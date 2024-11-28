@@ -7,6 +7,8 @@ from torch.testing import assert_allclose
 
 import bofire.surrogates.api as surrogates
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import MaternKernel as MaternKernelDataModel
 from bofire.data_models.kernels.api import RBFKernel as RBFKernelDataModel
 
@@ -100,6 +102,39 @@ def test_PiecewiseLinearGPSurrogate():
     surrogate2.loads(dump)
     preds2 = surrogate2.predict(experiments)
     assert_frame_equal(preds1, preds2)
+
+
+def test_PiecewiseLinearGPSurrogate_no_continuous():
+    surrogate_data = PiecewiseLinearGPSurrogate(
+        inputs=Inputs(
+            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
+            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
+        ),
+        outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        interpolation_range=(0, 1),
+        n_interpolation_points=1000,
+        x_keys=["t_1", "t_2"],
+        y_keys=[f"phi_{i}" for i in range(4)],
+        continuous_keys=[],
+        continuous_kernel=None,
+        prepend_x=[0.0],
+        append_x=[1.0],
+        prepend_y=[],
+        append_y=[],
+    )
+    surrogate = surrogates.map(surrogate_data)
+    experiments = pd.DataFrame.from_dict(
+        {
+            "phi_0": {0: 0.2508421787324221, 1: 0.4163841440870552},
+            "phi_1": {0: 0.433484737895208, 1: 0.6113523601901784},
+            "phi_2": {0: 0.5286771157519854, 1: 0.6648468998497129},
+            "phi_3": {0: 0.5755781889180437, 1: 0.7274116735640798},
+            "t_1": {0: 0.22223684134422478, 1: 0.23491735169040232},
+            "t_2": {0: 0.8253013968891976, 1: 0.7838135122442911},
+            "alpha": {0: 7, 1: 3},
+        },
+    )
+    surrogate.fit(experiments)
 
 
 def test_PiecewiseLinearGPHyperconfig():
