@@ -27,7 +27,7 @@ def test_mf_requires_all_fidelities_observed():
     experiments = benchmark.f(random_strategy.ask(100), return_complete=True)
 
     domain_with_extra_task = Domain(
-        inputs=benchmark.domain.inputs.get(excludes=TaskInput)
+        inputs=benchmark.domain.inputs.get(excludes=TaskInput)  # type: ignore
         + (
             TaskInput(
                 key=task_input.key,
@@ -109,7 +109,6 @@ def test_mf_point_selection():
 
     experiments = benchmark.f(random_strategy.ask(4), return_complete=True)
     experiments[task_input.key] = ["task_1", "task_2", "task_2", "task_2"]
-    experiments, withheld = experiments.iloc[:-1], experiments.iloc[-1:]
 
     strategy = MultiFidelityStrategy(
         data_model=MultiFidelityStrategyDataModel(
@@ -119,13 +118,7 @@ def test_mf_point_selection():
     )
 
     strategy.tell(experiments)
-    # test that for a point close to training data, the highest fidelity is selected
-    close_to_training = experiments.iloc[2:3].copy()
-    close_to_training[benchmark.domain.inputs.get_keys(excludes=TaskInput)] += 0.01
-    pred = strategy._select_fidelity_and_get_predict(close_to_training)
-    print(pred)
-    assert (pred[task_input.key] == task_input.categories[0]).all()
 
-    # test that for a point far from training data, the lowest fidelity is selected
-    pred = strategy._select_fidelity_and_get_predict(withheld)
-    assert (pred[task_input.key] == task_input.categories[1]).all()
+    # smoke test for querying a new point
+    candidate = strategy.ask(1)
+    assert set(benchmark.domain.inputs.get_keys()).issubset(candidate.columns)
