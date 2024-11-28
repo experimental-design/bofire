@@ -6,7 +6,7 @@ import pytest
 import bofire.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qNEI
-from bofire.data_models.features.api import CategoricalInput, ContinuousInput
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     NumberOfExperimentsCondition,
@@ -22,15 +22,6 @@ from bofire.data_models.strategies.stepwise.stepwise import (
 
 def test_validate_domain_compatibility():
     bench = Himmelblau()
-    domain2 = deepcopy(bench.domain)
-    domain2.inputs.features.append(ContinuousInput(key="a", bounds=(0, 1)))
-    with pytest.raises(ValueError, match="Domains have different number of features."):
-        validate_domain_compatibility(bench.domain, domain2)
-
-    domain2 = deepcopy(bench.domain)
-    domain2.inputs.features[0].key = "mama"
-    with pytest.raises(ValueError, match="Domains have different feature keys."):
-        validate_domain_compatibility(bench.domain, domain2)
 
     domain2 = deepcopy(bench.domain)
     domain2.inputs = bench.domain.inputs.get_by_keys(["x_1"])
@@ -51,10 +42,10 @@ def test_validate_domain_compatibility():
 def test_StepwiseStrategy_invalid_domains():
     benchmark = Himmelblau()
     domain2 = deepcopy(benchmark.domain)
-    domain2.inputs[0].key = "mama"
+    domain2.inputs.features[0] = CategoricalInput(key="x_1", categories=["a", "b"])
     with pytest.raises(
         ValueError,
-        match="Domains have different feature keys.",
+        match="Features with key x_1 have different types.",
     ):
         StepwiseStrategy(
             domain=benchmark.domain,
