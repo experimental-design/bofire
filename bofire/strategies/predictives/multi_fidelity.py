@@ -66,7 +66,8 @@ class MultiFidelityStrategy(SoboStrategy):
         assert fidelity_input.allowed is not None
 
         sorted_fidelities = np.argsort(fidelity_input.fidelities)[::-1]
-        target_fidelity = sorted_fidelities[-1]
+        target_fidelity_idx = sorted_fidelities[-1]
+        target_fidelity = fidelity_input.fidelities[target_fidelity_idx]
         _, sd_cols = get_column_names(self.domain.outputs)
 
         for fidelity_idx in sorted_fidelities:

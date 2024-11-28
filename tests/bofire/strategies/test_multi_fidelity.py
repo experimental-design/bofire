@@ -86,7 +86,6 @@ def test_mf_fidelity_selection():
     close_to_training = experiments.iloc[2:3].copy()
     close_to_training[benchmark.domain.inputs.get_keys(excludes=TaskInput)] += 0.01
     pred = strategy._select_fidelity_and_get_predict(close_to_training)
-    print(pred)
     assert (pred[task_input.key] == task_input.categories[0]).all()
 
     # test that for a point far from training data, the lowest fidelity is selected
