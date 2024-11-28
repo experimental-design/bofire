@@ -34,6 +34,9 @@ class MultiFidelityStrategy(SoboStrategy):
         """
         if candidate_count > 1:
             raise NotImplementedError("Batch optimization is not yet implemented")
+
+        self._verify_all_fidelities_observed()
+
         task_feature: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
         # only optimize the input x on the target fidelity
         # we fix the fidelity by setting all other fidelities to 'not allowed'
@@ -60,11 +63,16 @@ class MultiFidelityStrategy(SoboStrategy):
         """
         fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
         assert self.model is not None and self.experiments is not None
+        assert fidelity_input.allowed is not None
 
         sorted_fidelities = np.argsort(fidelity_input.fidelities)[::-1]
+        target_fidelity = sorted_fidelities[-1]
         _, sd_cols = get_column_names(self.domain.outputs)
 
         for fidelity_idx in sorted_fidelities:
+            if not fidelity_input.allowed[fidelity_idx]:
+                continue
+
             m = fidelity_input.fidelities[fidelity_idx]
             fidelity_name = fidelity_input.categories[fidelity_idx]
 
@@ -77,6 +85,20 @@ class MultiFidelityStrategy(SoboStrategy):
             )
             pred = self.predict(transformed)
 
-            if (pred[sd_cols] > fidelity_threshold).all().all() or m == 0:
+            if (pred[sd_cols] > fidelity_threshold).all().all() or m == target_fidelity:
                 pred[self.task_feature_key] = fidelity_name
                 return pred
+
+    def _verify_all_fidelities_observed(self) -> None:
+        """Get all fidelities that have at least one observation.
+
+        We use this instead of overriding `has_sufficient_experiments` to provide
+        a more descriptive error message."""
+        assert self.experiments is not None
+        observed_fidelities = set(self.experiments[self.task_feature_key].unique())
+        allowed_fidelities = set(
+            self.domain.inputs.get_by_key(self.task_feature_key).categories  # type: ignore
+        )
+        missing_fidelities = allowed_fidelities - observed_fidelities
+        if missing_fidelities:
+            raise ValueError(f"Some tasks have no experiments: {missing_fidelities}")
