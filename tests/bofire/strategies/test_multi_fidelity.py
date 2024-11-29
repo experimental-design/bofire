@@ -47,8 +47,12 @@ def test_mf_requires_all_fidelities_observed():
     )
 
     # since there are no observations on task_dummy, the strategy should raise an error
-    strategy.tell(experiments)
-    with pytest.raises(ValueError, match=r"Some tasks have no experiments"):
+    # in Python 3.9, a more cryptic RuntimeError is raised by gpytorch
+    with pytest.raises(
+        (ValueError, RuntimeError),
+        match=r"(Some tasks have no experiments)|(index out of row bound)",
+    ):
+        strategy.tell(experiments)
         strategy.ask(1)
 
     # test that the strategy does not raise an error if all fidelities are observed
@@ -67,6 +71,7 @@ def test_mf_fidelity_selection():
         data_model=RandomStrategyDataModel(
             domain=benchmark.domain,
             fallback_sampling_method=SamplingMethodEnum.SOBOL,
+            seed=42,
         ),
     )
 
@@ -103,6 +108,7 @@ def test_mf_point_selection():
         data_model=RandomStrategyDataModel(
             domain=benchmark.domain,
             fallback_sampling_method=SamplingMethodEnum.SOBOL,
+            seed=42,
         ),
     )
 
