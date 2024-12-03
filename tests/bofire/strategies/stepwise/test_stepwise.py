@@ -91,7 +91,7 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
 
 @pytest.mark.parametrize(
     "n_experiments, expected_strategy",
-    [(5, strategies.RandomStrategy), (10, strategies.SoboStrategy)],
+    [(5, strategies.RandomStrategy), (9, strategies.SoboStrategy)],
 )
 def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     benchmark = Himmelblau()
