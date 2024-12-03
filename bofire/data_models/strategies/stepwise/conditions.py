@@ -33,7 +33,7 @@ class NumberOfExperimentsCondition(SingleCondition, EvaluateableCondition):
             n_experiments = len(
                 domain.outputs.preprocess_experiments_all_valid_outputs(experiments),
             )
-        return n_experiments <= self.n_experiments
+        return n_experiments < self.n_experiments
 
 
 class AlwaysTrueCondition(SingleCondition, EvaluateableCondition):
