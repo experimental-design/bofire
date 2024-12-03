@@ -13,6 +13,9 @@ from bofire.data_models.strategies.predictives.active_learning import (
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
+from bofire.data_models.strategies.predictives.multi_fidelity import (
+    MultiFidelityStrategy,
+)
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
