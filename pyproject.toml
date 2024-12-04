@@ -2,6 +2,98 @@
 requires = ["setuptools", "setuptools_scm[toml]", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "bofire"
+description = ""
+dynamic = ["version"]
+authors = []
+license = {text = "BSD-3"}
+urls = {homepage = "https://github.com/experimental-design/bofire"}
+keywords = ["Bayesian optimization", "Multi-objective optimization", "Experimental design"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: BSD License",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+]
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.9.0"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pydantic>=2.5",
+    "scipy>=1.7",
+    "typing-extensions",
+]
+
+[project.optional-dependencies]
+optimization = [
+    "botorch>=0.10.0",
+    "numpy",
+    "multiprocess",
+    "plotly",
+    "formulaic>=1.0.1",
+    "cloudpickle>=2.0.0",
+    "sympy>=1.12",
+    "cvxpy[CLARABEL]",
+    "scikit-learn>=1.0.0",
+]
+entmoot = ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"]
+xgb = ["xgboost>=1.7.5"]
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordred"]
+tests = [
+    "mopti",
+    "pytest",
+    "pytest-cov",
+    "papermill",
+]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocs-jupyter",
+    "mkdocstrings>=0.18",
+    "mkdocstrings-python-legacy",
+    "mike",
+]
+tutorials = ["jupyter", "matplotlib", "seaborn"]
+all = [
+    "botorch>=0.10.0",
+    "numpy",
+    "multiprocess",
+    "plotly",
+    "formulaic>=1.0.1",
+    "cloudpickle>=2.0.0",
+    "sympy>=1.12",
+    "cvxpy[CLARABEL]",
+    "scikit-learn>=1.0.0",
+    "entmoot>=2.0",
+    "lightgbm==4.0.0",
+    "pyomo==6.7.1",
+    "gurobipy",
+    "xgboost>=1.7.5",
+    "rdkit>=2023.3.2",
+    "scikit-learn>=1.0.0",
+    "mordred",
+    "mopti",
+    "pytest",
+    "pytest-cov",
+    "papermill",
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocs-jupyter",
+    "mkdocstrings>=0.18",
+    "mkdocstrings-python-legacy",
+    "mike",
+    "jupyter",
+    "matplotlib",
+    "seaborn",
+]
+
+[tool.setuptools.packages]
+find = {}
+
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
