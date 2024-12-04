@@ -30,7 +30,7 @@ from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
     get_multiplicative_botorch_objective,
-    get_multiplicative_botorch_objective_with_nested_additive_features,
+    get_multiplicative_additive_objective,
     get_objective_callable,
     get_output_constraints,
     tkwargs,
@@ -269,7 +269,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_botorch_objective_with_nested_additive_features(  # type: ignore
+                objective=get_multiplicative_additive_objective(  # type: ignore
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
                     additive_features=self.additive_features,

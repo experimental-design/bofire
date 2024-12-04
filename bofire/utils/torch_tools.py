@@ -18,6 +18,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
+    Objective,
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     ConstrainedObjective,
@@ -484,28 +485,76 @@ def get_custom_botorch_objective(
     return objective
 
 
+def _callables_and_weights(outputs: Outputs, experiments: pd.DataFrame,
+                           exclude_constraints: bool = False,
+                           allowed_objectives: List[Objective] = None) -> Tuple[
+    List[Callable], List[float], List[str]]:
+    """
+    extract callables and weights from outputs object
+
+    Parameters
+    ----------
+    outputs : Outputs
+        Outputs object
+    experiments : pd.DataFrame
+        DataFrame containing the experiments that are used for adapting the objectives
+    exclude_constraints : bool, optional
+        exclude constraints, by default False
+    allowed_objectives : List[Objective], optional
+        limit to allowed objectives, by default None
+
+    """
+
+    if outputs is None:
+        return [], [], []
+
+    def _x_adapt(feat):
+        """ adapted output x, skipped for inputs"""
+        if isinstance(outputs, Outputs):
+            x = outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+                            feat.key
+                        ].values
+        else:
+            x = experiments[feat.key].values
+
+        return torch.from_numpy(x).to(**tkwargs)
+
+    callables, weights, keys = [], [], []
+
+    for i, feat in enumerate(outputs.get()):
+
+        if feat.objective is None:
+            continue
+
+        if exclude_constraints:
+            if isinstance(feat.objective, ConstrainedObjective):
+                continue
+
+        if allowed_objectives is not None:
+            if feat.objective.__class__ not in allowed_objectives:
+                continue
+
+        callables.append(
+            get_objective_callable(
+                idx=i,
+                objective=feat.objective,
+                x_adapt=_x_adapt(feat),
+            )
+        )
+
+        weights.append(feat.objective.w)
+
+        keys.append(feat.key)
+
+    return callables, weights, keys
+
+
 def get_multiplicative_botorch_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
-        )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-    ]
-    weights = [
-        feat.objective.w
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-    ]
+
+    callables, weights, _ = _callables_and_weights(outputs, experiments)
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         val = 1.0
@@ -521,34 +570,8 @@ def get_additive_botorch_objective(
     experiments: pd.DataFrame,
     exclude_constraints: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
-        )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and (
-            not isinstance(feat.objective, ConstrainedObjective)
-            if exclude_constraints
-            else True
-        )
-    ]
-    weights = [
-        feat.objective.w
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and (
-            not isinstance(feat.objective, ConstrainedObjective)
-            if exclude_constraints
-            else True
-        )
-    ]
+
+    callables, weights, _ = _callables_and_weights(outputs, experiments, exclude_constraints=exclude_constraints)
 
     def objective(samples: Tensor, X: Tensor) -> Tensor:
         val = 0.0
@@ -575,26 +598,73 @@ def get_multiobjective_objective(
         Callable[[Tensor], Tensor]: _description_
 
     """
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
-        )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and isinstance(
-            feat.objective,
-            (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
-        )
-    ]
+    allowed_objectives = [MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+
+    callables_outputs, _, _ = _callables_and_weights(outputs, experiments, allowed_objectives=allowed_objectives)
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-        return torch.stack([c(samples, None) for c in callables], dim=-1)
+        return torch.stack([c(samples, None) for c in callables_outputs], dim=-1)
+
+    return objective
+
+
+def get_multiplicative_additive_objective(
+    outputs: Outputs,
+    experiments: pd.DataFrame,
+    exclude_constraints: bool = True,
+    additive_features: List[str] = None,
+) -> Callable[[Tensor, Tensor], Tensor]:
+    """ will compute the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
+    Additive features (inputs or outputs) can be specified in the `additive_features` list.
+
+    The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
+    additive features (f3 and f4 with weights w3 and w4) is:
+
+        additive_objective = 1 + f3*w3 + f4*w4
+        denominator_additive_objectives = 1 + w3 + w4
+
+        denominator_multiplicative_objectives = 1 + w1 + w2
+        objective = f1^w1 * f2^w2 * (additive_objective / denominator_additive_objectives) ^ (1/denominator_multiplicative_objectives)
+    """
+
+    callables, weights, keys = _callables_and_weights(outputs, experiments, exclude_constraints=exclude_constraints)
+
+    if additive_features is None:
+        additive_features = []
+
+    def _differ_additive_and_multiplicative_features(callables, weights, feature_names):
+        callables_additive, weights_additive = [], []
+        callables_multiplicative, weights_multiplicative = [], []
+        for c, w, key in zip(callables, weights, feature_names):
+            if key in additive_features:
+                callables_additive.append(c)
+                weights_additive.append(w)
+            else:
+                callables_multiplicative.append(c)
+                weights_multiplicative.append(w)
+        return callables_additive, weights_additive, callables_multiplicative, weights_multiplicative
+
+
+    (callables_additive, weights_additive, callables_multiplicative,
+     weights_multiplicative) = _differ_additive_and_multiplicative_features(
+        callables, weights, keys)
+
+
+    def objective(samples: Tensor, X: Tensor = None) -> Tensor:
+
+        additive_objective = 1.
+        denominator_additive_objectives = 1.
+        for c, w in zip(callables_additive, weights_additive):
+            additive_objective += c(samples, None) * w
+            denominator_additive_objectives += w
+
+        multiplicative_objective = 1.
+        denominator_multiplicative_objectives = 1.
+        for c, w in zip(callables_multiplicative, weights_multiplicative):
+            multiplicative_objective *= c(samples, None) ** w
+            denominator_multiplicative_objectives += w
+
+        return (multiplicative_objective * (additive_objective / denominator_additive_objectives)) ** (1. / denominator_multiplicative_objectives)
 
     return objective
 
