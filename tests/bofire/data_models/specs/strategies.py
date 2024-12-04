@@ -215,9 +215,8 @@ specs.add_valid(
         "verbose": False,
         "seed": 42,
         "criterion": strategies.DOptimalityCriterion(
-            formula="fully-quadratic"
+            formula="fully-quadratic", transform_range=None
         ).model_dump(),
-        "transform_range": None,
     },
 )
 specs.add_valid(
