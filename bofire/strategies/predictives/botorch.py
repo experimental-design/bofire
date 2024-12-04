@@ -27,6 +27,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEn
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     DiscreteInput,
     Input,
 )
@@ -652,6 +653,12 @@ class BotorchStrategy(PredictiveStrategy):
                     for j, idx in enumerate(features2idx[feat]):
                         fixed_features[idx] = feature.values[index][j]
 
+                elif isinstance(feature, CategoricalMolecularInput):
+                    transformed = feature.to_descriptor_encoding(
+                        self.input_preprocessing_specs[feat], pd.Series([val])
+                    )
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = transformed.values[0, j]
                 elif isinstance(feature, CategoricalInput):
                     # it has to be onehot in this case
                     transformed = feature.to_onehot_encoding(pd.Series([val]))
