@@ -212,11 +212,12 @@ specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
-        "formula": "linear",
         "optimization_strategy": "default",
         "verbose": False,
         "seed": 42,
-        "objective": OptimalityCriterionEnum.D_OPTIMALITY,
+        "criterion": strategies.DOptimalityCriterion(
+            formula="fully-quadratic"
+        ).model_dump(),
         "transform_range": None,
     },
 )
