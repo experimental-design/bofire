@@ -17,7 +17,6 @@ extras_require = {
         "numpy",
         "multiprocess",
         "plotly",
-        "formulaic>=1.0.1",
         "cloudpickle>=2.0.0",
         "sympy>=1.12",
         "cvxpy[CLARABEL]",
@@ -74,6 +73,7 @@ setup(
         "pydantic>=2.5",
         "scipy>=1.7",
         "typing-extensions",
+        "formulaic>=1.0.1",
     ],
     extras_require=extras_require,
 )
