@@ -3,11 +3,11 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import CategoricalInput, Input
-from bofire.strategies.doe.design import (
-    find_local_max_ipopt,
+from bofire.strategies.doe.branch_and_bound import (
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
 )
+from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.utils_categorical_discrete import (
     design_from_new_to_original_domain,
     discrete_to_relaxable_domain_mapper,
@@ -29,7 +29,6 @@ class DoEStrategy(Strategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.formula = data_model.formula
         self.data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
@@ -87,6 +86,9 @@ class DoEStrategy(Strategy):
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
 
+        objective = self.data_model.criterion.map_to_enum()
+        model_type = self.data_model.criterion.formula
+        transform_range = self.data_model.criterion.transform_range
         if (
             self.data_model.optimization_strategy == "relaxed"
             or (num_binary_vars == 0 and num_discrete_vars == 0)
@@ -98,12 +100,12 @@ class DoEStrategy(Strategy):
         ):
             design = find_local_max_ipopt(
                 new_domain,
-                self.formula,
+                model_type=model_type,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
-                objective=self.data_model.objective,
-                transform_range=self.data_model.transform_range,
+                objective=objective,
+                transform_range=transform_range,
             )
         # todo adapt to when exhaustive search accepts discrete variables
         elif (
@@ -112,15 +114,15 @@ class DoEStrategy(Strategy):
         ):
             design = find_local_max_ipopt_exhaustive(
                 domain=new_domain,
-                model_type=self.formula,
+                model_type=model_type,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
-                objective=self.data_model.objective,
-                transform_range=self.data_model.transform_range,
+                objective=objective,
+                transform_range=transform_range,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -129,15 +131,15 @@ class DoEStrategy(Strategy):
         ]:
             design = find_local_max_ipopt_BaB(
                 domain=new_domain,
-                model_type=self.formula,
+                model_type=model_type,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
-                objective=self.data_model.objective,
-                transform_range=self.data_model.transform_range,
+                objective=objective,
+                transform_range=transform_range,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -154,15 +156,15 @@ class DoEStrategy(Strategy):
             for i in range(_candidate_count):
                 design = find_local_max_ipopt_BaB(
                     domain=new_domain,
-                    model_type=self.formula,
+                    model_type=model_type,
                     n_experiments=num_adapted_partially_fixed_candidates + i + 1,
                     fixed_experiments=None,
                     verbose=self.data_model.verbose,
                     partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
-                    objective=self.data_model.objective,
-                    transform_range=self.data_model.transform_range,
+                    objective=objective,
+                    transform_range=transform_range,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [

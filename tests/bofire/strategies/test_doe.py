@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.strategies.doe import DOptimalityCriterion
 from bofire.strategies.api import DoEStrategy
 
 
@@ -57,13 +58,17 @@ domain = Domain.from_lists(
 
 
 def test_doe_strategy_init():
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     assert strategy is not None
 
 
 def test_doe_strategy_ask():
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
     assert candidates.shape == (12, 3)
@@ -74,7 +79,9 @@ def test_doe_strategy_ask_with_candidates():
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
         columns=["x1", "x2", "x3"],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(candidates_fixed)
     candidates = strategy.ask(candidate_count=12)
@@ -94,7 +101,9 @@ def test_nchoosek_implemented():
         constraints=[nchoosek_constraint],
     )
     data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", optimization_strategy="partially-random"
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        optimization_strategy="partially-random",
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
@@ -110,7 +119,9 @@ def test_formulas_implemented():
     }
 
     for formula, num_candidates in expected_num_candidates.items():
-        data_model = data_models.DoEStrategy(domain=domain, formula=formula)
+        data_model = data_models.DoEStrategy(
+            domain=domain, criterion=DOptimalityCriterion(formula=formula)
+        )
         strategy = DoEStrategy(data_model=data_model)
         candidates = strategy.ask()
         assert candidates.shape == (num_candidates, 3)
@@ -121,7 +132,9 @@ def test_doe_strategy_correctness():
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
         columns=["x1", "x2", "x3"],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(candidates_fixed)
     candidates = strategy.ask(candidate_count=12)
@@ -141,7 +154,9 @@ def test_doe_strategy_amount_of_candidates():
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
         columns=["x1", "x2", "x3"],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(candidates_fixed)
     candidates = strategy.ask(candidate_count=12)
@@ -187,14 +202,16 @@ def test_categorical_discrete_doe():
     ]
 
     n_experiments = 10
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=all_inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=all_constraints,
     )
 
     data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", optimization_strategy="partially-random"
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        optimization_strategy="partially-random",
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)
@@ -224,7 +241,7 @@ def test_partially_fixed_experiments():
     n_experiments = 10
 
     all_inputs = all_inputs + continuous_var
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=all_inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=all_constraints,
@@ -232,7 +249,7 @@ def test_partially_fixed_experiments():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         optimization_strategy="relaxed",
         verbose=True,
     )
@@ -275,7 +292,6 @@ def test_partially_fixed_experiments():
     )
 
     candidates = strategy.ask(candidate_count=n_experiments)
-    print(candidates)
     only_partially_fixed = only_partially_fixed.mask(
         only_partially_fixed.isnull(), candidates[:4]
     )
@@ -300,7 +316,8 @@ def test_scaled_doe():
         constraints=[],
     )
     data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", transform_range=(-1, 1)
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear", transform_range=(-1, 1)),
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=4).to_numpy()
@@ -328,7 +345,7 @@ def test_categorical_doe_iterative():
     ]
 
     n_experiments = 5
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=all_inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=all_constraints,
@@ -336,7 +353,7 @@ def test_categorical_doe_iterative():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         optimization_strategy="iterative",
     )
     strategy = DoEStrategy(data_model=data_model)

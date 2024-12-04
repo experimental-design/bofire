@@ -10,6 +10,7 @@ from bofire.data_models.features.api import Feature, MolecularInput
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds
+from bofire.strategies.enum import OptimalityCriterionEnum
 
 
 PREDEFINED_MODEL_TYPES = Literal[
@@ -51,21 +52,41 @@ class DoEOptimalityCriterion(OptimalityCriterion):
 class DOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["DOptimalityCriterion"] = "DOptimalityCriterion"  # type: ignore
 
+    @classmethod
+    def map_to_enum(cls) -> OptimalityCriterionEnum:
+        return OptimalityCriterionEnum.D_OPTIMALITY
+
 
 class EOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["EOptimalityCriterion"] = "EOptimalityCriterion"  # type: ignore
+
+    @classmethod
+    def map_to_enum(cls) -> OptimalityCriterionEnum:
+        return OptimalityCriterionEnum.E_OPTIMALITY
 
 
 class AOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["AOptimalityCriterion"] = "AOptimalityCriterion"  # type: ignore
 
+    @classmethod
+    def map_to_enum(cls) -> OptimalityCriterionEnum:
+        return OptimalityCriterionEnum.A_OPTIMALITY
+
 
 class GOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["GOptimalityCriterion"] = "GOptimalityCriterion"  # type: ignore
 
+    @classmethod
+    def map_to_enum(cls) -> OptimalityCriterionEnum:
+        return OptimalityCriterionEnum.G_OPTIMALITY
+
 
 class KOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"  # type: ignore
+
+    @classmethod
+    def map_to_enum(cls) -> OptimalityCriterionEnum:
+        return OptimalityCriterionEnum.K_OPTIMALITY
 
 
 AnyDoEOptimalityCriterion = Union[

@@ -214,7 +214,7 @@ def test_find_local_max_ipopt_results():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_batch_constraint():
     # define problem with batch constraints
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             ContinuousInput(key="x2", bounds=(0, 1)),
@@ -512,7 +512,7 @@ def test_get_n_experiments():
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_fixed_experiments_checker():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
@@ -606,7 +606,7 @@ def test_fixed_experiments_checker():
 
 
 def test_partially_fixed_experiments():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
