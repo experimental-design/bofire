@@ -1,9 +1,9 @@
-from typing import Literal
+from typing import List, Literal, Optional
 
-from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.kernel import ConcreteKernel
 
 
-class CategoricalKernel(Kernel):
+class CategoricalKernel(ConcreteKernel):
     pass
 
 

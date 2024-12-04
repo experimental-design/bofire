@@ -54,6 +54,7 @@ def test_map(kernel_spec: Spec):
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert isinstance(gkernel, EQUIVALENTS[kernel.__class__])
 
@@ -66,6 +67,7 @@ def test_map_infinite_width_bnn_kernel():
         batch_shape=torch.Size(),
         active_dims=list(range(5)),
         ard_num_dims=10,
+        features_to_idx_mapper=None,
     )
     assert isinstance(gkernel, BNNKernel)
 
@@ -79,6 +81,7 @@ def test_map_scale_kernel():
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert hasattr(k, "outputscale_prior")
     assert isinstance(k.outputscale_prior, gpytorch.priors.GammaPrior)
@@ -88,6 +91,7 @@ def test_map_scale_kernel():
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert hasattr(k, "outputscale_prior") is False
 
@@ -99,6 +103,7 @@ def test_map_polynomial_kernel():
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert hasattr(k, "offset_prior")
     assert isinstance(k.offset_prior, gpytorch.priors.GammaPrior)
@@ -108,6 +113,7 @@ def test_map_polynomial_kernel():
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert hasattr(k, "offset_prior") is False
 
@@ -163,6 +169,7 @@ def test_map_continuous_kernel(kernel, ard_num_dims, active_dims, expected_kerne
         batch_shape=torch.Size(),
         ard_num_dims=ard_num_dims,
         active_dims=active_dims,
+        features_to_idx_mapper=None,
     )
     assert isinstance(k, expected_kernel)
     if isinstance(kernel, LinearKernel):
@@ -206,6 +213,7 @@ def test_map_molecular_kernel(kernel, ard_num_dims, active_dims, expected_kernel
         batch_shape=torch.Size(),
         ard_num_dims=ard_num_dims,
         active_dims=active_dims,
+        features_to_idx_mapper=None,
     )
     assert isinstance(k, expected_kernel)
 
@@ -226,6 +234,7 @@ def test_map_wasserstein_kernel():
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert isinstance(k, shapeKernels.WassersteinKernel)
     assert hasattr(k, "lengthscale_prior")
@@ -237,6 +246,7 @@ def test_map_wasserstein_kernel():
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
+        features_to_idx_mapper=None,
     )
     assert k.squared is True
     assert hasattr(k, "lengthscale_prior") is False

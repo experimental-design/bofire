@@ -24,6 +24,9 @@ from bofire.strategies.api import DoEStrategy
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
+import pytest
+pytest.importorskip("cyipopt")
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
