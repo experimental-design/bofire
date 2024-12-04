@@ -15,7 +15,7 @@ from pandas.testing import assert_frame_equal
 from pydantic import ValidationError
 
 import bofire.surrogates.api as surrogates
-from bofire.benchmarks.api import Himmelblau
+from bofire.benchmarks.api import Hartmann, Himmelblau
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
@@ -25,6 +25,7 @@ from bofire.data_models.features.api import (
     MolecularInput,
 )
 from bofire.data_models.kernels.api import (
+    AdditiveKernel,
     HammingDistanceKernel,
     MaternKernel,
     RBFKernel,
@@ -291,6 +292,45 @@ def test_SingleTaskGPHyperconfig():
                 surrogate_data.kernel.base_kernel.lengthscale_prior
                 == HVARFNER_LENGTHSCALE_PRIOR()
             )
+
+
+def test_SingleTaskGPModel_feature_subsets():
+    """make an additive kernel using feature subsets for each kernel in the sum"""
+    benchmark = Hartmann()
+    bench_x = benchmark.domain.inputs.sample(12)
+    bench_expts = pd.concat([bench_x, benchmark.f(bench_x)], axis=1)
+
+    input_names = benchmark.domain.inputs.get_keys()
+    inputs_kernel_1 = input_names[:2]
+    inputs_kernel_2 = input_names[2:]
+
+    gp_data = SingleTaskGPSurrogate(
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
+        kernel=AdditiveKernel(
+            kernels=[
+                RBFKernel(
+                    ard=True,
+                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                    features=inputs_kernel_1,
+                ),
+                RBFKernel(
+                    ard=True,
+                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                    features=inputs_kernel_2,
+                ),
+            ]
+        ),
+    )
+
+    gp_mapped = surrogates.map(gp_data)
+    assert hasattr(gp_mapped, "fit")
+    assert len(gp_mapped.kernel.kernels) == 2
+    assert gp_mapped.kernel.kernels[0].features == ["x_0", "x_1"]
+    assert gp_mapped.kernel.kernels[1].features == ["x_2", "x_3", "x_4", "x_5"]
+    gp_mapped.fit(bench_expts)
+    pred = gp_mapped.predict(bench_expts)
+    assert pred.shape == (12, 2)
 
 
 def test_MixedSingleTaskGPHyperconfig():
