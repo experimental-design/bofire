@@ -331,6 +331,8 @@ def test_SingleTaskGPModel_feature_subsets():
     gp_mapped.fit(bench_expts)
     pred = gp_mapped.predict(bench_expts)
     assert pred.shape == (12, 2)
+    assert len(gp_mapped.model.covar_module.kernels[0].active_dims) == 2
+    assert len(gp_mapped.model.covar_module.kernels[1].active_dims) == 4
 
 
 def test_MixedSingleTaskGPHyperconfig():
