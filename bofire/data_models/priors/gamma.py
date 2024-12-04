@@ -11,6 +11,7 @@ class GammaPrior(Prior):
     Attributes:
         concentration(PostiveFloat): concentration of the gamma distribution
         rate(PositiveFloat): rate of the gamma prior.
+
     """
 
     type: Literal["GammaPrior"] = "GammaPrior"

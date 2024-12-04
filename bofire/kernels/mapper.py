@@ -8,6 +8,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
+from bofire.kernels.shape import WassersteinKernel
 
 
 def map_RBFKernel(
@@ -62,7 +63,7 @@ def map_InfiniteWidthBNNKernel(
         raise ImportError(
             "InfiniteWidthBNNKernel requires botorch>=0.11.3 to be installed. "
             "This can be installed by running `pip install 'botorch>=0.11.3'`, "
-            "requires python 3.10+."
+            "requires python 3.10+.",
         )
 
     return InfiniteWidthBNNKernel(
@@ -122,7 +123,7 @@ def map_AdditiveKernel(
                 active_dims=active_dims,
             )
             for k in data_model.kernels
-        ]
+        ],
     )
 
 
@@ -141,7 +142,7 @@ def map_MultiplicativeKernel(
                 active_dims=active_dims,
             )
             for k in data_model.kernels
-        ]
+        ],
     )
 
 
@@ -192,7 +193,25 @@ def map_HammingDistanceKernel(
     )
 
 
+def map_WassersteinKernel(
+    data_model: data_models.WassersteinKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> WassersteinKernel:
+    return WassersteinKernel(
+        squared=data_model.squared,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        active_dims=active_dims,
+    )
+
+
 KERNEL_MAP = {
+    data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
     data_models.LinearKernel: map_LinearKernel,
@@ -213,5 +232,8 @@ def map(
     active_dims: List[int],
 ) -> GpytorchKernel:
     return KERNEL_MAP[data_model.__class__](
-        data_model, batch_shape, ard_num_dims, active_dims
+        data_model,
+        batch_shape,
+        ard_num_dims,
+        active_dims,
     )

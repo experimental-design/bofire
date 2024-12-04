@@ -18,7 +18,7 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
         self.model = AffineDeterministicModel(
             b=data_model.intercept,
             a=torch.tensor(
-                [data_model.coefficients[key] for key in self.inputs.get_keys()]
+                [data_model.coefficients[key] for key in self.inputs.get_keys()],
             )
             .to(**tkwargs)
             .unsqueeze(-1),

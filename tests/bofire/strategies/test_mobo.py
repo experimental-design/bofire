@@ -92,10 +92,11 @@ def test_mobo(strategy, use_ref_point, acqf):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(candidate_count=10), return_complete=True
+        random_strategy.ask(candidate_count=10),
+        return_complete=True,
     )
     # init strategy
     data_model = strategy(
@@ -131,7 +132,7 @@ def test_mobo(strategy, use_ref_point, acqf):
 def test_mobo_constraints(acqf):
     benchmark = C2DTLZ2(dim=4)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     data_model = data_models.MoboStrategy(
@@ -172,10 +173,11 @@ def test_get_acqf_input(num_experiments, num_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(num_experiments), return_complete=True
+        random_strategy.ask(num_experiments),
+        return_complete=True,
     )
     data_model = data_models.MoboStrategy(domain=benchmark.domain)
     strategy = strategies.map(data_model)
@@ -187,7 +189,7 @@ def test_get_acqf_input(num_experiments, num_candidates):
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
     _, names = strategy.domain.inputs._get_transform_info(
-        specs=strategy.surrogate_specs.input_preprocessing_specs
+        specs=strategy.surrogate_specs.input_preprocessing_specs,
     )
 
     assert torch.is_tensor(X_train)
@@ -209,7 +211,8 @@ def test_no_objective():
     experiments["ignore"] = experiments["f_0"] + 6
     experiments["valid_ignore"] = 1
     data_model = data_models.MoboStrategy(
-        domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+        domain=domain,
+        ref_point={"f_0": 1.1, "f_1": 1.1},
     )
     recommender = strategies.map(data_model=data_model)
     recommender.tell(experiments=experiments)
@@ -246,7 +249,7 @@ def test_mobo_with_multitask(acqf, target_task):
             "y1": np.concatenate([task_1_y, task_2_y]),
             "y2": np.concatenate([task_1_y, task_2_y]),
             "task": ["task_1"] * len(task_1_x) + ["task_2"] * len(task_2_x),
-        }
+        },
     )
 
     if target_task == "task_1":

@@ -172,7 +172,7 @@ def test_smiles2fingerprints():
                 0,
                 0,
             ],
-        ]
+        ],
     )
     desc = smiles2fingerprints(smiles=smiles, n_bits=32)
     assert desc.shape[0] == 4
@@ -185,7 +185,8 @@ def test_smiles2fragments():
     values = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
 
     desc = smiles2fragments(
-        smiles=smiles, fragments_list=["fr_unbrch_alkane", "fr_thiocyan"]
+        smiles=smiles,
+        fragments_list=["fr_unbrch_alkane", "fr_thiocyan"],
     )
     assert desc.shape[0] == 4
     assert desc.shape[1] == 2
@@ -340,11 +341,13 @@ def test_smiles2fragments_fingerprints():
                 0.0,
                 0.0,
             ],
-        ]
+        ],
     )
 
     desc = smiles2fragments_fingerprints(
-        smiles=smiles, n_bits=32, fragments_list=["fr_unbrch_alkane", "fr_thiocyan"]
+        smiles=smiles,
+        n_bits=32,
+        fragments_list=["fr_unbrch_alkane", "fr_thiocyan"],
     )
     assert desc.shape[0] == 4
     assert desc.shape[1] == 32 + 2
@@ -359,7 +362,7 @@ def test_smiles2mordred():
             [-1.5, 0.0],
             [-0.28395061728395066, 1.0],
             [-8.34319526627219, 0.0],
-        ]
+        ],
     )
 
     desc = smiles2mordred(smiles=smiles, descriptors_list=["NssCH2", "ATSC2d"])

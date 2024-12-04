@@ -1,9 +1,9 @@
 import pytest
 import torch
-import torch.nn as nn
 from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
+from torch import nn
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.single import Himmelblau
@@ -50,7 +50,7 @@ def test_mlp_input_size(output_size):
 
 def test_mlp_hidden_layer_sizes():
     mlp = MLP(input_size=2, output_size=1, hidden_layer_sizes=(8, 4, 2))
-    assert len(mlp.layers) == 8  # added final acitvation function as a layer
+    assert len(mlp.layers) == 8  # added final activation function as a layer
     assert mlp.layers[0].in_features == 2
     assert mlp.layers[0].out_features == 8
     assert mlp.layers[2].in_features == 8
@@ -216,7 +216,8 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
 
 @pytest.mark.parametrize(
-    "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY]
+    "scaler",
+    [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY],
 )
 def test_mlp_ensemble_fit_categorical(scaler):
     inputs = Inputs(
@@ -227,7 +228,7 @@ def test_mlp_ensemble_fit_categorical(scaler):
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -274,7 +275,7 @@ def test_mlp_classification_ensemble_fit():
         features=[
             ContinuousInput(key="x_1", bounds=(-1, 1)),
             ContinuousInput(key="x_2", bounds=(-1, 1)),
-        ]
+        ],
     )
     outputs = Outputs(
         features=[
@@ -285,8 +286,8 @@ def test_mlp_classification_ensemble_fit():
                     categories=["unacceptable", "acceptable"],
                     desirability=[False, True],
                 ),
-            )
-        ]
+            ),
+        ],
     )
     domain = Domain(inputs=inputs, outputs=outputs)
     samples = domain.inputs.sample(10)

@@ -1,5 +1,4 @@
-"""
-This module was copied from the GAUCHE library(https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py).
+"""This module was copied from the GAUCHE library(https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py).
 
 GAUCHE was published under the following license (https://github.com/leojklarner/gauche/blob/main/LICENSE):
 
@@ -32,8 +31,7 @@ from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 
 
 class TanimotoKernel(BitKernel):
-    r"""
-    Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
+    r"""Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
 
     Formula:
         .. math::
@@ -57,6 +55,7 @@ class TanimotoKernel(BitKernel):
         >>> # Batch: Simple option
         >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
         >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
+
     """
 
     is_stationary = False
@@ -70,7 +69,9 @@ class TanimotoKernel(BitKernel):
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(
-                *x1.shape[:-2], x1.shape[-2], dtype=x1.dtype, device=x1.device
+                *x1.shape[:-2],
+                x1.shape[-2],
+                dtype=x1.dtype,
+                device=x1.device,
             )
-        else:
-            return self.covar_dist(x1, x2, **params)
+        return self.covar_dist(x1, x2, **params)

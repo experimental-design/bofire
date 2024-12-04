@@ -15,7 +15,7 @@ def test_polynomial_surrogate():
         features=[
             ContinuousInput(key="a", bounds=(0, 40)),
             ContinuousInput(key="b", bounds=(20, 60)),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="c")])
 
@@ -29,7 +29,9 @@ def test_polynomial_surrogate():
     experiments["valid_c"] = 1
 
     surrogate_data = PolynomialSurrogate.from_power(
-        power=2, inputs=inputs, outputs=outputs
+        power=2,
+        inputs=inputs,
+        outputs=outputs,
     )
     surrogate = surrogates.map(surrogate_data)
 
@@ -50,18 +52,20 @@ def test_can_define_botorch_surrogate():
         features=[
             ContinuousInput(key="a", bounds=(0, 40)),
             ContinuousInput(key="b", bounds=(20, 80)),
-        ]
+        ],
     )
     outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
     (
         BotorchSurrogates(
             surrogates=[
                 PolynomialSurrogate(
-                    inputs=inputs, outputs=Outputs(features=[outputs[0]])
+                    inputs=inputs,
+                    outputs=Outputs(features=[outputs[0]]),
                 ),
                 PolynomialSurrogate(
-                    inputs=inputs, outputs=Outputs(features=[outputs[1]])
+                    inputs=inputs,
+                    outputs=Outputs(features=[outputs[1]]),
                 ),
-            ]
+            ],
         ),
     )

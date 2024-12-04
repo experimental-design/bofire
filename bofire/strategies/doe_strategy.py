@@ -41,7 +41,7 @@ class DoEStrategy(Strategy):
                 to_many_columns.append(col)
         if len(to_many_columns) > 0:
             raise AttributeError(
-                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain"
+                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain",
             )
 
         to_few_columns = []
@@ -50,7 +50,7 @@ class DoEStrategy(Strategy):
                 to_few_columns.append(col)
         if len(to_few_columns) > 0:
             raise AttributeError(
-                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain"
+                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain",
             )
 
         self._candidates = candidates
@@ -60,7 +60,7 @@ class DoEStrategy(Strategy):
 
         # map categorical/ discrete Domain to a relaxable Domain
         new_domain, new_categories, new_discretes = discrete_to_relaxable_domain_mapper(
-            self.domain
+            self.domain,
         )
         all_new_categories.extend(new_categories)
 
@@ -76,7 +76,8 @@ class DoEStrategy(Strategy):
         fixed_experiments_count = 0
         _candidate_count = candidate_count
         adapted_partially_fixed_candidates = self._transform_candidates_to_new_domain(
-            new_domain, self.candidates
+            new_domain,
+            self.candidates,
         )
 
         if self.candidates is not None:
@@ -107,7 +108,7 @@ class DoEStrategy(Strategy):
                 objective=objective,
                 transform_range=transform_range,
             )
-        # todo adapt to when exhaustive search accepts discrete variables
+        # TODO adapt to when exhaustive search accepts discrete variables
         elif (
             self.data_model.optimization_strategy == "exhaustive"
             and num_discrete_vars == 0
@@ -150,7 +151,7 @@ class DoEStrategy(Strategy):
             num_adapted_partially_fixed_candidates = 0
             if adapted_partially_fixed_candidates is not None:
                 num_adapted_partially_fixed_candidates = len(
-                    adapted_partially_fixed_candidates
+                    adapted_partially_fixed_candidates,
                 )
             design = None
             for i in range(_candidate_count):
@@ -176,7 +177,7 @@ class DoEStrategy(Strategy):
                 )
                 print(
                     f"Status: {i+1} of {_candidate_count} experiments determined \n"
-                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}"
+                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}",
                 )
 
         else:
@@ -186,7 +187,7 @@ class DoEStrategy(Strategy):
         transformed_design = design_from_new_to_original_domain(self.domain, design)  # type: ignore
 
         return transformed_design.iloc[fixed_experiments_count:, :].reset_index(
-            drop=True
+            drop=True,
         )
 
     def has_sufficient_experiments(
@@ -196,6 +197,7 @@ class DoEStrategy(Strategy):
 
         Returns:
             bool: True if number of passed experiments is sufficient, False otherwise
+
         """
         return True
 
@@ -219,20 +221,21 @@ class DoEStrategy(Strategy):
                     if c not in cat.categories:  # type: ignore
                         raise AttributeError(
                             f"provided value {c} for categorical variable {cat.key} "
-                            f"does not exist in the corresponding categories {cat.categories}"  # type: ignore
+                            f"does not exist in the corresponding categories {cat.categories}",  # type: ignore
                         )
                     intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
                     intermediate_candidates.loc[row_index, c] = 1
 
             intermediate_candidates = intermediate_candidates.drop(
-                [cat.key for cat in cat_columns], axis=1
+                [cat.key for cat in cat_columns],
+                axis=1,
             )
 
             adapted_partially_fixed_candidates = pd.concat(
                 [
                     intermediate_candidates[candidates.notnull().all(axis=1)],
                     intermediate_candidates[candidates.isnull().any(axis=1)],
-                ]
+                ],
             )
             return adapted_partially_fixed_candidates
         return None

@@ -22,7 +22,7 @@ def test_model_cross_validate(folds):
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
@@ -56,8 +56,8 @@ def test_model_cross_validate_descriptor():
                 categories=["a", "b", "c"],
                 descriptors=["alpha"],
                 values=[[1], [2], [3]],
-            )
-        ]
+            ),
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
@@ -91,7 +91,7 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -104,7 +104,10 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
     )
     model = surrogates.map(model)
     train_cv, test_cv, _ = model.cross_validate(
-        experiments, folds=5, include_X=include_X, include_labcodes=include_labcodes
+        experiments,
+        folds=5,
+        include_X=include_X,
+        include_labcodes=include_labcodes,
     )
     if include_X:
         assert train_cv.results[0].X.shape == (8, 2)
@@ -139,13 +142,12 @@ def test_model_cross_validate_hooks():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
-    #
     model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
@@ -153,14 +155,18 @@ def test_model_cross_validate_hooks():
     model = surrogates.map(model)
     # first test with one hook
     _, _, hook_results = model.cross_validate(
-        experiments, folds=5, hooks={"hook1": hook1}
+        experiments,
+        folds=5,
+        hooks={"hook1": hook1},
     )
     assert len(hook_results.keys()) == 1
     assert len(hook_results["hook1"]) == 5
     assert hook_results["hook1"] == [(8, 2), (8, 2), (8, 2), (8, 2), (8, 2)]
     # now test with two hooks
     _, _, hook_results = model.cross_validate(
-        experiments, folds=5, hooks={"hook1": hook1, "hook2": hook2}
+        experiments,
+        folds=5,
+        hooks={"hook1": hook1, "hook2": hook2},
     )
     assert len(hook_results.keys()) == 2
     assert len(hook_results["hook1"]) == 5
@@ -190,7 +196,7 @@ def test_model_cross_validate_invalid(folds):
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -214,7 +220,7 @@ def test_model_cross_validate_random_state(folds):
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
@@ -227,17 +233,25 @@ def test_model_cross_validate_random_state(folds):
     )
     model = surrogates.map(model)
     train_cv_1_1, test_cv_1_1, _ = model.cross_validate(
-        experiments, folds=folds, random_state=1
+        experiments,
+        folds=folds,
+        random_state=1,
     )
     train_cv_1_2, test_cv_1_2, _ = model.cross_validate(
-        experiments, folds=folds, random_state=1
+        experiments,
+        folds=folds,
+        random_state=1,
     )
 
     train_cv_2_1, test_cv_2_1, _ = model.cross_validate(
-        experiments, folds=folds, random_state=2
+        experiments,
+        folds=folds,
+        random_state=2,
     )
     train_cv_2_2, test_cv_2_2, _ = model.cross_validate(
-        experiments, folds=folds, random_state=2
+        experiments,
+        folds=folds,
+        random_state=2,
     )
 
     for cvresult1, cvresult2 in zip(train_cv_1_1.results, train_cv_1_2.results):
@@ -278,7 +292,7 @@ def test_model_cross_validate_stratified(random_state):
                 descriptors=["alpha"],
                 values=[[1], [2], [3]],
             ),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     # category2, b, and c only appears 5 times each
@@ -318,20 +332,29 @@ def test_model_cross_validate_stratified(random_state):
     )
     model = surrogates.map(model)
     _, test_cv, _ = model.cross_validate(
-        experiments, folds=5, random_state=random_state, stratified_feature="cat_x_3"
+        experiments,
+        folds=5,
+        random_state=random_state,
+        stratified_feature="cat_x_3",
     )
     for cvresults in test_cv.results:
         assert any(i in cvresults.observed.index for i in cat_x_3_category2_indexes)
 
     _, test_cv, _ = model.cross_validate(
-        experiments, folds=5, random_state=random_state, stratified_feature="cat_x_4"
+        experiments,
+        folds=5,
+        random_state=random_state,
+        stratified_feature="cat_x_4",
     )
     for cvresults in test_cv.results:
         assert any(i in cvresults.observed.index for i in cat_x_4_b_indexes)
         assert any(i in cvresults.observed.index for i in cat_x_4_c_indexes)
 
     _, test_cv, _ = model.cross_validate(
-        experiments, folds=5, random_state=random_state, stratified_feature="y"
+        experiments,
+        folds=5,
+        random_state=random_state,
+        stratified_feature="y",
     )
     for cvresults in test_cv.results:
         assert any(i in cvresults.observed.index for i in zero_indexes)
@@ -354,7 +377,7 @@ def test_model_cross_validate_stratified_invalid_feature_name():
                 descriptors=["alpha"],
                 values=[[1], [2], [3]],
             ),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = pd.DataFrame(
@@ -410,7 +433,7 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
                 descriptors=["alpha"],
                 values=[[1], [2], [3]],
             ),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = pd.DataFrame(

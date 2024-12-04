@@ -6,10 +6,12 @@ import plotly.graph_objects as go
 
 
 def plot_duplicates_plotly(
-    experiments: pd.DataFrame, duplicates: List[str], key: str, scale: float = 0.1
+    experiments: pd.DataFrame,
+    duplicates: List[str],
+    key: str,
+    scale: float = 0.1,
 ) -> go.Figure:
-    """
-    Plots duplicates using Plotly.
+    """Plots duplicates using Plotly.
 
     Args:
         experiments: The dataframe containing the experiments data.
@@ -19,8 +21,8 @@ def plot_duplicates_plotly(
 
     Returns:
         fig: The Plotly figure object representing the plot.
-    """
 
+    """
     fig = go.Figure()
 
     # plot everything
@@ -39,7 +41,7 @@ def plot_duplicates_plotly(
             y=experiments[key],
             mode="markers",
             name="total",
-        )
+        ),
     )
 
     # loop over the duplicates
@@ -60,11 +62,13 @@ def plot_duplicates_plotly(
                 mode="markers",
                 name="-".join(d),
                 hovertext=d,
-            )
+            ),
         )
 
     fig.update_layout(
-        title=f"Duplicates {key}", yaxis_title=key, xaxis_showticklabels=False
+        title=f"Duplicates {key}",
+        yaxis_title=key,
+        xaxis_showticklabels=False,
     )
 
     return fig

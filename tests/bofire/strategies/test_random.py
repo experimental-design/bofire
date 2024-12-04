@@ -34,7 +34,9 @@ if1 = ContinuousInput(key="if1", bounds=(0, 2))
 if2 = ContinuousInput(key="if2", bounds=(0, 3))
 if3 = CategoricalInput(key="if3", categories=["c1", "c2", "c3"])
 if4 = CategoricalInput(
-    key="if4", categories=["A", "B", "C"], allowed=[True, True, False]
+    key="if4",
+    categories=["A", "B", "C"],
+    allowed=[True, True, False],
 )
 if5 = CategoricalInput(key="if5", categories=["A", "B"], allowed=[True, False])
 if6 = CategoricalDescriptorInput(
@@ -52,7 +54,10 @@ c2 = LinearInequalityConstraint(features=["if0", "if1"], coefficients=[1, 1], rh
 c3 = NonlinearEqualityConstraint(expression="if0**2 + if1**2 - 1")
 c4 = NonlinearInequalityConstraint(expression="if0**2 + if1**2 - 1")
 c5 = NChooseKConstraint(
-    features=["if0", "if1", "if2"], min_count=0, max_count=2, none_also_valid=False
+    features=["if0", "if1", "if2"],
+    min_count=0,
+    max_count=2,
+    none_also_valid=False,
 )
 
 supported_domains = [
@@ -118,11 +123,14 @@ def test_ask(domain):
 
 def test_rejection_sampler_not_converged():
     data_model = data_models.RandomStrategy(
-        domain=supported_domains[-2], num_base_samples=4, max_iters=2
+        domain=supported_domains[-2],
+        num_base_samples=4,
+        max_iters=2,
     )
     sampler = strategies.RandomStrategy(data_model=data_model)
     with pytest.raises(
-        ValueError, match="Maximum iterations exceeded in rejection sampling."
+        ValueError,
+        match="Maximum iterations exceeded in rejection sampling.",
     ):
         sampler.ask(128)
 
@@ -150,8 +158,10 @@ def test_all_fixed():
         inputs=[if1, if4],
         constraints=[
             LinearEqualityConstraint(
-                features=["if1", "if4"], coefficients=[1.0, 1.0], rhs=1.0
-            )
+                features=["if1", "if4"],
+                coefficients=[1.0, 1.0],
+                rhs=1.0,
+            ),
         ],
     )
     data_model = data_models.RandomStrategy(domain=domain)
@@ -186,7 +196,9 @@ def test_nchoosek():
     If7 = ContinuousInput(bounds=(1, 1), key="If7")
 
     c2 = LinearInequalityConstraint.from_greater_equal(
-        features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.2
+        features=["if1", "if2"],
+        coefficients=[1.0, 1.0],
+        rhs=0.2,
     )
 
     c6 = NChooseKConstraint(
@@ -196,7 +208,9 @@ def test_nchoosek():
         none_also_valid=False,
     )
     c7 = LinearEqualityConstraint(
-        features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=1.0
+        features=["if1", "if2"],
+        coefficients=[1.0, 1.0],
+        rhs=1.0,
     )
     domain = Domain.from_lists(
         inputs=[if1, if2, if3, if4, if6, If7],
@@ -218,7 +232,9 @@ def test_sample_from_polytope():
         key="if2",
     )
     c2 = LinearInequalityConstraint.from_greater_equal(
-        features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.8
+        features=["if1", "if2"],
+        coefficients=[1.0, 1.0],
+        rhs=0.8,
     )
     domain = Domain.from_lists(
         inputs=[if1, if2],

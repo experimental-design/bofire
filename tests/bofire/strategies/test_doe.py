@@ -47,11 +47,15 @@ domain = Domain.from_lists(
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(
-            features=[f"x{i + 1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+            features=[f"x{i + 1}" for i in range(3)],
+            coefficients=[1, 1, 1],
+            rhs=1,
         ),
         LinearInequalityConstraint(features=["x1", "x2"], coefficients=[5, 4], rhs=3.9),
         LinearInequalityConstraint(
-            features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+            features=["x1", "x2"],
+            coefficients=[-20, 5],
+            rhs=-3,
         ),
     ],
 )
@@ -141,7 +145,7 @@ def test_doe_strategy_correctness():
 
     np.random.seed(1)
     candidates_expected = np.array(
-        [[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]
+        [[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]],
     )
     for row in candidates.to_numpy():
         assert any(np.allclose(row, o, atol=1e-2) for o in candidates_expected)
@@ -271,7 +275,7 @@ def test_partially_fixed_experiments():
                 "animal",
                 "plant",
             ],
-        )
+        ),
     )
 
     only_partially_fixed = pd.DataFrame(
@@ -293,7 +297,8 @@ def test_partially_fixed_experiments():
 
     candidates = strategy.ask(candidate_count=n_experiments)
     only_partially_fixed = only_partially_fixed.mask(
-        only_partially_fixed.isnull(), candidates[:4]
+        only_partially_fixed.isnull(),
+        candidates[:4],
     )
     test_df = pd.DataFrame(np.ones((4, 6)))
     test_df = test_df.where(candidates[:4] == only_partially_fixed, 0)
@@ -320,7 +325,7 @@ def test_scaled_doe():
         criterion=DOptimalityCriterion(formula="linear", transform_range=(-1, 1)),
     )
     strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=4).to_numpy()
+    candidates = strategy.ask(candidate_count=6).to_numpy()
     expected_candidates = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])
     for c in candidates:
         assert np.any([np.allclose(c, e) for e in expected_candidates])
@@ -358,7 +363,8 @@ def test_categorical_doe_iterative():
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(
-        candidate_count=n_experiments, raise_validation_error=False
+        candidate_count=n_experiments,
+        raise_validation_error=False,
     )
 
     assert candidates.shape == (5, 3)

@@ -61,15 +61,15 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             train_X=tX,
             train_Y=tY,
             task_feature=transformed_X.columns.get_loc(  # type: ignore
-                self.task_feature_key
+                self.task_feature_key,
             ),  # obtain the fidelity index
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(
-                    range(tX.shape[1] - 1)
+                    range(tX.shape[1] - 1),
                 ),  # kernel is for input space so we subtract one for the fidelity index
-                ard_num_dims=1,  # this keyword is ingored
+                ard_num_dims=1,  # this keyword is ignored
             ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])

@@ -22,7 +22,9 @@ if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
 if3 = specs.features.valid(ContinuousInput).obj(key="if3", bounds=(3, 3))
 if4 = specs.features.valid(CategoricalInput).obj(
-    key="if4", categories=["a", "b"], allowed=[True, False]
+    key="if4",
+    categories=["a", "b"],
+    allowed=[True, False],
 )
 if5 = specs.features.valid(DiscreteInput).obj(key="if5")
 if7 = specs.features.valid(CategoricalInput).obj(
@@ -142,11 +144,18 @@ def test_features_get_by_key(features, key, expected):
     assert id(returned) == id(expected)
 
 
-def test_features_get_by_keys():
+def test_features_get_by_keys_include():
     keys = ["of2", "if1"]
     feats = features.get_by_keys(keys)
     assert feats[0].key == "if1"
     assert feats[1].key == "of2"
+
+
+def test_features_get_by_keys_exclude():
+    keys = ["of2", "if1"]
+    feats = features.get_by_keys(keys, include=False)
+    assert feats[0].key == "if2"
+    assert feats[1].key == "of1"
 
 
 @pytest.mark.parametrize(
@@ -178,10 +187,14 @@ def test_exclude_include():
     test(includes=[ContinuousInput], excludes=None, expected=[if1, if2, if3])
     test(includes=None, excludes=[CategoricalInput], expected=[if1, if2, if3, if5])
     test(
-        includes=AnyFeature, excludes=None, expected=[if1, if2, if3, if4, if5, if7, if8]
+        includes=AnyFeature,
+        excludes=None,
+        expected=[if1, if2, if3, if4, if5, if7, if8],
     )
     test(
-        includes=AnyFeature, excludes=[CategoricalInput], expected=[if1, if2, if3, if5]
+        includes=AnyFeature,
+        excludes=[CategoricalInput],
+        expected=[if1, if2, if3, if5],
     )
 
     with pytest.raises(ValueError, match="no filter provided"):

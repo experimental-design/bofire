@@ -79,7 +79,7 @@ class IterativeTrimming(OutlierDetection):
             ix_old = ix_sub
 
             self.surrogate.fit(  # type: ignore
-                experiments[experiments.index.isin(indices[ix_sub])].copy()
+                experiments[experiments.index.isin(indices[ix_sub])].copy(),
             )
             # make prediction
             pred = self.surrogate.predict(experiments)
@@ -111,8 +111,12 @@ class IterativeTrimming(OutlierDetection):
             ix_old = ix_sub
 
         filtered_experiments = experiments.copy()
+        output_name = self.base_gp.outputs.get_keys()[0]
+        filtered_experiments[f"valid_{output_name}"] = filtered_experiments[
+            f"valid_{output_name}"
+        ].astype(int)
         filtered_experiments.loc[
             ~ix_sub,  # type: ignore
-            f"valid_{self.base_gp.outputs.get_keys()[0]}",
+            f"valid_{output_name}",
         ] = 0
         return filtered_experiments

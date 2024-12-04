@@ -16,6 +16,7 @@ class EmpiricalSurrogate(BotorchSurrogate):
 
     Attributes:
         model (DeterministicModel): Botorch model instance.
+
     """
 
     def __init__(
@@ -31,7 +32,7 @@ class EmpiricalSurrogate(BotorchSurrogate):
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            import bofire.surrogates.cloudpickle_module as cloudpickle_module
+            from bofire.surrogates import cloudpickle_module
 
             if len(w) == 1:
                 raise ModuleNotFoundError("Cloudpickle is not available.")
@@ -45,7 +46,7 @@ class EmpiricalSurrogate(BotorchSurrogate):
         """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            import bofire.surrogates.cloudpickle_module as cloudpickle_module
+            from bofire.surrogates import cloudpickle_module
 
             if len(w) == 1:
                 raise ModuleNotFoundError("Cloudpickle is not available.")

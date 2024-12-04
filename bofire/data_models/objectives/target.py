@@ -20,6 +20,7 @@ class CloseToTargetObjective(Objective):
         w (float): float between zero and one for weighting the objective.
         target_value (float): target value that should be reached.
         exponent (float): the exponent of the expression.
+
     """
 
     type: Literal["CloseToTargetObjective"] = "CloseToTargetObjective"
@@ -66,13 +67,14 @@ class TargetObjective(Objective, ConstrainedObjective):
 
         Returns:
             np.array: An array of reward values calculated by the product of two sigmoidal shaped functions resulting in a maximum at the target value.
+
         """
         return (
             1
             / (
                 1
                 + np.exp(
-                    -1 * self.steepness * (x - (self.target_value - self.tolerance))
+                    -1 * self.steepness * (x - (self.target_value - self.tolerance)),
                 )
             )
             * (
@@ -81,7 +83,9 @@ class TargetObjective(Objective, ConstrainedObjective):
                 / (
                     1.0
                     + np.exp(
-                        -1 * self.steepness * (x - (self.target_value + self.tolerance))
+                        -1
+                        * self.steepness
+                        * (x - (self.target_value + self.tolerance)),
                     )
                 )
             )

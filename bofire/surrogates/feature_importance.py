@@ -1,4 +1,5 @@
-from typing import Dict, Optional, Sequence
+from collections.abc import Sequence
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -16,19 +17,29 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
         surrogate (SingleTaskGPSurrogate): Surrogate to extract the importances.
 
     Returns:
-        pd.Series: The importance values (inverse of the individual lenght scales).
+        pd.Series: The importance values (inverse of the individual length scales).
+
     """
+    # If we are using a base kernel wrapped in a scale kernel, get the lengthscales
+    # from the base kernel. Otherwise, get the lengthscales from the top-level kernel.
     try:
         scales = surrogate.model.covar_module.base_kernel.lengthscale  # type: ignore
     except AttributeError:
-        raise ValueError("No lenghtscale based kernel found.")
+        try:
+            scales = surrogate.model.covar_module.lengthscale  # type: ignore
+        except AttributeError:
+            raise ValueError("No lenghtscale based kernel found.")
+
     scales = 1.0 / scales.squeeze().detach().numpy()
+
     if isinstance(scales, float):
         raise ValueError("Only one lengthscale found, use `ard=True`.")
+
     if len(scales) != len(surrogate.inputs):
         raise ValueError(
-            "Number of lengthscale parameters to not matches the number of inputs."
+            "Number of lengthscale parameters to not matches the number of inputs.",
         )
+
     return pd.Series(data=scales, index=surrogate.inputs.get_keys())
 
 
@@ -39,7 +50,9 @@ def lengthscale_importance_hook(
     X_test: Optional[pd.DataFrame] = None,
     y_test: Optional[pd.DataFrame] = None,
 ):
-    """Hook that can be used within `model.cross_validate` to compute a cross validated permutation feature importance."""
+    """Hook that can be used within `model.cross_validate` to compute a cross
+    validated permutation feature importance.
+    """
     return lengthscale_importance(surrogate=surrogate)
 
 
@@ -51,6 +64,7 @@ def combine_lengthscale_importances(importances: Sequence[pd.Series]) -> pd.Data
 
     Returns:
         pd.DataFrame: Dataframe with feature keys as columns, and one row per fold.
+
     """
     return pd.concat(importances, axis=1).T
 
@@ -72,8 +86,10 @@ def permutation_importance(
         seed (int, optional): Seed for the random sampler. Defaults to 42.
 
     Returns:
-        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
-            with the feature keys as columns and the mean and std of the respective permutation importances as rows.
+        Dict[str, pd.DataFrame]: keys are the metrices for which the model is
+            evaluated and value is a dataframe with the feature keys as columns
+            and the mean and std of the respective permutation importances as rows.
+
     """
     assert len(surrogate.outputs) == 1, "Only single output model supported so far."
     assert n_repeats > 1, "Number of repeats has to be larger than 1."
@@ -115,7 +131,7 @@ def permutation_importance(
             for metricenum, metric in metrics.items():
                 if len(pred) >= 2:
                     prelim_results[metricenum.name][feature.key].append(
-                        metric(y[output_key].values, pred[output_key + "_pred"].values)
+                        metric(y[output_key].values, pred[output_key + "_pred"].values),
                     )
                 else:
                     prelim_results[metricenum.name][feature.key].append(np.nan)
@@ -150,7 +166,8 @@ def permutation_importance_hook(
     n_repeats: int = 5,
     seed: int = 42,
 ) -> Dict[str, pd.DataFrame]:
-    """Hook that can be used within `model.cross_validate` to compute a cross validated permutation feature importance.
+    """Hook that can be used within `model.cross_validate` to compute a cross
+    validated permutation feature importance.
 
     Args:
         model (Model): Predictive BoFire model.
@@ -158,14 +175,16 @@ def permutation_importance_hook(
         y_train (pd.DataFrame): Current train fold. y values.
         X_test (pd.DataFrame): Current test fold. X values.
         y_test (pd.DataFrame): Current test fold. y values.
-        use_test (bool, optional): If True test fold is used to calculate feature importance else train fold is used.
-            Defaults to True.
+        use_test (bool, optional): If True test fold is used to calculate feature
+            importance else train fold is used. Defaults to True.
         n_repeats (int, optional): Number of repeats per feature. Defaults to 5.
         seed (int, optional): Seed for the random number generator. Defaults to 42.
 
     Returns:
-        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
-            with the feature keys as columns and the mean and std of the respective permutation importances as rows.
+        Dict[str, pd.DataFrame]: keys are the metrices for which the model is
+            evaluated and value is a dataframe with the feature keys as columns
+            and the mean and std of the respective permutation importances as rows.
+
     """
     if use_test:
         X = X_test
@@ -174,7 +193,11 @@ def permutation_importance_hook(
         X = X_train
         y = y_train
     return permutation_importance(
-        surrogate=surrogate, X=X, y=y, n_repeats=n_repeats, seed=seed
+        surrogate=surrogate,
+        X=X,
+        y=y,
+        n_repeats=n_repeats,
+        seed=seed,
     )
 
 
@@ -182,21 +205,23 @@ def combine_permutation_importances(
     importances: Sequence[Dict[str, pd.DataFrame]],
     metric: RegressionMetricsEnum = RegressionMetricsEnum.R2,
 ) -> pd.DataFrame:
-    """Combines feature importances of a set of folds into one data frame for a requested metric.
+    """Combines feature importances of a set of folds into one data frame for
+    a requested metric.
 
     Args:
-        importances (List[Dict[str, pd.DataFrame]]): List of permutation importance dictionaries, one per fold.
-        metric (RegressionMetricsEnum, optional): Metric for which the data should be combined.
-            Defaults to RegressionMetricsEnum.R2
+        importances (List[Dict[str, pd.DataFrame]]): List of permutation
+            importance dictionaries, one per fold.
+        metric (RegressionMetricsEnum, optional): Metric for which the data
+            should be combined. Defaults to RegressionMetricsEnum.R2
 
     Returns:
-        pd.DataFrame: Dataframe holding the mean permutation importance per fold and feature. Can be further processed by
-            `describe`.
+        pd.DataFrame: Dataframe holding the mean permutation importance per fold
+            and feature. Can be further processed by `describe`.
     """
     feature_keys = importances[0]["MAE"].columns
     return pd.DataFrame(
         data={
             key: [fold[metric.name].loc["mean", key] for fold in importances]
             for key in feature_keys
-        }
+        },
     )

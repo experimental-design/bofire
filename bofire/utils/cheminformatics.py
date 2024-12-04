@@ -15,14 +15,16 @@ try:
     # from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
     warnings.warn(
-        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
+        "rdkit not installed, BoFire's cheminformatics utilities cannot be used.",
+        ImportWarning,
     )
 
 try:
     from mordred import Calculator, descriptors
 except ImportError:
     warnings.warn(
-        "mordred not installed. Mordred molecular descriptors cannot be used."
+        "mordred not installed. Mordred molecular descriptors cannot be used.",
+        ImportWarning,
     )
 
 # This code is based on GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/data_featuriser/featurisation.py
@@ -39,6 +41,7 @@ def smiles2mol(smiles: str):
 
     Returns:
         rdkit.Mol: rdkit.mol object
+
     """
     mol = MolFromSmiles(smiles)  # type: ignore
     if mol is None:
@@ -47,7 +50,9 @@ def smiles2mol(smiles: str):
 
 
 def smiles2fingerprints(
-    smiles: List[str], bond_radius: int = 5, n_bits: int = 2048
+    smiles: List[str],
+    bond_radius: int = 5,
+    n_bits: int = 2048,
 ) -> np.ndarray:
     """Transforms a list of smiles to an array of morgan fingerprints.
 
@@ -58,6 +63,7 @@ def smiles2fingerprints(
 
     Returns:
         np.ndarray: Numpy array holding the fingerprints
+
     """
     rdkit_mols = [smiles2mol(m) for m in smiles]
     fps = [
@@ -69,15 +75,18 @@ def smiles2fingerprints(
 
 
 def smiles2fragments(
-    smiles: List[str], fragments_list: Optional[List[str]] = None
+    smiles: List[str],
+    fragments_list: Optional[List[str]] = None,
 ) -> np.ndarray:
     """Transforms smiles to an array of fragments.
 
     Args:
-        smiles (List[str]): List of smiles
+        smiles (list[str]): List of smiles
+        fragments_list (list[str], optional): List of desired fragments. Defaults to None.
 
     Returns:
         np.ndarray: Array holding the fragment information.
+
     """
     rdkit_fragment_list = [
         item
@@ -123,6 +132,7 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
 
     Returns:
         np.ndarray: Array holding the mordred moelcular descriptors.
+
     """
     mols = [smiles2mol(smi) for smi in smiles]
 
@@ -136,7 +146,7 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     ]
     if any(nan_list):
         raise ValueError(
-            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"  # type: ignore
+            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}",  # type: ignore
         )
 
     return descriptors_df.astype(float).values

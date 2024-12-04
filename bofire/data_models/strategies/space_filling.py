@@ -28,6 +28,7 @@ class SpaceFillingStrategy(Strategy):
         sampling_fraction (float, optional): Fraction of sampled points to total points generated in
             the sampling process. Defaults to 0.3.
         ipopt_options (dict, optional): Dictionary containing options for the IPOPT solver. Defaults to {"maxiter":200, "disp"=0}.
+
     """
 
     type: Literal["SpaceFillingStrategy"] = "SpaceFillingStrategy"  # type: ignore

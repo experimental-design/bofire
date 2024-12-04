@@ -38,7 +38,9 @@ class Hyperopt(Benchmark):
             self.surrogate_data.update_hyperparameters(candidate)
             surrogate = surrogates.map(self.surrogate_data)
             _, cv_test, _ = surrogate.cross_validate(  # type: ignore
-                self.training_data, folds=self.folds, random_state=self.random_state
+                self.training_data,
+                folds=self.folds,
+                random_state=self.random_state,
             )
             if i == 0:
                 results = cv_test.get_metrics(combine_folds=True)

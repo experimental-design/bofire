@@ -39,6 +39,7 @@ def find_local_max_ipopt(
     transform_range: Optional[Bounds] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
+
     Args:
         domain (Domain): domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
@@ -56,11 +57,12 @@ def find_local_max_ipopt(
             Non-fixed variables have to be set to None or nan.
         objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
         transform_range (Optional[Bounds]): range to which the input variables are transformed.
+
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.
-    """
 
+    """
     #
     # Checks and preparation steps
     #
@@ -71,12 +73,14 @@ def find_local_max_ipopt(
     except ImportError as e:
         warnings.warn(e.msg)
         warnings.warn(
-            "please run `conda install -c conda-forge cyipopt` for this functionality."
+            "please run `conda install -c conda-forge cyipopt` for this functionality.",
         )
         raise e
 
     model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
+        model_type=model_type,
+        rhs_only=True,
+        domain=domain,
     )
 
     # determine number of experiments (only relevant if n_experiments is not provided by the user)
@@ -85,7 +89,9 @@ def find_local_max_ipopt(
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
-            domain, n_experiments, partially_fixed_experiments
+            domain,
+            n_experiments,
+            partially_fixed_experiments,
         )
         # no columns from partially fixed experiments which are not in the domain
         partially_fixed_experiments = partially_fixed_experiments[
@@ -101,7 +107,10 @@ def find_local_max_ipopt(
     if (partially_fixed_experiments is not None) and (fixed_experiments is not None):
         # check if partially fixed experiments and fixed experiments are valid
         check_partially_and_fully_fixed_experiments(
-            domain, n_experiments, fixed_experiments, partially_fixed_experiments
+            domain,
+            n_experiments,
+            fixed_experiments,
+            partially_fixed_experiments,
         )
 
     # warn user about usage of nonlinear constraints
@@ -121,27 +130,26 @@ def find_local_max_ipopt(
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     #
-    # Sampling initital values
+    # Sampling initial values
     #
 
     if sampling is not None:
         sampling.sort_index(axis=1, inplace=True)
         x0 = sampling.values.flatten()
+    elif len(domain.constraints.get(NonlinearConstraint)) == 0:
+        sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
+        x0 = sampler.ask(n_experiments).to_numpy().flatten()
     else:
-        if len(domain.constraints.get(NonlinearConstraint)) == 0:
-            sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
-            x0 = sampler.ask(n_experiments).to_numpy().flatten()
-        else:
-            warnings.warn(
-                "Sampling failed. Falling back to uniform sampling on input domain.\
-                          Providing a custom sampling strategy compatible with the problem can \
-                          possibly improve performance."
-            )
-            x0 = (
-                domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
-                .to_numpy()
-                .flatten()
-            )
+        warnings.warn(
+            "Sampling failed. Falling back to uniform sampling on input domain.\
+                      Providing a custom sampling strategy compatible with the problem can \
+                      possibly improve performance.",
+        )
+        x0 = (
+            domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+            .to_numpy()
+            .flatten()
+        )
 
     # get objective function and its jacobian
     objective_class = get_objective_class(objective)
@@ -155,7 +163,9 @@ def find_local_max_ipopt(
 
     # write constraints as scipy constraints
     constraints = constraints_as_scipy_constraints(
-        domain, n_experiments, ignore_nchoosek=True
+        domain,
+        n_experiments,
+        ignore_nchoosek=True,
     )
 
     # find bounds imposing NChooseK constraints
@@ -171,7 +181,11 @@ def find_local_max_ipopt(
 
     # partially fix experiments if any are given
     bounds, x0 = partially_fix_experiment(
-        bounds, fixed_experiments, n_experiments, partially_fixed_experiments, x0
+        bounds,
+        fixed_experiments,
+        n_experiments,
+        partially_fixed_experiments,
+        x0,
     )
 
     # set ipopt options
@@ -234,8 +248,7 @@ def partially_fix_experiment(
     partially_fixed_experiments: Union[pd.DataFrame, None],
     x0: np.ndarray,
 ) -> Tuple[List, np.ndarray]:
-    """
-    fixes some variables for experiments. Within one experiment not all variables need to be fixed.
+    """Fixes some variables for experiments. Within one experiment not all variables need to be fixed.
     Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
     Non-fixed variables have to be set to None or nan. Will also fix the experiments provided in fixed_experiments
 
@@ -250,7 +263,6 @@ def partially_fix_experiment(
         which comply with the bounds
 
     """
-
     shift = 0
     if partially_fixed_experiments is not None:
         partially_fixed_experiments.sort_index(axis=1, inplace=True)
@@ -261,7 +273,7 @@ def partially_fix_experiment(
             ):
                 raise AttributeError(
                     "Number of fixed experiments and partially fixed experiments exceeds the number of total "
-                    "experiments"
+                    "experiments",
                 )
             shift = len(fixed_experiments)
 
@@ -278,7 +290,9 @@ def partially_fix_experiment(
 
 
 def check_fixed_experiments(
-    domain: Domain, n_experiments: int, fixed_experiments: pd.DataFrame
+    domain: Domain,
+    n_experiments: int,
+    fixed_experiments: pd.DataFrame,
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
@@ -286,12 +300,11 @@ def check_fixed_experiments(
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
         fixed_experiments (pd.DataFrame): fixed experiment proposals to be checked.
     """
-
     n_fixed_experiments = len(fixed_experiments.index)
 
     if n_fixed_experiments >= n_experiments:
         raise ValueError(
-            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments.",
         )
 
     domain.validate_candidates(
@@ -312,15 +325,15 @@ def check_partially_fixed_experiments(
         key in partially_fixed_experiments.columns for key in domain.inputs.get_keys()
     ):
         raise ValueError(
-            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column.",
         )
 
     if n_partially_fixed_experiments > n_experiments:
         warnings.warn(
             UserWarning(
                 "The number of partially fixed experiments exceeds the amount "
-                "of the overall count of experiments. Partially fixed experiments may be cut off"
-            )
+                "of the overall count of experiments. Partially fixed experiments may be cut off",
+            ),
         )
 
 
@@ -337,10 +350,11 @@ def check_partially_and_fully_fixed_experiments(
         fixed_experiments (pd.DataFrame): fixed experiment proposals to be checked.
         partially_fixed_experiments (pd.DataFrame): partially fixed experiment proposals to be checked.
     """
-
     check_fixed_experiments(domain, n_experiments, fixed_experiments)
     check_partially_fixed_experiments(
-        domain, n_experiments, partially_fixed_experiments
+        domain,
+        n_experiments,
+        partially_fixed_experiments,
     )
     n_fixed_experiments = len(fixed_experiments.index)
 
@@ -350,8 +364,8 @@ def check_partially_and_fully_fixed_experiments(
         warnings.warn(
             UserWarning(
                 "The number of fixed experiments and partially fixed experiments exceeds the amount "
-                "of the overall count of experiments. Partially fixed experiments may be cut off"
-            )
+                "of the overall count of experiments. Partially fixed experiments may be cut off",
+            ),
         )
 
 
@@ -374,7 +388,7 @@ def get_n_experiments(model_type: Formula, n_experiments: Optional[int] = None):
         n_experiments = n_experiments_min
     elif n_experiments < n_experiments_min:
         warnings.warn(
-            f"The minimum number of experiments is {n_experiments_min}, but the current setting is n_experiments={n_experiments}."
+            f"The minimum number of experiments is {n_experiments_min}, but the current setting is n_experiments={n_experiments}.",
         )
 
     return n_experiments

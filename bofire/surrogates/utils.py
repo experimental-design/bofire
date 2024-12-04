@@ -30,6 +30,7 @@ def get_molecular_feature_keys(
 
     Returns:
         List[str]: The list of molecular feature keys.
+
     """
     molecular_feature_key_list = [
         key
@@ -56,6 +57,7 @@ def get_continuous_feature_keys(
 
     Returns:
         List[str]: The list of continuous feature keys.
+
     """
     non_continuous_feature_key_list = [
         key
@@ -84,6 +86,7 @@ def get_categorical_feature_keys(
 
     Returns:
         List[str]: The list of categorical feature keys.
+
     """
     categorical_feature_key_list = [
         key
@@ -116,6 +119,7 @@ def get_scaler(
 
     Returns:
         Union[InputStandardize, Normalize]: The instantiated scaler class
+
     """
     if scaler != ScalerEnum.IDENTITY:
         features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
@@ -125,11 +129,13 @@ def get_scaler(
             d += len(indices)
 
         continuous_feature_keys = get_continuous_feature_keys(
-            inputs=inputs, specs=input_preprocessing_specs
+            inputs=inputs,
+            specs=input_preprocessing_specs,
         )
 
         ord_dims = inputs.get_feature_indices(
-            specs=input_preprocessing_specs, feature_keys=continuous_feature_keys
+            specs=input_preprocessing_specs,
+            feature_keys=continuous_feature_keys,
         )
 
         if len(ord_dims) == 0:
@@ -137,7 +143,8 @@ def get_scaler(
 
         if scaler == ScalerEnum.NORMALIZE:
             lower, upper = inputs.get_bounds(
-                specs=input_preprocessing_specs, experiments=X
+                specs=input_preprocessing_specs,
+                experiments=X,
             )
             scaler_transform = Normalize(
                 d=d,
@@ -154,5 +161,4 @@ def get_scaler(
         else:
             raise ValueError("Scaler enum not known.")
         return scaler_transform
-    else:
-        return None
+    return None

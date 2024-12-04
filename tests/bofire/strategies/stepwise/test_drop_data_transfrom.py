@@ -31,11 +31,12 @@ def test_dropdata_transform():
                 ),
                 Step(
                     strategy_data=SoboStrategy(
-                        domain=benchmark.domain, acquisition_function=qNEI()
+                        domain=benchmark.domain,
+                        acquisition_function=qNEI(),
                     ),
                     condition=AlwaysTrueCondition(),
                     transform=DropDataTransform(
-                        to_be_removed_experiments=to_be_removed_rows
+                        to_be_removed_experiments=to_be_removed_rows,
                     ),
                 ),
             ],
@@ -54,13 +55,13 @@ def test_dropdata_transform():
 
         last_strategy, _ = strategy.get_step()
         assert last_strategy.experiments is not None and len(
-            last_strategy.experiments
+            last_strategy.experiments,
         ) == n_samples - len(to_be_removed_rows)
         kept_rows = [i for i in range(n_samples) if i not in to_be_removed_rows]
         for i, row in enumerate(kept_rows):
             assert np.all(
                 last_strategy.experiments[params].values[i]
-                == experiments[params].values[row]
+                == experiments[params].values[row],
             )
 
     test([0])

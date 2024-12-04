@@ -10,7 +10,11 @@ from bofire.utils.tmpfile import make_tmpfile
 try:
     from xgboost import XGBRegressor
 except ImportError:
-    warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
+    warnings.warn(
+        "xgboost not installed. Please install it to use "
+        "BoFire's `XGBoostSurrogate`.",
+        ImportWarning,
+    )
 
 import uuid
 
@@ -80,7 +84,7 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
     def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         preds = self.model.predict(transformed_X.values)
         return preds.reshape((transformed_X.shape[0], 1)), np.zeros(
-            (transformed_X.shape[0], 1)
+            (transformed_X.shape[0], 1),
         )
 
     def loads(self, data: str):
@@ -94,6 +98,6 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
     def _dumps(self) -> str:
         with make_tmpfile(name=self.tmpfile_name) as fname:
             self.model.save_model(fname=fname)
-            with open(fname, "r") as f:
+            with open(fname) as f:
                 dump = f.read()
             return dump

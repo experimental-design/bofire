@@ -101,7 +101,7 @@ dfs = [
                 1,
                 1,
             ],
-        }
+        },
     ),
     pd.DataFrame.from_dict(
         {
@@ -131,7 +131,7 @@ dfs = [
                 1,
                 1,
             ],
-        }
+        },
     ),
     pd.DataFrame.from_dict(
         {
@@ -173,7 +173,7 @@ dfs = [
                 1,
                 1,
             ],
-        }
+        },
     ),
 ]
 
@@ -258,7 +258,7 @@ def test_compute_hypervolume(domain, experiments, ref_point):
 def test_infer_ref_point(domain, experiments, return_masked, expected):
     ref_point = infer_ref_point(domain, experiments, return_masked)
     keys = domain.outputs.get_keys_by_objective(
-        includes=[MaximizeObjective, MinimizeObjective]
+        includes=[MaximizeObjective, MinimizeObjective],
     )
     assert np.allclose(
         np.array([ref_point[feat] for feat in keys]),

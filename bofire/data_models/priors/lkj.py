@@ -13,6 +13,7 @@ class LKJPrior(Prior):
         n(int): number of dimensions of the correlation matrix
         eta(PositiveFloat): shape parameter of the LKJ distribution
         sd_prior(Prior): prior over the standard deviations of the correlation matrix
+
     """
 
     type: Literal["LKJPrior"] = "LKJPrior"

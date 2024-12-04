@@ -19,7 +19,7 @@ def test_MinMaxTransform():
         features=[
             ContinuousInput(key="a", bounds=(0, 2)),
             ContinuousInput(key="b", bounds=(4, 8)),
-        ]
+        ],
     )
     t = MinMaxTransform(inputs=inputs, feature_range=(-1, 1))
     samples = pd.DataFrame.from_dict({"a": [1, 2], "b": [4, 6]})

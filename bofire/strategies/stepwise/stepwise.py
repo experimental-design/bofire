@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Tuple, TypeVar, Union
+from typing import List, Literal, Optional, Tuple, TypeVar
 
 import pandas as pd
 from pydantic import PositiveInt
@@ -17,7 +17,7 @@ from bofire.transforms.transform import Transform
 T = TypeVar("T", pd.DataFrame, Domain)
 
 
-TfData = Union[Literal["experiments"], Literal["candidates"], Literal["domain"]]
+TfData = Literal["experiments", "candidates", "domain"]
 
 
 def _apply_tf(
@@ -53,10 +53,9 @@ class StepwiseStrategy(Strategy):
 
         candidate_count = candidate_count or 1
 
-        # handle a possible transform
-        tf_domain = _apply_tf(self.domain, transform, "domain")
-        transformed_domain = tf_domain or self.domain
-        strategy.domain = transformed_domain
+        # handle a possible transform, no need to apply transforms to domains, as domains
+        # do not have to be exactly the same for each step, they only have to be compatible
+        # to the master domain of the stepwise strategy
         tf_exp = _apply_tf(self.experiments, transform, "experiments")
         transformed_experiments = self.experiments if tf_exp is None else tf_exp
         tf_cand = _apply_tf(self.candidates, transform, "candidates")
@@ -71,8 +70,7 @@ class StepwiseStrategy(Strategy):
         candidates = strategy.ask(candidate_count=candidate_count)
         if transform is not None:
             return transform.untransform_candidates(candidates)
-        else:
-            return candidates
+        return candidates
 
     def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
         strategy, _ = self.get_step()

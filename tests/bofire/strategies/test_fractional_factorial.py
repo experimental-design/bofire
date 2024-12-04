@@ -16,9 +16,9 @@ def test_FractionalFactorialStrategy_ask():
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     ContinuousInput(key="b", bounds=(-2, 8)),
-                ]
-            )
-        )
+                ],
+            ),
+        ),
     )
     strategy = strategies.map(strategy_data)
     candidates = strategy.ask(None).sort_values(by=["a", "b"]).reset_index(drop=True)
@@ -28,7 +28,7 @@ def test_FractionalFactorialStrategy_ask():
             {
                 "a": [0.0, 1.0, 0.0, 1.0, 0.5],
                 "b": [-2.0, -2.0, 8.0, 8.0, 3.0],
-            }
+            },
         )
         .sort_values(by=["a", "b"])
         .reset_index(drop=True),
@@ -41,8 +41,8 @@ def test_FractionalFactorialStrategy_ask():
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     ContinuousInput(key="b", bounds=(-2, 8)),
-                ]
-            )
+                ],
+            ),
         ),
         n_repetitions=2,
     )
@@ -56,8 +56,8 @@ def test_FractionalFactorialStrategy_ask():
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     ContinuousInput(key="b", bounds=(-2, 8)),
-                ]
-            )
+                ],
+            ),
         ),
         n_repetitions=2,
         n_center=2,
@@ -72,8 +72,8 @@ def test_FractionalFactorialStrategy_ask():
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     ContinuousInput(key="b", bounds=(-2, 8)),
-                ]
-            )
+                ],
+            ),
         ),
         n_repetitions=1,
         n_center=0,
@@ -90,8 +90,8 @@ def test_FractionalFactorialStrategy_ask():
                     ContinuousInput(key="b", bounds=(0, 1)),
                     ContinuousInput(key="c", bounds=(0, 1)),
                     ContinuousInput(key="d", bounds=(0, 1)),
-                ]
-            )
+                ],
+            ),
         ),
         n_repetitions=1,
         n_center=0,
@@ -109,8 +109,8 @@ def test_FractionalFactorialStrategy_ask():
                     ContinuousInput(key="b", bounds=(0, 1)),
                     ContinuousInput(key="c", bounds=(0, 1)),
                     ContinuousInput(key="d", bounds=(0, 1)),
-                ]
-            )
+                ],
+            ),
         ),
         n_repetitions=1,
         n_center=0,
@@ -130,9 +130,9 @@ def test_FractionalFactorialStrategy_ask_invalid():
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     ContinuousInput(key="b", bounds=(-2, 8)),
-                ]
-            )
-        )
+                ],
+            ),
+        ),
     )
     strategy = strategies.map(strategy_data)
     with pytest.raises(

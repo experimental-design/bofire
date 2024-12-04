@@ -6,6 +6,7 @@ from tests.bofire.data_models.specs.constraints import specs as constraints
 from tests.bofire.data_models.specs.constraints_container import (
     specs as constraints_container,
 )
+from tests.bofire.data_models.specs.dataframes import specs as dataframes
 from tests.bofire.data_models.specs.domain import specs as domain
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.inputs import specs as inputs

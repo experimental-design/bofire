@@ -21,6 +21,7 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
     Attributes:
         w (float): float between zero and one for weighting the objective.
         desirability (list): list of values of size c (c is number of categories) such that the i-th entry is in {True, False}
+
     """
 
     w: TWeight = 1.0
@@ -30,7 +31,7 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
 
     @model_validator(mode="after")
     def validate_desireability(self):
-        """validates that categories have unique names
+        """Validates that categories have unique names
 
         Args:
             categories (List[str]): List or tuple of category names
@@ -40,10 +41,11 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
 
         Returns:
             Tuple[str]: Tuple of the categories
+
         """
         if len(self.desirability) != len(self.categories):
             raise ValueError(
-                "number of categories differs from number of desirabilities"
+                "number of categories differs from number of desirabilities",
             )
         return self
 
@@ -52,7 +54,7 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
         return dict(zip(self.categories, self.desirability))
 
     def to_dict_label(self) -> Dict:
-        """Returns the catergories and label location of categories"""
+        """Returns the categories and label location of categories"""
         return {c: i for i, c in enumerate(self.categories)}
 
     def from_dict_label(self) -> Dict:
@@ -74,5 +76,6 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
 
         Returns:
             np.ndarray: A reward calculated as inner product of probabilities and feasible objectives.
+
         """
         return np.dot(x, np.array(self.desirability))

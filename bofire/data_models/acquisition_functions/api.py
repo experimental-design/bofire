@@ -41,7 +41,13 @@ AnyAcquisitionFunction = Union[
 ]
 
 AnySingleObjectiveAcquisitionFunction = Union[
-    qNEI, qEI, qSR, qUCB, qPI, qLogEI, qLogNEI
+    qNEI,
+    qEI,
+    qSR,
+    qUCB,
+    qPI,
+    qLogEI,
+    qLogNEI,
 ]
 
 AnyMultiObjectiveAcquisitionFunction = Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI]

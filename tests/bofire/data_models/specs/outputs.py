@@ -51,7 +51,8 @@ specs.add_invalid(
                 key="b",
                 categories=["a", "b"],
                 objective=ConstrainedCategoricalObjective(
-                    categories=["c", "d"], desirability=[True, True]
+                    categories=["c", "d"],
+                    desirability=[True, True],
                 ),
             ),
         ],

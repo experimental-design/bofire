@@ -13,9 +13,9 @@ def test_FactorialStrategy_ask():
                 features=[
                     CategoricalInput(key="alpha", categories=["a", "b", "c"]),
                     DiscreteInput(key="beta", values=[1.0, 2, 3.0, 4.0]),
-                ]
-            )
-        )
+                ],
+            ),
+        ),
     )
     strategy = strategies.map(strategy_data)
     candidates = strategy.ask(None)
@@ -29,9 +29,9 @@ def test_FactorialStrategy_ask_invalid():
                 features=[
                     CategoricalInput(key="alpha", categories=["a", "b", "c"]),
                     DiscreteInput(key="beta", values=[1.0, 2, 3.0, 4.0]),
-                ]
-            )
-        )
+                ],
+            ),
+        ),
     )
     strategy = strategies.map(strategy_data)
     with pytest.raises(

@@ -24,6 +24,7 @@ class DummyDataModel(SurrogateDataModel):
 
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
+
         """
         return True
 
@@ -38,10 +39,14 @@ class Dummy(Surrogate):
 
     def _predict(self, transformed_X: pd.DataFrame):
         preds = np.random.normal(
-            loc=5, scale=1, size=(len(transformed_X), len(self.outputs))
+            loc=5,
+            scale=1,
+            size=(len(transformed_X), len(self.outputs)),
         )
         stds = np.random.uniform(
-            low=0.0, high=1.0, size=(len(transformed_X), len(self.outputs))
+            low=0.0,
+            high=1.0,
+            size=(len(transformed_X), len(self.outputs)),
         )
         return preds, stds
 
@@ -68,7 +73,7 @@ def test_zero_outputs():
                 bounds=(-4, 4),
             )
             for i in range(5)
-        ]
+        ],
     )
     outputs = Outputs(features=[])
     with pytest.raises(ValueError):
@@ -94,10 +99,10 @@ def test_to_outputs(n_outputs):
                 bounds=(-4, 4),
             )
             for i in range(5)
-        ]
+        ],
     )
     outputs = Outputs(
-        features=[ContinuousOutput(key=f"y_{i+1}") for i in range(n_outputs)]
+        features=[ContinuousOutput(key=f"y_{i+1}") for i in range(n_outputs)],
     )
     data_model = DummyDataModel(inputs=inputs, outputs=outputs)
     model = Dummy(data_model=data_model)
@@ -119,7 +124,7 @@ def test_is_fitted():
                 bounds=(-4, 4),
             )
             for i in range(5)
-        ]
+        ],
     )
 
     outputs = Outputs(features=[ContinuousOutput(key="y")])

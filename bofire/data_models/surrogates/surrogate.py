@@ -14,7 +14,8 @@ class Surrogate(BaseModel):
     inputs: Inputs
     outputs: Outputs
     input_preprocessing_specs: InputTransformSpecs = Field(
-        default_factory=dict, validate_default=True
+        default_factory=dict,
+        validate_default=True,
     )
     dump: Optional[str] = None
 
@@ -47,4 +48,3 @@ class Surrogate(BaseModel):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        pass

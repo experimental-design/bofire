@@ -1,15 +1,6 @@
 import collections.abc as collections
-from typing import (
-    Any,
-    Callable,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    Union,
-    get_args,
-    get_origin,
-)
+from collections.abc import Sequence
+from typing import Any, Callable, List, Optional, Type, Union, get_args, get_origin
 
 
 def filter_by_attribute(
@@ -30,6 +21,7 @@ def filter_by_attribute(
 
     Returns:
         list of data point with attributes as filtered for
+
     """
     data_with_attr = []
     for d in data:
@@ -67,6 +59,7 @@ def filter_by_class(
 
     Returns:
         filtered list of data points
+
     """
     if includes is None:
         includes = []
@@ -105,10 +98,9 @@ def filter_by_class(
         return [
             d for d in data if type(key(d)) in includes and type(key(d)) not in excludes
         ]
-    else:
-        return [
-            d
-            for d in data
-            if isinstance(key(d), tuple(includes))  # type: ignore
-            and not isinstance(key(d), tuple(excludes))  # type: ignore
-        ]
+    return [
+        d
+        for d in data
+        if isinstance(key(d), tuple(includes))  # type: ignore
+        and not isinstance(key(d), tuple(excludes))  # type: ignore
+    ]

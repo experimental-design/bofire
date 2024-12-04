@@ -22,11 +22,7 @@ from bofire.data_models.objectives.api import MinimizeObjective
 
 
 def get_invalids(valid: dict) -> List[dict]:
-    return [
-        {k: v for k, v in valid.items() if k != k_}
-        for k_ in valid.keys()
-        if k_ != "type"
-    ]
+    return [{k: v for k, v in valid.items() if k != k_} for k_ in valid if k_ != "type"]
 
 
 INVALID_SPECS = [

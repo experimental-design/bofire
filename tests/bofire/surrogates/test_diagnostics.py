@@ -50,7 +50,8 @@ def generate_cvresult(
         labcodes = None
     if include_X:
         X = pd.DataFrame(
-            data=np.random.uniform(size=(n_samples, 2)), columns=["a", "b"]
+            data=np.random.uniform(size=(n_samples, 2)),
+            columns=["a", "b"],
         )
     else:
         X = None
@@ -117,7 +118,9 @@ def test_sklearn_metrics_f1(bofire, sklearn):
     predicted = np.random.choice([0, 1, 2, 3], size=(n_samples,))
     sd = None
     assert bofire(observed, predicted, sd) == sklearn(
-        observed, predicted, average="micro"
+        observed,
+        predicted,
+        average="micro",
     )
     assert bofire(observed, predicted) == sklearn(observed, predicted, average="micro")
 
@@ -163,7 +166,8 @@ def test_cvresult_not_numeric():
             predicted=feature2.sample(n_samples),
         )
     with pytest.raises(
-        ValueError, match="Not all values of standard_deviation are numerical"
+        ValueError,
+        match="Not all values of standard_deviation are numerical",
     ):
         CvResult(
             key=feature.key,
@@ -366,7 +370,7 @@ def test_cvresults_invalid():
     "cv_results",
     [
         CvResults(
-            results=[generate_cvresult(key="a", n_samples=10) for _ in range(10)]
+            results=[generate_cvresult(key="a", n_samples=10) for _ in range(10)],
         ),
         CvResults(results=[generate_cvresult(key="a", n_samples=10) for _ in range(5)]),
     ],
@@ -391,7 +395,7 @@ def test_cvresults_get_metrics(cv_results):
 
 def test_cvresults_get_metric_combine_folds():
     cv_results = CvResults(
-        results=[generate_cvresult(key="a", n_samples=10) for _ in range(10)]
+        results=[generate_cvresult(key="a", n_samples=10) for _ in range(10)],
     )
     assert np.allclose(
         cv_results.get_metric(RegressionMetricsEnum.MAE, combine_folds=True).values[0],
@@ -403,12 +407,18 @@ def test_cvresults_combine_folds():
     cv_results = CvResults(
         results=[
             generate_cvresult(
-                key="a", n_samples=5, include_labcodes=True, include_X=True
+                key="a",
+                n_samples=5,
+                include_labcodes=True,
+                include_X=True,
             ),
             generate_cvresult(
-                key="a", n_samples=6, include_labcodes=True, include_X=True
+                key="a",
+                n_samples=6,
+                include_labcodes=True,
+                include_X=True,
             ),
-        ]
+        ],
     )
     cv = cv_results._combine_folds()
     assert cv.observed.shape == (11,)
@@ -440,13 +450,13 @@ def test_cvresults_get_metrics_loo(cv_results):
     [
         (
             CvResults(
-                results=[generate_cvresult(key="a", n_samples=1) for _ in range(5)]
+                results=[generate_cvresult(key="a", n_samples=1) for _ in range(5)],
             ),
             True,
         ),
         (
             CvResults(
-                results=[generate_cvresult(key="a", n_samples=5) for _ in range(5)]
+                results=[generate_cvresult(key="a", n_samples=5) for _ in range(5)],
             ),
             False,
         ),
@@ -455,7 +465,7 @@ def test_cvresults_get_metrics_loo(cv_results):
                 results=[
                     generate_cvresult(key="a", n_samples=5),
                     generate_cvresult(key="a", n_samples=1),
-                ]
+                ],
             ),
             False,
         ),
@@ -473,7 +483,7 @@ def test_cvresults_is_loo(cv_results, expected):
             results=[
                 generate_cvresult(key="a", n_samples=6, include_standard_deviation=True)
                 for _ in range(4)
-            ]
+            ],
         ),
     ],
 )
@@ -485,10 +495,12 @@ def test_CvResults2CrossValidationValues(cv_results):
     assert len(transformed["a"]) == len(cv_results)
     for i in range(len(cv_results)):
         assert np.allclose(
-            cv_results.results[i].predicted.values, transformed["a"][i].predicted
+            cv_results.results[i].predicted.values,
+            transformed["a"][i].predicted,
         )
         assert np.allclose(
-            cv_results.results[i].observed.values, transformed["a"][i].observed
+            cv_results.results[i].observed.values,
+            transformed["a"][i].observed,
         )
         if cv_results.results[i].standard_deviation is not None:
             assert np.allclose(
@@ -504,7 +516,7 @@ def test_CvResults2CrossValidationValues(cv_results):
 def test_CvResults2CrossValidationValues_minimal():
     cv_results = CvResults(
         results=[generate_cvresult(key="a", n_samples=2) for _ in range(4)]
-        + [generate_cvresult(key="a", n_samples=1)]
+        + [generate_cvresult(key="a", n_samples=1)],
     )
     transformed = CvResults2CrossValidationValues(cv_results)
     for i in range(5):

@@ -43,8 +43,10 @@ def test_check_domain_for_reduction():
         outputs=[of1, of2],
         constraints=[
             LinearInequalityConstraint.from_greater_equal(
-                features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.9
-            )
+                features=["if1", "if2"],
+                coefficients=[1.0, 1.0],
+                rhs=0.9,
+            ),
         ],
     )
     assert not check_domain_for_reduction(domain)
@@ -59,8 +61,10 @@ def test_check_domain_for_reduction():
         outputs=[of1, of2],
         constraints=[
             LinearEqualityConstraint(
-                features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=1.0
-            )
+                features=["if1", "if2"],
+                coefficients=[1.0, 1.0],
+                rhs=1.0,
+            ),
         ],
     )
     assert check_domain_for_reduction(domain) is True
@@ -104,10 +108,14 @@ def test_reduce_1_independent_linear_equality_constraints():
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
             LinearEqualityConstraint(
-                features=["x1", "x2"], coefficients=[-0.5, -0.5], rhs=0
+                features=["x1", "x2"],
+                coefficients=[-0.5, -0.5],
+                rhs=0,
             ),
             LinearInequalityConstraint.from_greater_equal(
-                features=["x1", "x2"], coefficients=[-1.0, -1.0], rhs=0
+                features=["x1", "x2"],
+                coefficients=[-1.0, -1.0],
+                rhs=0,
             ),
         ],
     )
@@ -150,8 +158,10 @@ def test_reduce_1_independent_linear_equality_constraints():
         outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2"], coefficients=[1.0, 0.0], rhs=0
-            )
+                features=["x1", "x2"],
+                coefficients=[1.0, 0.0],
+                rhs=0,
+            ),
         ],
     )
     with pytest.raises(Exception):
@@ -178,13 +188,19 @@ def test_reduce_2_independent_linear_equality_constraints():
         outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
+                features=["x1", "x2", "x3"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1,
             ),
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1.0, 2.0, 1.0], rhs=2
+                features=["x1", "x2", "x3"],
+                coefficients=[1.0, 2.0, 1.0],
+                rhs=2,
             ),
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[-1.0, -1.0, -1.0], rhs=-1
+                features=["x1", "x2", "x3"],
+                coefficients=[-1.0, -1.0, -1.0],
+                rhs=-1,
             ),
         ],
     )
@@ -218,13 +234,19 @@ def test_reduce_3_independent_linear_equality_constraints():
         outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
+                features=["x1", "x2", "x3"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1,
             ),
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1.0, 2.0, 1.0], rhs=2
+                features=["x1", "x2", "x3"],
+                coefficients=[1.0, 2.0, 1.0],
+                rhs=2,
             ),
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[0.0, 0.0, 1.0], rhs=3
+                features=["x1", "x2", "x3"],
+                coefficients=[0.0, 0.0, 1.0],
+                rhs=3,
             ),
         ],
     )
@@ -254,8 +276,10 @@ def test_doc_simple():
         outputs=outputs,
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
-            )
+                features=["x1", "x2", "x3"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1,
+            ),
         ],
     )
 
@@ -330,10 +354,14 @@ def test_doc_complex():
             rhs=1.0,
         ),
         LinearEqualityConstraint(
-            features=["B1", "B2", "B3"], coefficients=[1.0, 1.0, 1], rhs=1.0
+            features=["B1", "B2", "B3"],
+            coefficients=[1.0, 1.0, 1],
+            rhs=1.0,
         ),
         LinearInequalityConstraint.from_greater_equal(
-            features=["A1", "A2"], coefficients=[-1.0, -2.0], rhs=-0.8
+            features=["A1", "A2"],
+            coefficients=[-1.0, -2.0],
+            rhs=-0.8,
         ),
     ]
     domain = Domain(inputs=inputs, constraints=constraints)
@@ -378,19 +406,19 @@ def test_doc_complex():
         [0.1, 1.0],
     )
     assert all(
-        np.array(_domain.constraints[0].features) == np.array(["A2", "A3", "A4"])
+        np.array(_domain.constraints[0].features) == np.array(["A2", "A3", "A4"]),
     )
     assert np.allclose(_domain.constraints[0].coefficients, [1.0, -1.0, -1.0])
     assert np.allclose(_domain.constraints[0].rhs, -0.2)
 
     assert all(
-        np.array(_domain.constraints[1].features) == np.array(["A2", "A3", "A4"])
+        np.array(_domain.constraints[1].features) == np.array(["A2", "A3", "A4"]),
     )
     assert np.allclose(_domain.constraints[1].coefficients, [-1.0, -1.0, -1.0])
     assert np.allclose(_domain.constraints[1].rhs, -0.1)
 
     assert all(
-        np.array(_domain.constraints[2].features) == np.array(["A2", "A3", "A4"])
+        np.array(_domain.constraints[2].features) == np.array(["A2", "A3", "A4"]),
     )
     assert np.allclose(_domain.constraints[2].coefficients, [1.0, 1.0, 1.0])
     assert np.allclose(_domain.constraints[2].rhs, 1.0)
@@ -439,10 +467,14 @@ def test_reduce_large_problem():
         outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x4"], coefficients=[1.0, -1.0, 1.0], rhs=-1.0
+                features=["x1", "x2", "x4"],
+                coefficients=[1.0, -1.0, 1.0],
+                rhs=-1.0,
             ),
             LinearEqualityConstraint(
-                features=["x2", "x3"], coefficients=[2, 1], rhs=2.0
+                features=["x2", "x3"],
+                coefficients=[2, 1],
+                rhs=2.0,
             ),
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3", "x4"],
@@ -450,10 +482,14 @@ def test_reduce_large_problem():
                 rhs=1.0,
             ),
             LinearInequalityConstraint.from_greater_equal(
-                features=["x1", "x2"], coefficients=[-1.0, -1.0], rhs=-1.0
+                features=["x1", "x2"],
+                coefficients=[-1.0, -1.0],
+                rhs=-1.0,
             ),
             LinearInequalityConstraint.from_greater_equal(
-                features=["x1", "x2", "x4"], coefficients=[-1.0, 1.0, -1.0], rhs=0.0
+                features=["x1", "x2", "x4"],
+                coefficients=[-1.0, 1.0, -1.0],
+                rhs=0.0,
             ),
         ],
     )
@@ -499,7 +535,7 @@ def test_rref():
         [
             [1.0, 3183098861.837907, 0.7329355988794278, 2.228169203286535],
             [0.0, 0.0, 0.0, 0.0],
-        ]
+        ],
     )
     assert np.all(np.round(A_rref, 8) == np.round(B_rref, 8))
     assert all(np.array(pivots) == np.array([0]))
@@ -510,7 +546,7 @@ def test_rref():
             [1e10, np.exp(0), 2, 2, 2],
             [np.log(10), -5.2, 3, 3, 3],
             [7, -3.5 * 1e-4, 4, 4, 4],
-        ]
+        ],
     )
     A_rref, pivots = rref(A)
     B_rref = np.array(
@@ -519,7 +555,7 @@ def test_rref():
             [0.0, 1.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 1.0, 1.0],
             [0.0, 0.0, 0.0, 0.0, 0.0],
-        ]
+        ],
     )
     assert np.all(np.round(A_rref, 8) == np.round(B_rref, 8))
     assert all(np.array(pivots) == np.array([0, 1, 2]))

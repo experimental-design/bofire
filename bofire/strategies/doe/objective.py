@@ -24,16 +24,14 @@ class Objective:
         delta: float = 1e-6,
         transform_range: Optional[Bounds] = None,
     ) -> None:
-        """
-        Args:
-            domain (Domain): A domain defining the DoE domain together with model_type.
-            model_type (str or Formula): A formula containing all model terms.
-            n_experiments (int): Number of experiments
-            delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
-            transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
+        """Args:
+        domain (Domain): A domain defining the DoE domain together with model_type.
+        model_type (str or Formula): A formula containing all model terms.
+        n_experiments (int): Number of experiments
+        delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+        transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
 
         """
-
         self.model = deepcopy(model)
         self.domain = deepcopy(domain)
 
@@ -41,7 +39,8 @@ class Objective:
             self.transform = IndentityTransform()
         else:
             self.transform = MinMaxTransform(
-                inputs=self.domain.inputs, feature_range=transform_range
+                inputs=self.domain.inputs,
+                feature_range=transform_range,
             )
 
         self.n_experiments = n_experiments
@@ -85,16 +84,17 @@ class Objective:
         pass
 
     def _convert_input_to_model_tensor(
-        self, x: np.ndarray, requires_grad: bool = True
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
     ) -> Tensor:
-        """
-
-        Args:
-            x: x (np.ndarray): values of design variables a 1d array.
+        """Args:
+        x: x (np.ndarray): values of design variables a 1d array.
         """
         assert x.ndim == 1, "values of design should be 1d array"
         X = pd.DataFrame(
-            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
+            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            columns=self.vars,
         )
         # scale to [0, 1]
         # lower, upper = self.domain.inputs.get_bounds(specs={}, experiments=X)
@@ -119,7 +119,7 @@ class DOptimality(Objective):
     closed expression for this one) and one model dependent part for the jacobian of X.T@X
     w.r.t. the inputs. Because each row of X only depends on the inputs of one experiment
     the second part can be formulated in a simplified way. It is built up with n_experiment
-    blocks of the same structure which is represended by the attribute jacobian_building_block.
+    blocks of the same structure which is represented by the attribute jacobian_building_block.
 
     A nice derivation for the "first part" of the jacobian can be found [here](https://angms.science/doc/LA/logdet.pdf).
     The second part consists of the partial derivatives of the model terms with
@@ -144,7 +144,7 @@ class DOptimality(Objective):
     default_jacobian_building_block implements the computation of these matrices/"building blocks".
 
     Then, we notice that the model term values of the j-th experiment only depend on the input values of
-    the j-th experiment. Thus, to compute the partial derivative df/dx_ik we only have to compute the euclidian
+    the j-th experiment. Thus, to compute the partial derivative df/dx_ik we only have to compute the euclidean
     scalar product of (K_kij)_j and (df/dy_jk)_j. The way how we built the two parts of the jacobian allows us
     to compute this scalar product in a vectorized way for all x_ik at once, see also JacobianForLogDet.jacobian.
     """
@@ -180,8 +180,8 @@ class DOptimality(Objective):
         return float(
             -1
             * torch.logdet(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
-            )
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -193,6 +193,7 @@ class DOptimality(Objective):
 
         Returns:
             The jacobian of -log(det(X.T@X+delta)) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
@@ -201,7 +202,9 @@ class DOptimality(Objective):
         torch.logdet(X.T @ X + self.delta * torch.eye(self.n_model_terms)).backward()
         J1 = -1 * X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -236,9 +239,9 @@ class AOptimality(Objective):
             torch.trace(
                 torch.linalg.inv(
                     X.detach().T @ X.detach()
-                    + self.delta * torch.eye(self.n_model_terms)
-                )
-            )
+                    + self.delta * torch.eye(self.n_model_terms),
+                ),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -250,17 +253,20 @@ class AOptimality(Objective):
 
         Returns:
             The jacobian of tr((X.T@X+delta)^-1) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
 
         # first part of jacobian
         torch.trace(
-            torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+            torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms)),
         ).backward()
         J1 = X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -295,7 +301,7 @@ class GOptimality(Objective):
         H = (
             X.detach()
             @ torch.linalg.inv(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
             )
             @ X.detach().T
         )
@@ -310,6 +316,7 @@ class GOptimality(Objective):
 
         Returns:
             The jacobian of max(diag(H)) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
@@ -319,12 +326,14 @@ class GOptimality(Objective):
             torch.diag(
                 X
                 @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
-                @ X.T
-            )
+                @ X.T,
+            ),
         ).backward()
         J1 = X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -353,15 +362,16 @@ class EOptimality(Objective):
 
         Returns:
             min(eigvals(X.T @ X + delta))
+
         """
         X = self._convert_input_to_model_tensor(x, requires_grad=False)
         return -1 * float(
             torch.min(
                 torch.linalg.eigvalsh(
                     X.detach().T @ X.detach()
-                    + self.delta * torch.eye(self.n_model_terms)
-                )
-            )
+                    + self.delta * torch.eye(self.n_model_terms),
+                ),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -373,17 +383,20 @@ class EOptimality(Objective):
 
         Returns:
             The jacobian of -1 * min(eigvals(X.T @ X + delta)) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
 
         # first part of jacobian
         torch.min(
-            torch.linalg.eigvalsh(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+            torch.linalg.eigvalsh(X.T @ X + self.delta * torch.eye(self.n_model_terms)),
         ).backward()
         J1 = -1 * X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -412,12 +425,13 @@ class KOptimality(Objective):
 
         Returns:
             cond(X.T @ X + delta)
+
         """
         X = self._convert_input_to_model_tensor(x, requires_grad=False)
         return float(
             torch.linalg.cond(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
-            )
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -429,17 +443,20 @@ class KOptimality(Objective):
 
         Returns:
             The jacobian of cond(X.T @ X + delta) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
 
         # first part of jacobian
         torch.linalg.cond(
-            X.T @ X + self.delta * torch.eye(self.n_model_terms)
+            X.T @ X + self.delta * torch.eye(self.n_model_terms),
         ).backward()
         J1 = X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -456,7 +473,7 @@ class SpaceFilling(Objective):
     def _evaluate(self, x: np.ndarray) -> float:
         X = self._convert_input_to_tensor(x, requires_grad=False)
         return float(
-            -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments])
+            -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments]),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> float:  # type: ignore
@@ -466,10 +483,13 @@ class SpaceFilling(Objective):
         return -X.grad.detach().numpy().flatten()  # type: ignore
 
     def _convert_input_to_tensor(
-        self, x: np.ndarray, requires_grad: bool = True
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
     ) -> Tensor:
         X = pd.DataFrame(
-            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
+            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            columns=self.vars,
         )
         return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
 
@@ -479,13 +499,13 @@ def get_objective_class(objective: OptimalityCriterionEnum) -> Type:
 
     if objective == OptimalityCriterionEnum.D_OPTIMALITY:
         return DOptimality
-    elif objective == OptimalityCriterionEnum.A_OPTIMALITY:
+    if objective == OptimalityCriterionEnum.A_OPTIMALITY:
         return AOptimality
-    elif objective == OptimalityCriterionEnum.G_OPTIMALITY:
+    if objective == OptimalityCriterionEnum.G_OPTIMALITY:
         return GOptimality
-    elif objective == OptimalityCriterionEnum.E_OPTIMALITY:
+    if objective == OptimalityCriterionEnum.E_OPTIMALITY:
         return EOptimality
-    elif objective == OptimalityCriterionEnum.K_OPTIMALITY:
+    if objective == OptimalityCriterionEnum.K_OPTIMALITY:
         return KOptimality
-    elif objective == OptimalityCriterionEnum.SPACE_FILLING:
+    if objective == OptimalityCriterionEnum.SPACE_FILLING:
         return SpaceFilling

@@ -14,7 +14,8 @@ class FractionalFactorialStrategy(Strategy):
     n_center: Annotated[int, Field(description="Number of center points", ge=0)] = 1
     generator: Annotated[str, Field(description="Generator for the design.")] = ""
     n_generators: Annotated[
-        int, Field(description="Number of reducing factors", ge=0)
+        int,
+        Field(description="Number of reducing factors", ge=0),
     ] = 0
 
     @classmethod
@@ -31,6 +32,7 @@ class FractionalFactorialStrategy(Strategy):
             validate_generator(len(self.domain.inputs), self.generator)
         else:
             get_generator(
-                n_factors=len(self.domain.inputs), n_generators=self.n_generators
+                n_factors=len(self.domain.inputs),
+                n_generators=self.n_generators,
             )
         return self

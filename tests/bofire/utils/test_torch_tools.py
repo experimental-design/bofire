@@ -35,6 +35,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
+    InterpolateTransform,
     constrained_objective2botorch,
     get_additive_botorch_objective,
     get_custom_botorch_objective,
@@ -48,6 +49,7 @@ from bofire.utils.torch_tools import (
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
+    interp1d,
     tkwargs,
 )
 
@@ -78,13 +80,19 @@ if6 = CategoricalInput(
     key="if6",
 )
 c1 = LinearEqualityConstraint(
-    features=["if1", "if2", "if3", "if4"], coefficients=[1.0, 1.0, 1.0, 1.0], rhs=1.0
+    features=["if1", "if2", "if3", "if4"],
+    coefficients=[1.0, 1.0, 1.0, 1.0],
+    rhs=1.0,
 )
 c2 = LinearInequalityConstraint(
-    features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.2
+    features=["if1", "if2"],
+    coefficients=[1.0, 1.0],
+    rhs=0.2,
 )
 c3 = LinearInequalityConstraint(
-    features=["if1", "if2", "if4"], coefficients=[1.0, 1.0, 0.5], rhs=0.2
+    features=["if1", "if2", "if4"],
+    coefficients=[1.0, 1.0, 0.5],
+    rhs=0.2,
 )
 
 
@@ -158,7 +166,7 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
             "valid_alpha": [1] * 10,
             "valid_beta": [1] * 10,
             "valid_gamma": [1] * 10,
-        }
+        },
     )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
@@ -179,10 +187,13 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
                 key="gamma",
                 objective=obj3,
             ),
-        ]
+        ],
     )
     objective = get_custom_botorch_objective(
-        outputs, f=f, exclude_constraints=exclude_constraints, experiments=experiments
+        outputs,
+        f=f,
+        exclude_constraints=exclude_constraints,
+        experiments=experiments,
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -205,7 +216,8 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
     )
     if exclude_constraints:
         constraints, etas = get_output_constraints(
-            outputs=outputs, experiments=experiments
+            outputs=outputs,
+            experiments=experiments,
         )
         generic_objective = ConstrainedMCObjective(
             objective=objective,
@@ -235,7 +247,7 @@ def test_get_multiplicative_botorch_objective():
             "beta": np.random.rand(10),
             "valid_alpha": [1] * 10,
             "valid_beta": [1] * 10,
-        }
+        },
     )
     (obj1, obj2) = random.choices(
         [
@@ -252,7 +264,7 @@ def test_get_multiplicative_botorch_objective():
         features=[
             ContinuousOutput(key="alpha", objective=obj1),
             ContinuousOutput(key="beta", objective=obj2),
-        ]
+        ],
     )
     objective = get_multiplicative_botorch_objective(outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
@@ -281,7 +293,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
             "valid_alpha": [1] * 10,
             "valid_beta": [1] * 10,
             "valid_gamma": [1] * 10,
-        }
+        },
     )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
@@ -303,10 +315,12 @@ def test_get_additive_botorch_objective(exclude_constraints):
                 key="gamma",
                 objective=obj3,
             ),
-        ]
+        ],
     )
     objective = get_additive_botorch_objective(
-        outputs, exclude_constraints=exclude_constraints, experiments=experiments
+        outputs,
+        exclude_constraints=exclude_constraints,
+        experiments=experiments,
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -328,7 +342,8 @@ def test_get_additive_botorch_objective(exclude_constraints):
     )
     if exclude_constraints:
         constraints, etas = get_output_constraints(
-            outputs=outputs, experiments=experiments
+            outputs=outputs,
+            experiments=experiments,
         )
         generic_objective = ConstrainedMCObjective(
             objective=objective,
@@ -349,12 +364,12 @@ def test_get_interpoint_equality_constraints():
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(1, 1)),
-            ]
+            ],
         ),
         constraints=Constraints(
             constraints=[
                 InterpointEqualityConstraint(feature="b", multiplicity=3),
-            ]
+            ],
         ),
     )
     assert len(get_interpoint_constraints(domain=domain, n_candidates=9)) == 0
@@ -488,19 +503,22 @@ def test_get_linear_constraints_unit_scaled():
             coefficients=[1.0, 1.0, 1.0],
             features=["base_polymer", "glas_fibre", "additive"],
             rhs=1.0,
-        )
+        ),
     ]
     domain = Domain(inputs=inputs, constraints=constraints)
 
     constraints = get_linear_constraints(
-        domain, LinearEqualityConstraint, unit_scaled=True
+        domain,
+        LinearEqualityConstraint,
+        unit_scaled=True,
     )
     assert len(constraints) == 1
     assert len(constraints[0][0]) == 3
     assert len(constraints[0][1]) == 3
     assert constraints[0][2] == 0.5 * -1
     assert torch.allclose(
-        constraints[0][1], torch.tensor([0.4, 0.6, 0.5]).to(**tkwargs) * -1
+        constraints[0][1],
+        torch.tensor([0.4, 0.6, 0.5]).to(**tkwargs) * -1,
     )
     assert torch.allclose(constraints[0][0], torch.tensor([1, 2, 0]))
 
@@ -536,7 +554,7 @@ def test_get_output_constraints(outputs):
             "valid_of1": [1] * 10,
             "valid_of2": [1] * 10,
             "valid_of3": [1] * 10,
-        }
+        },
     )
     constraints, etas = get_output_constraints(outputs=outputs, experiments=experiments)
     assert len(constraints) == len(etas)
@@ -546,7 +564,7 @@ def test_get_output_constraints(outputs):
 def test_get_nchoosek_constraints():
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)],
         ),
         constraints=Constraints(
             constraints=[
@@ -555,8 +573,8 @@ def test_get_nchoosek_constraints():
                     min_count=2,
                     max_count=5,
                     none_also_valid=False,
-                )
-            ]
+                ),
+            ],
         ),
     )
     constraints = get_nchoosek_constraints(domain=domain)
@@ -568,19 +586,19 @@ def test_get_nchoosek_constraints():
     # check max count fulfilled
     samples.if8 = 0
     assert torch.all(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
     )
 
     # check min count fulfilled
     samples = domain.inputs.sample(5)
     assert torch.all(
-        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) >= 0
+        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
     )
     samples[[f"if{i+4}" for i in range(5)]] = 0.0
     assert torch.all(constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)],
         ),
         constraints=Constraints(
             constraints=[
@@ -589,20 +607,20 @@ def test_get_nchoosek_constraints():
                     min_count=3,
                     max_count=6,
                     none_also_valid=False,
-                )
-            ]
+                ),
+            ],
         ),
     )
     constraints = get_nchoosek_constraints(domain=domain)
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
     assert torch.all(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
     )
 
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)],
         ),
         constraints=Constraints(
             constraints=[
@@ -611,8 +629,8 @@ def test_get_nchoosek_constraints():
                     min_count=0,
                     max_count=2,
                     none_also_valid=False,
-                )
-            ]
+                ),
+            ],
         ),
     )
     constraints = get_nchoosek_constraints(domain=domain)
@@ -645,10 +663,12 @@ def test_get_nchoosek_constraints():
     samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
     constraints = get_nchoosek_constraints(domain=domain)
     assert torch.allclose(
-        constraints[0](samples), torch.tensor([0.0, -1.0, -2.0]).to(**tkwargs)
+        constraints[0](samples),
+        torch.tensor([0.0, -1.0, -2.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[1](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
+        constraints[1](samples),
+        torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
     )
     # test with two min nchoosek constraints
     domain = Domain(
@@ -676,10 +696,12 @@ def test_get_nchoosek_constraints():
     samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
     constraints = get_nchoosek_constraints(domain=domain)
     assert torch.allclose(
-        constraints[0](samples), torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs)
+        constraints[0](samples),
+        torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[1](samples), torch.tensor([-1.0, 0.0, 1.0]).to(**tkwargs)
+        constraints[1](samples),
+        torch.tensor([-1.0, 0.0, 1.0]).to(**tkwargs),
     )
     # test with min/max and max constraint
     # test with two min nchoosek constraints
@@ -708,13 +730,16 @@ def test_get_nchoosek_constraints():
     samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
     constraints = get_nchoosek_constraints(domain=domain)
     assert torch.allclose(
-        constraints[0](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
+        constraints[0](samples),
+        torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[1](samples), torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs)
+        constraints[1](samples),
+        torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[2](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
+        constraints[2](samples),
+        torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
     )
 
 
@@ -750,7 +775,7 @@ def test_get_product_constraints():
     assert len(constraints) == 3
 
     samples = torch.tensor([[0.1, 0.5, 90], [0.2, 0.9, 100], [0.3, 0.1, 100]]).to(
-        **tkwargs
+        **tkwargs,
     )
     results = torch.tensor([35.0, -10.0, 70.0]).to(**tkwargs)
     assert torch.allclose(constraints[0](samples), results)
@@ -819,7 +844,7 @@ def test_get_multiobjective_objective():
                 key="omega",
                 objective=obj4,
             ),
-        ]
+        ],
     )
     experiments = pd.DataFrame(
         {
@@ -831,7 +856,7 @@ def test_get_multiobjective_objective():
             "valid_beta": [1] * 10,
             "valid_gamma": [1] * 10,
             "valid_omega": [1] * 10,
-        }
+        },
     )
     objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
@@ -861,7 +886,7 @@ def test_get_initial_conditions_generator(sequential: bool):
                 descriptors=["omega"],
                 values=[[0], [1], [3]],
             ),
-        ]
+        ],
     )
     domain = Domain(inputs=inputs)
     strategy = strategies.map(RandomStrategy(domain=domain))
@@ -897,7 +922,9 @@ def test_get_initial_conditions_generator(sequential: bool):
 def test_constrained_objective2botorch(objective):
     x_adapt = torch.tensor([1.0, 2.0, 3.0]).to(**tkwargs)
     cs, etas, _ = constrained_objective2botorch(
-        idx=0, objective=objective, x_adapt=x_adapt
+        idx=0,
+        objective=objective,
+        x_adapt=x_adapt,
     )
 
     x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1).to(**tkwargs)
@@ -915,11 +942,14 @@ def test_constrained_objective2botorch(objective):
     )
 
     assert np.allclose(
-        objective.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()), result
+        objective.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()),
+        result,
     )
     if isinstance(objective, MovingMaximizeSigmoidObjective):
         objective2 = MaximizeSigmoidObjective(
-            w=1, tp=x_adapt.max().item() + objective.tp, steepness=objective.steepness
+            w=1,
+            tp=x_adapt.max().item() + objective.tp,
+            steepness=objective.steepness,
         )
         assert np.allclose(
             objective2.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()),
@@ -930,7 +960,8 @@ def test_constrained_objective2botorch(objective):
 def test_constrained_objective():
     desirability = [True, False, False]
     obj1 = ConstrainedCategoricalObjective(
-        categories=["c1", "c2", "c3"], desirability=desirability
+        categories=["c1", "c2", "c3"],
+        desirability=desirability,
     )
     cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1, x_adapt=None)
 
@@ -946,7 +977,8 @@ def test_constrained_objective():
     assert np.allclose(y_hat.numpy(), transformed_y.numpy())
     assert (
         np.linalg.norm(
-            np.exp(-np.log(np.exp(y_hat.numpy()) + 1)) - true_y.numpy(), ord=np.inf
+            np.exp(-np.log(np.exp(y_hat.numpy()) + 1)) - true_y.numpy(),
+            ord=np.inf,
         )
         <= 1e-8
     )
@@ -962,3 +994,251 @@ def test_constrained_objective():
         .ravel()
     )
     assert np.allclose(true_y.numpy(), result)
+
+
+def test_interp1d():
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([0.0, 10, 40, 60])
+    y = np.array([0.0, 0.2, 0.5, 0.9])
+    y_new = np.interp(x_new, x, y)
+    tx_new = torch.from_numpy(x_new).to(**tkwargs)
+    tx = torch.from_numpy(np.array([0.0, 10, 40, 60])).to(**tkwargs)
+    ty = torch.from_numpy(np.array([0.0, 0.2, 0.5, 0.9])).to(**tkwargs)
+    ty_new = interp1d(tx, ty, tx_new).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+
+def test_InterpolateTransform():
+    new_x = torch.from_numpy(np.linspace(0, 60, 200)).to(**tkwargs)
+    with pytest.raises(ValueError, match="Indices are not unique."):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[2, 3, 4],
+            prepend_x=torch.tensor([0]),
+            append_x=torch.tensor([60]),
+            prepend_y=torch.tensor([0]),
+            append_y=torch.tensor([1]),
+            new_x=new_x,
+        )
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2],
+        idx_y=[3, 4, 5],
+        prepend_x=torch.tensor([0]),
+        append_x=torch.tensor([60]),
+        prepend_y=torch.tensor([0]),
+        append_y=torch.tensor([1]),
+        new_x=new_x,
+    )
+
+    # test the append and prepend functionality for 2 dim data
+    X = torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs)
+    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]).to(**tkwargs),
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor(
+            [
+                [
+                    1,
+                    2,
+                    10,
+                    40,
+                    55,
+                ],
+                [1, 2, 10, 20, 55],
+            ],
+        ).to(**tkwargs),
+    )
+
+    values = torch.tensor([1.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[10, 40, 55, 1], [10, 20, 55, 1]]).to(**tkwargs),
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[1, 10, 40, 55], [1, 10, 20, 55]]).to(**tkwargs),
+    )
+
+    values = torch.tensor([]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs),
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs),
+    )
+
+    # test the append and prepend functionality for 3 dim data
+    X = torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs)
+    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]]).to(**tkwargs),
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor(
+            [
+                [
+                    1,
+                    2,
+                    10,
+                    40,
+                    55,
+                ],
+                [1, 2, 10, 20, 55],
+            ],
+        ).to(**tkwargs),
+    )
+
+    values = torch.tensor([1.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[10, 40, 55, 1], [10, 20, 55, 1]]]).to(**tkwargs),
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[1, 10, 40, 55], [1, 10, 20, 55]]]).to(**tkwargs),
+    )
+
+    values = torch.tensor([]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs),
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs),
+    )
+
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+
+    tX = torch.tensor([[10, 40, 55, 0.2, 0.5, 0.75], [10, 20, 55, 0.2, 0.5, 0.7]]).to(
+        **tkwargs,
+    )
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test error handling
+    with pytest.raises(
+        ValueError,
+        match="The number of x and y indices must be equal.",
+    ):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[3, 4, 5],
+            prepend_x=torch.tensor([0, 0.1]),
+            append_x=torch.tensor([60]),
+            prepend_y=torch.tensor([0]),
+            append_y=torch.tensor([1]),
+            new_x=new_x,
+        )
+
+    # test without prepend and append
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3, 4],
+        idx_y=[5, 6, 7, 8, 9],
+        prepend_x=torch.tensor([]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([]),
+        new_x=new_x,
+    )
+
+    tX = torch.tensor(
+        [
+            [0, 10, 40, 55, 60, 0, 0.2, 0.5, 0.75, 1],
+            [0, 10, 20, 55, 60, 0, 0.2, 0.5, 0.7, 1],
+        ],
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test different prepend and append
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ],
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test keep original
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+        keep_original=True,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ],
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(
+        np.concatenate([y_new, tX.numpy()], axis=-1),
+        ty_new,
+        rtol=1e-6,
+    )

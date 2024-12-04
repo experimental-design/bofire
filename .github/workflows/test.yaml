@@ -7,8 +7,13 @@ on:
     branches:
       - main
 
+concurrency:
+  # Cancel only on same PR number
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  testing_minimal:
+  testing_data_models:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,7 +35,7 @@ jobs:
       - name: Install Dependencies
         run: uv pip install "." pytest --system
 
-      - name: Run domain-only test
+      - name: Run data model tests
         run: pytest tests/bofire/data_models
 
   testing:
@@ -121,4 +126,4 @@ jobs:
 
       - name: Run Notebooks
         shell: bash -l {0}
-        run: python scripts/run_tutorials.py -p "$(pwd)"
+        run: python scripts/run_tutorials.py

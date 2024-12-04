@@ -51,7 +51,7 @@ specs.add_invalid(
     features.ContinuousInput,
     lambda: {"key": "a", "bounds": (5, 3)},
     error=ValueError,
-    message="lower bound must be <= upper bound, got 5.0 > 3.0",
+    message="Sequence is not monotonically increasing.",
 )
 
 specs.add_valid(
@@ -138,7 +138,8 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["a", "b", "c"],
         "objective": ConstrainedCategoricalObjective(
-            categories=["a", "b", "c"], desirability=[True, True, False]
+            categories=["a", "b", "c"],
+            desirability=[True, True, False],
         ).model_dump(),
     },
 )
