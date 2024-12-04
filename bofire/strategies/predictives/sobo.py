@@ -22,6 +22,7 @@ from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDa
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
 from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
+    MultiplicativeAdditiveSoboStrategy as MultiplicativeAdditiveDataModel,
 )
 from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -29,6 +30,7 @@ from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
     get_multiplicative_botorch_objective,
+    get_multiplicative_botorch_objective_with_nested_additive_features,
     get_objective_callable,
     get_output_constraints,
     tkwargs,
@@ -245,6 +247,38 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             None,
             1e-3,
         )
+
+
+class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
+    def __init__(
+        self,
+        data_model: MultiplicativeAdditiveDataModel,
+        **kwargs,
+    ):
+        self.additive_features = data_model.additive_features
+        super().__init__(data_model=data_model, **kwargs)
+
+    def _get_objective_and_constraints(
+        self,
+    ) -> Tuple[
+        GenericMCObjective,
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
+        Union[List, float],
+    ]:
+        # we absorb all constraints into the objective
+        assert self.experiments is not None, "No experiments available."
+        return (
+            GenericMCObjective(
+                objective=get_multiplicative_botorch_objective_with_nested_additive_features(  # type: ignore
+                    outputs=self.domain.outputs,
+                    experiments=self.experiments,
+                    additive_features=self.additive_features,
+                )
+            ),
+            None,
+            1e-3,
+        )
+
 
 
 class CustomSoboStrategy(SoboStrategy):
