@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import (
@@ -60,6 +60,7 @@ class TrainableSurrogate(ABC):
         include_labcodes: bool = False,
         random_state: Optional[int] = None,
         stratified_feature: Optional[str] = None,
+        group_split_column: Optional[str] = None,
         hooks: Optional[
             Dict[
                 str,
@@ -88,6 +89,7 @@ class TrainableSurrogate(ABC):
                 Defaults to None.
             stratified_feature (str, optional): The feature name to preserve the percentage of samples for each class in
                 the stratified folds. Defaults to None.
+            group_split_column (str, optional): The column name of the group id. Defaults to None.
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.
@@ -125,6 +127,23 @@ class TrainableSurrogate(ABC):
                 raise ValueError(
                     "The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput",
                 )
+            
+        if group_split_column is not None:
+            # check if the group split column is present in the experiments
+            if group_split_column not in experiments.columns:
+                raise ValueError(
+                    f"Group split column {group_split_column} is not present in the experiments."
+                )
+            ngroups = len(experiments[group_split_column].unique())
+            if ngroups == 0:
+                raise ValueError(
+                    f"Number of unique groups {len(experiments[group_split_column].unique())} is zero."
+                )
+            # check if the number of unique groups is greater than or equal to the number of folds
+            if ngroups < folds:
+                raise ValueError(
+                    f"Number of unique groups {len(experiments[group_split_column].unique())} is less than the number of folds {folds}."
+                )
 
         # first filter the experiments based on the model setting
         experiments = self._preprocess_experiments(experiments)
@@ -149,8 +168,16 @@ class TrainableSurrogate(ABC):
 
         # instantiate kfold object
         if stratified_feature is None:
-            cv = KFold(n_splits=folds, shuffle=True, random_state=random_state)
-            cv_func = cv.split(experiments)
+            if group_split_column is not None:
+                # GROUP SPLIT FUNCTIONALITY
+                cv = GroupKFold(n_folds = folds, shuffle=True, random_state=random_state)
+                cv_func = cv.split(
+                    experiments,
+                    groups=experiments[group_split_column]
+                )
+            else:
+                cv = KFold(n_splits=folds, shuffle=True, random_state=random_state)
+                cv_func = cv.split(experiments)
         else:
             cv = StratifiedKFold(
                 n_splits=folds,
