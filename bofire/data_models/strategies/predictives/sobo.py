@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, List
 
 from pydantic import Field, field_validator
 
@@ -85,6 +85,30 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy):
             )
         return v
 
+class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy):
+    """ mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
+
+    The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
+    additive features (f3 and f4 with weights w3 and w4) is:
+
+        additive_objective = 1 + f3*w3 + f4*w4
+        denominator_additive_objectives = 1 + w3 + w4
+
+        denominator_multiplicative_objectives = 1 + w1 + w2
+        objective = f1^w1 * f2^w2 * (additive_objective / denominator_additive_objectives) ^ (1/denominator_multiplicative_objectives)
+
+    """
+    type: Literal["MultiplicativeAdditiveSoboStrategy"] = "MultiplicativeAdditiveSoboStrategy"
+    use_output_constraints: bool = True
+    additive_features: List[str] = Field(default_factory=list)
+
+    @field_validator("additive_features")
+    def validate_additive_features(cls, v, values):
+        domain = values.data["domain"]
+        for feature in v:
+            if (feature not in domain.outputs.get_keys()) and (feature not in domain.inputs.get_keys()):
+                raise ValueError(f"Feature {feature} is not a feature (input or output) of the domain.")
+        return v
 
 class CustomSoboStrategy(SoboBaseStrategy):
     type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"

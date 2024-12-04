@@ -27,7 +27,7 @@ from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiplicativeSoboStrategy,
-    SoboStrategy,
+    SoboStrategy, MultiplicativeAdditiveSoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
@@ -61,6 +61,7 @@ AnyPredictive = Union[
     ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,
