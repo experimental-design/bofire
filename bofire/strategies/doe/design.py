@@ -28,7 +28,7 @@ from bofire.strategies.random import RandomStrategy
 
 def find_local_max_ipopt(
     domain: Domain,
-    model_type: Union[str, Formula],
+    model_type: Optional[Union[str, Formula]],
     n_experiments: Optional[int] = None,
     delta: float = 1e-7,
     ipopt_options: Optional[Dict] = None,

@@ -3,6 +3,7 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import CategoricalInput, Input
+from bofire.data_models.strategies.doe import DoEOptimalityCriterion
 from bofire.strategies.doe.branch_and_bound import (
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
@@ -88,7 +89,11 @@ class DoEStrategy(Strategy):
         num_discrete_vars = len(new_discretes)
 
         objective = self.data_model.criterion.map_to_enum()
-        model_type = self.data_model.criterion.formula
+
+        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
+            model_type = self.data_model.criterion.formula
+        else:
+            model_type = None
         transform_range = self.data_model.criterion.transform_range
         if (
             self.data_model.optimization_strategy == "relaxed"
