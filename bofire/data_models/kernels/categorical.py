@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal
 
 from bofire.data_models.kernels.kernel import ConcreteKernel
 

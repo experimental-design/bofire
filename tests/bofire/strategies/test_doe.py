@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -24,7 +25,7 @@ from bofire.strategies.api import DoEStrategy
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
-import pytest
+
 pytest.importorskip("cyipopt")
 
 with warnings.catch_warnings():
