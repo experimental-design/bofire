@@ -469,3 +469,83 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
         match="The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput",
     ):
         model.cross_validate(experiments, folds=5, stratified_feature=key)
+
+@pytest.mark.parametrize("random_state", [1, 2])
+def test_model_cross_validate_groupfold(random_state):
+    # TODO: perhaps look into more efficient way to test this
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [
+            CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
+            CategoricalDescriptorInput(
+                key="cat_x_4",
+                categories=["a", "b", "c"],
+                descriptors=["alpha"],
+                values=[[1], [2], [3]],
+            ),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = pd.DataFrame(
+        [
+            [-4, -4, "category1", "a", 1, 0],
+            [-3, -3, "category1", "a", 1, 0],
+            [-2, -2, "category1", "a", 1, 0],
+            [-1, -1, "category1", "b", 1, 0],
+            [0, 0, "category1", "b", 1, 1],
+            [1, 1, "category1", "b", 1, 1],
+            [2, 2, "category1", "c", 1, 1],
+            [3, 3, "category1", "c", 1, 1],
+            [2, 3, "category1", "c", 1, 1],
+            [3, 1, "category1", "a", 1, 2],
+            [3, 4, "category1", "a", 0, 2],
+            [4, 4, "category2", "b", 0, 2],
+            [1, 4, "category2", "b", 0, 2],
+            [1, 0, "category2", "c", 0, 2],
+            [1, 2, "category2", "c", 0, 3],
+            [2, 4, "category2", "a", 1, 3],
+        ],
+        columns=["x_1", "x_2", "cat_x_3", "cat_x_4", "y", "group"],
+    )
+    experiments["valid_y"] = 1
+
+    cat0_indexes = experiments[experiments["group"] == 0].index
+    cat1_indexes = experiments[experiments["group"] == 1].index
+    cat2_indexes = experiments[experiments["group"] == 2].index
+    cat3_indexes = experiments[experiments["group"] == 3].index
+
+    all_indices = [cat0_indexes, cat1_indexes, cat2_indexes, cat3_indexes]
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+    train_cv, test_cv, hook_results = model.cross_validate(
+        experiments,
+        folds=4,
+        random_state=random_state,
+        group_split_column="group",
+    )
+
+    # gather train and test indices
+    test_indices = []
+    train_indices = []
+    for cvresults in test_cv.results:
+        test_indices.append(list(cvresults.observed.index))
+
+    for cvresults in train_cv.results:
+        train_indices.append(list(cvresults.observed.index))
+    
+    # test if the groups are only present in either the test or train indices and are grouped together
+    for test_index, train_index in zip(test_indices, train_indices):
+        for indices in all_indices:
+            test_set = set(test_index)
+            train_set = set(train_index)
+            assert test_set.issuperset(indices) or train_set.issuperset(indices)

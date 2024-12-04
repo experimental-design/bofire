@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
-from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
+from sklearn.model_selection import KFold, StratifiedKFold, GroupShuffleSplit
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import (
@@ -170,7 +170,7 @@ class TrainableSurrogate(ABC):
         if stratified_feature is None:
             if group_split_column is not None:
                 # GROUP SPLIT FUNCTIONALITY
-                cv = GroupKFold(n_folds = folds, shuffle=True, random_state=random_state)
+                cv = GroupShuffleSplit(n_splits=folds, random_state=random_state)
                 cv_func = cv.split(
                     experiments,
                     groups=experiments[group_split_column]
