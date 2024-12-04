@@ -21,7 +21,6 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
-from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
