@@ -12,7 +12,10 @@ import pandas as pd
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, Input
-from bofire.data_models.strategies.doe import DOptimalityCriterion, OptimalityCriterion
+from bofire.data_models.strategies.doe import (
+    AnyOptimalityCriterion,
+    DOptimalityCriterion,
+)
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils_categorical_discrete import equal_count_split
@@ -231,7 +234,7 @@ def find_local_max_ipopt_BaB(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    criterion: OptimalityCriterion = DOptimalityCriterion,
+    criterion: AnyOptimalityCriterion = DOptimalityCriterion,
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
@@ -359,11 +362,10 @@ def find_local_max_ipopt_BaB(
 def find_local_max_ipopt_exhaustive(
     domain: Domain,
     n_experiments: int,
-    delta: float = 1e-7,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
-    criterion: OptimalityCriterion = DOptimalityCriterion,
+    criterion: AnyOptimalityCriterion = DOptimalityCriterion,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
@@ -499,7 +501,6 @@ def find_local_max_ipopt_exhaustive(
             current_design = find_local_max_ipopt(
                 domain,
                 n_experiments,
-                delta,
                 ipopt_options,
                 sampling,
                 None,
