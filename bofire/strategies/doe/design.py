@@ -27,7 +27,7 @@ from bofire.strategies.random import RandomStrategy
 def find_local_max_ipopt(
     domain: Domain,
     n_experiments: int,
-    criterion: AnyOptimalityCriterion,
+    criterion: Optional[AnyOptimalityCriterion] = None,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
