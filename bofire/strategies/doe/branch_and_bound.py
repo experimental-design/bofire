@@ -14,8 +14,8 @@ from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.types import Bounds
+from bofire.strategies.doe.criterion import get_objective_class
 from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
-from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
 from bofire.strategies.doe.utils_categorical_discrete import equal_count_split
 from bofire.strategies.enum import OptimalityCriterionEnum
