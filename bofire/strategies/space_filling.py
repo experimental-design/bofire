@@ -1,8 +1,8 @@
 import pandas as pd
 
 from bofire.data_models.strategies.api import SpaceFillingStrategy as DataModel
+from bofire.data_models.strategies.doe import SpaceFillingCriterion
 from bofire.strategies.doe.design import find_local_max_ipopt
-from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.strategy import Strategy
 
 
@@ -31,13 +31,11 @@ class SpaceFillingStrategy(Strategy):
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         samples = find_local_max_ipopt(
             domain=self.domain,
-            model_type="linear",  # dummy model
             n_experiments=self.num_candidates
             + int(candidate_count / self.sampling_fraction),
             ipopt_options=self.ipopt_options,
-            objective=OptimalityCriterionEnum.SPACE_FILLING,
+            criterion=SpaceFillingCriterion(transform_range=self.transform_range),
             fixed_experiments=self.candidates,
-            transform_range=self.transform_range,
         )
 
         samples = samples.iloc[self.num_candidates :,]
