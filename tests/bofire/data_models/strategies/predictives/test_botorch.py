@@ -3,6 +3,9 @@ import pytest
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.strategies.api import LSRBO, SoboStrategy
+from bofire.data_models.strategies.predictives.acqf_optimizers import (
+    BotorchAcqfOptimizer,
+)
 
 
 @pytest.mark.parametrize(
@@ -22,9 +25,20 @@ def test_validate_batch_limit():
         outputs=[ContinuousOutput(key="b")],
     )
     strategy_data = SoboStrategy(domain=domain)
-    assert strategy_data.batch_limit == strategy_data.num_restarts
-    strategy_data = SoboStrategy(domain=domain, batch_limit=50)
-    assert strategy_data.batch_limit == strategy_data.num_restarts
-    strategy_data = SoboStrategy(domain=domain, batch_limit=2, num_restarts=4)
-    assert strategy_data.batch_limit == 2
-    assert strategy_data.num_restarts == 4
+    assert (
+        strategy_data.acqf_optimizer.batch_limit
+        == strategy_data.acqf_optimizer.num_restarts
+    )
+    strategy_data = SoboStrategy(
+        domain=domain, acqf_optimizer=BotorchAcqfOptimizer(batch_limit=50)
+    )
+    assert (
+        strategy_data.acqf_optimizer.batch_limit
+        == strategy_data.acqf_optimizer.num_restarts
+    )
+    strategy_data = SoboStrategy(
+        domain=domain,
+        acqf_optimizer=BotorchAcqfOptimizer(batch_limit=2, num_restarts=4),
+    )
+    assert strategy_data.acqf_optimizer.batch_limit == 2
+    assert strategy_data.acqf_optimizer.num_restarts == 4

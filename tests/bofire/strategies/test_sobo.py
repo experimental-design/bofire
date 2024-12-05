@@ -44,6 +44,9 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import LSRBO
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.predictives.acqf_optimizers import (
+    BotorchAcqfOptimizer,
+)
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
 from tests.bofire.strategies.test_base import domains
@@ -54,8 +57,7 @@ from tests.bofire.strategies.test_base import domains
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[1],
     "acquisition_function": specs.acquisition_functions.valid(
-        SingleObjectiveAcquisitionFunction,
-        exact=False,
+        SingleObjectiveAcquisitionFunction, exact=False
     ).obj(),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
@@ -81,8 +83,7 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
 VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[2],
     "acquisition_function": specs.acquisition_functions.valid(
-        SingleObjectiveAcquisitionFunction,
-        exact=False,
+        SingleObjectiveAcquisitionFunction, exact=False
     ).obj(),
     "descriptor_method": "EXHAUSTIVE",
     "categorical_method": "EXHAUSTIVE",
@@ -145,14 +146,13 @@ def test_SOBO_get_acqf(acqf, expected, num_test_candidates):
     benchmark = Himmelblau()
 
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain),
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
 
     experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
 
     data_model = data_models.SoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=acqf,
+        domain=benchmark.domain, acquisition_function=acqf
     )
     strategy = SoboStrategy(data_model=data_model)
 
@@ -169,8 +169,7 @@ def test_SOBO_calc_acquisition():
     experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
     samples = benchmark.domain.inputs.sample(2)
     data_model = data_models.SoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qLogEI(),
+        domain=benchmark.domain, acquisition_function=qLogEI()
     )
     strategy = SoboStrategy(data_model=data_model)
     strategy.tell(experiments=experiments)
@@ -187,13 +186,12 @@ def test_SOBO_init_qUCB():
     # generate data
     benchmark = Himmelblau()
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain),
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
 
     data_model = data_models.SoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=acqf,
+        domain=benchmark.domain, acquisition_function=acqf
     )
     strategy = SoboStrategy(data_model=data_model)
     strategy.tell(experiments)
@@ -217,7 +215,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
     # generate data
     benchmark = Himmelblau()
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain),
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
         random_strategy._ask(candidate_count=num_experiments),
@@ -225,8 +223,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
     )
 
     data_model = data_models.SoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=acqf,
+        domain=benchmark.domain, acquisition_function=acqf
     )
     strategy = SoboStrategy(data_model=data_model)
 
@@ -236,7 +233,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
     _, names = strategy.domain.inputs._get_transform_info(
-        specs=strategy.surrogate_specs.input_preprocessing_specs,
+        specs=strategy.surrogate_specs.input_preprocessing_specs
     )
 
     assert torch.is_tensor(X_train)
@@ -263,8 +260,7 @@ def test_custom_get_objective():
     benchmark = DTLZ2(3)
     experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     data_model = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+        domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
     strategy.f = f
@@ -276,8 +272,7 @@ def test_custom_get_objective():
 def test_custom_get_objective_invalid():
     benchmark = DTLZ2(3)
     data_model = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+        domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
     experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
@@ -318,8 +313,7 @@ def test_custom_dumps_loads():
     strategy2._experiments = experiments
 
     data_model3 = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+        domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy3 = CustomSoboStrategy(data_model=data_model3)
     strategy3._experiments = experiments
@@ -343,8 +337,7 @@ def test_custom_dumps_loads():
 def test_custom_dumps_invalid():
     benchmark = DTLZ2(3)
     data_model = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+        domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
     with pytest.raises(ValueError):
@@ -352,7 +345,7 @@ def test_custom_dumps_invalid():
 
 
 @pytest.mark.parametrize("candidate_count", [1, 2])
-def test_sobo_fully_combinatorial(candidate_count):
+def test_sobo_fully_combinatorical(candidate_count):
     benchmark = _CategoricalDiscreteHimmelblau()
 
     strategy_data = data_models.SoboStrategy(domain=benchmark.domain)
@@ -369,7 +362,7 @@ def test_sobo_fully_combinatorial(candidate_count):
     [
         (
             Outputs(
-                features=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+                features=[ContinuousOutput(key="alpha", objective=MaximizeObjective())]
             ),
             GenericMCObjective,
         ),
@@ -379,8 +372,8 @@ def test_sobo_fully_combinatorial(candidate_count):
                     ContinuousOutput(
                         key="alpha",
                         objective=MaximizeSigmoidObjective(steepness=1, tp=1),
-                    ),
-                ],
+                    )
+                ]
             ),
             GenericMCObjective,
         ),
@@ -391,7 +384,7 @@ def test_sobo_get_objective(outputs, expected_objective):
         domain=Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=outputs,
-        ),
+        )
     )
     experiments = pd.DataFrame({"a": [0.5], "alpha": [0.5], "valid_alpha": [1]})
     strategy = SoboStrategy(data_model=strategy_data)
@@ -405,8 +398,7 @@ def test_sobo_get_constrained_objective():
     experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     domain = benchmark.domain
     domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(  # type: ignore
-        tp=1.5,
-        steepness=2.0,
+        tp=1.5, steepness=2.0
     )
     strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qUCB())
     strategy = SoboStrategy(data_model=strategy_data)
@@ -420,12 +412,10 @@ def test_sobo_get_constrained_objective2():
     experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     domain = benchmark.domain
     domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(  # type: ignore
-        tp=1.5,
-        steepness=2.0,
+        tp=1.5, steepness=2.0
     )
     strategy_data = data_models.SoboStrategy(
-        domain=domain,
-        acquisition_function=qLogEI(),
+        domain=domain, acquisition_function=qLogEI()
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments=experiments)
@@ -437,14 +427,12 @@ def test_sobo_hyperoptimize():
     benchmark = Himmelblau()
     experiments = benchmark.f(benchmark.domain.inputs.sample(3), return_complete=True)
     strategy_data = data_models.SoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qLogEI(),
-        frequency_hyperopt=1,
+        domain=benchmark.domain, acquisition_function=qLogEI(), frequency_hyperopt=1
     )
     strategy_data.surrogate_specs.surrogates[0].hyperconfig = None  # type: ignore
     strategy = SoboStrategy(data_model=strategy_data)
     with pytest.warns(
-        match="No hyperopt is possible as no hyperopt config is available. Returning initial config.",
+        match="No hyperopt is possible as no hyperopt config is available. Returning initial config."
     ):
         strategy.tell(experiments=experiments)
 
@@ -469,9 +457,7 @@ def test_sobo_lsrbo():
     ]
     # local search
     strategy_data = data_models.SoboStrategy(
-        domain=bench.domain,
-        seed=42,
-        local_search_config=LSRBO(gamma=0),
+        domain=bench.domain, seed=42, local_search_config=LSRBO(gamma=0)
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
@@ -479,9 +465,7 @@ def test_sobo_lsrbo():
     np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.55276, 11.192913])  # type: ignore
     # global search
     strategy_data = data_models.SoboStrategy(
-        domain=bench.domain,
-        seed=42,
-        local_search_config=LSRBO(gamma=500000),
+        domain=bench.domain, seed=42, local_search_config=LSRBO(gamma=500000)
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
@@ -497,9 +481,14 @@ def test_sobo_get_optimizer_options():
         ],
         outputs=[ContinuousOutput(key="c")],  # type: ignore
     )
-    strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
+    strategy_data = data_models.SoboStrategy(
+        domain=domain, acqf_optimizer=BotorchAcqfOptimizer(maxiter=500, batch_limit=4)
+    )
     strategy = SoboStrategy(data_model=strategy_data)
-    assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 4}
+    assert strategy.acqf_optimizer._get_optimizer_options(strategy.domain) == {
+        "maxiter": 500,
+        "batch_limit": 4,
+    }
     domain = Domain(
         inputs=[  # type: ignore
             ContinuousInput(key="a", bounds=(0, 1)),
@@ -508,16 +497,18 @@ def test_sobo_get_optimizer_options():
         outputs=[ContinuousOutput(key="c")],  # type: ignore
         constraints=[  # type: ignore
             NChooseKConstraint(
-                features=["a", "b"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
+                features=["a", "b"], max_count=1, min_count=0, none_also_valid=True
+            )
         ],
     )
-    strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
+    strategy_data = data_models.SoboStrategy(
+        domain=domain, acqf_optimizer=BotorchAcqfOptimizer(maxiter=500, batch_limit=4)
+    )
     strategy = SoboStrategy(data_model=strategy_data)
-    assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 1}
+    assert strategy.acqf_optimizer._get_optimizer_options(strategy.domain) == {
+        "maxiter": 500,
+        "batch_limit": 1,
+    }
 
 
 def test_sobo_interpoint():
