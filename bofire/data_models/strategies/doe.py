@@ -22,7 +22,7 @@ PREDEFINED_MODEL_TYPES = Literal[
 
 class OptimalityCriterion(BaseModel):
     type: str
-    delta: float
+    delta: float = 1e-6
     transform_range: Optional[Bounds] = None
 
 
