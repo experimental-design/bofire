@@ -5,7 +5,10 @@ from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
+from bofire.data_models.surrogates.deterministic import (
+    CategoricalDeterministicSurrogate,
+    LinearDeterministicSurrogate,
+)
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.linear import LinearSurrogate
@@ -39,6 +42,7 @@ AnyBotorchSurrogate = Union[
     LinearSurrogate,
     PolynomialSurrogate,
     LinearDeterministicSurrogate,
+    CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
     PiecewiseLinearGPSurrogate,
 ]

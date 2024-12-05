@@ -23,3 +23,21 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
             .to(**tkwargs)
             .unsqueeze(-1),
         )
+
+
+class CategoricalDeterministicSurrogate(BotorchSurrogate):
+    def __init__(
+        self,
+        data_model: DataModel,
+        **kwargs,
+    ):
+        self.mapping = data_model.mapping
+        super().__init__(data_model=data_model, **kwargs)
+        self.model = AffineDeterministicModel(
+            b=0.0,
+            a=torch.tensor(
+                [data_model.mapping[key] for key in self.inputs[0].categories],
+            )
+            .to(**tkwargs)
+            .unsqueeze(-1),
+        )
