@@ -4,11 +4,10 @@ import time
 from functools import total_ordering
 from itertools import combinations_with_replacement, product
 from queue import PriorityQueue
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from formulaic import Formula
 
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
@@ -171,12 +170,12 @@ def bnb(
     if priority_queue.empty():
         raise RuntimeError("Queue empty before feasible solution was found")
 
-    objective_class = get_objective_function(
+    objective_function = get_objective_function(
         criterion=kwargs["criterion"],
         domain=kwargs["domain"],
         n_experiments=kwargs["n_experiments"],
-        delta=kwargs["delta"],
     )
+    assert objective_function is not None, "Criterion type is not supported!"
 
     pre_size = priority_queue.qsize()
     current_branch = priority_queue.get()
@@ -197,7 +196,7 @@ def bnb(
         kwargs["sampling"] = current_branch.design_matrix
         try:
             design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
-            value = objective_class.evaluate(design.to_numpy().flatten())
+            value = objective_function.evaluate(design.to_numpy().flatten())
             new_node = NodeExperiment(
                 branch,
                 design,
@@ -227,9 +226,7 @@ def bnb(
 
 def find_local_max_ipopt_BaB(
     domain: Domain,
-    model_type: Union[str, Formula],
     n_experiments: int,
-    delta: float = 1e-7,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
@@ -274,7 +271,7 @@ def find_local_max_ipopt_BaB(
         categorical_groups = []
 
     objective_function = get_objective_function(
-        criterion, domain=domain, n_experiments=n_experiments, delta=delta
+        criterion, domain=domain, n_experiments=n_experiments
     )
     assert objective_function is not None, "Criterion type is not supported!"
 
@@ -322,7 +319,6 @@ def find_local_max_ipopt_BaB(
     initial_design = find_local_max_ipopt(
         domain,
         n_experiments,
-        delta,
         ipopt_options,
         sampling,
         None,
@@ -350,7 +346,6 @@ def find_local_max_ipopt_BaB(
         initial_queue,
         domain=domain,
         n_experiments=n_experiments,
-        delta=delta,
         ipopt_options=ipopt_options,
         sampling=sampling,
         fixed_experiments=None,
@@ -412,7 +407,7 @@ def find_local_max_ipopt_exhaustive(
         )
 
     objective_function = get_objective_function(
-        criterion, domain=domain, n_experiments=n_experiments, delta=delta
+        criterion, domain=domain, n_experiments=n_experiments
     )
     assert objective_function is not None, "Criterion type is not supported!"
 

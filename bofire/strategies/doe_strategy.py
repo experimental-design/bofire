@@ -3,7 +3,6 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import CategoricalInput, Input
-from bofire.data_models.strategies.doe import DoEOptimalityCriterion
 from bofire.strategies.doe.branch_and_bound import (
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
@@ -87,14 +86,6 @@ class DoEStrategy(Strategy):
 
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
-
-        objective = self.data_model.criterion.map_to_enum()
-
-        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
-            model_type = self.data_model.criterion.formula
-        else:
-            model_type = None
-        transform_range = self.data_model.criterion.transform_range
         if (
             self.data_model.optimization_strategy == "relaxed"
             or (num_binary_vars == 0 and num_discrete_vars == 0)
@@ -106,12 +97,10 @@ class DoEStrategy(Strategy):
         ):
             design = find_local_max_ipopt(
                 new_domain,
-                model_type=model_type,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
-                objective=objective,
-                transform_range=transform_range,
+                criterion=self.data_model.criterion,
             )
         # TODO adapt to when exhaustive search accepts discrete variables
         elif (
@@ -120,15 +109,13 @@ class DoEStrategy(Strategy):
         ):
             design = find_local_max_ipopt_exhaustive(
                 domain=new_domain,
-                model_type=model_type,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
-                objective=objective,
-                transform_range=transform_range,
+                criterion=self.data_model.criterion,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -137,15 +124,13 @@ class DoEStrategy(Strategy):
         ]:
             design = find_local_max_ipopt_BaB(
                 domain=new_domain,
-                model_type=model_type,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
-                objective=objective,
-                transform_range=transform_range,
+                criterion=self.data_model.criterion,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -162,15 +147,13 @@ class DoEStrategy(Strategy):
             for i in range(_candidate_count):
                 design = find_local_max_ipopt_BaB(
                     domain=new_domain,
-                    model_type=model_type,
                     n_experiments=num_adapted_partially_fixed_candidates + i + 1,
                     fixed_experiments=None,
                     verbose=self.data_model.verbose,
                     partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
-                    objective=objective,
-                    transform_range=transform_range,
+                    criterion=self.data_model.criterion,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [

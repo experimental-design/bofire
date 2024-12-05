@@ -556,7 +556,7 @@ class SpaceFilling(Objective):
 
 
 def get_objective_function(
-    criterion: OptimalityCriterion, domain: Domain, n_experiments: int, delta: float
+    criterion: OptimalityCriterion, domain: Domain, n_experiments: int
 ) -> Objective | None:
     if isinstance(criterion, DoEOptimalityCriterion):
         if isinstance(criterion, DOptimalityCriterion):
@@ -564,7 +564,7 @@ def get_objective_function(
                 domain,
                 model=criterion.formula,
                 n_experiments=n_experiments,
-                delta=delta,
+                delta=criterion.delta,
                 transform_range=criterion.transform_range,
             )
         if isinstance(criterion, AOptimalityCriterion):
@@ -572,7 +572,7 @@ def get_objective_function(
                 domain,
                 model=criterion.formula,
                 n_experiments=n_experiments,
-                delta=delta,
+                delta=criterion.delta,
                 transform_range=criterion.transform_range,
             )
         if isinstance(criterion, GOptimalityCriterion):
@@ -580,7 +580,7 @@ def get_objective_function(
                 domain,
                 model=criterion.formula,
                 n_experiments=n_experiments,
-                delta=delta,
+                delta=criterion.delta,
                 transform_range=criterion.transform_range,
             )
         if isinstance(criterion, EOptimalityCriterion):
@@ -588,7 +588,7 @@ def get_objective_function(
                 domain,
                 model=criterion.formula,
                 n_experiments=n_experiments,
-                delta=delta,
+                delta=criterion.delta,
                 transform_range=criterion.transform_range,
             )
         if isinstance(criterion, KOptimalityCriterion):
@@ -596,14 +596,14 @@ def get_objective_function(
                 domain,
                 model=criterion.formula,
                 n_experiments=n_experiments,
-                delta=delta,
+                delta=criterion.delta,
                 transform_range=criterion.transform_range,
             )
     if isinstance(criterion, SpaceFillingCriterion):
         return SpaceFilling(
             domain,
             n_experiments=n_experiments,
-            delta=delta,
+            delta=criterion.delta,
             transform_range=criterion.transform_range,
         )
     else:
