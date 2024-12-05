@@ -319,11 +319,11 @@ def find_local_max_ipopt_BaB(
     initial_design = find_local_max_ipopt(
         domain,
         n_experiments,
+        criterion,
         ipopt_options,
         sampling,
         None,
         partially_fixed_experiments=initial_branch,
-        criterion=criterion,
     )
     initial_value = objective_function.evaluate(
         initial_design.to_numpy().flatten(),
@@ -498,11 +498,11 @@ def find_local_max_ipopt_exhaustive(
             current_design = find_local_max_ipopt(
                 domain,
                 n_experiments,
+                criterion,
                 ipopt_options,
                 sampling,
                 None,
                 one_set_of_experiments,
-                criterion=criterion,
             )
             domain.validate_candidates(
                 candidates=current_design.apply(lambda x: np.round(x, 8)),
