@@ -556,8 +556,8 @@ class SpaceFilling(Objective):
 
 
 def get_objective_function(
-    criterion: OptimalityCriterion | None, domain: Domain, n_experiments: int
-) -> Objective | None:
+    criterion: Optional[OptimalityCriterion], domain: Domain, n_experiments: int
+) -> Optional[Objective]:
     if criterion is None:
         return DOptimality(
             domain,
