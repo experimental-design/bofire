@@ -14,36 +14,30 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.types import Bounds
-from bofire.strategies.doe.objective import get_objective_class
+from bofire.data_models.strategies.doe import DOptimalityCriterion, OptimalityCriterion
+from bofire.strategies.doe.criterion import get_objective_function
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
-    get_formula_from_string,
     metrics,
     nchoosek_constraints_as_bounds,
 )
-from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.random import RandomStrategy
 
 
 def find_local_max_ipopt(
     domain: Domain,
-    model_type: Optional[Union[str, Formula]],
-    n_experiments: Optional[int] = None,
+    n_experiments: int,
     delta: float = 1e-7,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
-    transform_range: Optional[Bounds] = None,
+    criterion: OptimalityCriterion = DOptimalityCriterion,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
     Args:
         domain (Domain): domain containing the inputs and constraints.
-        model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
-            are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
         delta (float): Regularization parameter. Default value is 1e-3.
@@ -55,8 +49,7 @@ def find_local_max_ipopt(
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
-        transform_range (Optional[Bounds]): range to which the input variables are transformed.
+        criterion (OptimalityCriterion): OptimalityCriterion object indicating which criterion function to use.
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -77,14 +70,10 @@ def find_local_max_ipopt(
         )
         raise e
 
-    model_formula = get_formula_from_string(
-        model_type=model_type,
-        rhs_only=True,
-        domain=domain,
+    objective_function = get_objective_function(
+        criterion, domain=domain, n_experiments=n_experiments, delta=delta
     )
-
-    # determine number of experiments (only relevant if n_experiments is not provided by the user)
-    n_experiments = get_n_experiments(model_formula, n_experiments)
+    assert objective_function is not None, "Criterion type is not supported!"
 
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
@@ -151,16 +140,6 @@ def find_local_max_ipopt(
             .flatten()
         )
 
-    # get objective function and its jacobian
-    objective_class = get_objective_class(objective)
-    objective_function = objective_class(
-        domain=domain,
-        model=model_formula,
-        n_experiments=n_experiments,
-        delta=delta,
-        transform_range=transform_range,
-    )
-
     # write constraints as scipy constraints
     constraints = constraints_as_scipy_constraints(
         domain,
@@ -221,7 +200,7 @@ def find_local_max_ipopt(
     if _ipopt_options[b"print_level"] > 12:  # type: ignore
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
-        X = model_formula.get_model_matrix(design).to_numpy()
+        X = objective_function.get_model_matrix(design).to_numpy()
         print("metrics:", metrics(X))
 
     # check if all points respect the domain and the constraint

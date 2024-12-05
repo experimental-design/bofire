@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Optional, Type
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -9,9 +9,18 @@ from formulaic import Formula
 from torch import Tensor
 
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.strategies.doe import (
+    AOptimalityCriterion,
+    DoEOptimalityCriterion,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    KOptimalityCriterion,
+    OptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
-from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -79,6 +88,10 @@ class Objective:
     @abstractmethod
     def _model_jacobian_t(self, x: np.ndarray) -> np.ndarray:
         """Computes the transpose of the model jacobian for each experiment in input x."""
+        pass
+
+    @abstractmethod
+    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
         pass
 
 
@@ -153,6 +166,9 @@ class ModelBasedObjective(Objective):
         X = pd.DataFrame(x.reshape(self.n_experiments, self.n_vars), columns=self.vars)
         jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)  # type: ignore
         return np.swapaxes(jacobians, 1, 2)
+
+    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
+        return self.model.get_model_matrix(design)
 
 
 class DOptimality(ModelBasedObjective):
@@ -535,19 +551,60 @@ class SpaceFilling(Objective):
         )
         return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
 
+    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
+        return design
 
-def get_objective_class(objective: OptimalityCriterionEnum) -> Type:
-    objective = OptimalityCriterionEnum(objective)
 
-    if objective == OptimalityCriterionEnum.D_OPTIMALITY:
-        return DOptimality
-    if objective == OptimalityCriterionEnum.A_OPTIMALITY:
-        return AOptimality
-    if objective == OptimalityCriterionEnum.G_OPTIMALITY:
-        return GOptimality
-    if objective == OptimalityCriterionEnum.E_OPTIMALITY:
-        return EOptimality
-    if objective == OptimalityCriterionEnum.K_OPTIMALITY:
-        return KOptimality
-    if objective == OptimalityCriterionEnum.SPACE_FILLING:
-        return SpaceFilling
+def get_objective_function(
+    criterion: OptimalityCriterion, domain: Domain, n_experiments: int, delta: float
+) -> Objective | None:
+    if isinstance(criterion, DoEOptimalityCriterion):
+        if isinstance(criterion, DOptimalityCriterion):
+            return DOptimality(
+                domain,
+                model=criterion.formula,
+                n_experiments=n_experiments,
+                delta=delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, AOptimalityCriterion):
+            return AOptimality(
+                domain,
+                model=criterion.formula,
+                n_experiments=n_experiments,
+                delta=delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, GOptimalityCriterion):
+            return GOptimality(
+                domain,
+                model=criterion.formula,
+                n_experiments=n_experiments,
+                delta=delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, EOptimalityCriterion):
+            return EOptimality(
+                domain,
+                model=criterion.formula,
+                n_experiments=n_experiments,
+                delta=delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, KOptimalityCriterion):
+            return KOptimality(
+                domain,
+                model=criterion.formula,
+                n_experiments=n_experiments,
+                delta=delta,
+                transform_range=criterion.transform_range,
+            )
+    if isinstance(criterion, SpaceFillingCriterion):
+        return SpaceFilling(
+            domain,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform_range=criterion.transform_range,
+        )
+    else:
+        NotImplementedError("Criterion type not implemented!")
