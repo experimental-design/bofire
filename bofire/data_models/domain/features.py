@@ -630,26 +630,30 @@ class Inputs(_BaseFeatures[AnyInput]):
         experiments: Optional[pd.DataFrame] = None,
         reference_experiment: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
-        """Returns the boundaries of the optimization problem based on the transformations
-        defined in the  `specs` dictionary.
+        """Returns the boundaries of the optimization problem based on the
+        transformations defined in the  `specs` dictionary.
 
         Args:
             specs (InputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
-            experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
-                If provided the real feature bounds are returned based on both the opt.
-                feature bounds and the extreme points in the dataframe. Defaults to None,
-            reference_experiment (Optional[pd.Serues], optional): If a reference experiment provided,
-            then the local bounds based on a local search region are provided as reference to the
-                reference experiment. Currently only supported for continuous inputs.
-                For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
+            experiments (Optional[pd.DataFrame], optional): Dataframe with input
+                features. If provided the real feature bounds are returned based
+                on both the opt. feature bounds and the extreme points in the
+                dataframe. Defaults to None,
+            reference_experiment (Optional[pd.Serues], optional): If a reference
+                experiment provided, then the local bounds based on a local search
+                region are provided as reference to the reference experiment.
+                Currently only supported for continuous inputs. For more details,
+                it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.
+                Defaults to None.
 
         Raises:
             ValueError: If a feature type is not known.
             ValueError: If no transformation is provided for a categorical feature.
 
         Returns:
-            Tuple[List[float], List[float]]: list with lower bounds, list with upper bounds.
+            Tuple[List[float], List[float]]: list with lower bounds, list with
+                upper bounds.
 
         """
         if reference_experiment is not None and experiments is not None:
