@@ -13,12 +13,10 @@ from formulaic import Formula
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, Input
-from bofire.data_models.types import Bounds
-from bofire.strategies.doe.criterion import get_objective_class
-from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
-from bofire.strategies.doe.utils import get_formula_from_string
+from bofire.data_models.strategies.doe import DOptimalityCriterion, OptimalityCriterion
+from bofire.strategies.doe.design import find_local_max_ipopt
+from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils_categorical_discrete import equal_count_split
-from bofire.strategies.enum import OptimalityCriterionEnum
 
 
 @total_ordering
@@ -173,20 +171,11 @@ def bnb(
     if priority_queue.empty():
         raise RuntimeError("Queue empty before feasible solution was found")
 
-    domain = kwargs["domain"]
-    n_experiments = kwargs["n_experiments"]
-
-    # get objective function
-    model_formula = get_formula_from_string(
-        model_type=kwargs["model_type"],
-        rhs_only=True,
-        domain=domain,
-    )
-    objective_class = get_objective_class(kwargs["objective"])
-    objective_class = objective_class(
-        domain=domain,
-        model=model_formula,
-        n_experiments=n_experiments,
+    objective_class = get_objective_function(
+        criterion=kwargs["criterion"],
+        domain=kwargs["domain"],
+        n_experiments=kwargs["n_experiments"],
+        delta=kwargs["delta"],
     )
 
     pre_size = priority_queue.qsize()
@@ -216,7 +205,7 @@ def bnb(
                 current_branch.categorical_groups,
                 current_branch.discrete_vars,
             )
-            domain.validate_candidates(
+            kwargs["domain"].validate_candidates(
                 candidates=design.apply(lambda x: np.round(x, 8)),
                 only_inputs=True,
                 tol=1e-4,
@@ -239,17 +228,16 @@ def bnb(
 def find_local_max_ipopt_BaB(
     domain: Domain,
     model_type: Union[str, Formula],
-    n_experiments: Optional[int] = None,
+    n_experiments: int,
     delta: float = 1e-7,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    criterion: OptimalityCriterion = DOptimalityCriterion,
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
-    transform_range: Optional[Bounds] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
@@ -285,21 +273,10 @@ def find_local_max_ipopt_BaB(
     if categorical_groups is None:
         categorical_groups = []
 
-    model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
+    objective_function = get_objective_function(
+        criterion, domain=domain, n_experiments=n_experiments, delta=delta
     )
-
-    n_experiments = get_n_experiments(model_formula, n_experiments)
-
-    # get objective function
-    objective_class = get_objective_class(objective)
-    objective_class = objective_class(
-        domain=domain,
-        model=model_formula,
-        n_experiments=n_experiments,
-        delta=delta,
-        transform_range=transform_range,
-    )
+    assert objective_function is not None, "Criterion type is not supported!"
 
     # setting up initial node in the branch-and-bound tree
     column_keys = domain.inputs.get_keys()
@@ -344,16 +321,15 @@ def find_local_max_ipopt_BaB(
 
     initial_design = find_local_max_ipopt(
         domain,
-        model_formula,
         n_experiments,
         delta,
         ipopt_options,
         sampling,
         None,
         partially_fixed_experiments=initial_branch,
-        objective=objective,
+        criterion=criterion,
     )
-    initial_value = objective_class.evaluate(
+    initial_value = objective_function.evaluate(
         initial_design.to_numpy().flatten(),
     )
 
@@ -373,13 +349,12 @@ def find_local_max_ipopt_BaB(
     result_node = bnb(
         initial_queue,
         domain=domain,
-        model_type=model_formula,
         n_experiments=n_experiments,
         delta=delta,
         ipopt_options=ipopt_options,
         sampling=sampling,
         fixed_experiments=None,
-        objective=objective,
+        criterion=criterion,
         verbose=verbose,
     )
 
@@ -388,18 +363,16 @@ def find_local_max_ipopt_BaB(
 
 def find_local_max_ipopt_exhaustive(
     domain: Domain,
-    model_type: Union[str, Formula],
-    n_experiments: Optional[int] = None,
+    n_experiments: int,
     delta: float = 1e-7,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
-    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    criterion: OptimalityCriterion = DOptimalityCriterion,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
-    transform_range: Optional[Bounds] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
@@ -438,18 +411,10 @@ def find_local_max_ipopt_exhaustive(
             "Exhaustive search for discrete variables is not implemented yet."
         )
 
-    # get objective function
-    model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
+    objective_function = get_objective_function(
+        criterion, domain=domain, n_experiments=n_experiments, delta=delta
     )
-    objective_class = get_objective_class(objective)
-    objective_class = objective_class(
-        domain=domain,
-        model=model_formula,
-        n_experiments=n_experiments,
-        delta=delta,
-        transform_range=transform_range,
-    )
+    assert objective_function is not None, "Criterion type is not supported!"
 
     # get binary variables
     binary_vars = [var for group in categorical_groups for var in group]
@@ -460,7 +425,6 @@ def find_local_max_ipopt_exhaustive(
     for group in categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
 
-    n_experiments = get_n_experiments(model_formula, n_experiments)
     n_non_fixed_experiments = n_experiments
     if fixed_experiments is not None:
         n_non_fixed_experiments -= len(fixed_experiments)
@@ -539,14 +503,13 @@ def find_local_max_ipopt_exhaustive(
         try:
             current_design = find_local_max_ipopt(
                 domain,
-                model_formula,
                 n_experiments,
                 delta,
                 ipopt_options,
                 sampling,
                 None,
                 one_set_of_experiments,
-                objective,
+                criterion=criterion,
             )
             domain.validate_candidates(
                 candidates=current_design.apply(lambda x: np.round(x, 8)),
@@ -554,7 +517,7 @@ def find_local_max_ipopt_exhaustive(
                 tol=1e-4,
                 raise_validation_error=True,
             )
-            temp_value = objective_class.evaluate(
+            temp_value = objective_function.evaluate(
                 current_design.to_numpy().flatten(),
             )
             if minimum is None or minimum > temp_value:
