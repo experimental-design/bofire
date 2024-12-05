@@ -14,10 +14,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import (
-    AnyOptimalityCriterion,
-    DOptimalityCriterion,
-)
+from bofire.data_models.strategies.doe import AnyOptimalityCriterion
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -30,11 +27,11 @@ from bofire.strategies.random import RandomStrategy
 def find_local_max_ipopt(
     domain: Domain,
     n_experiments: int,
+    criterion: AnyOptimalityCriterion,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    criterion: AnyOptimalityCriterion = DOptimalityCriterion,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
