@@ -1,7 +1,12 @@
 import torch
 from botorch.models.deterministic import AffineDeterministicModel
 
-from bofire.data_models.surrogates.api import LinearDeterministicSurrogate as DataModel
+from bofire.data_models.surrogates.api import (
+    CategoricalDeterministicSurrogate as CategoricalDeterministicSurrogateDataModel,
+)
+from bofire.data_models.surrogates.api import (
+    LinearDeterministicSurrogate as LinearDeterministicSurrogateDataModel,
+)
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.utils.torch_tools import tkwargs
 
@@ -9,7 +14,7 @@ from bofire.utils.torch_tools import tkwargs
 class LinearDeterministicSurrogate(BotorchSurrogate):
     def __init__(
         self,
-        data_model: DataModel,
+        data_model: LinearDeterministicSurrogateDataModel,
         **kwargs,
     ):
         self.intercept = data_model.intercept
@@ -28,7 +33,7 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
 class CategoricalDeterministicSurrogate(BotorchSurrogate):
     def __init__(
         self,
-        data_model: DataModel,
+        data_model: CategoricalDeterministicSurrogateDataModel,
         **kwargs,
     ):
         self.mapping = data_model.mapping
