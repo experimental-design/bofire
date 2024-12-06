@@ -5,7 +5,10 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import CategoricalInput, Input
-from bofire.data_models.strategies.doe import AnyDoEOptimalityCriterion
+from bofire.data_models.strategies.doe import (
+    AnyDoEOptimalityCriterion,
+    DoEOptimalityCriterion,
+)
 from bofire.strategies.doe.branch_and_bound import (
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
@@ -39,7 +42,7 @@ class DoEStrategy(Strategy):
 
     @property
     def formula(self):
-        if isinstance(self.data_model.criterion, AnyDoEOptimalityCriterion):
+        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
             return get_formula_from_string(
                 self.data_model.criterion.formula, self.data_model.domain
             )
