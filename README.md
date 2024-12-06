@@ -119,7 +119,9 @@ print(candidates)
 Let's execute the randomly drawn candidates using the `himmelblau` function to obtain `Experiments` in BoFire's terminology.
 
 ```Python
-experimental_output = candidates.apply(lambda row: himmelblau(row["x1"], row["x2"]), axis=1)
+experimental_output = candidates.apply(
+    lambda row: himmelblau(row["x1"], row["x2"]), axis=1
+)
 
 experiments = candidates.copy()
 experiments["y"] = experimental_output
@@ -148,7 +150,9 @@ from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.strategies.api import SoboStrategy
 
 
-sobo_strategy_data_model = SoboStrategy(domain=domain, acquisition_function=qLogEI(), seed=19)
+sobo_strategy_data_model = SoboStrategy(
+    domain=domain, acquisition_function=qLogEI(), seed=19
+)
 
 sobo_strategy = strategies.map(sobo_strategy_data_model)
 ```
@@ -174,8 +178,12 @@ for _ in range(30):
     new_candidates = sobo_strategy.ask(candidate_count=1)
 
     new_experiments = new_candidates.copy()
-    new_experiments["y"] = new_candidates.apply(lambda row: himmelblau(row["x1"], row["x2"]), axis=1)
-    experiments = pd.concat([experiments, new_experiments], join="inner").reset_index(drop=True)
+    new_experiments["y"] = new_candidates.apply(
+        lambda row: himmelblau(row["x1"], row["x2"]), axis=1
+    )
+    experiments = pd.concat([experiments, new_experiments], join="inner").reset_index(
+        drop=True
+    )
 
     sobo_strategy.tell(experiments=experiments)
 ```
