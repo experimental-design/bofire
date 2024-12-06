@@ -21,6 +21,7 @@ from bofire.data_models.strategies.doe import (
 )
 from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
+from bofire.strategies.doe.utils import get_formula_from_string
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -561,14 +562,14 @@ def get_objective_function(
     if criterion is None:
         return DOptimality(
             domain,
-            model="linear",
+            model=get_formula_from_string(domain=domain),
             n_experiments=n_experiments,
         )
     if isinstance(criterion, DoEOptimalityCriterion):
         if isinstance(criterion, DOptimalityCriterion):
             return DOptimality(
                 domain,
-                model=criterion.formula,
+                model=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -576,7 +577,7 @@ def get_objective_function(
         if isinstance(criterion, AOptimalityCriterion):
             return AOptimality(
                 domain,
-                model=criterion.formula,
+                model=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -584,7 +585,7 @@ def get_objective_function(
         if isinstance(criterion, GOptimalityCriterion):
             return GOptimality(
                 domain,
-                model=criterion.formula,
+                model=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -592,7 +593,7 @@ def get_objective_function(
         if isinstance(criterion, EOptimalityCriterion):
             return EOptimality(
                 domain,
-                model=criterion.formula,
+                model=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -600,7 +601,7 @@ def get_objective_function(
         if isinstance(criterion, KOptimalityCriterion):
             return KOptimality(
                 domain,
-                model=criterion.formula,
+                model=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,

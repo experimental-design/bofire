@@ -1,13 +1,17 @@
+from typing import Optional
+
 import pandas as pd
 from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import CategoricalInput, Input
+from bofire.data_models.strategies.doe import AnyDoEOptimalityCriterion
 from bofire.strategies.doe.branch_and_bound import (
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
 )
-from bofire.strategies.doe.design import find_local_max_ipopt
+from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
+from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     design_from_new_to_original_domain,
     discrete_to_relaxable_domain_mapper,
@@ -32,6 +36,14 @@ class DoEStrategy(Strategy):
         self.data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
+
+    @property
+    def formula(self):
+        if isinstance(self.data_model.criterion, AnyDoEOptimalityCriterion):
+            return get_formula_from_string(
+                self.data_model.criterion.formula, self.data_model.domain
+            )
+        return None
 
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)
@@ -177,6 +189,18 @@ class DoEStrategy(Strategy):
         return transformed_design.iloc[fixed_experiments_count:, :].reset_index(
             drop=True,
         )
+
+    def get_required_number_of_experiments(self) -> Optional[int]:
+        if self.formula:
+            return (
+                get_n_experiments(self.formula)
+                - n_zero_eigvals(domain=self.data_model.domain, model_type=self.formula)
+                + 3
+            )
+        else:
+            ValueError(
+                f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
+            )
 
     def has_sufficient_experiments(
         self,
