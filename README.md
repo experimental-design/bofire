@@ -185,7 +185,7 @@ The optimization behavior of the strategy is shown in the animated figure below.
 [comment]: <> (TODO: Update Figure with Dorofee and exchange link below with https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau_optimization.gif)
 
 <div style="text-align: center;">
-    <img src="graphics/tutorials/himmelblau_optimization.gif" alt="Optimization of Himmelblau's function" width="500"/>
+    <img src="graphics/tutorials/himmelblau_optimization.gif" alt="Optimization of Himmelblau's function" width="300"/>
 </div>
 
 
