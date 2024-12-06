@@ -3,8 +3,15 @@ from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.surrogates.api import (
+    CategoricalDeterministicSurrogate,
+    LinearDeterministicSurrogate,
+)
 
 
 def test_linear_deterministic_surrogate():
@@ -24,3 +31,19 @@ def test_linear_deterministic_surrogate():
     experiments = pd.DataFrame(data={"a": [1.0, 2.0], "b": [0.5, 4.0]})
     preds = surrogate.predict(experiments)
     assert_frame_equal(preds, pd.DataFrame(data={"y_pred": [1.5, 10.0], "y_sd": 0.0}))
+
+
+def test_categorical_deterministic_surrogate():
+    surrogate_data = CategoricalDeterministicSurrogate(
+        inputs=Inputs(
+            features=[
+                CategoricalInput(key="a", categories=["A", "B"]),
+            ],
+        ),
+        outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        mapping={"A": 1.0, "B": 2.0},
+    )
+    surrogate = surrogates.map(surrogate_data)
+    experiments = pd.DataFrame(data={"a": ["A", "B"]})
+    preds = surrogate.predict(experiments)
+    assert_frame_equal(preds, pd.DataFrame(data={"y_pred": [1.0, 2.0], "y_sd": 0.0}))
