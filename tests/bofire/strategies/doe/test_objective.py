@@ -9,7 +9,7 @@ from bofire.strategies.doe.objective import (
     DOptimality,
     EOptimality,
     GOptimality,
-    Objective,
+    ModelBasedObjective,
     SpaceFilling,
 )
 from bofire.strategies.doe.utils import get_formula_from_string
@@ -32,7 +32,7 @@ def test_Objective_model_jacobian_t():
     f = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
     x = np.array([[1, 2, 3]])
 
-    objective = Objective(
+    objective = ModelBasedObjective(
         domain=domain,
         model=f,
         n_experiments=1,
@@ -51,7 +51,7 @@ def test_Objective_model_jacobian_t():
     model_terms = np.array(f, dtype=str)
     x = np.array([[1, 2, 3]])
 
-    objective = Objective(
+    objective = ModelBasedObjective(
         domain=domain,
         model=f,
         n_experiments=1,
@@ -116,7 +116,7 @@ def test_Objective_model_jacobian_t():
                 formula += term
     f = Formula(formula[:-3])
     x = np.array([[1, 2, 3, 4, 5]])
-    objective = Objective(
+    objective = ModelBasedObjective(
         domain=domain,
         model=f,
         n_experiments=1,
@@ -467,7 +467,7 @@ def test_DOptimality_instantiation():
 
 def test_DOptimality_evaluate_jacobian():
     # n_experiment = 1, n_inputs = 2, model: x1 + x2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
     domain = Domain.from_lists(
@@ -493,10 +493,12 @@ def test_DOptimality_evaluate_jacobian():
     np.random.seed(1)
     for _ in range(10):
         x = np.random.rand(2)
-        assert np.allclose(d_optimality.evaluate_jacobian(x), jacobian(x), rtol=1e-3)
+        assert np.allclose(
+            d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
+        )
 
     # n_experiment = 1, n_inputs = 2, model: x1**2 + x2**2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         return -4 * x**3 / (x[0] ** 4 + x[1] ** 4 + delta)
 
     model = Formula("{x1**2} + {x2**2} - 1")
@@ -509,10 +511,12 @@ def test_DOptimality_evaluate_jacobian():
     np.random.seed(1)
     for _ in range(10):
         x = np.random.rand(2)
-        assert np.allclose(d_optimality.evaluate_jacobian(x), jacobian(x), rtol=1e-3)
+        assert np.allclose(
+            d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
+        )
 
     # n_experiment = 2, n_inputs = 2, model = x1 + x2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         X = x.reshape(2, 2)
 
         y = np.empty(4)
@@ -562,7 +566,9 @@ def test_DOptimality_evaluate_jacobian():
     np.random.seed(1)
     for _ in range(10):
         x = np.random.rand(4)
-        assert np.allclose(d_optimality.evaluate_jacobian(x), jacobian(x), rtol=1e-3)
+        assert np.allclose(
+            d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
+        )
 
     # n_experiment = 2, n_inputs = 2, model = x1**2 + x2**2
     def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
@@ -762,9 +768,8 @@ def test_SpaceFilling_evaluate():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
 
-    space_filling = SpaceFilling(domain=domain, model=model, n_experiments=4, delta=0)
+    space_filling = SpaceFilling(domain=domain, n_experiments=4, delta=0)
 
     x = np.array([1, 0.6, 0.1, 0.3])
 
@@ -776,9 +781,8 @@ def test_SpaceFilling_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
 
-    space_filling = SpaceFilling(domain=domain, model=model, n_experiments=4, delta=0)
+    space_filling = SpaceFilling(domain=domain, n_experiments=4, delta=0)
 
     x = np.array([1, 0.4, 0, 0.1])
 

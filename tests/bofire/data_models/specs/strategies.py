@@ -21,7 +21,6 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
-from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -212,12 +211,12 @@ specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
-        "formula": "linear",
         "optimization_strategy": "default",
         "verbose": False,
         "seed": 42,
-        "objective": OptimalityCriterionEnum.D_OPTIMALITY,
-        "transform_range": None,
+        "criterion": strategies.DOptimalityCriterion(
+            formula="fully-quadratic", transform_range=None
+        ).model_dump(),
     },
 )
 specs.add_valid(
