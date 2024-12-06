@@ -96,12 +96,18 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                     active_dims=self.idx_continuous,
                     ard_num_dims=1,
                     batch_shape=torch.Size(),
+                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                        self.input_preprocessing_specs, feats
+                    ),
                 )
                 * kernels.map(
                     self.shape_kernel,
                     active_dims=self.idx_shape,
                     ard_num_dims=1,
                     batch_shape=torch.Size(),
+                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                        self.input_preprocessing_specs, feats
+                    ),
                 ),
                 outputscale_prior=priors.map(self.outputscale_prior),
             )
@@ -112,6 +118,9 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                     active_dims=self.idx_shape,
                     ard_num_dims=1,
                     batch_shape=torch.Size(),
+                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                        self.input_preprocessing_specs, feats
+                    ),
                 ),
                 outputscale_prior=priors.map(self.outputscale_prior),
             )
