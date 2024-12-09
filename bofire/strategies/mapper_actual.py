@@ -15,6 +15,7 @@ from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     SoboStrategy,
 )
 from bofire.strategies.random import RandomStrategy
@@ -29,6 +30,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.SoboStrategy: SoboStrategy,
     data_models.AdditiveSoboStrategy: AdditiveSoboStrategy,
     data_models.MultiplicativeSoboStrategy: MultiplicativeSoboStrategy,
+    data_models.MultiplicativeAdditiveSoboStrategy: MultiplicativeAdditiveSoboStrategy,
     data_models.CustomSoboStrategy: CustomSoboStrategy,
     data_models.MultiFidelityStrategy: MultiFidelityStrategy,
     data_models.QehviStrategy: QehviStrategy,

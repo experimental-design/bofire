@@ -21,16 +21,18 @@ from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
 from bofire.data_models.strategies.api import (
-    MultiplicativeSoboStrategy as MultiplicativeDataModel,
     MultiplicativeAdditiveSoboStrategy as MultiplicativeAdditiveDataModel,
+)
+from bofire.data_models.strategies.api import (
+    MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
 from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
-    get_multiplicative_botorch_objective,
     get_multiplicative_additive_objective,
+    get_multiplicative_botorch_objective,
     get_objective_callable,
     get_output_constraints,
     tkwargs,
@@ -242,6 +244,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
                 objective=get_multiplicative_botorch_objective(  # type: ignore
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
+                    adapt_weights_to_1_inf=True,
                 ),
             ),
             None,
@@ -273,12 +276,12 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
                     additive_features=self.additive_features,
+                    adapt_weights_to_1_inf=True,
                 )
             ),
             None,
             1e-3,
         )
-
 
 
 class CustomSoboStrategy(SoboStrategy):

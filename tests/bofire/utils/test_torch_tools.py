@@ -43,8 +43,8 @@ from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
     get_multiobjective_objective,
-    get_multiplicative_botorch_objective,
     get_multiplicative_additive_objective,
+    get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
     get_objective_callable,
@@ -53,8 +53,7 @@ from bofire.utils.torch_tools import (
     interp1d,
     tkwargs,
 )
-from tests.bofire.data_models.domain.test_domain_nchoosek_combinatorics import experiments
-from tests.bofire.data_models.domain.test_inputs import outputs
+
 
 if1 = ContinuousInput(
     bounds=(0, 1),
@@ -864,9 +863,11 @@ def mutiobjective_data():
 
     return samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs
 
-def test_get_multiplicative_objective(mutiobjective_data):
 
-    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = mutiobjective_data
+def test_get_multiplicative_objective(mutiobjective_data):
+    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
+        mutiobjective_data
+    )
 
     objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
@@ -886,32 +887,39 @@ def test_get_multiplicative_objective(mutiobjective_data):
 
 
 def test_get_additive_objective(mutiobjective_data):
+    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
+        mutiobjective_data
+    )
 
-    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = mutiobjective_data
-
-    objective = get_additive_botorch_objective(outputs=outputs, experiments=experiments,
-                                               exclude_constraints=False)
+    objective = get_additive_botorch_objective(
+        outputs=outputs, experiments=experiments, exclude_constraints=False
+    )
     generic_objective = GenericMCObjective(objective=objective)
     # check the shape
     objective_forward = generic_objective.forward(samples2, None)
     assert objective_forward.shape == torch.Size((30, 512))
     objective_forward = generic_objective.forward(samples, None)
-    assert objective_forward.shape == torch.Size((30, ))
+    assert objective_forward.shape == torch.Size((30,))
     # check what is in
     # calc with numpy
     reward1 = obj1(a_samples[:, 0]) * obj1.w
     reward2 = obj2(a_samples[:, 1]) * obj2.w
     reward3 = obj3(a_samples[:, 2]) * obj3.w
     reward4 = obj4(a_samples[:, 3]) * obj4.w
-    assert np.allclose(reward1 + reward2 + reward3 + reward4, objective_forward.detach().numpy())
+    assert np.allclose(
+        reward1 + reward2 + reward3 + reward4, objective_forward.detach().numpy()
+    )
 
 
 def test_get_multiplicative_additive_objective(mutiobjective_data):
-
-    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = mutiobjective_data
+    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
+        mutiobjective_data
+    )
 
     objective = get_multiplicative_additive_objective(
-        outputs=outputs, experiments=experiments, exclude_constraints=False,
+        outputs=outputs,
+        experiments=experiments,
+        exclude_constraints=False,
         additive_features=["gamma", "alpha"],
     )
     generic_objective = GenericMCObjective(objective=objective)
@@ -919,7 +927,7 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
     objective_forward = generic_objective.forward(samples2, None)
     assert objective_forward.shape == torch.Size((30, 512))
     objective_forward = generic_objective.forward(samples, None)
-    assert objective_forward.shape == torch.Size((30, ))
+    assert objective_forward.shape == torch.Size((30,))
     # check what is in
     # calc with numpy
     reward_alpha = obj1(a_samples[:, 0])
@@ -931,8 +939,11 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
     additive_objective = 1.0 + reward_gamma * w_gamma + reward_alpha * w_alpha
     denominator_additive = 1.0 + w_gamma + w_alpha
     denominator_multiplicative = 1.0 + w_beta + w_omega
-    multiplicative_objective = ((reward_beta ** w_beta) * (reward_omega ** w_omega) * \
-                               (additive_objective / denominator_additive)) ** (1/denominator_multiplicative)
+    multiplicative_objective = (
+        (reward_beta**w_beta)
+        * (reward_omega**w_omega)
+        * (additive_objective / denominator_additive)
+    ) ** (1 / denominator_multiplicative)
 
     # multiplicative weighting is not nan-safe with != 1.0 weights: use nan-filter for this test
     # need other objectives for this

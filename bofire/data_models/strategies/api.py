@@ -26,8 +26,9 @@ from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
-    SoboStrategy, MultiplicativeAdditiveSoboStrategy,
+    SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
