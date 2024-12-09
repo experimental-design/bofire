@@ -664,6 +664,7 @@ def test_fixed_experiments_checker():
 
 
 def test_partially_fixed_experiments():
+    pytest.importorskip("docutils")
     domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
