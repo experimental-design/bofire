@@ -74,13 +74,15 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
             )
         return v
 
+
 class _CheckAdaptableWeightsMixin:
-    """ additional validation of weights for adaptable weights, in multiplicative calculations. Adaption to (1, inf)
-    requires w>=1e-8 """
+    """additional validation of weights for adaptable weights, in multiplicative calculations. Adaption to (1, inf)
+    requires w>=1e-8"""
+
     @model_validator(mode="after")
     def check_adaptable_weights(cls, self):
         for obj in self.domain.outputs.get_by_objective():
-            if obj.objective.w <1e-8:
+            if obj.objective.w < 1e-8:
                 raise pydantic.ValidationError(
                     f"Weight transformation to (1, inf) requires w>=1e-8 . Violated by feature {obj.key}."
                 )

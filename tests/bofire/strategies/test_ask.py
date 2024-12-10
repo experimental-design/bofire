@@ -26,11 +26,11 @@ STRATEGY_SPECS_MULTI_OBJECTIVE = {
     data_models.MultiplicativeAdditiveSoboStrategy: VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
 }
 mo_strategy_has_ref_point = {
-     data_models.QehviStrategy: True,
-     data_models.QnehviStrategy: True,
-     data_models.AdditiveSoboStrategy: False,
-     data_models.MultiplicativeSoboStrategy: False,
-     data_models.MultiplicativeAdditiveSoboStrategy: False,
+    data_models.QehviStrategy: True,
+    data_models.QnehviStrategy: True,
+    data_models.AdditiveSoboStrategy: False,
+    data_models.MultiplicativeSoboStrategy: False,
+    data_models.MultiplicativeAdditiveSoboStrategy: False,
 }
 mo_strategy_has_additive_objective = {
     data_models.QehviStrategy: False,
@@ -58,7 +58,7 @@ mo_strategy_support_weights = {
         for descriptor in [True, False]
     ],
 )
-#@pytest.mark.slow
+# @pytest.mark.slow
 def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_count):
     # generate data
     benchmark = Ackley(categorical=categorical, descriptor=descriptor)
@@ -85,7 +85,14 @@ def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_coun
 @pytest.mark.parametrize(
     "cls, spec, use_ref_point, add_additive_features, vary_weights, candidate_count",
     [
-        (cls, specs, use_ref_point, add_additive_features, vary_weights, random.randint(1, 2))
+        (
+            cls,
+            specs,
+            use_ref_point,
+            add_additive_features,
+            vary_weights,
+            random.randint(1, 2),
+        )
         for cls, specs in STRATEGY_SPECS_MULTI_OBJECTIVE.items()
         for use_ref_point in [True, False]
         for add_additive_features in [True, False]
@@ -94,10 +101,10 @@ def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_coun
         # for descriptor in [True, False]
     ],
 )
-#@pytest.mark.slow  # use pytest . --runslow in command line to include these tests
-def test_ask_multi_objective(cls, spec, use_ref_point, add_additive_features, vary_weights,
-                             candidate_count):
-
+# @pytest.mark.slow  # use pytest . --runslow in command line to include these tests
+def test_ask_multi_objective(
+    cls, spec, use_ref_point, add_additive_features, vary_weights, candidate_count
+):
     # generate data
     benchmark = DTLZ2(
         dim=6,

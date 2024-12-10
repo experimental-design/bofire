@@ -14,8 +14,8 @@ from bofire.strategies.predictives.qparego import QparegoStrategy
 from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
-    MultiplicativeSoboStrategy,
     MultiplicativeAdditiveSoboStrategy,
+    MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.strategies.random import RandomStrategy

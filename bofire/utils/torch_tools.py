@@ -18,7 +18,6 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
-    Objective,
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     ConstrainedObjective,
@@ -27,6 +26,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     MinimizeSigmoidObjective,
     MovingMaximizeSigmoidObjective,
+    Objective,
     TargetObjective,
 )
 from bofire.strategies.strategy import Strategy
@@ -490,7 +490,7 @@ def _callables_and_weights(
     experiments: pd.DataFrame,
     exclude_constraints: bool = False,
     allowed_objectives: List[Objective] = None,
-    adapt_weights_to_1_inf: bool = False
+    adapt_weights_to_1_inf: bool = False,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
     extract callables and weights from outputs object
@@ -557,12 +557,11 @@ def _callables_and_weights(
 
 
 def get_multiplicative_botorch_objective(
-    outputs: Outputs,
-    experiments: pd.DataFrame,
-    adapt_weights_to_1_inf: bool = True
+    outputs: Outputs, experiments: pd.DataFrame, adapt_weights_to_1_inf: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    callables, weights, _ = _callables_and_weights(outputs, experiments,
-                                                   adapt_weights_to_1_inf=adapt_weights_to_1_inf)
+    callables, weights, _ = _callables_and_weights(
+        outputs, experiments, adapt_weights_to_1_inf=adapt_weights_to_1_inf
+    )
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         val = 1.0
@@ -579,7 +578,9 @@ def get_additive_botorch_objective(
     exclude_constraints: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables, weights, _ = _callables_and_weights(
-        outputs, experiments, exclude_constraints=exclude_constraints,
+        outputs,
+        experiments,
+        exclude_constraints=exclude_constraints,
         adapt_weights_to_1_inf=False,
     )
 
@@ -611,7 +612,10 @@ def get_multiobjective_objective(
     allowed_objectives = [MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
 
     callables_outputs, _, _ = _callables_and_weights(
-        outputs, experiments, allowed_objectives=allowed_objectives, adapt_weights_to_1_inf=False,
+        outputs,
+        experiments,
+        allowed_objectives=allowed_objectives,
+        adapt_weights_to_1_inf=False,
     )
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
@@ -646,7 +650,9 @@ def get_multiplicative_additive_objective(
     """
 
     callables, weights, keys = _callables_and_weights(
-        outputs, experiments, exclude_constraints=exclude_constraints,
+        outputs,
+        experiments,
+        exclude_constraints=exclude_constraints,
         adapt_weights_to_1_inf=adapt_weights_to_1_inf,
     )
 
@@ -690,9 +696,8 @@ def get_multiplicative_additive_objective(
             multiplicative_objective *= c(samples, None) ** w
             denominator_multiplicative_objectives += w
 
-        y = (
-            multiplicative_objective
-            * (additive_objective / denominator_additive_objectives)
+        y = multiplicative_objective * (
+            additive_objective / denominator_additive_objectives
         )
         return y
 
