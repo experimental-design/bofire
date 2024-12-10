@@ -4,6 +4,13 @@ from formulaic import Formula
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.doe import (
+    AOptimalityCriterion,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.strategies.doe.objective import (
     AOptimality,
     DOptimality,
@@ -11,6 +18,7 @@ from bofire.strategies.doe.objective import (
     GOptimality,
     ModelBasedObjective,
     SpaceFilling,
+    get_objective_function,
 )
 from bofire.strategies.doe.utils import get_formula_from_string
 
@@ -799,20 +807,31 @@ def test_MinMaxTransform():
     x = np.array([1, 0.8, 0.55, 0.65])
     x_scaled = x * 2 - 1
 
-    for cls in [DOptimality, AOptimality, EOptimality, GOptimality, SpaceFilling]:
-        objective_unscaled = cls(
+    for cls in [
+        DOptimalityCriterion,
+        AOptimalityCriterion,
+        EOptimalityCriterion,
+        GOptimalityCriterion,
+        SpaceFillingCriterion,
+    ]:
+        objective_unscaled = get_objective_function(
+            cls(
+                model=model,
+                delta=0,
+                transform_range=None,
+            ),
             domain=domain,
-            model=model,
             n_experiments=4,
-            delta=0,
-            transform_range=None,
         )
-        objective_scaled = cls(
+
+        objective_scaled = get_objective_function(
+            cls(
+                model=model,
+                delta=0,
+                transform_range=(-1.0, 1.0),
+            ),
             domain=domain,
-            model=model,
             n_experiments=4,
-            delta=0,
-            transform_range=(-1.0, 1.0),
         )
         assert np.allclose(
             objective_unscaled.evaluate(x_scaled),
