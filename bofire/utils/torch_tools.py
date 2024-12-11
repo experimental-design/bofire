@@ -489,7 +489,7 @@ def _callables_and_weights(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = False,
-    allowed_objectives: List[Objective] = None,
+    allowed_objectives: Optional[List[Objective]] = None,
     adapt_weights_to_1_inf: bool = False,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
@@ -628,7 +628,7 @@ def get_multiplicative_additive_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = True,
-    additive_features: List[str] = None,
+    additive_features: Optional[List[str]] = None,
     adapt_weights_to_1_inf: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     """will compute the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
@@ -683,7 +683,7 @@ def get_multiplicative_additive_objective(
         weights_multiplicative,
     ) = _differ_additive_and_multiplicative_features(callables, weights, keys)
 
-    def objective(samples: Tensor, X: Tensor = None) -> Tensor:
+    def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         additive_objective = 1.0
         denominator_additive_objectives = 1.0
         for c, w in zip(callables_additive, weights_additive):
@@ -696,7 +696,7 @@ def get_multiplicative_additive_objective(
             multiplicative_objective *= c(samples, None) ** w
             denominator_multiplicative_objectives += w
 
-        y = multiplicative_objective * (
+        y: Tensor = multiplicative_objective * (
             additive_objective / denominator_additive_objectives
         )
         return y
