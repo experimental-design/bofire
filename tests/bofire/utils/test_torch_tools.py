@@ -935,8 +935,10 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
     reward_gamma = obj3(a_samples[:, 2])
     reward_omega = obj4(a_samples[:, 3])
     w_alpha, w_beta, w_gamma, w_omega = obj1.w, obj2.w, obj3.w, obj4.w
-    w_alpha, w_beta, w_gamma, w_omega = [w / min([w_alpha, w_beta, w_gamma, w_omega]) for w in \
-                                         [w_alpha, w_beta, w_gamma, w_omega]]
+    w_alpha, w_beta, w_gamma, w_omega = [
+        w / min([w_alpha, w_beta, w_gamma, w_omega])
+        for w in [w_alpha, w_beta, w_gamma, w_omega]
+    ]
 
     additive_objective = 1.0 + reward_gamma * w_gamma + reward_alpha * w_alpha
     denominator_additive = 1.0 + w_gamma + w_alpha
