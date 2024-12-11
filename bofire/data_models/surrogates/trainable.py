@@ -47,7 +47,9 @@ AnyAggregation = Union[SumAggregation, MeanAggregation]
 
 class Hyperconfig(BaseModel):
     type: str
-    hyperstrategy: Literal["RandomStrategy", "FactorialStrategy", "SoboStrategy"]
+    hyperstrategy: Literal[
+        "RandomStrategy", "FractionalFactorialStrategy", "SoboStrategy"
+    ]
     inputs: Inputs
     n_iterations: Optional[Annotated[int, Field(ge=1)]] = None
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
@@ -56,12 +58,12 @@ class Hyperconfig(BaseModel):
     @classmethod
     def validate_n_iterations(cls, v, values):
         if v is None:
-            if values.data["hyperstrategy"] == "FactorialStrategy":
+            if values.data["hyperstrategy"] == "FractionalFactorialStrategy":
                 return v
             return len(values.data["inputs"]) + 10
-        if values.data["hyperstrategy"] == "FactorialStrategy":
+        if values.data["hyperstrategy"] == "FractionalFactorialStrategy":
             raise ValueError(
-                "It is not allowed to scpecify the number of its for FactorialStrategy",
+                "It is not allowed to scpecify the number of its for FractionalFactorialStrategy",
             )
         if v < len(values.data["inputs"]) + 2:
             raise ValueError(
