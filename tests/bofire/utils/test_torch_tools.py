@@ -276,9 +276,12 @@ def test_get_multiplicative_botorch_objective():
     reward1 = obj1(a_samples[:, 0])
     reward2 = obj2(a_samples[:, 1])
     # do the comparison
+    w1, w2 = obj1.w, obj2.w
+    w1, w2 = [w/min(w1, w2) for w in [w1, w2]]
+
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
-        reward1**obj1.w * reward2**obj2.w,
+        reward1**w1 * reward2**w2,
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
