@@ -814,25 +814,42 @@ def test_MinMaxTransform():
         GOptimalityCriterion,
         SpaceFillingCriterion,
     ]:
-        objective_unscaled = get_objective_function(
-            cls(
-                model=model,
-                delta=0,
-                transform_range=None,
-            ),
-            domain=domain,
-            n_experiments=4,
-        )
+        if cls == SpaceFillingCriterion:
+            objective_unscaled = get_objective_function(
+                cls(
+                    transform_range=None,
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
 
-        objective_scaled = get_objective_function(
-            cls(
-                model=model,
-                delta=0,
-                transform_range=(-1.0, 1.0),
-            ),
-            domain=domain,
-            n_experiments=4,
-        )
+            objective_scaled = get_objective_function(
+                cls(
+                    transform_range=(-1.0, 1.0),
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
+        else:
+            objective_unscaled = get_objective_function(
+                cls(
+                    model=model,
+                    delta=0,
+                    transform_range=None,
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
+
+            objective_scaled = get_objective_function(
+                cls(
+                    model=model,
+                    delta=0,
+                    transform_range=(-1.0, 1.0),
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
         assert np.allclose(
             objective_unscaled.evaluate(x_scaled),
             objective_scaled.evaluate(x),

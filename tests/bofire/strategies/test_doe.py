@@ -127,7 +127,7 @@ def test_formulas_implemented():
             domain=domain, criterion=DOptimalityCriterion(formula=formula)
         )
         strategy = DoEStrategy(data_model=data_model)
-        candidates = strategy.ask()
+        candidates = strategy.ask(strategy.get_required_number_of_experiments())
         assert candidates.shape == (num_candidates, 3)
 
 
