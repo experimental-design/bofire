@@ -115,6 +115,10 @@ def test_nchoosek_implemented():
 
 
 def test_formulas_implemented():
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
     expected_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
         "linear-and-quadratic": 10,  # 1+a+b+c+a**2+b**2+c**2+3
@@ -368,3 +372,7 @@ def test_categorical_doe_iterative():
     )
 
     assert candidates.shape == (5, 3)
+
+
+if __name__ == "__main__":
+    test_formulas_implemented()
