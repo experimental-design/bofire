@@ -833,7 +833,7 @@ def test_MinMaxTransform():
         else:
             objective_unscaled = get_objective_function(
                 cls(
-                    model=model,
+                    formula=model,
                     delta=0,
                     transform_range=None,
                 ),
@@ -843,7 +843,7 @@ def test_MinMaxTransform():
 
             objective_scaled = get_objective_function(
                 cls(
-                    model=model,
+                    formula=model,
                     delta=0,
                     transform_range=(-1.0, 1.0),
                 ),
