@@ -495,18 +495,18 @@ def _callables_and_weights(
     """
     extract callables and weights from outputs object
 
-    Parameters
-    ----------
-    outputs : Outputs
-        Outputs object
-    experiments : pd.DataFrame
-        DataFrame containing the experiments that are used for adapting the objectives
-    exclude_constraints : bool, optional
-        exclude constraints, by default False
-    allowed_objectives : List[Objective], optional
-        limit to allowed objectives, by default None
-    adapt_weights_to_1_inf: bool
-        transform weights from [0,1] to [1,inf) space, by default False
+    Args:
+        outputs (Outputs): Outputs object
+        experiments (pd.DataFrame): DataFrame containing the experiments that are used for adapting the objectives
+        exclude_constraints (bool): exclude constraints
+        allowed_objectives (Optional[List[Objective]]): limit to allowed objectives
+        adapt_weights_to_1_inf (bool): transform weights from [0,1] to [1,inf) space
+
+    Returns:
+        callables (List[Callable]): list of callables
+        weights (List[float]): List of weights for callables
+        keys (List[str]): Output keys, for the corresponding callables and weights
+
     """
 
     if outputs is None:
@@ -643,10 +643,16 @@ def get_multiplicative_additive_objective(
         objective = f1^w1 * f2^w2 * (additive_objective / denominator_additive_objectives)
 
 
-    Parameters
-    ----------
-    adapt_weights_to_1_inf: bool
-        will transform weights from [0,1] to [1,inf) space
+    Args:
+        outputs
+        experiments
+        exclude_constraints
+        additive_features (List[str]): list of features that should be treated as additive
+        adapt_weights_to_1_inf (bool): will transform weights from [0,1] to [1,inf) space
+
+    Returns:
+        objective (callable): callable that can be used by botorch for optimization
+
     """
 
     callables, weights, keys = _callables_and_weights(

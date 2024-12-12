@@ -76,8 +76,12 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
 
 
 class _CheckAdaptableWeightsMixin:
-    """additional validation of weights for adaptable weights, in multiplicative calculations. Adaption to (1, inf)
-    requires w>=1e-8"""
+    """
+    Contains an additional validator for weights in multiplicative objective merging.
+
+    Additional validation of weights for adaptable weights, in multiplicative calculations. Adaption to (1, inf)
+    requires w>=1e-8
+    """
 
     @model_validator(mode="after")
     def check_adaptable_weights(cls, self):
@@ -102,7 +106,8 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
 
 
 class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
-    """mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
+    """
+    mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
 
     The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
     additive features (f3 and f4 with weights w3 and w4) is:
