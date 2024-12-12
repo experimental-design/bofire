@@ -63,7 +63,7 @@ class Hyperconfig(BaseModel):
             return len(values.data["inputs"]) + 10
         if values.data["hyperstrategy"] == "FractionalFactorialStrategy":
             raise ValueError(
-                "It is not allowed to scpecify the number of its for FractionalFactorialStrategy",
+                "It is not allowed to specify the number of its for FractionalFactorialStrategy",
             )
         if v < len(values.data["inputs"]) + 2:
             raise ValueError(

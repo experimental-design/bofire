@@ -80,7 +80,7 @@ class FractionalFactorialStrategy(Strategy):
         return pd.concat(
             [
                 pd.concat([design] * len(categorical_design), ignore_index=True),
-                pd.concat([categorical_design] * len(design), ignore_index=True),
+                pd.concat([categorical_design] * len(design), ignore_index=True),  # type: ignore
             ],
             axis=1,
         ).sort_values(by=self.domain.inputs.get_keys([CategoricalInput, DiscreteInput]))
