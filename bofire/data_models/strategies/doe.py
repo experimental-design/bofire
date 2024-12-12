@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type, Union
+from typing import Dict, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -90,7 +90,7 @@ AnyOptimalityCriterion = Union[
 class DoEStrategy(Strategy):
     type: Literal["DoEStrategy"] = "DoEStrategy"  # type: ignore
 
-    criterion: AnyDoEOptimalityCriterion = Field(
+    criterion: AnyOptimalityCriterion = Field(
         default_factory=lambda: DOptimalityCriterion(formula="fully-quadratic")
     )
     optimization_strategy: Literal[
@@ -103,6 +103,7 @@ class DoEStrategy(Strategy):
     ] = "default"
 
     verbose: bool = False  # get rid of this at a later stage
+    ipopt_options: Optional[Dict] = None
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

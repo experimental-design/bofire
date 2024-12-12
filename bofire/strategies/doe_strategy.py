@@ -115,6 +115,7 @@ class DoEStrategy(Strategy):
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
+                ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
             )
         # TODO adapt to when exhaustive search accepts discrete variables
@@ -130,6 +131,7 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
+                ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
             )
         elif self.data_model.optimization_strategy in [
@@ -145,6 +147,7 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
+                ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
             )
         elif self.data_model.optimization_strategy == "iterative":
@@ -168,6 +171,7 @@ class DoEStrategy(Strategy):
                     partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
+                    ipopt_options=self.data_model.ipopt_options,
                     criterion=self.data_model.criterion,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
