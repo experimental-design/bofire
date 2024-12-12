@@ -10,7 +10,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.objectives.api import MinimizeObjective
 from bofire.data_models.strategies.api import (
-    FactorialStrategy,
+    FractionalFactorialStrategy,
     RandomStrategy,
     SoboStrategy,
 )
@@ -50,8 +50,8 @@ def hyperoptimize(
         random_state=random_state,
     )
 
-    if surrogate_data.hyperconfig.hyperstrategy == "FactorialStrategy":
-        strategy = strategies.map(FactorialStrategy(domain=benchmark.domain))
+    if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy":
+        strategy = strategies.map(FractionalFactorialStrategy(domain=benchmark.domain))
         experiments = benchmark.f(
             strategy.ask(candidate_count=None),
             return_complete=True,

@@ -3,6 +3,11 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
 from bofire.strategies.strategy import Strategy
 from bofire.utils.doe import fracfact, get_generator
@@ -20,6 +25,37 @@ class FractionalFactorialStrategy(Strategy):
         self.n_generators = data_model.n_generators
         self.generator = data_model.generator
 
+    def _get_continuous_design(self) -> pd.DataFrame:
+        continuous_inputs = self.domain.inputs.get(ContinuousInput)
+        gen = self.generator or get_generator(
+            n_factors=len(continuous_inputs),
+            n_generators=self.n_generators,
+        )
+        design = pd.DataFrame(fracfact(gen=gen), columns=continuous_inputs.get_keys())
+        # setup the repetitions
+        if self.n_repetitions > 1:
+            design = pd.concat([design] * (self.n_repetitions), ignore_index=True)
+        # setup the center points
+        centers = pd.DataFrame(
+            {key: [0] * self.n_center for key in continuous_inputs.get_keys()},
+        )
+        design = pd.concat([design, centers], ignore_index=True)
+        # scale the design to 0 and 1
+        design = (design + 1.0) / 2.0
+        # scale to correct bounds
+        lower, upper = continuous_inputs.get_bounds(specs={})
+        lower, upper = np.array(lower), np.array(upper)
+        design = design * (upper - lower).reshape(1, -1) + lower.reshape(1, -1)
+        return design
+
+    def _get_categorical_design(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            [
+                {e[0]: e[1] for e in combi}
+                for combi in self.domain.inputs.get_categorical_combinations()
+            ],
+        )
+
     def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
         if candidate_count is not None:
             raise ValueError(
@@ -27,26 +63,27 @@ class FractionalFactorialStrategy(Strategy):
                 "The strategy automatically determines how many candidates to "
                 "propose.",
             )
-        gen = self.generator or get_generator(
-            n_factors=len(self.domain.inputs),
-            n_generators=self.n_generators,
-        )
-        design = pd.DataFrame(fracfact(gen=gen), columns=self.domain.inputs.get_keys())
-        # setup the repetitions
-        if self.n_repetitions > 1:
-            design = pd.concat([design] * (self.n_repetitions), ignore_index=True)
-        # setup the center points
-        centers = pd.DataFrame(
-            {key: [0] * self.n_center for key in self.domain.inputs.get_keys()},
-        )
-        design = pd.concat([design, centers], ignore_index=True)
-        # scale the design to 0 and 1
-        design = (design + 1.0) / 2.0
-        # scale to correct bounds
-        lower, upper = self.domain.inputs.get_bounds(specs={})
-        lower, upper = np.array(lower), np.array(upper)
-        design = design * (upper - lower).reshape(1, -1) + lower.reshape(1, -1)
-        return design
+        design = None
+        if len(self.domain.inputs.get(ContinuousInput)) > 0:
+            design = self._get_continuous_design()
+            if len(self.domain.inputs.get(ContinuousInput)) == len(self.domain.inputs):
+                return design
+
+        categorical_design = self._get_categorical_design()
+        if len(self.domain.inputs.get([CategoricalInput, DiscreteInput])) == len(
+            self.domain.inputs
+        ):
+            return categorical_design
+
+        assert isinstance(design, pd.DataFrame)
+        # combine the two designs
+        return pd.concat(
+            [
+                pd.concat([design] * len(categorical_design), ignore_index=True),
+                pd.concat([categorical_design] * len(design), ignore_index=True),  # type: ignore
+            ],
+            axis=1,
+        ).sort_values(by=self.domain.inputs.get_keys([CategoricalInput, DiscreteInput]))
 
     def has_sufficient_experiments(self) -> bool:
         return True

@@ -5,8 +5,6 @@ from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
-
-# from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -47,9 +45,9 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
-        "FactorialStrategy"
-    )
+    hyperstrategy: Literal[
+        "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
+    ] = "FractionalFactorialStrategy"
 
     @staticmethod
     def _update_hyperparameters(
