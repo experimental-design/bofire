@@ -9,20 +9,10 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.initializers import gen_batch_initial_conditions
-from botorch.optim.optimize import (
-    optimize_acqf,
-    optimize_acqf_discrete,
-    optimize_acqf_list,
-    optimize_acqf_mixed,
-)
+from botorch.optim.optimize import optimize_acqf_discrete
 from torch import Tensor
 
-from bofire.data_models.constraints.api import (
-    LinearEqualityConstraint,
-    LinearInequalityConstraint,
-    NChooseKConstraint,
-    ProductConstraint,
-)
+from bofire.data_models.constraints.api import NChooseKConstraint, ProductConstraint
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -39,14 +29,13 @@ from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.outlier_detection.outlier_detections import OutlierDetections
+from bofire.strategies.predictives.acqf_optimizers import map as acqf_opt_mapper
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
-    get_interpoint_constraints,
-    get_linear_constraints,
     get_nonlinear_constraints,
     tkwargs,
 )
@@ -59,15 +48,16 @@ class BotorchStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.num_restarts = data_model.num_restarts
-        self.num_raw_samples = data_model.num_raw_samples
+
+        self.acqf_optimizer = acqf_opt_mapper(data_model.acqf_optimizer)
+
         self.descriptor_method = data_model.descriptor_method
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
         self.surrogate_specs = data_model.surrogate_specs
         if data_model.outlier_detection_specs is not None:
             self.outlier_detection_specs = OutlierDetections(
-                data_model=data_model.outlier_detection_specs,
+                data_model=data_model.outlier_detection_specs
             )
         else:
             self.outlier_detection_specs = None
@@ -79,8 +69,6 @@ class BotorchStrategy(PredictiveStrategy):
         self.folds = data_model.folds
         self.surrogates = None
         self.local_search_config = data_model.local_search_config
-        self.maxiter = data_model.maxiter
-        self.batch_limit = data_model.batch_limit
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -92,45 +80,22 @@ class BotorchStrategy(PredictiveStrategy):
     @property
     def _features2idx(self) -> Dict[str, Tuple[int]]:
         features2idx, _ = self.domain.inputs._get_transform_info(
-            self.input_preprocessing_specs,
+            self.input_preprocessing_specs
         )
         return features2idx
 
     @property
     def _features2names(self) -> Dict[str, Tuple[str]]:
         _, features2names = self.domain.inputs._get_transform_info(
-            self.input_preprocessing_specs,
+            self.input_preprocessing_specs
         )
         return features2names
-
-    def _get_optimizer_options(self) -> Dict[str, int]:
-        """Returns a dictionary of settings passed to `optimize_acqf` controlling
-        the behavior of the optimizer.
-
-        Returns:
-            Dict[str, int]: The dictionary with the settings.
-
-        """
-        return {
-            "batch_limit": (  # type: ignore
-                self.batch_limit
-                if len(
-                    self.domain.constraints.get(
-                        [NChooseKConstraint, ProductConstraint]
-                    ),
-                )
-                == 0
-                else 1
-            ),
-            "maxiter": self.maxiter,
-        }
 
     def _fit(self, experiments: pd.DataFrame):
         """[summary]
 
         Args:
             transformed (pd.DataFrame): [description]
-
         """
         # perform outlier detection
         if self.outlier_detection_specs is not None:
@@ -192,11 +157,9 @@ class BotorchStrategy(PredictiveStrategy):
         return preds, stds
 
     def calc_acquisition(
-        self,
-        candidates: pd.DataFrame,
-        combined: bool = False,
+        self, candidates: pd.DataFrame, combined: bool = False
     ) -> np.ndarray:
-        """Calculate the acquisition value for a set of experiments.
+        """Calculate the acqusition value for a set of experiments.
 
         Args:
             candidates (pd.DataFrame): Dataframe with experimentes for which the acqf value should be calculated.
@@ -205,13 +168,11 @@ class BotorchStrategy(PredictiveStrategy):
 
         Returns:
             np.ndarray: Dataframe with the acquisition values.
-
         """
         acqf = self._get_acqfs(1)[0]
 
         transformed = self.domain.inputs.transform(
-            candidates,
-            self.input_preprocessing_specs,
+            candidates, self.input_preprocessing_specs
         )
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         if combined is False:
@@ -225,13 +186,13 @@ class BotorchStrategy(PredictiveStrategy):
     def _setup_ask(self):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
         num_categorical_features = len(
-            self.domain.inputs.get([CategoricalInput, DiscreteInput]),
+            self.domain.inputs.get([CategoricalInput, DiscreteInput])
         )
         num_categorical_combinations = len(
-            self.domain.inputs.get_categorical_combinations(),
+            self.domain.inputs.get_categorical_combinations()
         )
         lower, upper = self.domain.inputs.get_bounds(
-            specs=self.input_preprocessing_specs,
+            specs=self.input_preprocessing_specs
         )
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
         # setup local bounds
@@ -259,7 +220,7 @@ class BotorchStrategy(PredictiveStrategy):
                         data_model=RandomStrategyDataModel(domain=self.domain),
                     ),
                     transform_specs=self.input_preprocessing_specs,
-                ),
+                )
             }
             nonlinear_constraints = get_nonlinear_constraints(self.domain)
         # setup fixed features
@@ -300,7 +261,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         Returns:
             pd.DataFrame: Dataframe with candidates.
-
         """
         input_feature_keys = [
             item
@@ -309,99 +269,15 @@ class BotorchStrategy(PredictiveStrategy):
         ]
 
         df_candidates = pd.DataFrame(
-            data=candidates.detach().numpy(),
-            columns=input_feature_keys,
+            data=candidates.detach().numpy(), columns=input_feature_keys
         )
 
         df_candidates = self.domain.inputs.inverse_transform(
-            df_candidates,
-            self.input_preprocessing_specs,
+            df_candidates, self.input_preprocessing_specs
         )
 
         preds = self.predict(df_candidates)
         return pd.concat((df_candidates, preds), axis=1)
-
-    def _optimize_acqf_continuous(
-        self,
-        candidate_count: int,
-        acqfs: List[AcquisitionFunction],
-        bounds: Tensor,
-        ic_generator: Callable,
-        ic_gen_kwargs: Dict,
-        nonlinear_constraints: List[Callable[[Tensor], float]],
-        fixed_features: Optional[Dict[int, float]],
-        fixed_features_list: Optional[List[Dict[int, float]]],
-    ) -> Tuple[Tensor, Tensor]:
-        if len(acqfs) > 1:
-            candidates, acqf_vals = optimize_acqf_list(
-                acq_function_list=acqfs,
-                bounds=bounds,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                fixed_features=fixed_features,
-                fixed_features_list=fixed_features_list,
-                ic_gen_kwargs=ic_gen_kwargs,
-                ic_generator=ic_generator,
-                options=self._get_optimizer_options(),  # type: ignore
-            )
-        elif fixed_features_list:
-            candidates, acqf_vals = optimize_acqf_mixed(
-                acq_function=acqfs[0],
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                fixed_features_list=fixed_features_list,
-                ic_generator=ic_generator,
-                ic_gen_kwargs=ic_gen_kwargs,
-                options=self._get_optimizer_options(),  # type: ignore
-            )
-        else:
-            interpoints = get_interpoint_constraints(
-                domain=self.domain,
-                n_candidates=candidate_count,
-            )
-            candidates, acqf_vals = optimize_acqf(
-                acq_function=acqfs[0],
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,
-                )
-                + interpoints,
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                fixed_features=fixed_features,
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                return_best_only=True,
-                options=self._get_optimizer_options(),  # type: ignore
-                ic_generator=ic_generator,
-                **ic_gen_kwargs,
-            )
-        return candidates, acqf_vals
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """[summary]
@@ -411,28 +287,28 @@ class BotorchStrategy(PredictiveStrategy):
 
         Returns:
             pd.DataFrame: [description]
-
         """
+
         assert candidate_count > 0, "candidate_count has to be larger than zero."
         if self.experiments is None:
             raise ValueError("No experiments have been provided yet.")
 
         acqfs = self._get_acqfs(candidate_count)
 
-        # we check here if we have a fully combinatorial search space
+        # we check here if we have a fully combinatorical search space
         if len(
-            self.domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
+            self.domain.inputs.get(includes=[DiscreteInput, CategoricalInput])
         ) == len(self.domain.inputs):
             if len(acqfs) > 1:
                 raise NotImplementedError(
-                    "Multiple Acqfs are currently not supported for purely combinatorial search spaces.",
+                    "Multiple Acqfs are currently not supported for purely combinatorical search spaces."
                 )
             # generate the choices as pandas dataframe
             choices = pd.DataFrame.from_dict(
                 [  # type: ignore
                     {e[0]: e[1] for e in combi}
                     for combi in self.domain.inputs.get_categorical_combinations()
-                ],
+                ]
             )
             # adding categorical features that are fixed
             for feat in self.domain.inputs.get_fixed():
@@ -451,16 +327,12 @@ class BotorchStrategy(PredictiveStrategy):
             # translate the filtered choice to torch
             t_choices = torch.from_numpy(
                 self.domain.inputs.transform(
-                    filtered_choices,
-                    specs=self.input_preprocessing_specs,
-                ).values,
+                    filtered_choices, specs=self.input_preprocessing_specs
+                ).values
             ).to(**tkwargs)
 
             candidates, _ = optimize_acqf_discrete(
-                acq_function=acqfs[0],
-                q=candidate_count,
-                unique=True,
-                choices=t_choices,
+                acq_function=acqfs[0], q=candidate_count, unique=True, choices=t_choices
             )
             return self._postprocess_candidates(candidates=candidates)
 
@@ -475,7 +347,8 @@ class BotorchStrategy(PredictiveStrategy):
         ) = self._setup_ask()
 
         # do the global opt
-        candidates, global_acqf_val = self._optimize_acqf_continuous(
+        candidates, global_acqf_val = self.acqf_optimizer.optimize(
+            domain=self.domain,
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
@@ -491,7 +364,8 @@ class BotorchStrategy(PredictiveStrategy):
             and has_local_search_region(self.domain)
             and candidate_count == 1
         ):
-            local_candidates, local_acqf_val = self._optimize_acqf_continuous(
+            local_candidates, local_acqf_val = self.acqf_optimizer.optimize(
+                domain=self.domain,
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
@@ -502,21 +376,22 @@ class BotorchStrategy(PredictiveStrategy):
                 fixed_features_list=fixed_features_list,
             )
             if self.local_search_config.is_local_step(
-                local_acqf_val.item(),
-                global_acqf_val.item(),
+                local_acqf_val.item(), global_acqf_val.item()
             ):
                 return self._postprocess_candidates(candidates=local_candidates)
-            sp = ShortestPathStrategy(
-                data_model=ShortestPathStrategyDataModel(
-                    domain=self.domain,
-                    start=self.experiments.iloc[-1].to_dict(),
-                    end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
-                ),
-            )
-            step = pd.DataFrame(sp.step(sp.start)).T
-            return pd.concat((step, self.predict(step)), axis=1)
+            else:
+                sp = ShortestPathStrategy(
+                    data_model=ShortestPathStrategyDataModel(
+                        domain=self.domain,
+                        start=self.experiments.iloc[-1].to_dict(),
+                        end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+                    )
+                )
+                step = pd.DataFrame(sp.step(sp.start)).T
+                return pd.concat((step, self.predict(step)), axis=1)
 
-        return self._postprocess_candidates(candidates=candidates)
+        else:
+            return self._postprocess_candidates(candidates=candidates)
 
     def _tell(self) -> None:
         pass
@@ -526,14 +401,13 @@ class BotorchStrategy(PredictiveStrategy):
         pass
 
     def get_fixed_features(self) -> Dict[int, float]:
-        """Provides the values of all fixed features
+        """provides the values of all fixed features
 
         Raises:
             NotImplementedError: [description]
 
         Returns:
             fixed_features (dict): Dictionary of fixed features, keys are the feature indices, values the transformed feature values
-
         """
         fixed_features = {}
         features2idx = self._features2idx
@@ -542,7 +416,7 @@ class BotorchStrategy(PredictiveStrategy):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
-                    transform_type=self.input_preprocessing_specs.get(feat.key),  # type: ignore
+                    transform_type=self.input_preprocessing_specs.get(feat.key)  # type: ignore
                 )
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
@@ -593,11 +467,10 @@ class BotorchStrategy(PredictiveStrategy):
         return fixed_features
 
     def get_categorical_combinations(self) -> List[Dict[int, float]]:
-        """Provides all possible combinations of fixed values
+        """provides all possible combinations of fixed values
 
         Returns:
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
-
         """
         fixed_basis = self.get_fixed_features()
 
@@ -609,19 +482,20 @@ class BotorchStrategy(PredictiveStrategy):
 
         if all(m == CategoricalMethodEnum.FREE for m in methods):
             return [{}]
-        include = []
-        exclude = None
-
-        if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(DiscreteInput)
-
-        if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalInput)
-            exclude = CategoricalDescriptorInput
-
-        if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalDescriptorInput)
+        else:
+            include = []
             exclude = None
+
+            if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
+                include.append(DiscreteInput)
+
+            if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
+                include.append(CategoricalInput)
+                exclude = CategoricalDescriptorInput
+
+            if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
+                include.append(CategoricalDescriptorInput)
+                exclude = None
 
         if not include:
             include = None
@@ -633,35 +507,36 @@ class BotorchStrategy(PredictiveStrategy):
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
-        features2idx = self._features2idx
-        list_of_fixed_features = []
+        else:
+            features2idx = self._features2idx
+            list_of_fixed_features = []
 
-        for combo in combos:
-            fixed_features = copy.deepcopy(fixed_basis)
+            for combo in combos:
+                fixed_features = copy.deepcopy(fixed_basis)
 
-            for pair in combo:
-                feat, val = pair
-                feature = self.domain.inputs.get_by_key(feat)
-                if (
-                    isinstance(feature, CategoricalDescriptorInput)
-                    and self.input_preprocessing_specs[feat]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ):
-                    index = feature.categories.index(val)
+                for pair in combo:
+                    feat, val = pair
+                    feature = self.domain.inputs.get_by_key(feat)
+                    if (
+                        isinstance(feature, CategoricalDescriptorInput)
+                        and self.input_preprocessing_specs[feat]
+                        == CategoricalEncodingEnum.DESCRIPTOR
+                    ):
+                        index = feature.categories.index(val)
 
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = feature.values[index][j]
+                        for j, idx in enumerate(features2idx[feat]):
+                            fixed_features[idx] = feature.values[index][j]
 
-                elif isinstance(feature, CategoricalInput):
-                    # it has to be onehot in this case
-                    transformed = feature.to_onehot_encoding(pd.Series([val]))
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
+                    elif isinstance(feature, CategoricalInput):
+                        # it has to be onehot in this case
+                        transformed = feature.to_onehot_encoding(pd.Series([val]))
+                        for j, idx in enumerate(features2idx[feat]):
+                            fixed_features[idx] = transformed.values[0, j]
 
-                elif isinstance(feature, DiscreteInput):
-                    fixed_features[features2idx[feat][0]] = val  # type: ignore
+                    elif isinstance(feature, DiscreteInput):
+                        fixed_features[features2idx[feat][0]] = val  # type: ignore
 
-            list_of_fixed_features.append(fixed_features)
+                list_of_fixed_features.append(fixed_features)
         return list_of_fixed_features
 
     def has_sufficient_experiments(
@@ -672,8 +547,8 @@ class BotorchStrategy(PredictiveStrategy):
         if (
             len(
                 self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                    experiments=self.experiments,
-                ),
+                    experiments=self.experiments
+                )
             )
             > 1
         ):
@@ -683,7 +558,7 @@ class BotorchStrategy(PredictiveStrategy):
     def get_acqf_input_tensors(self):
         assert self.experiments is not None
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments,
+            self.experiments
         )
 
         # TODO: should this be selectable?
@@ -694,15 +569,13 @@ class BotorchStrategy(PredictiveStrategy):
         )
 
         transformed = self.domain.inputs.transform(
-            clean_experiments,
-            self.input_preprocessing_specs,
+            clean_experiments, self.input_preprocessing_specs
         )
         X_train = torch.from_numpy(transformed.values).to(**tkwargs)
 
         if self.candidates is not None:
             transformed_candidates = self.domain.inputs.transform(
-                self.candidates,
-                self.input_preprocessing_specs,
+                self.candidates, self.input_preprocessing_specs
             )
             X_pending = torch.from_numpy(transformed_candidates.values).to(**tkwargs)
         else:
@@ -711,18 +584,14 @@ class BotorchStrategy(PredictiveStrategy):
         return X_train, X_pending
 
     def get_infeasible_cost(
-        self,
-        objective: Callable[[Tensor, Tensor], Tensor],
-        n_samples=128,
+        self, objective: Callable[[Tensor, Tensor], Tensor], n_samples=128
     ) -> Tensor:
         X_train, X_pending = self.get_acqf_input_tensors()
         sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=self.domain))
         samples = sampler.ask(candidate_count=n_samples)
         # we need to transform the samples
         transformed_samples = torch.from_numpy(
-            self.domain.inputs.transform(
-                samples, self.input_preprocessing_specs
-            ).values,
+            self.domain.inputs.transform(samples, self.input_preprocessing_specs).values
         ).to(**tkwargs)
         X = (
             torch.cat((X_train, X_pending, transformed_samples))

@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from typing import Annotated, Literal, Optional, Type
 
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -21,6 +21,10 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.outlier_detection.api import OutlierDetections
+from bofire.data_models.strategies.predictives.acqf_optimizers import (
+    AnyAcqfOptimizer,
+    BotorchAcqfOptimizer,
+)
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
@@ -29,7 +33,6 @@ from bofire.data_models.surrogates.api import (
     MultiTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
-from bofire.data_models.types import IntPowerOfTwo
 
 
 class LocalSearchConfig(BaseModel):
@@ -50,8 +53,8 @@ class LocalSearchConfig(BaseModel):
 
         Returns:
             bool: If true, do local step, else a step towards the global acqf maximum.
-
         """
+        pass
 
 
 class LSRBO(LocalSearchConfig):
@@ -61,7 +64,6 @@ class LSRBO(LocalSearchConfig):
     Attributes:
         gamma (float): The switsching parameter between local and global optimization.
             Defaults to 0.1.
-
     """
 
     type: Literal["LSRBO"] = "LSRBO"
@@ -76,17 +78,16 @@ AnyLocalSearchConfig = LSRBO
 
 class BotorchStrategy(PredictiveStrategy):
     # acqf optimizer params
-    num_restarts: PositiveInt = 8
-    num_raw_samples: IntPowerOfTwo = 1024
-    maxiter: PositiveInt = 2000
-    batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
+    #    acqf_optimizer: AcquisitionFunctionOptimizer = Field(
+    acqf_optimizer: AnyAcqfOptimizer = Field(
+        default_factory=lambda: BotorchAcqfOptimizer(), validate_default=True
+    )
     # encoding params
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     surrogate_specs: BotorchSurrogates = Field(
-        default_factory=lambda: BotorchSurrogates(surrogates=[]),
-        validate_default=True,
+        default_factory=lambda: BotorchSurrogates(surrogates=[]), validate_default=True
     )
     # outlier detection params
     outlier_detection_specs: Optional[OutlierDetections] = None
@@ -98,21 +99,12 @@ class BotorchStrategy(PredictiveStrategy):
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
 
-    @field_validator("batch_limit")
-    @classmethod
-    def validate_batch_limit(cls, batch_limit: int, info):
-        batch_limit = min(
-            batch_limit or info.data["num_restarts"],
-            info.data["num_restarts"],
-        )
-        return batch_limit
-
     @model_validator(mode="after")
     def validate_local_search_config(self):
         if self.local_search_config is not None:
             if has_local_search_region(self.domain) is False:
                 warnings.warn(
-                    "`local_search_region` config is specified, but no local search region is defined in `domain`",
+                    "`local_search_region` config is specified, but no local search region is defined in `domain`"
                 )
             if (
                 len(self.domain.constraints)
@@ -131,7 +123,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         Returns:
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
-
         """
         if my_type in [NonlinearInequalityConstraint, NonlinearEqualityConstraint]:
             return False
@@ -140,10 +131,10 @@ class BotorchStrategy(PredictiveStrategy):
     @model_validator(mode="after")
     def validate_interpoint_constraints(self):
         if self.domain.constraints.get(InterpointConstraint) and len(
-            self.domain.inputs.get(ContinuousInput),
+            self.domain.inputs.get(ContinuousInput)
         ) != len(self.domain.inputs):
             raise ValueError(
-                "Interpoint constraints can only be used for pure continuous search spaces.",
+                "Interpoint constraints can only be used for pure continuous search spaces."
             )
         return self
 
@@ -154,7 +145,7 @@ class BotorchStrategy(PredictiveStrategy):
             self.domain,
             self.surrogate_specs,
         )
-        # we also have to check here that the categorical method is compatible with the chosen models
+        # we also have to checke here that the categorical method is compatible with the chosen models
         # categorical_method = (
         #   values["categorical_method"] if "categorical_method" in values else None
         # )
@@ -162,7 +153,7 @@ class BotorchStrategy(PredictiveStrategy):
             for m in self.surrogate_specs.surrogates:
                 if isinstance(m, MixedSingleTaskGPSurrogate):
                     raise ValueError(
-                        "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
+                        "Categorical method FREE not compatible with a a MixedSingleTaskGPModel."
                     )
         # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
         # used for the descriptor as for the categoricals
@@ -177,7 +168,7 @@ class BotorchStrategy(PredictiveStrategy):
                 if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
                     if self.categorical_method != self.descriptor_method:
                         raise ValueError(
-                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
+                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals."
                         )
         return self
 
@@ -186,8 +177,7 @@ class BotorchStrategy(PredictiveStrategy):
         """Ensures that a outlier_detection model is specified for each output feature"""
         if self.outlier_detection_specs is not None:
             self.outlier_detection_specs._check_compability(
-                inputs=self.domain.inputs,
-                outputs=self.domain.outputs,
+                inputs=self.domain.inputs, outputs=self.domain.outputs
             )
         return self
 
@@ -198,17 +188,14 @@ class BotorchStrategy(PredictiveStrategy):
     ) -> BotorchSurrogates:
         """Method to generate model specifications when no model specs are passed
         As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
-
         Args:
             domain (Domain): The domain defining the problem to be optimized with the strategy
             surrogate_specs (List[ModelSpec], optional): List of model specification classes specifying the models to be used in the strategy. Defaults to None.
-
         Raises:
             KeyError: if there is a model spec for an unknown output feature
             KeyError: if a model spec has an unknown input feature
         Returns:
             List[ModelSpec]: List of model specification classes
-
         """
         existing_keys = surrogate_specs.outputs.get_keys()
         non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
@@ -219,9 +206,9 @@ class BotorchStrategy(PredictiveStrategy):
                     MixedSingleTaskGPSurrogate(
                         inputs=domain.inputs,
                         outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)],
+                            features=[domain.outputs.get_by_key(output_feature)]
                         ),
-                    ),
+                    )
                 )
             else:
                 _surrogate_specs.append(
@@ -229,10 +216,10 @@ class BotorchStrategy(PredictiveStrategy):
                         inputs=domain.inputs,
                         outputs=Outputs(
                             features=[
-                                domain.outputs.get_by_key(output_feature),  # type: ignore
-                            ],
+                                domain.outputs.get_by_key(output_feature)  # type: ignore
+                            ]
                         ),
-                    ),
+                    )
                 )
         surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
