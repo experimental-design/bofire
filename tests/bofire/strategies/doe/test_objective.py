@@ -802,8 +802,6 @@ def test_MinMaxTransform():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
-
     x = np.array([1, 0.8, 0.55, 0.65])
     x_scaled = x * 2 - 1
 
@@ -833,7 +831,7 @@ def test_MinMaxTransform():
         else:
             objective_unscaled = get_objective_function(
                 cls(
-                    formula=model,
+                    formula="linear",
                     delta=0,
                     transform_range=None,
                 ),
@@ -843,7 +841,7 @@ def test_MinMaxTransform():
 
             objective_scaled = get_objective_function(
                 cls(
-                    formula=model,
+                    formula="linear",
                     delta=0,
                     transform_range=(-1.0, 1.0),
                 ),
