@@ -199,10 +199,8 @@ class DoEStrategy(Strategy):
 
     def get_required_number_of_experiments(self) -> Optional[int]:
         if self.formula:
-            return (
-                get_n_experiments(self.formula)
-                - n_zero_eigvals(domain=self.data_model.domain, model_type=self.formula)
-                + 3
+            return get_n_experiments(self.formula) - n_zero_eigvals(
+                domain=self.data_model.domain, model_type=self.formula
             )
         else:
             ValueError(
