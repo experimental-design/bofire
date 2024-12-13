@@ -26,6 +26,7 @@ from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
@@ -61,6 +62,7 @@ AnyPredictive = Union[
     ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,
