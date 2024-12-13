@@ -1,3 +1,5 @@
+import importlib.util
+
 import pytest
 from pandas import concat
 
@@ -12,6 +14,9 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput
+
+
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
 inputs = [ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)]
@@ -50,6 +55,7 @@ domains = [
 ]
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 @pytest.mark.parametrize(
     "domain, num_samples",
     [(domain, candidate_count) for domain in domains for candidate_count in [1, 16]],
@@ -61,6 +67,7 @@ def test_ask(domain, num_samples):
     assert len(samples) == num_samples
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_ask_pending_candidates():
     data_model = data_models.SpaceFillingStrategy(domain=domains[0])
     sampler = strategies.SpaceFillingStrategy(data_model=data_model)

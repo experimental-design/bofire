@@ -17,16 +17,19 @@ from botorch.optim.optimize import (
 )
 from torch import Tensor
 
+import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     ProductConstraint,
 )
+from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    ContinuousInput,
     DiscreteInput,
     Input,
 )
@@ -78,6 +81,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
         self.surrogates = None
+        self.trust_region_config = data_model.trust_region_config
         self.local_search_config = data_model.local_search_config
         self.maxiter = data_model.maxiter
         self.batch_limit = data_model.batch_limit
@@ -126,12 +130,31 @@ class BotorchStrategy(PredictiveStrategy):
         }
 
     def _fit(self, experiments: pd.DataFrame):
-        """[summary]
+        """Fits the surrogate model to the provided experiments.
 
         Args:
-            transformed (pd.DataFrame): [description]
-
+            experiments (pd.DataFrame): The experiments to fit the model to.
         """
+        if self.trust_region_config is not None:
+            if not self.trust_region_config.experiment_batch_sizes[-1]:
+                self.trust_region_config.init_trust_region(experiments, self.domain)
+            else:
+                self.trust_region_config.update_trust_region(experiments, self.domain)
+
+            if not self.trust_region_config.has_sufficient_experiments(
+                experiments, self.domain
+            ):
+                # we want to take samples up to the minimum trust region size
+                # and so we don't bother to fit the model.
+                return
+
+            # get only the experiments that we want for the trust region.
+            # NOTE this is a bit redundant as we call this method inside
+            # the has_sufficient_experiments method but cleaner this way.
+            experiments = self.trust_region_config.get_trust_region_experiments(
+                experiments, self.domain
+            )
+
         # perform outlier detection
         if self.outlier_detection_specs is not None:
             if (
@@ -139,6 +162,7 @@ class BotorchStrategy(PredictiveStrategy):
                 and self.num_experiments % self.frequency_check == 0
             ):
                 experiments = self.outlier_detection_specs.detect(experiments)
+
         # perform hyperopt
         if (self.frequency_hyperopt > 0) and (
             self.num_experiments % self.frequency_hyperopt == 0
@@ -199,8 +223,10 @@ class BotorchStrategy(PredictiveStrategy):
         """Calculate the acquisition value for a set of experiments.
 
         Args:
-            candidates (pd.DataFrame): Dataframe with experimentes for which the acqf value should be calculated.
-            combined (bool, optional): If combined an acquisition value for the whole batch is calculated, else individual ones.
+            candidates (pd.DataFrame): Dataframe with experimentes for which
+                the acqf value should be calculated.
+            combined (bool, optional): If combined an acquisition value for
+                the whole batch is calculated, else individual ones.
                 Defaults to False.
 
         Returns:
@@ -230,17 +256,20 @@ class BotorchStrategy(PredictiveStrategy):
         num_categorical_combinations = len(
             self.domain.inputs.get_categorical_combinations(),
         )
+
+        if self.trust_region_config is not None:
+            reference_experiment = self.experiments.loc[  # type: ignore
+                self.trust_region_config.X_center_idx
+            ]
+        else:
+            reference_experiment = None
+
         lower, upper = self.domain.inputs.get_bounds(
             specs=self.input_preprocessing_specs,
+            reference_experiment=reference_experiment,  # type: ignore
         )
+
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
-        # setup local bounds
-        assert self.experiments is not None
-        local_lower, local_upper = self.domain.inputs.get_bounds(
-            specs=self.input_preprocessing_specs,
-            reference_experiment=self.experiments.iloc[-1],
-        )
-        local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
         # setup nonlinears
         if (
@@ -262,19 +291,18 @@ class BotorchStrategy(PredictiveStrategy):
                 ),
             }
             nonlinear_constraints = get_nonlinear_constraints(self.domain)
+
         # setup fixed features
         if (
             (num_categorical_features == 0)
             or (num_categorical_combinations == 1)
-            or (
-                all(
-                    enc == CategoricalMethodEnum.FREE
-                    for enc in [
-                        self.categorical_method,
-                        self.descriptor_method,
-                        self.discrete_method,
-                    ]
-                )
+            or all(
+                enc == CategoricalMethodEnum.FREE
+                for enc in [
+                    self.categorical_method,
+                    self.descriptor_method,
+                    self.discrete_method,
+                ]
             )
         ):
             fixed_features = self.get_fixed_features()
@@ -282,9 +310,9 @@ class BotorchStrategy(PredictiveStrategy):
         else:
             fixed_features = None
             fixed_features_list = self.get_categorical_combinations()
+
         return (
             bounds,
-            local_bounds,
             ic_generator,
             ic_gen_kwargs,
             nonlinear_constraints,
@@ -332,20 +360,24 @@ class BotorchStrategy(PredictiveStrategy):
         fixed_features: Optional[Dict[int, float]],
         fixed_features_list: Optional[List[Dict[int, float]]],
     ) -> Tuple[Tensor, Tensor]:
+        equality_constraints = get_linear_constraints(
+            domain=self.domain,
+            constraint=LinearEqualityConstraint,
+        )
+        inequality_constraints = get_linear_constraints(
+            domain=self.domain,
+            constraint=LinearInequalityConstraint,
+        )
+
+        # Optimization of multiple acquisition functions
         if len(acqfs) > 1:
             candidates, acqf_vals = optimize_acqf_list(
                 acq_function_list=acqfs,
                 bounds=bounds,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,
-                ),
+                equality_constraints=equality_constraints,
+                inequality_constraints=inequality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
@@ -353,69 +385,175 @@ class BotorchStrategy(PredictiveStrategy):
                 ic_generator=ic_generator,
                 options=self._get_optimizer_options(),  # type: ignore
             )
-        elif fixed_features_list:
+            return candidates, acqf_vals
+
+        # Optimization of a single acquisition function with fixed features
+        if fixed_features_list:
             candidates, acqf_vals = optimize_acqf_mixed(
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,
-                ),
+                equality_constraints=equality_constraints,
+                inequality_constraints=inequality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                 fixed_features_list=fixed_features_list,
                 ic_generator=ic_generator,
                 ic_gen_kwargs=ic_gen_kwargs,
                 options=self._get_optimizer_options(),  # type: ignore
             )
-        else:
-            interpoints = get_interpoint_constraints(
-                domain=self.domain,
-                n_candidates=candidate_count,
-            )
-            candidates, acqf_vals = optimize_acqf(
-                acq_function=acqfs[0],
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,
-                )
-                + interpoints,
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                fixed_features=fixed_features,
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                return_best_only=True,
-                options=self._get_optimizer_options(),  # type: ignore
-                ic_generator=ic_generator,
-                **ic_gen_kwargs,
-            )
+            return candidates, acqf_vals
+
+        interpoints = get_interpoint_constraints(
+            domain=self.domain, n_candidates=candidate_count
+        )
+        candidates, acqf_vals = optimize_acqf(
+            acq_function=acqfs[0],
+            bounds=bounds,
+            q=candidate_count,
+            num_restarts=self.num_restarts,
+            raw_samples=self.num_raw_samples,
+            equality_constraints=equality_constraints + interpoints,
+            inequality_constraints=inequality_constraints,
+            fixed_features=fixed_features,
+            nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
+            return_best_only=True,
+            options=self._get_optimizer_options(),  # type: ignore
+            ic_generator=ic_generator,
+            **ic_gen_kwargs,
+        )
         return candidates, acqf_vals
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
-        """[summary]
+    def _ask_local_search(
+        self,
+        global_candidates: Tensor,
+        global_acqf_val: Tensor,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],
+        ic_generator: Callable,
+        ic_gen_kwargs: Dict,
+        nonlinear_constraints: Optional[List[Callable[[Tensor], float]]],
+        fixed_features: Optional[Dict[int, float]],
+        fixed_features_list: Optional[List[Dict[int, float]]],
+    ) -> pd.DataFrame:
+        # grab local bounds
+        assert self.experiments is not None
+        local_lower, local_upper = self.domain.inputs.get_bounds(
+            specs=self.input_preprocessing_specs,
+            reference_experiment=self.experiments.iloc[-1],
+        )
+        local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
+
+        local_candidates, local_acqf_val = self._optimize_acqf_continuous(
+            candidate_count=candidate_count,
+            acqfs=acqfs,
+            bounds=local_bounds,
+            ic_generator=ic_generator,  # type: ignore
+            ic_gen_kwargs=ic_gen_kwargs,
+            nonlinear_constraints=nonlinear_constraints,  # type: ignore
+            fixed_features=fixed_features,
+            fixed_features_list=fixed_features_list,
+        )
+
+        # check if we should take the local step
+        if self.local_search_config.is_local_step(  # type: ignore
+            local_acqf_val.item(), global_acqf_val.item()
+        ):
+            return self._postprocess_candidates(candidates=local_candidates)
+
+        # otherwise we return a set of experiments that take us to the global
+        # candidates from the last experiment ran on the equipment
+        sp = ShortestPathStrategy(
+            data_model=ShortestPathStrategyDataModel(
+                domain=self.domain,
+                start=self.experiments.iloc[-1].to_dict(),
+                end=self._postprocess_candidates(global_candidates).iloc[-1].to_dict(),
+            )
+        )
+        step = pd.DataFrame(sp.step(sp.start)).T
+        return pd.concat((step, self.predict(step)), axis=1)
+
+    def _ask_refill_trust_region(self, candidate_count: int) -> pd.DataFrame:
+        """If a trust region doesn't have enough experiments to reliably fit a
+        surrogate GP then we will just randomly sample from the trust region.
 
         Args:
-            candidate_count (int, optional): [description]. Defaults to 1.
+            candidate_count (int): The number of candidates to sample.
 
         Returns:
-            pd.DataFrame: [description]
+            pd.DataFrame: The candidates sampled from the trust region with
+                assigned dummy values for the predictions, standard deviations.
+        """
+        reference_experiment = self.experiments.loc[  # type: ignore
+            self.trust_region_config.X_center_idx  # type: ignore
+        ]
+        # instantiate a random strategy and ask it for the new experiments.
+        inputs = self.domain.inputs
+        outputs = self.domain.outputs
+        constraints = self.domain.constraints
 
+        # This is a bit of a hack to get the local sampler to work, ideally
+        # there would be a more elegant solution.
+        local_inputs = Inputs(
+            features=[
+                ContinuousInput(
+                    key=inp.key,
+                    bounds=(
+                        max(
+                            reference_experiment[inp.key]
+                            - self.trust_region_config.length / 2,  # type: ignore
+                            inp.lower_bound,  # type: ignore
+                        ),
+                        min(
+                            reference_experiment[inp.key]
+                            + self.trust_region_config.length / 2,  # type: ignore
+                            inp.upper_bound,  # type: ignore
+                        ),
+                    ),
+                )
+                for inp in inputs.get(ContinuousInput)
+            ]
+            + list(inputs.get(excludes=ContinuousInput))  # type: ignore
+        )
+        local_domain = Domain(
+            inputs=local_inputs,
+            outputs=outputs,
+            constraints=constraints,
+        )
+        sampler = strategies.map(
+            data_model=RandomStrategyDataModel(domain=local_domain)
+        )
+        # TODO (jduerholt): allow for method to return the required number of
+        # candidates in a single call rather than having to iterate over this
+        # via an external loop.
+        candidates = sampler.ask(candidate_count)
+        for key in self.domain.outputs.get_keys():
+            candidates[f"{key}_pred"] = 0
+            candidates[f"{key}_sd"] = 0
+            candidates[f"{key}_des"] = 1
+        return candidates
+
+    def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
+        """Ask the strategy for new experiments.
+
+        Args:
+            candidate_count (int): The batch size of new experiments
+                requested from the strategy. Defaults to 1.
         """
         assert candidate_count > 0, "candidate_count has to be larger than zero."
         if self.experiments is None:
             raise ValueError("No experiments have been provided yet.")
+
+        if (
+            self.trust_region_config is not None
+            and not self.trust_region_config.has_sufficient_experiments(
+                self.experiments, self.domain
+            )
+        ):
+            # fill the trust region with random samples if we're using a TR
+            # approach and don't have enough experiments to fit a reasonable GP
+            return self._ask_refill_trust_region(candidate_count)
 
         acqfs = self._get_acqfs(candidate_count)
 
@@ -466,7 +604,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         (
             bounds,
-            local_bounds,
             ic_generator,
             ic_gen_kwargs,
             nonlinears,
@@ -491,30 +628,17 @@ class BotorchStrategy(PredictiveStrategy):
             and has_local_search_region(self.domain)
             and candidate_count == 1
         ):
-            local_candidates, local_acqf_val = self._optimize_acqf_continuous(
+            return self._ask_local_search(
+                global_candidates=candidates,
+                global_acqf_val=global_acqf_val,
                 candidate_count=candidate_count,
                 acqfs=acqfs,
-                bounds=local_bounds,
                 ic_generator=ic_generator,  # type: ignore
                 ic_gen_kwargs=ic_gen_kwargs,
-                nonlinear_constraints=nonlinears,  # type: ignore
+                nonlinear_constraints=nonlinears,
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
             )
-            if self.local_search_config.is_local_step(
-                local_acqf_val.item(),
-                global_acqf_val.item(),
-            ):
-                return self._postprocess_candidates(candidates=local_candidates)
-            sp = ShortestPathStrategy(
-                data_model=ShortestPathStrategyDataModel(
-                    domain=self.domain,
-                    start=self.experiments.iloc[-1].to_dict(),
-                    end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
-                ),
-            )
-            step = pd.DataFrame(sp.step(sp.start)).T
-            return pd.concat((step, self.predict(step)), axis=1)
 
         return self._postprocess_candidates(candidates=candidates)
 
@@ -528,12 +652,9 @@ class BotorchStrategy(PredictiveStrategy):
     def get_fixed_features(self) -> Dict[int, float]:
         """Provides the values of all fixed features
 
-        Raises:
-            NotImplementedError: [description]
-
         Returns:
-            fixed_features (dict): Dictionary of fixed features, keys are the feature indices, values the transformed feature values
-
+            fixed_features (dict): Dictionary of fixed features, keys are the
+                feature indices, values the transformed feature values
         """
         fixed_features = {}
         features2idx = self._features2idx
@@ -571,6 +692,7 @@ class BotorchStrategy(PredictiveStrategy):
                         for j, idx in enumerate(features2idx[feat.key]):
                             if transformed.values[0, j] == 1.0:
                                 fixed_features[idx] = 0
+
         # for the descriptor ones
         if (
             self.descriptor_method == CategoricalMethodEnum.FREE
@@ -590,6 +712,7 @@ class BotorchStrategy(PredictiveStrategy):
                     for j, idx in enumerate(features2idx[feat.key]):
                         if lower[j] == upper[j]:
                             fixed_features[idx] = lower[j]
+
         return fixed_features
 
     def get_categorical_combinations(self) -> List[Dict[int, float]]:
@@ -609,6 +732,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         if all(m == CategoricalMethodEnum.FREE for m in methods):
             return [{}]
+
         include = []
         exclude = None
 
@@ -633,6 +757,7 @@ class BotorchStrategy(PredictiveStrategy):
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
+
         features2idx = self._features2idx
         list_of_fixed_features = []
 
@@ -662,6 +787,7 @@ class BotorchStrategy(PredictiveStrategy):
                     fixed_features[features2idx[feat][0]] = val  # type: ignore
 
             list_of_fixed_features.append(fixed_features)
+
         return list_of_fixed_features
 
     def has_sufficient_experiments(
