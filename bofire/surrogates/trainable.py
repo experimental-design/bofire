@@ -89,7 +89,11 @@ class TrainableSurrogate(ABC):
                 Defaults to None.
             stratified_feature (str, optional): The feature name to preserve the percentage of samples for each class in
                 the stratified folds. Defaults to None.
-            group_split_column (str, optional): The column name of the group id. Defaults to None.
+            group_split_column (str, optional): The column name of the group id. 
+                This parameter is used to ensure that the splits are made such that the same group is not present in both
+                training and testing sets. This is useful in scenarios where data points are related or dependent on each
+                other, and splitting them into different sets would violate the assumption of independence. The number of
+                unique groups must be greater than or equal to the number of folds. Defaults to None. 
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.

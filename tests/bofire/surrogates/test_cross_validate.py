@@ -472,7 +472,7 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
 
 @pytest.mark.parametrize("random_state", [1, 2])
 def test_model_cross_validate_groupfold(random_state):
-    # TODO: perhaps look into more efficient way to test this
+    # Define the input features for the model
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -491,7 +491,10 @@ def test_model_cross_validate_groupfold(random_state):
             ),
         ],
     )
+    # Define the output features for the model
     outputs = Outputs(features=[ContinuousOutput(key="y")])
+    
+    # Create a DataFrame with sample experiments data
     experiments = pd.DataFrame(
         [
             [-4, -4, "category1", "a", 1, 0],
@@ -515,6 +518,7 @@ def test_model_cross_validate_groupfold(random_state):
     )
     experiments["valid_y"] = 1
 
+    # Get the indices for each group
     cat0_indexes = experiments[experiments["group"] == 0].index
     cat1_indexes = experiments[experiments["group"] == 1].index
     cat2_indexes = experiments[experiments["group"] == 2].index
@@ -522,11 +526,14 @@ def test_model_cross_validate_groupfold(random_state):
 
     all_indices = [cat0_indexes, cat1_indexes, cat2_indexes, cat3_indexes]
 
+    # Initialize the model
     model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
     )
     model = surrogates.map(model)
+    
+    # Perform cross-validation with group splitting
     train_cv, test_cv, hook_results = model.cross_validate(
         experiments,
         folds=4,
@@ -534,7 +541,7 @@ def test_model_cross_validate_groupfold(random_state):
         group_split_column="group",
     )
 
-    # gather train and test indices
+    # Gather train and test indices
     test_indices = []
     train_indices = []
     for cvresults in test_cv.results:
@@ -543,7 +550,7 @@ def test_model_cross_validate_groupfold(random_state):
     for cvresults in train_cv.results:
         train_indices.append(list(cvresults.observed.index))
     
-    # test if the groups are only present in either the test or train indices and are grouped together
+    # Test if the groups are only present in either the test or train indices and are grouped together
     for test_index, train_index in zip(test_indices, train_indices):
         for indices in all_indices:
             test_set = set(test_index)
