@@ -86,15 +86,6 @@ class Objective:
         assert x.ndim == 1, "values of design should be 1d array"
         pass
 
-    @abstractmethod
-    def _model_jacobian_t(self, x: np.ndarray) -> np.ndarray:
-        """Computes the transpose of the model jacobian for each experiment in input x."""
-        pass
-
-    @abstractmethod
-    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
-        pass
-
 
 class ModelBasedObjective(Objective):
     def __init__(
@@ -551,9 +542,6 @@ class SpaceFilling(Objective):
             columns=self.vars,
         )
         return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
-
-    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
-        return design
 
 
 def get_objective_function(

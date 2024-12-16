@@ -18,7 +18,6 @@ from bofire.data_models.strategies.doe import AnyOptimalityCriterion
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
-    metrics,
     nchoosek_constraints_as_bounds,
 )
 from bofire.strategies.random import RandomStrategy
@@ -194,14 +193,6 @@ def find_local_max_ipopt(
         columns=domain.inputs.get_keys(),
         index=[f"exp{i}" for i in range(n_experiments)],
     )
-
-    # exit message
-    if _ipopt_options[b"print_level"] > 12:  # type: ignore
-        for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
-            print(key + ":", result[key])
-        X = objective_function.get_model_matrix(design).to_numpy()
-        print("metrics:", metrics(X))
-
     # check if all points respect the domain and the constraint
     try:
         domain.validate_candidates(
