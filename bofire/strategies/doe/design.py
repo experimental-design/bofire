@@ -13,7 +13,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.random import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.doe import AnyOptimalityCriterion
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import (

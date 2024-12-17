@@ -30,7 +30,7 @@ from bofire.data_models.strategies.doe import (
     SpaceFillingCriterion,
 )
 from bofire.data_models.types import Bounds
-from bofire.strategies.api import SpaceFillingStrategy
+from bofire.strategies.space_filling import SpaceFillingStrategy
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
 from bofire.strategies.doe.utils import get_formula_from_string
 from bofire.utils.torch_tools import tkwargs
@@ -236,7 +236,6 @@ class IOptimality(ModelBasedObjective):
             if n_space_filling_points is None:
                 n_space_filling_points = n_experiments * 10
 
-            # TODO: call SpaceFilling Strategy to generate space filling points
             data_model = SpaceFillingStrategyDataModel(
                 domain=domain,
                 sampling_fraction=1.0,
