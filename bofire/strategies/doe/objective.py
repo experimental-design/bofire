@@ -727,7 +727,7 @@ class SpaceFilling(Objective):
 
 def get_objective_function(
     criterion: Optional[OptimalityCriterion], domain: Domain, n_experiments: int
-) -> Optional[Objective]:
+) -> Objective:
     if criterion is None:
         return DOptimality(
             domain,
@@ -793,4 +793,4 @@ def get_objective_function(
             transform_range=criterion.transform_range,
         )
     else:
-        NotImplementedError("Criterion type not implemented!")
+        raise NotImplementedError("Criterion type not implemented!")

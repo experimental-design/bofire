@@ -258,7 +258,7 @@ def test_find_local_max_ipopt_batch_constraint():
         n_experiments=30,
     )
 
-    x1 = np.round(result["x1"].values, 6)
+    x1 = np.round(np.array(result["x1"].values), 6)
 
     assert 0 in x1 and 1 in x1
     for i in range(10):
