@@ -20,13 +20,9 @@ from bofire.data_models.features.api import (
 )
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
-    a_optimality,
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
-    d_optimality,
-    g_optimality,
     get_formula_from_string,
-    metrics,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
 )
@@ -479,84 +475,6 @@ def test_ConstraintWrapper():
             ],
         ),
     )
-
-
-def test_d_optimality():
-    # define model matrix: full rank
-    X = np.array(
-        [
-            [1, 1, 0, 0],
-            [1, 0, 1, 0],
-            [1, 0, 0, 1],
-            [1, 0, 0, 0],
-        ],
-    )
-    assert np.allclose(d_optimality(X), np.linalg.slogdet(X.T @ X)[1])
-
-    # define model matrix: not full rank
-    X = np.array(
-        [
-            [1, 1, 0, 0],
-            [1, 0, 1, 0],
-            [1, 0, 0, 1],
-            [1, 1 / 3, 1 / 3, 1 / 3],
-        ],
-    )
-    assert np.allclose(d_optimality(X), np.sum(np.log(np.linalg.eigvalsh(X.T @ X)[1:])))
-
-
-def test_a_optimality():
-    # define model matrix: full rank
-    X = np.array(
-        [
-            [1, 1, 0, 0],
-            [1, 0, 1, 0],
-            [1, 0, 0, 1],
-            [1, 0, 0, 0],
-        ],
-    )
-    assert np.allclose(a_optimality(X), np.sum(1 / (np.linalg.eigvalsh(X.T @ X))))
-
-    # define model matrix: not full rank
-    X = np.array(
-        [
-            [1, 1, 0, 0],
-            [1, 0, 1, 0],
-            [1, 0, 0, 1],
-            [1, 1 / 3, 1 / 3, 1 / 3],
-        ],
-    )
-    assert np.allclose(a_optimality(X), np.sum(1 / (np.linalg.eigvalsh(X.T @ X)[1:])))
-
-
-def test_g_optimality():
-    # define model matrix and domain: no constraints
-    X = np.array(
-        [
-            [1, 0, 0, 0],
-            [0, 0.1, 0, 0],
-            [0, 0, 0.1, 0],
-            [0, 0, 0, 0.1],
-        ],
-    )
-    assert np.allclose(g_optimality(X), 1)
-
-
-def test_metrics():
-    # define model matrix
-    X = np.array(
-        [
-            [1, 1, 0, 0],
-            [1, 0, 1, 0],
-            [1, 0, 0, 1],
-            [1, 0, 0, 0],
-        ],
-    )
-
-    m = metrics(X)
-    assert np.allclose(m["A-optimality"], a_optimality(X))
-    assert np.allclose(m["D-optimality"], d_optimality(X))
-    assert np.allclose(m["G-optimality"], g_optimality(X))
 
 
 def test_check_nchoosek_constraints_as_bounds():

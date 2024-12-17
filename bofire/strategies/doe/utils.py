@@ -421,61 +421,6 @@ class ConstraintWrapper:
         return jacobian
 
 
-def d_optimality(X: np.ndarray, delta=1e-9) -> float:
-    """Compute ln(1/|X^T X|) for a model matrix X (smaller is better).
-    The covariance of the estimated model parameters for $y = X beta + epsilon $is
-    given by $Var(beta) ~ (X^T X)^{-1}$.
-    The determinant |Var| quantifies the volume of the confidence ellipsoid which is to
-    be minimized.
-    """
-    eigenvalues = np.linalg.eigvalsh(X.T @ X)
-    eigenvalues = eigenvalues[np.abs(eigenvalues) > delta]
-    return np.sum(np.log(eigenvalues))
-
-
-def a_optimality(X: np.ndarray, delta=1e-9) -> float:
-    """Compute the A-optimality for a model matrix X (smaller is better).
-    A-optimality is the sum of variances of the estimated model parameters, which is
-    the trace of the covariance matrix $X.T @ X^-1$.
-
-    F is symmetric positive definite, hence the trace of (X.T @ X)^-1 is equal to the
-    the sum of inverse eigenvalues.
-    """
-    eigenvalues = np.linalg.eigvalsh(X.T @ X)
-    eigenvalues = eigenvalues[np.abs(eigenvalues) > delta]
-    return np.sum(1.0 / eigenvalues)  # type: ignore
-
-
-def g_optimality(X: np.ndarray, delta: float = 1e-9) -> float:
-    """Compute the G-optimality for a model matrix X (smaller is better).
-    G-optimality is the maximum entry in the diagonal of the hat matrix
-    H = X (X.T X)^-1 X.T which relates to the maximum variance of the predicted values.
-    """
-    H = X @ np.linalg.inv(X.T @ X + delta * np.eye(len(X))) @ X.T
-    return np.max(np.diag(H))  # type: ignore
-
-
-def metrics(X: np.ndarray, delta: float = 1e-9) -> pd.Series:
-    """Returns a series containing D-optimality, A-optimality and G-efficiency
-    for a model matrix X
-
-    Args:
-        X (np.ndarray): model matrix for which the metrics are determined
-        delta (float): cutoff value for eigenvalues of the information matrix. Default value is 1e-9.
-
-    Returns:
-        A pd.Series containing the values for the three metrics.
-
-    """
-    return pd.Series(
-        {
-            "D-optimality": d_optimality(X, delta),
-            "A-optimality": a_optimality(X, delta),
-            "G-optimality": g_optimality(X, delta),
-        },
-    )
-
-
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     """Checks if NChooseK constraints of domain can be formulated as bounds.
 
