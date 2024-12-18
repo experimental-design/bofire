@@ -7,7 +7,9 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
+from cyipopt import minimize_ipopt  # type: ignore
 from formulaic import Formula
+from scipy.optimize._minimize import standardize_constraints
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -15,9 +17,7 @@ from bofire.data_models.constraints.api import (
     EqualityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.strategies.api import (
-    SpaceFillingStrategy as SpaceFillingStrategyDataModel,
-)
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.doe import (
     AOptimalityCriterion,
     DoEOptimalityCriterion,
@@ -30,9 +30,12 @@ from bofire.data_models.strategies.doe import (
     SpaceFillingCriterion,
 )
 from bofire.data_models.types import Bounds
-from bofire.strategies.space_filling import SpaceFillingStrategy
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
-from bofire.strategies.doe.utils import get_formula_from_string
+from bofire.strategies.doe.utils import (
+    constraints_as_scipy_constraints,
+    get_formula_from_string,
+    nchoosek_constraints_as_bounds,
+)
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -205,8 +208,7 @@ class IOptimality(ModelBasedObjective):
             n_experiments (int): Number of experiments
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
             transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
-            n_space_filling_points (int, optional): Number of space filling points. If None is provided,
-                n_space_filling_points = n_experiments is assumed. Only relevant if SpaceFilling is used
+            n_space_filling_points (int, optional): Number of space filling points. Only relevant if SpaceFilling is used
                 to fill the feasible space, i.e. in presence of equality constraints.
                 Otherwise a uniform grid is generated. If None is provided, n_space_filling_points = 10 * n_experiments is assumed.
                 Default is None.
@@ -236,14 +238,40 @@ class IOptimality(ModelBasedObjective):
             if n_space_filling_points is None:
                 n_space_filling_points = n_experiments * 10
 
-            data_model = SpaceFillingStrategyDataModel(
-                domain=domain,
-                sampling_fraction=1.0,
-                ipopt_options=ipopt_options if ipopt_options is not None else {},
-                transform_range=transform_range,
+            x0 = (
+                domain.inputs.sample(
+                    n=n_space_filling_points, method=SamplingMethodEnum.UNIFORM
+                )
+                .to_numpy()
+                .flatten()
             )
-            sampler = SpaceFillingStrategy(data_model=data_model)
-            self.Y = sampler.ask(n_space_filling_points)
+            objective = SpaceFilling(
+                domain=domain,
+                n_experiments=n_space_filling_points,
+                delta=delta,
+                transform_range=None,
+            )
+            constraints = constraints_as_scipy_constraints(
+                domain, n_space_filling_points, ignore_nchoosek=True
+            )
+            bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
+
+            result = minimize_ipopt(
+                objective.evaluate,
+                x0=x0,
+                bounds=bounds,
+                constraints=standardize_constraints(constraints, x0, "SLSQP"),
+                options=ipopt_options
+                if ipopt_options is not None
+                else {"maxiter": 500, "disp": 0},
+                jac=objective.evaluate_jacobian,
+            )
+
+            self.Y = pd.DataFrame(
+                result["x"].reshape(n_space_filling_points, len(domain.inputs)),
+                columns=domain.inputs.get_keys(),
+                index=[f"gridpoint{i}" for i in range(n_space_filling_points)],
+            )
 
         else:
             low, high = domain.inputs.get_bounds(specs={})
@@ -270,7 +298,7 @@ class IOptimality(ModelBasedObjective):
                 fulfilled = np.array(np.prod(fulfilled, axis=0), dtype=bool)
                 self.Y = points[fulfilled]
             else:
-                self.y = points
+                self.Y = points
             n_space_filling_points = len(self.Y)
 
         try:
