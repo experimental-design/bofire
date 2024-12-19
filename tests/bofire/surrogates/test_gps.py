@@ -351,7 +351,7 @@ def test_SingleTaskGPModel_mixed_features():
         ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = inputs.sample(n=10)
+    experiments = inputs.sample(n=10, seed=194387)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_cat_1 == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat_1 == "papa", "y"] /= 2.0
@@ -385,7 +385,7 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     assert pred.shape == (10, 2)
-    assert ((pred['y_pred'] - experiments['y'])**2).mean() < 0.5
+    assert ((pred["y_pred"] - experiments["y"]) ** 2).mean() < 0.5
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [2, 3, 4, 5]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
 
