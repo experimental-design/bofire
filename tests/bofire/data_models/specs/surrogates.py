@@ -429,6 +429,69 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    models.CategoricalDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="y_cat"),
+            ],
+        ).model_dump(),
+        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
+        "dump": None,
+    },
+)
+
+
+specs.add_invalid(
+    models.CategoricalDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+                CategoricalInput(key="x_cat2", categories=["a", "b", "c"]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="y_cat"),
+            ],
+        ).model_dump(),
+        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
+        "dump": None,
+    },
+    error=ValueError,
+    message="Only one input is supported for the `CategoricalDeterministicSurrogate`",
+)
+
+specs.add_invalid(
+    models.CategoricalDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="y_cat"),
+            ],
+        ).model_dump(),
+        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "mapping": {"a": 0.1, "b": 0.2, "d": 1.0},
+        "dump": None,
+    },
+    error=ValueError,
+    message="Mapping keys do not match input feature keys.",
+)
+
+specs.add_valid(
     models.LinearDeterministicSurrogate,
     lambda: {
         "inputs": Inputs(

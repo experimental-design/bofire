@@ -231,7 +231,7 @@ def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
 def test_hyperconfig_invalid():
     with pytest.raises(
         ValueError,
-        match="It is not allowed to scpecify the number of its for FactorialStrategy",
+        match="It is not allowed to specify the number of its for FractionalFactorialStrategy",
     ):
         SingleTaskGPHyperconfig(n_iterations=5)
     with pytest.raises(

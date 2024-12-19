@@ -26,8 +26,6 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     AnyPrior,
 )
-
-# from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -45,9 +43,9 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
         ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
-        "FactorialStrategy"
-    )
+    hyperstrategy: Literal[
+        "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
+    ] = "FractionalFactorialStrategy"
 
     @staticmethod
     def _update_hyperparameters(
