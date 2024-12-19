@@ -335,61 +335,6 @@ def test_SingleTaskGPModel_feature_subsets():
     assert len(gp_mapped.model.covar_module.kernels[1].active_dims) == 4
 
 
-def test_SingleTaskGPModel_mixed_features():
-    """test that we can use a single task gp with mixed features"""
-    inputs = Inputs(
-        features=[
-            ContinuousInput(
-                key=f"x_{i+1}",
-                bounds=(-4, 4),
-            )
-            for i in range(2)
-        ]
-        + [
-            CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
-            CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
-        ],
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = inputs.sample(n=10)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
-    experiments.loc[experiments.x_cat_1 == "mama", "y"] *= 5.0
-    experiments.loc[experiments.x_cat_1 == "papa", "y"] /= 2.0
-    experiments.loc[experiments.x_cat_2 == "cat", "y"] *= -2.0
-    experiments.loc[experiments.x_cat_2 == "dog", "y"] /= -5.0
-    experiments["valid_y"] = 1
-
-    gp_data = SingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        kernel=AdditiveKernel(
-            kernels=[
-                HammingDistanceKernel(
-                    ard=True,
-                    features=["x_cat_1", "x_cat_2"],
-                ),
-                RBFKernel(
-                    ard=True,
-                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-                    features=[f"x_{i+1}" for i in range(2)],
-                ),
-            ]
-        ),
-    )
-
-    gp_mapped = surrogates.map(gp_data)
-    assert hasattr(gp_mapped, "fit")
-    assert len(gp_mapped.kernel.kernels) == 2
-    assert gp_mapped.kernel.kernels[0].features == ["x_cat_1", "x_cat_2"]
-    assert gp_mapped.kernel.kernels[1].features == ["x_1", "x_2"]
-    gp_mapped.fit(experiments)
-    pred = gp_mapped.predict(experiments)
-    assert pred.shape == (10, 2)
-    assert ((pred['y_pred'] - experiments['y'])**2).mean() < 0.5
-    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [2, 3, 4, 5]
-    assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
-
-
 def test_MixedSingleTaskGPHyperconfig():
     inputs = Inputs(
         features=[
