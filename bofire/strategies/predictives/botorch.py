@@ -31,7 +31,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Input,
 )
-from bofire.data_models.molfeatures.api import AnyMolFeatures
+from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
@@ -656,7 +656,7 @@ class BotorchStrategy(PredictiveStrategy):
 
                 elif isinstance(feature, CategoricalMolecularInput):
                     preproc = self.input_preprocessing_specs[feat]
-                    if not isinstance(preproc, AnyMolFeatures):  # type: ignore
+                    if not isinstance(preproc, MolFeatures):
                         raise ValueError(
                             f"preprocessing for {feat} must be of type AnyMolFeatures"
                         )
