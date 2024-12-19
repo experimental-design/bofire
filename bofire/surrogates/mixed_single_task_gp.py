@@ -92,7 +92,13 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             train_Y=tY,
             cat_dims=cat_dims,
             # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
-            cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
+            cont_kernel_factory=partial(
+                kernels.map,
+                data_model=self.continuous_kernel,
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])
                 if self.output_scaler == ScalerEnum.STANDARDIZE

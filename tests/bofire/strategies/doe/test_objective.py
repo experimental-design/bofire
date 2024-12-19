@@ -44,7 +44,12 @@ def test_Objective_model_jacobian_t():
     B[:, 4] = np.array([0, 0, 6])
     B[:, 5] = np.array([2, 1, 0])
 
-    assert np.allclose(B, model_jacobian_t(x))
+    J = model_jacobian_t(x)
+    print('===== B\n', B)
+    print('===== J\n', J)
+    print('===== Jterms\n', objective.terms_jacobian_t)
+
+    assert np.allclose(B, J)
 
     # fully quadratic model
     f = Formula("x1 + x2 + x3 + x1:x2 + x1:x3 + x2:x3 + {x1**2} + {x2**2} + {x3**2}")

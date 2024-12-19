@@ -54,7 +54,9 @@ class Objective:
 
         # terms for model jacobian
         self.terms_jacobian_t = []
+        print('model', model)
         for var in self.vars:
+            print('diff', var, model.differentiate(var, use_sympy=True))
             _terms = [
                 str(term).replace(":", "*") + f" + 0 * {self.vars[0]}"
                 for term in model.differentiate(var, use_sympy=True)
