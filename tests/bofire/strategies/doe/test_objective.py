@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 from formulaic import Formula
 
 from bofire.data_models.constraints.linear import (
@@ -816,7 +817,6 @@ def test_MinMaxTransform():
         AOptimalityCriterion,
         EOptimalityCriterion,
         GOptimalityCriterion,
-        IOptimalityCriterion,
         SpaceFillingCriterion,
     ]:
         if cls == SpaceFillingCriterion:
@@ -835,29 +835,7 @@ def test_MinMaxTransform():
                 domain=domain,
                 n_experiments=4,
             )
-        elif cls == IOptimalityCriterion:
-            objective_unscaled = get_objective_function(
-                cls(
-                    delta=0,
-                    transform_range=None,
-                    n_space_filling_points=4,
-                    ipopt_options={"maxiter": 200},
-                ),
-                domain=domain,
-                n_experiments=4,
-            )
-
-            objective_scaled = get_objective_function(
-                cls(
-                    delta=0,
-                    transform_range=(-1.0, 1.0),
-                    n_space_filling_points=4,
-                    ipopt_options={"maxiter": 200},
-                ),
-                domain=domain,
-                n_experiments=4,
-            )
-        else:
+        elif cls != IOptimalityCriterion:
             objective_unscaled = get_objective_function(
                 cls(
                     formula="linear",
@@ -885,6 +863,30 @@ def test_MinMaxTransform():
             2 * objective_unscaled.evaluate_jacobian(x_scaled),
             objective_scaled.evaluate_jacobian(x),
         )
+
+        objective_unscaled = get_objective_function(
+            IOptimalityCriterion(
+                formula="linear",
+                delta=0,
+                transform_range=None,
+                n_space_filling_points=4,
+                ipopt_options={"maxiter": 200},
+            ),
+            domain=domain,
+            n_experiments=4,
+        )
+        with pytest.raises(ValueError):
+            objective_scaled = get_objective_function(
+                IOptimalityCriterion(
+                    formula="linear",
+                    delta=0,
+                    transform_range=(-1.0, 1.0),
+                    n_space_filling_points=4,
+                    ipopt_options={"maxiter": 200},
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
 
 
 def test_IOptimality_instantiation():
