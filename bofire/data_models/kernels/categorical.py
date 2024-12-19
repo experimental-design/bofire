@@ -10,4 +10,3 @@ class CategoricalKernel(ConcreteKernel):
 class HammingDistanceKernel(CategoricalKernel):
     type: Literal["HammingDistanceKernel"] = "HammingDistanceKernel"
     ard: bool = True
-    with_one_hots: Optional[bool] = None
