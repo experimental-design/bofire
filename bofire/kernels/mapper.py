@@ -7,6 +7,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.kernels.categorical import HammingKernelWithOneHots
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
 
@@ -215,13 +216,35 @@ def map_HammingDistanceKernel(
     ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
-) -> CategoricalKernel:
+) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    return CategoricalKernel(
-        batch_shape=batch_shape,
-        ard_num_dims=len(active_dims) if data_model.ard else None,
-        active_dims=active_dims,  # type: ignore
-    )
+
+    if data_model.with_one_hots is None:
+        with_one_hots = data_model.features is not None and len(active_dims) > 1
+    else:
+        with_one_hots = data_model.with_one_hots
+
+    if with_one_hots and len(active_dims) == 1:
+        raise RuntimeError(
+            "only one feature for categorical kernel operating on one-hot features"
+        )
+    elif not with_one_hots and len(active_dims) > 1:
+        # this is not necessarily an issue since botorch's CategoricalKernel
+        # can work on multiple features at the same time
+        pass
+
+    if with_one_hots:
+        return HammingKernelWithOneHots(
+            batch_shape=batch_shape,
+            ard_num_dims=len(active_dims) if data_model.ard else None,
+            active_dims=active_dims,  # type: ignore
+        )
+    else:
+        return CategoricalKernel(
+            batch_shape=batch_shape,
+            ard_num_dims=len(active_dims) if data_model.ard else None,
+            active_dims=active_dims,  # type: ignore
+        )
 
 
 def map_WassersteinKernel(
