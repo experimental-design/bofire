@@ -67,7 +67,7 @@ all = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
-    "scikit-learn>=1.0.0",
+    "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0",
     "lightgbm==4.0.0",
     "pyomo==6.7.1",
