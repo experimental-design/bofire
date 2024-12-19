@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from bofire.data_models.kernels.kernel import ConcreteKernel
 
@@ -10,3 +10,4 @@ class CategoricalKernel(ConcreteKernel):
 class HammingDistanceKernel(CategoricalKernel):
     type: Literal["HammingDistanceKernel"] = "HammingDistanceKernel"
     ard: bool = True
+    with_one_hots: Optional[bool] = None

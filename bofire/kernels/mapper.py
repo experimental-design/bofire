@@ -219,7 +219,11 @@ def map_HammingDistanceKernel(
 ) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
 
-    with_one_hots = data_model.features is not None and len(active_dims) > 1
+    if data_model.with_one_hots is None:
+        with_one_hots = data_model.features is not None and len(active_dims) > 1
+    else:
+        with_one_hots = data_model.with_one_hots
+
     if with_one_hots and len(active_dims) == 1:
         raise RuntimeError(
             "only one feature for categorical kernel operating on one-hot features"

@@ -13,7 +13,7 @@ class HammingKernelWithOneHots(Kernel):
         diag: bool = False,
         last_dim_is_batch: bool = False,
     ) -> Tensor:
-        delta = (x1.unsqueeze(-2) - x2.unsqueeze(-3)) ** 2
+        delta = (x1.unsqueeze(-2) - x2.unsqueeze(-3))**2
         dists = delta / self.lengthscale.unsqueeze(-2)
         if last_dim_is_batch:
             dists = dists.transpose(-3, -1)
