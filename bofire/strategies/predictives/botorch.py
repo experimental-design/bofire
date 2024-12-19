@@ -656,7 +656,7 @@ class BotorchStrategy(PredictiveStrategy):
 
                 elif isinstance(feature, CategoricalMolecularInput):
                     preproc = self.input_preprocessing_specs[feat]
-                    if not isinstance(preproc, AnyMolFeatures):
+                    if not isinstance(preproc, AnyMolFeatures):  # type: ignore
                         raise ValueError(
                             f"preprocessing for {feat} must be of type AnyMolFeatures"
                         )
