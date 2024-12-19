@@ -835,7 +835,7 @@ def test_MinMaxTransform():
                 domain=domain,
                 n_experiments=4,
             )
-        elif cls != IOptimalityCriterion:
+        else:
             objective_unscaled = get_objective_function(
                 cls(
                     formula="linear",
