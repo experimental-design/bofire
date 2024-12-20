@@ -3,6 +3,7 @@ from typing import Callable, List, Optional
 import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
+from gpytorch.constraints import GreaterThan
 from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
@@ -234,6 +235,7 @@ def map_HammingDistanceKernel(
             batch_shape=batch_shape,
             ard_num_dims=len(active_dims) if data_model.ard else None,
             active_dims=active_dims,  # type: ignore
+            lengthscale_constraint=GreaterThan(1e-06),
         )
     else:
         return CategoricalKernel(
