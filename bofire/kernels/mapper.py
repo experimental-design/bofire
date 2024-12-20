@@ -1,14 +1,27 @@
-from typing import List
+from typing import Callable, List, Optional
 
 import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
+from gpytorch.constraints import GreaterThan
 from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.kernels.categorical import HammingKernelWithOneHots
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
+
+
+def _compute_active_dims(
+    data_model: data_models.ConcreteKernel,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> List[int]:
+    if data_model.features:
+        assert features_to_idx_mapper is not None
+        active_dims = features_to_idx_mapper(data_model.features)
+    return active_dims
 
 
 def map_RBFKernel(
@@ -16,7 +29,9 @@ def map_RBFKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.RBFKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.RBFKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
@@ -34,7 +49,9 @@ def map_MaternKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.MaternKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.MaternKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
@@ -53,6 +70,7 @@ def map_InfiniteWidthBNNKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> "InfiniteWidthBNNKernel":  # type: ignore # noqa: F821
     try:
         from botorch.models.kernels.infinite_width_bnn import (  # type: ignore
@@ -66,6 +84,7 @@ def map_InfiniteWidthBNNKernel(
             "requires python 3.10+.",
         )
 
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return InfiniteWidthBNNKernel(
         batch_shape=batch_shape,
         active_dims=tuple(active_dims),
@@ -78,7 +97,9 @@ def map_LinearKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.LinearKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.LinearKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
@@ -95,7 +116,9 @@ def map_PolynomialKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.PolynomialKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.PolynomialKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
@@ -113,6 +136,7 @@ def map_AdditiveKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.AdditiveKernel:
     return gpytorch.kernels.AdditiveKernel(
         *[  # type: ignore
@@ -121,6 +145,7 @@ def map_AdditiveKernel(
                 batch_shape=batch_shape,
                 ard_num_dims=ard_num_dims,
                 active_dims=active_dims,
+                features_to_idx_mapper=features_to_idx_mapper,
             )
             for k in data_model.kernels
         ],
@@ -132,6 +157,7 @@ def map_MultiplicativeKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.ProductKernel:
     return gpytorch.kernels.ProductKernel(
         *[  # type: ignore
@@ -140,6 +166,7 @@ def map_MultiplicativeKernel(
                 batch_shape=batch_shape,
                 ard_num_dims=ard_num_dims,
                 active_dims=active_dims,
+                features_to_idx_mapper=features_to_idx_mapper,
             )
             for k in data_model.kernels
         ],
@@ -151,6 +178,7 @@ def map_ScaleKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.ScaleKernel:
     return gpytorch.kernels.ScaleKernel(
         base_kernel=map(
@@ -158,6 +186,7 @@ def map_ScaleKernel(
             batch_shape=batch_shape,
             ard_num_dims=ard_num_dims,
             active_dims=active_dims,
+            features_to_idx_mapper=features_to_idx_mapper,
         ),
         outputscale_prior=(
             priors.map(data_model.outputscale_prior)
@@ -172,7 +201,9 @@ def map_TanimotoKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> TanimotoKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return TanimotoKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
@@ -185,12 +216,33 @@ def map_HammingDistanceKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
-) -> CategoricalKernel:
-    return CategoricalKernel(
-        batch_shape=batch_shape,
-        ard_num_dims=len(active_dims) if data_model.ard else None,
-        active_dims=active_dims,  # type: ignore
-    )
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> GpytorchKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+
+    with_one_hots = data_model.features is not None and len(active_dims) > 1
+    if with_one_hots and len(active_dims) == 1:
+        raise RuntimeError(
+            "only one feature for categorical kernel operating on one-hot features"
+        )
+    elif not with_one_hots and len(active_dims) > 1:
+        # this is not necessarily an issue since botorch's CategoricalKernel
+        # can work on multiple features at the same time
+        pass
+
+    if with_one_hots:
+        return HammingKernelWithOneHots(
+            batch_shape=batch_shape,
+            ard_num_dims=len(active_dims) if data_model.ard else None,
+            active_dims=active_dims,  # type: ignore
+            lengthscale_constraint=GreaterThan(1e-06),
+        )
+    else:
+        return CategoricalKernel(
+            batch_shape=batch_shape,
+            ard_num_dims=len(active_dims) if data_model.ard else None,
+            active_dims=active_dims,  # type: ignore
+        )
 
 
 def map_WassersteinKernel(
@@ -198,6 +250,7 @@ def map_WassersteinKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> WassersteinKernel:
     return WassersteinKernel(
         squared=data_model.squared,
@@ -230,10 +283,12 @@ def map(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> GpytorchKernel:
     return KERNEL_MAP[data_model.__class__](
         data_model,
         batch_shape,
         ard_num_dims,
         active_dims,
+        features_to_idx_mapper,
     )

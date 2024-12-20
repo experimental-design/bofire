@@ -27,9 +27,11 @@ from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEn
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     DiscreteInput,
     Input,
 )
+from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
@@ -652,6 +654,17 @@ class BotorchStrategy(PredictiveStrategy):
                     for j, idx in enumerate(features2idx[feat]):
                         fixed_features[idx] = feature.values[index][j]
 
+                elif isinstance(feature, CategoricalMolecularInput):
+                    preproc = self.input_preprocessing_specs[feat]
+                    if not isinstance(preproc, MolFeatures):
+                        raise ValueError(
+                            f"preprocessing for {feat} must be of type AnyMolFeatures"
+                        )
+                    transformed = feature.to_descriptor_encoding(
+                        preproc, pd.Series([val])
+                    )
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = transformed.values[0, j]
                 elif isinstance(feature, CategoricalInput):
                     # it has to be onehot in this case
                     transformed = feature.to_onehot_encoding(pd.Series([val]))
