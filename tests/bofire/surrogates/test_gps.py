@@ -28,7 +28,6 @@ from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
     MaternKernel,
-    MultiplicativeKernel,
     RBFKernel,
     ScaleKernel,
 )
@@ -50,6 +49,7 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.trainable import metrics2objectives
+from bofire.kernels.categorical import HammingKernelWithOneHots
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
@@ -381,11 +381,13 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped = surrogates.map(gp_data)
     assert hasattr(gp_mapped, "fit")
     assert len(gp_mapped.kernel.kernels) == 2
+    assert isinstance(gp_mapped.kernel.kernels[0], HammingDistanceKernel)
     assert gp_mapped.kernel.kernels[0].features == ["x_cat_1", "x_cat_2"]
     assert gp_mapped.kernel.kernels[1].features == ["x_1", "x_2"]
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     assert pred.shape == (10, 2)
+    assert isinstance(gp_mapped.model.covar_module.kernels[0], HammingKernelWithOneHots)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [2, 3, 4, 5]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
 
@@ -617,89 +619,3 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     model2.loads(dump)
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
-
-
-def test_SingleTaskGP_with_categoricals_is_equivalent_to_MixedSingleTaskGP():
-    inputs = Inputs(
-        features=[
-            ContinuousInput(
-                key=f"x_{i+1}",
-                bounds=(-4, 4),
-            )
-            for i in range(2)
-        ]
-        + [
-            CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
-            CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
-        ]
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = inputs.sample(n=10, seed=194387)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
-    experiments.loc[experiments.x_cat_1 == "mama", "y"] *= 5.0
-    experiments.loc[experiments.x_cat_1 == "papa", "y"] /= 2.0
-    experiments.loc[experiments.x_cat_2 == "cat", "y"] *= -2.0
-    experiments.loc[experiments.x_cat_2 == "dog", "y"] /= -5.0
-    experiments["valid_y"] = 1
-
-    gp_data = SingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        kernel=AdditiveKernel(  # use the same kernel as botorch.models.MixedSingleTaskGP
-            kernels=[
-                ScaleKernel(
-                    base_kernel=HammingDistanceKernel(
-                        ard=True,
-                        features=["x_cat_1", "x_cat_2"],
-                    )
-                ),
-                ScaleKernel(
-                    base_kernel=RBFKernel(
-                        ard=True,
-                        lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-                        features=[f"x_{i+1}" for i in range(2)],
-                    )
-                ),
-                ScaleKernel(
-                    base_kernel=MultiplicativeKernel(
-                        kernels=[
-                            HammingDistanceKernel(
-                                ard=True,
-                                features=["x_cat_1", "x_cat_2"],
-                            ),
-                            RBFKernel(
-                                ard=True,
-                                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-                                features=[f"x_{i+1}" for i in range(2)],
-                            ),
-                        ]
-                    )
-                ),
-            ]
-        ),
-    )
-
-    gp_mapped = surrogates.map(gp_data)
-    gp_mapped.fit(experiments)
-    pred = gp_mapped.predict(experiments)
-    single_task_gp_mse = ((pred["y_pred"] - experiments["y"]) ** 2).mean()
-
-    model = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        input_preprocessing_specs={
-            "x_cat_1": CategoricalEncodingEnum.ONE_HOT,
-            "x_cat_2": CategoricalEncodingEnum.ONE_HOT,
-        },
-        continuous_kernel=RBFKernel(
-            ard=True,
-            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        ),
-        categorical_kernel=HammingDistanceKernel(ard=True),
-    )
-    model = surrogates.map(model)
-    model.fit(experiments)
-    pred = model.predict(experiments)
-    mixed_single_task_gp_mse = ((pred["y_pred"] - experiments["y"]) ** 2).mean()
-
-    assert abs(single_task_gp_mse - mixed_single_task_gp_mse) < 1.0
