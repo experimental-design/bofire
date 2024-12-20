@@ -34,15 +34,15 @@ optimization = [
     "numpy",
     "multiprocess",
     "plotly",
-    "formulaic>=1.0.1",
+    "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
-    "scikit-learn>=1.0.0",
+    "scikit-learn>=1.0.0,<1.6",
 ]
 entmoot = ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"]
 xgb = ["xgboost>=1.7.5"]
-cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordred"]
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred"]
 tests = [
     "mopti",
     "pytest",
@@ -67,14 +67,13 @@ all = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
-    "scikit-learn>=1.0.0",
+    "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0",
     "lightgbm==4.0.0",
     "pyomo==6.7.1",
     "gurobipy",
     "xgboost>=1.7.5",
     "rdkit>=2023.3.2",
-    "scikit-learn>=1.0.0",
     "mordred",
     "mopti",
     "pytest",
