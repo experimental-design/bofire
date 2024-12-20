@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -470,6 +471,7 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
     ):
         model.cross_validate(experiments, folds=5, stratified_feature=key)
 
+
 @pytest.mark.parametrize("random_state", [1, 2])
 def test_model_cross_validate_groupfold(random_state):
     # Define the input features for the model
@@ -493,7 +495,7 @@ def test_model_cross_validate_groupfold(random_state):
     )
     # Define the output features for the model
     outputs = Outputs(features=[ContinuousOutput(key="y")])
-    
+
     # Create a DataFrame with sample experiments data
     experiments = pd.DataFrame(
         [
@@ -532,7 +534,7 @@ def test_model_cross_validate_groupfold(random_state):
         outputs=outputs,
     )
     model = surrogates.map(model)
-    
+
     # Perform cross-validation with group splitting
     train_cv, test_cv, hook_results = model.cross_validate(
         experiments,
@@ -549,10 +551,101 @@ def test_model_cross_validate_groupfold(random_state):
 
     for cvresults in train_cv.results:
         train_indices.append(list(cvresults.observed.index))
-    
+
     # Test if the groups are only present in either the test or train indices and are grouped together
     for test_index, train_index in zip(test_indices, train_indices):
         for indices in all_indices:
             test_set = set(test_index)
             train_set = set(train_index)
             assert test_set.issuperset(indices) or train_set.issuperset(indices)
+
+
+def test_make_cv_split():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments["group"] = [i % 2 for i in range(10)]
+    experiments["stratified_feature"] = [
+        (i % 2) == 0 for i in range(10)
+    ]  # Add a stratified feature
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Test KFold split
+    cv, cv_func = model._make_cv_split(
+        experiments,
+        folds=5,
+        random_state=1,
+        stratified_feature=None,
+        group_split_column=None,
+    )
+    assert isinstance(cv, KFold)
+    assert len(list(cv_func)) == 5
+
+    # Test StratifiedKFold split
+    cv, cv_func = model._make_cv_split(
+        experiments,
+        folds=5,
+        random_state=1,
+        stratified_feature="stratified_feature",
+        group_split_column=None,
+    )
+    assert isinstance(cv, StratifiedKFold)
+    assert len(list(cv_func)) == 5
+
+    # Test GroupShuffleSplit split
+    cv, cv_func = model._make_cv_split(
+        experiments,
+        folds=2,
+        random_state=1,
+        stratified_feature=None,
+        group_split_column="group",
+    )
+    assert isinstance(cv, GroupShuffleSplit)
+    assert len(list(cv_func)) == 2
+
+
+def test_check_valid_nfolds():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+    # Test valid folds
+    assert model._check_valid_nfolds(5, 10) == 5
+    assert model._check_valid_nfolds(-1, 10) == 10
+
+    # Test folds greater than number of experiments
+    with pytest.warns(UserWarning):
+        assert model._check_valid_nfolds(20, 10) == 10
+
+    # Test invalid folds
+    with pytest.raises(ValueError):
+        model._check_valid_nfolds(0, 10)
+    with pytest.raises(ValueError):
+        model._check_valid_nfolds(1, 10)
+    with pytest.raises(ValueError):
+        model._check_valid_nfolds(5, 0)
