@@ -39,6 +39,13 @@ def get_row(features, value: float = None, values: List[float] = None):
         (
             get_row(F[:4], 1),
             NonlinearEqualityConstraint(
+                expression=lambda f1, f2, f3, f4: f1 + f2 + f3 + f4 - 4,
+            ),
+            True,
+        ),
+        (
+            get_row(F[:4], 1),
+            NonlinearEqualityConstraint(
                 expression="f1 + f2 + f3 + f4 -3",
             ),
             False,
@@ -54,6 +61,13 @@ def get_row(features, value: float = None, values: List[float] = None):
             get_row(F[:4], 1),
             NonlinearInequalityConstraint(
                 expression="f1 + f2 + f3 + f4 -2",
+            ),
+            False,
+        ),
+        (
+            get_row(F[:4], 1),
+            NonlinearInequalityConstraint(
+                expression=lambda f1, f2, f3, f4: f1 + f2 + f3 + f4 - 2,
             ),
             False,
         ),
