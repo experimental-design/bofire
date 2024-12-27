@@ -42,7 +42,7 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
-from bofire.data_models.strategies.api import LSRBO
+from bofire.data_models.strategies.api import LSRBOConfig
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
@@ -469,9 +469,7 @@ def test_sobo_lsrbo():
     ]
     # local search
     strategy_data = data_models.SoboStrategy(
-        domain=bench.domain,
-        seed=42,
-        local_search_config=LSRBO(gamma=0),
+        domain=bench.domain, seed=42, local_search_config=LSRBOConfig(gamma=0)
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
@@ -479,9 +477,7 @@ def test_sobo_lsrbo():
     np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.55276, 11.192913])  # type: ignore
     # global search
     strategy_data = data_models.SoboStrategy(
-        domain=bench.domain,
-        seed=42,
-        local_search_config=LSRBO(gamma=500000),
+        domain=bench.domain, seed=42, local_search_config=LSRBOConfig(gamma=500000)
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)

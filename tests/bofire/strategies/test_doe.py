@@ -1,7 +1,9 @@
+import importlib.util
 import warnings
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -19,7 +21,7 @@ from bofire.data_models.features.api import (
 from bofire.strategies.api import DoEStrategy
 
 
-# from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
@@ -66,6 +68,7 @@ def test_doe_strategy_init():
     assert strategy is not None
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_doe_strategy_ask():
     data_model = data_models.DoEStrategy(domain=domain, formula="linear")
     strategy = DoEStrategy(data_model=data_model)
@@ -73,6 +76,7 @@ def test_doe_strategy_ask():
     assert candidates.shape == (12, 3)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_doe_strategy_ask_with_candidates():
     candidates_fixed = pd.DataFrame(
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
@@ -85,6 +89,7 @@ def test_doe_strategy_ask_with_candidates():
     assert candidates.shape == (12, 3)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_nchoosek_implemented():
     nchoosek_constraint = NChooseKConstraint(
         features=[f"x{i + 1}" for i in range(3)],
@@ -107,6 +112,7 @@ def test_nchoosek_implemented():
     assert candidates.shape == (12, 3)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_formulas_implemented():
     expected_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
@@ -122,6 +128,7 @@ def test_formulas_implemented():
         assert candidates.shape == (num_candidates, 3)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_doe_strategy_correctness():
     candidates_fixed = pd.DataFrame(
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
@@ -142,6 +149,7 @@ def test_doe_strategy_correctness():
         assert any(np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy())
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_doe_strategy_amount_of_candidates():
     candidates_fixed = pd.DataFrame(
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
@@ -157,6 +165,7 @@ def test_doe_strategy_amount_of_candidates():
     assert len(candidates) == num_candidates_expected
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_categorical_discrete_doe():
     quantity_a = [
         ContinuousInput(key=f"quantity_a_{i}", bounds=(0, 100)) for i in range(3)
@@ -210,6 +219,7 @@ def test_categorical_discrete_doe():
     assert candidates.shape == (10, 9)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_partially_fixed_experiments():
     continuous_var = [
         ContinuousInput(key=f"continuous_var_{i}", bounds=(100, 230)) for i in range(2)
@@ -293,6 +303,7 @@ def test_partially_fixed_experiments():
     assert test_df.sum().sum() == 0
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_scaled_doe():
     domain = Domain.from_lists(
         inputs=[
@@ -320,6 +331,7 @@ def test_scaled_doe():
         assert np.any([np.allclose(c, e) for e in expected_candidates])
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_categorical_doe_iterative():
     quantity_a = [
         ContinuousInput(key=f"quantity_a_{i}", bounds=(20, 100)) for i in range(2)
