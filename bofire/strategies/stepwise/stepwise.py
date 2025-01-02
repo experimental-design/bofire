@@ -51,8 +51,6 @@ class StepwiseStrategy(Strategy):
     def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:  # type: ignore
         strategy, transform = self.get_step()
 
-        candidate_count = candidate_count or 1
-
         # handle a possible transform, no need to apply transforms to domains, as domains
         # do not have to be exactly the same for each step, they only have to be compatible
         # to the master domain of the stepwise strategy
