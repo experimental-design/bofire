@@ -489,7 +489,7 @@ def _callables_and_weights(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = False,
-    allowed_objectives: List[Type[Objective]]] = [],
+    allowed_objectives: List[Type[Objective]] = [],
     adapt_weights_to_1_inf: bool = False,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
