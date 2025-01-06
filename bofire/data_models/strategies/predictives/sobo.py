@@ -113,9 +113,8 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
     additive features (f3 and f4 with weights w3 and w4) is:
 
         additive_objective = 1 + f3*w3 + f4*w4
-        denominator_additive_objectives = 1 + w3 + w4
 
-        objective = f1^w1 * f2^w2 * (additive_objective / denominator_additive_objectives)
+        objective = f1^w1 * f2^w2 * additive_objective
 
     """
 

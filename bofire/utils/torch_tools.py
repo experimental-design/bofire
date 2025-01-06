@@ -638,9 +638,8 @@ def get_multiplicative_additive_objective(
     additive features (f3 and f4 with weights w3 and w4) is:
 
         additive_objective = 1 + f3*w3 + f4*w4
-        denominator_additive_objectives = 1 + w3 + w4
 
-        objective = f1^w1 * f2^w2 * (additive_objective / denominator_additive_objectives)
+        objective = f1^w1 * f2^w2 * additive_objective
 
 
     Args:
@@ -691,20 +690,14 @@ def get_multiplicative_additive_objective(
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         additive_objective = 1.0
-        denominator_additive_objectives = 1.0
         for c, w in zip(callables_additive, weights_additive):
             additive_objective += c(samples, None) * w
-            denominator_additive_objectives += w
 
         multiplicative_objective = 1.0
-        denominator_multiplicative_objectives = 1.0
         for c, w in zip(callables_multiplicative, weights_multiplicative):
             multiplicative_objective *= c(samples, None) ** w
-            denominator_multiplicative_objectives += w
 
-        y: Tensor = multiplicative_objective * (
-            additive_objective / denominator_additive_objectives
-        )
+        y: Tensor = multiplicative_objective * additive_objective
         return y
 
     return objective
