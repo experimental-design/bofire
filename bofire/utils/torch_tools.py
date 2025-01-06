@@ -566,7 +566,7 @@ def get_multiplicative_botorch_objective(
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         val = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables, weights):
-            val *= c(samples, None) ** w
+            val = val * c(samples, None) ** w
         return val  # type: ignore
 
     return objective
@@ -587,7 +587,7 @@ def get_additive_botorch_objective(
     def objective(samples: Tensor, X: Tensor) -> Tensor:
         val = torch.tensor(0.0).to(**tkwargs)
         for c, w in zip(callables, weights):
-            val += c(samples, None) * w
+            val = val + c(samples, None) * w
         return val  # type: ignore
 
     return objective
@@ -691,11 +691,11 @@ def get_multiplicative_additive_objective(
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         additive_objective = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables_additive, weights_additive):
-            additive_objective += c(samples, None) * w
+            additive_objective = additive_objective + c(samples, None) * w
 
         multiplicative_objective = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables_multiplicative, weights_multiplicative):
-            multiplicative_objective *= c(samples, None) ** w
+            multiplicative_objective = multiplicative_objective * c(samples, None) ** w
 
         y: Tensor = multiplicative_objective * additive_objective
         return y
