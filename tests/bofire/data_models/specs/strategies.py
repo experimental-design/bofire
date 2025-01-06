@@ -109,6 +109,15 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.MultiplicativeAdditiveSoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "additive_features": ["o1"],
+    },
+)
+specs.add_valid(
     strategies.CustomSoboStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
