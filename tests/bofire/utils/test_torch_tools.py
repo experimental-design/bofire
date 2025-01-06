@@ -867,7 +867,7 @@ def mutiobjective_data():
     return samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs
 
 
-def test_get_multiplicative_objective(mutiobjective_data):
+def test_get_multiobjective_objective(mutiobjective_data):
     samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
         mutiobjective_data
     )
