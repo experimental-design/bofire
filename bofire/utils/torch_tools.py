@@ -489,7 +489,7 @@ def _callables_and_weights(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = False,
-    allowed_objectives: Optional[List[Objective]] = None,
+    allowed_objectives: Optional[List[Type[Objective]]] = None,
     adapt_weights_to_1_inf: bool = False,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
@@ -499,7 +499,7 @@ def _callables_and_weights(
         outputs (Outputs): Outputs object
         experiments (pd.DataFrame): DataFrame containing the experiments that are used for adapting the objectives
         exclude_constraints (bool): exclude constraints
-        allowed_objectives (Optional[List[Objective]]): limit to allowed objectives
+        allowed_objectives (Optional[List[Type[Objective]]]): limit to allowed objectives
         adapt_weights_to_1_inf (bool): transform weights from [0,1] to [1,inf) space
 
     Returns:
