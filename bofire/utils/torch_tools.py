@@ -631,7 +631,7 @@ def get_multiplicative_additive_objective(
     additive_features: Optional[List[str]] = None,
     adapt_weights_to_1_inf: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    """will compute the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
+    """Computes the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
     Additive features (inputs or outputs) can be specified in the `additive_features` list.
 
     The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
