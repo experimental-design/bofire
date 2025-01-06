@@ -107,7 +107,7 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
 
 class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
     """
-    mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
+    Mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
 
     The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
     additive features (f3 and f4 with weights w3 and w4) is:
@@ -129,11 +129,9 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
     def validate_additive_features(cls, v, values):
         domain = values.data["domain"]
         for feature in v:
-            if (feature not in domain.outputs.get_keys()) and (
-                feature not in domain.inputs.get_keys()
-            ):
+            if (feature not in domain.outputs.get_keys()):
                 raise ValueError(
-                    f"Feature {feature} is not a feature (input or output) of the domain."
+                    f"Feature {feature} is not an output feature of the domain."
                 )
         return v
 

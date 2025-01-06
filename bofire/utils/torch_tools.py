@@ -493,7 +493,7 @@ def _callables_and_weights(
     adapt_weights_to_1_inf: bool = False,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
-    extract callables and weights from outputs object
+    Extract callables and weights from outputs object
 
     Args:
         outputs (Outputs): Outputs object
@@ -534,7 +534,7 @@ def _callables_and_weights(
                 continue
 
         if allowed_objectives is not None:
-            if feat.objective.__class__ not in allowed_objectives:
+            if not isinstance(feat.objective,  tuple(allowed_objectives)):
                 continue
 
         callables.append(
