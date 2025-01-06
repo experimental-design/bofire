@@ -129,7 +129,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
     def validate_additive_features(cls, v, values):
         domain = values.data["domain"]
         for feature in v:
-            if (feature not in domain.outputs.get_keys()):
+            if feature not in domain.outputs.get_keys():
                 raise ValueError(
                     f"Feature {feature} is not an output feature of the domain."
                 )

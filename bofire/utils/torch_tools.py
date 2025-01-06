@@ -534,7 +534,7 @@ def _callables_and_weights(
                 continue
 
         if allowed_objectives is not None:
-            if not isinstance(feat.objective,  tuple(allowed_objectives)):
+            if not isinstance(feat.objective, tuple(allowed_objectives)):
                 continue
 
         callables.append(
