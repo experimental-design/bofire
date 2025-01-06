@@ -114,6 +114,7 @@ specs.add_valid(
         "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
         "acquisition_function": qPI(tau=0.1).model_dump(),
+        "use_output_constraints": False,
         "additive_features": ["o1"],
     },
 )
