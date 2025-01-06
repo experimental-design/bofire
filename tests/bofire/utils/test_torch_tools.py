@@ -42,6 +42,7 @@ from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
     get_interpoint_constraints,
     get_linear_constraints,
+    _callables_and_weights,
     get_multiobjective_objective,
     get_multiplicative_additive_objective,
     get_multiplicative_botorch_objective,
@@ -865,6 +866,43 @@ def mutiobjective_data():
     )
 
     return samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs
+
+
+@pytest.fixture(params=["default", "exclude_constraints", "allowed_objectives", "adapt_weights"])
+def _callables_and_weights_kwargs_testcase(request):
+    return request.param
+
+def test_callables_and_weights(mutiobjective_data, _callables_and_weights_kwargs_testcase: str):
+
+    kwargs = {}
+    if _callables_and_weights_kwargs_testcase == "exclude_constraints":
+        kwargs["exclude_constraints"] =  True
+    elif _callables_and_weights_kwargs_testcase == "allowed_objectives":
+        kwargs["allowed_objectives"] =  [MaximizeObjective]
+    elif _callables_and_weights_kwargs_testcase == "adapt_weights":
+        kwargs["adapt_weights_to_1_inf"] =  True
+
+
+    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
+        mutiobjective_data
+    )
+
+    callables, weights, keys = _callables_and_weights(outputs, experiments, **kwargs)
+
+    testkeys = outputs.get_keys()
+    if _callables_and_weights_kwargs_testcase == "exclude_constraints":
+        testkeys = ["alpha", "gamma", "omega"]
+    elif _callables_and_weights_kwargs_testcase == "allowed_objectives":
+        testkeys = ["alpha"]
+
+    weights_data_model = [outputs.get_by_key(k).objective.w for k in testkeys]
+    if _callables_and_weights_kwargs_testcase == "adapt_weights":
+        weights_data_model = [w / min(weights_data_model) for w in weights_data_model]
+
+    assert testkeys == keys
+    assert weights == weights_data_model
+
+
 
 
 def test_get_multiobjective_objective(mutiobjective_data):
