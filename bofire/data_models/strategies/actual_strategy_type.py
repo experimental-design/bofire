@@ -20,6 +20,7 @@ from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
@@ -32,6 +33,7 @@ ActualStrategy = Union[
     AdditiveSoboStrategy,
     ActiveLearningStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiFidelityStrategy,
     QehviStrategy,
