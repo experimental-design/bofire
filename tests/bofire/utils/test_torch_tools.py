@@ -946,9 +946,7 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
     additive_objective = 1.0 + reward_gamma * w_gamma + reward_alpha * w_alpha
 
     multiplicative_objective = (
-        (reward_beta**w_beta)
-        * (reward_omega**w_omega)
-        * additive_objective
+        (reward_beta**w_beta) * (reward_omega**w_omega) * additive_objective
     )
 
     objective_forward = objective_forward.detach().numpy()
