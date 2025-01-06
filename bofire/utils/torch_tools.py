@@ -585,7 +585,7 @@ def get_additive_botorch_objective(
     )
 
     def objective(samples: Tensor, X: Tensor) -> Tensor:
-        val = torch.tensor(0.).to(**tkwargs)
+        val = torch.tensor(0.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val += c(samples, None) * w
         return val  # type: ignore
