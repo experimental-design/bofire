@@ -534,7 +534,6 @@ def _callables_and_weights(
                 continue
 
         if allowed_objectives is not None:
-            allowed_objectives = tuple(type(obj) for obj in allowed_objectives)
             if not isinstance(feat.objective, tuple(allowed_objectives)):
                 continue
 
