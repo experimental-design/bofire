@@ -2,8 +2,25 @@ import pandas as pd
 
 
 # this are the default generators used for fractional factorial designs in BoFire
-default_fracfac_generators = pd.DataFrame.from_dict(
-    [
+# They are based on the book "Design and Analysis of Experiments" by Douglas C. Montgomery
+# Eighth Edition, 2013, ISBN-13: 978-1118146927
+
+default_blocking_generators = pd.DataFrame(
+    data=[
+        {"n_factors": 3, "n_blocks": 2, "block_generator": "ABC"},
+        {"n_factors": 3, "n_blocks": 4, "block_generator": "AB; AC"},
+        {"n_factors": 4, "n_blocks": 2, "block_generator": "ABCD"},
+        {"n_factors": 4, "n_blocks": 4, "block_generator": "ABC; ACD"},
+        {"n_factors": 4, "n_blocks": 8, "block_generator": "AB; BC; CD"},
+        {"n_factors": 5, "n_blocks": 2, "block_generator": "ABCDE"},
+        {"n_factors": 5, "n_blocks": 4, "block_generator": "ABC; CDE"},
+        {"n_factors": 5, "n_blocks": 8, "block_generator": "ABE; BCE; CDE"},
+        {"n_factors": 5, "n_blocks": 16, "block_generator": "AB; AC; CD; DE"},
+    ]
+)
+
+default_fracfac_generators = pd.DataFrame(
+    data=[
         {"n_factors": 3, "n_generators": 1, "generator": "C = AB"},
         {"n_factors": 4, "n_generators": 1, "generator": "D = ABC"},
         {"n_factors": 5, "n_generators": 1, "generator": "E = ABCD"},
