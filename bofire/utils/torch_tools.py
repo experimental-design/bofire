@@ -534,7 +534,7 @@ def _callables_and_weights(
                 continue
 
         if allowed_objectives is not None:
-            if not any(map(lambda obj: isinstance(feat.objective, obj), allowed_objectives)):
+            if not any(isinstance(feat.objective, obj) for obj in allowed_objectives):
                 continue
 
         callables.append(
