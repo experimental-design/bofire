@@ -509,18 +509,11 @@ def _callables_and_weights(
 
     """
 
-    if outputs is None:
-        return [], [], []
-
     def _x_adapt(feat):
         """adapted output x, skipped for inputs"""
-        if isinstance(outputs, Outputs):
-            x = outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                feat.key
-            ].values
-        else:
-            x = experiments[feat.key].values
-
+        x = outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+            feat.key
+        ].values
         return torch.from_numpy(x).to(**tkwargs)
 
     callables, weights, keys = [], [], []
