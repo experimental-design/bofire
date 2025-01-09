@@ -21,6 +21,9 @@ from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
 from bofire.data_models.strategies.api import (
+    MultiplicativeAdditiveSoboStrategy as MultiplicativeAdditiveDataModel,
+)
+from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
 from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
@@ -28,6 +31,7 @@ from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
+    get_multiplicative_additive_objective,
     get_multiplicative_botorch_objective,
     get_objective_callable,
     get_output_constraints,
@@ -240,7 +244,40 @@ class MultiplicativeSoboStrategy(SoboStrategy):
                 objective=get_multiplicative_botorch_objective(  # type: ignore
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
+                    adapt_weights_to_1_inf=True,
                 ),
+            ),
+            None,
+            1e-3,
+        )
+
+
+class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
+    def __init__(
+        self,
+        data_model: MultiplicativeAdditiveDataModel,
+        **kwargs,
+    ):
+        self.additive_features = data_model.additive_features
+        super().__init__(data_model=data_model, **kwargs)
+
+    def _get_objective_and_constraints(
+        self,
+    ) -> Tuple[
+        GenericMCObjective,
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
+        Union[List, float],
+    ]:
+        # we absorb all constraints into the objective
+        assert self.experiments is not None, "No experiments available."
+        return (
+            GenericMCObjective(
+                objective=get_multiplicative_additive_objective(  # type: ignore
+                    outputs=self.domain.outputs,
+                    experiments=self.experiments,
+                    additive_features=self.additive_features,
+                    adapt_weights_to_1_inf=True,
+                )
             ),
             None,
             1e-3,
