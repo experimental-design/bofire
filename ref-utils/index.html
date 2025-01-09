@@ -1039,6 +1039,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.utils.torch_tools.get_multiplicative_additive_objective" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_multiplicative_additive_objective()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.utils.torch_tools.get_nchoosek_constraints" class="md-nav__link">
     <span class="md-ellipsis">
       get_nchoosek_constraints()
@@ -1223,7 +1232,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fingerprints</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">smiles2fingerprints</span><span class="p">(</span>
     <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">bond_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
     <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
@@ -1310,7 +1319,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fragments</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">smiles2fragments</span><span class="p">(</span>
     <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">fragments_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1415,7 +1424,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2mol</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">smiles2mol</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms a smiles string to an rdkit mol object.</span>
 
 <span class="sd">    Args:</span>
@@ -1496,7 +1505,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2mordred</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">descriptors_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">smiles2mordred</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">descriptors_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms list of smiles to mordred moelcular descriptors.</span>
 
 <span class="sd">    Args:</span>
@@ -1624,7 +1633,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">compute_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">compute_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes a generator for a given number of factors and generators.</span>
 
 <span class="sd">    Args:</span>
@@ -1728,7 +1737,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">ff2n</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">ff2n</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the full factorial design for a given number of factors.</span>
 
 <span class="sd">    Args:</span>
@@ -1797,7 +1806,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the fractional factorial design for a given generator.</span>
 
 <span class="sd">    Args:</span>
@@ -1907,7 +1916,7 @@ with positive signs.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_alias_structure</span><span class="p">(</span><span class="n">gen</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_alias_structure</span><span class="p">(</span><span class="n">gen</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the alias structure of the design matrix. Works only for generators</span>
 <span class="sd">    with positive signs.</span>
 
@@ -2037,7 +2046,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_confounding_matrix</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_confounding_matrix</span><span class="p">(</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">,</span>
     <span class="n">design</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">powers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2059,7 +2068,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 <span class="sd">        _type_: _description_</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinMaxScaler</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Categorical input features will be ignored.&quot;</span><span class="p">)</span>
@@ -2154,7 +2163,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_default_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_default_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the default generator for a given number of factors and generators.</span>
 
 <span class="sd">    In case the combination is not available, the function will raise an error.</span>
@@ -2254,7 +2263,7 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a generator for a given number of factors and generators.</span>
 
 <span class="sd">    If the requested combination is available in the default generators, it will return</span>
@@ -2296,7 +2305,7 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
 
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">generator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">generator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validates the generator and thows an error if it is not valid.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n_factors</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generator does not match the number of factors.&quot;</span><span class="p">)</span>
@@ -2447,7 +2456,7 @@ that should be considered in the mask. Defaults to None.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/multiobjective.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_ref_point_mask</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_ref_point_mask</span><span class="p">(</span>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">output_feature_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -2580,7 +2589,7 @@ that should be considered in the mask. Defaults to None.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_column_names</span><span class="p">(</span><span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_column_names</span><span class="p">(</span><span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Specifies column names for given Outputs type.</span>
 
 <span class="sd">    Args:</span>
@@ -2669,7 +2678,7 @@ that should be considered in the mask. Defaults to None.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">postprocess_categorical_predictions</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">postprocess_categorical_predictions</span><span class="p">(</span>
     <span class="n">predictions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -2761,10 +2770,10 @@ AffineTransform        </code>
 
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">AffineTransform</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AffineTransform</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class to switch back and forth from the reduced to the original domain.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equalities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equalities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes a `AffineTransformation` object.</span>
 
 <span class="sd">        Args:</span>
@@ -2776,7 +2785,7 @@ AffineTransform        </code>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">equalities</span> <span class="o">=</span> <span class="n">equalities</span>
 
-    <span class="k">def</span> <span class="nf">augment_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">augment_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore the eliminated features in a dataframe</span>
 
 <span class="sd">        Args:</span>
@@ -2795,7 +2804,7 @@ AffineTransform        </code>
                 <span class="n">data</span><span class="p">[</span><span class="n">name_lhs</span><span class="p">]</span> <span class="o">+=</span> <span class="n">coeffs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">data</span>
 
-    <span class="k">def</span> <span class="nf">drop_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">drop_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop eliminated features from a dataframe.</span>
 
 <span class="sd">        Args:</span>
@@ -2868,7 +2877,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equalities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equalities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initializes a `AffineTransformation` object.</span>
 
 <span class="sd">    Args:</span>
@@ -2937,7 +2946,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">augment_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">augment_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Restore the eliminated features in a dataframe</span>
 
 <span class="sd">    Args:</span>
@@ -3013,7 +3022,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">drop_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">drop_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop eliminated features from a dataframe.</span>
 
 <span class="sd">    Args:</span>
@@ -3096,7 +3105,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">adjust_boundary</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">adjust_boundary</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the boundaries of a feature.</span>
 
 <span class="sd">    Args:</span>
@@ -3169,7 +3178,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">check_domain_for_reduction</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check_domain_for_reduction</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the reduction can be applied or if a trivial case is present.</span>
 
 <span class="sd">    Args:</span>
@@ -3228,7 +3237,7 @@ are the corresponding coefficients.</p></td>
 
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">check_existence_of_solution</span><span class="p">(</span><span class="n">A_aug</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">check_existence_of_solution</span><span class="p">(</span><span class="n">A_aug</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Given an augmented coefficient matrix this function determines the existence (and uniqueness) of solution using the rank theorem.&quot;&quot;&quot;</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">A_aug</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">A_aug</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -3308,7 +3317,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">reduce_domain</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Domain</span><span class="p">,</span> <span class="n">AffineTransform</span><span class="p">]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reduce_domain</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Domain</span><span class="p">,</span> <span class="n">AffineTransform</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Reduce a domain with linear equality constraints to a subdomain where linear equality constraints are eliminated.</span>
 
 <span class="sd">    Args:</span>
@@ -3528,7 +3537,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">remove_eliminated_inputs</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">AffineTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_eliminated_inputs</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">AffineTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Eliminates remaining occurrences of eliminated inputs in linear constraints.</span>
 
 <span class="sd">    Args:</span>
@@ -3693,7 +3702,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">rref</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">rref</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the reduced row echelon form of a Matrix</span>
 
 <span class="sd">    Args:</span>
@@ -3863,7 +3872,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/subdomain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_subdomain</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_subdomain</span><span class="p">(</span>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">feature_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
@@ -3975,10 +3984,10 @@ InterpolateTransform            (<span title="botorch.models.transforms.input.In
 
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">InterpolateTransform</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">InterpolateTransform</span><span class="p">(</span><span class="n">InputTransform</span><span class="p">,</span> <span class="n">Module</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Botorch input transform that interpolates values between given x and y values.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">new_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">idx_x</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
@@ -4016,22 +4025,22 @@ InterpolateTransform            (<span title="botorch.models.transforms.input.In
         <span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prepend_y</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">append_y</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of x and y indices must be equal.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">new_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficient</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">values_reshaped</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">values_expanded</span> <span class="o">=</span> <span class="n">values_reshaped</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">values_expanded</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">prepend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="n">shape</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">values_reshaped</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">*</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">values_expanded</span> <span class="o">=</span> <span class="n">values_reshaped</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">*</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">values_expanded</span><span class="p">,</span> <span class="n">X</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
         <span class="n">shapeX</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="n">x</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_x</span><span class="p">]</span>
@@ -4124,7 +4133,7 @@ InterpolateTransform            (<span title="botorch.models.transforms.input.In
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
     <span class="n">shapeX</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
 
     <span class="n">x</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_x</span><span class="p">]</span>
@@ -4240,7 +4249,7 @@ Defaults to 1e-8.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">constrained_objective2botorch</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">constrained_objective2botorch</span><span class="p">(</span>
     <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">ConstrainedObjective</span><span class="p">,</span>
     <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
@@ -4404,7 +4413,7 @@ are generated at once.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_initial_conditions_generator</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_initial_conditions_generator</span><span class="p">(</span>
     <span class="n">strategy</span><span class="p">:</span> <span class="n">Strategy</span><span class="p">,</span>
     <span class="n">transform_specs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
     <span class="n">ask_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -4432,7 +4441,7 @@ are generated at once.</p></td>
     <span class="k">if</span> <span class="n">ask_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ask_options</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">def</span> <span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">sequential</span><span class="p">:</span>
             <span class="n">initial_conditions</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
@@ -4528,7 +4537,7 @@ are generated at once.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_interpoint_constraints</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_interpoint_constraints</span><span class="p">(</span>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">n_candidates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
@@ -4640,7 +4649,7 @@ are generated at once.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_linear_constraints</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_linear_constraints</span><span class="p">(</span>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">constraint</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">LinearInequalityConstraint</span><span class="p">]],</span>
     <span class="n">unit_scaled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -4762,7 +4771,7 @@ adapting the objectives on the fly, for example in the case of the
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_multiobjective_objective</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_multiobjective_objective</span><span class="p">(</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
@@ -4778,26 +4787,165 @@ adapting the objectives on the fly, for example in the case of the
 <span class="sd">        Callable[[Tensor], Tensor]: _description_</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">callables</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">get_objective_callable</span><span class="p">(</span>
-            <span class="n">idx</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
-            <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-            <span class="n">x_adapt</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
-                <span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_one_valid_output</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)[</span>
-                    <span class="n">feat</span><span class="o">.</span><span class="n">key</span>
-                <span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">),</span>
-        <span class="p">)</span>
-    <span class="p">]</span>
+    <span class="n">allowed_objectives</span> <span class="o">=</span> <span class="p">[</span><span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">callables</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">callables_outputs</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_callables_and_weights</span><span class="p">(</span>
+        <span class="n">outputs</span><span class="p">,</span>
+        <span class="n">experiments</span><span class="p">,</span>
+        <span class="n">allowed_objectives</span><span class="o">=</span><span class="n">allowed_objectives</span><span class="p">,</span>
+        <span class="n">adapt_weights_to_1_inf</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">callables_outputs</span><span class="p">],</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">objective</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.torch_tools.get_multiplicative_additive_objective" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_multiplicative_additive_objective</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">,</span> <span class="n">exclude_constraints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">additive_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">adapt_weights_to_1_inf</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Computes the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
+Additive features (inputs or outputs) can be specified in the <code>additive_features</code> list.</p>
+<p>The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
+additive features (f3 and f4 with weights w3 and w4) is:</p>
+<div class="highlight"><pre><span></span><code>additive_objective = 1 + f3*w3 + f4*w4
+
+objective = f1^w1 * f2^w2 * additive_objective
+</code></pre></div>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>additive_features</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>list of features that should be treated as additive</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>adapt_weights_to_1_inf</code></td>
+        <td><code>bool</code></td>
+        <td><p>will transform weights from [0,1] to [1,inf) space</p></td>
+        <td><code>True</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>objective (callable)</code></td>
+      <td><p>callable that can be used by botorch for optimization</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_multiplicative_additive_objective</span><span class="p">(</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">exclude_constraints</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">additive_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">adapt_weights_to_1_inf</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.</span>
+<span class="sd">    Additive features (inputs or outputs) can be specified in the `additive_features` list.</span>
+
+<span class="sd">    The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two</span>
+<span class="sd">    additive features (f3 and f4 with weights w3 and w4) is:</span>
+
+<span class="sd">        additive_objective = 1 + f3*w3 + f4*w4</span>
+
+<span class="sd">        objective = f1^w1 * f2^w2 * additive_objective</span>
+
+
+<span class="sd">    Args:</span>
+<span class="sd">        outputs</span>
+<span class="sd">        experiments</span>
+<span class="sd">        exclude_constraints</span>
+<span class="sd">        additive_features (List[str]): list of features that should be treated as additive</span>
+<span class="sd">        adapt_weights_to_1_inf (bool): will transform weights from [0,1] to [1,inf) space</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        objective (callable): callable that can be used by botorch for optimization</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">callables</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">_callables_and_weights</span><span class="p">(</span>
+        <span class="n">outputs</span><span class="p">,</span>
+        <span class="n">experiments</span><span class="p">,</span>
+        <span class="n">exclude_constraints</span><span class="o">=</span><span class="n">exclude_constraints</span><span class="p">,</span>
+        <span class="n">adapt_weights_to_1_inf</span><span class="o">=</span><span class="n">adapt_weights_to_1_inf</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">additive_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">additive_features</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_differ_additive_and_multiplicative_features</span><span class="p">(</span><span class="n">callables</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">):</span>
+        <span class="n">callables_additive</span><span class="p">,</span> <span class="n">weights_additive</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">callables_multiplicative</span><span class="p">,</span> <span class="n">weights_multiplicative</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">callables</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">feature_names</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">additive_features</span><span class="p">:</span>
+                <span class="n">callables_additive</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+                <span class="n">weights_additive</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">callables_multiplicative</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+                <span class="n">weights_multiplicative</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">callables_additive</span><span class="p">,</span>
+            <span class="n">weights_additive</span><span class="p">,</span>
+            <span class="n">callables_multiplicative</span><span class="p">,</span>
+            <span class="n">weights_multiplicative</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="p">(</span>
+        <span class="n">callables_additive</span><span class="p">,</span>
+        <span class="n">weights_additive</span><span class="p">,</span>
+        <span class="n">callables_multiplicative</span><span class="p">,</span>
+        <span class="n">weights_multiplicative</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">_differ_additive_and_multiplicative_features</span><span class="p">(</span><span class="n">callables</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">samples</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">additive_objective</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">callables_additive</span><span class="p">,</span> <span class="n">weights_additive</span><span class="p">):</span>
+            <span class="n">additive_objective</span> <span class="o">=</span> <span class="n">additive_objective</span> <span class="o">+</span> <span class="n">c</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span>
+
+        <span class="n">multiplicative_objective</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">callables_multiplicative</span><span class="p">,</span> <span class="n">weights_multiplicative</span><span class="p">):</span>
+            <span class="n">multiplicative_objective</span> <span class="o">=</span> <span class="n">multiplicative_objective</span> <span class="o">*</span> <span class="n">c</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">**</span> <span class="n">w</span>
+
+        <span class="n">y</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="n">multiplicative_objective</span> <span class="o">*</span> <span class="n">additive_objective</span>
+        <span class="k">return</span> <span class="n">y</span>
 
     <span class="k">return</span> <span class="n">objective</span>
 </code></pre></div>
@@ -4863,7 +5011,7 @@ at zero.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nchoosek_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_nchoosek_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms NChooseK constraints into a list of non-linear inequality constraint callables</span>
 <span class="sd">    that can be parsed by pydantic. For this purpose the NChooseK constraint is continuously</span>
 <span class="sd">    relaxed by countig the number of zeros in a candidate by a sum of narrow gaussians centered</span>
@@ -4878,15 +5026,15 @@ at zero.</p>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">ell</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">max_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span>
             <span class="n">num_features</span> <span class="o">-</span> <span class="n">max_count</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">min_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">min_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
             <span class="n">num_features</span> <span class="o">-</span> <span class="n">min_count</span>
         <span class="p">)</span>
@@ -4976,7 +5124,7 @@ as input and return a float value representing the constraint evaluation.</p></t
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nonlinear_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_nonlinear_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a list of callable functions that represent the nonlinear constraints</span>
 <span class="sd">    for the given domain that can be processed by botorch.</span>
 
@@ -5059,7 +5207,7 @@ adapting the objectives on the fly, for example in the case of the
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_constraints</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_output_constraints</span><span class="p">(</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
@@ -5160,7 +5308,7 @@ based on the given domain.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_product_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_product_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a list of nonlinear constraint functions that can be processed by botorch</span>
 <span class="sd">    based on the given domain.</span>
 
@@ -5172,7 +5320,7 @@ based on the given domain.</p>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">product_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">exponents</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">product_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">exponents</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">sign</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">]</span> <span class="o">**</span> <span class="n">exponents</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">rhs</span>
 
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>

@@ -850,6 +850,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     processEnvironments: true
                 },
                 displayAlign: 'center',
+                messageStyle: 'none',
                 CommonHTML: {
                     linebreaks: {
                     automatic: true
@@ -1066,13 +1067,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="n">LinearEqualityConstraint</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Domain</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.features.api</span> <span class="kn">import</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">ContinuousOutput</span>
-<span class="kn">from</span> <span class="nn">bofire.strategies.doe.design</span> <span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
-<span class="kn">from</span> <span class="nn">bofire.strategies.enum</span> <span class="kn">import</span> <span class="n">OptimalityCriterionEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.constraints.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearEqualityConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.domain.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.features.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">ContinuousOutput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.strategies.doe.design</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.strategies.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimalityCriterionEnum</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">import matplotlib.pyplot as plt
 

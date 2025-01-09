@@ -915,7 +915,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Domain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Domain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;Domain&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Domain&quot;</span>
 
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Inputs</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">())</span>
@@ -931,7 +931,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_lists</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_lists</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
         <span class="n">inputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyInput</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">outputs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyOutput</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -948,7 +948,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;inputs&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_inputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_inputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">v</span>
@@ -958,7 +958,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_outputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_outputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyOutput</span><span class="p">):</span>
@@ -967,7 +967,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_constraints_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_constraints_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyConstraint</span><span class="p">):</span>
@@ -975,7 +975,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">        Args:</span>
@@ -995,7 +995,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the constraints defined in the domain fit to the input features.</span>
 
 <span class="sd">        Args:</span>
@@ -1014,7 +1014,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="c1"># TODO: tidy this up</span>
-    <span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all possible NChooseK combinations</span>
 
 <span class="sd">        Args:</span>
@@ -1120,7 +1120,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
         <span class="k">return</span> <span class="n">used_features_list_final</span><span class="p">,</span> <span class="n">unused_features_list</span>
 
-    <span class="k">def</span> <span class="nf">coerce_invalids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">coerce_invalids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Coerces all invalid output measurements to np.nan</span>
 
 <span class="sd">        Args:</span>
@@ -1135,7 +1135,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="n">experiments</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">experiments</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;valid_</span><span class="si">{</span><span class="n">feat</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">feat</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
         <span class="k">return</span> <span class="n">experiments</span>
 
-    <span class="k">def</span> <span class="nf">aggregate_by_duplicates</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_by_duplicates</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">prec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1207,7 +1207,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="n">experiments</span> <span class="o">=</span> <span class="n">experiments</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">experiments</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">duplicated_labcodes</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">validate_experiments</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_experiments</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -1260,7 +1260,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">experiments</span>
 
-    <span class="k">def</span> <span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature</span>
 
 <span class="sd">        Args:</span>
@@ -1290,7 +1290,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;measured&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_candidates</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -1335,7 +1335,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">return</span> <span class="n">candidates</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">experiment_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">experiment_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The columns in the experimental dataframe</span>
 
 <span class="sd">        Returns:</span>
@@ -1348,7 +1348,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">candidate_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">candidate_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The columns in the candidate dataframe</span>
 
 <span class="sd">        Returns:</span>
@@ -1804,7 +1804,7 @@ method to use. Defaults to "mean".</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">aggregate_by_duplicates</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">aggregate_by_duplicates</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">prec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -1933,7 +1933,7 @@ method to use. Defaults to "mean".</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">coerce_invalids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">coerce_invalids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerces all invalid output measurements to np.nan</span>
 
 <span class="sd">    Args:</span>
@@ -2005,7 +2005,7 @@ method to use. Defaults to "mean".</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature</span>
 
 <span class="sd">    Args:</span>
@@ -2094,7 +2094,7 @@ method to use. Defaults to "mean".</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all possible NChooseK combinations</span>
 
 <span class="sd">    Args:</span>
@@ -2308,7 +2308,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_candidates</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -2431,7 +2431,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that the constraints defined in the domain fit to the input features.</span>
 
 <span class="sd">    Args:</span>
@@ -2562,7 +2562,7 @@ Defaults to False.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_experiments</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">validate_experiments</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -2696,7 +2696,7 @@ Defaults to False.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">    Args:</span>

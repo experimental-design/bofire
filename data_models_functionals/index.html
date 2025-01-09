@@ -630,9 +630,9 @@
 <p>Data models in BoFire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</p>
 <p>All data models in <code>bofire.data_models</code>, are specified as pydantic models and inherit from <code>bofire.data_models.base.BaseModel</code>. These data models can be (de)serialized via <code>.dict()</code> and <code>.json()</code> (provided by pydantic). A json schema of each data model can be obtained using <code>.schema()</code>.</p>
 <p>For surrogates and strategies, all functional parts are located in <code>bofire.surrogates</code> and <code>bofire.strategies</code>. These functionalities include the <code>ask</code> and <code>tell</code> as well as <code>fit</code> and <code>predict</code> methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a <code>RandomStrategy</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">bofire.data_models.domain.api</span> <span class="k">as</span> <span class="nn">dm_domain</span>
-<span class="kn">import</span> <span class="nn">bofire.data_models.features.api</span> <span class="k">as</span> <span class="nn">dm_features</span>
-<span class="kn">import</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="k">as</span> <span class="nn">dm_strategies</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">bofire.data_models.domain.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dm_domain</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bofire.data_models.features.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dm_features</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dm_strategies</span>
 
 <span class="n">in1</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in1&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">))</span>
 <span class="n">in2</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in2&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">2.0</span><span class="p">))</span>
@@ -653,9 +653,9 @@
 <span class="n">data_model</span> <span class="o">=</span> <span class="n">dm_strategies</span><span class="o">.</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
 </code></pre></div>
 <p>Such a data model can be (de)serialized as follows:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">parse_obj_as</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="kn">import</span> <span class="n">AnyStrategy</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_obj_as</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyStrategy</span>
 
 <span class="n">serialized</span> <span class="o">=</span> <span class="n">data_model</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
@@ -664,7 +664,7 @@
 <span class="k">assert</span> <span class="n">data_model_</span> <span class="o">==</span> <span class="n">data_model</span>
 </code></pre></div>
 <p>Using this data model of a strategy, we can create an instance of a (functional) strategy:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">bofire.strategies.api</span> <span class="k">as</span> <span class="nn">strategies</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">bofire.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">strategies</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
 </code></pre></div>
 <p>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</p>

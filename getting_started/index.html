@@ -1009,6 +1009,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
                     processEnvironments: true
                 },
                 displayAlign: 'center',
+                messageStyle: 'none',
                 CommonHTML: {
                     linebreaks: {
                     automatic: true
@@ -1257,7 +1258,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.features.api</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.features.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CategoricalDescriptorInput</span><span class="p">,</span>
     <span class="n">CategoricalInput</span><span class="p">,</span>
     <span class="n">ContinuousInput</span><span class="p">,</span>
@@ -1331,8 +1332,8 @@ x6 = CategoricalDescriptorInput(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.features.api</span> <span class="kn">import</span> <span class="n">ContinuousOutput</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.objectives.api</span> <span class="kn">import</span> <span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.features.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousOutput</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.objectives.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span>
 
 
 <span class="n">objective1</span> <span class="o">=</span> <span class="n">MaximizeObjective</span><span class="p">(</span>
@@ -1391,7 +1392,7 @@ y2 = ContinuousOutput(key="y2", objective=objective2)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Outputs</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.domain.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Inputs</span><span class="p">,</span> <span class="n">Outputs</span>
 
 
 <span class="n">input_features</span> <span class="o">=</span> <span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span><span class="p">,</span> <span class="n">x5</span><span class="p">,</span> <span class="n">x6</span><span class="p">])</span>
@@ -1772,7 +1773,7 @@ fixed_inputs = input_features.get_fixed()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.enum</span> <span class="kn">import</span> <span class="n">SamplingMethodEnum</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingMethodEnum</span>
 
 
 <span class="n">X</span> <span class="o">=</span> <span class="n">input_features</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">LHS</span><span class="p">)</span>
@@ -1832,7 +1833,7 @@ They take a list of names of the input features they are operating on, a list of
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.constraints.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">LinearEqualityConstraint</span><span class="p">,</span>
     <span class="n">LinearInequalityConstraint</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1928,7 +1929,7 @@ constr2 = LinearInequalityConstraint(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="n">NonlinearEqualityConstraint</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.constraints.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">NonlinearEqualityConstraint</span>
 
 
 <span class="c1"># The unit circle: x1**2 + x2**2 = 1</span>
@@ -1977,7 +1978,7 @@ Think of a mixture, where we have long list of possible ingredients, but want to
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="n">NChooseKConstraint</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.constraints.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">NChooseKConstraint</span>
 
 
 <span class="c1"># Only 2 or 3 out of 3 parameters can be greater than zero</span>
@@ -2036,7 +2037,7 @@ constr5</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Constraints</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.domain.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraints</span>
 
 
 <span class="n">constraints</span> <span class="o">=</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">constr1</span><span class="p">,</span> <span class="n">constr2</span><span class="p">])</span>
@@ -2156,8 +2157,8 @@ constraints = Constraints(constraints=[constr1, constr2])</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.objectives.api</span> <span class="kn">import</span> <span class="n">MinimizeSigmoidObjective</span>
-<span class="kn">from</span> <span class="nn">bofire.plot.api</span> <span class="kn">import</span> <span class="n">plot_objective_plotly</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.objectives.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinimizeSigmoidObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.plot.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_objective_plotly</span>
 
 
 <span class="n">output_constraint</span> <span class="o">=</span> <span class="n">MinimizeSigmoidObjective</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">steepness</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">tp</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
@@ -2216,7 +2217,7 @@ fig.show()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Domain</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.domain.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>
 
 
 <span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">input_features</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="n">output_features</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
@@ -2318,8 +2319,8 @@ domain = Domain(inputs=input_features, outputs=output_features, constraints=cons
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">bofire.strategies.api</span> <span class="k">as</span> <span class="nn">strategies</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="kn">import</span> <span class="n">RandomStrategy</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">bofire.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">strategies</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomStrategy</span>
 
 
 <span class="n">strategy_data_model</span> <span class="o">=</span> <span class="n">RandomStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
@@ -2375,7 +2376,7 @@ random_candidates</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.benchmarks.single</span> <span class="kn">import</span> <span class="n">Himmelblau</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.benchmarks.single</span><span class="w"> </span><span class="kn">import</span> <span class="n">Himmelblau</span>
 
 
 <span class="n">benchmark</span> <span class="o">=</span> <span class="n">Himmelblau</span><span class="p">()</span>
@@ -2469,8 +2470,8 @@ experiments</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.data_models.acquisition_functions.api</span> <span class="kn">import</span> <span class="n">qLogNEI</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="kn">import</span> <span class="n">SoboStrategy</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.acquisition_functions.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">qLogNEI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoboStrategy</span>
 
 
 <span class="n">sobo_strategy_data_model</span> <span class="o">=</span> <span class="n">SoboStrategy</span><span class="p">(</span>
@@ -2534,9 +2535,9 @@ sobo_strategy.ask(candidate_count=1)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">bofire.strategies.doe.design</span> <span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.strategies.doe.design</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
 
 
 <span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">y1</span><span class="p">],</span> <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">constr1</span><span class="p">])</span>
@@ -2588,7 +2589,7 @@ np.round(res, 3)</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 
 <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
