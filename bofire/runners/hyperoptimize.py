@@ -48,6 +48,9 @@ def hyperoptimize(
         training_data=training_data,
         folds=folds,
         random_state=random_state,
+        show_progress_bar=True
+        if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy"
+        else False,
     )
 
     if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy":
