@@ -1,4 +1,3 @@
-import math
 import random
 import uuid
 
@@ -40,16 +39,16 @@ specs.add_valid(
     features.ContinuousInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "bounds": (3, 5.3),
+        "bounds": [3, 5.3],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
-        "local_relative_bounds": (math.inf, math.inf),
+        "local_relative_bounds": None,
         "stepsize": None,
     },
 )
 
 specs.add_invalid(
     features.ContinuousInput,
-    lambda: {"key": "a", "bounds": (5, 3)},
+    lambda: {"key": "a", "bounds": [5, 3]},
     error=ValueError,
     message="Sequence is not monotonically increasing.",
 )
@@ -58,11 +57,11 @@ specs.add_valid(
     features.ContinuousDescriptorInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "bounds": (3, 5.3),
+        "bounds": [3, 5.3],
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
-        "local_relative_bounds": (math.inf, math.inf),
+        "local_relative_bounds": None,
         "stepsize": None,
     },
 )
