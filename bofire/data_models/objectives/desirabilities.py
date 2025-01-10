@@ -2,6 +2,7 @@ from typing import Literal, Optional, Tuple, Union, Callable
 
 import numpy as np
 import pandas as pd
+import pydantic
 
 from bofire.data_models.objectives.identity import IdentityObjective
 
@@ -27,7 +28,19 @@ class _SeriesNumpyCallable:
     def call_numpy(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
 
-class DesirabilityObjective(IdentityObjective):
+
+class _LogShapeClipFactorValidator:
+    @pydantic.field_validator("clip", check_fields=False)
+    def validate_clip(cls, v, values):
+        if v:
+            return v
+        log_shapes = {key: val for (key, val) in values.data.items() if key.startswith("log_shape_factor")}
+        for key, log_shape_ in log_shapes.items():
+            if log_shape_ != 0:
+                raise ValueError(f"Log shape factor {key} must be zero if clip is False.")
+        return v
+
+class DesirabilityObjective(IdentityObjective, _LogShapeClipFactorValidator):
     """Abstract class for desirability objectives. Works as Identity Objective"""
     pass
 
@@ -186,3 +199,10 @@ class PeakDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
         )
 
         return y * self.w
+
+    @pydantic.field_validator("peak_position")
+    def validate_peak_position(cls, v, values):
+        bounds = values.data["bounds"]
+        if v < bounds[0] or v > bounds[1]:
+            raise ValueError(f"Peak position must be within bounds {bounds}, got {v}")
+        return v
