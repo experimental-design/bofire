@@ -3025,9 +3025,9 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;IdentityObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IdentityObjective&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;IdentityObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IdentityObjective&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Bounds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">lower_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>

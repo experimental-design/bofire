@@ -3119,9 +3119,9 @@ are the corresponding coefficients.</p></td>
     <span class="n">boundary</span> <span class="o">=</span> <span class="n">rhs</span> <span class="o">/</span> <span class="n">coef</span>
     <span class="k">if</span> <span class="n">coef</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">boundary</span> <span class="o">&gt;</span> <span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">:</span>
-            <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">boundary</span><span class="p">,</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+            <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">boundary</span><span class="p">,</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">boundary</span> <span class="o">&lt;</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
-        <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">boundary</span><span class="p">)</span>
+        <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">boundary</span><span class="p">]</span>
 </code></pre></div>
         </details>
     </div>
@@ -3611,7 +3611,7 @@ are the corresponding coefficients.</p></td>
                     <span class="n">feat</span><span class="p">:</span> <span class="n">ContinuousInput</span> <span class="o">=</span> <span class="n">ContinuousInput</span><span class="p">(</span>
                         <span class="o">**</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
                     <span class="p">)</span>
-                    <span class="n">feat</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">feat</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">_c</span> <span class="o">=</span> <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
