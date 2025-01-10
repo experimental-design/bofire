@@ -3,9 +3,6 @@ from typing import Literal, Optional, Tuple, Union, Callable
 import numpy as np
 import pandas as pd
 
-import torch
-from torch import Tensor
-
 from bofire.data_models.objectives.identity import IdentityObjective
 
 
