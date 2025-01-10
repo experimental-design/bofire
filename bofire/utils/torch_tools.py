@@ -21,17 +21,17 @@ from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     ConstrainedObjective,
+    DecreasingDesirabilityObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
     MovingMaximizeSigmoidObjective,
     Objective,
-    TargetObjective,
-    IncreasingDesirabilityObjective,
-    DecreasingDesirabilityObjective,
     PeakDesirabilityObjective,
-    DesirabilityObjective,
+    TargetObjective,
 )
 from bofire.strategies.strategy import Strategy
 
@@ -439,43 +439,54 @@ def get_objective_callable(
         return lambda y, X=None: y
 
     if isinstance(objective, IncreasingDesirabilityObjective):
+
         def objective(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
 
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
             if objective.clip:
-                y[x < objective.lower_bound] = 0.
-                y[x > objective.upper_bound] = 1.
+                y[x < objective.lower_bound] = 0.0
+                y[x > objective.upper_bound] = 1.0
                 between = (x >= objective.lower_bound) & (x <= objective.upper_bound)
             else:
                 between = torch.full(x.shape, True, dtype=torch.bool, device=x.device)
 
             t: float = np.exp(objective.log_shape_factor)
 
-            y[between] = torch.pow((x[between] - objective.lower_bound) / (objective.upper_bound - objective.lower_bound), t)
+            y[between] = torch.pow(
+                (x[between] - objective.lower_bound)
+                / (objective.upper_bound - objective.lower_bound),
+                t,
+            )
             return y
 
         return objective
 
     if isinstance(objective, DecreasingDesirabilityObjective):
+
         def objective(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
 
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
             if objective.clip:
-                y[x < objective.lower_bound] = 1.
-                y[x > objective.upper_bound] = 0.
+                y[x < objective.lower_bound] = 1.0
+                y[x > objective.upper_bound] = 0.0
                 between = (x >= objective.lower_bound) & (x <= objective.upper_bound)
             else:
                 between = torch.full(x.shape, True, dtype=torch.bool, device=x.device)
 
             t: float = np.exp(objective.log_shape_factor)
-            y[between] = torch.pow((objective.upper_bound - x[between]) / (objective.upper_bound - objective.lower_bound), t)
+            y[between] = torch.pow(
+                (objective.upper_bound - x[between])
+                / (objective.upper_bound - objective.lower_bound),
+                t,
+            )
             return y
 
         return objective
 
     if isinstance(objective, PeakDesirabilityObjective):
+
         def objective(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
@@ -505,7 +516,6 @@ def get_objective_callable(
             return y * objective.w
 
         return objective
-
 
     raise NotImplementedError(
         f"Objective {objective.__class__.__name__} not implemented.",

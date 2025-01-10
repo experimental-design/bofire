@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Tuple, Union, Callable
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -10,8 +10,10 @@ from bofire.data_models.objectives.identity import IdentityObjective
 class _SeriesNumpyCallable:
     """Helper class to call numpy and torch functions with series or numpy arrays. matches __call__
     signature of objectives."""
-    def __call__(self, x: Union[pd.Series, np.ndarray], x_adapt) -> Union[pd.Series, np.ndarray]:
 
+    def __call__(
+        self, x: Union[pd.Series, np.ndarray], x_adapt
+    ) -> Union[pd.Series, np.ndarray]:
         convert_to_series = False
         if isinstance(x, pd.Series):
             convert_to_series = True
@@ -34,14 +36,22 @@ class _LogShapeClipFactorValidator:
     def validate_clip(cls, v, values):
         if v:
             return v
-        log_shapes = {key: val for (key, val) in values.data.items() if key.startswith("log_shape_factor")}
+        log_shapes = {
+            key: val
+            for (key, val) in values.data.items()
+            if key.startswith("log_shape_factor")
+        }
         for key, log_shape_ in log_shapes.items():
             if log_shape_ != 0:
-                raise ValueError(f"Log shape factor {key} must be zero if clip is False.")
+                raise ValueError(
+                    f"Log shape factor {key} must be zero if clip is False."
+                )
         return v
+
 
 class DesirabilityObjective(IdentityObjective, _LogShapeClipFactorValidator):
     """Abstract class for desirability objectives. Works as Identity Objective"""
+
     pass
 
 
@@ -71,29 +81,29 @@ class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
             Defaults to (0, 1).
     """
 
-    log_shape_factor: float = 0.
+    log_shape_factor: float = 0.0
     clip: bool = True
 
     def call_numpy(
-            self,
-            x: np.ndarray,
-            x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+        self,
+        x: np.ndarray,
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
     ) -> np.ndarray:
-
         y = np.zeros(x.shape)
         if self.clip:
-            y[x < self.lower_bound] = 0.
-            y[x > self.upper_bound] = 1.
+            y[x < self.lower_bound] = 0.0
+            y[x > self.upper_bound] = 1.0
             between = (x >= self.lower_bound) & (x <= self.upper_bound)
         else:
             between = np.full(x.shape, True)
 
         t = np.exp(self.log_shape_factor)
 
-        y[between] = np.power((x[between] - self.lower_bound) / (self.upper_bound - self.lower_bound), t)
+        y[between] = np.power(
+            (x[between] - self.lower_bound) / (self.upper_bound - self.lower_bound), t
+        )
 
         return y
-
 
 
 class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
@@ -120,26 +130,27 @@ class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
             Defaults to (0, 1).
     """
 
-    log_shape_factor: float = 0.
+    log_shape_factor: float = 0.0
     clip: bool = True
 
     def call_numpy(
-            self,
-            x: np.ndarray,
-            x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+        self,
+        x: np.ndarray,
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
     ) -> np.ndarray:
-
         y = np.zeros(x.shape)
         if self.clip:
-            y[x < self.lower_bound] = 1.
-            y[x > self.upper_bound] = 0.
+            y[x < self.lower_bound] = 1.0
+            y[x > self.upper_bound] = 0.0
             between = (x >= self.lower_bound) & (x <= self.upper_bound)
         else:
             between = np.full(x.shape, True)
 
         t = np.exp(self.log_shape_factor)
 
-        y[between] = np.power((self.upper_bound - x[between]) / (self.upper_bound - self.lower_bound), t)
+        y[between] = np.power(
+            (self.upper_bound - x[between]) / (self.upper_bound - self.lower_bound), t
+        )
 
         return y
 
