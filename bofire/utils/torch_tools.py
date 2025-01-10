@@ -435,12 +435,10 @@ def get_objective_callable(
                 )
             )
         )
-    if isinstance(objective, DesirabilityObjective):
-        return lambda y, X=None: y
 
     if isinstance(objective, IncreasingDesirabilityObjective):
 
-        def objective(x: Tensor, *args) -> Tensor:
+        def objective_callable_(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
 
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
@@ -460,11 +458,11 @@ def get_objective_callable(
             )
             return y
 
-        return objective
+        return objective_callable_
 
     if isinstance(objective, DecreasingDesirabilityObjective):
 
-        def objective(x: Tensor, *args) -> Tensor:
+        def objective_callable_(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
 
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
@@ -483,11 +481,11 @@ def get_objective_callable(
             )
             return y
 
-        return objective
+        return objective_callable_
 
     if isinstance(objective, PeakDesirabilityObjective):
 
-        def objective(x: Tensor, *args) -> Tensor:
+        def objective_callable_(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
 
@@ -515,7 +513,10 @@ def get_objective_callable(
             )
             return y * objective.w
 
-        return objective
+        return objective_callable_
+
+    if isinstance(objective, DesirabilityObjective):
+        return lambda y, X=None: y[..., idx]
 
     raise NotImplementedError(
         f"Objective {objective.__class__.__name__} not implemented.",
