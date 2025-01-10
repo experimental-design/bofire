@@ -19,12 +19,20 @@ from bofire.data_models.objectives.target import (
     TargetObjective,
 )
 
+from bofire.data_models.objectives.desirabilities import (
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+)
+
 
 AbstractObjective = Union[
     Objective,
     IdentityObjective,
     SigmoidObjective,
     ConstrainedObjective,
+    DesirabilityObjective,
 ]
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective
@@ -36,7 +44,7 @@ AnyConstraintObjective = Union[
     TargetObjective,
 ]
 
-AnyRealObjective = Union[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+AnyRealObjective = Union[MaximizeObjective, MinimizeObjective, CloseToTargetObjective, DesirabilityObjective]
 
 AnyObjective = Union[
     MaximizeObjective,
@@ -47,4 +55,5 @@ AnyObjective = Union[
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     MovingMaximizeSigmoidObjective,
+    DesirabilityObjective,
 ]
