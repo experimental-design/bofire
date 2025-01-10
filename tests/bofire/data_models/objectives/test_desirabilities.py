@@ -86,8 +86,8 @@ invalid_specs.append(
 
 def test_desirabilities():
     for spec in valid_specs:
-        obj = spec[0](**spec[1])
+        _ = spec[0](**spec[1])
 
     with pytest.raises(pydantic.ValidationError):
         for spec in invalid_specs:
-            obj = spec[0](**spec[1])
+            _ = spec[0](**spec[1])

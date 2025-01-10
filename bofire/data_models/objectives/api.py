@@ -2,11 +2,11 @@ from typing import Union
 
 from bofire.data_models.objectives.categorical import ConstrainedCategoricalObjective
 from bofire.data_models.objectives.desirabilities import (
+    DecreasingDesirabilityObjective,
     DesirabilityObjective,
     IncreasingDesirabilityObjective,
-    DecreasingDesirabilityObjective,
     PeakDesirabilityObjective,
-    )
+)
 from bofire.data_models.objectives.identity import (
     IdentityObjective,
     MaximizeObjective,
