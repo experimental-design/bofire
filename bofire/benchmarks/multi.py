@@ -54,7 +54,7 @@ class DTLZ2(Benchmark):
 
         inputs = []
         for i in range(self.dim):
-            inputs.append(ContinuousInput(key="x_%i" % (i), bounds=(0, 1)))
+            inputs.append(ContinuousInput(key="x_%i" % (i), bounds=[0, 1]))
         outputs = []
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
@@ -140,8 +140,8 @@ class BNH(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key="x1", bounds=(0, 5)),
-                    ContinuousInput(key="x2", bounds=(0, 3)),
+                    ContinuousInput(key="x1", bounds=[0, 5]),
+                    ContinuousInput(key="x2", bounds=[0, 3]),
                 ],
             ),
             outputs=Outputs(
@@ -187,8 +187,8 @@ class TNK(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key="x1", bounds=(0, math.pi)),
-                    ContinuousInput(key="x2", bounds=(0, math.pi)),
+                    ContinuousInput(key="x1", bounds=[0, math.pi]),
+                    ContinuousInput(key="x2", bounds=[0, math.pi]),
                 ],
             ),
             outputs=Outputs(
@@ -293,13 +293,13 @@ class SnarBenchmark(Benchmark):
         # Decision variables
         # "residence time in minutes"
         inputs = [
-            ContinuousInput(key="tau", bounds=(0.5, 2)),
+            ContinuousInput(key="tau", bounds=[0.5, 2]),
             # "equivalents of pyrrolidine"
-            ContinuousInput(key="equiv_pldn", bounds=(1, 5)),
+            ContinuousInput(key="equiv_pldn", bounds=[1, 5]),
             # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
-            ContinuousInput(key="conc_dfnb", bounds=(0.1, 0.5)),
+            ContinuousInput(key="conc_dfnb", bounds=[0.1, 0.5]),
             # "Reactor temperature in degrees celsius"
-            ContinuousInput(key="temperature", bounds=(30, 120)),
+            ContinuousInput(key="temperature", bounds=[30, 120]),
         ]
         # Objectives
         # "space time yield (kg/m^3/h)"
@@ -442,7 +442,7 @@ class ZDT1(Benchmark):
         super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(n_inputs)
+            ContinuousInput(key=f"x{i+1}", bounds=[0, 1]) for i in range(n_inputs)
         ]
         inputs = Inputs(features=inputs)
         outputs = [
@@ -550,11 +550,11 @@ class CrossCoupling(Benchmark):
                 ],
             ),
             # "base equivalents"
-            ContinuousInput(key="base_eq", bounds=(1, 2.5)),
+            ContinuousInput(key="base_eq", bounds=[1, 2.5]),
             # "Reactor temperature in degrees celsius"
-            ContinuousInput(key="temperature", bounds=(30, 100)),
+            ContinuousInput(key="temperature", bounds=[30, 100]),
             # "residence time in seconds (s)"
-            ContinuousInput(key="t_res", bounds=(60, 1800)),
+            ContinuousInput(key="t_res", bounds=[60, 1800]),
         ]
 
         input_preprocessing_specs = {
@@ -566,11 +566,11 @@ class CrossCoupling(Benchmark):
         outputs = [
             ContinuousOutput(
                 key="yield",
-                objective=MaximizeObjective(w=1.0, bounds=(0.0, 1.0)),
+                objective=MaximizeObjective(w=1.0, bounds=[0.0, 1.0]),
             ),
             ContinuousOutput(
                 key="cost",
-                objective=MinimizeObjective(w=1.0, bounds=(0.0, 1.0)),
+                objective=MinimizeObjective(w=1.0, bounds=[0.0, 1.0]),
             ),
         ]
         self.ref_point = {"yield": 0.0, "cost": 1.0}
