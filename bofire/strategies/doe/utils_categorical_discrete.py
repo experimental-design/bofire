@@ -255,7 +255,7 @@ def NChooseKGroup_with_quantity(
         # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
         pick_exactly_one_of_group_const = []
     else:
-        category = [ContinuousInput(key=k, bounds=(0, 1)) for k in keys]
+        category = [ContinuousInput(key=k, bounds=[0, 1]) for k in keys]
         pick_exactly_one_of_group_const = [
             LinearEqualityConstraint(
                 features=list(keys),
@@ -293,7 +293,7 @@ def _generate_quantity_var_constr(
     quantity_var = [
         ContinuousInput(
             key=unique_group_identifier + "_" + k + "_quantity",
-            bounds=(0, q[1]),
+            bounds=[0, q[1]],
         )
         for k, q in zip(keys, quantity_if_picked)
     ]
@@ -469,7 +469,7 @@ def NChooseKGroup(
     # adding the new possible combinations to the list of keys
     keys = combined_keys
 
-    category = [ContinuousInput(key=k, bounds=(0, 1)) for k in keys]
+    category = [ContinuousInput(key=k, bounds=[0, 1]) for k in keys]
     pick_exactly_one_of_group_const = [
         LinearEqualityConstraint(
             features=list(keys),
@@ -489,7 +489,7 @@ def NChooseKGroup(
 def generate_mixture_constraints(
     keys: List[str],
 ) -> Tuple[LinearEqualityConstraint, List[ContinuousInput]]:
-    binary_vars = (ContinuousInput(key=x, bounds=(0, 1)) for x in keys)
+    binary_vars = (ContinuousInput(key=x, bounds=[0, 1]) for x in keys)
 
     mixture_constraint = LinearEqualityConstraint(
         features=keys,

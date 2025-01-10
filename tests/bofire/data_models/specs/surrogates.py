@@ -45,8 +45,8 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                ContinuousInput(key="a", bounds=(0, 1)),
-                ContinuousInput(key="b", bounds=(0, 1)),
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
             ],
         ).model_dump(),
         "outputs": Outputs(
@@ -670,7 +670,7 @@ specs.add_valid(
             + [ContinuousInput(key=f"t_{3}", bounds=(2, 60))],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
+        "interpolation_range": [0, 1],
         "n_interpolation_points": 1000,
         "x_keys": ["t_1", "t_2"],
         "y_keys": [f"phi_{i}" for i in range(4)],

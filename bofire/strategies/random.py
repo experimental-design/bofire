@@ -147,7 +147,7 @@ class RandomStrategy(Strategy):
                 for key in u:
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
-                    feat.bounds = (0, 0)
+                    feat.bounds = [0.0, 0.0]
                 # setup then sampler for this situation
                 samples.append(
                     self._sample_from_polytope(
