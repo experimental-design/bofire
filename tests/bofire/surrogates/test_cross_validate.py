@@ -208,7 +208,7 @@ def test_model_cross_validate_invalid(folds):
         outputs=outputs,
     )
     model = surrogates.map(model)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Folds must be -1 for LOO, or > 1."):
         model.cross_validate(experiments, folds=folds)
 
 
@@ -669,13 +669,13 @@ def test_check_valid_nfolds():
     assert model._check_valid_nfolds(-1, 10) == 10
 
     # Test folds greater than number of experiments
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match="Training data only has 10 experiments, which is less than folds, fallback to LOOCV."):
         assert model._check_valid_nfolds(20, 10) == 10
 
     # Test invalid folds
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Folds must be -1 for LOO, or > 1."):
         model._check_valid_nfolds(0, 10)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Folds must be -1 for LOO, or > 1."):
         model._check_valid_nfolds(1, 10)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Experiments is empty."):
         model._check_valid_nfolds(5, 0)
