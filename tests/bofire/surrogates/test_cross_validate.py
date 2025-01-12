@@ -560,6 +560,36 @@ def test_model_cross_validate_groupfold(random_state):
             assert test_set.issuperset(indices) or train_set.issuperset(indices)
 
 
+def test_model_cross_validate_invalid_group_split_column():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+    
+    # Test with a non-existent group split column
+    with pytest.raises(ValueError, match="Group split column non_existent_column is not present in the experiments."):
+        model.cross_validate(experiments, folds=5, group_split_column="non_existent_column")
+
+    # Test with fewer unique groups than folds
+    experiments["group"] = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
+    with pytest.raises(ValueError, match="Number of unique groups 3 is less than the number of folds 5."):
+        model.cross_validate(experiments, folds=5, group_split_column="group")
+
+
 def test_make_cv_split():
     inputs = Inputs(
         features=[

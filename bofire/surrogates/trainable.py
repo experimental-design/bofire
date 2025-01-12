@@ -163,14 +163,10 @@ class TrainableSurrogate(ABC):
                     f"Group split column {group_split_column} is not present in the experiments."
                 )
             ngroups = len(experiments[group_split_column].unique())
-            if ngroups == 0:
-                raise ValueError(
-                    f"Number of unique groups {len(experiments[group_split_column].unique())} is zero."
-                )
             # check if the number of unique groups is greater than or equal to the number of folds
             if ngroups < folds:
                 raise ValueError(
-                    f"Number of unique groups {len(experiments[group_split_column].unique())} is less than the number of folds {folds}."
+                    f"Number of unique groups {ngroups} is less than the number of folds {folds}."
                 )
 
         # first filter the experiments based on the model setting
