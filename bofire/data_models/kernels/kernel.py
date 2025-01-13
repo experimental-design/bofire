@@ -11,5 +11,5 @@ class AggregationKernel(Kernel):
     pass
 
 
-class ConcreteKernel(Kernel):
+class FeatureSpecificKernel(Kernel):
     features: Optional[List[str]] = None

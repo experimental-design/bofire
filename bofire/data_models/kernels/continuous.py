@@ -2,11 +2,11 @@ from typing import List, Literal, Optional
 
 from pydantic import PositiveInt, field_validator
 
-from bofire.data_models.kernels.kernel import ConcreteKernel
+from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior
 
 
-class ContinuousKernel(ConcreteKernel):
+class ContinuousKernel(FeatureSpecificKernel):
     pass
 
 

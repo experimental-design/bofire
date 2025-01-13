@@ -14,7 +14,7 @@ from bofire.kernels.shape import WassersteinKernel
 
 
 def _compute_active_dims(
-    data_model: data_models.ConcreteKernel,
+    data_model: data_models.FeatureSpecificKernel,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> List[int]:
