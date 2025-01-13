@@ -44,8 +44,13 @@ AnyConstraintObjective = Union[
 ]
 
 AnyRealObjective = Union[
-    MaximizeObjective, MinimizeObjective, CloseToTargetObjective, DesirabilityObjective,
-    IncreasingDesirabilityObjective, DecreasingDesirabilityObjective, PeakDesirabilityObjective,
+    MaximizeObjective,
+    MinimizeObjective,
+    CloseToTargetObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
 ]
 
 AnyObjective = Union[
