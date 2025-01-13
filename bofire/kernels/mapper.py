@@ -218,22 +218,35 @@ def map_HammingDistanceKernel(
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> GpytorchKernel:
-    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    if data_model.features is not None:
+        if features_to_idx_mapper is None:
+            raise RuntimeError(
+                "features_to_idx_mapper must be defined when using only a subset of features"
+            )
 
-    with_one_hots = data_model.features is not None and len(active_dims) > 1
-    if with_one_hots and len(active_dims) == 1:
-        raise RuntimeError(
-            "only one feature for categorical kernel operating on one-hot features"
-        )
-    elif not with_one_hots and len(active_dims) > 1:
-        # this is not necessarily an issue since botorch's CategoricalKernel
-        # can work on multiple features at the same time
-        pass
+        active_dims = []
+        categorical_features = {}
+        for k in data_model.features:
+            idx = features_to_idx_mapper([k])
+            categorical_features[len(active_dims)] = len(idx)
 
-    if with_one_hots:
+            already_used = [i for i in idx if i in active_dims]
+            if already_used:
+                raise RuntimeError(
+                    f"indices {already_used} are used in more than one categorical feature"
+                )
+
+            active_dims.extend(idx)
+
+            if len(idx) == 1:
+                raise RuntimeError(
+                    f"feature {k} is supposed to be one-hot encoded but is mapped to a single dimension"
+                )
+
         return HammingKernelWithOneHots(
-            batch_shape=batch_shape,
+            categorical_features=categorical_features,
             ard_num_dims=len(active_dims) if data_model.ard else None,
+            batch_shape=batch_shape,
             active_dims=active_dims,  # type: ignore
             lengthscale_constraint=GreaterThan(1e-06),
         )
