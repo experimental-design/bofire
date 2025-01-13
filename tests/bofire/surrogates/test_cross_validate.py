@@ -579,14 +579,22 @@ def test_model_cross_validate_invalid_group_split_column():
         outputs=outputs,
     )
     model = surrogates.map(model)
-    
+
     # Test with a non-existent group split column
-    with pytest.raises(ValueError, match="Group split column non_existent_column is not present in the experiments."):
-        model.cross_validate(experiments, folds=5, group_split_column="non_existent_column")
+    with pytest.raises(
+        ValueError,
+        match="Group split column non_existent_column is not present in the experiments.",
+    ):
+        model.cross_validate(
+            experiments, folds=5, group_split_column="non_existent_column"
+        )
 
     # Test with fewer unique groups than folds
     experiments["group"] = [0, 0, 0, 0, 1, 1, 1, 1, 2, 2]
-    with pytest.raises(ValueError, match="Number of unique groups 3 is less than the number of folds 5."):
+    with pytest.raises(
+        ValueError,
+        match="Number of unique groups 3 is less than the number of folds 5.",
+    ):
         model.cross_validate(experiments, folds=5, group_split_column="group")
 
 
@@ -669,7 +677,10 @@ def test_check_valid_nfolds():
     assert model._check_valid_nfolds(-1, 10) == 10
 
     # Test folds greater than number of experiments
-    with pytest.warns(UserWarning, match="Training data only has 10 experiments, which is less than folds, fallback to LOOCV."):
+    with pytest.warns(
+        UserWarning,
+        match="Training data only has 10 experiments, which is less than folds, fallback to LOOCV.",
+    ):
         assert model._check_valid_nfolds(20, 10) == 10
 
     # Test invalid folds
