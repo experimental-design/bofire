@@ -593,7 +593,6 @@ class Inputs(_BaseFeatures[AnyInput]):
         """
         # first check that the keys in the specs dict are correct also correct feature keys
         # next check that all values are of type CategoricalEncodingEnum or MolFeatures
-        checked_keys = set()
         for key, value in specs.items():
             try:
                 feat = self.get_by_key(key)
@@ -622,20 +621,6 @@ class Inputs(_BaseFeatures[AnyInput]):
                 if not isinstance(value, tuple(no_enums)):  # type: ignore
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
-                    )
-            checked_keys.add(key)
-
-        # now check that features that must be transformed do have a transformation defined
-        for key in self.get_keys():
-            if key in checked_keys:
-                continue
-
-            feat = self.get_by_key(key)
-            if isinstance(feat, MolecularInput):
-                trx = specs.get(key)
-                if trx is None or not isinstance(trx, MolFeatures):
-                    raise ValueError(
-                        "MolecularInput features must have a input processing of type MolFeatures defined"
                     )
 
         return specs
