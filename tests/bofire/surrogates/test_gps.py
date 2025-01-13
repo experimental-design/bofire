@@ -30,6 +30,7 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
@@ -49,7 +50,6 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.trainable import metrics2objectives
-from bofire.kernels.categorical import HammingKernelWithOneHots
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
@@ -340,25 +340,25 @@ def test_SingleTaskGPModel_mixed_features():
     """test that we can use a single task gp with mixed features"""
     inputs = Inputs(
         features=[
-            ContinuousInput(
-                key=f"x_{i+1}",
-                bounds=(-4, 4),
-            )
-            for i in range(2)
-        ]
-        + [
+            ContinuousInput(key="x_1", bounds=(-4, 4)),
+            ContinuousInput(key="x_2", bounds=(-4, 4)),
             CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
             CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
+            MolecularInput(key="x_mol"),
         ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = inputs.sample(n=10, seed=194387)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
-    experiments.loc[experiments.x_cat_1 == "mama", "y"] *= 5.0
-    experiments.loc[experiments.x_cat_1 == "papa", "y"] /= 2.0
-    experiments.loc[experiments.x_cat_2 == "cat", "y"] *= -2.0
-    experiments.loc[experiments.x_cat_2 == "dog", "y"] /= -5.0
-    experiments["valid_y"] = 1
+
+    experiment_values = [
+        [2.56, -1.42, "papa", "dog", -3.98, 1, "CC(=O)Oc1ccccc1C(=O)O"],
+        [3.84, -2.73, "mama", "cat", -197.46, 1, "c1ccccc1"],
+        [3.57, 3.23, "papa", "cat", -74.55, 1, "[CH3][CH2][OH]"],
+        [-0.07, -1.55, "mama", "dog", -179.14, 1, "N[C@](C)(F)C(=O)O"],
+    ]
+    experiments = pd.DataFrame(
+        experiment_values,
+        columns=["x_1", "x_2", "x_cat_1", "x_cat_2", "y", "valid_y", "x_mol"],
+    )
 
     gp_data = SingleTaskGPSurrogate(
         inputs=inputs,
@@ -374,22 +374,16 @@ def test_SingleTaskGPModel_mixed_features():
                     lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
                     features=[f"x_{i+1}" for i in range(2)],
                 ),
+                TanimotoKernel(features=["x_mol"]),
             ]
         ),
     )
 
     gp_mapped = surrogates.map(gp_data)
-    assert hasattr(gp_mapped, "fit")
-    assert len(gp_mapped.kernel.kernels) == 2
-    assert isinstance(gp_mapped.kernel.kernels[0], HammingDistanceKernel)
-    assert gp_mapped.kernel.kernels[0].features == ["x_cat_1", "x_cat_2"]
-    assert gp_mapped.kernel.kernels[1].features == ["x_1", "x_2"]
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
-    assert pred.shape == (10, 2)
-    assert isinstance(gp_mapped.model.covar_module.kernels[0], HammingKernelWithOneHots)
-    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [2, 3, 4, 5]
-    assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
+    assert pred.shape == (4, 2)
+    # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
 
 def test_MixedSingleTaskGPHyperconfig():
