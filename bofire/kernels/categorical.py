@@ -9,8 +9,10 @@ from torch import Tensor
 class HammingKernelWithOneHots(Kernel):
     r"""
     A Kernel for one-hot enocded categorical features. The inputs
-    may contain more than one categorical feature.
+    may contain more than one categorical feature. 
 
+    This kernel mimics the functionality of CategoricalKernel from
+    botorch, but assumes categorical features encoded as one-hot variables.
     Computes `exp(-dist(x1, x2) / lengthscale)`, where
     `dist(x1, x2)` is zero if `x1` and `x2` correspond to the
     same category, and one otherwise. If the last dimension
@@ -29,7 +31,7 @@ class HammingKernelWithOneHots(Kernel):
             categorical_features: A dictionary mapping the starting index of each
                 categorical feature to its cardinality. This assumes that categoricals
                 are one-hot encoded.
-            *args, **kwargs: Passed to gpytorch.kernels.kernel.Kernel
+            *args, **kwargs: Passed to gpytorch.kernels.kernel.Kernel.__init__
         """
         super().__init__(*args, **kwargs)
 
