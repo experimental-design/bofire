@@ -9,7 +9,7 @@ from torch import Tensor
 class HammingKernelWithOneHots(Kernel):
     r"""
     A Kernel for one-hot enocded categorical features. The inputs
-    may contain more than one categorical feature. 
+    may contain more than one categorical feature.
 
     This kernel mimics the functionality of CategoricalKernel from
     botorch, but assumes categorical features encoded as one-hot variables.
@@ -53,6 +53,8 @@ class HammingKernelWithOneHots(Kernel):
 
         delta = x1.unsqueeze(-2) != x2.unsqueeze(-3)
         if self.ard_num_dims is not None:
+            # botorch forces ard_num_dims to be the same as the total size of the of one-hot encoded features
+            # however here we just need one length scale per categorical feature
             ls = self.lengthscale[..., : delta.shape[-1]]
         else:
             ls = self.lengthscale

@@ -9,6 +9,7 @@ import bofire.kernels.api as kernels
 import bofire.kernels.shape as shapeKernels
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
+    FeatureSpecificKernel,
     HammingDistanceKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -22,6 +23,7 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR, GammaPrior
 from bofire.kernels.categorical import HammingKernelWithOneHots
+from bofire.kernels.mapper import _compute_active_dims
 from tests.bofire.data_models.specs.api import Spec
 
 
@@ -341,7 +343,10 @@ def test_map_HammingDistanceKernel_to_onehot_checks_dimension_overlap():
         "x_cat_2": [2, 3],
     }
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(
+        RuntimeError,
+        match=r"indices \[3\] are used in more than one categorical feature",
+    ):
         kernels.map(
             HammingDistanceKernel(
                 ard=True,
@@ -360,7 +365,10 @@ def test_map_HammingDistanceKernel_to_onehot_checks_onehot_encoding():
         "x_cat_2": [2, 3],
     }
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(
+        RuntimeError,
+        match="feature x_cat_1 is supposed to be one-hot encoded but is mapped to a single dimension",
+    ):
         kernels.map(
             HammingDistanceKernel(
                 ard=True,
@@ -410,3 +418,36 @@ def test_map_multiple_kernels_on_feature_subsets():
     assert isinstance(k_mapped.kernels[1], GpytorchRBFKernel)
     assert k_mapped.kernels[1].active_dims.tolist() == [0, 1]
     assert k_mapped.kernels[1].ard_num_dims == 2
+
+
+def test_compute_active_dims_no_features_returns_active_dims():
+    assert _compute_active_dims(
+        data_model=FeatureSpecificKernel(
+            type="test",
+            features=None,
+        ),
+        active_dims=[1, 2, 3],
+        features_to_idx_mapper=None,
+    ) == [1, 2, 3]
+
+
+def test_compute_active_dims_features_override_active_dims():
+    assert _compute_active_dims(
+        data_model=FeatureSpecificKernel(type="test", features=["x1", "x2"]),
+        active_dims=[1, 2, 3],
+        features_to_idx_mapper=lambda ks: [
+            i for k in ks for i in {"x1": [4], "x2": [7]}[k]
+        ],
+    ) == [4, 7]
+
+
+def test_compute_active_dims_fails_with_features_without_mapper():
+    with pytest.raises(
+        RuntimeError,
+        match="features_to_idx_mapper must be defined when using only a subset of features",
+    ):
+        _compute_active_dims(
+            data_model=FeatureSpecificKernel(type="test", features=["x1", "x2"]),
+            active_dims=[1, 2, 3],
+            features_to_idx_mapper=None,
+        )

@@ -332,8 +332,8 @@ def test_SingleTaskGPModel_feature_subsets():
     gp_mapped.fit(bench_expts)
     pred = gp_mapped.predict(bench_expts)
     assert pred.shape == (12, 2)
-    assert len(gp_mapped.model.covar_module.kernels[0].active_dims) == 2
-    assert len(gp_mapped.model.covar_module.kernels[1].active_dims) == 4
+    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [0, 1]
+    assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [2, 3, 4, 5]
 
 
 def test_SingleTaskGPModel_mixed_features():
@@ -372,7 +372,7 @@ def test_SingleTaskGPModel_mixed_features():
                 RBFKernel(
                     ard=True,
                     lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-                    features=[f"x_{i+1}" for i in range(2)],
+                    features=["x_1", "x_2"],
                 ),
                 TanimotoKernel(features=["x_mol"]),
             ]
@@ -383,6 +383,16 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     assert pred.shape == (4, 2)
+    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
+        2050,
+        2051,
+        2052,
+        2053,
+    ]
+    assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
+    assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
+        range(2, 2050)
+    )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
 

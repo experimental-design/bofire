@@ -19,7 +19,10 @@ def _compute_active_dims(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> List[int]:
     if data_model.features:
-        assert features_to_idx_mapper is not None
+        if features_to_idx_mapper is None:
+            raise RuntimeError(
+                "features_to_idx_mapper must be defined when using only a subset of features"
+            )
         active_dims = features_to_idx_mapper(data_model.features)
     return active_dims
 
@@ -245,6 +248,9 @@ def map_HammingDistanceKernel(
 
         return HammingKernelWithOneHots(
             categorical_features=categorical_features,
+            # botorch will check that the lengthscale for ARD has the same number of elements as the one-hotted inputs,
+            # so we have to specify the ard_num_dims accordingly. The kernel will make sure to only use one length scale
+            # for each categorical feature.
             ard_num_dims=len(active_dims) if data_model.ard else None,
             batch_shape=batch_shape,
             active_dims=active_dims,  # type: ignore

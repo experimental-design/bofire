@@ -14,6 +14,13 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    kernels.HammingDistanceKernel,
+    lambda: {
+        "ard": True,
+        "features": ["x_cat_1", "x_cat_2"],
+    },
+)
+specs.add_valid(
     kernels.WassersteinKernel,
     lambda: {
         "squared": False,
