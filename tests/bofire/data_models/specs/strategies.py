@@ -237,7 +237,7 @@ specs.add_valid(
         "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
         "seed": 42,
-        "transform_range": (-1, 1),
+        "transform_range": [-1, 1],
     },
 )
 
