@@ -169,10 +169,11 @@ def test_FractionalFactorialStrategy_ask_invalid():
         ),
     )
     strategy = strategies.map(strategy_data)
-    with pytest.raises(
-        ValueError,
+    with pytest.warns(
+        UserWarning,
         match="FractionalFactorialStrategy will ignore the specified value of candidate_count. "
         "The strategy automatically determines how many candidates to "
         "propose.",
     ):
-        strategy.ask(5)
+        candidates = strategy.ask(7)
+    assert len(candidates) == 5

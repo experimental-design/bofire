@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional, Tuple
 
 import cvxpy as cp
@@ -127,10 +128,11 @@ class ShortestPathStrategy(Strategy):
 
         """
         if candidate_count is not None:
-            raise ValueError(
-                "ShortestPath will ignore the specified value of candidate_count. "
+            warnings.warn(
+                "ShortestPathStrategy will ignore the specified value of candidate_count. "
                 "The strategy automatically determines how many candidates to "
                 "propose.",
+                UserWarning,
             )
         start = self.start
         steps = []
