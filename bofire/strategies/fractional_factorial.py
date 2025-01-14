@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 
 import numpy as np
@@ -58,10 +59,11 @@ class FractionalFactorialStrategy(Strategy):
 
     def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
         if candidate_count is not None:
-            raise ValueError(
+            warnings.warn(
                 "FractionalFactorialStrategy will ignore the specified value of candidate_count. "
                 "The strategy automatically determines how many candidates to "
                 "propose.",
+                UserWarning,
             )
         design = None
         if len(self.domain.inputs.get(ContinuousInput)) > 0:
