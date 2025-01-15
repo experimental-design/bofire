@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -129,8 +130,9 @@ class Strategy(ABC):
 
         if candidate_count is not None:
             if len(candidates) != candidate_count:
-                raise ValueError(
-                    f"expected {candidate_count} candidates, got {len(candidates)}",
+                warnings.warn(
+                    f"Expected {candidate_count} candidates, got {len(candidates)}",
+                    UserWarning,
                 )
 
         if add_pending:

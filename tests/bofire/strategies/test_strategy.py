@@ -449,7 +449,7 @@ def test_strategy_ask_invalid_candidate_count(
         return candidates
 
     with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
-        with pytest.raises(ValueError):
+        with pytest.warns(UserWarning, match="Expected"):
             strategy.ask(candidate_count=4)
 
 
