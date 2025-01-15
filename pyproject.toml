@@ -24,7 +24,7 @@ dependencies = [
     "numpy",
     "pandas",
     "pydantic>=2.5",
-    "scipy>=1.7",
+    "scipy>=1.7,<1.15",
     "typing-extensions",
     "formulaic==1.0.1",
 ]
