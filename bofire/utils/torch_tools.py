@@ -22,7 +22,6 @@ from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     ConstrainedObjective,
     DecreasingDesirabilityObjective,
-    DesirabilityObjective,
     IncreasingDesirabilityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -514,9 +513,6 @@ def get_objective_callable(
             return y * objective.w
 
         return objective_callable_
-
-    if isinstance(objective, DesirabilityObjective):
-        return lambda y, X=None: y[..., idx]
 
     raise NotImplementedError(
         f"Objective {objective.__class__.__name__} not implemented.",

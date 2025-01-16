@@ -5,7 +5,6 @@ import pytest
 
 from bofire.data_models.objectives.desirabilities import (
     DecreasingDesirabilityObjective,
-    DesirabilityObjective,
     IncreasingDesirabilityObjective,
     PeakDesirabilityObjective,
 )
@@ -13,19 +12,6 @@ from bofire.data_models.objectives.desirabilities import (
 
 valid_specs: List[Tuple[callable, dict]] = []
 invalid_specs: List[Tuple[callable, dict]] = []
-
-valid_specs.append(
-    (
-        DesirabilityObjective,
-        {},
-    )
-)
-valid_specs.append(
-    (
-        DesirabilityObjective,
-        {"bounds": (0, 10.0)},
-    )
-)
 
 for obj in [
     IncreasingDesirabilityObjective,
