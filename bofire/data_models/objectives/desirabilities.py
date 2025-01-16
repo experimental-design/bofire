@@ -213,5 +213,7 @@ class PeakDesirabilityObjective(IncreasingDesirabilityObjective):
     def validate_peak_position(self):
         bounds = self.bounds
         if self.peak_position < bounds[0] or self.peak_position > bounds[1]:
-            raise ValueError(f"Peak position must be within bounds {bounds}, got {self.peak_position}")
+            raise ValueError(
+                f"Peak position must be within bounds {bounds}, got {self.peak_position}"
+            )
         return self

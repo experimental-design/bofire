@@ -5023,4 +5023,4 @@
     "tuple[Literal[0], Literal[1]]" is not assignable to "List[float]" (reportArgumentType)
   /Users/gdiwt/SourceCode/bofire_global/tests/bofire/utils/test_torch_tools.py:1031:38 - error: Expected 3 more positional arguments (reportCallIssue)
   /Users/gdiwt/SourceCode/bofire_global/tests/bofire/utils/test_torch_tools.py:1040:38 - error: Expected 3 more positional arguments (reportCallIssue)
-1773 errors, 2 warnings, 0 informations 
+1773 errors, 2 warnings, 0 informations
