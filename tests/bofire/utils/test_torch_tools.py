@@ -113,7 +113,6 @@ c3 = LinearInequalityConstraint(
         CloseToTargetObjective(target_value=2.0, exponent=1.0, w=0.5),
         MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1),
         # ConstantObjective(w=0.5, value=1.0),
-        DesirabilityObjective(),
         IncreasingDesirabilityObjective(
             bounds=(0, 2.5), log_shape_factor=0.0, clip=False
         ),

@@ -753,7 +753,6 @@
     Type "Series | ndarray[Unknown, Unknown]" is not assignable to type "ndarray[Unknown, Unknown]"
       "Series" is not assignable to "ndarray[Unknown, Unknown]" (reportArgumentType)
   /Users/gdiwt/SourceCode/bofire_global/bofire/data_models/objectives/desirabilities.py:26:38 - error: "name" is possibly unbound (reportPossiblyUnboundVariable)
-  /Users/gdiwt/SourceCode/bofire_global/bofire/data_models/objectives/desirabilities.py:216:83 - error: "v" is not defined (reportUndefinedVariable)
 /Users/gdiwt/SourceCode/bofire_global/bofire/data_models/objectives/identity.py
   /Users/gdiwt/SourceCode/bofire_global/bofire/data_models/objectives/identity.py:82:5 - error: "type" overrides symbol of same name in class "IdentityObjective"
     Variable is mutable so its type is invariant
@@ -5023,4 +5022,4 @@
     "tuple[Literal[0], Literal[1]]" is not assignable to "List[float]" (reportArgumentType)
   /Users/gdiwt/SourceCode/bofire_global/tests/bofire/utils/test_torch_tools.py:1031:38 - error: Expected 3 more positional arguments (reportCallIssue)
   /Users/gdiwt/SourceCode/bofire_global/tests/bofire/utils/test_torch_tools.py:1040:38 - error: Expected 3 more positional arguments (reportCallIssue)
-1773 errors, 2 warnings, 0 informations
+1772 errors, 2 warnings, 0 informations 
