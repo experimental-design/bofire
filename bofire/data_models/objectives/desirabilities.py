@@ -38,8 +38,7 @@ class DesirabilityObjective(IdentityObjective):
 
     @pydantic.model_validator(mode="after")
     def validate_clip(self):
-
-        if not "clip" in list(self.__dict__):
+        if "clip" not in list(self.__dict__):
             return self
 
         if self.clip:

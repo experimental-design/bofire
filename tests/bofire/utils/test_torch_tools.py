@@ -27,7 +27,6 @@ from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     DecreasingDesirabilityObjective,
-    DesirabilityObjective,
     IncreasingDesirabilityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
