@@ -51,7 +51,6 @@ def test_Objective_model_jacobian_t():
     B[:, 1:4] = np.eye(3)
     B[:, 4] = np.array([0, 0, 6])
     B[:, 5] = np.array([2, 1, 0])
-
     assert np.allclose(B, model_jacobian_t(x))
 
     # fully quadratic model

@@ -38,7 +38,7 @@ def test_find_local_max_ipopt_no_constraint():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(4)
@@ -62,7 +62,7 @@ def test_find_local_max_ipopt_nchoosek():
     # Design for a problem with an n-choose-k constraint
     inputs = [
         ContinuousInput(
-            key=f"x{i+1}",
+            key=f"x{i + 1}",
             bounds=(0, 1),
         )
         for i in range(4)
@@ -72,7 +72,7 @@ def test_find_local_max_ipopt_nchoosek():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(4)],
+                features=[f"x{i + 1}" for i in range(4)],
                 min_count=0,
                 max_count=3,
                 none_also_valid=True,
@@ -100,7 +100,7 @@ def test_find_local_max_ipopt_mixture():
     # Design for a problem with a mixture constraint
     inputs = [
         ContinuousInput(
-            key=f"x{i+1}",
+            key=f"x{i + 1}",
             bounds=(0, 1),
         )
         for i in range(4)
@@ -110,7 +110,7 @@ def test_find_local_max_ipopt_mixture():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(4)],
+                features=[f"x{i + 1}" for i in range(4)],
                 coefficients=[1, 1, 1, 1],
                 rhs=1,
             ),
@@ -147,12 +147,12 @@ def test_find_local_max_ipopt_mixed_results():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 coefficients=[1, 1, 1],
                 rhs=1,
             ),
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 min_count=0,
                 max_count=1,
                 none_also_valid=True,
@@ -195,7 +195,7 @@ def test_find_local_max_ipopt_results():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 coefficients=[1, 1, 1],
                 rhs=1,
             ),
@@ -282,7 +282,7 @@ def test_find_local_max_ipopt_fixed_experiments():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 coefficients=[1, 1, 1],
                 rhs=1,
             ),
@@ -354,12 +354,12 @@ def test_find_local_max_ipopt_fixed_experiments():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 coefficients=[1, 1, 1],
                 rhs=1,
             ),
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 min_count=0,
                 max_count=1,
                 none_also_valid=True,
@@ -416,12 +416,12 @@ def test_check_fixed_experiments():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 coefficients=[1, 1, 1],
                 rhs=1,
             ),
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 min_count=0,
                 max_count=1,
                 none_also_valid=True,
@@ -700,7 +700,8 @@ def test_fixed_experiments_checker():
 
 
 def test_partially_fixed_experiments():
-    domain = Domain.from_lists(
+    pytest.importorskip("docutils")
+    domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),

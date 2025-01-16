@@ -15,6 +15,8 @@ from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.doe import SpaceFillingCriterion
 
 
+pytest.importorskip("cyipopt")
+
 inputs = [ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)]
 c1 = LinearInequalityConstraint(
     features=["if1", "if2", "if3"],
