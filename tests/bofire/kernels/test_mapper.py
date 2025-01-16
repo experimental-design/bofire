@@ -2,6 +2,7 @@ import gpytorch
 import gpytorch.kernels
 import pytest
 import torch
+from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
 from botorch.models.kernels.categorical import CategoricalKernel
 
 import bofire
@@ -27,14 +28,6 @@ from bofire.kernels.mapper import _compute_active_dims
 from tests.bofire.data_models.specs.api import Spec
 
 
-try:
-    from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
-except ImportError:
-    BNN_AVAILABLE = False
-else:
-    BNN_AVAILABLE = True
-
-
 EQUIVALENTS = {
     RBFKernel: gpytorch.kernels.RBFKernel,
     MaternKernel: gpytorch.kernels.MaternKernel,
@@ -45,12 +38,13 @@ EQUIVALENTS = {
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
     HammingDistanceKernel: CategoricalKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
+    InfiniteWidthBNNKernel: BNNKernel,
 }
 
 
 def test_map(kernel_spec: Spec):
     kernel = kernel_spec.cls(**kernel_spec.typed_spec())
-    if isinstance(kernel, InfiniteWidthBNNKernel):
+    if isinstance(kernel, HammingDistanceKernel) and kernel.features is not None:
         return
     gkernel = kernels.map(
         kernel,
@@ -60,19 +54,6 @@ def test_map(kernel_spec: Spec):
         features_to_idx_mapper=None,
     )
     assert isinstance(gkernel, EQUIVALENTS[kernel.__class__])
-
-
-@pytest.mark.skipif(BNN_AVAILABLE is False, reason="requires latest botorch")
-def test_map_infinite_width_bnn_kernel():
-    kernel = InfiniteWidthBNNKernel(depth=3)
-    gkernel = kernels.map(
-        kernel,
-        batch_shape=torch.Size(),
-        active_dims=list(range(5)),
-        ard_num_dims=10,
-        features_to_idx_mapper=None,
-    )
-    assert isinstance(gkernel, BNNKernel)
 
 
 def test_map_scale_kernel():
