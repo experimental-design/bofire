@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 
 import numpy as np
 import pandas as pd
@@ -62,6 +62,7 @@ class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
             bounds[1] the desirability is =1  (if clip=True) or >1 (if clip=False).
             Defaults to (0, 1).
     """
+
     type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"  # type: ignore
     log_shape_factor: float = 0.0
     clip: bool = True
@@ -89,7 +90,6 @@ class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
 
     @pydantic.model_validator(mode="after")
     def validate_clip(self):
-
         if self.clip:
             return self
 
@@ -129,6 +129,7 @@ class DecreasingDesirabilityObjective(IncreasingDesirabilityObjective):
             bounds[1] the desirability is =0  (if clip=True) or <0 (if clip=False).
             Defaults to (0, 1).
     """
+
     type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"  # type: ignore
 
     def call_numpy(
@@ -174,6 +175,7 @@ class PeakDesirabilityObjective(IncreasingDesirabilityObjective):
             bounds[1] the desirability is =0  (if clip=True) or <0 (if clip=False).
             Defaults to (0, 1).
     """
+
     type: Literal["PeakDesirabilityObjective"] = "PeakDesirabilityObjective"  # type: ignore
     log_shape_factor_decreasing: float = 0.0  # often named log_t
     peak_position: float = 0.5  # often named T
