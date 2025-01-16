@@ -3,6 +3,7 @@ from typing import Callable, List, Optional
 import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
+from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels import Kernel as GpytorchKernel
 
@@ -74,19 +75,7 @@ def map_InfiniteWidthBNNKernel(
     ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
-) -> "InfiniteWidthBNNKernel":  # type: ignore # noqa: F821
-    try:
-        from botorch.models.kernels.infinite_width_bnn import (  # type: ignore
-            InfiniteWidthBNNKernel,
-        )
-
-    except ImportError:
-        raise ImportError(
-            "InfiniteWidthBNNKernel requires botorch>=0.11.3 to be installed. "
-            "This can be installed by running `pip install 'botorch>=0.11.3'`, "
-            "requires python 3.10+.",
-        )
-
+) -> InfiniteWidthBNNKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return InfiniteWidthBNNKernel(
         batch_shape=batch_shape,
