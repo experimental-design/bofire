@@ -31,27 +31,8 @@ class _SeriesNumpyCallable:
         raise NotImplementedError()
 
 
-class _LogShapeClipFactorValidator:
-    @pydantic.field_validator("clip", check_fields=False)
-    def validate_clip(cls, v, values):
-        if v:
-            return v
-        log_shapes = {
-            key: val
-            for (key, val) in values.data.items()
-            if key.startswith("log_shape_factor")
-        }
-        for key, log_shape_ in log_shapes.items():
-            if log_shape_ != 0:
-                raise ValueError(
-                    f"Log shape factor {key} must be zero if clip is False."
-                )
-        return v
-
-
-class DesirabilityObjective(IdentityObjective, _LogShapeClipFactorValidator):
+class DesirabilityObjective(IdentityObjective):
     """Abstract class for desirability objectives. Works as Identity Objective"""
-
     pass
 
 
@@ -105,8 +86,26 @@ class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
 
         return y
 
+    @pydantic.model_validator(mode="after")
+    def validate_clip(self):
 
-class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
+        if self.clip:
+            return self
+
+        log_shapes = {
+            key: val
+            for (key, val) in self.__dict__.items()
+            if key.startswith("log_shape_factor")
+        }
+        for key, log_shape_ in log_shapes.items():
+            if log_shape_ != 0:
+                raise ValueError(
+                    f"Log shape factor {key} must be zero if clip is False."
+                )
+        return self
+
+
+class DecreasingDesirabilityObjective(IncreasingDesirabilityObjective):
     """An objective returning a reward the negative, shifted scaled identity, but trimmed at the bounds:
 
         d = ((upper_bound - x) / (upper_bound - lower_bound))^t
@@ -130,9 +129,6 @@ class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
             Defaults to (0, 1).
     """
 
-    log_shape_factor: float = 0.0
-    clip: bool = True
-
     def call_numpy(
         self,
         x: np.ndarray,
@@ -155,7 +151,7 @@ class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
         return y
 
 
-class PeakDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
+class PeakDesirabilityObjective(IncreasingDesirabilityObjective):
     """
     A piecewise (linear or convex/concave) objective that increases from the lower bound
     to the peak position and decreases from the peak position to the upper bound.
@@ -176,9 +172,6 @@ class PeakDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
             bounds[1] the desirability is =0  (if clip=True) or <0 (if clip=False).
             Defaults to (0, 1).
     """
-
-    clip: bool = True
-    log_shape_factor: float = 0.0  # often named log_s
     log_shape_factor_decreasing: float = 0.0  # often named log_t
     peak_position: float = 0.5  # often named T
 
@@ -211,9 +204,9 @@ class PeakDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
 
         return y * self.w
 
-    @pydantic.field_validator("peak_position")
-    def validate_peak_position(cls, v, values):
-        bounds = values.data["bounds"]
-        if v < bounds[0] or v > bounds[1]:
+    @pydantic.model_validator(mode="after")
+    def validate_peak_position(self):
+        bounds = self.bounds
+        if self.peak_position < bounds[0] or self.peak_position > bounds[1]:
             raise ValueError(f"Peak position must be within bounds {bounds}, got {v}")
-        return v
+        return self
