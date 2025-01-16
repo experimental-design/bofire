@@ -63,7 +63,7 @@ docs = [
 ]
 tutorials = ["jupyter", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.10.0",
+    "botorch>=0.11.3",
     "numpy",
     "multiprocess",
     "plotly",
