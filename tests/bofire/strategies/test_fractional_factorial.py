@@ -4,7 +4,11 @@ from pandas.testing import assert_frame_equal
 
 import bofire.strategies.api as strategies
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 from bofire.data_models.strategies.api import FractionalFactorialStrategy
 
 
@@ -121,6 +125,36 @@ def test_FractionalFactorialStrategy_ask():
     candidates_gen = strategy.ask(None)
     with pytest.raises(AssertionError):
         assert_frame_equal(candidates_auto, candidates_gen)
+    # here we test a purely categorical space
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="alpha", categories=["a", "b", "c"]),
+                    DiscreteInput(key="beta", values=[1.0, 2, 3.0, 4.0]),
+                ],
+            ),
+        ),
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 12
+    # here we test a mixed space
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    CategoricalInput(key="alpha", categories=["a", "b"]),
+                ],
+            ),
+        ),
+        n_center=1,
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 10
 
 
 def test_FractionalFactorialStrategy_ask_invalid():
@@ -135,10 +169,11 @@ def test_FractionalFactorialStrategy_ask_invalid():
         ),
     )
     strategy = strategies.map(strategy_data)
-    with pytest.raises(
-        ValueError,
+    with pytest.warns(
+        UserWarning,
         match="FractionalFactorialStrategy will ignore the specified value of candidate_count. "
         "The strategy automatically determines how many candidates to "
         "propose.",
     ):
-        strategy.ask(5)
+        candidates = strategy.ask(7)
+    assert len(candidates) == 5

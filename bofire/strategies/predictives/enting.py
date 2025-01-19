@@ -12,7 +12,10 @@ try:
     from entmoot.optimizers.pyomo_opt import PyomoOptimizer
     from entmoot.problem_config import ProblemConfig
 except ImportError:
-    warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
+    warnings.warn(
+        "entmoot not installed. Please install it to use " "BoFire's `EntingStrategy`.",
+        ImportWarning,
+    )
 
 from typing import Union
 

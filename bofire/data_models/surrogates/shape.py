@@ -5,8 +5,6 @@ from pydantic import AfterValidator, Field, PositiveInt, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
-
-# from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -23,8 +21,6 @@ from bofire.data_models.priors.api import (
     AnyPrior,
     LogNormalPrior,
 )
-
-# from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.types import Bounds, validate_monotonically_increasing
@@ -45,9 +41,9 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
         ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
-        "FactorialStrategy"
-    )
+    hyperstrategy: Literal[
+        "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
+    ] = "FractionalFactorialStrategy"
 
     @staticmethod
     def _update_hyperparameters(

@@ -6,7 +6,7 @@ from bofire.benchmarks.single import Himmelblau
 
 def test_RequiredExperimentsCondition():
     benchmark = Himmelblau()
-    experiments = benchmark.f(benchmark.domain.inputs.sample(3), return_complete=True)
+    experiments = benchmark.f(benchmark.domain.inputs.sample(2), return_complete=True)
     condition = data_models.NumberOfExperimentsCondition(n_experiments=3)
     assert condition.evaluate(benchmark.domain, experiments=experiments) is True
     experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)

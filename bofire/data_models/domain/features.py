@@ -622,6 +622,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
+
         return specs
 
     def get_bounds(

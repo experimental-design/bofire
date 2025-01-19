@@ -1,6 +1,7 @@
 from typing import Optional
 
 import pandas as pd
+from tqdm import tqdm
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.benchmark import Benchmark
@@ -15,6 +16,7 @@ class Hyperopt(Benchmark):
         training_data: pd.DataFrame,
         folds: int,
         random_state: Optional[int] = None,
+        show_progress_bar: bool = False,
     ) -> None:
         super().__init__()
         if surrogate_data.hyperconfig is None:
@@ -24,6 +26,7 @@ class Hyperopt(Benchmark):
         self.folds = folds
         self.results = None
         self.random_state = random_state
+        self.show_progress_bar = show_progress_bar
 
     @property
     def domain(self) -> Domain:
@@ -34,7 +37,11 @@ class Hyperopt(Benchmark):
         return self.surrogate_data.hyperconfig.target_metric  # type: ignore
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        for i, candidate in candidates.iterrows():
+        for i, candidate in tqdm(
+            candidates.iterrows(),
+            total=candidates.shape[0],
+            disable=self.show_progress_bar is False,
+        ):
             self.surrogate_data.update_hyperparameters(candidate)
             surrogate = surrogates.map(self.surrogate_data)
             _, cv_test, _ = surrogate.cross_validate(  # type: ignore

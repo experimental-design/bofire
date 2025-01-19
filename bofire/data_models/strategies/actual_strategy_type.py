@@ -10,12 +10,16 @@ from bofire.data_models.strategies.predictives.active_learning import (
 )
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
+from bofire.data_models.strategies.predictives.multi_fidelity import (
+    MultiFidelityStrategy,
+)
 from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
 from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
@@ -29,7 +33,9 @@ ActualStrategy = Union[
     AdditiveSoboStrategy,
     ActiveLearningStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiFidelityStrategy,
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,

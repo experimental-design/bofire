@@ -317,9 +317,21 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             train_Y=tY,
             cat_dims=cat_dims,
             mol_dims=mol_dims,
-            cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
+            cont_kernel_factory=partial(
+                kernels.map,
+                data_model=self.continuous_kernel,
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            ),
             # cat_kernel_factory=partial(kernels.map, data_model=self.categorical_kernel), BoTorch forced to use CategoricalKernel
-            mol_kernel_factory=partial(kernels.map, data_model=self.molecular_kernel),
+            mol_kernel_factory=partial(
+                kernels.map,
+                data_model=self.molecular_kernel,
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            ),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=tf,
         )

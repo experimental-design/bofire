@@ -109,6 +109,16 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.MultiplicativeAdditiveSoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "use_output_constraints": False,
+        "additive_features": ["o1"],
+    },
+)
+specs.add_valid(
     strategies.CustomSoboStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -227,7 +237,7 @@ specs.add_valid(
         "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
         "seed": 42,
-        "transform_range": (-1, 1),
+        "transform_range": [-1, 1],
     },
 )
 
@@ -637,4 +647,61 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Exactly one allowed task category must be specified for strategies with MultiTask models.",
+)
+
+specs.add_valid(
+    strategies.MultiFidelityStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    TaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qEI().model_dump(),
+        "fidelity_thresholds": 0.1,
+    },
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qEI().model_dump(),
+        "fidelity_thresholds": 0.1,
+    },
+    error=ValueError,
+    message="Exactly one task input is required for multi-task GPs.",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    TaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 0]
+                    ),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qEI().model_dump(),
+        "fidelity_thresholds": 0.1,
+    },
+    error=ValueError,
+    message="Only one task can be the target fidelity",
 )
