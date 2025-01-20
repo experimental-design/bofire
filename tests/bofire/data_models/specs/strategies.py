@@ -233,6 +233,7 @@ specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
         "domain": domain.valid().obj().dict(),
+        "optimization_strategy": "default",
         "ipopt_options": {"maxiter": 200, "disp": 0},
         "criterion": strategies.SpaceFillingCriterion(
             sampling_fraction=0.3, transform_range=[-1, 1]
