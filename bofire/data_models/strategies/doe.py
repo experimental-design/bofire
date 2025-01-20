@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional, Type, Union
+from typing import Annotated, Dict, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -28,6 +28,7 @@ class OptimalityCriterion(BaseModel):
 
 class SpaceFillingCriterion(OptimalityCriterion):
     type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"  # type: ignore
+    sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
