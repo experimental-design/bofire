@@ -26,21 +26,20 @@ class _SeriesNumpyCallable:
             return pd.Series(y, name=name)
 
         return y
-
+    @abstractmethod
     def call_numpy(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
 
 
-class DesirabilityObjective(IdentityObjective):
+class DesirabilityObjective(IdentityObjective, _SeriesNumpyCallable):
     """Abstract class for desirability objectives. Works as Identity Objective"""
 
     type: Literal["DesirabilityObjective"] = "DesirabilityObjective"  # type: ignore
+    clip: bool = True
 
     @pydantic.model_validator(mode="after")
     def validate_clip(self):
-        if "clip" not in list(self.__dict__):
-            return self
-
+    
         if self.clip:
             return self
 
@@ -57,7 +56,7 @@ class DesirabilityObjective(IdentityObjective):
         return self
 
 
-class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
+class IncreasingDesirabilityObjective(DesirabilityObjective):
     """An objective returning a reward the scaled identity, but trimmed at the bounds:
 
         d = ((x - lower_bound) / (upper_bound - lower_bound))^t
@@ -85,7 +84,6 @@ class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
 
     type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"  # type: ignore
     log_shape_factor: float = 0.0
-    clip: bool = True
 
     def call_numpy(
         self,
@@ -109,7 +107,7 @@ class IncreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
         return y
 
 
-class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
+class DecreasingDesirabilityObjective(DesirabilityObjective):
     """An objective returning a reward the negative, shifted scaled identity, but trimmed at the bounds:
 
         d = ((upper_bound - x) / (upper_bound - lower_bound))^t
@@ -135,7 +133,6 @@ class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
 
     type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"  # type: ignore
     log_shape_factor: float = 0.0
-    clip: bool = True
 
     def call_numpy(
         self,
@@ -159,7 +156,7 @@ class DecreasingDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjectiv
         return y
 
 
-class PeakDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
+class PeakDesirabilityObjective(DesirabilityObjective):
     """
     A piecewise (linear or convex/concave) objective that increases from the lower bound
     to the peak position and decreases from the peak position to the upper bound.
@@ -183,7 +180,6 @@ class PeakDesirabilityObjective(_SeriesNumpyCallable, DesirabilityObjective):
 
     type: Literal["PeakDesirabilityObjective"] = "PeakDesirabilityObjective"  # type: ignore
     log_shape_factor: float = 0.0
-    clip: bool = True
     log_shape_factor_decreasing: float = 0.0  # often named log_t
     peak_position: float = 0.5  # often named T
 
