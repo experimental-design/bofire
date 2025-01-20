@@ -34,8 +34,8 @@ class DesirabilityObjective(IdentityObjective):
     def __call__(
         self, x: Union[pd.Series, np.ndarray], x_adapt
     ) -> Union[pd.Series, np.ndarray]:
-        """ Wrapper function for to call numpy and torch functions with series or numpy arrays. matches __call__
-    signature of objectives."""
+        """Wrapper function for to call numpy and torch functions with series or numpy arrays. matches __call__
+        signature of objectives."""
 
         convert_to_series = False
         if isinstance(x, pd.Series):
