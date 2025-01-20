@@ -126,13 +126,13 @@ specs.add_invalid(
 )
 specs.add_invalid(
     objectives.PeakDesirabilityObjective,
-    {"bounds": [0, 10.0], "peak_position": 15.0},
+    lambda: {"bounds": [0, 10.0], "peak_position": 15.0},
     ValueError,
     "Peak position must be within bounds",
 )
 specs.add_invalid(
     objectives.PeakDesirabilityObjective,
-    {"bounds": [0, 10.0], "peak_position": -1.0},
+    lambda: {"bounds": [0, 10.0], "peak_position": -1.0},
     ValueError,
     "Peak position must be within bounds",
 )
