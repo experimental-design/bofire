@@ -230,13 +230,14 @@ specs.add_valid(
     },
 )
 specs.add_valid(
-    strategies.SpaceFillingStrategy,
+    strategies.DoEStrategy,
     lambda: {
         "domain": domain.valid().obj().dict(),
-        "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
+        "criterion": strategies.SpaceFillingCriterion(
+            sampling_fraction=0.3, transform_range=[-1, 1]
+        ).model_dump(),
         "seed": 42,
-        "transform_range": [-1, 1],
     },
 )
 
