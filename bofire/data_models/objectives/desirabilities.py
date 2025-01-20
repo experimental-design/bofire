@@ -8,32 +8,7 @@ import pydantic
 from bofire.data_models.objectives.identity import IdentityObjective
 
 
-class _SeriesNumpyCallable:
-    """Helper class to call numpy and torch functions with series or numpy arrays. matches __call__
-    signature of objectives."""
-
-    def __call__(
-        self, x: Union[pd.Series, np.ndarray], x_adapt
-    ) -> Union[pd.Series, np.ndarray]:
-        convert_to_series = False
-        if isinstance(x, pd.Series):
-            convert_to_series = True
-            name = x.name
-            x = x.values
-
-        y = self.call_numpy(x)
-
-        if convert_to_series:
-            return pd.Series(y, name=name)
-
-        return y
-
-    @abstractmethod
-    def call_numpy(self, x: np.ndarray) -> np.ndarray:
-        raise NotImplementedError()
-
-
-class DesirabilityObjective(IdentityObjective, _SeriesNumpyCallable):
+class DesirabilityObjective(IdentityObjective):
     """Abstract class for desirability objectives. Works as Identity Objective"""
 
     type: Literal["DesirabilityObjective"] = "DesirabilityObjective"  # type: ignore
@@ -55,6 +30,29 @@ class DesirabilityObjective(IdentityObjective, _SeriesNumpyCallable):
                     f"Log shape factor {key} must be zero if clip is False."
                 )
         return self
+
+    def __call__(
+        self, x: Union[pd.Series, np.ndarray], x_adapt
+    ) -> Union[pd.Series, np.ndarray]:
+        """ Wrapper function for to call numpy and torch functions with series or numpy arrays. matches __call__
+    signature of objectives."""
+
+        convert_to_series = False
+        if isinstance(x, pd.Series):
+            convert_to_series = True
+            name = x.name
+            x = x.values
+
+        y = self.call_numpy(x)
+
+        if convert_to_series:
+            return pd.Series(y, name=name)
+
+        return y
+
+    @abstractmethod
+    def call_numpy(self, x: np.ndarray) -> np.ndarray:
+        raise NotImplementedError()
 
 
 class IncreasingDesirabilityObjective(DesirabilityObjective):
