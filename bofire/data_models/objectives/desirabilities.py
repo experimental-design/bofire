@@ -1,4 +1,5 @@
 from typing import Literal, Optional, Union
+from abc import abstractmethod
 
 import numpy as np
 import pandas as pd
@@ -26,6 +27,7 @@ class _SeriesNumpyCallable:
             return pd.Series(y, name=name)
 
         return y
+
     @abstractmethod
     def call_numpy(self, x: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
@@ -39,7 +41,6 @@ class DesirabilityObjective(IdentityObjective, _SeriesNumpyCallable):
 
     @pydantic.model_validator(mode="after")
     def validate_clip(self):
-    
         if self.clip:
             return self
 
