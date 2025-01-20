@@ -36,7 +36,6 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.QnehviStrategy: QnehviStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
     data_models.EntingStrategy: EntingStrategy,
-    data_models.SpaceFillingStrategy: DoEStrategy,
     data_models.DoEStrategy: DoEStrategy,
     data_models.FactorialStrategy: FactorialStrategy,
     data_models.MoboStrategy: MoboStrategy,
