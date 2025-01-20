@@ -35,10 +35,7 @@ optimization = [
     "numpy",
     "multiprocess",
     "plotly",
-<<<<<<< HEAD
-=======
     "formulaic>=1.0.1,<1.1",
->>>>>>> 9bb1a364 (pin compatible version of packages (#489))
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
