@@ -82,3 +82,64 @@ specs.add_invalid(
     error=ValueError,
     message="Categories must be unique",
 )
+
+for obj in [
+    objectives.IncreasingDesirabilityObjective,
+    objectives.DecreasingDesirabilityObjective,
+]:
+    specs.add_valid(
+        obj,
+        lambda: {"w": 1.0, "bounds": [0, 10.0], "log_shape_factor": 1.0, "clip": True},
+    )
+    specs.add_valid(
+        obj,
+        lambda: {"w": 1.0, "bounds": [0, 10.0], "log_shape_factor": -1.0, "clip": True},
+    )
+    specs.add_invalid(
+        obj,
+        lambda: {
+            "w": 1.0,
+            "bounds": [0, 10.0],
+            "log_shape_factor": -1.0,
+            "clip": False,
+        },
+        ValueError,
+        "Log shape factor log_shape_factor must be zero if clip is False.",
+    )
+
+specs.add_valid(
+    objectives.PeakDesirabilityObjective,
+    lambda: {
+        "w": 1.0,
+        "bounds": [0, 10.0],
+        "clip": True,
+        "log_shape_factor": 0.0,
+        "log_shape_factor_decreasing": 0.0,
+        "peak_position": 5.0,
+    },
+)
+specs.add_invalid(
+    objectives.PeakDesirabilityObjective,
+    lambda: {
+        "w": 1.0,
+        "bounds": [0, 10.0],
+        "clip": False,
+        "log_shape_factor": 0.0,
+        "log_shape_factor_decreasing": 1.0,
+        "peak_position": 5.0,
+    },
+    ValueError,
+    "Log shape factor log_shape_factor_decreasing must be zero if clip is False.",
+)
+specs.add_invalid(
+    objectives.PeakDesirabilityObjective,
+    lambda: {"bounds": [0, 10.0], "peak_position": 15.0},
+    ValueError,
+    "Peak position must be within bounds",
+)
+specs.add_invalid(
+    objectives.PeakDesirabilityObjective,
+    lambda: {"bounds": [0, 10.0], "peak_position": -1.0},
+    ValueError,
+    "Peak position must be within bounds",
+)

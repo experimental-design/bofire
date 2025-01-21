@@ -26,11 +26,14 @@ from bofire.data_models.features.api import (
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
+    DecreasingDesirabilityObjective,
+    IncreasingDesirabilityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
     MovingMaximizeSigmoidObjective,
+    PeakDesirabilityObjective,
     TargetObjective,
 )
 from bofire.data_models.strategies.api import RandomStrategy
@@ -109,6 +112,14 @@ c3 = LinearInequalityConstraint(
         CloseToTargetObjective(target_value=2.0, exponent=1.0, w=0.5),
         MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1),
         # ConstantObjective(w=0.5, value=1.0),
+        IncreasingDesirabilityObjective(
+            bounds=(0, 2.5), log_shape_factor=0.0, clip=False
+        ),
+        IncreasingDesirabilityObjective(
+            bounds=(0, 2.5), log_shape_factor=1.0, clip=True
+        ),
+        DecreasingDesirabilityObjective(bounds=(0, 5.0), log_shape_factor=1.0),
+        PeakDesirabilityObjective(bounds=(0, 5.0), peak_position=2.5),
     ],
 )
 def test_get_objective_callable(objective):
