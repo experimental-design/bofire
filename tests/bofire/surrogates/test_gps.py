@@ -15,7 +15,7 @@ from pandas.testing import assert_frame_equal
 from pydantic import ValidationError
 
 import bofire.surrogates.api as surrogates
-from bofire.benchmarks.api import Himmelblau
+from bofire.benchmarks.api import Hartmann, Himmelblau
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
@@ -25,10 +25,12 @@ from bofire.data_models.features.api import (
     MolecularInput,
 )
 from bofire.data_models.kernels.api import (
+    AdditiveKernel,
     HammingDistanceKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
@@ -229,7 +231,7 @@ def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
 def test_hyperconfig_invalid():
     with pytest.raises(
         ValueError,
-        match="It is not allowed to scpecify the number of its for FactorialStrategy",
+        match="It is not allowed to specify the number of its for FractionalFactorialStrategy",
     ):
         SingleTaskGPHyperconfig(n_iterations=5)
     with pytest.raises(
@@ -291,6 +293,107 @@ def test_SingleTaskGPHyperconfig():
                 surrogate_data.kernel.base_kernel.lengthscale_prior
                 == HVARFNER_LENGTHSCALE_PRIOR()
             )
+
+
+def test_SingleTaskGPModel_feature_subsets():
+    """make an additive kernel using feature subsets for each kernel in the sum"""
+    benchmark = Hartmann()
+    bench_x = benchmark.domain.inputs.sample(12)
+    bench_expts = pd.concat([bench_x, benchmark.f(bench_x)], axis=1)
+
+    input_names = benchmark.domain.inputs.get_keys()
+    inputs_kernel_1 = input_names[:2]
+    inputs_kernel_2 = input_names[2:]
+
+    gp_data = SingleTaskGPSurrogate(
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
+        kernel=AdditiveKernel(
+            kernels=[
+                RBFKernel(
+                    ard=True,
+                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                    features=inputs_kernel_1,
+                ),
+                RBFKernel(
+                    ard=True,
+                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                    features=inputs_kernel_2,
+                ),
+            ]
+        ),
+    )
+
+    gp_mapped = surrogates.map(gp_data)
+    assert hasattr(gp_mapped, "fit")
+    assert len(gp_mapped.kernel.kernels) == 2
+    assert gp_mapped.kernel.kernels[0].features == ["x_0", "x_1"]
+    assert gp_mapped.kernel.kernels[1].features == ["x_2", "x_3", "x_4", "x_5"]
+    gp_mapped.fit(bench_expts)
+    pred = gp_mapped.predict(bench_expts)
+    assert pred.shape == (12, 2)
+    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [0, 1]
+    assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [2, 3, 4, 5]
+
+
+def test_SingleTaskGPModel_mixed_features():
+    """test that we can use a single task gp with mixed features"""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x_1", bounds=(-4, 4)),
+            ContinuousInput(key="x_2", bounds=(-4, 4)),
+            CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
+            CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
+            MolecularInput(key="x_mol"),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    experiment_values = [
+        [2.56, -1.42, "papa", "dog", -3.98, 1, "CC(=O)Oc1ccccc1C(=O)O"],
+        [3.84, -2.73, "mama", "cat", -197.46, 1, "c1ccccc1"],
+        [3.57, 3.23, "papa", "cat", -74.55, 1, "[CH3][CH2][OH]"],
+        [-0.07, -1.55, "mama", "dog", -179.14, 1, "N[C@](C)(F)C(=O)O"],
+    ]
+    experiments = pd.DataFrame(
+        experiment_values,
+        columns=["x_1", "x_2", "x_cat_1", "x_cat_2", "y", "valid_y", "x_mol"],
+    )
+
+    gp_data = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=AdditiveKernel(
+            kernels=[
+                HammingDistanceKernel(
+                    ard=True,
+                    features=["x_cat_1", "x_cat_2"],
+                ),
+                RBFKernel(
+                    ard=True,
+                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                    features=["x_1", "x_2"],
+                ),
+                TanimotoKernel(features=["x_mol"]),
+            ]
+        ),
+    )
+
+    gp_mapped = surrogates.map(gp_data)
+    gp_mapped.fit(experiments)
+    pred = gp_mapped.predict(experiments)
+    assert pred.shape == (4, 2)
+    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
+        2050,
+        2051,
+        2052,
+        2053,
+    ]
+    assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
+    assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
+        range(2, 2050)
+    )
+    # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
 
 def test_MixedSingleTaskGPHyperconfig():

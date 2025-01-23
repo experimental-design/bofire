@@ -110,7 +110,7 @@ class Ackley(Benchmark):
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(key=f"x_{d+1}", bounds=(self.lower, self.upper)),
+                ContinuousInput(key=f"x_{d+1}", bounds=[self.lower, self.upper]),
             )
 
         # Objective
@@ -179,7 +179,7 @@ class Hartmann(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                    ContinuousInput(key=f"x_{i}", bounds=[0, 1]) for i in range(dim)
                 ],
             ),
             outputs=Outputs(
@@ -235,7 +235,7 @@ class Hartmann6plus(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                    ContinuousInput(key=f"x_{i}", bounds=[0, 1]) for i in range(dim)
                 ]
             ),
             outputs=Outputs(
@@ -291,27 +291,23 @@ class Branin(Benchmark):
                 features=[
                     ContinuousInput(
                         key="x_1",
-                        bounds=(-5.0, 10),
-                        local_relative_bounds=(
-                            (
-                                0.5 * locality_factor,
-                                0.5 * locality_factor,
-                            )
-                            if locality_factor is not None
-                            else None
-                        ),
+                        bounds=[-5.0, 10],
+                        local_relative_bounds=[
+                            0.5 * locality_factor,
+                            0.5 * locality_factor,
+                        ]
+                        if locality_factor is not None
+                        else None,
                     ),
                     ContinuousInput(
                         key="x_2",
-                        bounds=(0.0, 15.0),
-                        local_relative_bounds=(
-                            (
-                                1.5 * locality_factor,
-                                1.5 * locality_factor,
-                            )
-                            if locality_factor is not None
-                            else None
-                        ),
+                        bounds=[0.0, 15.0],
+                        local_relative_bounds=[
+                            1.5 * locality_factor,
+                            1.5 * locality_factor,
+                        ]
+                        if locality_factor is not None
+                        else None,
                     ),
                 ],
             ),
@@ -355,7 +351,7 @@ class Branin30(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1:02d}", bounds=(0, 1))
+                    ContinuousInput(key=f"x_{i+1:02d}", bounds=[0, 1])
                     for i in range(30)
                 ],
             ),
@@ -398,8 +394,8 @@ class Himmelblau(Benchmark):
         self.use_constraints = use_constraints
         inputs = []
 
-        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
-        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_1", bounds=[-6, 6]))
+        inputs.append(ContinuousInput(key="x_2", bounds=[-6, 6]))
 
         objective = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", objective=objective)
@@ -472,8 +468,8 @@ class MultiTaskHimmelblau(Benchmark):
         inputs = []
 
         inputs.append(TaskInput(key="task_id", categories=["task_1", "task_2"]))
-        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
-        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_1", bounds=[-6, 6]))
+        inputs.append(ContinuousInput(key="x_2", bounds=[-6, 6]))
 
         objective = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", objective=objective)
@@ -645,7 +641,7 @@ class Multinormalpdfs(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1))
+                    ContinuousInput(key=f"x_{i}", bounds=[0, 1])
                     for i in range(self.dim)
                 ],
             ),

@@ -700,7 +700,8 @@ def test_fixed_experiments_checker():
 
 
 def test_partially_fixed_experiments():
-    domain = Domain.from_lists(
+    pytest.importorskip("docutils")
+    domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),

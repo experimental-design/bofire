@@ -1,6 +1,7 @@
-from typing import Literal, Optional, Type
+from typing import List, Literal, Optional, Type
 
-from pydantic import Field, field_validator
+import pydantic
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
@@ -74,7 +75,25 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
         return v
 
 
-class MultiplicativeSoboStrategy(SoboBaseStrategy):
+class _CheckAdaptableWeightsMixin:
+    """
+    Contains an additional validator for weights in multiplicative objective merging.
+
+    Additional validation of weights for adaptable weights, in multiplicative calculations. Adaption to (1, inf)
+    requires w>=1e-8
+    """
+
+    @model_validator(mode="after")
+    def check_adaptable_weights(cls, self):
+        for obj in self.domain.outputs.get_by_objective():
+            if obj.objective.w < 1e-8:
+                raise pydantic.ValidationError(
+                    f"Weight transformation to (1, inf) requires w>=1e-8 . Violated by feature {obj.key}."
+                )
+        return self
+
+
+class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
 
     @field_validator("domain")
@@ -83,6 +102,36 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy):
             raise ValueError(
                 "Multiplicative SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead.",
             )
+        return v
+
+
+class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
+    """
+    Mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
+
+    The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
+    additive features (f3 and f4 with weights w3 and w4) is:
+
+        additive_objective = 1 + f3*w3 + f4*w4
+
+        objective = f1^w1 * f2^w2 * additive_objective
+
+    """
+
+    type: Literal["MultiplicativeAdditiveSoboStrategy"] = (
+        "MultiplicativeAdditiveSoboStrategy"
+    )
+    use_output_constraints: bool = True
+    additive_features: List[str] = Field(default_factory=list)
+
+    @field_validator("additive_features")
+    def validate_additive_features(cls, v, values):
+        domain = values.data["domain"]
+        for feature in v:
+            if feature not in domain.outputs.get_keys():
+                raise ValueError(
+                    f"Feature {feature} is not an output feature of the domain."
+                )
         return v
 
 

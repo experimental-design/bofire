@@ -19,12 +19,12 @@ classifiers = [
     "Intended Audience :: Developers",
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 dependencies = [
     "numpy",
     "pandas",
     "pydantic>=2.5",
-    "scipy>=1.7",
+    "scipy>=1.7,<1.15",
     "typing-extensions",
     "formulaic>=1.0.1",
 ]
@@ -35,14 +35,15 @@ optimization = [
     "numpy",
     "multiprocess",
     "plotly",
+    "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
-    "scikit-learn>=1.0.0",
+    "scikit-learn>=1.0.0,<1.6",
 ]
 entmoot = ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"]
 xgb = ["xgboost>=1.7.5"]
-cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordred"]
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred"]
 tests = [
     "mopti",
     "pytest",
@@ -59,7 +60,7 @@ docs = [
 ]
 tutorials = ["jupyter", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.10.0",
+    "botorch>=0.11.3",
     "numpy",
     "multiprocess",
     "plotly",
@@ -67,14 +68,13 @@ all = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
-    "scikit-learn>=1.0.0",
+    "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0",
     "lightgbm==4.0.0",
     "pyomo==6.7.1",
     "gurobipy",
     "xgboost>=1.7.5",
     "rdkit>=2023.3.2",
-    "scikit-learn>=1.0.0",
     "mordred",
     "mopti",
     "pytest",

@@ -108,6 +108,16 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.MultiplicativeAdditiveSoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "use_output_constraints": False,
+        "additive_features": ["o1"],
+    },
+)
+specs.add_valid(
     strategies.CustomSoboStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -226,7 +236,7 @@ specs.add_valid(
         "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
         "seed": 42,
-        "transform_range": (-1, 1),
+        "transform_range": [-1, 1],
     },
 )
 
