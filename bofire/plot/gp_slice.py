@@ -9,7 +9,7 @@ import pandas as pd
 
 import plotly.graph_objects as go
 
-def plot_gp_slice(
+def plot_gp_slice_plotly(
     domain: Domain,
     model: SingleTaskGPSurrogate,
     fixed_input_features: pd.Series,
