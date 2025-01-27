@@ -215,20 +215,25 @@ specs.add_valid(
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
     },
 )
-
-
-specs.add_valid(
-    strategies.DoEStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "optimization_strategy": "default",
-        "verbose": False,
-        "seed": 42,
-        "criterion": strategies.DOptimalityCriterion(
-            formula="fully-quadratic", transform_range=None
-        ).model_dump(),
-    },
-)
+for criterion in [
+    strategies.AOptimalityCriterion,
+    strategies.DOptimalityCriterion,
+    strategies.EOptimalityCriterion,
+    strategies.GOptimalityCriterion,
+    strategies.KOptimalityCriterion,
+]:
+    specs.add_valid(
+        strategies.DoEStrategy,
+        lambda criterion=criterion: {
+            "domain": domain.valid().obj().model_dump(),
+            "optimization_strategy": "default",
+            "verbose": False,
+            "seed": 42,
+            "criterion": criterion(
+                formula="fully-quadratic", transform_range=None
+            ).model_dump(),
+        },
+    )
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
