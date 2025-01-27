@@ -222,18 +222,34 @@ for criterion in [
     strategies.GOptimalityCriterion,
     strategies.KOptimalityCriterion,
 ]:
-    specs.add_valid(
-        strategies.DoEStrategy,
-        lambda criterion=criterion: {
-            "domain": domain.valid().obj().model_dump(),
-            "optimization_strategy": "default",
-            "verbose": False,
-            "seed": 42,
-            "criterion": criterion(
-                formula="fully-quadratic", transform_range=None
-            ).model_dump(),
-        },
-    )
+    for formula in [
+        "linear",
+        "linear-and-interactions",
+        "quadratic",
+        "fully-quadratic",
+    ]:
+        for optimization_strategy in [
+            "default",
+            "exhaustive",
+            "branch-and-bound",
+            "partially-random",
+            "relaxed",
+            "iterative",
+        ]:
+            specs.add_valid(
+                strategies.DoEStrategy,
+                lambda criterion=criterion,
+                formula=formula,
+                optimization_strategy=optimization_strategy: {
+                    "domain": domain.valid().obj().model_dump(),
+                    "optimization_strategy": optimization_strategy,
+                    "verbose": False,
+                    "seed": 42,
+                    "criterion": criterion(
+                        formula=formula, transform_range=None
+                    ).model_dump(),
+                },
+            )
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
