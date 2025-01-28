@@ -20,7 +20,6 @@ from bofire.strategies.predictives.sobo import (
 )
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
-from bofire.strategies.space_filling import SpaceFillingStrategy
 from bofire.strategies.strategy import Strategy
 
 
@@ -37,7 +36,6 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.QnehviStrategy: QnehviStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
     data_models.EntingStrategy: EntingStrategy,
-    data_models.SpaceFillingStrategy: SpaceFillingStrategy,
     data_models.DoEStrategy: DoEStrategy,
     data_models.FactorialStrategy: FactorialStrategy,
     data_models.MoboStrategy: MoboStrategy,

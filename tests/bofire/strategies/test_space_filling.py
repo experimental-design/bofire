@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.strategies.doe import SpaceFillingCriterion
 
 
 pytest.importorskip("cyipopt")
@@ -57,15 +58,25 @@ domains = [
     [(domain, candidate_count) for domain in domains for candidate_count in [1, 16]],
 )
 def test_ask(domain, num_samples):
-    data_model = data_models.SpaceFillingStrategy(domain=domain)
-    sampler = strategies.SpaceFillingStrategy(data_model=data_model)
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        optimization_strategy="partially-random",
+        criterion=SpaceFillingCriterion(),
+        ipopt_options={"maxiter": 300, "disp": 0},
+    )
+    sampler = strategies.DoEStrategy(data_model=data_model)
     samples = sampler.ask(num_samples)
     assert len(samples) == num_samples
 
 
 def test_ask_pending_candidates():
-    data_model = data_models.SpaceFillingStrategy(domain=domains[0])
-    sampler = strategies.SpaceFillingStrategy(data_model=data_model)
+    data_model = data_models.DoEStrategy(
+        domain=domains[0],
+        optimization_strategy="partially-random",
+        criterion=SpaceFillingCriterion(),
+        ipopt_options={"maxiter": 300, "disp": 0},
+    )
+    sampler = strategies.DoEStrategy(data_model=data_model)
     pending_candidates = sampler.ask(2, add_pending=True)
     samples = sampler.ask(1)
     assert len(samples) == 1
