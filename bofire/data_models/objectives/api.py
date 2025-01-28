@@ -1,6 +1,12 @@
 from typing import Union
 
 from bofire.data_models.objectives.categorical import ConstrainedCategoricalObjective
+from bofire.data_models.objectives.desirabilities import (
+    DecreasingDesirabilityObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+)
 from bofire.data_models.objectives.identity import (
     IdentityObjective,
     MaximizeObjective,
@@ -25,6 +31,7 @@ AbstractObjective = Union[
     IdentityObjective,
     SigmoidObjective,
     ConstrainedObjective,
+    DesirabilityObjective,
 ]
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective
@@ -36,7 +43,15 @@ AnyConstraintObjective = Union[
     TargetObjective,
 ]
 
-AnyRealObjective = Union[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+AnyRealObjective = Union[
+    MaximizeObjective,
+    MinimizeObjective,
+    CloseToTargetObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+]
 
 AnyObjective = Union[
     MaximizeObjective,
@@ -47,4 +62,8 @@ AnyObjective = Union[
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     MovingMaximizeSigmoidObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
 ]
