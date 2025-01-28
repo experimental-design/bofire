@@ -147,11 +147,5 @@ specs.add_valid(
     objectives.InRangeDesirability,
     lambda: {
         "bounds": [0.0, 10.0],
-        "desired_range_min": 0.0,
-        "desired_range_max": 10.0,
     },
-)
-specs.add_valid(
-    objectives.InRangeDesirability,
-    lambda: {"bounds": [0.0, 10.0]},
 )
