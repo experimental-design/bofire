@@ -1078,8 +1078,8 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1099,6 +1099,7 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">bofire.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">strategies</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.constraints.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">LinearEqualityConstraint</span><span class="p">,</span>
     <span class="n">LinearInequalityConstraint</span><span class="p">,</span>
@@ -1106,7 +1107,8 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.domain.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Domain</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.features.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">ContinuousOutput</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.strategies.doe.design</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">DoEStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.doe</span><span class="w"> </span><span class="kn">import</span> <span class="n">DOptimalityCriterion</span>
 
 
 <span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
@@ -1138,15 +1140,18 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
     <span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">res</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span>
+<span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
-    <span class="n">model_type</span><span class="o">=</span><span class="s2">"fully-quadratic"</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="o">=</span><span class="n">DOptimalityCriterion</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="s2">"fully-quadratic"</span><span class="p">),</span>
     <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">},</span>
 <span class="p">)</span>
-<span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
+<span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">candidate_count</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">import numpy as np
 
+import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -1154,7 +1159,8 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.strategies.doe.design import find_local_max_ipopt
+from bofire.data_models.strategies.api import DoEStrategy
+from bofire.data_models.strategies.doe import DOptimalityCriterion
 
 
 domain = Domain(
@@ -1186,12 +1192,210 @@ domain = Domain(
     ],
 )
 
-res = find_local_max_ipopt(
+data_model = DoEStrategy(
     domain=domain,
-    model_type="fully-quadratic",
+    criterion=DOptimalityCriterion(formula="fully-quadratic"),
     ipopt_options={"maxiter": 500},
 )
-np.round(res, 3)</div>
+strategy = strategies.map(data_model=data_model)
+candidates = strategy.ask(candidate_count=12)
+np.round(candidates, 3)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>/home/linznedd/miniforge3/envs/bofire/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>
+******************************************************************************
+This program contains Ipopt, a library for large-scale nonlinear optimization.
+ Ipopt is released as open source code under the Eclipse Public License (EPL).
+         For more information visit https://github.com/coin-or/Ipopt
+******************************************************************************
+
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>x1</th>
+<th>x2</th>
+<th>x3</th>
+<th>x4</th>
+<th>x5</th>
+<th>x6</th>
+<th>x7</th>
+<th>x8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.1</td>
+</tr>
+<tr>
+<th>1</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.1</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+</tr>
+<tr>
+<th>2</th>
+<td>-0.0</td>
+<td>0.7</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.3</td>
+<td>-0.0</td>
+</tr>
+<tr>
+<th>3</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.1</td>
+<td>-0.0</td>
+<td>0.9</td>
+</tr>
+<tr>
+<th>4</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>0.1</td>
+<td>-0.0</td>
+</tr>
+<tr>
+<th>5</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.7</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.3</td>
+</tr>
+<tr>
+<th>6</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.1</td>
+<td>-0.0</td>
+</tr>
+<tr>
+<th>7</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.0</td>
+<td>0.1</td>
+</tr>
+<tr>
+<th>8</th>
+<td>0.7</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.3</td>
+<td>-0.0</td>
+</tr>
+<tr>
+<th>9</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.1</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.0</td>
+</tr>
+<tr>
+<th>10</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.1</td>
+</tr>
+<tr>
+<th>11</th>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.0</td>
+<td>0.1</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
