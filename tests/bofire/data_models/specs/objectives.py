@@ -143,3 +143,29 @@ specs.add_invalid(
     ValueError,
     "Peak position must be within bounds",
 )
+specs.add_valid(
+    objectives.InRangeDesirability,
+    lambda: {"bounds": [0., 10.0], "desired_range_min": 0., "desired_range_max": 10.}
+)
+specs.add_valid(
+    objectives.InRangeDesirability,
+    lambda: {"bounds": [0., 10.0], "desired_range_min": 5., "desired_range_max": 5.}
+)
+specs.add_invalid(
+    objectives.InRangeDesirability,
+    lambda: {"bounds": [0., 10.0], "desired_range_min": 5., "desired_range_max": 4.},
+    ValueError,
+    "Desired range min must be < desired range max"
+)
+specs.add_invalid(
+    objectives.InRangeDesirability,
+    lambda: {"bounds": [0., 10.0], "desired_range_min": 5., "desired_range_max": 15.},
+    ValueError,
+    "Desired range max must be <= upper-bound"
+)
+specs.add_invalid(
+    objectives.InRangeDesirability,
+    lambda: {"bounds": [0., 10.0], "desired_range_min": -5., "desired_range_max": 10.},
+    ValueError,
+    "Desired range min must be >= lower-bound"
+)
