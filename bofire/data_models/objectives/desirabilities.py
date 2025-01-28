@@ -223,8 +223,6 @@ class PeakDesirabilityObjective(DesirabilityObjective):
 
 class InRangeDesirability(DesirabilityObjective):
     type: Literal["InBoundsDesirability"] = "InBoundsDesirability"  # type: ignore
-    desired_range_min: float = 0.0
-    desired_range_max: float = 1.0
 
     def call_numpy(
         self,
@@ -233,21 +231,7 @@ class InRangeDesirability(DesirabilityObjective):
     ) -> np.ndarray:
         y = np.zeros(x.shape)
 
-        between = (x >= self.desired_range_min) & (x <= self.desired_range_max)
+        between = (x >= self.lower_bound) & (x <= self.upper_bound)
         y[between] = 1.0
 
         return y
-
-    @pydantic.model_validator(mode="after")
-    def validate_desired_range(self):
-        bounds = self.bounds
-        assert (
-            self.desired_range_min >= bounds[0]
-        ), f"Desired range min must be >= lower-bound {bounds[0]}, got {self.desired_range_min}"
-        assert (
-            self.desired_range_max <= bounds[1]
-        ), f"Desired range max must be <= upper-bound {bounds[1]}, got {self.desired_range_max}"
-        assert (
-            self.desired_range_min <= self.desired_range_max
-        ), f"Desired range min must be < desired range max, got {self.desired_range_min} >= {self.desired_range_max}"
-        return self

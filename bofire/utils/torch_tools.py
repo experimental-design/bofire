@@ -521,8 +521,8 @@ def get_objective_callable(
             x = x[..., idx]
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
 
-            in_range = (x >= objective.desired_range_min) & (
-                x <= objective.desired_range_max
+            in_range = (x >= objective.lower_bound) & (
+                x <= objective.upper_bound
             )
             y[in_range] = 1.0
 

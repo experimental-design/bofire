@@ -153,31 +153,5 @@ specs.add_valid(
 )
 specs.add_valid(
     objectives.InRangeDesirability,
-    lambda: {"bounds": [0.0, 10.0], "desired_range_min": 5.0, "desired_range_max": 5.0},
-)
-specs.add_invalid(
-    objectives.InRangeDesirability,
-    lambda: {"bounds": [0.0, 10.0], "desired_range_min": 5.0, "desired_range_max": 4.0},
-    ValueError,
-    "Desired range min must be < desired range max",
-)
-specs.add_invalid(
-    objectives.InRangeDesirability,
-    lambda: {
-        "bounds": [0.0, 10.0],
-        "desired_range_min": 5.0,
-        "desired_range_max": 15.0,
-    },
-    ValueError,
-    "Desired range max must be <= upper-bound",
-)
-specs.add_invalid(
-    objectives.InRangeDesirability,
-    lambda: {
-        "bounds": [0.0, 10.0],
-        "desired_range_min": -5.0,
-        "desired_range_max": 10.0,
-    },
-    ValueError,
-    "Desired range min must be >= lower-bound",
+    lambda: {"bounds": [0.0, 10.0]},
 )
