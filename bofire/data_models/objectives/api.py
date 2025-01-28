@@ -5,8 +5,8 @@ from bofire.data_models.objectives.desirabilities import (
     DecreasingDesirabilityObjective,
     DesirabilityObjective,
     IncreasingDesirabilityObjective,
-    PeakDesirabilityObjective,
     InRangeDesirability,
+    PeakDesirabilityObjective,
 )
 from bofire.data_models.objectives.identity import (
     IdentityObjective,

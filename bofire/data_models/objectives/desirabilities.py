@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Literal, Optional, Union, List
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -220,8 +220,8 @@ class PeakDesirabilityObjective(DesirabilityObjective):
             )
         return self
 
-class InRangeDesirability(DesirabilityObjective):
 
+class InRangeDesirability(DesirabilityObjective):
     type: Literal["InBoundsDesirability"] = "InBoundsDesirability"  # type: ignore
     desired_range_min: float = 0.0
     desired_range_max: float = 1.0
@@ -241,10 +241,13 @@ class InRangeDesirability(DesirabilityObjective):
     @pydantic.model_validator(mode="after")
     def validate_desired_range(self):
         bounds = self.bounds
-        assert self.desired_range_min >= bounds[0],\
-            f"Desired range min must be >= lower-bound {bounds[0]}, got {self.desired_range_min}"
-        assert self.desired_range_max <= bounds[1],\
-            f"Desired range max must be <= upper-bound {bounds[1]}, got {self.desired_range_max}"
-        assert self.desired_range_min <= self.desired_range_max,\
-            f"Desired range min must be < desired range max, got {self.desired_range_min} >= {self.desired_range_max}"
+        assert (
+            self.desired_range_min >= bounds[0]
+        ), f"Desired range min must be >= lower-bound {bounds[0]}, got {self.desired_range_min}"
+        assert (
+            self.desired_range_max <= bounds[1]
+        ), f"Desired range max must be <= upper-bound {bounds[1]}, got {self.desired_range_max}"
+        assert (
+            self.desired_range_min <= self.desired_range_max
+        ), f"Desired range min must be < desired range max, got {self.desired_range_min} >= {self.desired_range_max}"
         return self
