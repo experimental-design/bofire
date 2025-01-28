@@ -30,6 +30,7 @@ from bofire.data_models.objectives.api import (
     MovingMaximizeSigmoidObjective,
     Objective,
     PeakDesirabilityObjective,
+    InRangeDesirability,
     TargetObjective,
 )
 from bofire.strategies.strategy import Strategy
@@ -510,6 +511,19 @@ def get_objective_callable(
                 ),
                 t,
             )
+            return y * objective.w
+
+        return objective_callable_
+
+    if isinstance(objective, InRangeDesirability):
+
+        def objective_callable_(x: Tensor, *args) -> Tensor:
+            x = x[..., idx]
+            y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
+
+            in_range = (x >= objective.desired_range_min) & (x <= objective.desired_range_max)
+            y[in_range] = 1.
+
             return y * objective.w
 
         return objective_callable_
