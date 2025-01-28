@@ -146,6 +146,6 @@ specs.add_invalid(
 specs.add_valid(
     objectives.InRangeDesirability,
     lambda: {
-        "bounds": [0.0, 10.0],
+        "bounds": [0.0, 10.0], "clip": True, "w": 1.0,
     },
 )

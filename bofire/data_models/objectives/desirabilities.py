@@ -222,7 +222,7 @@ class PeakDesirabilityObjective(DesirabilityObjective):
 
 
 class InRangeDesirability(DesirabilityObjective):
-    type: Literal["InBoundsDesirability"] = "InBoundsDesirability"  # type: ignore
+    type: Literal["InRangeDesirability"] = "InRangeDesirability"  # type: ignore
 
     def call_numpy(
         self,
