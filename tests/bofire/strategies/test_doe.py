@@ -391,7 +391,7 @@ def test_functional_constraint():
 
     outputs = [ContinuousOutput(key="y")]
 
-    # Aggregate the solids content as well as the (dry) density of the materials in a dictionary
+    # Aggregate the solids content as well as the density of the materials in a dictionary
     # First col: solids content, second col= density
     raw_materials_data = {
         "A": [0.4, 2],
