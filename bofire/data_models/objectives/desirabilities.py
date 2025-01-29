@@ -219,3 +219,19 @@ class PeakDesirabilityObjective(DesirabilityObjective):
                 f"Peak position must be within bounds {bounds}, got {self.peak_position}"
             )
         return self
+
+
+class InRangeDesirability(DesirabilityObjective):
+    type: Literal["InRangeDesirability"] = "InRangeDesirability"  # type: ignore
+
+    def call_numpy(
+        self,
+        x: np.ndarray,
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+    ) -> np.ndarray:
+        y = np.zeros(x.shape)
+
+        between = (x >= self.lower_bound) & (x <= self.upper_bound)
+        y[between] = 1.0
+
+        return y
