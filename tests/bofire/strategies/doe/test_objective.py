@@ -4,13 +4,21 @@ from formulaic import Formula
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.doe import (
+    AOptimalityCriterion,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.strategies.doe.objective import (
     AOptimality,
     DOptimality,
     EOptimality,
     GOptimality,
-    Objective,
+    ModelBasedObjective,
     SpaceFilling,
+    get_objective_function,
 )
 from bofire.strategies.doe.utils import get_formula_from_string
 
@@ -32,7 +40,7 @@ def test_Objective_model_jacobian_t():
     f = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
     x = np.array([[1, 2, 3]])
 
-    objective = Objective(
+    objective = ModelBasedObjective(
         domain=domain,
         model=f,
         n_experiments=1,
@@ -50,7 +58,7 @@ def test_Objective_model_jacobian_t():
     model_terms = np.array(f, dtype=str)
     x = np.array([[1, 2, 3]])
 
-    objective = Objective(
+    objective = ModelBasedObjective(
         domain=domain,
         model=f,
         n_experiments=1,
@@ -115,7 +123,7 @@ def test_Objective_model_jacobian_t():
                 formula += term
     f = Formula(formula[:-3])
     x = np.array([[1, 2, 3, 4, 5]])
-    objective = Objective(
+    objective = ModelBasedObjective(
         domain=domain,
         model=f,
         n_experiments=1,
@@ -466,7 +474,7 @@ def test_DOptimality_instantiation():
 
 def test_DOptimality_evaluate_jacobian():
     # n_experiment = 1, n_inputs = 2, model: x1 + x2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
     domain = Domain.from_lists(
@@ -492,10 +500,12 @@ def test_DOptimality_evaluate_jacobian():
     np.random.seed(1)
     for _ in range(10):
         x = np.random.rand(2)
-        assert np.allclose(d_optimality.evaluate_jacobian(x), jacobian(x), rtol=1e-3)
+        assert np.allclose(
+            d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
+        )
 
     # n_experiment = 1, n_inputs = 2, model: x1**2 + x2**2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         return -4 * x**3 / (x[0] ** 4 + x[1] ** 4 + delta)
 
     model = Formula("{x1**2} + {x2**2} - 1")
@@ -508,10 +518,12 @@ def test_DOptimality_evaluate_jacobian():
     np.random.seed(1)
     for _ in range(10):
         x = np.random.rand(2)
-        assert np.allclose(d_optimality.evaluate_jacobian(x), jacobian(x), rtol=1e-3)
+        assert np.allclose(
+            d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
+        )
 
     # n_experiment = 2, n_inputs = 2, model = x1 + x2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         X = x.reshape(2, 2)
 
         y = np.empty(4)
@@ -561,7 +573,9 @@ def test_DOptimality_evaluate_jacobian():
     np.random.seed(1)
     for _ in range(10):
         x = np.random.rand(4)
-        assert np.allclose(d_optimality.evaluate_jacobian(x), jacobian(x), rtol=1e-3)
+        assert np.allclose(
+            d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
+        )
 
     # n_experiment = 2, n_inputs = 2, model = x1**2 + x2**2
     def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
@@ -761,9 +775,8 @@ def test_SpaceFilling_evaluate():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
 
-    space_filling = SpaceFilling(domain=domain, model=model, n_experiments=4, delta=0)
+    space_filling = SpaceFilling(domain=domain, n_experiments=4, delta=0)
 
     x = np.array([1, 0.6, 0.1, 0.3])
 
@@ -775,9 +788,8 @@ def test_SpaceFilling_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
 
-    space_filling = SpaceFilling(domain=domain, model=model, n_experiments=4, delta=0)
+    space_filling = SpaceFilling(domain=domain, n_experiments=4, delta=0)
 
     x = np.array([1, 0.4, 0, 0.1])
 
@@ -789,26 +801,52 @@ def test_MinMaxTransform():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
-
     x = np.array([1, 0.8, 0.55, 0.65])
     x_scaled = x * 2 - 1
 
-    for cls in [DOptimality, AOptimality, EOptimality, GOptimality, SpaceFilling]:
-        objective_unscaled = cls(
-            domain=domain,
-            model=model,
-            n_experiments=4,
-            delta=0,
-            transform_range=None,
-        )
-        objective_scaled = cls(
-            domain=domain,
-            model=model,
-            n_experiments=4,
-            delta=0,
-            transform_range=(-1.0, 1.0),
-        )
+    for cls in [
+        DOptimalityCriterion,
+        AOptimalityCriterion,
+        EOptimalityCriterion,
+        GOptimalityCriterion,
+        SpaceFillingCriterion,
+    ]:
+        if cls == SpaceFillingCriterion:
+            objective_unscaled = get_objective_function(
+                cls(
+                    transform_range=None,
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
+
+            objective_scaled = get_objective_function(
+                cls(
+                    transform_range=(-1.0, 1.0),
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
+        else:
+            objective_unscaled = get_objective_function(
+                cls(
+                    formula="linear",
+                    delta=0,
+                    transform_range=None,
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
+
+            objective_scaled = get_objective_function(
+                cls(
+                    formula="linear",
+                    delta=0,
+                    transform_range=(-1.0, 1.0),
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
         assert np.allclose(
             objective_unscaled.evaluate(x_scaled),
             objective_scaled.evaluate(x),

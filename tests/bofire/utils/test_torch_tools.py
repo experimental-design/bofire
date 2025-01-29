@@ -28,6 +28,7 @@ from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     DecreasingDesirabilityObjective,
     IncreasingDesirabilityObjective,
+    InRangeDesirability,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -120,6 +121,9 @@ c3 = LinearInequalityConstraint(
         ),
         DecreasingDesirabilityObjective(bounds=(0, 5.0), log_shape_factor=1.0),
         PeakDesirabilityObjective(bounds=(0, 5.0), peak_position=2.5),
+        InRangeDesirability(
+            bounds=(1.0, 3.0),
+        ),
     ],
 )
 def test_get_objective_callable(objective):

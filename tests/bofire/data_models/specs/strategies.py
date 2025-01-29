@@ -21,7 +21,6 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
-from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -216,28 +215,52 @@ specs.add_valid(
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
     },
 )
-
-
+for criterion in [
+    strategies.AOptimalityCriterion,
+    strategies.DOptimalityCriterion,
+    strategies.EOptimalityCriterion,
+    strategies.GOptimalityCriterion,
+    strategies.KOptimalityCriterion,
+]:
+    for formula in [
+        "linear",
+        "linear-and-interactions",
+        "quadratic",
+        "fully-quadratic",
+    ]:
+        for optimization_strategy in [
+            "default",
+            "exhaustive",
+            "branch-and-bound",
+            "partially-random",
+            "relaxed",
+            "iterative",
+        ]:
+            specs.add_valid(
+                strategies.DoEStrategy,
+                lambda criterion=criterion,
+                formula=formula,
+                optimization_strategy=optimization_strategy: {
+                    "domain": domain.valid().obj().model_dump(),
+                    "optimization_strategy": optimization_strategy,
+                    "verbose": False,
+                    "seed": 42,
+                    "criterion": criterion(
+                        formula=formula, transform_range=None
+                    ).model_dump(),
+                },
+            )
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "formula": "linear",
+        "domain": domain.valid().obj().dict(),
         "optimization_strategy": "default",
         "verbose": False,
-        "seed": 42,
-        "objective": OptimalityCriterionEnum.D_OPTIMALITY,
-        "transform_range": None,
-    },
-)
-specs.add_valid(
-    strategies.SpaceFillingStrategy,
-    lambda: {
-        "domain": domain.valid().obj().dict(),
-        "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
+        "criterion": strategies.SpaceFillingCriterion(
+            sampling_fraction=0.3, transform_range=[-1, 1]
+        ).model_dump(),
         "seed": 42,
-        "transform_range": [-1, 1],
     },
 )
 
