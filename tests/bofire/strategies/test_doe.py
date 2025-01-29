@@ -380,7 +380,6 @@ def test_categorical_doe_iterative():
 
 
 def test_functional_constraint():
-    # this test is an anonymized use case
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),
         ContinuousInput(key="B", bounds=(0, 0.8)),
