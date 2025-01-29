@@ -439,7 +439,7 @@ def test_functional_constraint():
         + 0.03704 * calc_volume_content(A, B, T, W, W_T),
     )
 
-    # Set the thickener solution to 3 %.
+    # Set the thinner solution to 3 %.
     constraint4 = LinearEqualityConstraint(
         features=["T", "W_T"], coefficients=[0.97, -0.03], rhs=0
     )
