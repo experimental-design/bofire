@@ -156,7 +156,9 @@ class PredictiveStrategy(Strategy):
             predictions=predictions,
             outputs=self.domain.outputs,
         )
-        desis = self.domain.outputs(predictions, predictions=True)
+        desis = self.domain.outputs(
+            predictions, experiments_adapt=self.experiments, predictions=True
+        )
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index
         return predictions

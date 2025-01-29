@@ -783,12 +783,15 @@ class Outputs(_BaseFeatures[AnyOutput]):
     def __call__(
         self,
         experiments: pd.DataFrame,
+        experiments_adapt: Optional[pd.DataFrame] = None,
         predictions: bool = False,
     ) -> pd.DataFrame:
         """Evaluate the objective for every feature.
 
         Args:
             experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
+            experiments_adapt (pd.DataFrame, optional): Experimental values which are used to update the objective
+                parameters on the fly. Defaults to None.
             predictions (bool, optional): If True use the prediction columns in the dataframe to calc the
                 desirabilities `f"{feat.key}_pred`.
 
@@ -796,11 +799,17 @@ class Outputs(_BaseFeatures[AnyOutput]):
             pd.DataFrame: Objective values for the experiments of interest.
 
         """
+        experiments_adapt = (
+            experiments if experiments_adapt is None else experiments_adapt
+        )
+
         desis = pd.concat(
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments[f"{feat.key}_pred" if predictions else feat.key],
+                    experiments_adapt[
+                        f"{feat.key}_pred" if predictions else feat.key
+                    ].dropna(),
                 )
                 for feat in self.features
                 if feat.objective is not None
@@ -811,7 +820,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
                     pd.Series(  # type: ignore
                         data=feat(
                             experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments_adapt.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
                         ),
                         name=f"{feat.key}_pred",
                     )
