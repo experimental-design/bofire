@@ -401,7 +401,7 @@ def test_functional_constraint():
         "W_T": [0, 1],
     }
 
-    df_raw_materials = pd.DataFrame(raw_materials_data, index=["sc", "dry_density"]).T
+    df_raw_materials = pd.DataFrame(raw_materials_data, index=["sc", "density"]).T
 
     # Mixture constraint: All components should sum up to 1
     constraint1 = LinearEqualityConstraint(
