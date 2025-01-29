@@ -18,8 +18,8 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
 )
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
     AnyPrior,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -33,18 +33,18 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: MaternKernel(
             ard=True,
             nu=2.5,
-            lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
+            lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
         )
     )
     categorical_kernel: AnyCategoricalKernel = Field(
-        default_factory=lambda: HammingDistanceKernel(ard=True)
+        default_factory=lambda: HammingDistanceKernel(ard=True),
     )
     # Molecular kernel will only be imposed on fingerprints, fragments, or fingerprintsfragments
     molecular_kernel: AnyMolecularKernel = Field(
-        default_factory=lambda: TanimotoKernel(ard=True)
+        default_factory=lambda: TanimotoKernel(ard=True),
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -66,6 +66,6 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
             for value in v.values()
         ):
             raise ValueError(
-                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
+                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
             )
         return v

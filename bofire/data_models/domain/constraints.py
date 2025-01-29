@@ -1,16 +1,7 @@
 import collections.abc
+from collections.abc import Iterator, Sequence
 from itertools import chain
-from typing import (
-    Generic,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Generic, List, Literal, Optional, Type, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field
@@ -19,6 +10,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
 
+
 C = TypeVar("C", bound=Union[AnyConstraint, Constraint])
 CIncludes = TypeVar("CIncludes", bound=Union[AnyConstraint, Constraint])
 CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])
@@ -26,7 +18,7 @@ CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])
 
 class Constraints(BaseModel, Generic[C]):
     type: Literal["Constraints"] = "Constraints"
-    constraints: Sequence[C] = Field(default_factory=lambda: [])
+    constraints: Sequence[C] = Field(default_factory=list)
 
     def __iter__(self) -> Iterator[C]:
         return iter(self.constraints)
@@ -38,7 +30,8 @@ class Constraints(BaseModel, Generic[C]):
         return self.constraints[i]
 
     def __add__(
-        self, other: Union[Sequence[CIncludes], "Constraints[CIncludes]"]
+        self,
+        other: Union[Sequence[CIncludes], "Constraints[CIncludes]"],
     ) -> "Constraints[Union[C, CIncludes]]":
         if isinstance(other, collections.abc.Sequence):
             other_constraints = other
@@ -55,6 +48,7 @@ class Constraints(BaseModel, Generic[C]):
 
         Returns:
             pd.DataFrame: Constraint evaluation for each of the constraints
+
         """
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
@@ -66,6 +60,7 @@ class Constraints(BaseModel, Generic[C]):
 
         Returns:
             list: A list containing the jacobians as pd.DataFrames
+
         """
         return [c.jacobian(experiments) for c in self.constraints]
 
@@ -79,12 +74,14 @@ class Constraints(BaseModel, Generic[C]):
 
         Returns:
             Boolean: True if all constraints are fulfilled for all rows, false if not
+
         """
         if len(self.constraints) == 0:
             return pd.Series([True] * len(experiments), index=experiments.index)
         return (
             pd.concat(
-                [c.is_fulfilled(experiments, tol) for c in self.constraints], axis=1
+                [c.is_fulfilled(experiments, tol) for c in self.constraints],
+                axis=1,
             )
             .fillna(True)
             .all(axis=1)
@@ -105,6 +102,7 @@ class Constraints(BaseModel, Generic[C]):
 
         Returns:
             Constraints: constraints in the domain fitting to the passed requirements.
+
         """
         return Constraints(
             constraints=filter_by_class(
@@ -112,7 +110,7 @@ class Constraints(BaseModel, Generic[C]):
                 includes=includes,
                 excludes=excludes,
                 exact=exact,
-            )
+            ),
         )
 
     def get_reps_df(self):
@@ -120,6 +118,7 @@ class Constraints(BaseModel, Generic[C]):
 
         Returns:
             pd.DataFrame: DataFrame listing all constraints of the domain with a description
+
         """
         df = pd.DataFrame(
             index=range(len(self.constraints)),

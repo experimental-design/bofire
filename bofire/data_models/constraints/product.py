@@ -15,8 +15,7 @@ from bofire.data_models.types import FeatureKeys
 
 
 class ProductConstraint(IntrapointConstraint):
-    """
-    Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en`.
+    """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en`.
 
     Attributes:
         type (str): The type of the constraint.
@@ -25,6 +24,7 @@ class ProductConstraint(IntrapointConstraint):
         rhs (float): The right-hand side value of the constraint.
         sign (Literal[1, -1], optional): The sign of the left hand side of the constraint.
             Defaults to 1.
+
     """
 
     type: str
@@ -35,38 +35,38 @@ class ProductConstraint(IntrapointConstraint):
 
     @model_validator(mode="after")
     def validate_list_lengths(self) -> "ProductConstraint":
-        """
-        Validates that the number of features and exponents provided are the same.
+        """Validates that the number of features and exponents provided are the same.
 
         Raises:
             ValueError: If the number of features and exponents are not equal.
 
         Returns:
             ProductConstraint: The current instance of the class.
+
         """
         if len(self.features) != len(self.exponents):
             raise ValueError(
-                f"must provide same number of features and exponents, got {len(self.features)} != {len(self.exponents)}"
+                f"must provide same number of features and exponents, got {len(self.features)} != {len(self.exponents)}",
             )
         return self
 
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys(ContinuousInput)
-        for f in self.features:  # type: ignore
+        for f in self.features:
             if f not in keys:
                 raise ValueError(
-                    f"Feature {f} is not a continuous input feature in the provided Inputs object."
+                    f"Feature {f} is not a continuous input feature in the provided Inputs object.",
                 )
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
-        """
-        Evaluates the constraint on the given experiments.
+        """Evaluates the constraint on the given experiments.
 
         Args:
             experiments (pd.DataFrame): The experiments to evaluate the constraint on.
 
         Returns:
             pd.Series: The distance to reach constraint fulfillment.
+
         """
         return pd.Series(
             self.sign
@@ -80,13 +80,12 @@ class ProductConstraint(IntrapointConstraint):
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError(
-            "Jacobian for product constraints is not yet implemented."
+            "Jacobian for product constraints is not yet implemented.",
         )
 
 
 class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
-    """
-    Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
+    """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
 
     Attributes:
         type (str): The type of the constraint.
@@ -95,14 +94,14 @@ class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
         rhs (float): The right-hand side value of the constraint.
         sign (Literal[1, -1], optional): The sign of the left hand side of the constraint.
             Defaults to 1.
+
     """
 
     type: Literal["ProductEqualityConstraint"] = "ProductEqualityConstraint"
 
 
 class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
-    """
-    Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
+    """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
 
     Attributes:
         type (str): The type of the constraint.
@@ -111,6 +110,7 @@ class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
         rhs (float): The right-hand side value of the constraint.
         sign (Literal[1, -1], optional): The sign of the left hand side of the constraint.
             Defaults to 1.
+
     """
 
     type: Literal["ProductInequalityConstraint"] = "ProductInequalityConstraint"

@@ -27,6 +27,7 @@ from bofire.data_models.molfeatures.api import (
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
@@ -44,7 +45,7 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                ]
+                ],
             ),
             [
                 [("f1", "c11"), ("f1", "c12")],
@@ -65,7 +66,7 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
                         key="f3",
                         categories=["c31", "c32"],
                     ),
-                ]
+                ],
             ),
             [
                 [("f1", "c11"), ("f1", "c12")],
@@ -96,7 +97,7 @@ def test_inputs_get_categorical_combinations(inputs, data):
                         descriptors=["d21", "d22"],
                         values=[[1, 2], [3, 4]],
                     ),
-                ]
+                ],
             ),
             [
                 [("f1", "c11"), ("f1", "c12")],
@@ -117,7 +118,7 @@ def test_inputs_get_categorical_combinations(inputs, data):
                         descriptors=["d21", "d22"],
                         values=[[1, 2], [3, 4]],
                     ),
-                ]
+                ],
             ),
             [
                 [("f2", "c21"), ("f2", "c22")],
@@ -139,7 +140,7 @@ def test_inputs_get_categorical_combinations(inputs, data):
                         descriptors=["d21", "d22"],
                         values=[[1, 2], [3, 4]],
                     ),
-                ]
+                ],
             ),
             [
                 [("f2", "c21"), ("f2", "c22")],
@@ -160,7 +161,7 @@ def test_inputs_get_categorical_combinations(inputs, data):
                         descriptors=["d21", "d22"],
                         values=[[1, 2], [3, 4]],
                     ),
-                ]
+                ],
             ),
             [],
             CategoricalDescriptorInput,
@@ -181,7 +182,9 @@ if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
 if3 = specs.features.valid(ContinuousInput).obj(key="if3", bounds=(3, 3))
 if4 = specs.features.valid(CategoricalInput).obj(
-    key="if4", categories=["a", "b"], allowed=[True, False]
+    key="if4",
+    categories=["a", "b"],
+    allowed=[True, False],
 )
 if5 = specs.features.valid(DiscreteInput).obj(key="if5")
 if7 = specs.features.valid(CategoricalInput).obj(
@@ -286,7 +289,7 @@ def test_inputs_validate_transform_specs_invalid(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
-        ]
+        ],
     )
     with pytest.raises(ValueError):
         inps._validate_transform_specs(specs)
@@ -317,7 +320,7 @@ def test_inputs_validate_transform_valid(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
-        ]
+        ],
     )
     inps._validate_transform_specs(specs)
 
@@ -350,7 +353,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
                 values=[[1, 2], [3, 4]],
             ),
             MolecularInput(key="x4"),
-        ]
+        ],
     )
     with pytest.raises(ValueError):
         inps._validate_transform_specs(specs)
@@ -397,7 +400,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 values=[[1, 2], [3, 4]],
             ),
             MolecularInput(key="x4"),
-        ]
+        ],
     )
     inps._validate_transform_specs(specs)
 
@@ -438,7 +441,8 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             {
                 "x2": CategoricalEncodingEnum.ORDINAL,
                 "x4": FingerprintsFragments(
-                    n_bits=2048, fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+                    n_bits=2048,
+                    fragments=["fr_unbrch_alkane", "fr_thiocyan"],
                 ),
             },
             {
@@ -453,7 +457,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 "x3": ("x3",),
                 "x4": tuple(
                     [f"x4_fingerprint_{i}" for i in range(2048)]
-                    + ["x4_fr_unbrch_alkane", "x4_fr_thiocyan"]
+                    + ["x4_fr_unbrch_alkane", "x4_fr_thiocyan"],
                 ),
             },
         ),
@@ -490,7 +494,9 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
     ],
 )
 def test_inputs_get_transform_info(
-    specs, expected_features2idx, expected_features2names
+    specs,
+    expected_features2idx,
+    expected_features2names,
 ):
     inps = Inputs(
         features=[
@@ -503,7 +509,7 @@ def test_inputs_get_transform_info(
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
             MolecularInput(key="x4"),
-        ]
+        ],
     )
     features2idx, features2names = inps._get_transform_info(specs)
     assert features2idx == expected_features2idx
@@ -549,7 +555,7 @@ def test_inputs_transform(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-        ]
+        ],
     )
     samples = inps.sample(n=100)
     samples = samples.sample(40)
@@ -649,7 +655,8 @@ def test_input_reverse_transform_molecular():
             {
                 "x2": CategoricalEncodingEnum.ORDINAL,
                 "x4": FingerprintsFragments(
-                    n_bits=32, fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+                    n_bits=32,
+                    fragments=["fr_unbrch_alkane", "fr_thiocyan"],
                 ),
             },
             {
@@ -736,7 +743,7 @@ def test_inputs_transform_molecular(specs, expected):
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
             MolecularInput(key="x4"),
-        ]
+        ],
     )
     transformed = inps.transform(experiments=experiments, specs=specs)
     assert_frame_equal(transformed, pd.DataFrame.from_dict(expected))
@@ -789,7 +796,7 @@ inputs2 = Inputs(
         if4,
         if5,
         if6,
-    ]
+    ],
 )
 
 
@@ -952,14 +959,15 @@ def test_input_get_bounds_reference_experiment():
         features=[
             ContinuousInput(key="if1", bounds=(0, 1), local_relative_bounds=(0.2, 0.3)),
             CategoricalInput(key="if2", categories=["a", "b"], allowed=[True, True]),
-        ]
+        ],
     )
     specs = {
         "if2": CategoricalEncodingEnum.ONE_HOT,
     }
 
     lower, upper = inputs.get_bounds(
-        specs=specs, reference_experiment=pd.Series({"if1": 0.3, "if2": "a"})
+        specs=specs,
+        reference_experiment=pd.Series({"if1": 0.3, "if2": "a"}),
     )
     assert np.allclose(lower, [0.1, 0, 0])
     assert np.allclose(upper, [0.6, 1, 1])
@@ -996,7 +1004,7 @@ def test_inputs_get_bounds_fit():
             if4,
             if5,
             if6,
-        ]
+        ],
     )
     experiments = inputs.sample(100)
     experiments["if4"] = [random.choice(if4.categories) for _ in range(100)]
@@ -1007,7 +1015,7 @@ def test_inputs_get_bounds_fit():
             "if4": CategoricalEncodingEnum.ONE_HOT,
             "if5": CategoricalEncodingEnum.DESCRIPTOR,
             "if6": CategoricalEncodingEnum.DESCRIPTOR,
-        }
+        },
     )
     fit_bounds = inputs.get_bounds(
         {
@@ -1138,7 +1146,7 @@ def test_inputs_get_feature_indices(
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
             MolecularInput(key="x4"),
-        ]
+        ],
     )
 
     mol_dims = inps.get_feature_indices(specs, molecular_keys)

@@ -10,6 +10,7 @@ class LookupTableBenchmark(Benchmark):
 
     Args:
         Benchmark: Subclass of the Benchmark function class.
+
     """
 
     def __init__(
@@ -22,7 +23,9 @@ class LookupTableBenchmark(Benchmark):
 
         Args:
             domain (Domain): Domain of the inputs and outputs
-            LookUpTable (pd.DataFrame): DataFrame containing the LookUp table.
+            lookup_table (pd.DataFrame): DataFrame containing the LookUp table.
+            **kwargs: Additional arguments for the Benchmark class.
+
         """
         super().__init__(**kwargs)
 
@@ -30,19 +33,24 @@ class LookupTableBenchmark(Benchmark):
         self.lookup_table = lookup_table
         self.domain.validate_experiments(self.lookup_table)
 
-    def _f(self, sampled: pd.DataFrame, **kwargs) -> pd.DataFrame:
-        """return output values for matching SMILE candidates.
+    def _f(self, sampled: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+        """Return output values for matching SMILE candidates.
 
         Args:
             sampled (pd.DataFrame): Input values with input columns only.
+            **kwargs: Allow additional unused arguments to prevent errors.
 
         Returns:
-            pd.DataFrame: output values from the LookUpTable. Columns are ouput keys and valid_output keys.
+            pd.DataFrame: output values from the LookUpTable. Columns are output keys and valid_output keys.
+
         """
         X = sampled.copy()
         X["proxy_index"] = X.index
         X_temp = pd.merge(
-            X, self.lookup_table, on=self.domain.inputs.get_keys(), how="left"
+            X,
+            self.lookup_table,
+            on=self.domain.inputs.get_keys(),
+            how="left",
         ).dropna()
         df = pd.merge(X, X_temp, how="left", indicator=True)
         if (
@@ -50,7 +58,8 @@ class LookupTableBenchmark(Benchmark):
             != 0
         ):
             indices = df.loc[
-                df._merge == "left_only", df.columns != "_merge"
+                df._merge == "left_only",
+                df.columns != "_merge",
             ].proxy_index.to_list()
             raise ValueError(f"Input combination {indices} not found in Look up table")
         Y = X_temp[

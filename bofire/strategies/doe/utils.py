@@ -34,8 +34,10 @@ def get_formula_from_string(
         domain (Domain): A domain that nests necessary information on
         how to translate a problem to a formula. Contains a problem.
         rhs_only (bool): The function returns only the right hand side of the formula if set to True.
-        Returns:
+
+    Returns:
     A Formula object describing the model that was given as string or keyword.
+
     """
     # set maximum recursion depth to higher value
     recursion_limit = sys.getrecursionlimit()
@@ -44,25 +46,24 @@ def get_formula_from_string(
     if isinstance(model_type, Formula):
         return model_type
         # build model if a keyword and a problem are given.
+    # linear model
+    if model_type == "linear":
+        formula = linear_formula(domain)
+
+    # linear and interactions model
+    elif model_type == "linear-and-quadratic":
+        formula = linear_and_quadratic_formula(domain)
+
+    # linear and quadratic model
+    elif model_type == "linear-and-interactions":
+        formula = linear_and_interactions_formula(domain)
+
+    # fully quadratic model
+    elif model_type == "fully-quadratic":
+        formula = fully_quadratic_formula(domain)
+
     else:
-        # linear model
-        if model_type == "linear":
-            formula = linear_formula(domain)
-
-        # linear and interactions model
-        elif model_type == "linear-and-quadratic":
-            formula = linear_and_quadratic_formula(domain)
-
-        # linear and quadratic model
-        elif model_type == "linear-and-interactions":
-            formula = linear_and_interactions_formula(domain)
-
-        # fully quadratic model
-        elif model_type == "fully-quadratic":
-            formula = fully_quadratic_formula(domain)
-
-        else:
-            formula = model_type + "   "
+        formula = model_type + "   "
 
     formula = Formula(formula[:-3])
 
@@ -87,6 +88,7 @@ def linear_formula(
 
     Returns:
         A string describing the model that was given as string or keyword.
+
     """
     assert (
         domain is not None
@@ -105,6 +107,7 @@ def linear_and_quadratic_formula(
 
     Returns:
         A string describing the model that was given as string or keyword.
+
     """
     assert (
         domain is not None
@@ -124,6 +127,7 @@ def linear_and_interactions_formula(
 
     Returns:
         A string describing the model that was given as string or keyword.
+
     """
     assert (
         domain is not None
@@ -147,6 +151,7 @@ def fully_quadratic_formula(
 
     Returns:
         A string describing the model that was given as string or keyword.
+
     """
     assert (
         domain is not None
@@ -162,14 +167,18 @@ def fully_quadratic_formula(
 
 
 def n_zero_eigvals(
-    domain: Domain, model_type: Union[str, Formula], epsilon=1e-7
+    domain: Domain,
+    model_type: Union[str, Formula],
+    epsilon=1e-7,
 ) -> int:
     """Determine the number of eigenvalues of the information matrix that are necessarily zero because of
-    equality constraints."""
-
+    equality constraints.
+    """
     # sample points (fulfilling the constraints)
     model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
+        model_type=model_type,
+        rhs_only=True,
+        domain=domain,
     )
     N = len(model_formula) + 3
 
@@ -177,7 +186,7 @@ def n_zero_eigvals(
     X = sampler.ask(N)
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
-    eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
+    eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))
 
     return len(eigvals) - len(eigvals[eigvals > epsilon])
 
@@ -196,21 +205,23 @@ def constraints_as_scipy_constraints(
 
     Returns:
         A list of scipy constraints corresponding to the constraints of the given opti problem.
-    """
 
+    """
     # reformulate constraints
     constraints = []
     if len(domain.constraints) == 0:
         return constraints
     for c in domain.constraints:
         if isinstance(c, LinearEqualityConstraint) or isinstance(
-            c, LinearInequalityConstraint
+            c,
+            LinearInequalityConstraint,
         ):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
+            constraints.append(LinearConstraint(A, lb, ub))
 
         elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
-            c, NonlinearInequalityConstraint
+            c,
+            NonlinearInequalityConstraint,
         ):
             fun, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
             if c.jacobian_expression is not None:
@@ -223,13 +234,15 @@ def constraints_as_scipy_constraints(
                 pass
             else:
                 fun, lb, ub = get_constraint_function_and_bounds(
-                    c, domain, n_experiments
+                    c,
+                    domain,
+                    n_experiments,
                 )
                 constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
 
         elif isinstance(c, InterpointEqualityConstraint):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
+            constraints.append(LinearConstraint(A, lb, ub))
 
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
@@ -238,7 +251,9 @@ def constraints_as_scipy_constraints(
 
 
 def get_constraint_function_and_bounds(
-    c: Constraint, domain: Domain, n_experiments: int
+    c: Constraint,
+    domain: Domain,
+    n_experiments: int,
 ) -> List:
     """Returns the function definition and bounds for a given constraint and domain.
 
@@ -249,11 +264,13 @@ def get_constraint_function_and_bounds(
 
     Returns:
         A list containing the constraint defining function and the lower and upper bounds.
+
     """
     D = len(domain.inputs)
 
     if isinstance(c, LinearEqualityConstraint) or isinstance(
-        c, LinearInequalityConstraint
+        c,
+        LinearInequalityConstraint,
     ):
         # write constraint as matrix
         lhs = {
@@ -262,7 +279,7 @@ def get_constraint_function_and_bounds(
         }
         row = np.zeros(D)
         for i, name in enumerate(domain.inputs.get_keys()):
-            if name in lhs.keys():
+            if name in lhs:
                 row[i] = lhs[name]
 
         A = np.zeros(shape=(n_experiments, D * n_experiments))
@@ -277,12 +294,15 @@ def get_constraint_function_and_bounds(
 
         return [A, lb, ub]
 
-    elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
-        c, NonlinearInequalityConstraint
+    if isinstance(c, NonlinearEqualityConstraint) or isinstance(
+        c,
+        NonlinearInequalityConstraint,
     ):
         # define constraint evaluation (and gradient if provided)
         fun = ConstraintWrapper(
-            constraint=c, domain=domain, n_experiments=n_experiments
+            constraint=c,
+            domain=domain,
+            n_experiments=n_experiments,  # type: ignore
         )
 
         # write upper/lower bound as vector
@@ -293,10 +313,12 @@ def get_constraint_function_and_bounds(
 
         return [fun, lb, ub]
 
-    elif isinstance(c, NChooseKConstraint):
+    if isinstance(c, NChooseKConstraint):
         # define constraint evaluation (and gradient if provided)
         fun = ConstraintWrapper(
-            constraint=c, domain=domain, n_experiments=n_experiments
+            constraint=c,
+            domain=domain,
+            n_experiments=n_experiments,  # type: ignore
         )
 
         # write upper/lower bound as vector
@@ -305,7 +327,7 @@ def get_constraint_function_and_bounds(
 
         return [fun, lb, ub]
 
-    elif isinstance(c, InterpointEqualityConstraint):
+    if isinstance(c, InterpointEqualityConstraint):
         # write lower/upper bound as vector
         multiplicity = c.multiplicity or len(domain.inputs)
         n_batches = int(np.ceil(n_experiments / multiplicity))
@@ -342,51 +364,55 @@ def get_constraint_function_and_bounds(
 
         return [A, lb, ub]
 
-    else:
-        raise NotImplementedError(f"No implementation for this constraint: {c}")
+    raise NotImplementedError(f"No implementation for this constraint: {c}")
 
 
 class ConstraintWrapper:
     """Wrapper for nonlinear constraints."""
 
     def __init__(
-        self, constraint: NonlinearConstraint, domain: Domain, n_experiments: int = 0
+        self,
+        constraint: NonlinearConstraint,
+        domain: Domain,
+        n_experiments: int = 0,
     ) -> None:
-        """
-        Args:
-            constraint (Constraint): constraint to be called
-            domain (Domain): Domain the constraint belongs to
+        """Args:
+        constraint (Constraint): constraint to be called
+        domain (Domain): Domain the constraint belongs to
         """
         self.constraint = constraint
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
-        if constraint.features is None:
+        if constraint.features is None:  # type: ignore
             raise ValueError(
-                f"The features attribute of constraint {constraint} is not set, but has to be set."
+                f"The features attribute of constraint {constraint} is not set, but has to be set.",
             )
         self.constraint_feature_indices = np.searchsorted(
-            self.names, self.constraint.features
+            self.names,
+            self.constraint.features,  # type: ignore
         )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        """call constraint with flattened numpy array."""
+        """Call constraint with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        violation = self.constraint(x).to_numpy()
+        violation = self.constraint(x).to_numpy()  # type: ignore
         violation[np.abs(violation) < 0] = 0
-        return violation  # type: ignore
+        return violation
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
-        """call constraint gradient with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)
-        gradient_compressed = self.constraint.jacobian(x).to_numpy()
+        """Call constraint gradient with flattened numpy array."""
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
+        gradient_compressed = self.constraint.jacobian(x).to_numpy()  # type: ignore
 
         jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
         rows = np.repeat(
-            np.arange(self.n_experiments), len(self.constraint_feature_indices)
+            np.arange(self.n_experiments),
+            len(self.constraint_feature_indices),
         )
         cols = np.repeat(
-            self.D * np.arange(self.n_experiments), len(self.constraint_feature_indices)
+            self.D * np.arange(self.n_experiments),
+            len(self.constraint_feature_indices),
         ).reshape((self.n_experiments, len(self.constraint_feature_indices)))
         cols = (cols + self.constraint_feature_indices).flatten()
 
@@ -395,65 +421,12 @@ class ConstraintWrapper:
         return jacobian
 
 
-def d_optimality(X: np.ndarray, delta=1e-9) -> float:
-    """Compute ln(1/|X^T X|) for a model matrix X (smaller is better).
-    The covariance of the estimated model parameters for $y = X beta + epsilon $is
-    given by $Var(beta) ~ (X^T X)^{-1}$.
-    The determinant |Var| quantifies the volume of the confidence ellipsoid which is to
-    be minimized.
-    """
-    eigenvalues = np.linalg.eigvalsh(X.T @ X)
-    eigenvalues = eigenvalues[np.abs(eigenvalues) > delta]
-    return np.sum(np.log(eigenvalues))
-
-
-def a_optimality(X: np.ndarray, delta=1e-9) -> float:
-    """Compute the A-optimality for a model matrix X (smaller is better).
-    A-optimality is the sum of variances of the estimated model parameters, which is
-    the trace of the covariance matrix $X.T @ X^-1$.
-
-    F is symmetric positive definite, hence the trace of (X.T @ X)^-1 is equal to the
-    the sum of inverse eigenvalues.
-    """
-    eigenvalues = np.linalg.eigvalsh(X.T @ X)
-    eigenvalues = eigenvalues[np.abs(eigenvalues) > delta]
-    return np.sum(1.0 / eigenvalues)  # type: ignore
-
-
-def g_optimality(X: np.ndarray, delta: float = 1e-9) -> float:
-    """Compute the G-optimality for a model matrix X (smaller is better).
-    G-optimality is the maximum entry in the diagonal of the hat matrix
-    H = X (X.T X)^-1 X.T which relates to the maximum variance of the predicted values.
-    """
-    H = X @ np.linalg.inv(X.T @ X + delta * np.eye(len(X))) @ X.T
-    return np.max(np.diag(H))  # type: ignore
-
-
-def metrics(X: np.ndarray, delta: float = 1e-9) -> pd.Series:
-    """Returns a series containing D-optimality, A-optimality and G-efficiency
-    for a model matrix X
-
-    Args:
-        X (np.ndarray): model matrix for which the metrics are determined
-        delta (float): cutoff value for eigenvalues of the information matrix. Default value is 1e-9.
-
-    Returns:
-        A pd.Series containing the values for the three metrics.
-    """
-    return pd.Series(
-        {
-            "D-optimality": d_optimality(X, delta),
-            "A-optimality": a_optimality(X, delta),
-            "G-optimality": g_optimality(X, delta),
-        }
-    )
-
-
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     """Checks if NChooseK constraints of domain can be formulated as bounds.
 
     Args:
         domain (Domain): Domain whose NChooseK constraints should be checked
+
     """
     # collect NChooseK constraints
     if len(domain.constraints) == 0:
@@ -474,7 +447,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
             if input.bounds[0] > 0 or input.bounds[1] < 0:  # type: ignore
                 raise ValueError(
                     f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
-                    domain of the affected decision variables."
+                    domain of the affected decision variables.",
                 )
 
     # check if the parameter names of two nchoose overlap
@@ -485,7 +458,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
                     if name in _c.features:
                         raise ValueError(
                             f"Domain {domain} cannot be used for formulation as bounds. \
-                            names attribute of NChooseK constraints must be pairwise disjoint."
+                            names attribute of NChooseK constraints must be pairwise disjoint.",
                         )
 
 
@@ -502,12 +475,13 @@ def nchoosek_constraints_as_bounds(
     Returns:
         A list of tuples containing bounds that respect NChooseK constraint imposed
         onto the decision variables.
+
     """
     check_nchoosek_constraints_as_bounds(domain)
 
     # bounds without NChooseK constraints
     bounds = np.array(
-        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments  # type: ignore
+        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments,  # type: ignore
     )
 
     if len(domain.constraints) > 0:

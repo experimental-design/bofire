@@ -1,10 +1,9 @@
 from abc import abstractmethod
-from typing import Union
+from typing import Annotated, Optional, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
@@ -15,16 +14,22 @@ class Objective(BaseModel):
     type: str
 
     @abstractmethod
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    def __call__(
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+    ) -> Union[pd.Series, np.ndarray]:
         """Abstract method to define the call function for the class Objective
 
         Args:
-            x (np.ndarray): An array of x values
+            x (np.ndarray): An array of x values for which the objective should be evaluated.
+            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to
+                update the objective parameters on the fly. Defaults to None.
 
         Returns:
             np.ndarray: The desirability of the passed x values
+
         """
-        pass
 
 
 # TODO: should this inherit from Objective?

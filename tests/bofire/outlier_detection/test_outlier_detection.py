@@ -44,27 +44,30 @@ def test_IterativeTrimming():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
-        ]
+        ],
     )
-    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
+    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
-            inputs=inputs, outputs=outputs, kernel=kernel, scaler=scaler
-        )
+            inputs=inputs,
+            outputs=outputs,
+            kernel=kernel,
+            scaler=scaler,
+        ),
     )
     ITGP = mapper.map(ITGP_model)
-    assert isinstance(ITGP.base_gp, SingleTaskGPSurrogate)  # type: ignore
+    assert isinstance(ITGP.base_gp, SingleTaskGPSurrogate)
     assert isinstance(ITGP, mapper.IterativeTrimming)
     # detect
     experiments1 = ITGP.detect(experiments=experiments)
     assert len(experiments[experiments["valid_y"] == 1]) != len(
-        experiments1[experiments1["valid_y"] == 1]
+        experiments1[experiments1["valid_y"] == 1],
     )
     assert len(experiments1[experiments1["valid_y"] == 0]) <= n / 2
 
@@ -89,19 +92,22 @@ def test_OutlierDetections():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
-        ]
+        ],
     )
-    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
+    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model1 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
-            inputs=inputs, outputs=outputs, kernel=kernel, scaler=scaler
-        )
+            inputs=inputs,
+            outputs=outputs,
+            kernel=kernel,
+            scaler=scaler,
+        ),
     )
     ITGP = data_models.OutlierDetections(detectors=[ITGP_model1])
     ITGP = OutlierDetections(data_model=ITGP)
@@ -109,7 +115,7 @@ def test_OutlierDetections():
     # detect
     experiments1 = ITGP.detect(experiments=experiments)
     assert len(experiments[experiments["valid_y"] == 1]) != len(
-        experiments1[experiments1["valid_y"] == 1]
+        experiments1[experiments1["valid_y"] == 1],
     )
     assert len(experiments1[experiments1["valid_y"] == 0]) <= n / 2
     # multiple detectors
@@ -136,25 +142,31 @@ def test_OutlierDetections():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
-        ]
+        ],
     )
-    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
-    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])  # type: ignore
+    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
+    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model1 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
-            inputs=inputs, outputs=outputs1, kernel=kernel, scaler=scaler
-        )
+            inputs=inputs,
+            outputs=outputs1,
+            kernel=kernel,
+            scaler=scaler,
+        ),
     )
     ITGP_model2 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
-            inputs=inputs, outputs=outputs2, kernel=kernel, scaler=scaler
-        )
+            inputs=inputs,
+            outputs=outputs2,
+            kernel=kernel,
+            scaler=scaler,
+        ),
     )
     ITGP = data_models.OutlierDetections(detectors=[ITGP_model1, ITGP_model2])
     ITGP = OutlierDetections(data_model=ITGP)
@@ -163,10 +175,10 @@ def test_OutlierDetections():
     # detect
     experiments1 = ITGP.detect(experiments=experiments)
     assert len(experiments[experiments["valid_y"] == 1]) != len(
-        experiments1[experiments1["valid_y"] == 1]
+        experiments1[experiments1["valid_y"] == 1],
     )
     assert len(experiments[experiments["valid_y1"] == 1]) != len(
-        experiments1[experiments1["valid_y1"] == 1]
+        experiments1[experiments1["valid_y1"] == 1],
     )
     assert len(experiments1[experiments1["valid_y"] == 0]) <= n / 2
     assert len(experiments1[experiments1["valid_y1"] == 0]) <= n / 2
@@ -196,35 +208,41 @@ def test_OutlierDetections():
     inputs1 = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
-        ]
+        ],
     )
     inputs2 = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[1],  # type: ignore
+                key=experiments.keys()[1],
                 bounds=(-3, 3),
             )
             for i in range(1)
-        ]
+        ],
     )
-    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])  # type: ignore
-    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[3])])  # type: ignore
+    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])
+    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[3])])
 
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model1 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
-            inputs=inputs1, outputs=outputs1, kernel=kernel, scaler=scaler
-        )
+            inputs=inputs1,
+            outputs=outputs1,
+            kernel=kernel,
+            scaler=scaler,
+        ),
     )
     ITGP_model2 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
-            inputs=inputs2, outputs=outputs2, kernel=kernel, scaler=scaler
-        )
+            inputs=inputs2,
+            outputs=outputs2,
+            kernel=kernel,
+            scaler=scaler,
+        ),
     )
     ITGP = data_models.OutlierDetections(detectors=[ITGP_model1, ITGP_model2])
     ITGP = OutlierDetections(data_model=ITGP)
@@ -233,10 +251,10 @@ def test_OutlierDetections():
     # detect
     experiments1 = ITGP.detect(experiments=experiments)
     assert len(experiments[experiments["valid_y"] == 1]) != len(
-        experiments1[experiments1["valid_y"] == 1]
+        experiments1[experiments1["valid_y"] == 1],
     )
     assert len(experiments[experiments["valid_y1"] == 1]) != len(
-        experiments1[experiments1["valid_y1"] == 1]
+        experiments1[experiments1["valid_y1"] == 1],
     )
     assert len(experiments1[experiments1["valid_y"] == 0]) <= n / 2
     assert len(experiments1[experiments1["valid_y1"] == 0]) <= n / 2
@@ -259,13 +277,13 @@ def test_outlier_detectors_check_compatibility():
                         categories=["apple", "banana"],
                         descriptors=["length", "width"],
                         values=[[1, 2], [3, 4]],
-                    )
-                ]
+                    ),
+                ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
             scaler=ScalerEnum.NORMALIZE,
             input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
-        )
+        ),
     )
     data_model2 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
@@ -283,13 +301,13 @@ def test_outlier_detectors_check_compatibility():
                         categories=["apple", "banana"],
                         descriptors=["length", "width"],
                         values=[[1, 2], [3, 4]],
-                    )
-                ]
+                    ),
+                ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y2")]),
             scaler=ScalerEnum.NORMALIZE,
             input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
-        )
+        ),
     )
     data_model = data_models.OutlierDetections(detectors=[data_model1, data_model2])
     # models = OutlierDetections(data_model=data_model)
@@ -301,11 +319,12 @@ def test_outlier_detectors_check_compatibility():
                 bounds=(-4, 4),
             )
             for i in range(3)
-        ]
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(
-        ValueError, match=r"Model with index \d+ has more features than acceptable."
+        ValueError,
+        match=r"Model with index \d+ has more features than acceptable.",
     ):
         data_model._check_compability(inp, out)
     # check unused input features
@@ -323,8 +342,8 @@ def test_outlier_detectors_check_compatibility():
                 categories=["apple", "banana"],
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(ValueError):
@@ -342,8 +361,8 @@ def test_outlier_detectors_check_compatibility():
             ContinuousInput(
                 key="cat",
                 bounds=(-4, 4),
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(ValueError, match=r"Features with key \w+ are incompatible."):
@@ -363,8 +382,8 @@ def test_outlier_detectors_check_compatibility():
                 categories=["apple", "banana"],
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y")])
     with pytest.raises(ValueError, match="Output features do not match."):
@@ -375,7 +394,7 @@ def test_outlier_detectors_check_compatibility():
             ContinuousOutput(key="y"),
             ContinuousOutput(key="y2"),
             ContinuousOutput(key="y3"),
-        ]
+        ],
     )
     with pytest.raises(ValueError, match="Output features do not match."):
         data_model._check_compability(inp, out)
@@ -384,7 +403,7 @@ def test_outlier_detectors_check_compatibility():
         features=[
             ContinuousOutput(key="y"),
             ContinuousOutput(key="y3"),
-        ]
+        ],
     )
     with pytest.raises(ValueError, match="Output features do not match."):
         data_model._check_compability(inp, out)
@@ -403,8 +422,8 @@ def test_outlier_detectors_check_compatibility():
                 categories=["apple", "banana"],
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     data_model._check_compability(inp, out)
@@ -416,11 +435,11 @@ def test_outlier_detectors_unique_outputs():
             inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
-                ]
+                ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
             scaler=ScalerEnum.NORMALIZE,
-        )
+        ),
     )
     data_model2 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
@@ -428,13 +447,14 @@ def test_outlier_detectors_unique_outputs():
                 features=[
                     ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)
                 ]
-                + [CategoricalInput(key="x_3", categories=["apple", "banana"])]
+                + [CategoricalInput(key="x_3", categories=["apple", "banana"])],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
             scaler=ScalerEnum.NORMALIZE,
-        )
+        ),
     )
     with pytest.raises(
-        ValueError, match="Output feature keys are not unique across detectors."
+        ValueError,
+        match="Output feature keys are not unique across detectors.",
     ):
         data_models.OutlierDetections(detectors=[data_model1, data_model2])

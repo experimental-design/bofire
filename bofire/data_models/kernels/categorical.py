@@ -1,9 +1,9 @@
 from typing import Literal
 
-from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 
 
-class CategoricalKernel(Kernel):
+class CategoricalKernel(FeatureSpecificKernel):
     pass
 
 

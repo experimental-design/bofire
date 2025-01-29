@@ -12,6 +12,7 @@ class NormalPrior(Prior):
     Attributes:
         loc(float): mean/center of the normal distribution
         scale(PositiveFloat): width of the normal distribution
+
     """
 
     type: Literal["NormalPrior"] = "NormalPrior"
@@ -25,6 +26,7 @@ class LogNormalPrior(Prior):
     Attributes:
         loc(float): mean/center of the log-normal distribution
         scale(PositiveFloat): width of the log-normal distribution
+
     """
 
     type: Literal["LogNormalPrior"] = "LogNormalPrior"
@@ -38,9 +40,9 @@ class DimensionalityScaledLogNormalPrior(Prior):
     this excellent blogpost: https://www.miguelgondu.com/blogposts/2024-03-16/when-does-vanilla-gpr-fail/
     """
 
-    type: Literal[
+    type: Literal["DimensionalityScaledLogNormalPrior"] = (
         "DimensionalityScaledLogNormalPrior"
-    ] = "DimensionalityScaledLogNormalPrior"
+    )
     loc: PositiveFloat = np.sqrt(2)
     loc_scaling: PositiveFloat = 0.5
     scale: PositiveFloat = np.sqrt(3)

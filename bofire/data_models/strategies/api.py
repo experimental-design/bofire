@@ -1,15 +1,31 @@
 from typing import Union
 
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
-from bofire.data_models.strategies.doe import DoEStrategy
+from bofire.data_models.strategies.doe import (
+    AnyDoEOptimalityCriterion,
+    AnyOptimalityCriterion,
+    AOptimalityCriterion,
+    DoEStrategy,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    KOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.fractional_factorial import (
     FractionalFactorialStrategy,
 )
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
+from bofire.data_models.strategies.predictives.active_learning import (
+    ActiveLearningStrategy,
+)
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
+from bofire.data_models.strategies.predictives.multi_fidelity import (
+    MultiFidelityStrategy,
+)
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
@@ -20,27 +36,26 @@ from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
-from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
-from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
+from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     AnyCondition,
     CombiCondition,
     NumberOfExperimentsCondition,
 )
-from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
-    Step,
-    StepwiseStrategy,
-)
+from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.transforms.api import (
-    AnyTransform,  # noqa: F401
+    AnyTransform,
     DropDataTransform,
+    ManipulateDataTransform,
 )
+
 
 AbstractStrategy = Union[
     Strategy,
@@ -53,8 +68,10 @@ AnyStrategy = Union[ActualStrategy, MetaStrategy]
 
 AnyPredictive = Union[
     SoboStrategy,
+    ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,

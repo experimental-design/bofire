@@ -3,6 +3,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
+from botorch.acquisition.acquisition import AcquisitionFunction
 from pydantic.types import NonNegativeInt
 
 import bofire.data_models.strategies.api as data_models
@@ -21,7 +22,7 @@ from bofire.strategies.api import BotorchStrategy, PredictiveStrategy, Strategy
 
 
 class DummyStrategyDataModel(data_models.BotorchStrategy):
-    type: Literal["DummyStrategyDataModel"] = "DummyStrategyDataModel"
+    type: Literal["DummyStrategyDataModel"] = "DummyStrategyDataModel"  # type: ignore
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -60,12 +61,12 @@ class DummyStrategy(Strategy):
     ) -> None:
         pass
 
-    def _ask(
+    def _ask(  # type: ignore
         self,
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
         )
 
     def _choose_from_pool(
@@ -83,13 +84,13 @@ class DummyStrategy(Strategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        return len(self.experiments) >= 3
+        return len(self.experiments) >= 3  # type: ignore
 
 
-class DummyPredictiveStrategyDataModel(data_models.Strategy):
-    type: Literal[
+class DummyPredictiveStrategyDataModel(data_models.PredictiveStrategy):
+    type: Literal["DummyPredictiveStrategyDataModel"] = (  # type: ignore
         "DummyPredictiveStrategyDataModel"
-    ] = "DummyPredictiveStrategyDataModel"
+    )
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -128,21 +129,21 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     ) -> None:
         pass
 
-    def _fit(self, transformed: pd.DataFrame):
+    def _fit(self, transformed: pd.DataFrame):  # type: ignore
         pass
 
-    def _predict(self, experiments: pd.DataFrame):
+    def _predict(self, experiments: pd.DataFrame):  # type: ignore
         return (
             np.ones([len(experiments), len(self.domain.outputs)]) * 4,
             np.ones([len(experiments), len(self.domain.outputs)]) * 5,
         )
 
-    def _ask(
+    def _ask(  # type: ignore
         self,
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
         )
 
     def _choose_from_pool(
@@ -164,7 +165,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        return len(self.experiments) >= 3
+        return len(self.experiments) >= 3  # type: ignore
 
 
 class DummyBotorchPredictiveStrategy(BotorchStrategy):
@@ -180,22 +181,22 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
     ) -> None:
         pass
 
-    def _predict(self, experiments: pd.DataFrame):
+    def _predict(self, experiments: pd.DataFrame):  # type: ignore
         return (
             np.ones([len(experiments), len(self.domain.outputs)]) * 4,
             np.ones([len(experiments), len(self.domain.outputs)]) * 5,
         )
 
-    def _ask(
+    def _ask(  # type: ignore
         self,
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
         )
 
-    def _get_acqfs(self, n: int):
-        pass
+    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
+        return []
 
     def _choose_from_pool(
         self,
@@ -216,7 +217,7 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        return len(self.experiments) >= 3
+        return len(self.experiments) >= 3  # type: ignore
 
 
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {

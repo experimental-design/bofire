@@ -1,7 +1,12 @@
 from typing import Union
 
-from bofire.data_models.objectives.categorical import (
-    ConstrainedCategoricalObjective,
+from bofire.data_models.objectives.categorical import ConstrainedCategoricalObjective
+from bofire.data_models.objectives.desirabilities import (
+    DecreasingDesirabilityObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    InRangeDesirability,
+    PeakDesirabilityObjective,
 )
 from bofire.data_models.objectives.identity import (
     IdentityObjective,
@@ -12,6 +17,7 @@ from bofire.data_models.objectives.objective import Objective
 from bofire.data_models.objectives.sigmoid import (
     MaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     SigmoidObjective,
 )
 from bofire.data_models.objectives.target import (
@@ -20,22 +26,34 @@ from bofire.data_models.objectives.target import (
     TargetObjective,
 )
 
+
 AbstractObjective = Union[
     Objective,
     IdentityObjective,
     SigmoidObjective,
     ConstrainedObjective,
+    DesirabilityObjective,
 ]
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective
 
 AnyConstraintObjective = Union[
     MaximizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
     TargetObjective,
 ]
 
-AnyRealObjective = Union[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+AnyRealObjective = Union[
+    MaximizeObjective,
+    MinimizeObjective,
+    CloseToTargetObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+    InRangeDesirability,
+]
 
 AnyObjective = Union[
     MaximizeObjective,
@@ -45,4 +63,10 @@ AnyObjective = Union[
     TargetObjective,
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
+    MovingMaximizeSigmoidObjective,
+    DesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+    InRangeDesirability,
 ]

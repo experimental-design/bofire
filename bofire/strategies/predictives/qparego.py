@@ -50,9 +50,11 @@ class QparegoStrategy(BotorchStrategy):
             GenericMCObjective: the botorch objective.
             Union[ConstrainedObjective, None]: the botorch constraints.
             Union[List, float]: etas used in the botorch constraints.
+
         """
+        assert self.experiments is not None, "No experiments available."
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
-            **tkwargs
+            **tkwargs,
         )
         weights = (
             sample_simplex(
@@ -62,35 +64,42 @@ class QparegoStrategy(BotorchStrategy):
                             MaximizeObjective,
                             MinimizeObjective,
                             CloseToTargetObjective,
-                        ]
-                    )
+                        ],
+                    ),
                 ),
                 **tkwargs,
             ).squeeze()
             * ref_point_mask
         )
 
-        obj_callable = get_multiobjective_objective(outputs=self.domain.outputs)
+        obj_callable = get_multiobjective_objective(
+            outputs=self.domain.outputs,
+            experiments=self.experiments,
+        )
 
         df_preds = self.predict(
             self.domain.outputs.preprocess_experiments_any_valid_output(
-                experiments=self.experiments
-            )
+                experiments=self.experiments,
+            ),
         )
 
         preds = torch.from_numpy(
-            df_preds[[f"{key}_pred" for key in self.domain.outputs.get_keys()]].values
+            df_preds[[f"{key}_pred" for key in self.domain.outputs.get_keys()]].values,
         ).to(**tkwargs)
 
         scalarization = get_chebyshev_scalarization(
-            weights=weights, Y=obj_callable(preds, None) * ref_point_mask
+            weights=weights,
+            Y=obj_callable(preds, None) * ref_point_mask,
         )
 
         def objective_callable(Z, X=None):
             return scalarization(obj_callable(Z, None) * ref_point_mask, X)
 
         if len(weights) != len(self.domain.outputs.get_by_objective(Objective)):
-            constraint_callables, etas = get_output_constraints(self.domain.outputs)
+            constraint_callables, etas = get_output_constraints(
+                self.domain.outputs,
+                experiments=self.experiments,
+            )
         else:
             constraint_callables, etas = None, 1e-3
 

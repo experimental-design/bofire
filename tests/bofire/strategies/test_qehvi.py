@@ -27,25 +27,26 @@ from tests.bofire.utils.test_multiobjective import (
     valid_domains,
 )
 
+
 if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if1",
-    }
+    },
 )
 
 if2 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if2",
-    }
+    },
 )
 
 if3 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if3",
-    }
+    },
 )
 
 of1 = ContinuousOutput(
@@ -142,7 +143,7 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
@@ -172,11 +173,12 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
 def test_qnehvi_constraints():
     benchmark = C2DTLZ2(dim=4)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     data_model = data_models.QnehviStrategy(
-        domain=benchmark.domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+        domain=benchmark.domain,
+        ref_point={"f_0": 1.1, "f_1": 1.1},
     )
     my_strategy = strategies.map(data_model)
     my_strategy.tell(experiments)
@@ -206,10 +208,11 @@ def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(num_experiments), return_complete=True
+        random_strategy.ask(num_experiments),
+        return_complete=True,
     )
     data_model = strategy(domain=benchmark.domain)
     strategy = strategies.map(data_model)
@@ -221,7 +224,7 @@ def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
     _, names = strategy.domain.inputs._get_transform_info(
-        specs=strategy.surrogate_specs.input_preprocessing_specs
+        specs=strategy.surrogate_specs.input_preprocessing_specs,
     )
 
     assert torch.is_tensor(X_train)
@@ -243,7 +246,8 @@ def test_no_objective():
     experiments["ignore"] = experiments["f_0"] + 6
     experiments["valid_ignore"] = 1
     data_model = data_models.QehviStrategy(
-        domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+        domain=domain,
+        ref_point={"f_0": 1.1, "f_1": 1.1},
     )
     recommender = strategies.map(data_model=data_model)
     recommender.tell(experiments=experiments)

@@ -8,6 +8,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
+
 TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
 
 
@@ -19,8 +20,7 @@ class Feature(BaseModel):
     order_id: ClassVar[int] = -1
 
     def __lt__(self, other) -> bool:
-        """
-        Method to compare two models to get them in the desired order.
+        """Method to compare two models to get them in the desired order.
         Return True if other is larger than self, else False. (see FEATURE_ORDER)
 
         Args:
@@ -28,13 +28,13 @@ class Feature(BaseModel):
 
         Returns:
             bool: True if the other class is larger than self, else False
+
         """
         order_self = self.order_id
         order_other = other.order_id
         if order_self == order_other:
             return self.key < other.key
-        else:
-            return order_self < order_other
+        return order_self < order_other
 
 
 class Input(Feature):
@@ -51,34 +51,37 @@ class Input(Feature):
 
         Returns:
             bool: True if fixed, els False.
+
         """
-        pass
 
     @abstractmethod
     def fixed_value(
-        self, transform_type: Optional[TTransform] = None
+        self,
+        transform_type: Optional[TTransform] = None,
     ) -> Union[None, List[str], List[float]]:
         """Method to return the fixed value in case of a fixed feature.
 
         Returns:
             Union[None,str,float]: None in case the feature is not fixed, else the fixed value.
+
         """
-        pass
 
     @abstractmethod
     def validate_experimental(
-        self, values: pd.Series, strict: bool = False
+        self,
+        values: pd.Series,
+        strict: bool = False,
     ) -> pd.Series:
         """Abstract method to validate the experimental dataFrame
 
         Args:
             values (pd.Series): A dataFrame with experiments
-            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.
+            strict (bool, optional): Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False.
 
         Returns:
             pd.Series: The passed dataFrame with experiments
+
         """
-        pass
 
     @abstractmethod
     def validate_candidental(self, values: pd.Series) -> pd.Series:
@@ -89,8 +92,8 @@ class Input(Feature):
 
         Returns:
             pd.Series: The passed dataFrame with candidates
+
         """
-        pass
 
     @abstractmethod
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
@@ -98,11 +101,12 @@ class Input(Feature):
 
         Args:
             n (int): Number of samples
+            seed (int, optional): random seed. Defaults to None.
 
         Returns:
             pd.Series: Sampled values.
+
         """
-        pass
 
     @abstractmethod
     def get_bounds(
@@ -120,10 +124,11 @@ class Input(Feature):
             reference_value (Optional[float], optional): If a reference value is provided, then the local bounds based
                 on a local search region are provided. Currently only supported for continuous inputs. For more
                 details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.
+
         Returns:
             Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
+
         """
-        pass
 
 
 class Output(Feature):
@@ -131,6 +136,7 @@ class Output(Feature):
 
     Attributes:
         key(str): Key of the Feature.
+
     """
 
     @abstractmethod
@@ -146,8 +152,8 @@ class Output(Feature):
 
         Returns:
             pd.Series: The passed dataFrame with experiments
+
         """
-        pass
 
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:

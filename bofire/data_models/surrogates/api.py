@@ -6,7 +6,10 @@ from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
     BotorchSurrogates,
 )
-from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
+from bofire.data_models.surrogates.deterministic import (
+    CategoricalDeterministicSurrogate,
+    LinearDeterministicSurrogate,
+)
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.linear import LinearSurrogate
@@ -27,6 +30,7 @@ from bofire.data_models.surrogates.multi_task_gp import (
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
@@ -35,6 +39,7 @@ from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable import MeanAggregation, SumAggregation
 from bofire.data_models.surrogates.xgb import XGBoostSurrogate
+
 
 AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate, MLPEnsemble]
 
@@ -53,8 +58,10 @@ AnySurrogate = Union[
     PolynomialSurrogate,
     TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
+    CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -70,6 +77,7 @@ AnyTrainableSurrogate = Union[
     PolynomialSurrogate,
     SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 AnyRegressionSurrogate = Union[
@@ -87,6 +95,7 @@ AnyRegressionSurrogate = Union[
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

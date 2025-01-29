@@ -12,10 +12,8 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import (
-    ContinuousInput,
-    ContinuousOutput,
-)
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.doe import DOptimalityCriterion
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
@@ -24,6 +22,7 @@ from bofire.strategies.doe.design import (
     get_n_experiments,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
+
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
@@ -39,7 +38,7 @@ def test_find_local_max_ipopt_no_constraint():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(4)
@@ -54,7 +53,7 @@ def test_find_local_max_ipopt_no_constraint():
         + 3
     )
 
-    design = find_local_max_ipopt(domain, "linear")
+    design = find_local_max_ipopt(domain, n_experiments=num_exp)
     assert design.shape == (num_exp, dim_input)
 
 
@@ -63,7 +62,7 @@ def test_find_local_max_ipopt_nchoosek():
     # Design for a problem with an n-choose-k constraint
     inputs = [
         ContinuousInput(
-            key=f"x{i+1}",
+            key=f"x{i + 1}",
             bounds=(0, 1),
         )
         for i in range(4)
@@ -73,11 +72,11 @@ def test_find_local_max_ipopt_nchoosek():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(4)],
+                features=[f"x{i + 1}" for i in range(4)],
                 min_count=0,
                 max_count=3,
                 none_also_valid=True,
-            )
+            ),
         ],
     )
 
@@ -90,7 +89,9 @@ def test_find_local_max_ipopt_nchoosek():
     )
     print(N)
 
-    A = find_local_max_ipopt(domain, "linear")
+    A = find_local_max_ipopt(
+        domain, n_experiments=N, criterion=DOptimalityCriterion(formula="linear")
+    )
     assert A.shape == (N, D)
 
 
@@ -99,7 +100,7 @@ def test_find_local_max_ipopt_mixture():
     # Design for a problem with a mixture constraint
     inputs = [
         ContinuousInput(
-            key=f"x{i+1}",
+            key=f"x{i + 1}",
             bounds=(0, 1),
         )
         for i in range(4)
@@ -109,15 +110,19 @@ def test_find_local_max_ipopt_mixture():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(4)], coefficients=[1, 1, 1, 1], rhs=1
-            )
+                features=[f"x{i + 1}" for i in range(4)],
+                coefficients=[1, 1, 1, 1],
+                rhs=1,
+            ),
         ],
     )
 
     D = len(domain.inputs)
 
     N = len(get_formula_from_string(domain=domain, model_type="linear")) + 3
-    A = find_local_max_ipopt(domain, "linear")
+    A = find_local_max_ipopt(
+        domain, n_experiments=N, criterion=DOptimalityCriterion(formula="linear")
+    )
     assert A.shape == (N, D)
 
 
@@ -142,10 +147,12 @@ def test_find_local_max_ipopt_mixed_results():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+                features=[f"x{i + 1}" for i in range(3)],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 min_count=0,
                 max_count=1,
                 none_also_valid=True,
@@ -153,8 +160,18 @@ def test_find_local_max_ipopt_mixed_results():
         ],
     )
 
+    N = (
+        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
+        + 3
+    )
     # with pytest.warns(ValueError):
-    A = find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"maxiter": 100})
+    A = find_local_max_ipopt(
+        domain,
+        n_experiments=N,
+        criterion=DOptimalityCriterion(formula="fully-quadratic"),
+        ipopt_options={"maxiter": 100},
+    )
     opt = np.eye(3)
     for row in A.to_numpy():
         assert any(np.allclose(row, o, atol=1e-2) for o in opt)
@@ -178,18 +195,26 @@ def test_find_local_max_ipopt_results():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+                features=[f"x{i + 1}" for i in range(3)],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[5, 4], rhs=3.9
+                features=["x1", "x2"],
+                coefficients=[5, 4],
+                rhs=3.9,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+                features=["x1", "x2"],
+                coefficients=[-20, 5],
+                rhs=-3,
             ),
         ],
     )
     np.random.seed(1)
-    A = find_local_max_ipopt(domain, "linear", n_experiments=12)
+    A = find_local_max_ipopt(
+        domain, criterion=DOptimalityCriterion(formula="linear"), n_experiments=12
+    )
     opt = np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]])
     for row in A.to_numpy():
         assert any(np.allclose(row, o, atol=1e-2) for o in opt)
@@ -216,7 +241,7 @@ def test_find_local_max_ipopt_results():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_batch_constraint():
     # define problem with batch constraints
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             ContinuousInput(key="x2", bounds=(0, 1)),
@@ -227,10 +252,13 @@ def test_find_local_max_ipopt_batch_constraint():
     )
 
     result = find_local_max_ipopt(
-        domain, "linear", ipopt_options={"maxiter": 100}, n_experiments=30
+        domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        ipopt_options={"maxiter": 100},
+        n_experiments=30,
     )
 
-    x1 = np.round(result["x1"].values, 6)
+    x1 = np.round(np.array(result["x1"].values), 6)
 
     assert 0 in x1 and 1 in x1
     for i in range(10):
@@ -254,13 +282,19 @@ def test_find_local_max_ipopt_fixed_experiments():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+                features=[f"x{i + 1}" for i in range(3)],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[5, 4], rhs=3.9
+                features=["x1", "x2"],
+                coefficients=[5, 4],
+                rhs=3.9,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+                features=["x1", "x2"],
+                coefficients=[-20, 5],
+                rhs=-3,
             ),
         ],
     )
@@ -270,7 +304,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     #     domain,
     #     "linear",
     #     n_experiments=12,
-    #     fixed_experiments=fixed_experiments,  # type: ignore
+    #     fixed_experiments=fixed_experiments,
     # )
     # opt = np.array(
     #     [
@@ -292,10 +326,11 @@ def test_find_local_max_ipopt_fixed_experiments():
     with pytest.raises(ValueError):
         find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=12,
             fixed_experiments=pd.DataFrame(
-                np.ones(shape=(12, 3)), columns=["x1", "x2", "x3"]
+                np.ones(shape=(12, 3)),
+                columns=["x1", "x2", "x3"],
             ),
         )
 
@@ -319,10 +354,12 @@ def test_find_local_max_ipopt_fixed_experiments():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+                features=[f"x{i + 1}" for i in range(3)],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 min_count=0,
                 max_count=1,
                 none_also_valid=True,
@@ -332,11 +369,22 @@ def test_find_local_max_ipopt_fixed_experiments():
 
     # with pytest.warns(ValueError):
     np.random.seed(1)
+
+    num_exp = (
+        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
+        + 3
+    )
+
     A = find_local_max_ipopt(
         domain,
-        "fully-quadratic",
+        n_experiments=num_exp,
+        criterion=DOptimalityCriterion(formula="fully-quadratic"),
         ipopt_options={"maxiter": 100},
-        fixed_experiments=pd.DataFrame([[1, 0, 0], [0, 1, 0]], columns=["x1", "x2", "x3"]),  # type: ignore
+        fixed_experiments=pd.DataFrame(
+            [[1, 0, 0], [0, 1, 0]],
+            columns=["x1", "x2", "x3"],
+        ),
     )
     opt = np.eye(3)
     for row in A.to_numpy():
@@ -368,10 +416,12 @@ def test_check_fixed_experiments():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+                features=[f"x{i + 1}" for i in range(3)],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
             NChooseKConstraint(
-                features=[f"x{i+1}" for i in range(3)],
+                features=[f"x{i + 1}" for i in range(3)],
                 min_count=0,
                 max_count=1,
                 none_also_valid=True,
@@ -379,13 +429,15 @@ def test_check_fixed_experiments():
         ],
     )
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0], [0, 1, 0]]), columns=domain.inputs.get_keys()
+        np.array([[1, 0, 0], [0, 1, 0]]),
+        columns=domain.inputs.get_keys(),
     )
     check_fixed_experiments(domain, 3, fixed_experiments)
 
     # define problem: not enough experiments
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0], [0, 1, 0]]), columns=domain.inputs.get_keys()
+        np.array([[1, 0, 0], [0, 1, 0]]),
+        columns=domain.inputs.get_keys(),
     )
     with pytest.raises(ValueError):
         check_fixed_experiments(domain, 2, fixed_experiments)
@@ -475,11 +527,22 @@ def test_find_local_max_ipopt_nonlinear_constraint():
                 expression="x1**2 + x2**2 - x3",
                 features=["x1", "x2", "x3"],
                 jacobian_expression="[2*x1,2*x2,-1]",
-            )
+            ),
         ],
     )
 
-    result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100})
+    num_exp = (
+        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
+        + 3
+    )
+
+    result = find_local_max_ipopt(
+        domain,
+        num_exp,
+        DOptimalityCriterion(formula="linear"),
+        ipopt_options={"maxiter": 100},
+    )
 
     assert np.allclose(domain.constraints(result), 0, atol=1e-6)
 
@@ -500,7 +563,7 @@ def test_get_n_experiments():
     # explicit formula
     assert (
         get_n_experiments(
-            get_formula_from_string("x1 + x2 + x3 + x1:x2 + {x2**2}", domain)
+            get_formula_from_string("x1 + x2 + x3 + x1:x2 + {x2**2}", domain),
         )
         == 9
     )
@@ -512,7 +575,7 @@ def test_get_n_experiments():
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_fixed_experiments_checker():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
@@ -523,38 +586,57 @@ def test_fixed_experiments_checker():
         constraints=[
             # Case 1: a and b are active
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 1, 10, -10],
+                rhs=15,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 0.2, 2, -2],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, -1, -3, 3],
+                rhs=5,
             ),
             # Case 2: a and c are active
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 1, -10, -10],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 0.2, 2, 2],
+                rhs=7,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, -1, -3, -3],
+                rhs=2,
             ),
             # Case 3: c and b are active
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 1, 0, -10],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 0.2, 0, 2],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, -1, 0, 3],
+                rhs=5,
             ),
         ],
     )
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0, 0], [0, 1, 0, 0]]), columns=domain.inputs.get_keys()
+        np.array([[1, 0, 0, 0], [0, 1, 0, 0]]),
+        columns=domain.inputs.get_keys(),
     )
     partially_fixed_experiments = pd.DataFrame(
         np.array([[1, None, None, None], [0, 1, 0, 0]]),
@@ -562,18 +644,27 @@ def test_fixed_experiments_checker():
     )
     # all fine
     check_partially_and_fully_fixed_experiments(
-        domain, 10, fixed_experiments, partially_fixed_experiments
+        domain,
+        10,
+        fixed_experiments,
+        partially_fixed_experiments,
     )
 
     # all fine
     check_partially_and_fully_fixed_experiments(
-        domain, 4, fixed_experiments, partially_fixed_experiments
+        domain,
+        4,
+        fixed_experiments,
+        partially_fixed_experiments,
     )
 
     # partially fixed will be cut of
     with pytest.warns(UserWarning) as record:
         check_partially_and_fully_fixed_experiments(
-            domain, 3, fixed_experiments, partially_fixed_experiments
+            domain,
+            3,
+            fixed_experiments,
+            partially_fixed_experiments,
         )
         assert len(record) == 1
         assert record[0].message.args[0] == (
@@ -592,20 +683,24 @@ def test_fixed_experiments_checker():
     # to few experiments
     with pytest.raises(ValueError) as e:
         check_partially_and_fully_fixed_experiments(
-            domain, 2, fixed_experiments, partially_fixed_experiments
+            domain,
+            2,
+            fixed_experiments,
+            partially_fixed_experiments,
         )
         assert e == ValueError(
-            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments.",
         )
 
     with pytest.raises(ValueError) as e:
         check_fixed_experiments(domain, 2, fixed_experiments)
         assert e == ValueError(
-            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments.",
         )
 
 
 def test_partially_fixed_experiments():
+    pytest.importorskip("docutils")
     domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
@@ -617,33 +712,51 @@ def test_partially_fixed_experiments():
         constraints=[
             # Case 1: a and b are active
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 1, 10, -10],
+                rhs=15,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 0.2, 2, -2],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, -1, -3, 3],
+                rhs=5,
             ),
             # Case 2: a and c are active
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 1, -10, -10],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 0.2, 2, 2],
+                rhs=7,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, -1, -3, -3],
+                rhs=2,
             ),
             # Case 3: c and b are active
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 1, 0, -10],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, 0.2, 0, 2],
+                rhs=5,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+                features=["x1", "x2", "a1", "a2"],
+                coefficients=[1, -1, 0, 3],
+                rhs=5,
             ),
         ],
     )
@@ -652,11 +765,15 @@ def test_partially_fixed_experiments():
         return ValueError(f"no col for input feature `{feature}`")
 
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0, 0], [0, 1, 0.7, 1]]), columns=domain.inputs.get_keys()
+        np.array([[1, 0, 0, 0], [0, 1, 0.7, 1]]),
+        columns=domain.inputs.get_keys(),
     )
 
     doe = find_local_max_ipopt(
-        domain, "linear", n_experiments=3, fixed_experiments=fixed_experiments
+        domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        n_experiments=3,
+        fixed_experiments=fixed_experiments,
     ).reset_index(drop=True)
 
     assert doe.shape == (3, 4)
@@ -666,12 +783,16 @@ def test_partially_fixed_experiments():
     assert np.allclose(doe.iloc[[0, 1]]["a2"], fixed_experiments["a2"])
 
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0], [0, 1, 0.7]]), columns=["x1", "x2", "a1"]
+        np.array([[1, 0, 0], [0, 1, 0.7]]),
+        columns=["x1", "x2", "a1"],
     )
 
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
-            domain, "linear", n_experiments=2, fixed_experiments=fixed_experiments
+            domain,
+            criterion=DOptimalityCriterion(formula="linear"),
+            n_experiments=2,
+            fixed_experiments=fixed_experiments,
         )
         assert e == get_domain_error("a2")
 
@@ -683,7 +804,7 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=2,
             partially_fixed_experiments=partially_fixed_experiments,
         )
@@ -695,7 +816,10 @@ def test_partially_fixed_experiments():
     )
 
     doe = find_local_max_ipopt(
-        domain, "linear", n_experiments=3, fixed_experiments=fixed_experiments
+        domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        n_experiments=3,
+        fixed_experiments=fixed_experiments,
     ).reset_index(drop=True)
 
     assert doe.shape == (3, 4)
@@ -710,19 +834,20 @@ def test_partially_fixed_experiments():
     )
     doe = find_local_max_ipopt(
         domain,
-        "linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         n_experiments=3,
         partially_fixed_experiments=partially_fixed_experiments,
     ).reset_index(drop=True)
 
     assert doe.shape == (3, 4)
     assert np.allclose(
-        doe.iloc[[0, 1]]["x1"], partially_fixed_experiments["x1"].astype(float)
+        doe.iloc[[0, 1]]["x1"],
+        partially_fixed_experiments["x1"].astype(float),
     )
 
     doe = find_local_max_ipopt(
         domain,
-        "linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         n_experiments=4,
         fixed_experiments=fixed_experiments,
         partially_fixed_experiments=partially_fixed_experiments,
@@ -734,16 +859,17 @@ def test_partially_fixed_experiments():
     assert np.allclose(doe.iloc[[0, 1]]["a1"], fixed_experiments["a1"])
     assert np.allclose(doe.iloc[[0, 1]]["a2"], fixed_experiments["a2"])
     assert np.allclose(
-        doe.iloc[[2, 3]]["x1"], partially_fixed_experiments["x1"].astype(float)
+        doe.iloc[[2, 3]]["x1"],
+        partially_fixed_experiments["x1"].astype(float),
     )
 
     too_few_experiments_error = ValueError(
-        "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+        "For starting the optimization the total number of experiments must be larger that the number of fixed experiments.",
     )
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=1,
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
@@ -752,7 +878,7 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=2,
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
@@ -763,7 +889,7 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=3,
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
@@ -774,28 +900,23 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=3,
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
         assert e == ValueError(
-            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column.",
         )
 
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            "linear",
+            criterion=DOptimalityCriterion(formula="linear"),
             n_experiments=3,
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
         assert e == ValueError(
-            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column.",
         )
-
-
-if __name__ == "__main__":
-    test_fixed_experiments_checker()
-    test_partially_fixed_experiments()

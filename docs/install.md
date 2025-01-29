@@ -1,6 +1,6 @@
 # Installation
 
-In BoFire we have several optional depencies.
+In BoFire we have several optional dependencies.
 
 ### Domain and Optimization Algorithms
 
@@ -11,7 +11,7 @@ pip install bofire[optimization]
 This will also install [BoTorch](https://botorch.org/) that depends on [PyTorch](https://pytorch.org/).
 ### Design of Experiments
 
-BoFire has functionality to create D-optimal experimental designs via the `doe` module. This module is depends on 
+BoFire has functionality to create D-optimal experimental designs via the `doe` module. This module is depends on
 [Cyipopt](https://cyipopt.readthedocs.io/en/stable/). A comfortable way to install Cyipopt and the dependencies is via
 ```
 conda install -c conda-forge cyipopt

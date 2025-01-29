@@ -48,27 +48,31 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
-        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
-            Y.values
-        ).to(**tkwargs)
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
 
-        self.model = botorch.models.MultiTaskGP(  # type: ignore
+        self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
-            task_feature=transformed_X.columns.get_loc(
-                self.task_feature_key
+            task_feature=transformed_X.columns.get_loc(  # type: ignore
+                self.task_feature_key,
             ),  # obtain the fidelity index
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(
-                    range(tX.shape[1] - 1)
+                    range(tX.shape[1] - 1),
                 ),  # kernel is for input space so we subtract one for the fidelity index
-                ard_num_dims=1,  # this keyword is ingored
+                ard_num_dims=1,  # this keyword is ignored
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
             ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])
@@ -87,7 +91,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             # self.model.task_covar_module.register_prior(
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
@@ -96,10 +100,13 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            preds = self.model.posterior(X=X, observation_noise=False).mean.cpu().detach().numpy()  # type: ignore
-            vars = self.model.posterior(X=X, observation_noise=False).variance.cpu().detach().numpy()  # type: ignore
-            # add the observation noise to the stds
-            stds = np.sqrt(vars + self.model.likelihood.noise.cpu().detach().numpy())  # type: ignore
+            try:
+                posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+            except NotImplementedError:
+                posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
+            preds = posterior.mean.cpu().detach().numpy()
+            stds = np.sqrt(posterior.variance.cpu().detach().numpy())
+
         return preds, stds
 
 

@@ -43,12 +43,14 @@ class MinMaxTransform(Transform):
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return (x - np.array(self._lower * (len(x) // len(self._lower)))) / np.tile(
-            self._range, len(x) // len(self._range)
+            self._range,
+            len(x) // len(self._range),
         ) * self._transformed_range + self._transformed_lower
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
         return self._transformed_range / np.tile(
-            self._range, len(x) // len(self._range)
+            self._range,
+            len(x) // len(self._range),
         )
 
 

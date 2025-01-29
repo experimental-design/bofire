@@ -30,11 +30,11 @@ def discrete_to_relaxable_domain_mapper(
 
     Args:
         domain (Domain): Domain with discrete and categorical inputs.
-    """
 
+    """
     # get all discrete and categorical inputs
     kept_inputs = domain.inputs.get(
-        includes=None,  # type: ignore
+        includes=None,
         excludes=[CategoricalInput, DiscreteInput],
     ).features
     discrete_inputs = domain.inputs.get(DiscreteInput)
@@ -42,13 +42,13 @@ def discrete_to_relaxable_domain_mapper(
 
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = {
-        d_input.key: (  # type: ignore
+        d_input.key: (
             ContinuousInput(
                 key=d_input.key,
                 bounds=(min(d_input.values), max(d_input.values)),  # type: ignore
-            ),  # type: ignore
+            ),
             d_input.values,  # type: ignore
-        )  # type: ignore
+        )
         for d_input in discrete_inputs
     }
 
@@ -65,9 +65,9 @@ def discrete_to_relaxable_domain_mapper(
 
     # create new domain with continuous inputs
     new_domain = Domain(
-        inputs=kept_inputs
-        + [var for key, (var, values) in relaxable_discrete_inputs.items()]  # type: ignore
-        + relaxable_categorical_inputs,  # type: ignore
+        inputs=kept_inputs  # type: ignore
+        + [var for key, (var, values) in relaxable_discrete_inputs.items()]
+        + relaxable_categorical_inputs,
         outputs=domain.outputs.features,  # type: ignore
         constraints=domain.constraints + new_constraints,
     )
@@ -84,16 +84,16 @@ def nchoosek_to_relaxable_domain_mapper(
     n_choose_k_constraints = domain.constraints.get(includes=NChooseKConstraint)
 
     for constr in n_choose_k_constraints:
-        var_occuring_in_nchoosek.extend(constr.features)  # type: ignore
+        var_occuring_in_nchoosek.extend(constr.features)
 
         current_features: List[Feature] = [
-            domain.inputs.get_by_key(k) for k in constr.features  # type: ignore
+            domain.inputs.get_by_key(k) for k in constr.features
         ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
             current_features,
-            constr.min_count,  # type: ignore
-            constr.max_count,  # type: ignore
-            constr.none_also_valid,  # type: ignore
+            constr.min_count,
+            constr.max_count,
+            constr.none_also_valid,
         )
         new_categories.append(new_relaxable_categorical_vars)
         new_constraints.extend(new_nchoosek_constraints)
@@ -107,12 +107,12 @@ def nchoosek_to_relaxable_domain_mapper(
                 current_var.bounds = (current_var.lower_bound, 0)  # type: ignore
 
     new_domain = Domain(
-        inputs=domain.inputs.features
-        + [var for group in new_categories for var in group],  # type: ignore
+        inputs=domain.inputs.features  # type: ignore
+        + [var for group in new_categories for var in group],
         outputs=domain.outputs,
         constraints=domain.constraints.get(excludes=NChooseKConstraint)
         + new_constraints,
-    )  # type: ignore
+    )
     return new_domain, new_categories
 
 
@@ -138,8 +138,7 @@ def NChooseKGroup_with_quantity(
         ]
     ],
 ]:
-    """
-    helper function to generate an N choose K problem with categorical variables, with an option to connect each
+    """Helper function to generate an N choose K problem with categorical variables, with an option to connect each
     element of a category to a corresponding quantity of how much that category should be used.
 
     Args:
@@ -166,14 +165,15 @@ def NChooseKGroup_with_quantity(
         otherwise empty List,
         List of either LinearConstraints or mix of Linear- and NonlinearConstraints, which enforce the quantities
         and group restrictions.
+
     """
     if quantity_if_picked is not None:
         if isinstance(quantity_if_picked, list) and len(keys) != len(
-            quantity_if_picked
+            quantity_if_picked,
         ):
             raise ValueError(
                 f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
-                f"and {len(quantity_if_picked)} quantities"
+                f"and {len(quantity_if_picked)} quantities",
             )
 
         if isinstance(quantity_if_picked, list) and True in [
@@ -181,24 +181,24 @@ def NChooseKGroup_with_quantity(
         ]:
             raise ValueError(
                 "If an element out of the group is chosen, the quantity with which it is used must be "
-                "larger than 0"
+                "larger than 0",
             )
 
     if pick_at_least > pick_at_most:
         raise ValueError(
             f"your upper bound to pick an element should be larger your lower bound. "
-            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}"
+            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}",
         )
 
     if pick_at_least < 0:
         raise ValueError(
-            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}"
+            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}",
         )
 
     if pick_at_most > len(keys):
         raise ValueError(
             f"you can not pick more elements than are available. "
-            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}"
+            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}",
         )
 
     if "pick_none" in keys:
@@ -208,7 +208,7 @@ def NChooseKGroup_with_quantity(
         raise ValueError('"_" is not allowed as an character in the keys')
 
     if quantity_if_picked is not None and not isinstance(quantity_if_picked, list):
-        quantity_if_picked = [quantity_if_picked for k in keys]  # type: ignore
+        quantity_if_picked = [quantity_if_picked for k in keys]
 
     quantity_var, all_new_constraints = [], []
     quantity_constraints_lb, quantity_constraints_ub = [], []
@@ -255,11 +255,13 @@ def NChooseKGroup_with_quantity(
         # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
         pick_exactly_one_of_group_const = []
     else:
-        category = [ContinuousInput(key=k, bounds=(0, 1)) for k in keys]
+        category = [ContinuousInput(key=k, bounds=[0, 1]) for k in keys]
         pick_exactly_one_of_group_const = [
             LinearEqualityConstraint(
-                features=list(keys), coefficients=[1 for k in keys], rhs=1
-            )
+                features=list(keys),
+                coefficients=[1 for k in keys],
+                rhs=1,
+            ),
         ]
 
     all_new_constraints = (
@@ -287,12 +289,11 @@ def _generate_quantity_var_constr(
     Union[List[NonlinearInequalityConstraint], List[LinearInequalityConstraint]],
     Optional[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
 ]:
-    """
-    Internal helper function just to create the quantity variables and the corresponding constraints.
-    """
+    """Internal helper function just to create the quantity variables and the corresponding constraints."""
     quantity_var = [
         ContinuousInput(
-            key=unique_group_identifier + "_" + k + "_quantity", bounds=(0, q[1])
+            key=unique_group_identifier + "_" + k + "_quantity",
+            bounds=[0, q[1]],
         )
         for k, q in zip(keys, quantity_if_picked)
     ]
@@ -304,7 +305,7 @@ def _generate_quantity_var_constr(
                 unique_group_identifier + "_" + state_key
                 for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
                 if k in state_tuple
-            ]
+            ],
         )
 
     if use_non_relaxable_category_and_non_linear_constraint:
@@ -312,7 +313,7 @@ def _generate_quantity_var_constr(
             NonlinearInequalityConstraint(
                 expression="".join(
                     ["-" + unique_group_identifier + "_" + k + "_quantity"]
-                    + [f" + {q[0]} * {key_c}" for key_c in combi]
+                    + [f" + {q[0]} * {key_c}" for key_c in combi],
                 ),
                 features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
             )
@@ -324,7 +325,7 @@ def _generate_quantity_var_constr(
             NonlinearInequalityConstraint(
                 expression="".join(
                     [unique_group_identifier + "_" + k + "_quantity"]
-                    + [f" - {q[1]} * {key_c}" for key_c in combi]
+                    + [f" - {q[1]} * {key_c}" for key_c in combi],
                 ),
                 features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
             )
@@ -384,8 +385,7 @@ def NChooseKGroup(
     List[ContinuousInput],
     List[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
 ]:
-    """
-    helper function to generate an N choose K problem with categorical variables, with an option to connect each
+    """Helper function to generate an N choose K problem with categorical variables, with an option to connect each
     element of a category to a corresponding quantity of how much that category should be used.
 
     Args:
@@ -397,24 +397,24 @@ def NChooseKGroup(
         List of ContinuousInput describing the group,
         List of either LinearConstraints, which enforce the quantities
         and group restrictions.
-    """
 
+    """
     keys = [var.key for var in variables]
     if pick_at_least > pick_at_most:
         raise ValueError(
             f"your upper bound to pick an element should be larger your lower bound. "
-            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}"
+            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}",
         )
 
     if pick_at_least < 0:
         raise ValueError(
-            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}"
+            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}",
         )
 
     if pick_at_most > len(keys):
         raise ValueError(
             f"you can not pick more elements than are available. "
-            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}"
+            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}",
         )
 
     if "pick_none" in keys:
@@ -439,7 +439,7 @@ def NChooseKGroup(
                 state_key
                 for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
                 if k in state_tuple
-            ]
+            ],
         )
 
     quantity_constraints_lb = [
@@ -469,11 +469,13 @@ def NChooseKGroup(
     # adding the new possible combinations to the list of keys
     keys = combined_keys
 
-    category = [ContinuousInput(key=k, bounds=(0, 1)) for k in keys]
+    category = [ContinuousInput(key=k, bounds=[0, 1]) for k in keys]
     pick_exactly_one_of_group_const = [
         LinearEqualityConstraint(
-            features=list(keys), coefficients=[1 for k in keys], rhs=1
-        )
+            features=list(keys),
+            coefficients=[1 for k in keys],
+            rhs=1,
+        ),
     ]
 
     all_new_constraints = []
@@ -487,30 +489,35 @@ def NChooseKGroup(
 def generate_mixture_constraints(
     keys: List[str],
 ) -> Tuple[LinearEqualityConstraint, List[ContinuousInput]]:
-    binary_vars = (ContinuousInput(key=x, bounds=(0, 1)) for x in keys)
+    binary_vars = (ContinuousInput(key=x, bounds=[0, 1]) for x in keys)
 
     mixture_constraint = LinearEqualityConstraint(
-        features=keys, coefficients=[1 for x in range(len(keys))], rhs=1
+        features=keys,
+        coefficients=[1 for x in range(len(keys))],
+        rhs=1,
     )
 
     return mixture_constraint, list(binary_vars)
 
 
 def design_from_original_to_new_domain(
-    original_domain: Domain, new_domain: Domain, design: pd.DataFrame
+    original_domain: Domain,
+    new_domain: Domain,
+    design: pd.DataFrame,
 ) -> pd.DataFrame:
     raise NotImplementedError(
-        "mapping a design to a new domain is not implemented yet."
+        "mapping a design to a new domain is not implemented yet.",
     )
 
 
 def design_from_new_to_original_domain(
-    original_domain: Domain, design: pd.DataFrame
+    original_domain: Domain,
+    design: pd.DataFrame,
 ) -> pd.DataFrame:
     # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random for multiple solutions
     transformed_design = design[
         original_domain.inputs.get_keys(
-            includes=None,  # type: ignore
+            includes=None,
             excludes=[CategoricalInput, Output],
         )
     ]
@@ -558,10 +565,11 @@ def design_from_new_to_original_domain(
 
 
 def equal_count_split(
-    values: List[float], lower_bound: float, upper_bound: float
+    values: List[float],
+    lower_bound: float,
+    upper_bound: float,
 ) -> Tuple[float, float]:
-    """
-    Determines the two elements x and y such that the intervals (lower_bound, x) and (y, upper_bound)
+    """Determines the two elements x and y such that the intervals (lower_bound, x) and (y, upper_bound)
     have the same number of elements regarding the values of the discrete variable
     Args:
         values: the values to split into a range

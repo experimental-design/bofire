@@ -19,13 +19,13 @@ class FactorialStrategy(Strategy):
             raise ValueError(
                 "FactorialStrategy will ignore the specified value of candidate_count. "
                 "The strategy automatically determines how many candidates to "
-                "propose."
+                "propose.",
             )
-        return pd.DataFrame.from_dict(
+        return pd.DataFrame(
             [
-                {e[0]: e[1] for e in combi}  # type: ignore
+                {e[0]: e[1] for e in combi}
                 for combi in self.domain.inputs.get_categorical_combinations()
-            ]
+            ],
         )
 
     def has_sufficient_experiments(self) -> bool:

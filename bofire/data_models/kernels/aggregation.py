@@ -1,13 +1,15 @@
-from typing import Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
-from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
+from bofire.data_models.kernels.shape import WassersteinKernel
 from bofire.data_models.priors.api import AnyGeneralPrior
 
 
-class AdditiveKernel(Kernel):
+class AdditiveKernel(AggregationKernel):
     type: Literal["AdditiveKernel"] = "AdditiveKernel"
     kernels: Sequence[
         Union[
@@ -24,7 +26,7 @@ class AdditiveKernel(Kernel):
     type: Literal["AdditiveKernel"] = "AdditiveKernel"
 
 
-class MultiplicativeKernel(Kernel):
+class MultiplicativeKernel(AggregationKernel):
     type: Literal["MultiplicativeKernel"] = "MultiplicativeKernel"
     kernels: Sequence[
         Union[
@@ -40,7 +42,7 @@ class MultiplicativeKernel(Kernel):
     ]
 
 
-class ScaleKernel(Kernel):
+class ScaleKernel(AggregationKernel):
     type: Literal["ScaleKernel"] = "ScaleKernel"
     base_kernel: Union[
         RBFKernel,
@@ -51,6 +53,7 @@ class ScaleKernel(Kernel):
         MultiplicativeKernel,
         TanimotoKernel,
         "ScaleKernel",
+        WassersteinKernel,
     ]
     outputscale_prior: Optional[AnyGeneralPrior] = None
 

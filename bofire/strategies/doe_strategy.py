@@ -1,13 +1,20 @@
+from typing import Optional
+
 import pandas as pd
 from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import CategoricalInput, Input
-from bofire.strategies.doe.design import (
-    find_local_max_ipopt,
+from bofire.data_models.strategies.doe import (
+    AnyDoEOptimalityCriterion,
+    DoEOptimalityCriterion,
+)
+from bofire.strategies.doe.branch_and_bound import (
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
 )
+from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
+from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     design_from_new_to_original_domain,
     discrete_to_relaxable_domain_mapper,
@@ -29,10 +36,17 @@ class DoEStrategy(Strategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.formula = data_model.formula
         self.data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
+
+    @property
+    def formula(self):
+        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
+            return get_formula_from_string(
+                self.data_model.criterion.formula, self.data_model.domain
+            )
+        return None
 
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)
@@ -42,7 +56,7 @@ class DoEStrategy(Strategy):
                 to_many_columns.append(col)
         if len(to_many_columns) > 0:
             raise AttributeError(
-                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain"
+                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain",
             )
 
         to_few_columns = []
@@ -51,17 +65,17 @@ class DoEStrategy(Strategy):
                 to_few_columns.append(col)
         if len(to_few_columns) > 0:
             raise AttributeError(
-                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain"
+                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain",
             )
 
         self._candidates = candidates
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         all_new_categories = []
 
         # map categorical/ discrete Domain to a relaxable Domain
         new_domain, new_categories, new_discretes = discrete_to_relaxable_domain_mapper(
-            self.domain
+            self.domain,
         )
         all_new_categories.extend(new_categories)
 
@@ -77,7 +91,8 @@ class DoEStrategy(Strategy):
         fixed_experiments_count = 0
         _candidate_count = candidate_count
         adapted_partially_fixed_candidates = self._transform_candidates_to_new_domain(
-            new_domain, self.candidates
+            new_domain,
+            self.candidates,
         )
 
         if self.candidates is not None:
@@ -86,7 +101,6 @@ class DoEStrategy(Strategy):
 
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
-
         if (
             self.data_model.optimization_strategy == "relaxed"
             or (num_binary_vars == 0 and num_discrete_vars == 0)
@@ -98,29 +112,27 @@ class DoEStrategy(Strategy):
         ):
             design = find_local_max_ipopt(
                 new_domain,
-                self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
-                objective=self.data_model.objective,
-                transform_range=self.data_model.transform_range,
+                ipopt_options=self.data_model.ipopt_options,
+                criterion=self.data_model.criterion,
             )
-        # todo adapt to when exhaustive search accepts discrete variables
+        # TODO adapt to when exhaustive search accepts discrete variables
         elif (
             self.data_model.optimization_strategy == "exhaustive"
             and num_discrete_vars == 0
         ):
             design = find_local_max_ipopt_exhaustive(
                 domain=new_domain,
-                model_type=self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
-                objective=self.data_model.objective,
-                transform_range=self.data_model.transform_range,
+                ipopt_options=self.data_model.ipopt_options,
+                criterion=self.data_model.criterion,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -129,15 +141,14 @@ class DoEStrategy(Strategy):
         ]:
             design = find_local_max_ipopt_BaB(
                 domain=new_domain,
-                model_type=self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
-                objective=self.data_model.objective,
-                transform_range=self.data_model.transform_range,
+                ipopt_options=self.data_model.ipopt_options,
+                criterion=self.data_model.criterion,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -148,21 +159,20 @@ class DoEStrategy(Strategy):
             num_adapted_partially_fixed_candidates = 0
             if adapted_partially_fixed_candidates is not None:
                 num_adapted_partially_fixed_candidates = len(
-                    adapted_partially_fixed_candidates
+                    adapted_partially_fixed_candidates,
                 )
             design = None
             for i in range(_candidate_count):
                 design = find_local_max_ipopt_BaB(
                     domain=new_domain,
-                    model_type=self.formula,
                     n_experiments=num_adapted_partially_fixed_candidates + i + 1,
                     fixed_experiments=None,
                     verbose=self.data_model.verbose,
                     partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
-                    objective=self.data_model.objective,
-                    transform_range=self.data_model.transform_range,
+                    ipopt_options=self.data_model.ipopt_options,
+                    criterion=self.data_model.criterion,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [
@@ -174,18 +184,28 @@ class DoEStrategy(Strategy):
                 )
                 print(
                     f"Status: {i+1} of {_candidate_count} experiments determined \n"
-                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}"
+                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}",
                 )
 
         else:
             raise RuntimeError("Could not find suitable optimization strategy")
 
         # mapping the solution to the variables from the original domain
-        transformed_design = design_from_new_to_original_domain(self.domain, design)
+        transformed_design = design_from_new_to_original_domain(self.domain, design)  # type: ignore
 
         return transformed_design.iloc[fixed_experiments_count:, :].reset_index(
-            drop=True
-        )  # type: ignore
+            drop=True,
+        )
+
+    def get_required_number_of_experiments(self) -> Optional[int]:
+        if self.formula:
+            return get_n_experiments(self.formula) - n_zero_eigvals(
+                domain=self.data_model.domain, model_type=self.formula
+            )
+        else:
+            ValueError(
+                f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
+            )
 
     def has_sufficient_experiments(
         self,
@@ -194,6 +214,7 @@ class DoEStrategy(Strategy):
 
         Returns:
             bool: True if number of passed experiments is sufficient, False otherwise
+
         """
         return True
 
@@ -216,20 +237,22 @@ class DoEStrategy(Strategy):
                         continue
                     if c not in cat.categories:  # type: ignore
                         raise AttributeError(
-                            f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
+                            f"provided value {c} for categorical variable {cat.key} "
+                            f"does not exist in the corresponding categories {cat.categories}",  # type: ignore
                         )
                     intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
                     intermediate_candidates.loc[row_index, c] = 1
 
             intermediate_candidates = intermediate_candidates.drop(
-                [cat.key for cat in cat_columns], axis=1
+                [cat.key for cat in cat_columns],
+                axis=1,
             )
 
             adapted_partially_fixed_candidates = pd.concat(
                 [
                     intermediate_candidates[candidates.notnull().all(axis=1)],
                     intermediate_candidates[candidates.isnull().any(axis=1)],
-                ]
+                ],
             )
             return adapted_partially_fixed_candidates
         return None

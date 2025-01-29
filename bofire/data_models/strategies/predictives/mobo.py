@@ -25,7 +25,7 @@ class MoboStrategy(MultiobjectiveStrategy):
     type: Literal["MoboStrategy"] = "MoboStrategy"
     ref_point: Optional[Dict[str, float]] = None
     acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEHVI()
+        default_factory=lambda: qLogNEHVI(),
     )
 
     @model_validator(mode="after")
@@ -34,11 +34,11 @@ class MoboStrategy(MultiobjectiveStrategy):
         if self.ref_point is None:
             return self
         keys = self.domain.outputs.get_keys_by_objective(
-            [MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+            [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
         if sorted(keys) != sorted(self.ref_point.keys()):
             raise ValueError(
-                f"Provided refpoint do not match the domain, expected keys: {keys}"
+                f"Provided refpoint do not match the domain, expected keys: {keys}",
             )
         return self
 
@@ -51,6 +51,7 @@ class MoboStrategy(MultiobjectiveStrategy):
 
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
+
         """
         if my_type not in [CategoricalOutput]:
             return True
@@ -65,6 +66,7 @@ class MoboStrategy(MultiobjectiveStrategy):
 
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
+
         """
         return my_type in [
             MaximizeObjective,

@@ -1,6 +1,6 @@
 from typing import List
+from unittest import mock
 
-import mock
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,7 +8,6 @@ from _pytest.fixtures import fixture
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
-import tests.bofire.strategies.dummy as dummy
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -29,6 +28,7 @@ from tests.bofire.data_models.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
 )
+from tests.bofire.strategies import dummy
 from tests.bofire.strategies.specs import (
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
@@ -38,30 +38,31 @@ from tests.bofire.strategies.specs import (
     VALID_NCHOOSEKE_CONSTRAINT_SPEC,
 )
 
+
 if1 = ContinuousInput(
-    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "bounds": (0, 5.3)}
+    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "bounds": (0, 5.3)},
 )
 if2 = ContinuousInput(
-    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if2", "bounds": (0, 5.3)}
+    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if2", "bounds": (0, 5.3)},
 )
 if3 = CategoricalInput(
     **{
         **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "if3",
-    }
+    },
 )
 
 of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }  # type: ignore
+    },
 )
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }  # type: ignore
+    },
 )
 of3 = ContinuousOutput(key="of3", objective=None)
 
@@ -75,31 +76,31 @@ c1 = LinearEqualityConstraint(
         **VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
         "features": ["if1", "if2"],
         "coefficients": [1, 1],
-    }
+    },
 )
 c2 = LinearInequalityConstraint(
     **{
         **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
         "features": ["if1", "if2"],
         "coefficients": [1, 1],
-    }
+    },
 )
 c3 = NChooseKConstraint(
     **{
         **VALID_NCHOOSEKE_CONSTRAINT_SPEC,
         "features": ["if1", "if2"],
-    }
+    },
 )
 
 
-@fixture  # type: ignore
+@fixture
 def strategy():
     data_model = dummy.DummyStrategyDataModel(
         domain=Domain.from_lists(
             inputs=[if1, if2],
             outputs=[of1, of2],
             constraints=[],
-        )
+        ),
     )
     return dummy.DummyStrategy(data_model=data_model)
 
@@ -221,9 +222,9 @@ def test_strategy_tell_initial(
     experiments: pd.DataFrame,
     replace: bool,
 ):
-    """verify that tell correctly stores initial experiments"""
+    """Verify that tell correctly stores initial experiments"""
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     strategy.tell(experiments=experiments, replace=replace)
     assert strategy.experiments.equals(experiments)
@@ -244,7 +245,11 @@ def test_strategy_no_variance():
     experiments["of1"] = [1, 2, 3, 4, 5]
     experiments["valid_of1"] = 1
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
+    )
+    strategy.tell(experiments)
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain),
     )
     with pytest.raises(ValueError):
         strategy.tell(experiments)
@@ -260,19 +265,19 @@ def test_strategy_no_variance():
 
 def test_strategy_set_experiments():
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     assert strategy.num_experiments == 0
     experiments = generate_experiments(domain, 2)
     strategy.set_experiments(experiments=experiments)
     assert_frame_equal(strategy.experiments, experiments)
-    assert_frame_equal(strategy._experiments, experiments)  # type: ignore
+    assert_frame_equal(strategy._experiments, experiments)
     assert strategy.num_experiments == 2
 
 
 def test_strategy_add_experiments():
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     assert strategy.num_experiments == 0
     experiments = generate_experiments(domain, 2)
@@ -283,19 +288,20 @@ def test_strategy_add_experiments():
     strategy.add_experiments(experiments=experiments2)
     assert strategy.num_experiments == 7
     assert_frame_equal(
-        strategy.experiments, pd.concat((experiments, experiments2), ignore_index=True)
+        strategy.experiments,
+        pd.concat((experiments, experiments2), ignore_index=True),
     )
 
 
 def test_strategy_set_candidates():
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     assert strategy.num_candidates == 0
     candidates = generate_candidates(domain, 2)
     strategy.set_candidates(candidates=candidates)
     assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
-    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])  # type: ignore
+    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
     assert strategy.num_candidates == 2
     strategy.reset_candidates()
     assert strategy.num_candidates == 0
@@ -303,7 +309,7 @@ def test_strategy_set_candidates():
 
 def test_strategy_add_candidates():
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     assert strategy.num_candidates == 0
     candidates = generate_candidates(domain, 2)
@@ -340,7 +346,7 @@ def test_strategy_tell_append(
     experimentss: List[pd.DataFrame],
 ):
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     for index, experiments in enumerate(experimentss):
         strategy.tell(experiments=experiments, replace=False)
@@ -357,7 +363,7 @@ def test_strategy_tell_replace(
     experimentss: List[pd.DataFrame],
 ):
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     for experiments in experimentss:
         strategy.tell(experiments=experiments, replace=True)
@@ -379,9 +385,10 @@ def test_strategy_tell_outliers(
         outlier_detectors.append(
             IterativeTrimming(
                 base_gp=SingleTaskGPSurrogate(
-                    inputs=domain.inputs, outputs=Outputs(features=[domain.outputs[i]])
-                )
-            )
+                    inputs=domain.inputs,
+                    outputs=Outputs(features=[domain.outputs[i]]),
+                ),
+            ),
         )
     experiments = domain.validate_experiments(experiments=experiments)
     experiments1 = experiments.copy()
@@ -389,19 +396,22 @@ def test_strategy_tell_outliers(
         data_model=dummy.DummyStrategyDataModel(
             domain=domain,
             outlier_detection_specs=OutlierDetections(detectors=outlier_detectors),
-        )
+        ),
     )
     strategy1 = dummy.DummyBotorchPredictiveStrategy(
         data_model=dummy.DummyStrategyDataModel(
             domain=domain,
-        )
+        ),
     )
     strategy.tell(experiments=experiments)
     assert_frame_equal(
-        experiments1, experiments
+        experiments1,
+        experiments,
     )  # test that experiments don't get changed outside detect_outliers
     strategy1.tell(experiments=experiments)
-    assert str(strategy.model.state_dict()) != str(strategy1.model.state_dict())  # type: ignore # test if two fitted surrogates are different
+    assert str(strategy.model.state_dict()) != str(
+        strategy1.model.state_dict(),
+    )  # test if two fitted surrogates are different
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
@@ -410,7 +420,7 @@ def test_strategy_ask_invalid_candidates(
     experiments: pd.DataFrame,
 ):
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     strategy.tell(experiments)
 
@@ -430,7 +440,7 @@ def test_strategy_ask_invalid_candidate_count(
     experiments: pd.DataFrame,
 ):
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     strategy.tell(experiments)
 
@@ -439,7 +449,7 @@ def test_strategy_ask_invalid_candidate_count(
         return candidates
 
     with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
-        with pytest.raises(ValueError):
+        with pytest.warns(UserWarning, match="Expected"):
             strategy.ask(candidate_count=4)
 
 
@@ -449,7 +459,7 @@ def test_strategy_ask_valid(
     experiments: pd.DataFrame,
 ):
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     strategy.tell(experiments)
 
@@ -463,7 +473,7 @@ def test_strategy_ask_valid(
 
 def test_ask_invalid_candidate_count_request():
     strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
+        data_model=dummy.DummyStrategyDataModel(domain=domain),
     )
     strategy.tell(e3)
     with pytest.raises(ValueError):
@@ -490,7 +500,7 @@ def test_predictive_strategy_ask_valid(
     experiments: pd.DataFrame,
 ):
     strategy = dummy.DummyPredictiveStrategy(
-        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain),
     )
     strategy.tell(experiments)
 
@@ -509,7 +519,7 @@ def test_predictivestrategy_to_candidates():
         constraints=[],
     )
     strategy = dummy.DummyPredictiveStrategy(
-        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain),
     )
     candidates = generate_candidates(domain, 5)
     strategy.to_candidates(candidates=candidates)
@@ -523,8 +533,8 @@ def test_predictive_strategy_ask_invalid():
                 inputs=[if1, if2],
                 outputs=[of1, of2],
                 constraints=[],
-            )
-        )
+            ),
+        ),
     )
     strategy.tell(e3)
 
@@ -553,7 +563,7 @@ def test_predictive_strategy_ask_invalid():
 )
 def test_predictive_strategy_predict(domain, experiments):
     strategy = dummy.DummyPredictiveStrategy(
-        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain),
     )
     strategy.tell(experiments)
     preds = strategy.predict(generate_candidates(domain=domain))
@@ -565,7 +575,7 @@ def test_predictive_strategy_predict(domain, experiments):
             "of2_sd",
             "of1_des",
             "of2_des",
-        ]
+        ],
     )
 
 
@@ -578,12 +588,12 @@ def test_predictive_strategy_predict(domain, experiments):
                 outputs=[of1, of2],
                 constraints=[],
             )
-        )
+        ),
     ],
 )
 def test_predictive_strategy_predict_not_fitted(domain):
     strategy = dummy.DummyPredictiveStrategy(
-        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain),
     )
     with pytest.raises(ValueError):
         strategy.predict(generate_candidates(domain=domain))

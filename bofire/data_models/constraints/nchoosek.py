@@ -23,6 +23,7 @@ class NChooseKConstraint(IntrapointConstraint):
         max_count (int): Maximum number of non-zero/active feature values.
         none_also_valid (bool): In case that min_count > 0,
             this flag decides if zero active features are also allowed.
+
     """
 
     type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
@@ -33,16 +34,15 @@ class NChooseKConstraint(IntrapointConstraint):
 
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys(ContinuousInput)
-        for f in self.features:  # type: ignore
+        for f in self.features:
             if f not in keys:
                 raise ValueError(
-                    f"Feature {f} is not a continuous input feature in the provided Inputs object."
+                    f"Feature {f} is not a continuous input feature in the provided Inputs object.",
                 )
 
     @model_validator(mode="after")
     def validate_counts(self):
         """Validates if the minimum and maximum of allowed features are smaller than the overall number of features."""
-
         if self.min_count > len(self.features):
             raise ValueError("min_count must be <= # of features")
         if self.max_count > len(self.features):
@@ -61,6 +61,7 @@ class NChooseKConstraint(IntrapointConstraint):
 
         Returns:
             pd.Series containing the constraint violation for each experiment (row in experiments argument).
+
         """
 
         def relu(x):
@@ -78,13 +79,13 @@ class NChooseKConstraint(IntrapointConstraint):
         if self.max_count != len(self.features):
             max_count_violation = relu(
                 -1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
-                + (len(self.features) - self.max_count)
+                + (len(self.features) - self.max_count),
             )
 
         if self.min_count > 0:
             min_count_violation = relu(
                 narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
-                - (len(self.features) - self.min_count)
+                - (len(self.features) - self.min_count),
             )
 
         return pd.Series(max_count_violation + min_count_violation)
@@ -99,8 +100,8 @@ class NChooseKConstraint(IntrapointConstraint):
 
         Returns:
             bool: True if fulfilled else False.
-        """
 
+        """
         cols = self.features
         sums = (np.abs(experiments[cols]) > tol).sum(axis=1)
 
@@ -110,12 +111,11 @@ class NChooseKConstraint(IntrapointConstraint):
         if not self.none_also_valid:
             # return lower.all() and upper.all()
             return pd.Series(np.logical_and(lower, upper), index=experiments.index)
-        else:
-            none = sums == 0
-            return pd.Series(
-                np.logical_or(none, np.logical_and(lower, upper)),
-                index=experiments.index,
-            )
+        none = sums == 0
+        return pd.Series(
+            np.logical_or(none, np.logical_and(lower, upper)),
+            index=experiments.index,
+        )
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError("Jacobian not implemented for NChooseK constraints.")

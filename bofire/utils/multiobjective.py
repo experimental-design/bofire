@@ -16,7 +16,8 @@ from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
 
 def get_ref_point_mask(
-    domain: Domain, output_feature_keys: Optional[list] = None
+    domain: Domain,
+    output_feature_keys: Optional[list] = None,
 ) -> np.ndarray:
     """Method to get a mask for the reference points taking into account if we
     want to maximize or minimize an objective. In case it is maximize the value
@@ -29,25 +30,27 @@ def get_ref_point_mask(
 
     Returns:
         np.ndarray: _description_
+
     """
     if output_feature_keys is None:
         output_feature_keys = domain.outputs.get_keys_by_objective(
-            includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+            includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
     if len(output_feature_keys) < 2:
         raise ValueError("At least two output features have to be provided.")
     mask = []
     for key in output_feature_keys:
         feat = domain.outputs.get_by_key(key)
-        if isinstance(feat.objective, MaximizeObjective):  # type: ignore
+        if isinstance(feat.objective, MaximizeObjective):
             mask.append(1.0)
-        elif isinstance(feat.objective, MinimizeObjective):  # type: ignore
-            mask.append(-1.0)
-        elif isinstance(feat.objective, CloseToTargetObjective):  # type: ignore
+        elif isinstance(feat.objective, MinimizeObjective) or isinstance(
+            feat.objective,
+            CloseToTargetObjective,
+        ):
             mask.append(-1.0)
         else:
             raise ValueError(
-                "Only `MaximizeObjective` and `MinimizeObjective` supported"
+                "Only `MaximizeObjective` and `MinimizeObjective` supported",
             )
     return np.array(mask)
 
@@ -59,33 +62,40 @@ def get_pareto_front(
 ) -> pd.DataFrame:
     if output_feature_keys is None:
         outputs = domain.outputs.get_by_objective(
-            includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+            includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
     else:
         outputs = domain.outputs.get_by_keys(output_feature_keys)
     assert len(outputs) >= 2, "At least two output features have to be provided."
     output_feature_keys = [f.key for f in outputs]
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
-        experiments, output_feature_keys
+        experiments,
+        output_feature_keys,
     )
-    objective = get_multiobjective_objective(outputs=outputs)  # type: ignore
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
     pareto_mask = np.array(
         is_non_dominated(
             objective(
-                torch.from_numpy(df[output_feature_keys].values).to(**tkwargs), None
-            )
-        )
+                torch.from_numpy(df[output_feature_keys].values).to(**tkwargs),
+                None,
+            ),
+        ),
     )
     return df.loc[pareto_mask]
 
 
 def compute_hypervolume(
-    domain: Domain, optimal_experiments: pd.DataFrame, ref_point: dict
+    domain: Domain,
+    optimal_experiments: pd.DataFrame,
+    ref_point: dict,
 ) -> float:
     outputs = domain.outputs.get_by_objective(
-        includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+        includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
     )
-    objective = get_multiobjective_objective(outputs=outputs)
+    objective = get_multiobjective_objective(
+        outputs=outputs,
+        experiments=optimal_experiments,
+    )
     ref_point_mask = torch.from_numpy(get_ref_point_mask(domain)).to(**tkwargs)
     hv = Hypervolume(
         ref_point=torch.tensor(
@@ -96,15 +106,15 @@ def compute_hypervolume(
                         MaximizeObjective,
                         MinimizeObjective,
                         CloseToTargetObjective,
-                    ]
+                    ],
                 )
-            ]
+            ],
         ).to(**tkwargs)
-        * ref_point_mask
+        * ref_point_mask,
     )
 
     return hv.compute(
-        objective(  # type: ignore
+        objective(
             torch.from_numpy(
                 optimal_experiments[
                     domain.outputs.get_keys_by_objective(
@@ -112,25 +122,28 @@ def compute_hypervolume(
                             MaximizeObjective,
                             MinimizeObjective,
                             CloseToTargetObjective,
-                        ]
+                        ],
                     )
-                ].values
-            ).to(**tkwargs)
-        )
+                ].values,  # type: ignore
+            ).to(**tkwargs),
+        ),
     )
 
 
 def infer_ref_point(
-    domain: Domain, experiments: pd.DataFrame, return_masked: bool = False
+    domain: Domain,
+    experiments: pd.DataFrame,
+    return_masked: bool = False,
 ) -> Dict[str, float]:
     outputs = domain.outputs.get_by_objective(
-        includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+        includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
     )
     keys = [f.key for f in outputs]
-    objective = get_multiobjective_objective(outputs=outputs)
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
 
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
-        experiments, output_feature_keys=keys
+        experiments,
+        output_feature_keys=keys,
     )
 
     ref_point_array = (

@@ -50,14 +50,17 @@ class Surrogate(ABC):
         # predict
         preds, stds = self._predict(Xt)
         # set up column names
-        pred_cols, sd_cols = get_column_names(self.outputs)  # type: ignore
+        pred_cols, sd_cols = get_column_names(self.outputs)
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
             columns=pred_cols + sd_cols,
         )
         # append predictions for categorical cases
-        predictions = postprocess_categorical_predictions(predictions=predictions, outputs=self.outputs)  # type: ignore
+        predictions = postprocess_categorical_predictions(
+            predictions=predictions,
+            outputs=self.outputs,
+        )
         # validate
         self.validate_predictions(predictions=predictions)
         # return
@@ -65,14 +68,14 @@ class Surrogate(ABC):
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
         # Get the column names
-        pred_cols, sd_cols = get_column_names(self.outputs)  # type: ignore
+        pred_cols, sd_cols = get_column_names(self.outputs)
         expected_cols = pred_cols + sd_cols
         check_columns = list(expected_cols)
         for featkey in self.outputs.get_keys(CategoricalOutput):
             expected_cols = expected_cols + [f"{featkey}_{t}" for t in ["pred", "sd"]]
         if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
-                f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
+                f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}.",
             )
         # check that values are numeric
         if not is_numeric(predictions[check_columns]):
@@ -80,7 +83,8 @@ class Surrogate(ABC):
         return predictions
 
     def to_predictions(
-        self, predictions: pd.DataFrame
+        self,
+        predictions: pd.DataFrame,
     ) -> Dict[str, List[PredictedValue]]:
         outputs = {key: [] for key in self.outputs.get_keys()}
         for _, row in predictions.iterrows():
@@ -89,7 +93,7 @@ class Surrogate(ABC):
                     PredictedValue(
                         predictedValue=row[f"{key}_pred"],
                         standardDeviation=row[f"{key}_sd"],
-                    )
+                    ),
                 )
         return outputs
 
@@ -110,9 +114,7 @@ class Surrogate(ABC):
 
     def _prepare_for_dump(self):
         """Prepares the model before the dump."""
-        pass
 
     @abstractmethod
     def loads(self, data: str):
         """Loads the actual model from a string and writes it to the `model` attribute."""
-        pass

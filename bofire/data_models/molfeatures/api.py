@@ -8,6 +8,7 @@ from bofire.data_models.molfeatures.molfeatures import (
     MordredDescriptors,
 )
 
+
 AbstractMolFeatures = MolFeatures
 
 AnyMolFeatures = Union[

@@ -5,11 +5,12 @@ from bofire.data_models.strategies.api import (
 )
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(
     AlwaysTrueCondition,
-    lambda: {},
+    dict,
 )
 
 specs.add_valid(

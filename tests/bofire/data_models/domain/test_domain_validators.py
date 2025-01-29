@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 
+
 # TODO: split this into the individual methods in the `Inputs` and `Outputs` classes
 
 
@@ -29,14 +30,17 @@ if1 = specs.features.valid(ContinuousInput).obj(key="cont")
 if2 = specs.features.valid(CategoricalInput).obj(key="cat")
 if3 = specs.features.valid(CategoricalDescriptorInput).obj(key="cat_")
 if4 = specs.features.valid(CategoricalInput).obj(
-    key="cat2", allowed=[True, True, False]
+    key="cat2",
+    allowed=[True, True, False],
 )
 if5 = specs.features.valid(ContinuousInput).obj(
     key="if5",
     bounds=(3, 3),
 )
 if6 = specs.features.valid(CategoricalInput).obj(
-    key="if6", categories=["c1", "c2", "c3"], allowed=[True, False, False]
+    key="if6",
+    categories=["c1", "c2", "c3"],
+    allowed=[True, False, False],
 )
 of1 = specs.features.valid(ContinuousOutput).obj(key="out1")
 of2 = specs.features.valid(ContinuousOutput).obj(key="out2")
@@ -58,11 +62,11 @@ def generate_experiments(
         [
             {
                 **{
-                    f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)  # type: ignore
+                    f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)
                     for f in domain.inputs.get(ContinuousInput)
                 },
                 **{
-                    f.key: random.choice(f.values)  # type: ignore
+                    f.key: random.choice(f.values)
                     for f in domain.inputs.get(DiscreteInput)
                 },
                 **{
@@ -73,24 +77,24 @@ def generate_experiments(
                 },
                 **{
                     f.key: (
-                        random.choice(f.categories)  # type: ignore
+                        random.choice(f.categories)
                         if not only_allowed_categories
                         else random.choice(f.get_allowed_categories())
-                    )  # type: ignore
+                    )
                     for f in domain.inputs.get(CategoricalInput)
                 },
             }
             for _ in range(row_count)
-        ]
+        ],
     )
     if include_labcode:
         experiments["labcode"] = [str(i) for i in range(row_count)]
     if force_all_categories:
         for feat in domain.inputs.get(CategoricalInput):
             categories = (
-                feat.categories  # type: ignore
-                if len(feat.categories) <= row_count  # type: ignore
-                else feat.categories[:row_count]  # type: ignore
+                feat.categories
+                if len(feat.categories) <= row_count
+                else feat.categories[:row_count]
             )
             experiments.loc[: len(categories) - 1, feat.key] = categories
 
@@ -102,7 +106,7 @@ def generate_candidates(domain: Domain, row_count: int = 5):
         [
             {
                 **{
-                    feat.key: random.uniform(feat.lower_bound, feat.upper_bound)  # type: ignore
+                    feat.key: random.uniform(feat.lower_bound, feat.upper_bound)
                     for feat in domain.inputs.get(ContinuousInput)
                 },
                 **{
@@ -118,12 +122,12 @@ def generate_candidates(domain: Domain, row_count: int = 5):
                     for k in domain.outputs.get_keys(ContinuousOutput)
                 },
                 **{
-                    f.key: random.choice(f.get_allowed_categories())  # type: ignore
+                    f.key: random.choice(f.get_allowed_categories())
                     for f in domain.inputs.get(CategoricalInput)
                 },
             }
             for _ in range(row_count)
-        ]
+        ],
     )
 
 
@@ -182,7 +186,9 @@ domain7 = Domain.from_lists(
     [if1, if5],
     [of1, of2],
     constraints=[
-        LinearEqualityConstraint(features=["cont", "if5"], coefficients=[1, 1], rhs=500)
+        LinearEqualityConstraint(
+            features=["cont", "if5"], coefficients=[1, 1], rhs=500
+        ),
     ],
 )
 
@@ -221,7 +227,9 @@ def test_domain_validate_experiments_valid(
     ],
 )
 def test_domain_validate_experiments_invalid(
-    domain: Domain, experiments: pd.DataFrame, strict: bool
+    domain: Domain,
+    experiments: pd.DataFrame,
+    strict: bool,
 ):
     with pytest.raises(ValueError):
         domain.validate_experiments(experiments, strict=strict)
@@ -257,7 +265,8 @@ def test_domain_validate_experiments_invalid_labcode():
 
 
 @pytest.mark.parametrize(
-    "domain, candidates", [(d, generate_candidates(d)) for d in domains]
+    "domain, candidates",
+    [(d, generate_candidates(d)) for d in domains],
 )
 def test_domain_validate_candidates_valid(
     domain: Domain,
@@ -303,7 +312,8 @@ def test_domain_validate_candidates_missing_cols(
     ],
 )
 def test_domain_validate_candidates_invalid_bounds(
-    domain: Domain, candidates: pd.DataFrame
+    domain: Domain,
+    candidates: pd.DataFrame,
 ):
     with pytest.raises(ValueError):
         domain.validate_candidates(candidates)
@@ -349,17 +359,21 @@ def test_domain_validate_candidates_not_numerical(
     ],
 )
 def test_domain_validate_candidates_constraint_not_fulfilled(
-    domain, candidates, raise_validation_error
+    domain,
+    candidates,
+    raise_validation_error,
 ):
     if raise_validation_error:
         with pytest.raises(ConstraintNotFulfilledError):
             domain.validate_candidates(
-                candidates, raise_validation_error=raise_validation_error
+                candidates,
+                raise_validation_error=raise_validation_error,
             )
     else:
         assert isinstance(
             domain.validate_candidates(
-                candidates, raise_validation_error=raise_validation_error
+                candidates,
+                raise_validation_error=raise_validation_error,
             ),
             pd.DataFrame,
         )
@@ -372,7 +386,6 @@ def test_outputs_add_valid_columns():
     experiments = domain0.outputs.add_valid_columns(experiments)
     assert "valid_out1" in experiments.columns
     assert "valid_out2" in experiments.columns
-    #
     experiments["valid_out1"] = "1"
     experiments["valid_out2"] = "0"
     experiments = domain0.outputs.add_valid_columns(experiments)

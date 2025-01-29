@@ -14,6 +14,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 
+
 F = FEATURES = ["f" + str(i) for i in range(1, 11)]
 
 C = list(range(1, 11))
@@ -89,35 +90,45 @@ def get_row(features, value: float = None, values: List[float] = None):
         (
             get_row(F[:3], 1),
             LinearInequalityConstraint.from_greater_equal(
-                features=F[:3], coefficients=C[:3], rhs=6
+                features=F[:3],
+                coefficients=C[:3],
+                rhs=6,
             ),
             True,
         ),
         (
             pd.concat([get_row(F[:3], 1), get_row(F[:3], 1), get_row(F[:3], 2)]),
             LinearInequalityConstraint.from_greater_equal(
-                features=F[:3], coefficients=C[:3], rhs=6
+                features=F[:3],
+                coefficients=C[:3],
+                rhs=6,
             ),
             True,
         ),
         (
             pd.concat([get_row(F[:3], 1), get_row(F[:3], 0.5)]),
             LinearInequalityConstraint.from_greater_equal(
-                features=F[:3], coefficients=C[:3], rhs=6
+                features=F[:3],
+                coefficients=C[:3],
+                rhs=6,
             ),
             False,
         ),
         (
             get_row(F[:3], 1),
             LinearInequalityConstraint.from_greater_equal(
-                features=F[:3], coefficients=C[:3], rhs=2
+                features=F[:3],
+                coefficients=C[:3],
+                rhs=2,
             ),
             True,
         ),
         (
             get_row(F[:3], 1),
             LinearInequalityConstraint.from_greater_equal(
-                features=F[:3], coefficients=C[:3], rhs=6.001
+                features=F[:3],
+                coefficients=C[:3],
+                rhs=6.001,
             ),
             False,
         ),
@@ -133,7 +144,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             pd.concat(
-                [get_row(F[:3], values=[1, 1, 1]), get_row(F[:3], values=[1, 1, 1])]
+                [get_row(F[:3], values=[1, 1, 1]), get_row(F[:3], values=[1, 1, 1])],
             ),
             NChooseKConstraint(
                 features=F[:3],
@@ -195,7 +206,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             pd.concat(
-                [get_row(F[:3], values=[0, 2, 3]), get_row(F[:3], values=[0, 0, 0])]
+                [get_row(F[:3], values=[0, 2, 3]), get_row(F[:3], values=[0, 0, 0])],
             ),
             NChooseKConstraint(
                 features=F[:3],
@@ -207,7 +218,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             pd.concat(
-                [get_row(F[:3], values=[0, 2, 3]), get_row(F[:3], values=[0, 0, 0])]
+                [get_row(F[:3], values=[0, 2, 3]), get_row(F[:3], values=[0, 0, 0])],
             ),
             NChooseKConstraint(
                 features=F[:3],
@@ -234,14 +245,14 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             pd.DataFrame(
-                {"a": [1.0, 1.0, 2.0, 2.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]}
+                {"a": [1.0, 1.0, 2.0, 2.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]},
             ),
             InterpointEqualityConstraint(feature="a", multiplicity=2),
             True,
         ),
         (
             pd.DataFrame(
-                {"a": [1.0, 1.0, 2.0, 3.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]}
+                {"a": [1.0, 1.0, 2.0, 3.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]},
             ),
             InterpointEqualityConstraint(feature="a", multiplicity=2),
             False,
@@ -264,7 +275,10 @@ def get_row(features, value: float = None, values: List[float] = None):
         (
             pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
             ProductInequalityConstraint(
-                features=["a", "b"], exponents=[2, 1], rhs=-18, sign=-1
+                features=["a", "b"],
+                exponents=[2, 1],
+                rhs=-18,
+                sign=-1,
             ),
             False,
         ),

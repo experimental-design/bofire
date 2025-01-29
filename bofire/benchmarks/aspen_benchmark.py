@@ -7,7 +7,8 @@ import pandas as pd
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.data_models.domain.api import Domain
 
-# Create a folder for the log file, if not alredy exists.
+
+# Create a folder for the log file, if not already exists.
 if not os.path.exists("bofire_logs"):
     os.makedirs("bofire_logs")
 
@@ -22,12 +23,9 @@ logger.addHandler(file_handler)
 
 class Aspen_benchmark(Benchmark):
     """This class connects to a Aspen plus file that runs the desired process.
-    It writes incoming input values into Aspen plus, runs the simulation and returns the results.
-    When initializing this class, make sure not to block multiple Aspen plus licenses at once
-    when is not absolutely needed.
-
-    Args:
-        Benchmark: Subclass of the Benchmark function class.
+    It writes incoming input values into Aspen plus, runs the simulation and
+    returns the results. When initializing this class, make sure not to block
+    multiple Aspen plus licenses at once when is not absolutely needed.
     """
 
     def __init__(
@@ -45,14 +43,22 @@ class Aspen_benchmark(Benchmark):
 
         Args:
             filename (str): Filepath of the Aspen plus simulation file.
-            domain (Domain): Domain of the benchmark setting inclunding bounds and information about input values.
-            paths (dict[str, str]): A dictionary with the key value pairs "key_of_variable": "path_to_variable".
-            The keys must be the same as provided in the domain.
-            translate_into_aspen_readable (Optional: Callable): A function that converts the columns of a candidate dataframe into
-            integers or floats so Aspen plus is able to read their values.
+            domain (Domain): Domain of the benchmark setting inclunding bounds
+                and information about input values.
+            paths (dict[str, str]): A dictionary with the key value pairs
+                "key_of_variable": "path_to_variable". The keys must be the
+                same as provided in the domain.
+            additional_output_keys: (list, optional): A list of additional output
+                keys to be retrieved from Aspen. Defaults to None.
+            translate_into_aspen_readable (Optional: Callable): A function that
+                converts the columns of a candidate dataframe into integers or
+                floats so Aspen plus is able to read their values.
+            **kwargs: Additional arguments for the Benchmark class.
 
         Raises:
-            ValueError: In case the number of provided variable names does not match the number of provided Aspen variable tree paths.
+            ValueError: In case the number of provided variable names does not
+                match the number of provided Aspen variable tree paths.
+
         """
         super().__init__(**kwargs)
         if os.path.exists(filename):
@@ -66,7 +72,7 @@ class Aspen_benchmark(Benchmark):
 
         for key in self.domain.inputs.get_keys() + self.domain.outputs.get_keys():
             # Check, if every input and output variable has a path to Aspen provided.
-            if key not in paths.keys():
+            if key not in paths:
                 raise ValueError("Path for " + key + " is not provided.")
 
         self.paths = paths
@@ -78,6 +84,7 @@ class Aspen_benchmark(Benchmark):
 
         Raises:
             ValueError: In case it is not possible to start Aspen plus.
+
         """
         import win32com.client as win32  # type: ignore
 
@@ -104,8 +111,8 @@ class Aspen_benchmark(Benchmark):
         Returns:
             pd.DataFrame: Output values from Aspen. The dataframe includes valid_(variable_name) columns for
             each output variable when the simulation went successful.
-        """
 
+        """
         # Only start Aspen, when it is not already blocking.
         if self.aspen_is_running is False:
             self.start_aspen()
@@ -126,7 +133,7 @@ class Aspen_benchmark(Benchmark):
         }
         add_outputs = {key: [] for key in self.additional_output_keys}
 
-        # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
+        # Iterate through dataframe rows to retrieve multiple input vectors. Running separate simulations for each.
         for index, row in X.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
@@ -149,7 +156,7 @@ class Aspen_benchmark(Benchmark):
             try:
                 # Check for errors during simulation in Aspen that disqualify the results
                 status = aspen.Tree.FindNode(
-                    "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
+                    "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2",
                 ).Value
 
                 if status != 8:
@@ -157,20 +164,20 @@ class Aspen_benchmark(Benchmark):
                         logger.error(
                             "Result"
                             + " does not converge. Simulation status: "
-                            + str(status)
+                            + str(status),
                         )
                     elif status == 10:
                         logger.warning(
                             "Result"
                             + " gives an Aspen warning. Simulation status: "
-                            + str(status)
+                            + str(status),
                         )
                     else:
                         logger.warning("Unknown simulation status: " + str(status))
 
                 for key in self.domain.outputs.get_keys():
                     y_outputs[key].append(
-                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                        aspen.Tree.FindNode(self.paths.get(key)).Value,
                     )
                     if status == 8:
                         # Result is valid and add valid_var = 1
@@ -181,7 +188,7 @@ class Aspen_benchmark(Benchmark):
 
                 for key in self.additional_output_keys:
                     add_outputs[key].append(
-                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                        aspen.Tree.FindNode(self.paths.get(key)).Value,
                     )
 
             except ConnectionAbortedError:

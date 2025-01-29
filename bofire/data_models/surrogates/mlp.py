@@ -1,4 +1,5 @@
-from typing import Annotated, Literal, Sequence, Type
+from collections.abc import Sequence
+from typing import Annotated, Literal, Type
 
 from pydantic import Field
 

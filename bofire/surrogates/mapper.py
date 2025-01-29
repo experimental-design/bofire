@@ -1,7 +1,10 @@
 from typing import Dict, Type
 
 from bofire.data_models.surrogates import api as data_models
-from bofire.surrogates.deterministic import LinearDeterministicSurrogate
+from bofire.surrogates.deterministic import (
+    CategoricalDeterministicSurrogate,
+    LinearDeterministicSurrogate,
+)
 from bofire.surrogates.empirical import EmpiricalSurrogate
 from bofire.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate
@@ -9,9 +12,11 @@ from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
+from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.xgb import XGBoostSurrogate
+
 
 SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.EmpiricalSurrogate: EmpiricalSurrogate,
@@ -29,6 +34,8 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
     data_models.SingleTaskIBNNSurrogate: SingleTaskGPSurrogate,
+    data_models.PiecewiseLinearGPSurrogate: PiecewiseLinearGPSurrogate,
+    data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
 }
 
 

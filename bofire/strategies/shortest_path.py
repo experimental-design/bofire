@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional, Tuple
 
 import cvxpy as cp
@@ -21,8 +22,7 @@ class ShortestPathStrategy(Strategy):
         data_model: DataModel,
         **kwargs,
     ):
-        """
-        Initialize the ShortestPath strategy.
+        """Initialize the ShortestPath strategy.
 
         Args:
             data_model (DataModel): The data model of the shortest path strategy.
@@ -35,19 +35,19 @@ class ShortestPathStrategy(Strategy):
 
     @property
     def continuous_inputs(self) -> Inputs:
-        """
-        Returns the continuous inputs from the domain.
+        """Returns the continuous inputs from the domain.
 
         Returns:
             Inputs: The continuous inputs from the domain.
+
         """
-        return self.domain.inputs.get(ContinuousInput)  # type: ignore
+        return self.domain.inputs.get(ContinuousInput)
 
     def get_linear_constraints(
-        self, constraints: Constraints
+        self,
+        constraints: Constraints,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Returns the linear constraints in the form of matrices A and b, where Ax = b for
+        """Returns the linear constraints in the form of matrices A and b, where Ax = b for
             equality constraints and Ax <= b for inequality constraints.
 
         Args:
@@ -55,10 +55,11 @@ class ShortestPathStrategy(Strategy):
 
         Returns:
             Tuple[np.ndarray, np.ndarray]: A tuple containing the matrices A and b.
+
         """
         inputs = self.continuous_inputs
         keys = inputs.get_keys()
-        b = np.array([c.rhs for c in constraints])  # type: ignore
+        b = np.array([c.rhs for c in constraints])
         A = np.zeros([len(constraints), len(inputs)])
         for i, c in enumerate(constraints):
             assert isinstance(c, LinearConstraint)
@@ -72,18 +73,19 @@ class ShortestPathStrategy(Strategy):
         return A, b
 
     def step(self, start: pd.Series) -> pd.Series:
-        """
-        Takes a starting point and returns the next step in the shortest path.
+        """Takes a starting point and returns the next step in the shortest path.
 
         Args:
             start (pd.Series): The starting point for the shortest path.
 
         Returns:
             pd.Series: The next step in the shortest path.
+
         """
         inputs = self.continuous_inputs
         lower, upper = inputs.get_bounds(
-            specs={}, reference_experiment=start[inputs.get_keys()]
+            specs={},
+            reference_experiment=start[inputs.get_keys()],
         )
         x = cp.Variable(len(inputs))
         cost = cp.sum_squares(x - self.end[inputs.get_keys()])
@@ -93,12 +95,12 @@ class ShortestPathStrategy(Strategy):
         ]
         if len(self.domain.constraints.get(LinearEqualityConstraint)) > 0:
             A, b = self.get_linear_constraints(
-                self.domain.constraints.get(LinearEqualityConstraint)
+                self.domain.constraints.get(LinearEqualityConstraint),
             )
             constraints.append(A @ x == b)
         if len(self.domain.constraints.get(LinearInequalityConstraint)) > 0:
             A, b = self.get_linear_constraints(
-                self.domain.constraints.get(LinearInequalityConstraint)
+                self.domain.constraints.get(LinearInequalityConstraint),
             )
             constraints.append(A @ x <= b)
         prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)  # type: ignore
@@ -110,8 +112,7 @@ class ShortestPathStrategy(Strategy):
         return step
 
     def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
-        """
-        Perform the shortest path strategy to determine the optimal path from the start point to the end point.
+        """Perform the shortest path strategy to determine the optimal path from the start point to the end point.
 
         Args:
             candidate_count (Optional[int]): The number of candidates to propose. This argument is ignored by the ShortestPath
@@ -124,12 +125,14 @@ class ShortestPathStrategy(Strategy):
         Raises:
             ValueError: If `candidate_count` is not None, as the ShortestPath strategy ignores the specified value and
                 automatically determines how many candidates to propose.
+
         """
         if candidate_count is not None:
-            raise ValueError(
-                "ShortestPath will ignore the specified value of candidate_count. "
+            warnings.warn(
+                "ShortestPathStrategy will ignore the specified value of candidate_count. "
                 "The strategy automatically determines how many candidates to "
-                "propose."
+                "propose.",
+                UserWarning,
             )
         start = self.start
         steps = []
@@ -144,10 +147,10 @@ class ShortestPathStrategy(Strategy):
         return pd.concat(steps, axis=1).T
 
     def has_sufficient_experiments(self) -> bool:
-        """
-        Checks if there are sufficient experiments available.
+        """Checks if there are sufficient experiments available.
 
         Returns:
             bool: True if there are sufficient experiments, False otherwise.
+
         """
         return True

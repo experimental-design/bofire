@@ -1,13 +1,13 @@
 from abc import abstractmethod
-from typing import Literal, Optional, Sequence
+from collections.abc import Sequence
+from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 from botorch.models.ensemble import EnsembleModel
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
-from torch import Tensor
+from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 
 from bofire.data_models.enum import OutputFilteringEnum
@@ -26,9 +26,7 @@ from bofire.utils.torch_tools import tkwargs
 
 
 class MLPDataset(Dataset):
-    """
-    Prepare the dataset for MLP training
-    """
+    """Prepare the dataset for MLP training"""
 
     def __init__(self, X: Tensor, y: Tensor):
         self.X = X.to(**tkwargs)
@@ -70,7 +68,7 @@ class MLP(nn.Module):
             for i in range(len(hidden_layer_sizes) - 1):
                 layers += [
                     nn.Linear(hidden_layer_sizes[i], hidden_layer_sizes[i + 1]).to(
-                        **tkwargs
+                        **tkwargs,
                     ),
                     f_activation(),
                 ]
@@ -83,7 +81,7 @@ class MLP(nn.Module):
             layers.append(nn.Identity())
         else:
             raise ValueError(
-                f"Currently only serving classification and regression problems; {final_activation} is not known."
+                f"Currently only serving classification and regression problems; {final_activation} is not known.",
             )
         self.layers = nn.Sequential(*layers)
 
@@ -93,7 +91,9 @@ class MLP(nn.Module):
 
 class _MLPEnsemble(EnsembleModel):
     def __init__(
-        self, mlps: Sequence[MLP], output_scaler: Optional[OutcomeTransform] = None
+        self,
+        mlps: Sequence[MLP],
+        output_scaler: Optional[OutcomeTransform] = None,
     ):
         super().__init__()
         if len(mlps) == 0:
@@ -119,6 +119,7 @@ class _MLPEnsemble(EnsembleModel):
         Returns:
             A `batch_shape x s x n x m`-dimensional output tensor where
             `s` is the size of the ensemble.
+
         """
         return torch.stack([mlp(X) for mlp in self.mlps], dim=-3)
 
@@ -136,7 +137,7 @@ def fit_mlp(
     lr: float = 1e-4,
     shuffle: bool = True,
     weight_decay: float = 0.0,
-    loss_function=nn.L1Loss,  # type: ignore
+    loss_function=nn.L1Loss,
 ):
     """Fit a MLP to a dataset.
 
@@ -149,6 +150,7 @@ def fit_mlp(
         shuffle (bool, optional): Whereas the batches should be shuffled. Defaults to True.
         weight_decay (float, optional): Weight decay (L2 regularization). Defaults to 0.0 (no regularization).
         loss_function (Loss function, NOT Optional): Loss function specified by the problem type. Defaults to L1 loss for regression problems.
+
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
@@ -162,7 +164,8 @@ def fit_mlp(
             if isinstance(loss_function, nn.CrossEntropyLoss):
                 targets = targets.flatten().long()
             elif len(targets.shape) == 1 and not isinstance(
-                loss_function, nn.CrossEntropyLoss
+                loss_function,
+                nn.CrossEntropyLoss,
             ):
                 targets = targets.reshape((targets.shape[0], 1))
 
@@ -205,7 +208,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     model: Optional[_MLPEnsemble] = None
 
     @abstractmethod
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
         pass
 
 
@@ -272,7 +275,7 @@ class ClassificationMLPEnsemble(MLPEnsemble):
 
         # Convert Y to classification tensor
         Y = pd.DataFrame.from_dict(
-            {col: Y[col].map(label_mapping) for col in Y.columns}
+            {col: Y[col].map(label_mapping) for col in Y.columns},
         )
 
         mlps = []
@@ -290,7 +293,7 @@ class ClassificationMLPEnsemble(MLPEnsemble):
             mlp = MLP(
                 input_size=transformed_X.shape[1],
                 output_size=len(
-                    label_mapping
+                    label_mapping,
                 ),  # Set outputs based on number of categories
                 hidden_layer_sizes=self.hidden_layer_sizes,
                 activation=self.activation,  # type: ignore

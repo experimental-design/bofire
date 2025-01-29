@@ -34,6 +34,7 @@ class _RandomForest(EnsembleModel):
 
         Args:
             rf (RandomForestRegressor): Fitted sklearn random forest regressor.
+
         """
         super().__init__()
         if not isinstance(rf, RandomForestRegressor):
@@ -52,6 +53,7 @@ class _RandomForest(EnsembleModel):
         Returns:
             A `batch_shape x s x n x m`-dimensional output tensor where
             `s` is the size of the ensemble.
+
         """
         # we transform to numpy
         nX = X.detach().numpy()
@@ -66,14 +68,14 @@ class _RandomForest(EnsembleModel):
             # loop over estimators
             for estimator in self._rf.estimators_:
                 batch_preds.append(
-                    estimator.predict(nX[i]).reshape((nX[i].shape[0], 1))
+                    estimator.predict(nX[i]).reshape((nX[i].shape[0], 1)),
                 )
             preds.append(np.stack(batch_preds, axis=0))
         preds = np.stack(preds, axis=0)
         if X.ndim == 3:  # we have a batch dim
             return torch.from_numpy(preds).to(**tkwargs)
-        else:  # we have no batch dim
-            return torch.from_numpy(preds).to(**tkwargs).squeeze(dim=0)
+        # we have no batch dim
+        return torch.from_numpy(preds).to(**tkwargs).squeeze(dim=0)
 
     @property
     def num_outputs(self) -> int:
@@ -119,6 +121,7 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
         Args:
             X (pd.DataFrame): Dataframe with X values.
             Y (pd.DataFrame): Dataframe with Y values.
+
         """
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
@@ -141,10 +144,10 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
             n_estimators=self.n_estimators,
             criterion=self.criterion,
             max_depth=self.max_depth,
-            min_samples_split=self.min_samples_split,  # type: ignore
-            min_samples_leaf=self.min_samples_leaf,  # type: ignore
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
             min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-            max_features=self.max_features,  # type: ignore
+            max_features=self.max_features,
             max_leaf_nodes=self.max_leaf_nodes,
             min_impurity_decrease=self.min_impurity_decrease,
             bootstrap=self.bootstrap,
@@ -168,4 +171,4 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
     def loads(self, data: str):
         """Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         buffer = io.BytesIO(base64.b64decode(data.encode()))
-        self.model = torch.load(buffer)
+        self.model = torch.load(buffer, weights_only=False)

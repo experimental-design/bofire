@@ -7,55 +7,82 @@ on:
     branches:
       - main
 
+concurrency:
+  # Cancel only on same PR number
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  testing_minimal:
+  testing_data_models:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11' ]
+        python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Minimal Bofire, Python ${{ matrix.python-version }}
-        run: pip install "." pytest
-      - name: Run domain-only test, Python ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: uv pip install "." pytest --system
+
+      - name: Run data model tests
         run: pytest tests/bofire/data_models
 
   testing:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.9', '3.11' ]
+        python-version: [ '3.10', '3.12' ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
           activate-environment: test
           python-version: ${{ matrix.python-version }}
-      - name: Install Dependencies, Python ${{ matrix.python-version }}
+
+      - name: Install Dependencies
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
-      - name: Run tests, Python ${{ matrix.python-version }}
+
+      - name: Run tests
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
-      - name: Run pip freeze, Python ${{ matrix.python-version }}
+
+      - name: Run pip freeze
         shell: bash -l {0}
         run: pip freeze
 
   testing_against_latest_botorch:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.12' ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
           activate-environment: test
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
+
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
@@ -65,29 +92,38 @@ jobs:
           export ALLOW_LATEST_GPYTORCH_LINOP=true
           pip install --upgrade git+https://github.com/pytorch/botorch.git
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
-      - name: Run tests, Python ${{ matrix.python-version }}
+
+      - name: Run tests
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
-      - name: Run pip freeze, Python ${{ matrix.python-version }}
+
+      - name: Run pip freeze
         shell: bash -l {0}
-        run: pip freeze    
+        run: pip freeze
 
 
   testing_tutorials:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.12' ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
           activate-environment: test
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
+
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
           pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
-      - name: Run notebooks
+
+      - name: Run Notebooks
         shell: bash -l {0}
-        run: python scripts/run_tutorials.py -p "$(pwd)"
-          
+        run: python scripts/run_tutorials.py

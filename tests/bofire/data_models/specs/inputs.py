@@ -7,6 +7,7 @@ from bofire.data_models.features.api import (
 )
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(
@@ -14,7 +15,9 @@ specs.add_valid(
     lambda: {
         "features": [
             CategoricalInput(
-                key="a", categories=["1", "2"], allowed=[True, True]
+                key="a",
+                categories=["1", "2"],
+                allowed=[True, True],
             ).model_dump(),
             ContinuousInput(key="b", bounds=(0, 1)).model_dump(),
         ],
@@ -26,7 +29,9 @@ specs.add_valid(
     lambda: {
         "features": [
             CategoricalInput(
-                key="a", categories=["1", "2"], allowed=[True, True]
+                key="a",
+                categories=["1", "2"],
+                allowed=[True, True],
             ).model_dump(),
             ContinuousInput(key="b", bounds=(0, 1)).model_dump(),
             TaskInput(key="c", categories=["a", "b", "c"]).model_dump(),

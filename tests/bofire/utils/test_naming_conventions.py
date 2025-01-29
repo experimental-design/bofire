@@ -12,12 +12,14 @@ from bofire.utils.naming_conventions import (
     postprocess_categorical_predictions,
 )
 
+
 continuous_output = ContinuousOutput(key="cont", objective=MinimizeObjective(w=1))
 categorical_output = CategoricalOutput(
     key="cat",
     categories=["alpha", "beta"],
     objective=ConstrainedCategoricalObjective(
-        categories=["alpha", "beta"], desirability=[True, False]
+        categories=["alpha", "beta"],
+        desirability=[True, False],
     ),
 )
 predictions = pd.DataFrame(
@@ -134,6 +136,7 @@ def test_get_column_names(output_features, expected_names):
 def test_postprocess_categorical_predictions(output_features, input_names, final_names):
     test_outputs = Outputs(features=output_features)
     updated_preds = postprocess_categorical_predictions(
-        predictions=predictions[input_names], outputs=test_outputs
+        predictions=predictions[input_names],
+        outputs=test_outputs,
     )
     assert updated_preds.columns.tolist() == final_names

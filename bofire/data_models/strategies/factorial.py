@@ -1,4 +1,7 @@
+import warnings
 from typing import Literal, Type
+
+from pydantic import model_validator
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
@@ -12,7 +15,12 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class FactorialStrategy(Strategy):
-    type: Literal["FactorialStrategy"] = "FactorialStrategy"
+    """Factorial design strategy.
+
+    This strategy is deprecated, please use FractionalFactorialStrategy instead.
+    """
+
+    type: Literal["FactorialStrategy"] = "FactorialStrategy"  # type: ignore
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -26,3 +34,11 @@ class FactorialStrategy(Strategy):
             CategoricalDescriptorInput,
             ContinuousOutput,
         ]
+
+    @model_validator(mode="after")
+    def raise_depreaction_warning(self):
+        warnings.warn(
+            "`FactorialStrategy is deprecated, use `FractionalFactorialStrategy` instead.",
+            DeprecationWarning,
+        )
+        return self

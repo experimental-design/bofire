@@ -22,6 +22,7 @@ class NonlinearConstraint(IntrapointConstraint):
         expression (str): Mathematical expression that can be evaluated by `pandas.eval`.
         jacobian_expression (str): Mathematical expression that that can be evaluated by `pandas.eval`.
         features (list): list of feature keys (str) on which the constraint works on.
+
     """
 
     expression: str
@@ -31,17 +32,17 @@ class NonlinearConstraint(IntrapointConstraint):
     def validate_inputs(self, inputs: Inputs):
         if self.features is not None:
             keys = inputs.get_keys(ContinuousInput)
-            for f in self.features:  # type: ignore
+            for f in self.features:
                 if f not in keys:
                     raise ValueError(
-                        f"Feature {f} is not a continuous input feature in the provided Inputs object."
+                        f"Feature {f} is not a continuous input feature in the provided Inputs object.",
                     )
 
     @field_validator("jacobian_expression")
     @classmethod
     def set_jacobian_expression(cls, jacobian_expression, info):
         try:
-            import sympy  # type: ignore
+            import sympy
         except ImportError as e:
             warnings.warn(e.msg)
             warnings.warn("please run `pip install sympy` for this functionality.")
@@ -59,7 +60,7 @@ class NonlinearConstraint(IntrapointConstraint):
                         [
                             str(sympy.S(info.data["expression"]).diff(key))
                             for key in info.data["features"]
-                        ]
+                        ],
                     )
                     + "]"
                 )
@@ -77,15 +78,16 @@ class NonlinearConstraint(IntrapointConstraint):
 
             if self.features is not None:
                 return pd.DataFrame(
-                    res, index=["dg/d" + name for name in self.features]
+                    res,
+                    index=["dg/d" + name for name in self.features],
                 ).transpose()
-            else:
-                return pd.DataFrame(
-                    res, index=[f"dg/dx{i}" for i in range(experiments.shape[1])]
-                ).transpose()
+            return pd.DataFrame(
+                res,
+                index=[f"dg/dx{i}" for i in range(experiments.shape[1])],
+            ).transpose()
 
         raise ValueError(
-            "The jacobian of a nonlinear constraint cannot be evaluated if jacobian_expression is None."
+            "The jacobian of a nonlinear constraint cannot be evaluated if jacobian_expression is None.",
         )
 
 
@@ -94,6 +96,7 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 
     Attributes:
         expression: Mathematical expression that can be evaluated by `pandas.eval`.
+
     """
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
@@ -104,6 +107,7 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
 
     Attributes:
         expression: Mathematical expression that can be evaluated by `pandas.eval`.
+
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"

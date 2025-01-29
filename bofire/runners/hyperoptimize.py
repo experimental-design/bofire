@@ -10,7 +10,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.objectives.api import MinimizeObjective
 from bofire.data_models.strategies.api import (
-    FactorialStrategy,
+    FractionalFactorialStrategy,
     RandomStrategy,
     SoboStrategy,
 )
@@ -26,7 +26,7 @@ def hyperoptimize(
 ) -> Tuple[AnyTrainableSurrogate, pd.DataFrame]:
     if surrogate_data.hyperconfig is None:
         warnings.warn(
-            "No hyperopt is possible as no hyperopt config is available. Returning initial config."
+            "No hyperopt is possible as no hyperopt config is available. Returning initial config.",
         )
         return surrogate_data, pd.DataFrame({e.name: [] for e in RegressionMetricsEnum})
 
@@ -48,12 +48,16 @@ def hyperoptimize(
         training_data=training_data,
         folds=folds,
         random_state=random_state,
+        show_progress_bar=True
+        if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy"
+        else False,
     )
 
-    if surrogate_data.hyperconfig.hyperstrategy == "FactorialStrategy":  # type: ignore
-        strategy = strategies.map(FactorialStrategy(domain=benchmark.domain))
+    if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy":
+        strategy = strategies.map(FractionalFactorialStrategy(domain=benchmark.domain))
         experiments = benchmark.f(
-            strategy.ask(candidate_count=None), return_complete=True
+            strategy.ask(candidate_count=None),
+            return_complete=True,
         )
     else:
         strategy_data = (
@@ -64,7 +68,7 @@ def hyperoptimize(
         experiments = run(
             benchmark=benchmark,
             strategy_factory=lambda domain: strategy_mapper.map(
-                data_model=strategy_data(domain=domain)
+                data_model=strategy_data(domain=domain),
             ),
             metric=best,
             n_runs=1,

@@ -16,6 +16,7 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 
+
 data = pd.DataFrame.from_dict(
     {
         "x1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
@@ -24,7 +25,7 @@ data = pd.DataFrame.from_dict(
         "out2": [nan, 1.0, 2.0, 3.0, 4.0, 5.0],
         "valid_out1": [1, 0, 1, 1, 1, 1],
         "valid_out2": [1, 1, 0, 1, 1, 0],
-    }
+    },
 )
 
 obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
@@ -52,7 +53,7 @@ of2_ = ContinuousOutput(key="out4", objective=None)
                     "out2": [3.0],
                     "valid_out1": [1],
                     "valid_out2": [1],
-                }
+                },
             ),
         ),
         (
@@ -67,7 +68,7 @@ of2_ = ContinuousOutput(key="out4", objective=None)
                     "out2": [3.0],
                     "valid_out1": [1],
                     "valid_out2": [1],
-                }
+                },
             ),
         ),
         (
@@ -82,7 +83,7 @@ of2_ = ContinuousOutput(key="out4", objective=None)
                     "out2": [3.0],
                     "valid_out1": [1],
                     "valid_out2": [1],
-                }
+                },
             ),
         ),
         (
@@ -97,16 +98,20 @@ of2_ = ContinuousOutput(key="out4", objective=None)
                     "out2": [1.0, 3.0, 4.0],
                     "valid_out1": [0, 1, 1],
                     "valid_out2": [1, 1, 1],
-                }
+                },
             ),
         ),
     ],
 )
 def test_preprocess_experiments_all_valid_outputs(
-    outputs, data, output_feature_keys, expected
+    outputs,
+    data,
+    output_feature_keys,
+    expected,
 ):
     experiments = outputs.preprocess_experiments_all_valid_outputs(
-        data, output_feature_keys
+        data,
+        output_feature_keys,
     )
     assert_frame_equal(experiments.reset_index(drop=True), expected, check_dtype=False)
 
@@ -125,9 +130,9 @@ def test_preprocess_experiments_all_valid_outputs(
                     "out2": [1, 2, 3, 4],
                     "valid_out1": [0, 1, 1, 1],
                     "valid_out2": [1, 0, 1, 1],
-                }
+                },
             ),
-        )
+        ),
     ],
 )
 def test_preprocess_experiments_any_valid_output(outputs, data, expected):
@@ -150,9 +155,9 @@ def test_preprocess_experiments_any_valid_output(outputs, data, expected):
                     "out2": [1, 3, 4],
                     "valid_out1": [0, 1, 1],
                     "valid_out2": [1, 1, 1],
-                }
+                },
             ),
-        )
+        ),
     ],
 )
 def test_preprocess_experiments_one_valid_output(outputs, data, expected):
@@ -184,7 +189,11 @@ def test_preprocess_experiments_one_valid_output(outputs, data, expected):
     ],
 )
 def test_get_outputs_by_objective(
-    outputs: Outputs, includes, excludes, exact, expected
+    outputs: Outputs,
+    includes,
+    excludes,
+    exact,
+    expected,
 ):
     assert (
         outputs.get_by_objective(
@@ -201,17 +210,18 @@ def test_get_outputs_by_objective_none():
         features=[
             ContinuousOutput(key="a", objective=None),
             ContinuousOutput(
-                key="b", objective=MaximizeSigmoidObjective(w=1, steepness=1, tp=0)
+                key="b",
+                objective=MaximizeSigmoidObjective(w=1, steepness=1, tp=0),
             ),
             ContinuousOutput(key="c", objective=MaximizeObjective()),
-        ]
+        ],
     )
     keys = outputs.get_keys_by_objective(excludes=ConstrainedObjective)
     assert keys == ["c"]
     assert outputs.get_keys().index("c") == 2
     assert outputs.get_keys_by_objective(excludes=Objective, includes=[]) == ["a"]
     assert outputs.get_by_objective(excludes=Objective, includes=[]) == Outputs(
-        features=[ContinuousOutput(key="a", objective=None)]
+        features=[ContinuousOutput(key="a", objective=None)],
     )
 
 
@@ -258,10 +268,11 @@ mixed_data["of4"] = ["a", "a", "b", "b", "a"]
                         key="of4",
                         categories=["a", "b"],
                         objective=ConstrainedCategoricalObjective(
-                            categories=["a", "b"], desirability=[True, False]
+                            categories=["a", "b"],
+                            desirability=[True, False],
                         ),
                     ),
-                ]
+                ],
             ),
             mixed_data,
         ),
@@ -273,15 +284,17 @@ def test_outputs_call(features, samples):
         len(samples),
         len(
             features.get_keys_by_objective(
-                Objective, excludes=ConstrainedCategoricalObjective
-            )
+                Objective,
+                excludes=ConstrainedCategoricalObjective,
+            ),
         )
         + len(features.get_keys(CategoricalOutput)),
     )
     assert list(o.columns) == [
         f"{key}_des"
         for key in features.get_keys_by_objective(
-            Objective, excludes=ConstrainedCategoricalObjective
+            Objective,
+            excludes=ConstrainedCategoricalObjective,
         )
         + features.get_keys(CategoricalOutput)
     ]
@@ -289,11 +302,12 @@ def test_outputs_call(features, samples):
 
 def test_categorical_objective_methods():
     obj = ConstrainedCategoricalObjective(
-        categories=["a", "b"], desirability=[True, False]
+        categories=["a", "b"],
+        desirability=[True, False],
     )
-    assert {"a": True, "b": False} == obj.to_dict()
-    assert {"a": 0, "b": 1} == obj.to_dict_label()
-    assert {0: "a", 1: "b"} == obj.from_dict_label()
+    assert obj.to_dict() == {"a": True, "b": False}
+    assert obj.to_dict_label() == {"a": 0, "b": 1}
+    assert obj.from_dict_label() == {0: "a", 1: "b"}
 
 
 def test_categorical_output_methods():
@@ -306,16 +320,19 @@ def test_categorical_output_methods():
                 key="of4",
                 categories=["a", "b"],
                 objective=ConstrainedCategoricalObjective(
-                    categories=["a", "b"], desirability=[True, False]
+                    categories=["a", "b"],
+                    desirability=[True, False],
                 ),
             ),
-        ]
+        ],
     )
 
     # Test the `get_keys_by_objective`
-    assert ["of1", "of2"] == outputs.get_keys_by_objective(
-        includes=Objective, excludes=ConstrainedObjective
-    )
-    assert ["of4"] == outputs.get_keys_by_objective(
-        includes=ConstrainedObjective, excludes=None
-    )
+    assert outputs.get_keys_by_objective(
+        includes=Objective,
+        excludes=ConstrainedObjective,
+    ) == ["of1", "of2"]
+    assert outputs.get_keys_by_objective(
+        includes=ConstrainedObjective,
+        excludes=None,
+    ) == ["of4"]

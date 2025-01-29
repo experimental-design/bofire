@@ -4,14 +4,18 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+
 try:
-    import entmoot.constraints as entconstr  # type: ignore
-    import pyomo.environ as pyo  # type: ignore
-    from entmoot.models.enting import Enting  # type: ignore
-    from entmoot.optimizers.pyomo_opt import PyomoOptimizer  # type: ignore
-    from entmoot.problem_config import ProblemConfig  # type: ignore
+    import entmoot.constraints as entconstr
+    import pyomo.environ as pyo
+    from entmoot.models.enting import Enting
+    from entmoot.optimizers.pyomo_opt import PyomoOptimizer
+    from entmoot.problem_config import ProblemConfig
 except ImportError:
-    warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
+    warnings.warn(
+        "entmoot not installed. Please install it to use " "BoFire's `EntingStrategy`.",
+        ImportWarning,
+    )
 
 from typing import Union
 
@@ -36,7 +40,8 @@ from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
 def domain_to_problem_config(
-    domain: Domain, seed: Optional[int] = None
+    domain: Domain,
+    seed: Optional[int] = None,
 ) -> Tuple["ProblemConfig", "pyo.ConcreteModel"]:
     """Convert a set of features and constraints from BoFire to ENTMOOT.
 
@@ -50,18 +55,19 @@ def domain_to_problem_config(
     Returns:
         A tuple (problem_config, model_pyo), where problem_config is the problem definition
         in an ENTMOOT format, and model_pyo is the Pyomo model containing constraints.
+
     """
     # entmoot expects int, not np.int64
     seed = int(seed) if not (isinstance(seed, int) or seed is None) else seed
-    problem_config = ProblemConfig(seed)
+    problem_config = ProblemConfig(seed)  # type: ignore
 
     for input_feature in domain.inputs.get():
-        _bofire_feat_to_entmoot(problem_config, input_feature)  # type: ignore
+        _bofire_feat_to_entmoot(problem_config, input_feature)
 
     for output_feature in domain.outputs.get_by_objective(
-        includes=[MinimizeObjective, MaximizeObjective]
+        includes=[MinimizeObjective, MaximizeObjective],
     ):
-        _bofire_output_to_entmoot(problem_config, output_feature)  # type: ignore
+        _bofire_output_to_entmoot(problem_config, output_feature)
 
     constraints = []
     for constraint in domain.constraints.get():
@@ -69,12 +75,14 @@ def domain_to_problem_config(
 
     # apply constraints to model
     model_pyo = problem_config.get_pyomo_model_core()
-    model_pyo.problem_constraints = pyo.ConstraintList()
-    entconstr.ConstraintList(constraints).apply_pyomo_constraints(
-        model_pyo, problem_config.feat_list, model_pyo.problem_constraints
+    model_pyo.problem_constraints = pyo.ConstraintList()  # type: ignore
+    entconstr.ConstraintList(constraints).apply_pyomo_constraints(  # type: ignore
+        model_pyo,
+        problem_config.feat_list,
+        model_pyo.problem_constraints,  # type: ignore
     )
 
-    return problem_config, model_pyo
+    return problem_config, model_pyo  # type: ignore
 
 
 def _bofire_feat_to_entmoot(
@@ -86,6 +94,7 @@ def _bofire_feat_to_entmoot(
     Args:
         problem_config (ProblemConfig): An ENTMOOT problem definition, modified in-place.
         feature (AnyInput): An input feature to be added to the problem_config object.
+
     """
     feat_type = None
     bounds = None
@@ -114,7 +123,8 @@ def _bofire_feat_to_entmoot(
 
 
 def _bofire_output_to_entmoot(
-    problem_config: "ProblemConfig", feature: AnyOutput
+    problem_config: "ProblemConfig",
+    feature: AnyOutput,
 ) -> None:
     """Given a Bofire `Output`, create an ENTMOOT `MinObjective`.
 
@@ -124,11 +134,12 @@ def _bofire_output_to_entmoot(
     Args:
         problem_config (ProblemConfig): An ENTMOOT problem definition, modified in-place.
         feature (AnyOutput): An output feature to be added to the problem_config object.
+
     """
-    if isinstance(feature.objective, MinimizeObjective):  # type: ignore
+    if isinstance(feature.objective, MinimizeObjective):
         problem_config.add_min_objective(name=feature.key)
 
-    elif isinstance(feature.objective, MaximizeObjective):  # type: ignore
+    elif isinstance(feature.objective, MaximizeObjective):
         problem_config.add_max_objective(name=feature.key)
 
     else:
@@ -138,7 +149,9 @@ def _bofire_output_to_entmoot(
 def _bofire_constraint_to_entmoot(
     problem_config: "ProblemConfig",
     constraint: Union[
-        LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint
+        LinearEqualityConstraint,
+        LinearInequalityConstraint,
+        NChooseKConstraint,
     ],
 ) -> None:
     """Convert a Bofire `Constraint` to an ENTMOOT `Constraint`.
@@ -146,24 +159,24 @@ def _bofire_constraint_to_entmoot(
     Args:
         problem_config (ProblemConfig): An ENTMOOT problem definition.
         constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint]): A constraint to be applied to the Pyomo model.
-    """
 
+    """
     if isinstance(constraint, LinearEqualityConstraint):
-        ent_constraint = entconstr.LinearEqualityConstraint(
+        ent_constraint = entconstr.LinearEqualityConstraint(  # type: ignore
             feature_keys=constraint.features,
             coefficients=constraint.coefficients,
             rhs=constraint.rhs,
         )
 
     elif isinstance(constraint, LinearInequalityConstraint):
-        ent_constraint = entconstr.LinearInequalityConstraint(
+        ent_constraint = entconstr.LinearInequalityConstraint(  # type: ignore
             feature_keys=constraint.features,
             coefficients=constraint.coefficients,
             rhs=constraint.rhs,
         )
 
     elif isinstance(constraint, NChooseKConstraint):
-        ent_constraint = entconstr.NChooseKConstraint(
+        ent_constraint = entconstr.NChooseKConstraint(  # type: ignore
             feature_keys=constraint.features,
             min_count=constraint.min_count,
             max_count=constraint.max_count,
@@ -173,7 +186,7 @@ def _bofire_constraint_to_entmoot(
     else:
         raise NotImplementedError("Only linear and nchoosek constraints are supported.")
 
-    return ent_constraint
+    return ent_constraint  # type: ignore
 
 
 def _dump_enting_params(data_model: data_models.EntingStrategy) -> dict:
@@ -181,6 +194,7 @@ def _dump_enting_params(data_model: data_models.EntingStrategy) -> dict:
 
     Returns:
         dict: the nested dictionary of entmoot params.
+
     """
     return {
         "unc_params": {
@@ -208,6 +222,7 @@ def _dump_solver_params(data_model: data_models.EntingStrategy) -> dict:
 
     Returns:
         dict: the nested dictionary of solver params.
+
     """
     return {
         "solver_name": data_model.solver_name,
@@ -226,14 +241,14 @@ class EntingStrategy(PredictiveStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self._init_problem_config()
-        self._enting = Enting(self._problem_config, _dump_enting_params(data_model))
+        self._enting = Enting(self._problem_config, _dump_enting_params(data_model))  # type: ignore
         self._solver_params = _dump_solver_params(data_model)
         self._kappa_fantasy = data_model.kappa_fantasy
 
     def _init_problem_config(self) -> None:
         cfg = domain_to_problem_config(self.domain, self.seed)
-        self._problem_config: ProblemConfig = cfg[0]
-        self._model_pyo: pyo.ConcreteModel = cfg[1]
+        self._problem_config: ProblemConfig = cfg[0]  # type: ignore
+        self._model_pyo: pyo.ConcreteModel = cfg[1]  # type: ignore
 
     @property
     def input_preprocessing_specs(self):
@@ -247,6 +262,7 @@ class EntingStrategy(PredictiveStrategy):
 
         Returns:
             pd.DataFrame: Dataframe with candidate.
+
         """
         keys = [feat.name for feat in self._problem_config.feat_list]
         df_candidate = pd.DataFrame(
@@ -268,11 +284,12 @@ class EntingStrategy(PredictiveStrategy):
 
         Args:
             candidates (pd.DataFrame): The candidate(s) to make a fantasy observation for.
+
         """
         kappa = self._kappa_fantasy
         # overestimate for minimisation, underestimate for maximisation
         signs = {
-            output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1  # type: ignore
+            output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1
             for output in self.domain.outputs.get_by_objective()
         }
         as_experiment = candidates.assign(
@@ -286,7 +303,7 @@ class EntingStrategy(PredictiveStrategy):
 
         return as_experiment
 
-    def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:
+    def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:  # type: ignore
         """Generates candidates.
 
         If `candidate_count == 1`, then the globally optimal solution is returned.
@@ -302,6 +319,7 @@ class EntingStrategy(PredictiveStrategy):
 
         Returns:
             pd.DataFrame: DataFrame with a candidates.
+
         """
         # First, fit the model on fantasies generated for any pending candidates
         # This ensures that new points are far from pending candidates
@@ -317,14 +335,14 @@ class EntingStrategy(PredictiveStrategy):
                 candidate = pd.concat((candidate, preds), axis=1)
                 as_experiment = self._fantasy_as_experiment(candidate)
                 experiments_plus_fantasies = pd.concat(
-                    (experiments_plus_fantasy, as_experiment)
+                    (experiments_plus_fantasy, as_experiment),
                 )
                 self._fit(experiments_plus_fantasies)
 
         new_candidates = []
         # Subsequently generate candidates, using fantasies if appropriate
         for i in range(candidate_count):
-            opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
+            opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)  # type: ignore
             res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
             candidate = self._postprocess_candidate(res.opt_point)
             new_candidates.append(candidate)
@@ -332,11 +350,11 @@ class EntingStrategy(PredictiveStrategy):
             if i < candidate_count - 1:
                 as_experiment = self._fantasy_as_experiment(candidate)
                 experiments_plus_fantasies = pd.concat(
-                    (experiments_plus_fantasy, as_experiment)
+                    (experiments_plus_fantasy, as_experiment),
                 )
                 self._fit(experiments_plus_fantasies)
 
-        self._fit(self.experiments)
+        self._fit(self.experiments)  # type: ignore
         return pd.concat(new_candidates)
 
     def _fit(self, experiments: pd.DataFrame):
@@ -344,14 +362,14 @@ class EntingStrategy(PredictiveStrategy):
         output_keys = self.domain.outputs.get_keys()
 
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            experiments
+            experiments,
         )
 
         X = experiments[input_keys].to_numpy()
         y = experiments[output_keys].to_numpy()
         self._enting.fit(X, y)
 
-    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore
         X = transformed.to_numpy()
         pred = self._enting.predict(X)
         # pred has shape [([mu1], std1), ([mu2], std2), ... ]
@@ -368,8 +386,8 @@ class EntingStrategy(PredictiveStrategy):
         return (
             len(
                 self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                    experiments=self.experiments
-                )
+                    experiments=self.experiments,
+                ),
             )
             > 1
         )

@@ -1,9 +1,29 @@
-"""
-Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
-RDKit fragment features.
-"""
+"""This module was copied from the GAUCHE library(https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py).
 
-# This code was copied from GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py
+GAUCHE was published under the following license (https://github.com/leojklarner/gauche/blob/main/LICENSE):
+
+MIT License
+
+Copyright (c) 2021 Anonymous Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 import torch
 
@@ -11,8 +31,7 @@ from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 
 
 class TanimotoKernel(BitKernel):
-    r"""
-    Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
+    r"""Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
 
     Formula:
         .. math::
@@ -36,6 +55,7 @@ class TanimotoKernel(BitKernel):
         >>> # Batch: Simple option
         >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
         >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
+
     """
 
     is_stationary = False
@@ -49,7 +69,9 @@ class TanimotoKernel(BitKernel):
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(
-                *x1.shape[:-2], x1.shape[-2], dtype=x1.dtype, device=x1.device
+                *x1.shape[:-2],
+                x1.shape[-2],
+                dtype=x1.dtype,
+                device=x1.device,
             )
-        else:
-            return self.covar_dist(x1, x2, **params)
+        return self.covar_dist(x1, x2, **params)

@@ -25,8 +25,8 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
         cls_benchmark (Aspen_benchmark): Aspen_benchmark class
         return_complete (bool): _description_
         kwargs (dict): Arguments to the initializer of Aspen_benchmark. {"filename": , "domain": , "paths": }
-    """
 
+    """
     domain = Domain(
         inputs=Inputs(
             features=[
@@ -44,7 +44,7 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
                     descriptors=["binary"],
                     values=[[0.0], [1.0]],
                 ),
-            ]
+            ],
         ),
         outputs=Outputs(
             features=[
@@ -55,8 +55,8 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
                         type="MaximizeObjective",
                         w=1.0,
                     ),
-                )
-            ]
+                ),
+            ],
         ),
     )
     filename = "aspen_benchmark_test_file.apwz"
@@ -92,7 +92,9 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
     paths.popitem()
     with pytest.raises(ValueError):
         benchmark_function = cls_benchmark(
-            filename=filename, domain=domain, paths=paths
+            filename=filename,
+            domain=domain,
+            paths=paths,
         )
 
     os.remove(filename)
@@ -100,7 +102,9 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
     # Test, if filename error gets thrown for wrong or non-existent filename.
     with pytest.raises(ValueError):
         benchmark_function = cls_benchmark(
-            filename=filename, domain=domain, paths=paths
+            filename=filename,
+            domain=domain,
+            paths=paths,
         )
 
 

@@ -1,6 +1,7 @@
 from itertools import chain
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.multi_objective import (  # qLogExpectedHypervolumeImprovement,; qLogNoisyExpectedHypervolumeImprovement,
@@ -19,8 +20,11 @@ import bofire.data_models.acquisition_functions.api as acquisitions
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.api import RandomStrategy
 from tests.bofire.utils.test_multiobjective import (
     dfs,
@@ -88,10 +92,11 @@ def test_mobo(strategy, use_ref_point, acqf):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(candidate_count=10), return_complete=True
+        random_strategy.ask(candidate_count=10),
+        return_complete=True,
     )
     # init strategy
     data_model = strategy(
@@ -127,7 +132,7 @@ def test_mobo(strategy, use_ref_point, acqf):
 def test_mobo_constraints(acqf):
     benchmark = C2DTLZ2(dim=4)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     data_model = data_models.MoboStrategy(
@@ -168,10 +173,11 @@ def test_get_acqf_input(num_experiments, num_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(num_experiments), return_complete=True
+        random_strategy.ask(num_experiments),
+        return_complete=True,
     )
     data_model = data_models.MoboStrategy(domain=benchmark.domain)
     strategy = strategies.map(data_model)
@@ -183,7 +189,7 @@ def test_get_acqf_input(num_experiments, num_candidates):
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
     _, names = strategy.domain.inputs._get_transform_info(
-        specs=strategy.surrogate_specs.input_preprocessing_specs
+        specs=strategy.surrogate_specs.input_preprocessing_specs,
     )
 
     assert torch.is_tensor(X_train)
@@ -205,9 +211,82 @@ def test_no_objective():
     experiments["ignore"] = experiments["f_0"] + 6
     experiments["valid_ignore"] = 1
     data_model = data_models.MoboStrategy(
-        domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+        domain=domain,
+        ref_point={"f_0": 1.1, "f_1": 1.1},
     )
     recommender = strategies.map(data_model=data_model)
     recommender.tell(experiments=experiments)
     candidates = recommender.ask(candidate_count=1)
     recommender.to_candidates(candidates)
+
+
+@pytest.mark.parametrize(
+    "acqf, target_task",
+    [
+        (acquisitions.qEHVI, "task_1"),
+        (acquisitions.qLogEHVI, "task_2"),
+        (acquisitions.qNEHVI, "task_1"),
+        (acquisitions.qLogNEHVI, "task_2"),
+    ],
+)
+def test_mobo_with_multitask(acqf, target_task):
+    # set the data
+    def task_1_f(x):
+        return np.sin(x * 2 * np.pi)
+
+    def task_2_f(x):
+        return 0.9 * np.sin(x * 2 * np.pi) - 0.2 + 0.2 * np.cos(x * 3 * np.pi)
+
+    task_1_x = np.linspace(0.6, 1, 4)
+    task_1_y = task_1_f(task_1_x)
+
+    task_2_x = np.linspace(0, 1, 15)
+    task_2_y = task_2_f(task_2_x)
+
+    experiments = pd.DataFrame(
+        {
+            "x": np.concatenate([task_1_x, task_2_x]),
+            "y1": np.concatenate([task_1_y, task_2_y]),
+            "y2": np.concatenate([task_1_y, task_2_y]),
+            "task": ["task_1"] * len(task_1_x) + ["task_2"] * len(task_2_x),
+        },
+    )
+
+    if target_task == "task_1":
+        allowed = [True, False]
+    else:
+        allowed = [False, True]
+
+    input_features = [
+        ContinuousInput(key="x", bounds=(0, 1)),
+        TaskInput(key="task", categories=["task_1", "task_2"], allowed=allowed),
+    ]
+
+    objective = MaximizeObjective(w=1)
+
+    inputs = Inputs(features=input_features)
+
+    output_features_1 = [ContinuousOutput(key="y1", objective=objective)]
+    output_features_2 = [ContinuousOutput(key="y2", objective=objective)]
+    outputs_1 = Outputs(features=output_features_1)
+    outputs_2 = Outputs(features=output_features_2)
+    outputs = Outputs(features=output_features_1 + output_features_2)
+
+    surrogate_data_1 = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
+    surrogate_data_2 = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
+    surrogate_data = [surrogate_data_1, surrogate_data_2]
+
+    surrogate_specs = BotorchSurrogates(surrogates=surrogate_data)
+
+    strategy_data_model = data_models.MoboStrategy(
+        domain=Domain(inputs=inputs, outputs=outputs),
+        surrogate_specs=surrogate_specs,
+        acquisition_function=acqf(),
+    )
+
+    strategy = strategies.map(strategy_data_model)
+    strategy.tell(experiments)
+    candidate = strategy.ask(1)
+
+    # test that the candidate is in the target task
+    assert candidate["task"].item() == target_task

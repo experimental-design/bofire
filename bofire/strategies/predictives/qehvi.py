@@ -34,9 +34,10 @@ class QehviStrategy(BotorchStrategy):
     ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
-    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:
+    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:  # type: ignore
+        assert self.experiments is not None, "No experiments available."
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments
+            self.experiments,
         )
 
         train_obj = (
@@ -48,7 +49,7 @@ class QehviStrategy(BotorchStrategy):
             [
                 feat.objective.w  # type: ignore
                 for feat in self.domain.outputs.get_by_objective(excludes=None)
-            ]
+            ],
         )
         # compute points that are better than the known reference point
         better_than_ref = (train_obj > ref_point).all(axis=-1)
@@ -76,16 +77,23 @@ class QehviStrategy(BotorchStrategy):
         return [acqf]
 
     def _get_objective(self) -> GenericMCMultiOutputObjective:
-        objective = get_multiobjective_objective(outputs=self.domain.outputs)
+        assert self.experiments is not None, "No experiments available."
+        objective = get_multiobjective_objective(
+            outputs=self.domain.outputs,
+            experiments=self.experiments,
+        )
         return GenericMCMultiOutputObjective(objective=objective)
 
     def get_adjusted_refpoint(self) -> List[float]:
+        assert self.experiments is not None, "No experiments available."
         if self.ref_point is None:
             df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments
+                self.experiments,
             )
             ref_point = infer_ref_point(
-                self.domain, experiments=df, return_masked=False
+                self.domain,
+                experiments=df,
+                return_masked=False,
             )
         else:
             ref_point = self.ref_point
@@ -95,8 +103,8 @@ class QehviStrategy(BotorchStrategy):
                 [
                     ref_point[feat]
                     for feat in self.domain.outputs.get_keys_by_objective(
-                        excludes=ConstrainedObjective
+                        excludes=ConstrainedObjective,
                     )
-                ]
+                ],
             )
         ).tolist()

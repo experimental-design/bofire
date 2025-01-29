@@ -47,27 +47,30 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
-        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
-            Y.values
-        ).to(**tkwargs)
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
 
         continuous_feature_keys = get_continuous_feature_keys(
-            self.inputs, self.input_preprocessing_specs
+            self.inputs,
+            self.input_preprocessing_specs,
         )
         ord_dims = self.inputs.get_feature_indices(
-            self.input_preprocessing_specs, continuous_feature_keys
+            self.input_preprocessing_specs,
+            continuous_feature_keys,
         )
 
         categorical_feature_keys = get_categorical_feature_keys(
-            self.input_preprocessing_specs
+            self.input_preprocessing_specs,
         )
-        # these are the categorical dimesions after applying the OneHotToNumeric transform
+        # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
-            range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys))
+            range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys)),
         )
 
         features2idx, _ = self.inputs._get_transform_info(
-            self.input_preprocessing_specs
+            self.input_preprocessing_specs,
         )
 
         # these are the categorical features within the the OneHotToNumeric transform
@@ -89,7 +92,13 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             train_Y=tY,
             cat_dims=cat_dims,
             # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
-            cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
+            cont_kernel_factory=partial(
+                kernels.map,
+                data_model=self.continuous_kernel,
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])
                 if self.output_scaler == ScalerEnum.STANDARDIZE
@@ -97,7 +106,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             ),
             input_transform=tf,
         )
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs)

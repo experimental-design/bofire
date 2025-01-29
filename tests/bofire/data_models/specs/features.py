@@ -1,4 +1,3 @@
-import math
 import random
 import uuid
 
@@ -9,6 +8,7 @@ from bofire.data_models.objectives.api import (
 )
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.specs import Specs
+
 
 # RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
@@ -39,29 +39,29 @@ specs.add_valid(
     features.ContinuousInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "bounds": (3, 5.3),
+        "bounds": [3, 5.3],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
-        "local_relative_bounds": (math.inf, math.inf),
+        "local_relative_bounds": None,
         "stepsize": None,
     },
 )
 
 specs.add_invalid(
     features.ContinuousInput,
-    lambda: {"key": "a", "bounds": (5, 3)},
+    lambda: {"key": "a", "bounds": [5, 3]},
     error=ValueError,
-    message="lower bound must be <= upper bound, got 5.0 > 3.0",
+    message="Sequence is not monotonically increasing.",
 )
 
 specs.add_valid(
     features.ContinuousDescriptorInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "bounds": (3, 5.3),
+        "bounds": [3, 5.3],
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
-        "local_relative_bounds": (math.inf, math.inf),
+        "local_relative_bounds": None,
         "stepsize": None,
     },
 )
@@ -137,7 +137,8 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["a", "b", "c"],
         "objective": ConstrainedCategoricalObjective(
-            categories=["a", "b", "c"], desirability=[True, True, False]
+            categories=["a", "b", "c"],
+            desirability=[True, True, False],
         ).model_dump(),
     },
 )

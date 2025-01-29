@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from itertools import product
-from typing import Optional, Type
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,17 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.strategies.doe import (
+    AOptimalityCriterion,
+    DoEOptimalityCriterion,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    IOptimalityCriterion,
+    KOptimalityCriterion,
+    OptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
 from bofire.strategies.doe.utils import (
@@ -25,7 +36,6 @@ from bofire.strategies.doe.utils import (
     get_formula_from_string,
     nchoosek_constraints_as_bounds,
 )
-from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -33,29 +43,26 @@ class Objective:
     def __init__(
         self,
         domain: Domain,
-        model: Formula,
         n_experiments: int,
         delta: float = 1e-6,
         transform_range: Optional[Bounds] = None,
     ) -> None:
-        """
-        Args:
-            domain (Domain): A domain defining the DoE domain together with model_type.
-            model_type (str or Formula): A formula containing all model terms.
-            n_experiments (int): Number of experiments
-            delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
-            transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
+        """Args:
+        domain (Domain): A domain defining the DoE domain together with model_type.
+        model_type (str or Formula): A formula containing all model terms.
+        n_experiments (int): Number of experiments
+        delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+        transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
 
         """
-
-        self.model = deepcopy(model)
         self.domain = deepcopy(domain)
 
         if transform_range is None:
             self.transform = IndentityTransform()
         else:
             self.transform = MinMaxTransform(
-                inputs=self.domain.inputs, feature_range=transform_range
+                inputs=self.domain.inputs,
+                feature_range=tuple(transform_range),  # type: ignore
             )
 
         self.n_experiments = n_experiments
@@ -63,23 +70,6 @@ class Objective:
 
         self.vars = self.domain.inputs.get_keys()
         self.n_vars = len(self.domain.inputs)
-
-        self.model_terms = list(np.array(model, dtype=str))
-        self.n_model_terms = len(self.model_terms)
-
-        # terms for model jacobian
-        self.terms_jacobian_t = []
-        for var in self.vars:
-            _terms = [
-                str(term).replace(":", "*") + f" + 0 * {self.vars[0]}"
-                for term in model.differentiate(var, use_sympy=True)
-            ]  # 0*vars[0] added to make sure terms are evaluated as series, not as number
-            terms = "["
-            for t in _terms:
-                terms += t + ", "
-            terms = terms[:-1] + "]"
-
-            self.terms_jacobian_t.append(terms)
 
     def __call__(self, x: np.ndarray) -> float:
         return self.evaluate(x)
@@ -98,17 +88,74 @@ class Objective:
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         pass
 
+    @abstractmethod
     def _convert_input_to_model_tensor(
-        self, x: np.ndarray, requires_grad: bool = True
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
     ) -> Tensor:
+        """Args:
+        x: x (np.ndarray): values of design variables a 1d array.
         """
+        assert x.ndim == 1, "values of design should be 1d array"
+        pass
 
-        Args:
-            x: x (np.ndarray): values of design variables a 1d array.
+
+class ModelBasedObjective(Objective):
+    def __init__(
+        self,
+        domain: Domain,
+        model: Formula,
+        n_experiments: int,
+        delta: float = 1e-6,
+        transform_range: Optional[Bounds] = None,
+    ) -> None:
+        """Args:
+        domain (Domain): A domain defining the DoE domain together with model_type.
+        model_type (str or Formula): A formula containing all model terms.
+        n_experiments (int): Number of experiments
+        delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+        transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
+
+        """
+        super().__init__(
+            domain=domain,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform_range=transform_range,
+        )
+
+        self.model = deepcopy(model)
+
+        self.model_terms = list(np.array(model, dtype=str))
+        self.n_model_terms = len(self.model_terms)
+
+        # terms for model jacobian
+        self.terms_jacobian_t = []
+        for var in self.vars:
+            _terms = [
+                str(term).replace(":", "*") + f" + 0 * {self.vars[0]}"
+                for term in model.differentiate(var, use_sympy=True)
+            ]  # 0*vars[0] added to make sure terms are evaluated as series, not as number
+            terms = "["
+            for t in _terms:
+                terms += t + ", "
+            terms = terms[:-1] + "]"
+
+            self.terms_jacobian_t.append(terms)
+
+    def _convert_input_to_model_tensor(
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
+    ) -> Tensor:
+        """Args:
+        x: x (np.ndarray): values of design variables a 1d array.
         """
         assert x.ndim == 1, "values of design should be 1d array"
         X = pd.DataFrame(
-            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
+            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            columns=self.vars,
         )
         # scale to [0, 1]
         # lower, upper = self.domain.inputs.get_bounds(specs={}, experiments=X)
@@ -123,17 +170,20 @@ class Objective:
     def _model_jacobian_t(self, x: np.ndarray) -> np.ndarray:
         """Computes the transpose of the model jacobian for each experiment in input x."""
         X = pd.DataFrame(x.reshape(self.n_experiments, self.n_vars), columns=self.vars)
-        jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)
+        jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)  # type: ignore
         return np.swapaxes(jacobians, 1, 2)
 
+    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
+        return self.model.get_model_matrix(design)
 
-class DOptimality(Objective):
+
+class DOptimality(ModelBasedObjective):
     """A class implementing the evaluation of logdet(X.T@X + delta) and its jacobian w.r.t. the inputs.
     The Jacobian can be divided into two parts, one for logdet(X.T@ + delta) w.r.t. X (there is a simple
     closed expression for this one) and one model dependent part for the jacobian of X.T@X
     w.r.t. the inputs. Because each row of X only depends on the inputs of one experiment
     the second part can be formulated in a simplified way. It is built up with n_experiment
-    blocks of the same structure which is represended by the attribute jacobian_building_block.
+    blocks of the same structure which is represented by the attribute jacobian_building_block.
 
     A nice derivation for the "first part" of the jacobian can be found [here](https://angms.science/doc/LA/logdet.pdf).
     The second part consists of the partial derivatives of the model terms with
@@ -158,7 +208,7 @@ class DOptimality(Objective):
     default_jacobian_building_block implements the computation of these matrices/"building blocks".
 
     Then, we notice that the model term values of the j-th experiment only depend on the input values of
-    the j-th experiment. Thus, to compute the partial derivative df/dx_ik we only have to compute the euclidian
+    the j-th experiment. Thus, to compute the partial derivative df/dx_ik we only have to compute the euclidean
     scalar product of (K_kij)_j and (df/dy_jk)_j. The way how we built the two parts of the jacobian allows us
     to compute this scalar product in a vectorized way for all x_ik at once, see also JacobianForLogDet.jacobian.
     """
@@ -194,8 +244,8 @@ class DOptimality(Objective):
         return float(
             -1
             * torch.logdet(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
-            )
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -207,6 +257,7 @@ class DOptimality(Objective):
 
         Returns:
             The jacobian of -log(det(X.T@X+delta)) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
@@ -215,7 +266,9 @@ class DOptimality(Objective):
         torch.logdet(X.T @ X + self.delta * torch.eye(self.n_model_terms)).backward()
         J1 = -1 * X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -228,7 +281,7 @@ class DOptimality(Objective):
         return J.flatten()
 
 
-class AOptimality(Objective):
+class AOptimality(ModelBasedObjective):
     """A class implementing the evaluation of tr((X.T@X + delta)^-1) and its jacobian w.r.t. the inputs.
     The jacobian evaluation is done analogously to DOptimality with the first part of the jacobian being
     the jacobian of tr((X.T@X + delta)^-1) instead of logdet(X.T@X + delta).
@@ -250,9 +303,9 @@ class AOptimality(Objective):
             torch.trace(
                 torch.linalg.inv(
                     X.detach().T @ X.detach()
-                    + self.delta * torch.eye(self.n_model_terms)
-                )
-            )
+                    + self.delta * torch.eye(self.n_model_terms),
+                ),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -264,17 +317,20 @@ class AOptimality(Objective):
 
         Returns:
             The jacobian of tr((X.T@X+delta)^-1) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
 
         # first part of jacobian
         torch.trace(
-            torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+            torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms)),
         ).backward()
         J1 = X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -287,7 +343,7 @@ class AOptimality(Objective):
         return J.flatten()
 
 
-class GOptimality(Objective):
+class GOptimality(ModelBasedObjective):
     """A class implementing the evaluation of max(diag(H)) and its jacobian w.r.t. the inputs where
     H = X @ (X.T@X + delta)^-1 @ X.T is the (regularized) hat matrix. The jacobian evaluation is done analogously
     to DOptimality with the first part of the jacobian being the jacobian of max(diag(H)) instead of
@@ -309,7 +365,7 @@ class GOptimality(Objective):
         H = (
             X.detach()
             @ torch.linalg.inv(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
             )
             @ X.detach().T
         )
@@ -324,6 +380,7 @@ class GOptimality(Objective):
 
         Returns:
             The jacobian of max(diag(H)) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
@@ -333,12 +390,14 @@ class GOptimality(Objective):
             torch.diag(
                 X
                 @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
-                @ X.T
-            )
+                @ X.T,
+            ),
         ).backward()
         J1 = X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -351,7 +410,7 @@ class GOptimality(Objective):
         return J.flatten()
 
 
-class EOptimality(Objective):
+class EOptimality(ModelBasedObjective):
     """A class implementing the evaluation of minus one times the minimum eigenvalue of (X.T @ X + delta)
     and its jacobian w.r.t. the inputs. The jacobian evaluation is done analogously to DOptimality with the
     first part of the jacobian being the jacobian of the smallest eigenvalue of (X.T @ X + delta) instead of
@@ -367,15 +426,16 @@ class EOptimality(Objective):
 
         Returns:
             min(eigvals(X.T @ X + delta))
+
         """
         X = self._convert_input_to_model_tensor(x, requires_grad=False)
         return -1 * float(
             torch.min(
                 torch.linalg.eigvalsh(
                     X.detach().T @ X.detach()
-                    + self.delta * torch.eye(self.n_model_terms)
-                )
-            )
+                    + self.delta * torch.eye(self.n_model_terms),
+                ),
+            ),
         )
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -387,17 +447,20 @@ class EOptimality(Objective):
 
         Returns:
             The jacobian of -1 * min(eigvals(X.T @ X + delta)) as numpy array
+
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
 
         # first part of jacobian
         torch.min(
-            torch.linalg.eigvalsh(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+            torch.linalg.eigvalsh(X.T @ X + self.delta * torch.eye(self.n_model_terms)),
         ).backward()
         J1 = -1 * X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
         )
 
         # second part of jacobian
@@ -410,86 +473,10 @@ class EOptimality(Objective):
         return J.flatten()
 
 
-class KOptimality(Objective):
-    """A class implementing the evaluation of the condition number of (X.T @ X + delta)
-    and its jacobian w.r.t. the inputs. The jacobian evaluation is done analogously to
-    DOptimality with the first part of the jacobian being the jacobian of condition number
-    of (X.T @ X + delta) instead of logdet(X.T@X + delta).
+class IOptimality(ModelBasedObjective):
+    """A class implementing the evaluation of I-criterion and its jacobian w.r.t.
+    the inputs.
     """
-
-    def _evaluate(self, x: np.ndarray) -> float:
-        """Computes condition number of (X.T@X + delta).
-        Where X is the model matrix corresponding to x.
-
-        Args:
-            x (np.ndarray): values of design variables a 1d array.
-
-        Returns:
-            cond(X.T @ X + delta)
-        """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
-        return float(
-            torch.linalg.cond(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
-            )
-        )
-
-    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
-        """Computes the jacobian of the condition number of (X.T @ X + delta).
-        Where X is the model matrix corresponding to x.
-
-        Args:
-            x (np.ndarray): values of design variables a 1d array.
-
-        Returns:
-            The jacobian of cond(X.T @ X + delta) as numpy array
-        """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
-
-        # first part of jacobian
-        torch.linalg.cond(
-            X.T @ X + self.delta * torch.eye(self.n_model_terms)
-        ).backward()
-        J1 = X.grad.detach().numpy()  # type: ignore
-        J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
-        )
-
-        # second part of jacobian
-        J2 = self._model_jacobian_t(x)
-
-        # combine both parts
-        J = J1 * J2
-        J = np.sum(J, axis=-1)
-
-        return J.flatten()
-
-
-class SpaceFilling(Objective):
-    def _evaluate(self, x: np.ndarray) -> float:
-        X = self._convert_input_to_tensor(x, requires_grad=False)
-        return float(
-            -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments])
-        )
-
-    def _evaluate_jacobian(self, x: np.ndarray) -> float:
-        X = self._convert_input_to_tensor(x, requires_grad=True)
-        torch.sum(torch.sort(torch.pdist(X))[0][: self.n_experiments]).backward()
-
-        return -X.grad.detach().numpy().flatten()  # type: ignore
-
-    def _convert_input_to_tensor(
-        self, x: np.ndarray, requires_grad: bool = True
-    ) -> Tensor:
-        X = pd.DataFrame(
-            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
-        )
-        return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
-
-
-class IOptimality(Objective):
-    """A class implementing the evaluation of I-criterion and its jacobian w.r.t. the inputs."""
 
     def __init__(
         self,
@@ -498,7 +485,7 @@ class IOptimality(Objective):
         n_experiments: int,
         delta: float = 1e-6,
         transform_range: Optional[Bounds] = None,
-        n_space: Optional[int] = None,
+        n_space_filling_points: Optional[int] = None,
         ipopt_options: Optional[dict] = None,
     ) -> None:
         """
@@ -508,10 +495,9 @@ class IOptimality(Objective):
             n_experiments (int): Number of experiments
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
             transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
-            n_space (int, optional): Number of space filling points. If none is provided,
-                n_space = n_experiments is assumed. Only relevant if SpaceFilling is used
+            n_space_filling_points (int, optional): Number of space filling points. Only relevant if SpaceFilling is used
                 to fill the feasible space, i.e. in presence of equality constraints.
-                Otherwise a uniform grid is generated. If None is provided, n_space = 10 * n_experiments is assumed.
+                Otherwise a uniform grid is generated. If None is provided, n_space_filling_points = 10 * n_experiments is assumed.
                 Default is None.
             ipopt_options (dict, optional): Options for the Ipopt solver to generate space filling point.
                 If None is provided, the default options (maxiter = 500) are used.
@@ -536,46 +522,44 @@ class IOptimality(Objective):
                 "Equality constraints were detected. No equidistant grid of points can be generated. The design space will be filled via SpaceFilling.",
                 UserWarning,
             )
-            if n_space is None:
-                n_space = n_experiments * 10
+            if n_space_filling_points is None:
+                n_space_filling_points = n_experiments * 10
 
-            print(
-                f"Filling the design space for the I-optimality criterion with {n_space} points..."
-            )
             x0 = (
-                domain.inputs.sample(n=n_space, method=SamplingMethodEnum.UNIFORM)
+                domain.inputs.sample(
+                    n=n_space_filling_points, method=SamplingMethodEnum.UNIFORM
+                )
                 .to_numpy()
                 .flatten()
             )
             objective = SpaceFilling(
-                domain, model, n_space, delta, transform_range=None
+                domain=domain,
+                n_experiments=n_space_filling_points,
+                delta=delta,
+                transform_range=None,
             )
             constraints = constraints_as_scipy_constraints(
-                domain, n_space, ignore_nchoosek=True
+                domain, n_space_filling_points, ignore_nchoosek=True
             )
-            bounds = nchoosek_constraints_as_bounds(domain, n_space)
-            if ipopt_options is None:
-                ipopt_options = {}
-            _ipopt_options = {"maxiter": 500, "disp": 0}
-            for key in ipopt_options.keys():
-                _ipopt_options[key] = ipopt_options[key]
-            if _ipopt_options["disp"] > 12:
-                _ipopt_options["disp"] = 0
+            bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
 
             result = minimize_ipopt(
                 objective.evaluate,
                 x0=x0,
                 bounds=bounds,
                 constraints=standardize_constraints(constraints, x0, "SLSQP"),
-                options=_ipopt_options,
+                options=ipopt_options
+                if ipopt_options is not None
+                else {"maxiter": 500, "disp": 0},
                 jac=objective.evaluate_jacobian,
             )
 
-            design = pd.DataFrame(
-                result["x"].reshape(n_space, len(domain.inputs)),
+            self.Y = pd.DataFrame(
+                result["x"].reshape(n_space_filling_points, len(domain.inputs)),
                 columns=domain.inputs.get_keys(),
-                index=[f"exp{i}" for i in range(n_space)],
+                index=[f"gridpoint{i}" for i in range(n_space_filling_points)],
             )
+
         else:
             low, high = domain.inputs.get_bounds(specs={})
             points = [
@@ -599,17 +583,14 @@ class IOptimality(Objective):
                     ]
                 )
                 fulfilled = np.array(np.prod(fulfilled, axis=0), dtype=bool)
-                design = points[fulfilled]
+                self.Y = points[fulfilled]
             else:
-                design = points
-            n_space = len(design)
-            print(
-                f"Filling the design space with {len(design)} equally spaced grid points."
-            )
+                self.Y = points
+            n_space_filling_points = len(self.Y)
 
         try:
             domain.validate_candidates(
-                candidates=design.apply(lambda x: np.round(x, 8)),
+                candidates=self.Y.apply(lambda x: np.round(x, 8)),
                 only_inputs=True,
                 tol=1e-4,
             )
@@ -620,28 +601,18 @@ class IOptimality(Objective):
                 UserWarning,
             )
 
-        model_formula = get_formula_from_string(
-            model_type=model, rhs_only=True, domain=domain
-        )
-        X = model_formula.get_model_matrix(design).to_numpy()
-        self.space_filling_design = design
-
-        self.YtY = torch.from_numpy(X.T @ X) / n_space
+        X = model.get_model_matrix(self.Y).to_numpy()
+        self.YtY = torch.from_numpy(X.T @ X) / n_space_filling_points
         self.YtY.requires_grad = False
-
-        print("Done!")
 
     def _evaluate(self, x: np.ndarray) -> float:
         """Computes trace((Y.T@Y) / nY @ inv(X.T@X + delta)).
         Where X is the model matrix corresponding to x, Y is the model matrix of points
         uniformly filling up the feasible space and nY is the number of such points.
-
         Args:
             x (np.ndarray): values of design variables a 1d array.
-
         Returns:
             trace((Y.T@Y) / nY @ inv(X.T@X + delta))
-
         """
         X = self._convert_input_to_model_tensor(x, requires_grad=False)
         return float(
@@ -656,13 +627,10 @@ class IOptimality(Objective):
 
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the jacobian of trace((Y.T@Y) / nY @ inv(X.T@X + delta)).
-
         Args:
             x (np.ndarray): values of design variables a 1d array.
-
         Returns:
             The jacobian of trace((Y.T@Y) / nY @ inv(X.T@X + delta))
-
         """
         # get model matrix X
         X = self._convert_input_to_model_tensor(x, requires_grad=True)
@@ -687,20 +655,157 @@ class IOptimality(Objective):
         return J.flatten()
 
 
-def get_objective_class(objective: OptimalityCriterionEnum) -> Type:
-    objective = OptimalityCriterionEnum(objective)
+class KOptimality(ModelBasedObjective):
+    """A class implementing the evaluation of the condition number of (X.T @ X + delta)
+    and its jacobian w.r.t. the inputs. The jacobian evaluation is done analogously to
+    DOptimality with the first part of the jacobian being the jacobian of condition number
+    of (X.T @ X + delta) instead of logdet(X.T@X + delta).
+    """
 
-    if objective == OptimalityCriterionEnum.D_OPTIMALITY:
-        return DOptimality
-    elif objective == OptimalityCriterionEnum.A_OPTIMALITY:
-        return AOptimality
-    elif objective == OptimalityCriterionEnum.G_OPTIMALITY:
-        return GOptimality
-    elif objective == OptimalityCriterionEnum.E_OPTIMALITY:
-        return EOptimality
-    elif objective == OptimalityCriterionEnum.K_OPTIMALITY:
-        return KOptimality
-    elif objective == OptimalityCriterionEnum.SPACE_FILLING:
-        return SpaceFilling
-    elif objective == OptimalityCriterionEnum.I_OPTIMALITY:
-        return IOptimality
+    def _evaluate(self, x: np.ndarray) -> float:
+        """Computes condition number of (X.T@X + delta).
+        Where X is the model matrix corresponding to x.
+
+        Args:
+            x (np.ndarray): values of design variables a 1d array.
+
+        Returns:
+            cond(X.T @ X + delta)
+
+        """
+        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        return float(
+            torch.linalg.cond(
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
+            ),
+        )
+
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+        """Computes the jacobian of the condition number of (X.T @ X + delta).
+        Where X is the model matrix corresponding to x.
+
+        Args:
+            x (np.ndarray): values of design variables a 1d array.
+
+        Returns:
+            The jacobian of cond(X.T @ X + delta) as numpy array
+
+        """
+        # get model matrix X
+        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+
+        # first part of jacobian
+        torch.linalg.cond(
+            X.T @ X + self.delta * torch.eye(self.n_model_terms),
+        ).backward()
+        J1 = X.grad.detach().numpy()  # type: ignore
+        J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
+            self.n_experiments,
+            self.n_vars,
+            self.n_model_terms,
+        )
+
+        # second part of jacobian
+        J2 = self._model_jacobian_t(x)
+
+        # combine both parts
+        J = J1 * J2
+        J = np.sum(J, axis=-1)
+
+        return J.flatten()
+
+
+class SpaceFilling(Objective):
+    def _evaluate(self, x: np.ndarray) -> float:
+        X = self._convert_input_to_tensor(x, requires_grad=False)
+        return float(
+            -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments]),
+        )
+
+    def _evaluate_jacobian(self, x: np.ndarray) -> float:  # type: ignore
+        X = self._convert_input_to_tensor(x, requires_grad=True)
+        torch.sum(torch.sort(torch.pdist(X))[0][: self.n_experiments]).backward()
+
+        return -X.grad.detach().numpy().flatten()  # type: ignore
+
+    def _convert_input_to_tensor(
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
+    ) -> Tensor:
+        X = pd.DataFrame(
+            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            columns=self.vars,
+        )
+        return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
+
+
+def get_objective_function(
+    criterion: Optional[OptimalityCriterion], domain: Domain, n_experiments: int
+) -> Optional[Objective]:
+    if criterion is None:
+        return DOptimality(
+            domain,
+            model=get_formula_from_string(domain=domain),
+            n_experiments=n_experiments,
+        )
+    if isinstance(criterion, DoEOptimalityCriterion):
+        if isinstance(criterion, DOptimalityCriterion):
+            return DOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, AOptimalityCriterion):
+            return AOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, GOptimalityCriterion):
+            return GOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, EOptimalityCriterion):
+            return EOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, KOptimalityCriterion):
+            return KOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, IOptimalityCriterion):
+            return IOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+                n_space_filling_points=criterion.n_space_filling_points,
+                ipopt_options=criterion.ipopt_options,
+            )
+    if isinstance(criterion, SpaceFillingCriterion):
+        return SpaceFilling(
+            domain,
+            n_experiments=n_experiments,
+            delta=criterion.delta,
+            transform_range=criterion.transform_range,
+        )
+    else:
+        raise NotImplementedError("Criterion type not implemented!")

@@ -28,6 +28,7 @@ from bofire.surrogates.utils import (
 )
 from bofire.utils.torch_tools import tkwargs
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
@@ -36,7 +37,7 @@ def test_get_scaler_none():
         features=[
             CategoricalInput(key="x_cat", categories=["mama", "papa"]),
             CategoricalInput(key="x_desc", categories=["alpha", "beta"]),
-        ]
+        ],
     )
     scaler = get_scaler(
         inputs=inputs,
@@ -145,7 +146,7 @@ def test_get_scaler(
                 descriptors=["oskar"],
                 values=[[1], [6]],
             ),
-        ]
+        ],
     )
     experiments = inputs.sample(n=10)
     scaler = get_scaler(
@@ -163,12 +164,11 @@ def test_get_scaler(
     if expected_offset is not None:
         assert torch.allclose(scaler.offset, expected_offset)
         assert torch.allclose(scaler.coefficient, expected_coefficient)
-    else:
-        if scaler is None:
-            with pytest.raises(AttributeError):
-                assert (scaler.offset == expected_offset).all()
-            with pytest.raises(AttributeError):
-                assert (scaler.coefficient == expected_coefficient).all()
+    elif scaler is None:
+        with pytest.raises(AttributeError):
+            assert (scaler.offset == expected_offset).all()
+        with pytest.raises(AttributeError):
+            assert (scaler.coefficient == expected_coefficient).all()
 
 
 @pytest.mark.parametrize(
@@ -238,7 +238,7 @@ def test_get_scaler_molecular(
             )
             for i in range(2)
         ]
-        + [MolecularInput(key="x_mol")]
+        + [MolecularInput(key="x_mol")],
     )
     experiments = [
         [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O"],
@@ -258,7 +258,8 @@ def test_get_scaler_molecular(
         assert (scaler.indices == expected_indices).all()
     else:
         with pytest.raises(
-            AttributeError, match="'NoneType' object has no attribute 'indices'"
+            AttributeError,
+            match="'NoneType' object has no attribute 'indices'",
         ):
             assert (scaler.indices == expected_indices).all()
 
@@ -346,7 +347,7 @@ def test_get_feature_keys(
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
             MolecularInput(key="x4"),
-        ]
+        ],
     )
     molecular_feature_keys = get_molecular_feature_keys(specs)
     continuous_feature_keys = get_continuous_feature_keys(inps, specs)

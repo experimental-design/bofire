@@ -14,6 +14,10 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.surrogates.api import XGBoostSurrogate
 
+
+pytest.importorskip("xgboost")
+
+
 XGB_AVAILABLE = importlib.util.find_spec("xgboost") is not None
 
 
@@ -22,9 +26,10 @@ def test_XGBoostSurrogate():
     benchmark = Himmelblau()
     samples = benchmark.domain.inputs.sample(10)
     experiments = benchmark.f(samples, return_complete=True)
-    #
     data_model = XGBoostSurrogate(
-        inputs=benchmark.domain.inputs, outputs=benchmark.domain.outputs, n_estimators=2
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
+        n_estimators=2,
     )
     surrogate = surrogates.map(data_model)
     assert isinstance(surrogate, surrogates.XGBoostSurrogate)
@@ -54,7 +59,7 @@ def test_XGBoostSurrogate_categorical():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -64,7 +69,7 @@ def test_XGBoostSurrogate_categorical():
     experiments["valid_y"] = 1
     data_model = XGBoostSurrogate(inputs=inputs, outputs=outputs, n_estimators=2)
     assert data_model.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ONE_HOT
+        "x_cat": CategoricalEncodingEnum.ONE_HOT,
     }
     surrogate = surrogates.map(data_model)
     surrogate.fit(experiments)

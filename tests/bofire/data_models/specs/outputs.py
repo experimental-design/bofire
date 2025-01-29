@@ -7,6 +7,7 @@ from bofire.data_models.features.api import (
 from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(
@@ -50,7 +51,8 @@ specs.add_invalid(
                 key="b",
                 categories=["a", "b"],
                 objective=ConstrainedCategoricalObjective(
-                    categories=["c", "d"], desirability=[True, True]
+                    categories=["c", "d"],
+                    desirability=[True, True],
                 ),
             ),
         ],

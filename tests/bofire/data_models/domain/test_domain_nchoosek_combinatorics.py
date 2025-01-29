@@ -13,27 +13,43 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 
+
 # NChooseKConstraint constraints 1
 cc1a = NChooseKConstraint(
-    features=["0", "1", "2", "3"], min_count=2, max_count=3, none_also_valid=True
+    features=["0", "1", "2", "3"],
+    min_count=2,
+    max_count=3,
+    none_also_valid=True,
 )
 cc2a = NChooseKConstraint(
-    features=["2", "3", "4", "5"], min_count=1, max_count=2, none_also_valid=True
+    features=["2", "3", "4", "5"],
+    min_count=1,
+    max_count=2,
+    none_also_valid=True,
 )
 
 # NChooseKConstraint constraints 2
 cc1b = NChooseKConstraint(
-    features=["0", "1", "2", "3"], min_count=2, max_count=3, none_also_valid=False
+    features=["0", "1", "2", "3"],
+    min_count=2,
+    max_count=3,
+    none_also_valid=False,
 )
 cc2b = NChooseKConstraint(
-    features=["2", "3", "4", "5"], min_count=1, max_count=2, none_also_valid=True
+    features=["2", "3", "4", "5"],
+    min_count=1,
+    max_count=2,
+    none_also_valid=True,
 )
 
 # NChooseKConstraint constraint 3
 cc3 = [
     NChooseKConstraint(
-        features=["0", "1", "2", "3"], min_count=2, max_count=3, none_also_valid=True
-    )
+        features=["0", "1", "2", "3"],
+        min_count=2,
+        max_count=3,
+        none_also_valid=True,
+    ),
 ]
 
 # input features
@@ -42,7 +58,8 @@ for i in range(6):
     f = ContinuousInput(key=str(i), bounds=(0, 1))
     continuous_inputs.append(f)
 categorical_feature = CategoricalInput(
-    key="categorical_feature", categories=["c1", "c2"]
+    key="categorical_feature",
+    categories=["c1", "c2"],
 )
 categorical_descriptor_feature = CategoricalDescriptorInput(
     key="categorical_descriptor_feature",
@@ -134,7 +151,8 @@ for used in test_features_used_2:
 
 # experiments
 experiments = pd.DataFrame(
-    np.random.uniform(size=(24, 7)), columns=["0", "1", "2", "3", "4", "5", "y"]
+    np.random.uniform(size=(24, 7)),
+    columns=["0", "1", "2", "3", "4", "5", "y"],
 )
 experiments["categorical_feature"] = ["c1"] * 12 + ["c2"] * 12
 experiments["categorical_descriptor_feature"] = (["cd1"] * 6 + ["cd2"] * 6) * 2
@@ -193,7 +211,7 @@ def test_nchoosek_combinations_completeness(test_case):
 def test_nchoosek_combinations_nonexhaustive():
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(6)]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(6)],
         ),
         constraints=Constraints(
             constraints=[
@@ -202,8 +220,8 @@ def test_nchoosek_combinations_nonexhaustive():
                     min_count=0,
                     max_count=2,
                     none_also_valid=True,
-                )
-            ]
+                ),
+            ],
         ),
     )
     used, unused = domain.get_nchoosek_combinations(exhaustive=False)

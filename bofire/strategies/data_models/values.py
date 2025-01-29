@@ -1,5 +1,6 @@
+from typing import Annotated
+
 from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
@@ -9,6 +10,7 @@ class InputValue(BaseModel):
 
     Attributes:
         value (Union[float, str, int]): The input value.
+
     """
 
     value: str
@@ -21,6 +23,7 @@ class OutputValue(BaseModel):
         predictedValue (Value): The predicted value.
         standardDeviation (float): Standard deviation, has to be zero or larger.
         objective (float): The objective value.
+
     """
 
     predictedValue: str

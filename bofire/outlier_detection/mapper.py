@@ -6,6 +6,7 @@ from bofire.outlier_detection.outlier_detection import (
     OutlierDetection,
 )
 
+
 OUTLIER_MAP: Dict[Type[data_models.OutlierDetection], Type[OutlierDetection]] = {
     data_models.IterativeTrimming: IterativeTrimming,
 }

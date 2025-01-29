@@ -2,10 +2,7 @@ import importlib
 
 import pytest
 from botorch.models import MultiTaskGP
-from botorch.models.transforms.input import (
-    InputStandardize,
-    Normalize,
-)
+from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
 
@@ -19,21 +16,16 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     TaskInput,
 )
-from bofire.data_models.kernels.api import (
-    MaternKernel,
-    RBFKernel,
-)
+from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
     LKJ_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
 )
-from bofire.data_models.surrogates.api import (
-    MultiTaskGPSurrogate,
-    ScalerEnum,
-)
+from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
+
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
@@ -49,11 +41,12 @@ def test_MultiTaskGPHyperconfig():
 
     with pytest.raises(ValueError, match="No hyperconfig available."):
         surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0]
+            benchmark.domain.inputs.sample(1).loc[0],
         )
     # test that correct stuff is written
     surrogate_data = MultiTaskGPSurrogate(
-        inputs=benchmark.domain.inputs, outputs=benchmark.domain.outputs
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
     )
     candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
     surrogate_data.update_hyperparameters(candidate)
@@ -71,27 +64,27 @@ def test_MultiTaskGPHyperconfig():
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         assert surrogate_data.kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
     else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == BOTORCH_LENGTHCALE_PRIOR()
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert surrogate_data.kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
 
 
 def test_MultiTask_input_preprocessing():
     # test that if no input_preprocessing_specs are provided, the ordinal encoding is used
     inputs = Inputs(
         features=[ContinuousInput(key="x", bounds=(-1, 1))]
-        + [TaskInput(key="task_id", categories=["1", "2"])]
+        + [TaskInput(key="task_id", categories=["1", "2"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs)
     assert data_model.input_preprocessing_specs == {
-        "task_id": CategoricalEncodingEnum.ORDINAL
+        "task_id": CategoricalEncodingEnum.ORDINAL,
     }
 
     # test that if we have a categorical input, one-hot encoding is correctly applied
     inputs = Inputs(
         features=[ContinuousInput(key="x", bounds=(-1, 1))]
         + [CategoricalInput(key="categories", categories=["1", "2"])]
-        + [TaskInput(key="task_id", categories=["1", "2"])]
+        + [TaskInput(key="task_id", categories=["1", "2"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(

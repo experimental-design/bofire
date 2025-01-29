@@ -52,16 +52,16 @@ class Detergent(Benchmark):
                 [0.8737, 8.7178, 0.0, 0.0, 0.0],
                 [0.0, 2.6651, 2.3495, 0.046, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 0.0],
-            ]
+            ],
         )
 
         self._domain = Domain.from_lists(
             inputs=[
-                ContinuousInput(key="x1", bounds=(0.0, 0.2)),
-                ContinuousInput(key="x2", bounds=(0.0, 0.3)),
-                ContinuousInput(key="x3", bounds=(0.02, 0.2)),
-                ContinuousInput(key="x4", bounds=(0.0, 0.06)),
-                ContinuousInput(key="x5", bounds=(0.0, 0.04)),
+                ContinuousInput(key="x1", bounds=[0.0, 0.2]),
+                ContinuousInput(key="x2", bounds=[0.0, 0.3]),
+                ContinuousInput(key="x3", bounds=[0.02, 0.2]),
+                ContinuousInput(key="x4", bounds=[0.0, 0.06]),
+                ContinuousInput(key="x5", bounds=[0.0, 0.04]),
             ],
             outputs=[ContinuousOutput(key=f"y{i+1}") for i in range(5)],
             constraints=[
@@ -78,9 +78,11 @@ class Detergent(Benchmark):
             ],
         )
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         x = np.atleast_2d(X[self.domain.inputs.get_keys()])
         xp = np.stack([_poly2(xi) for xi in x], axis=0)
         return pd.DataFrame(
-            xp @ self.coef, columns=self.domain.outputs.get_keys(), index=X.index
+            xp @ self.coef,
+            columns=self.domain.outputs.get_keys(),
+            index=X.index,
         )

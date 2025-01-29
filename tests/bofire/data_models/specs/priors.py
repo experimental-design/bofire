@@ -5,6 +5,7 @@ from pydantic.error_wrappers import ValidationError
 import bofire.data_models.priors.api as priors
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(
@@ -18,9 +19,9 @@ specs.add_valid(
 for scale in [-1.0, 0.0]:
     specs.add_invalid(
         priors.NormalPrior,
-        lambda: {
+        lambda scale=scale: {
             "loc": random.random(),
-            "scale": scale,  # noqa: B023
+            "scale": scale,
         },
         error=ValidationError,
     )
@@ -37,9 +38,9 @@ for rate in [-1.0, 0]:
     for concentration in [-5, 6]:
         specs.add_invalid(
             priors.GammaPrior,
-            lambda: {
-                "concentration": concentration,  # noqa: B023
-                "rate": rate,  # noqa: B023
+            lambda concentration=concentration, rate=rate: {
+                "concentration": concentration,
+                "rate": rate,
             },
             error=ValidationError,
         )
@@ -60,9 +61,9 @@ specs.add_valid(
 for shape in [-1, 0]:
     specs.add_invalid(
         priors.LKJPrior,
-        lambda: {
+        lambda shape=shape: {
             "n_tasks": random.randint(1, 10),
-            "shape": shape,  # noqa: B023
+            "shape": shape,
             "sd_prior": {
                 "type": "GammaPrior",
                 "concentration": random.random(),
@@ -76,13 +77,13 @@ for concentration in [-1, 0]:
     for rate in [-1, 0]:
         specs.add_invalid(
             priors.LKJPrior,
-            lambda: {
+            lambda concentration=concentration, rate=rate: {
                 "n_tasks": random.randint(1, 10),
                 "shape": random.random(),
                 "sd_prior": {
                     "type": "GammaPrior",
-                    "concentration": concentration,  # noqa: B023
-                    "rate": rate,  # noqa: B023
+                    "concentration": concentration,
+                    "rate": rate,
                 },
             },
             error=ValidationError,
@@ -90,7 +91,8 @@ for concentration in [-1, 0]:
 
 
 specs.add_valid(
-    priors.LogNormalPrior, lambda: {"loc": random.random(), "scale": random.random()}
+    priors.LogNormalPrior,
+    lambda: {"loc": random.random(), "scale": random.random()},
 )
 
 

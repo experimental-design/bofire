@@ -12,18 +12,22 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Upgrade pip
-        run: python3 -m pip install --upgrade pip
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
 
       - name: Install dependencies
-        run: pip install .[optimization,cheminfo,docs]
+        run: uv pip install ".[optimization,cheminfo,docs]" --system
+
       - name: Build docs
         run: |
           ls -l docs/*

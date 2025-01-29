@@ -11,21 +11,15 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     TaskInput,
 )
-from bofire.data_models.kernels.api import (
-    AnyKernel,
-    MaternKernel,
-    RBFKernel,
-)
+from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
     AnyPrior,
 )
 from bofire.data_models.priors.lkj import LKJPrior
-
-# from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -35,20 +29,22 @@ class MultiTaskGPHyperconfig(Hyperconfig):
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
-                key="kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+                key="kernel",
+                categories=["rbf", "matern_1.5", "matern_2.5"],
             ),
             CategoricalInput(key="prior", categories=["mbo", "botorch"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
-        ]
+        ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal[
-        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FactorialStrategy"
+        "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
+    ] = "FractionalFactorialStrategy"
 
     @staticmethod
     def _update_hyperparameters(
-        surrogate_data: "MultiTaskGPSurrogate", hyperparameters: pd.Series
+        surrogate_data: "MultiTaskGPSurrogate",
+        hyperparameters: pd.Series,
     ):
         def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
             return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
@@ -60,22 +56,25 @@ class MultiTaskGPHyperconfig(Hyperconfig):
             noise_prior, lengthscale_prior = (MBO_NOISE_PRIOR(), MBO_LENGTHCALE_PRIOR())
         else:
             noise_prior, lengthscale_prior = (
-                BOTORCH_NOISE_PRIOR(),
-                BOTORCH_LENGTHCALE_PRIOR(),
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
             )
 
         surrogate_data.noise_prior = noise_prior
         if hyperparameters.kernel == "rbf":
             surrogate_data.kernel = RBFKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
         elif hyperparameters.kernel == "matern_2.5":
             surrogate_data.kernel = matern_25(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
         elif hyperparameters.kernel == "matern_1.5":
             surrogate_data.kernel = matern_15(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
@@ -87,13 +86,13 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: MaternKernel(
             ard=True,
             nu=2.5,
-            lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
+            lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
         )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
-        default_factory=lambda: MultiTaskGPHyperconfig()
+        default_factory=lambda: MultiTaskGPHyperconfig(),
     )
 
     @classmethod
@@ -109,7 +108,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     @field_validator("inputs")
     @classmethod
     def validate_task_inputs(cls, inputs: Inputs):
-
         if len(inputs.get_keys(TaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
         return inputs
@@ -129,7 +127,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             v[task_feature_id] = CategoricalEncodingEnum.ORDINAL
         elif v[task_feature_id] != CategoricalEncodingEnum.ORDINAL:
             raise ValueError(
-                f"The task feature {task_feature_id} has to be encoded as ordinal."
+                f"The task feature {task_feature_id} has to be encoded as ordinal.",
             )
 
         return v

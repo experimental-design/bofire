@@ -35,16 +35,18 @@ from bofire.utils.torch_tools import tkwargs
 
 
 class DTLZ2(Benchmark):
-    """Multiobjective bechmark function for testing optimization algorithms.
+    """Multiobjective benchmark function for testing optimization algorithms.
     Info about the function: https://pymoo.org/problems/many/dtlz.html
     """
 
     def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
-        """Initiallizes object of Type DTLZ2 which is a benchmark function.
+        """Initializes object of Type DTLZ2 which is a benchmark function.
 
         Args:
             dim (PositiveInt): Dimension of input vector
             num_objectives (PositiveInt, optional): Dimension of output vector. Defaults to 2.
+            **kwargs: Additional arguments for the Benchmark class.
+
         """
         super().__init__(**kwargs)
         self.num_objectives = num_objectives
@@ -52,12 +54,12 @@ class DTLZ2(Benchmark):
 
         inputs = []
         for i in range(self.dim):
-            inputs.append(ContinuousInput(key="x_%i" % (i), bounds=(0, 1)))
+            inputs.append(ContinuousInput(key="x_%i" % (i), bounds=[0, 1]))
         outputs = []
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
             outputs.append(
-                ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
+                ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0)),
             )
         domain = Domain(
             inputs=Inputs(features=inputs),
@@ -74,7 +76,7 @@ class DTLZ2(Benchmark):
         num_objectives = values["num_objectives"]
         if dim <= values["num_objectives"]:
             raise ValueError(
-                f"dim must be > num_objectives, but got {dim} and {num_objectives}."
+                f"dim must be > num_objectives, but got {dim} and {num_objectives}.",
             )
         return dim
 
@@ -98,10 +100,11 @@ class DTLZ2(Benchmark):
 
         Returns:
             pd.DataFrame: Function values in output vector. Columns are f0 and f1.
+
         """
-        X = candidates[self.domain.inputs.get_keys(Input)].values  # type: ignore
-        X_m = X[..., -self.k :]  # type: ignore
-        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)  # type: ignore
+        X = candidates[self.domain.inputs.get_keys(Input)].values
+        X_m = X[..., -self.k :]
+        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
         g_X_plus1 = 1 + g_X
         fs = []
         pi_over_2 = math.pi / 2
@@ -114,15 +117,15 @@ class DTLZ2(Benchmark):
             fs.append(f_i)
 
         col_names = self.domain.outputs.get_keys_by_objective(
-            includes=MinimizeObjective
-        )  # type: ignore
+            includes=MinimizeObjective,
+        )
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
-                    includes=MinimizeObjective
+                for feat in self.domain.outputs.get_keys_by_objective(
+                    includes=MinimizeObjective,
                 )
             ]
         ] = 1
@@ -137,15 +140,15 @@ class BNH(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key="x1", bounds=(0, 5)),
-                    ContinuousInput(key="x2", bounds=(0, 3)),
-                ]
+                    ContinuousInput(key="x1", bounds=[0, 5]),
+                    ContinuousInput(key="x2", bounds=[0, 3]),
+                ],
             ),
             outputs=Outputs(
                 features=[
                     ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
                     ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
-                ]
+                ],
             ),
         )
         if self.constraints:
@@ -153,7 +156,7 @@ class BNH(Benchmark):
                 ContinuousOutput(
                     key="c1",
                     objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
-                )
+                ),
             )
             self._domain.outputs.features.append(  # type: ignore
                 ContinuousOutput(
@@ -184,9 +187,9 @@ class TNK(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key="x1", bounds=(0, math.pi)),
-                    ContinuousInput(key="x2", bounds=(0, math.pi)),
-                ]
+                    ContinuousInput(key="x1", bounds=[0, math.pi]),
+                    ContinuousInput(key="x2", bounds=[0, math.pi]),
+                ],
             ),
             outputs=Outputs(
                 features=[
@@ -200,7 +203,7 @@ class TNK(Benchmark):
                         key="c2",
                         objective=MinimizeSigmoidObjective(tp=0.5, steepness=500),
                     ),
-                ]
+                ],
             ),
         )
 
@@ -208,7 +211,8 @@ class TNK(Benchmark):
         experiments = candidates.eval("f1=x1", inplace=False)
         experiments = experiments.eval("f2=x2", inplace=False)
         experiments = experiments.eval(
-            "c1=x1**2 + x2**2 -1 -0.1*cos(16*arctan(x1/x2))", inplace=False
+            "c1=x1**2 + x2**2 -1 -0.1*cos(16*arctan(x1/x2))",
+            inplace=False,
         )
         experiments = experiments.eval("c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False)
         experiments["valid_c1"] = 1
@@ -232,7 +236,7 @@ class C2DTLZ2(DTLZ2):
             ContinuousOutput(
                 key="slack",
                 objective=MaximizeSigmoidObjective(w=1.0, tp=0, steepness=1.0 / 1e-3),
-            )
+            ),
         )
 
     @property
@@ -249,7 +253,7 @@ class C2DTLZ2(DTLZ2):
         )
         term1 = (f_X - 1).pow(2)
         mask = ~(torch.eye(f_X.shape[-1], device=f_X.device).bool())
-        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)  # type: ignore
+        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)
         indexer = indices[mask].view(f_X.shape[1], f_X.shape[-1] - 1)
         term2_inner = (
             f_X.unsqueeze(1)
@@ -260,7 +264,8 @@ class C2DTLZ2(DTLZ2):
         min1 = (term1 + term2).min(dim=-1).values
         min2 = ((f_X - 1 / math.sqrt(f_X.shape[-1])).pow(2) - r**2).sum(dim=-1)
         slack = pd.Series(
-            -torch.min(min1, min2).unsqueeze(-1).squeeze().numpy(), name="slack"
+            -torch.min(min1, min2).unsqueeze(-1).squeeze().numpy(),
+            name="slack",
         )
         Y = pd.concat([Y, slack], axis=1)
         Y["valid_slack"] = 1
@@ -269,7 +274,7 @@ class C2DTLZ2(DTLZ2):
 
 class SnarBenchmark(Benchmark):
     """Nucleophilic aromatic substitution problem as a multiobjective test function for optimization algorithms.
-    Solving of a differential equation system with varying intitial values.
+    Solving of a differential equation system with varying initial values.
     """
 
     def __init__(self, C_i: Optional[np.ndarray] = None, **kwargs):
@@ -277,6 +282,8 @@ class SnarBenchmark(Benchmark):
 
         Args:
             C_i (Optional[np.ndarray]): Input concentrations. Defaults to [1, 1]
+            **kwargs: Additional arguments for the Benchmark class.
+
         """
         super().__init__(**kwargs)
         if C_i is None:
@@ -286,13 +293,13 @@ class SnarBenchmark(Benchmark):
         # Decision variables
         # "residence time in minutes"
         inputs = [
-            ContinuousInput(key="tau", bounds=(0.5, 2)),
+            ContinuousInput(key="tau", bounds=[0.5, 2]),
             # "equivalents of pyrrolidine"
-            ContinuousInput(key="equiv_pldn", bounds=(1, 5)),
+            ContinuousInput(key="equiv_pldn", bounds=[1, 5]),
             # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
-            ContinuousInput(key="conc_dfnb", bounds=(0.1, 0.5)),
-            # "Reactor temperature in degress celsius"
-            ContinuousInput(key="temperature", bounds=(30, 120)),
+            ContinuousInput(key="conc_dfnb", bounds=[0.1, 0.5]),
+            # "Reactor temperature in degrees celsius"
+            ContinuousInput(key="temperature", bounds=[30, 120]),
         ]
         # Objectives
         # "space time yield (kg/m^3/h)"
@@ -322,6 +329,7 @@ class SnarBenchmark(Benchmark):
 
         Returns:
             pd.DataFrame: Output vector. Columns: sty, e_factor
+
         """
         stys = []
         e_factors = []
@@ -341,9 +349,7 @@ class SnarBenchmark(Benchmark):
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
-                    excludes=None
-                )
+                for feat in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
         ] = 1
         return Y
@@ -378,8 +384,7 @@ class SnarBenchmark(Benchmark):
         # Calculate STY and E-factor
         M = [159.09, 71.12, 210.21, 210.21, 261.33]  # molecular weights (g/mol)
         sty = 6e4 / 1000 * M[2] * C_final[2] * q_tot / V  # convert to kg m^-3 h^-1
-        if sty < 1e-6:
-            sty = 1e-6
+        sty = max(sty, 1e-6)
         rho_eth = 0.789  # g/mL (should adjust to temp, but just using @ 25C)
         term_2 = 1e-3 * sum([M[i] * C_final[i] * q_tot for i in range(5) if i != 2])
         if np.isclose(C_final[2], 0.0):
@@ -387,8 +392,7 @@ class SnarBenchmark(Benchmark):
             e_factor = 1e3
         else:
             e_factor = (q_tot * rho_eth + term_2) / (1e-3 * M[2] * C_final[2] * q_tot)
-        if e_factor > 1e3:
-            e_factor = 1e3
+        e_factor = min(e_factor, 1e3)
 
         return sty, e_factor, {}
 
@@ -410,7 +414,7 @@ class SnarBenchmark(Benchmark):
         # Reaction Rates
         r = np.zeros(5)
         for i in [0, 1]:  # Set to reactants when close
-            C[i] = 0 if C[i] < 1e-6 * self.C_i[i] else C[i]  # type: ignore
+            C[i] = 0 if C[i] < 1e-6 * self.C_i[i] else C[i]
         r[0] = -(k_a + k_b) * C[0] * C[1]
         r[1] = -(k_a + k_b) * C[0] * C[1] - k_c * C[1] * C[2] - k_d * C[1] * C[3]
         r[2] = k_a * C[0] * C[1] - k_c * C[1] * C[2]
@@ -432,11 +436,13 @@ class ZDT1(Benchmark):
 
         Args:
             n_inputs (int, optional): Number of inputs. Defaults to 30.
+            **kwargs: Additional arguments for the Benchmark class.
+
         """
         super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(n_inputs)
+            ContinuousInput(key=f"x{i+1}", bounds=[0, 1]) for i in range(n_inputs)
         ]
         inputs = Inputs(features=inputs)
         outputs = [
@@ -447,7 +453,7 @@ class ZDT1(Benchmark):
         self._domain = Domain(inputs=inputs, outputs=outputs)
         self.zdt = BotorchZDT1(dim=n_inputs)
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         """Function evaluation.
 
         Args:
@@ -455,11 +461,13 @@ class ZDT1(Benchmark):
 
         Returns:
             pd.DataFrame: Function values. Columns are y1, y2, valid_y1 and valid_y2.
+
         """
         Xt = torch.from_numpy(X.values).to(**tkwargs)
         Y = self.zdt(Xt).numpy()
         return pd.DataFrame(
-            {"y1": Y[:, 0], "y2": Y[:, 1], "valid_y1": 1, "valid_y2": 1}, index=X.index
+            {"y1": Y[:, 0], "y2": Y[:, 1], "valid_y1": 1, "valid_y2": 1},
+            index=X.index,
         )
 
     def get_optima(self, points=100) -> pd.DataFrame:
@@ -470,6 +478,7 @@ class ZDT1(Benchmark):
 
         Returns:
             pd.DataFrame: 2D pareto front with x and y values.
+
         """
         x = np.linspace(0, 1, points)
         y = np.stack([x, 1 - np.sqrt(x)], axis=1)
@@ -489,6 +498,7 @@ class CrossCoupling(Benchmark):
 
     Args:
         Benchmark (Benchmark): Benchmark base class
+
     """
 
     def __init__(
@@ -540,11 +550,11 @@ class CrossCoupling(Benchmark):
                 ],
             ),
             # "base equivalents"
-            ContinuousInput(key="base_eq", bounds=(1, 2.5)),
+            ContinuousInput(key="base_eq", bounds=[1, 2.5]),
             # "Reactor temperature in degrees celsius"
-            ContinuousInput(key="temperature", bounds=(30, 100)),
+            ContinuousInput(key="temperature", bounds=[30, 100]),
             # "residence time in seconds (s)"
-            ContinuousInput(key="t_res", bounds=(60, 1800)),
+            ContinuousInput(key="t_res", bounds=[60, 1800]),
         ]
 
         input_preprocessing_specs = {
@@ -556,11 +566,11 @@ class CrossCoupling(Benchmark):
         outputs = [
             ContinuousOutput(
                 key="yield",
-                objective=MaximizeObjective(w=1.0, bounds=(0.0, 1.0)),
+                objective=MaximizeObjective(w=1.0, bounds=[0.0, 1.0]),
             ),
             ContinuousOutput(
                 key="cost",
-                objective=MinimizeObjective(w=1.0, bounds=(0.0, 1.0)),
+                objective=MinimizeObjective(w=1.0, bounds=[0.0, 1.0]),
             ),
         ]
         self.ref_point = {"yield": 0.0, "cost": 1.0}
@@ -594,8 +604,8 @@ class CrossCoupling(Benchmark):
 
         Returns:
             pd.DataFrame: Output vector. Columns: yield, cost, valid_yield, valid_cost
-        """
 
+        """
         costs = self._calculate_costs(candidates)
         yields = self.ground_truth_yield.predict(candidates)
 
@@ -605,9 +615,7 @@ class CrossCoupling(Benchmark):
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
-                    excludes=None
-                )
+                for feat in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
         ] = 1
         return Y
@@ -620,6 +628,7 @@ class CrossCoupling(Benchmark):
 
         Returns:
             np.array: Vector with costs of suggested candidates
+
         """
         catalyst = conditions["catalyst"].values
         base = conditions["base"].values
@@ -641,14 +650,14 @@ class CrossCoupling(Benchmark):
         cost_triflate = mmol_triflate * 5.91  # triflate is $5.91/mmol
         cost_anniline = mmol_anniline * 0.01  # anniline is $0.01/mmol
         cost_catalyst = np.array(
-            [self._get_catalyst_cost(c, m) for c, m in zip(catalyst, mmol_catalyst)]
+            [self._get_catalyst_cost(c, m) for c, m in zip(catalyst, mmol_catalyst)],
         )
         cost_base = np.array(
-            [self._get_base_cost(b, m) for b, m in zip(base, mmol_base)]
+            [self._get_base_cost(b, m) for b, m in zip(base, mmol_base)],
         )
         tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
         if len(tot_cost) == 1:
-            tot_cost = tot_cost[0]  # type: ignore
+            tot_cost = tot_cost[0]
         return tot_cost
 
     def _get_catalyst_cost(self, catalyst, catalyst_mmol):
@@ -660,6 +669,7 @@ class CrossCoupling(Benchmark):
 
         Returns:
             float: Catalyst costs
+
         """
         catalyst_prices = {
             "tBuXPhos": 94.08,
@@ -677,6 +687,7 @@ class CrossCoupling(Benchmark):
 
         Returns:
             float: Base costs
+
         """
         # prices in $/mmol
         base_prices = {

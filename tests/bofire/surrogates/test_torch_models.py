@@ -25,11 +25,13 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    TaskInput,
 )
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.api import BotorchSurrogates
 from bofire.surrogates.random_forest import _RandomForest
 from bofire.utils.torch_tools import tkwargs
+
 
 CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
 
@@ -55,7 +57,7 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
             ),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = modelclass(
@@ -100,7 +102,8 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     ],
 )
 def test_BotorchModel_validate_invalid_input_preprocessing_steps(
-    modelclass, input_preprocessing_specs
+    modelclass,
+    input_preprocessing_specs,
 ):
     inputs = Inputs(
         features=[
@@ -118,7 +121,7 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
             ),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     with pytest.raises(ValueError):
@@ -132,14 +135,18 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
 def test_BotorchSurrogates_invalid_outputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)]
+            features=[
+                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)]
+            features=[
+                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -151,7 +158,9 @@ def test_BotorchSurrogates_invalid_outputs():
 def test_BotorchSurrogates_invalid_inputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)]
+            features=[
+                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -159,7 +168,7 @@ def test_BotorchSurrogates_invalid_inputs():
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)]
-            + [CategoricalInput(key="x_3", categories=["apple", "banana"])]
+            + [CategoricalInput(key="x_3", categories=["apple", "banana"])],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -184,8 +193,8 @@ def test_BotorchSurrogates_invalid_preprocessing():
                     categories=["apple", "banana"],
                     descriptors=["length", "width"],
                     values=[[1, 2], [3, 4]],
-                )
-            ]
+                ),
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -206,8 +215,8 @@ def test_BotorchSurrogates_invalid_preprocessing():
                     categories=["apple", "banana"],
                     descriptors=["length", "width"],
                     values=[[1, 2], [3, 4]],
-                )
-            ]
+                ),
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -237,8 +246,8 @@ def test_BotorchSurrogates_invalid_preprocessing():
                                 categories=["apple", "banana"],
                                 descriptors=["length", "width"],
                                 values=[[1, 2], [3, 4]],
-                            )
-                        ]
+                            ),
+                        ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=ScalerEnum.NORMALIZE,
@@ -259,20 +268,20 @@ def test_BotorchSurrogates_invalid_preprocessing():
                                 categories=["apple", "banana"],
                                 descriptors=["length", "width"],
                                 values=[[1, 2], [3, 4]],
-                            )
-                        ]
+                            ),
+                        ],
                     ),
                     outputs=Outputs(
                         features=[
                             ContinuousOutput(key="y2"),
                             ContinuousOutput(key="y3"),
-                        ]
+                        ],
                     ),
                     scaler=ScalerEnum.NORMALIZE,
                     input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
             ]
-        )
+        ),
     ],
 )
 def test_botorch_models_invalid_number_of_outputs(surrogate_list):
@@ -300,8 +309,8 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                                 categories=["apple", "banana"],
                                 descriptors=["length", "width"],
                                 values=[[1, 2], [3, 4]],
-                            )
-                        ]
+                            ),
+                        ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=ScalerEnum.NORMALIZE,
@@ -323,8 +332,8 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                                 categories=["apple", "banana"],
                                 descriptors=["length", "width"],
                                 values=[[1, 2], [3, 4]],
-                            )
-                        ]
+                            ),
+                        ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=ScalerEnum.NORMALIZE,
@@ -332,7 +341,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
             ]
-        )
+        ),
     ],
 )
 def test_botorch_models_valid(surrogate_list):
@@ -356,8 +365,8 @@ def test_botorch_models_check_compatibility():
                     categories=["apple", "banana"],
                     descriptors=["length", "width"],
                     values=[[1, 2], [3, 4]],
-                )
-            ]
+                ),
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -379,8 +388,8 @@ def test_botorch_models_check_compatibility():
                     categories=["apple", "banana"],
                     descriptors=["length", "width"],
                     values=[[1, 2], [3, 4]],
-                )
-            ]
+                ),
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -397,7 +406,7 @@ def test_botorch_models_check_compatibility():
                 bounds=(-4, 4),
             )
             for i in range(3)
-        ]
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(ValueError):
@@ -417,8 +426,8 @@ def test_botorch_models_check_compatibility():
                 categories=["apple", "banana"],
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(ValueError):
@@ -436,8 +445,8 @@ def test_botorch_models_check_compatibility():
             ContinuousInput(
                 key="cat",
                 bounds=(-4, 4),
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(ValueError):
@@ -457,8 +466,8 @@ def test_botorch_models_check_compatibility():
                 categories=["apple", "banana"],
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y")])
     with pytest.raises(ValueError):
@@ -469,7 +478,7 @@ def test_botorch_models_check_compatibility():
             ContinuousOutput(key="y"),
             ContinuousOutput(key="y2"),
             ContinuousOutput(key="y3"),
-        ]
+        ],
     )
     with pytest.raises(ValueError):
         models._check_compability(inp, out)
@@ -478,7 +487,7 @@ def test_botorch_models_check_compatibility():
         features=[
             ContinuousOutput(key="y"),
             ContinuousOutput(key="y3"),
-        ]
+        ],
     )
     with pytest.raises(ValueError):
         models._check_compability(inp, out)
@@ -497,8 +506,8 @@ def test_botorch_models_check_compatibility():
                 categories=["apple", "banana"],
                 descriptors=["length", "width"],
                 values=[[1, 2], [3, 4]],
-            )
-        ]
+            ),
+        ],
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     models._check_compability(inp, out)
@@ -520,8 +529,8 @@ def test_botorch_models_input_preprocessing_specs():
                     categories=["apple", "banana"],
                     descriptors=["length", "width"],
                     values=[[1, 2], [3, 4]],
-                )
-            ]
+                ),
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -540,8 +549,8 @@ def test_botorch_models_input_preprocessing_specs():
                 CategoricalInput(
                     key="cat2",
                     categories=["lotta", "sarah"],
-                )
-            ]
+                ),
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -564,7 +573,7 @@ def test_botorch_models_invalid_compatibilize():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
@@ -588,7 +597,7 @@ def test_botorch_models_invalid_compatibilize():
         botorch_surrogates.compatibilize(
             inputs=inputs,
             outputs=Outputs(
-                features=[ContinuousOutput(key="y2"), ContinuousOutput(key="y")]
+                features=[ContinuousOutput(key="y2"), ContinuousOutput(key="y")],
             ),
         )
 
@@ -602,7 +611,7 @@ def test_botorch_models_fit_and_compatibilize():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
@@ -623,11 +632,12 @@ def test_botorch_models_fit_and_compatibilize():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y2")])
     experiments2 = pd.concat(
-        [experiments1, inputs.get_by_key("x_cat").sample(10)], axis=1
+        [experiments1, inputs.get_by_key("x_cat").sample(10)],
+        axis=1,
     )
     experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
@@ -665,7 +675,7 @@ def test_botorch_models_fit_and_compatibilize():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     combined = botorch_surrogates.compatibilize(inputs=inputs, outputs=outputs)
@@ -687,7 +697,8 @@ def test_botorch_models_fit_and_compatibilize():
     # check predictions
     # transform experiments to torch
     trX = inputs.transform(
-        experiments=experiments, specs={"x_cat": CategoricalEncodingEnum.ONE_HOT}
+        experiments=experiments,
+        specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -717,7 +728,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
@@ -738,11 +749,12 @@ def test_botorch_models_rf_fit_and_compatibilize():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y2")])
     experiments2 = pd.concat(
-        [experiments1, inputs.get_by_key("x_cat").sample(10)], axis=1
+        [experiments1, inputs.get_by_key("x_cat").sample(10)],
+        axis=1,
     )
     experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
@@ -778,7 +790,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     combined = botorch_surrogates.compatibilize(inputs=inputs, outputs=outputs)
@@ -797,7 +809,8 @@ def test_botorch_models_rf_fit_and_compatibilize():
     # check predictions
     # transform experiments to torch
     trX = inputs.transform(
-        experiments=experiments, specs={"x_cat": CategoricalEncodingEnum.ONE_HOT}
+        experiments=experiments,
+        specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -838,7 +851,7 @@ def test_empirical_model():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
@@ -859,11 +872,12 @@ def test_empirical_model():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y2")])
     experiments2 = pd.concat(
-        [experiments1, inputs.get_by_key("x_cat").sample(10)], axis=1
+        [experiments1, inputs.get_by_key("x_cat").sample(10)],
+        axis=1,
     )
     experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
@@ -900,7 +914,7 @@ def test_empirical_model():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     combined = botorch_surrogates.compatibilize(inputs=inputs, outputs=outputs)
@@ -918,7 +932,8 @@ def test_empirical_model():
     # check predictions
     # transform experiments to torch
     trX = inputs.transform(
-        experiments=experiments, specs={"x_cat": CategoricalEncodingEnum.ONE_HOT}
+        experiments=experiments,
+        specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -937,7 +952,7 @@ def test_empirical_model_io():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = data_models.EmpiricalSurrogate(inputs=inputs, outputs=outputs)
@@ -948,7 +963,6 @@ def test_empirical_model_io():
     samples = inputs.sample(5)
     preds = surrogate.predict(samples)
     dump = surrogate.dumps()
-    #
     data_model2 = data_models.EmpiricalSurrogate(inputs=inputs, outputs=outputs)
     surrogate2 = surrogates.map(data_model2)
     surrogate2.loads(dump)
@@ -959,3 +973,48 @@ def test_empirical_model_io():
     surrogate3 = surrogates.map(data_model)
     preds3 = surrogate3.predict(samples)
     assert_frame_equal(preds, preds3)
+
+
+def test_multitask_invalid_processing():
+    inputs = Inputs(
+        features=[
+            TaskInput(key="task", categories=["task1", "task2"], allowed=[True, False]),
+            ContinuousInput(key="x", bounds=(-1, 1)),
+        ],
+    )
+
+    outputs_1 = Outputs(
+        features=[ContinuousOutput(key="y1")],
+    )
+    outputs_2 = Outputs(
+        features=[ContinuousOutput(key="y2")],
+    )
+
+    data_model_1 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
+
+    data_model_2 = data_models.SingleTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
+
+    with pytest.raises(ValueError):
+        data_models.BotorchSurrogates(surrogates=[data_model_1, data_model_2])
+
+
+def test_multitask_valid_processing():
+    inputs = Inputs(
+        features=[
+            TaskInput(key="task", categories=["task1", "task2"], allowed=[True, False]),
+            ContinuousInput(key="x", bounds=(-1, 1)),
+        ],
+    )
+
+    outputs_1 = Outputs(
+        features=[ContinuousOutput(key="y1")],
+    )
+    outputs_2 = Outputs(
+        features=[ContinuousOutput(key="y2")],
+    )
+
+    data_model_1 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
+
+    data_model_2 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
+
+    data_models.BotorchSurrogates(surrogates=[data_model_1, data_model_2])

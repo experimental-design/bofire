@@ -10,6 +10,7 @@ from bofire.data_models.priors.normal import (
 )
 from bofire.data_models.priors.prior import Prior
 
+
 AbstractPrior = Prior
 
 AnyPrior = Union[
@@ -26,9 +27,9 @@ AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
 
 # default priors of interest
 # botorch defaults
-BOTORCH_LENGTHCALE_PRIOR = partial(GammaPrior, concentration=3.0, rate=6.0)
-BOTORCH_NOISE_PRIOR = partial(GammaPrior, concentration=1.1, rate=0.05)
-BOTORCH_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
+THREESIX_LENGTHSCALE_PRIOR = partial(GammaPrior, concentration=3.0, rate=6.0)
+THREESIX_NOISE_PRIOR = partial(GammaPrior, concentration=1.1, rate=0.05)
+THREESIX_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
 
 # mbo priors
 # By default BoTorch places a highly informative prior on the kernel lengthscales,
@@ -40,7 +41,9 @@ MBO_OUTPUTSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 
 # prior for multitask kernel
 LKJ_PRIOR = partial(
-    LKJPrior, shape=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
+    LKJPrior,
+    shape=2.0,
+    sd_prior=GammaPrior(concentration=2.0, rate=0.15),
 )
 
 # Hvarfner priors

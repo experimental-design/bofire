@@ -1,7 +1,6 @@
-from typing import Literal, Optional, Type
+from typing import Annotated, Literal, Optional, Type
 
 from pydantic import Field, field_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -58,10 +57,9 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
                 CategoricalEncodingEnum.ORDINAL,
             ]:
                 raise ValueError(
-                    "Botorch based models have to use one hot encodings for categoricals"
+                    "Botorch based models have to use one hot encodings for categoricals",
                 )
-            else:
-                v[key] = CategoricalEncodingEnum.ONE_HOT
+            v[key] = CategoricalEncodingEnum.ONE_HOT
         for key in descriptor_keys:
             if v.get(key, CategoricalEncodingEnum.DESCRIPTOR) not in [
                 CategoricalEncodingEnum.DESCRIPTOR,
@@ -70,9 +68,9 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
                 CategoricalEncodingEnum.ORDINAL,
             ]:
                 raise ValueError(
-                    "Botorch based models have to use one hot encodings or descriptor encodings for categoricals."
+                    "Botorch based models have to use one hot encodings or descriptor encodings for categoricals.",
                 )
-            elif v.get(key) is None:
+            if v.get(key) is None:
                 v[key] = CategoricalEncodingEnum.DESCRIPTOR
         for key in inputs.get_keys(NumericalInput):
             if v.get(key) is not None:

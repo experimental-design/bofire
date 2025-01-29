@@ -15,8 +15,9 @@ from bofire.utils.doe import (
     validate_generator,
 )
 
+
 inputs = Inputs(
-    features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]]
+    features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]],
 )
 
 
@@ -113,7 +114,7 @@ def test_fracfact():
 def test_get_alias_structure():
     alias_structure = get_alias_structure("a b c")
     assert sorted(alias_structure) == sorted(
-        ["a", "b", "c", "I", "ab", "ac", "bc", "abc"]
+        ["a", "b", "c", "I", "ab", "ac", "bc", "abc"],
     )
     alias_structure = get_alias_structure("a b ab")
     assert sorted(alias_structure) == sorted(["I = abc", "a = bc", "b = ac", "c = ab"])
@@ -185,7 +186,8 @@ def test_get_default_generator():
         g = get_default_generator(n_factors, n_generators)
         validate_generator(n_factors, g)
     with pytest.raises(
-        ValueError, match="No generator available for the requested combination."
+        ValueError,
+        match="No generator available for the requested combination.",
     ):
         get_default_generator(100, 1)
 

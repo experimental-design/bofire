@@ -5,7 +5,10 @@ from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
+from bofire.data_models.surrogates.deterministic import (
+    CategoricalDeterministicSurrogate,
+    LinearDeterministicSurrogate,
+)
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.linear import LinearSurrogate
@@ -20,9 +23,11 @@ from bofire.data_models.surrogates.mlp import (
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
+from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
+
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
@@ -37,14 +42,17 @@ AnyBotorchSurrogate = Union[
     LinearSurrogate,
     PolynomialSurrogate,
     LinearDeterministicSurrogate,
+    CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 
 class BotorchSurrogates(BaseModel):
     """ "List of botorch surrogates.
 
-    Behaves similar to a Surrogate."""
+    Behaves similar to a Surrogate.
+    """
 
     surrogates: List[AnyBotorchSurrogate]
 
@@ -61,9 +69,9 @@ class BotorchSurrogates(BaseModel):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]  # type: ignore
-                )
-            )
+                    [model.outputs.get() for model in self.surrogates],
+                ),
+            ),
         )
 
     def _check_compability(self, inputs: Inputs, outputs: Outputs):
@@ -75,7 +83,7 @@ class BotorchSurrogates(BaseModel):
         for i, model in enumerate(self.surrogates):
             if len(model.inputs) > len(inputs):
                 raise ValueError(
-                    f"Model with index {i} has more features than acceptable."
+                    f"Model with index {i} has more features than acceptable.",
                 )
             for feat in model.inputs:
                 try:
@@ -103,7 +111,7 @@ class BotorchSurrogates(BaseModel):
                 raise ValueError("Only single output surrogates allowed.")
         # check that the output feature keys are distinctw
         used_output_feature_keys = list(
-            itertools.chain.from_iterable([model.outputs.get_keys() for model in v])
+            itertools.chain.from_iterable([model.outputs.get_keys() for model in v]),
         )
         if len(set(used_output_feature_keys)) != len(used_output_feature_keys):
             raise ValueError("Output feature keys are not unique across surrogates.")
@@ -113,7 +121,7 @@ class BotorchSurrogates(BaseModel):
             for key in model.inputs.get_keys():
                 if key not in used_feature_keys:
                     used_feature_keys.append(key)
-        # check that the features and preprocessing steps are equal trough the surrogates
+        # check that the features and preprocessing steps are equal through the surrogates
         for key in used_feature_keys:
             features = [
                 model.inputs.get_by_key(key)
@@ -129,6 +137,12 @@ class BotorchSurrogates(BaseModel):
                 raise ValueError(f"Features with key {key} are incompatible.")
             if all(i == preprocessing[0] for i in preprocessing) is False:
                 raise ValueError(
-                    f"Preprocessing steps for features with {key} are incompatible."
+                    f"Preprocessing steps for features with {key} are incompatible.",
+                )
+        # check that if any surrogate is a MultiTaskGPSurrogate, all have to be
+        if any(isinstance(model, MultiTaskGPSurrogate) for model in v):
+            if not all(isinstance(model, MultiTaskGPSurrogate) for model in v):
+                raise ValueError(
+                    "If a MultiTaskGPSurrogate is used, all surrogates need to be MultiTask.",
                 )
         return v

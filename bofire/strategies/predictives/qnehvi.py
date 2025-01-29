@@ -21,10 +21,14 @@ class QnehviStrategy(QehviStrategy):
         self.alpha = data_model.alpha
 
     def _get_acqfs(self, n) -> List[qNoisyExpectedHypervolumeImprovement]:
+        assert self.experiments is not None, "No experiments available."
         X_train, X_pending = self.get_acqf_input_tensors()
 
         # get etas and constraints
-        constraints, etas = get_output_constraints(self.domain.outputs)
+        constraints, etas = get_output_constraints(
+            self.domain.outputs,
+            experiments=self.experiments,
+        )
         if len(constraints) == 0:
             constraints, etas = None, 1e-3
         else:

@@ -35,12 +35,11 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.surrogates.api import (
-    ScalerEnum,
-)
+from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGP
+
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
@@ -64,7 +63,7 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
             inputs=inputs,
             outputs=outputs,
             input_preprocessing_specs={
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
         )
 
@@ -137,7 +136,7 @@ def test_MixedTanimotoGPModel_invalid_preprocessing():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -164,7 +163,7 @@ def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
             )
             for i in range(2)
         ]
-        + [MolecularInput(key="x_mol")]
+        + [MolecularInput(key="x_mol")],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
@@ -183,7 +182,7 @@ def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
             inputs=inputs,
             outputs=outputs,
             input_preprocessing_specs={
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
         )
 
@@ -218,7 +217,7 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
                 bounds=(0, 5.0),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
@@ -306,9 +305,9 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
             ContinuousInput(
                 key="x_1",
                 bounds=(0, 5.0),
-            )
+            ),
         ]
-        + [CategoricalInput(key="x_cat", categories=["a", "b"])]
+        + [CategoricalInput(key="x_cat", categories=["a", "b"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
@@ -389,7 +388,7 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
 def test_MixedTanimotoGP_categorical(kernel, specs):
     inputs = Inputs(
         features=[MolecularInput(key="x_mol")]
-        + [CategoricalInput(key="x_cat", categories=["a", "b"])]
+        + [CategoricalInput(key="x_cat", categories=["a", "b"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
@@ -464,7 +463,10 @@ def test_MixedTanimotoGP_categorical(kernel, specs):
     ],
 )
 def test_MixedTanimotoGP_with_mordred(
-    molecular_kernel, continuous_kernel, specs, scaler
+    molecular_kernel,
+    continuous_kernel,
+    specs,
+    scaler,
 ):
     inputs = Inputs(
         features=[
@@ -472,7 +474,7 @@ def test_MixedTanimotoGP_with_mordred(
                 key=f"x_{i+1}",
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [

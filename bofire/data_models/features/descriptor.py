@@ -20,6 +20,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         upper_bound (float): Upper bound of the feature in the optimization.
         descriptors (List[str]): Names of the descriptors.
         values (List[float]): Values of the descriptors.
+
     """
 
     type: Literal["ContinuousDescriptorInput"] = "ContinuousDescriptorInput"
@@ -30,31 +31,35 @@ class ContinuousDescriptorInput(ContinuousInput):
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
-        """compares the length of the defined descriptors list with the provided values
+        """Compares the length of the defined descriptors list with the provided values
 
         Args:
-            values (Dict): Dictionary with all attribues
+            values (Dict): Dictionary with all attributes
 
         Raises:
             ValueError: when the number of descriptors does not math the number of provided values
 
         Returns:
             Dict: Dict with the attributes
+
         """
         if len(self.descriptors) != len(self.values):
             raise ValueError(
-                'must provide same number of descriptors and values, got {len(values["descriptors"])} != {len(values["values"])}'
+                'must provide same number of descriptors and values, got {len(values["descriptors"])} != {len(values["values"])}',
             )
         return self
 
     def to_df(self) -> pd.DataFrame:
-        """tabular overview of the feature as DataFrame
+        """Tabular overview of the feature as DataFrame
 
         Returns:
             pd.DataFrame: tabular overview of the feature as DataFrame
+
         """
         return pd.DataFrame(
-            data=[self.values], index=[self.key], columns=self.descriptors
+            data=[self.values],
+            index=[self.key],
+            columns=self.descriptors,
         )
 
 
@@ -66,6 +71,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
         descriptors (List[str]): List of strings representing the names of the descriptors.
         values (List[List[float]]): List of lists representing the descriptor values.
+
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
@@ -80,7 +86,7 @@ class CategoricalDescriptorInput(CategoricalInput):
     @field_validator("values")
     @classmethod
     def validate_values(cls, v, info):
-        """validates the compatability of passed values for the descriptors and the defined categories
+        """Validates the compatibility of passed values for the descriptors and the defined categories
 
         Args:
             v (List[List[float]]): Nested list with descriptor values
@@ -93,6 +99,7 @@ class CategoricalDescriptorInput(CategoricalInput):
 
         Returns:
             List[List[float]]: Nested list with descriptor values
+
         """
         if len(v) != len(info.data["categories"]):
             raise ValueError("values must have same length as categories")
@@ -115,27 +122,29 @@ class CategoricalDescriptorInput(CategoricalInput):
         ]
 
     def to_df(self):
-        """tabular overview of the feature as DataFrame
+        """Tabular overview of the feature as DataFrame
 
         Returns:
             pd.DataFrame: tabular overview of the feature as DataFrame
+
         """
         data = dict(zip(self.categories, self.values))
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
 
     def fixed_value(
-        self, transform_type: Optional[TTransform] = None
+        self,
+        transform_type: Optional[TTransform] = None,
     ) -> Union[List[str], List[float], None]:
         """Returns the categories to which the feature is fixed, None if the feature is not fixed
 
         Returns:
             List[str]: List of categories or None
+
         """
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().fixed_value(transform_type)
-        else:
-            val = self.get_allowed_categories()[0]
-            return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
+        val = self.get_allowed_categories()[0]
+        return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
     def get_bounds(
         self,
@@ -145,43 +154,46 @@ class CategoricalDescriptorInput(CategoricalInput):
     ) -> Tuple[List[float], List[float]]:
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
+        # in case that values is None, we return the optimization bounds
+        # else we return the complete bounds
+        if values is None:
+            df = self.to_df().loc[self.get_allowed_categories()]
         else:
-            # in case that values is None, we return the optimization bounds
-            # else we return the complete bounds
-            if values is None:
-                df = self.to_df().loc[self.get_allowed_categories()]
-            else:
-                df = self.to_df()
-            lower = df.min().values.tolist()  # type: ignore
-            upper = df.max().values.tolist()  # type: ignore
-            return lower, upper
+            df = self.to_df()
+        lower = df.min().values.tolist()
+        upper = df.max().values.tolist()
+        return lower, upper
 
     def validate_experimental(
-        self, values: pd.Series, strict: bool = False
+        self,
+        values: pd.Series,
+        strict: bool = False,
     ) -> pd.Series:
         """Method to validate the experimental dataFrame
 
         Args:
             values (pd.Series): A dataFrame with experiments
-            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.
+            strict (bool, optional): Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False.
 
         Raises:
             ValueError: when an entry is not in the list of allowed categories
             ValueError: when there is no variation in a feature provided by the experimental data
-            ValueError: when no variation is present or planed for a given descriptor
+            ValueError: when no variation is present or planned for a given descriptor
 
         Returns:
             pd.Series: A dataFrame with experiments
+
         """
         values = super().validate_experimental(values, strict)
         if strict:
             lower, upper = self.get_bounds(
-                transform_type=CategoricalEncodingEnum.DESCRIPTOR, values=values
+                transform_type=CategoricalEncodingEnum.DESCRIPTOR,
+                values=values,
             )
             for i, desc in enumerate(self.descriptors):
                 if lower[i] == upper[i]:
                     raise ValueError(
-                        f"No variation present or planned for descriptor {desc} for feature {self.key}. Remove the descriptor."
+                        f"No variation present or planned for descriptor {desc} for feature {self.key}. Remove the descriptor.",
                     )
         return values
 
@@ -195,6 +207,7 @@ class CategoricalDescriptorInput(CategoricalInput):
 
         Returns:
             _type_: _description_
+
         """
         return cls(
             key=key,
@@ -212,9 +225,10 @@ class CategoricalDescriptorInput(CategoricalInput):
 
         Returns:
             pd.DataFrame: Descriptor encoded dataframe.
+
         """
         return pd.DataFrame(
-            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
+            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),
             columns=[get_encoded_name(self.key, d) for d in self.descriptors],
             index=values.index,
         )
@@ -230,13 +244,14 @@ class CategoricalDescriptorInput(CategoricalInput):
 
         Returns:
             pd.Series: Series with categorical values.
+
         """
         cat_cols = [get_encoded_name(self.key, d) for d in self.descriptors]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):
             raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}.",
             )
         s = pd.DataFrame(
             data=np.sqrt(
@@ -247,7 +262,7 @@ class CategoricalDescriptorInput(CategoricalInput):
                     )
                     ** 2,
                     axis=2,
-                )
+                ),
             ),
             columns=self.get_allowed_categories(),
             index=values.index,

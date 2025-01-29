@@ -1,37 +1,38 @@
 name: Lint
+
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
-jobs:    
-  style:
-    name: Check style with ruff and black
+permissions:
+  contents: read
+
+jobs:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - name: style
-        run: |
-          pip3 install ruff==0.0.265 black==22.10.0
-          black --check bofire tests
-          ruff check .
+      - name: Check out repo
+        uses: actions/checkout@v4
 
-  pyright:
-    name: Typechecking with pyright
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
-      - name: pyright
-        run: |
-          pip install ".[optimization,cheminfo,tests]"
-          pyright
-          
+          python-version: "3.10"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv pip install pre-commit ".[all]" --system
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files --show-diff-on-failure
+
+      - name: Pyright
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: 1.1.305  # is there any reason not to use the latest?

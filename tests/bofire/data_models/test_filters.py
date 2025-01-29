@@ -147,7 +147,9 @@ def test_filter_by_class(data, includes, expected):
 )
 def test_filter_by_attribute(data, includes, expected):
     res = filter_by_attribute(
-        data, attribute_getter=lambda of: of.attribute, includes=includes
+        data,
+        attribute_getter=lambda of: of.attribute,
+        includes=includes,
     )
     print("got:", [type(x.attribute).__name__ for x in res])
     print("expected:", [type(x.attribute).__name__ for x in expected])
@@ -177,7 +179,9 @@ def test_filter_by_class_only_exclude(data, excludes, expected):
 )
 def test_filter_by_attribute_only_exclude(data, excludes, expected):
     res = filter_by_attribute(
-        data, attribute_getter=lambda of: of.attribute, excludes=excludes
+        data,
+        attribute_getter=lambda of: of.attribute,
+        excludes=excludes,
     )
     print("got:", [type(x.attribute).__name__ for x in res])
     print("expected:", [type(x.attribute).__name__ for x in expected])
@@ -213,7 +217,10 @@ def test_filter_by_class_exact(data, includes, expected):
 )
 def test_filter_by_attribute_exact(data, includes, expected):
     res = filter_by_attribute(
-        data, attribute_getter=lambda of: of.attribute, includes=includes, exact=True
+        data,
+        attribute_getter=lambda of: of.attribute,
+        includes=includes,
+        exact=True,
     )
     print("got:", [type(x.attribute).__name__ for x in res])
     print("expected:", [type(x.attribute).__name__ for x in expected])

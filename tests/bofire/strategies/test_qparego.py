@@ -23,6 +23,7 @@ from bofire.strategies.api import QparegoStrategy, RandomStrategy
 from tests.bofire.strategies.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
+
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[6],
     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
@@ -35,7 +36,7 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
                 inputs=domains[6].inputs,
                 outputs=Outputs(features=[domains[6].outputs.get_by_key("of2")]),
             ),
-        ]
+        ],
     ),
     "descriptor_method": "FREE",
     # "acquisition_function": specs.acquisition_functions.valid().obj(),
@@ -66,16 +67,16 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
                         inputs=domains[2].inputs,
                         outputs=Outputs(
-                            features=[domains[2].outputs.get_by_key("of1")]
+                            features=[domains[2].outputs.get_by_key("of1")],
                         ),
                     ),
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
                         inputs=domains[2].inputs,
                         outputs=Outputs(
-                            features=[domains[2].outputs.get_by_key("of2")]
+                            features=[domains[2].outputs.get_by_key("of2")],
                         ),
                     ),
-                ]
+                ],
             ),
             "descriptor_method": "EXHAUSTIVE",
             "categorical_method": "EXHAUSTIVE",
@@ -111,7 +112,7 @@ def test_qparego(num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
@@ -125,7 +126,8 @@ def test_qparego(num_test_candidates):
     i = random.choice([0, 1, 2, 3])
 
     data_model = data_models.QparegoStrategy(
-        domain=benchmark.domain, acquisition_function=acqfs[i]
+        domain=benchmark.domain,
+        acquisition_function=acqfs[i],
     )
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
@@ -150,12 +152,13 @@ def test_qparego_constraints(num_test_candidates):
     def test(benchmark_factory):
         benchmark = benchmark_factory()
         random_strategy = RandomStrategy(
-            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+            data_model=RandomStrategyDataModel(domain=benchmark.domain),
         )
         experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
         # init strategy
         data_model = data_models.QparegoStrategy(
-            domain=benchmark.domain, num_restarts=1
+            domain=benchmark.domain,
+            num_restarts=1,
         )
         my_strategy = QparegoStrategy(data_model=data_model)
         my_strategy.tell(experiments)
@@ -192,10 +195,11 @@ def test_qparego_constraints(num_test_candidates):
 def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
     # generate data
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(num_experiments), return_complete=True
+        random_strategy.ask(num_experiments),
+        return_complete=True,
     )
     data_model = data_models.QparegoStrategy(
         domain=benchmark.domain,
@@ -214,7 +218,7 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
     _, names = strategy.domain.inputs._get_transform_info(
-        specs=strategy.surrogate_specs.input_preprocessing_specs
+        specs=strategy.surrogate_specs.input_preprocessing_specs,
     )
 
     assert torch.is_tensor(X_train)
@@ -223,7 +227,7 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
         num_experiments,
         len(set(chain(*names.values()))),
     )
-    assert X_pending.shape == (
+    assert X_pending.shape == (  # type: ignore
         num_candidates,
         len(set(chain(*names.values()))),
     )

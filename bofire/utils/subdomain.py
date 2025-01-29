@@ -10,7 +10,7 @@ def get_subdomain(
     domain: Domain,
     feature_keys: List,
 ) -> Domain:
-    """removes all features not defined as argument creating a subdomain of the provided domain
+    """Removes all features not defined as argument creating a subdomain of the provided domain
 
     Args:
         domain (Domain): the original domain wherefrom a subdomain should be created
@@ -25,6 +25,7 @@ def get_subdomain(
 
     Returns:
         Domain: A new domain containing only parts of the original domain
+
     """
     assert len(feature_keys) >= 2, "At least two features have to be provided."
     outputs = []
@@ -44,10 +45,10 @@ def get_subdomain(
     outputs = Outputs(features=outputs)
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
-        for key in c.features:  # type: ignore
+        for key in c.features:
             if key not in inputs.get_keys():
                 raise ValueError(
-                    f"Removed input feature {key} is used in a constraint."
+                    f"Removed input feature {key} is used in a constraint.",
                 )
     subdomain = deepcopy(domain)
     subdomain.inputs = inputs

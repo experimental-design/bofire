@@ -5,7 +5,9 @@ import plotly.graph_objs as go
 
 
 def compose_annotation(
-    caption: str, x: float = 0.0, y: float = -0.15
+    caption: str,
+    x: float = 0.0,
+    y: float = -0.15,
 ) -> List[Dict[str, Any]]:
     if not caption:
         return []
@@ -44,8 +46,10 @@ def plot_feature_importance_by_feature_plotly(
         show_std (bool, optional): Whether to show the standard deviation in the plot. Defaults to False.
         caption: An HTML-formatted string to place at the bottom of the plot.
         importance_measure: The name of the importance metric to be added to the title.
+
     Returns:
         go.Figure: Figure of feature importances.
+
     """
     traces = []
     dropdown = []
@@ -55,7 +59,7 @@ def plot_feature_importance_by_feature_plotly(
             [
                 {"Feature": feature, "Importance": importances.loc["mean", feature]}
                 for feature in importances.columns
-            ]
+            ],
         )
         if show_std and "std" in importances.index:
             error_x = {
@@ -78,13 +82,17 @@ def plot_feature_importance_by_feature_plotly(
                 y=df["Feature"],
                 error_x=error_x,
                 opacity=0.8,
-            )
+            ),
         )
 
         is_visible = [False] * len(sensitivity_values)
         is_visible[i] = True
         dropdown.append(
-            {"args": ["visible", is_visible], "label": metric_name, "method": "restyle"}
+            {
+                "args": ["visible", is_visible],
+                "label": metric_name,
+                "method": "restyle",
+            },
         )
     if not traces:
         raise NotImplementedError("No traces found for metric")
@@ -97,9 +105,9 @@ def plot_feature_importance_by_feature_plotly(
             "xanchor": "left",
             "buttons": dropdown,
             "pad": {
-                "t": -40
+                "t": -40,
             },  # hack to put dropdown below title regardless of number of features
-        }
+        },
     ]
     features = traces[0].y
     title = (
@@ -110,9 +118,7 @@ def plot_feature_importance_by_feature_plotly(
     layout = go.Layout(
         height=200 + len(features) * 20,
         hovermode="closest",
-        margin=go.layout.Margin(
-            l=8 * min(max(len(idx) for idx in features), 75)
-        ),  # noqa E741
+        margin=go.layout.Margin(l=8 * min(max(len(idx) for idx in features), 75)),
         showlegend=False,
         title=title,
         updatemenus=updatemenus,

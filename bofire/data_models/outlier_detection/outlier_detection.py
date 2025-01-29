@@ -1,8 +1,7 @@
 from abc import abstractmethod
-from typing import Literal, Union
+from typing import Annotated, Literal, Union
 
 from pydantic import Field, field_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -17,12 +16,12 @@ class OutlierDetection(BaseModel):
 
     @property
     @abstractmethod
-    def inputs(self) -> Inputs:  # type: ignore
+    def inputs(self) -> Inputs:
         pass
 
     @property
     @abstractmethod
-    def outputs(self) -> Outputs:  # type: ignore
+    def outputs(self) -> Outputs:
         pass
 
 
@@ -39,6 +38,7 @@ class IterativeTrimming(OutlierDetection):
         ncc (int (>=1)): Number of concentrating iterations.
         nrw (int (>=1)): Number of reweighting iterations.
         base_gp (SingleTaskGPSurrogate): Gaussian process model for outlier detection.
+
     """
 
     type: Literal["IterativeTrimming"] = "IterativeTrimming"
