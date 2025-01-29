@@ -1017,6 +1017,129 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability" class="md-nav__link">
+    <span class="md-ellipsis">
+      InRangeDesirability
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="InRangeDesirability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__class_vars__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __class_vars__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__private_attributes__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __private_attributes__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_complete__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_complete__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_computed_fields__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_computed_fields__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_custom_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_custom_init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_decorators__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_decorators__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_fields__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_fields__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_generic_metadata__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_generic_metadata__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_parent_namespace__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_parent_namespace__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_post_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_post_init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.__signature__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __signature__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.desirabilities.InRangeDesirability.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      model_config
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.data_models.objectives.desirabilities.IncreasingDesirabilityObjective" class="md-nav__link">
     <span class="md-ellipsis">
       IncreasingDesirabilityObjective
@@ -4281,6 +4404,331 @@ signature of objectives.</p>
     </div>
 
   </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h3 id="bofire.data_models.objectives.desirabilities.InRangeDesirability" class="doc doc-heading">
+        <code>
+InRangeDesirability            (<a class="autorefs autorefs-internal" title="bofire.data_models.objectives.desirabilities.DesirabilityObjective" href="#bofire.data_models.objectives.desirabilities.DesirabilityObjective">DesirabilityObjective</a>)
+        </code>
+
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/desirabilities.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">InRangeDesirability</span><span class="p">(</span><span class="n">DesirabilityObjective</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;InRangeDesirability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;InRangeDesirability&quot;</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">call_numpy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">between</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">between</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="k">return</span> <span class="n">y</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__class_vars__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__class_vars__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The names of the class variables defined on the model.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__private_attributes__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__private_attributes__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata about the private attributes of the model.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_complete__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_complete__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Whether model building is completed, or if there are still undefined fields.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_computed_fields__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_computed_fields__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>A dictionary of computed field names and their corresponding [<code>ComputedFieldInfo</code>][pydantic.fields.ComputedFieldInfo] objects.</p>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_custom_init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_custom_init__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Whether the model has a custom <code>__init__</code> method.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_decorators__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_decorators__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata containing the decorators defined on the model.
+This replaces <code>Model.__validators__</code> and <code>Model.__root_validators__</code> from Pydantic V1.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_fields__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_fields__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>A dictionary of field names and their corresponding [<code>FieldInfo</code>][pydantic.fields.FieldInfo] objects.
+This replaces <code>Model.__fields__</code> from Pydantic V1.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_generic_metadata__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_generic_metadata__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata for generic models; contains data used for a similar purpose to
+<strong>args</strong>, <strong>origin</strong>, <strong>parameters</strong> in typing-module generics. May eventually be replaced by these.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_parent_namespace__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_parent_namespace__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Parent namespace of the model, used for automatic rebuilding of models.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__pydantic_post_init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_post_init__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The name of the post-init method for the model, if defined.</p>
+    </div>
+
+  </div>
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.__signature__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__signature__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.desirabilities.InRangeDesirability.model_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">model_config</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Configuration for the model, should be a dictionary conforming to [<code>ConfigDict</code>][pydantic.config.ConfigDict].</p>
+    </div>
+
+  </div>
+
+
 
 
 
