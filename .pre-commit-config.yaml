@@ -25,3 +25,10 @@ repos:
     hooks:
       - id: nbstripout
         args: [--drop-empty-cells, --keep-output]
+
+# repos:
+#   - repo: https://github.com/RobertCraigie/pyright-python
+#     rev: v1.1.305
+#     hooks:
+#     - id: pyright  # TODO: work out how to install the package in the
+#                    # pre-commit venv

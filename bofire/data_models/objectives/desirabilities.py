@@ -34,21 +34,13 @@ class DesirabilityObjective(IdentityObjective):
     def __call__(
         self, x: Union[pd.Series, np.ndarray], x_adapt
     ) -> Union[pd.Series, np.ndarray]:
-        """Wrapper function for to call numpy and torch functions with series or numpy arrays. matches __call__
-        signature of objectives."""
-
-        convert_to_series = False
+        """Wrapper function for to call numpy and torch functions with series
+        or numpy arrays. matches __call__ signature of objectives."""
         if isinstance(x, pd.Series):
-            convert_to_series = True
-            name = x.name
-            x = x.values
+            s: pd.Series = x
+            return pd.Series(self.call_numpy(s.to_numpy()), name=s.name)
 
-        y = self.call_numpy(x)
-
-        if convert_to_series:
-            return pd.Series(y, name=name)
-
-        return y
+        return self.call_numpy(x)
 
     @abstractmethod
     def call_numpy(self, x: np.ndarray) -> np.ndarray:
