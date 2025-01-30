@@ -23,6 +23,7 @@ from bofire.data_models.objectives.api import (
     ConstrainedObjective,
     DecreasingDesirabilityObjective,
     IncreasingDesirabilityObjective,
+    InRangeDesirability,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -510,6 +511,19 @@ def get_objective_callable(
                 ),
                 t,
             )
+            return y * objective.w
+
+        return objective_callable_
+
+    if isinstance(objective, InRangeDesirability):
+
+        def objective_callable_(x: Tensor, *args) -> Tensor:
+            x = x[..., idx]
+            y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
+
+            in_range = (x >= objective.lower_bound) & (x <= objective.upper_bound)
+            y[in_range] = 1.0
+
             return y * objective.w
 
         return objective_callable_

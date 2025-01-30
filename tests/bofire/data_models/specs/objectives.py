@@ -143,3 +143,11 @@ specs.add_invalid(
     ValueError,
     "Peak position must be within bounds",
 )
+specs.add_valid(
+    objectives.InRangeDesirability,
+    lambda: {
+        "bounds": [0.0, 10.0],
+        "clip": True,
+        "w": 1.0,
+    },
+)

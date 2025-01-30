@@ -379,6 +379,10 @@ def test_categorical_doe_iterative():
     assert candidates.shape == (5, 3)
 
 
+if __name__ == "__main__":
+    test_formulas_implemented()
+
+
 def test_functional_constraint():
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),

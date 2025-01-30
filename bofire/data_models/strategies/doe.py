@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional, Type, Union
+from typing import Annotated, Dict, Dict, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -28,6 +28,7 @@ class OptimalityCriterion(BaseModel):
 
 class SpaceFillingCriterion(OptimalityCriterion):
     type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"  # type: ignore
+    sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
@@ -36,6 +37,63 @@ class DoEOptimalityCriterion(OptimalityCriterion):
         PREDEFINED_MODEL_TYPES,
         str,
     ]
+    """
+    model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
+    are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
+    """
+
+    @field_validator("formula")
+    @classmethod
+    def validate_formula(cls, formula: str) -> str:
+        if formula not in PREDEFINED_MODEL_TYPES.__args__:  # type: ignore
+            # check that it is a valid formula
+            try:
+                Formula(formula)
+            except FormulaSyntaxError:
+                raise ValueError(f"Invalid formula: {formula}")
+        return formula
+
+
+class DOptimalityCriterion(DoEOptimalityCriterion):
+    type: Literal["DOptimalityCriterion"] = "DOptimalityCriterion"  # type: ignore
+
+
+class EOptimalityCriterion(DoEOptimalityCriterion):
+    type: Literal["EOptimalityCriterion"] = "EOptimalityCriterion"  # type: ignore
+
+
+class AOptimalityCriterion(DoEOptimalityCriterion):
+    type: Literal["AOptimalityCriterion"] = "AOptimalityCriterion"  # type: ignore
+
+
+class GOptimalityCriterion(DoEOptimalityCriterion):
+    type: Literal["GOptimalityCriterion"] = "GOptimalityCriterion"  # type: ignore
+
+
+class KOptimalityCriterion(DoEOptimalityCriterion):
+    type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"  # type: ignore
+
+
+AnyDoEOptimalityCriterion = Union[
+    KOptimalityCriterion,
+    GOptimalityCriterion,
+    AOptimalityCriterion,
+    EOptimalityCriterion,
+    DOptimalityCriterion,
+]
+
+AnyOptimalityCriterion = Union[
+    AnyDoEOptimalityCriterion,
+    SpaceFillingCriterion,
+]
+
+
+class DoEStrategy(Strategy):
+    type: Literal["DoEStrategy"] = "DoEStrategy"  # type: ignore
+
+    criterion: AnyOptimalityCriterion = Field(
+        default_factory=lambda: DOptimalityCriterion(formula="fully-quadratic")
+    )
     """
     model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
     are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".

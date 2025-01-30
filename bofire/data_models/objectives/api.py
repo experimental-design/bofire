@@ -5,6 +5,7 @@ from bofire.data_models.objectives.desirabilities import (
     DecreasingDesirabilityObjective,
     DesirabilityObjective,
     IncreasingDesirabilityObjective,
+    InRangeDesirability,
     PeakDesirabilityObjective,
 )
 from bofire.data_models.objectives.identity import (
@@ -51,6 +52,7 @@ AnyRealObjective = Union[
     IncreasingDesirabilityObjective,
     DecreasingDesirabilityObjective,
     PeakDesirabilityObjective,
+    InRangeDesirability,
 ]
 
 AnyObjective = Union[
@@ -66,4 +68,5 @@ AnyObjective = Union[
     IncreasingDesirabilityObjective,
     DecreasingDesirabilityObjective,
     PeakDesirabilityObjective,
+    InRangeDesirability,
 ]

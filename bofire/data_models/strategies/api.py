@@ -42,7 +42,6 @@ from bofire.data_models.strategies.predictives.sobo import (
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
-from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     AnyCondition,
