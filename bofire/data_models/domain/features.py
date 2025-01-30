@@ -791,25 +791,29 @@ class Outputs(_BaseFeatures[AnyOutput]):
         Args:
             experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
             experiments_adapt (pd.DataFrame, optional): Experimental values which are used to update the objective
-                parameters on the fly. Defaults to None.
+                parameters on the fly. This is for example needed when a `MovingMaximizeSigmoidObjective` is used
+                as this depends on the best experimental value achieved so far. For this reason `experiments_adapt`
+                has to be provided if `predictions=True` ie. that the objectives of candidates are evaluated.
+                Defaults to None.
             predictions (bool, optional): If True use the prediction columns in the dataframe to calc the
-                desirabilities `f"{feat.key}_pred`.
+                desirabilities `f"{feat.key}_pred`, furthermore `experiments_adapt` has to be provided.
 
         Returns:
             pd.DataFrame: Objective values for the experiments of interest.
 
         """
-        experiments_adapt = (
-            experiments if experiments_adapt is None else experiments_adapt
-        )
+        if predictions and experiments_adapt is None:
+            raise ValueError(
+                "If predictions are used, `experiments_adapt` has to be provided.",
+            )
+        else:
+            experiments_adapt = experiments
 
         desis = pd.concat(
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments_adapt[
-                        f"{feat.key}_pred" if predictions else feat.key
-                    ].dropna(),
+                    experiments_adapt[f"{feat.key}"].dropna(),
                 )
                 for feat in self.features
                 if feat.objective is not None
@@ -820,7 +824,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
                     pd.Series(  # type: ignore
                         data=feat(
                             experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
-                            experiments_adapt.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
                         ),
                         name=f"{feat.key}_pred",
                     )
