@@ -807,13 +807,15 @@ class Outputs(_BaseFeatures[AnyOutput]):
                 "If predictions are used, `experiments_adapt` has to be provided.",
             )
         else:
-            experiments_adapt = experiments
+            experiments_adapt = (
+                experiments if experiments_adapt is None else experiments_adapt
+            )
 
         desis = pd.concat(
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments_adapt[f"{feat.key}"].dropna(),
+                    experiments_adapt[feat.key].dropna(),
                 )
                 for feat in self.features
                 if feat.objective is not None
