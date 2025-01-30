@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Dict, Literal, Optional, Type, Union
+from typing import Annotated, Dict, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -86,29 +86,6 @@ AnyOptimalityCriterion = Union[
     AnyDoEOptimalityCriterion,
     SpaceFillingCriterion,
 ]
-
-
-class DoEStrategy(Strategy):
-    type: Literal["DoEStrategy"] = "DoEStrategy"  # type: ignore
-
-    criterion: AnyOptimalityCriterion = Field(
-        default_factory=lambda: DOptimalityCriterion(formula="fully-quadratic")
-    )
-    """
-    model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
-    are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
-    """
-
-    @field_validator("formula")
-    @classmethod
-    def validate_formula(cls, formula: str) -> str:
-        if formula not in PREDEFINED_MODEL_TYPES.__args__:  # type: ignore
-            # check that it is a valid formula
-            try:
-                Formula(formula)
-            except FormulaSyntaxError:
-                raise ValueError(f"Invalid formula: {formula}")
-        return formula
 
 
 class DOptimalityCriterion(DoEOptimalityCriterion):

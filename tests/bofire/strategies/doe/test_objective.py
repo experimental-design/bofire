@@ -14,13 +14,6 @@ from bofire.data_models.strategies.doe import (
     DOptimalityCriterion,
     EOptimalityCriterion,
     GOptimalityCriterion,
-    SpaceFillingCriterion,
-)
-from bofire.data_models.strategies.doe import (
-    AOptimalityCriterion,
-    DOptimalityCriterion,
-    EOptimalityCriterion,
-    GOptimalityCriterion,
     IOptimalityCriterion,
     SpaceFillingCriterion,
 )
@@ -29,6 +22,7 @@ from bofire.strategies.doe.objective import (
     DOptimality,
     EOptimality,
     GOptimality,
+    IOptimality,
     ModelBasedObjective,
     SpaceFilling,
     get_objective_function,
@@ -487,7 +481,7 @@ def test_DOptimality_instantiation():
 
 def test_DOptimality_evaluate_jacobian():
     # n_experiment = 1, n_inputs = 2, model: x1 + x2
-    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
     domain = Domain.from_lists(
@@ -518,7 +512,7 @@ def test_DOptimality_evaluate_jacobian():
         )
 
     # n_experiment = 1, n_inputs = 2, model: x1**2 + x2**2
-    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -4 * x**3 / (x[0] ** 4 + x[1] ** 4 + delta)
 
     model = Formula("{x1**2} + {x2**2} - 1")
