@@ -459,6 +459,7 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
+        ipopt_options={"maxiter": 500},
     )
     strategy = DoEStrategy(data_model=data_model)
     doe = strategy.ask(candidate_count=n_experiments)
