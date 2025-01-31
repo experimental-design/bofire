@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
+import pytest
 from formulaic import Formula
 
+from bofire.data_models.constraints.linear import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.strategies.doe import (
@@ -9,6 +14,7 @@ from bofire.data_models.strategies.doe import (
     DOptimalityCriterion,
     EOptimalityCriterion,
     GOptimalityCriterion,
+    IOptimalityCriterion,
     SpaceFillingCriterion,
 )
 from bofire.strategies.doe.objective import (
@@ -16,6 +22,7 @@ from bofire.strategies.doe.objective import (
     DOptimality,
     EOptimality,
     GOptimality,
+    IOptimality,
     ModelBasedObjective,
     SpaceFilling,
     get_objective_function,
@@ -474,7 +481,7 @@ def test_DOptimality_instantiation():
 
 def test_DOptimality_evaluate_jacobian():
     # n_experiment = 1, n_inputs = 2, model: x1 + x2
-    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
     domain = Domain.from_lists(
@@ -505,7 +512,7 @@ def test_DOptimality_evaluate_jacobian():
         )
 
     # n_experiment = 1, n_inputs = 2, model: x1**2 + x2**2
-    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -4 * x**3 / (x[0] ** 4 + x[1] ** 4 + delta)
 
     model = Formula("{x1**2} + {x2**2} - 1")
@@ -855,3 +862,87 @@ def test_MinMaxTransform():
             2 * objective_unscaled.evaluate_jacobian(x_scaled),
             objective_scaled.evaluate_jacobian(x),
         )
+
+        objective_unscaled = get_objective_function(
+            IOptimalityCriterion(
+                formula="linear",
+                delta=0,
+                transform_range=None,
+                n_space_filling_points=4,
+                ipopt_options={"maxiter": 200},
+            ),
+            domain=domain,
+            n_experiments=4,
+        )
+        with pytest.raises(ValueError):
+            objective_scaled = get_objective_function(
+                IOptimalityCriterion(
+                    formula="linear",
+                    delta=0,
+                    transform_range=(-1.0, 1.0),
+                    n_space_filling_points=4,
+                    ipopt_options={"maxiter": 200},
+                ),
+                domain=domain,
+                n_experiments=4,
+            )
+
+
+def test_IOptimality_instantiation():
+    # no constraints
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    model = get_formula_from_string("linear", domain=domain)
+
+    i_optimality = IOptimality(
+        domain=domain,
+        model=model,
+        n_experiments=2,
+    )
+    assert np.allclose(np.linspace(0, 1, 100), i_optimality.Y.to_numpy().flatten())
+
+    # inequality constraints
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(2)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2"], coefficients=[1, 0], rhs=0.5
+            )
+        ],
+    )
+
+    model = get_formula_from_string("linear", domain=domain)
+
+    i_optimality = IOptimality(
+        domain=domain,
+        model=model,
+        n_experiments=2,
+    )
+
+    assert np.allclose(
+        np.linspace(0, 1, 100)[:50],
+        np.unique(i_optimality.Y.to_numpy()[:, 0]),
+    )
+
+    # equality constraints
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(2)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=1)
+        ],
+    )
+
+    model = get_formula_from_string("linear", domain=domain)
+
+    i_optimality = IOptimality(
+        domain=domain,
+        model=model,
+        n_experiments=2,
+    )
+
+    assert np.allclose(domain.constraints(i_optimality.Y), 0.0)
