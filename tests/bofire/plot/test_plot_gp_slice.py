@@ -57,7 +57,3 @@ def test_plot_gp_slice_plotly():
 
     assert isinstance(fig, go.Figure)
     assert isinstance(fig_sd, go.Figure)
-
-
-
-
