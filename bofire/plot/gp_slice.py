@@ -1,6 +1,5 @@
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, List, Tuple
 
-from bofire.data_models.domain.api import Domain
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 
