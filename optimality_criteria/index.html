@@ -1093,6 +1093,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
     <span class="n">AOptimalityCriterion</span><span class="p">,</span>
     <span class="n">DOptimalityCriterion</span><span class="p">,</span>
     <span class="n">EOptimalityCriterion</span><span class="p">,</span>
+    <span class="n">IOptimalityCriterion</span><span class="p">,</span>
     <span class="n">KOptimalityCriterion</span><span class="p">,</span>
     <span class="n">SpaceFillingCriterion</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1109,6 +1110,7 @@ from bofire.data_models.strategies.doe import (
     AOptimalityCriterion,
     DOptimalityCriterion,
     EOptimalityCriterion,
+    IOptimalityCriterion,
     KOptimalityCriterion,
     SpaceFillingCriterion,
 )
@@ -1176,6 +1178,7 @@ from bofire.strategies.doe.objective import get_objective_function</div>
     <span class="n">AOptimalityCriterion</span><span class="p">,</span>
     <span class="n">KOptimalityCriterion</span><span class="p">,</span>
     <span class="n">EOptimalityCriterion</span><span class="p">,</span>
+    <span class="n">IOptimalityCriterion</span><span class="p">,</span>
 <span class="p">]:</span>
     <span class="n">criterion</span> <span class="o">=</span> <span class="n">crit</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="n">model_type</span><span class="p">)</span>
     <span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
@@ -1214,6 +1217,7 @@ for crit in [
     AOptimalityCriterion,
     KOptimalityCriterion,
     EOptimalityCriterion,
+    IOptimalityCriterion,
 ]:
     criterion = crit(formula=model_type)
     data_model = DoEStrategy(

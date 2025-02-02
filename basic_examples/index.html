@@ -2220,7 +2220,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 <span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
     <span class="n">criterion</span><span class="o">=</span><span class="n">DOptimalityCriterion</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">),</span>
-    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
@@ -2238,7 +2238,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 data_model = DoEStrategy(
     domain=domain,
     criterion=DOptimalityCriterion(formula="linear"),
-    ipopt_options={"maxiter": 100, "disp": 0},
+    ipopt_options={"maxiter": 500, "disp": 0},
 )
 strategy = strategies.map(data_model=data_model)
 result = strategy.ask(12)
