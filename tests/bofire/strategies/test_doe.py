@@ -379,10 +379,6 @@ def test_categorical_doe_iterative():
     assert candidates.shape == (5, 3)
 
 
-if __name__ == "__main__":
-    test_formulas_implemented()
-
-
 def test_functional_constraint():
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),
@@ -447,7 +443,7 @@ def test_functional_constraint():
         features=["T", "W_T"], coefficients=[0.97, -0.03], rhs=0
     )
 
-    n_experiments = 9
+    n_experiments = 4
     domain = Domain.from_lists(
         inputs=inputs,
         outputs=outputs,
@@ -463,10 +459,10 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="iterative",
+        ipopt_options={"maxiter": 500},
     )
     strategy = DoEStrategy(data_model=data_model)
-    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)
+    doe = strategy.ask(candidate_count=n_experiments)
     doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]
