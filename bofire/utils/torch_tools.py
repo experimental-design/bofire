@@ -144,7 +144,9 @@ def get_interpoint_constraints(
     return constraints
 
 
-def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_nchoosek_constraints(
+    domain: Domain,
+) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Transforms NChooseK constraints into a list of non-linear inequality constraint callables
     that can be parsed by pydantic. For this purpose the NChooseK constraint is continuously
     relaxed by countig the number of zeros in a candidate by a sum of narrow gaussians centered
@@ -182,24 +184,32 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
         )
         if c.max_count != len(c.features):
             constraints.append(
-                max_constraint(
-                    indices=indices,
-                    num_features=len(c.features),
-                    max_count=c.max_count,
-                ),
+                (
+                    max_constraint(
+                        indices=indices,
+                        num_features=len(c.features),
+                        max_count=c.max_count,
+                    ),
+                    True,
+                )
             )
         if c.min_count > 0:
             constraints.append(
-                min_constraint(
-                    indices=indices,
-                    num_features=len(c.features),
-                    min_count=c.min_count,
-                ),
+                (
+                    min_constraint(
+                        indices=indices,
+                        num_features=len(c.features),
+                        min_count=c.min_count,
+                    ),
+                    True,
+                )
             )
     return constraints
 
 
-def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_product_constraints(
+    domain: Domain,
+) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of nonlinear constraint functions that can be processed by botorch
     based on the given domain.
 
@@ -222,7 +232,10 @@ def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
             dtype=torch.int64,
         )
         constraints.append(
-            product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign),
+            (
+                product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign),
+                True,
+            )
         )
     return constraints
 

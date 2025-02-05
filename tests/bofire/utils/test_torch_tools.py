@@ -584,12 +584,14 @@ def test_get_output_constraints(outputs):
 def test_get_nchoosek_constraints():
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)],
+            features=[
+                ContinuousInput(key=f"if{i + 1}", bounds=(0, 1)) for i in range(8)
+            ],
         ),
         constraints=Constraints(
             constraints=[
                 NChooseKConstraint(
-                    features=[f"if{i+3}" for i in range(6)],
+                    features=[f"if{i + 3}" for i in range(6)],
                     min_count=2,
                     max_count=5,
                     none_also_valid=False,
@@ -599,31 +601,40 @@ def test_get_nchoosek_constraints():
     )
     constraints = get_nchoosek_constraints(domain=domain)
     assert len(constraints) == 2
+    # check correct boolean to mark it as intrapoint constraint
+    for c in constraints:
+        assert c[1] is True
     # wrong samples
     samples = domain.inputs.sample(5)
     # check max count not fulfilled
-    assert torch.all(constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
+    assert torch.all(
+        constraints[0][0](torch.from_numpy(samples.values).to(**tkwargs)) < 0
+    )
     # check max count fulfilled
     samples.if8 = 0
     assert torch.all(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
+        constraints[0][0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
     )
 
     # check min count fulfilled
     samples = domain.inputs.sample(5)
     assert torch.all(
-        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
+        constraints[1][0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
     )
-    samples[[f"if{i+4}" for i in range(5)]] = 0.0
-    assert torch.all(constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
+    samples[[f"if{i + 4}" for i in range(5)]] = 0.0
+    assert torch.all(
+        constraints[1][0](torch.from_numpy(samples.values).to(**tkwargs)) < 0
+    )
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)],
+            features=[
+                ContinuousInput(key=f"if{i + 1}", bounds=(0, 1)) for i in range(8)
+            ],
         ),
         constraints=Constraints(
             constraints=[
                 NChooseKConstraint(
-                    features=[f"if{i+3}" for i in range(6)],
+                    features=[f"if{i + 3}" for i in range(6)],
                     min_count=3,
                     max_count=6,
                     none_also_valid=False,
@@ -635,17 +646,19 @@ def test_get_nchoosek_constraints():
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
     assert torch.all(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
+        constraints[0][0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0,
     )
 
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)],
+            features=[
+                ContinuousInput(key=f"if{i + 1}", bounds=(0, 1)) for i in range(8)
+            ],
         ),
         constraints=Constraints(
             constraints=[
                 NChooseKConstraint(
-                    features=[f"if{i+3}" for i in range(6)],
+                    features=[f"if{i + 3}" for i in range(6)],
                     min_count=0,
                     max_count=2,
                     none_also_valid=False,
@@ -656,7 +669,9 @@ def test_get_nchoosek_constraints():
     constraints = get_nchoosek_constraints(domain=domain)
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
-    assert torch.all(constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
+    assert torch.all(
+        constraints[0][0](torch.from_numpy(samples.values).to(**tkwargs)) < 0
+    )
     # test with two max nchoosek constraints
     domain = Domain(
         inputs=[
@@ -683,11 +698,11 @@ def test_get_nchoosek_constraints():
     samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
     constraints = get_nchoosek_constraints(domain=domain)
     assert torch.allclose(
-        constraints[0](samples),
+        constraints[0][0](samples),
         torch.tensor([0.0, -1.0, -2.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[1](samples),
+        constraints[1][0](samples),
         torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
     )
     # test with two min nchoosek constraints
@@ -716,11 +731,11 @@ def test_get_nchoosek_constraints():
     samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
     constraints = get_nchoosek_constraints(domain=domain)
     assert torch.allclose(
-        constraints[0](samples),
+        constraints[0][0](samples),
         torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[1](samples),
+        constraints[1][0](samples),
         torch.tensor([-1.0, 0.0, 1.0]).to(**tkwargs),
     )
     # test with min/max and max constraint
@@ -750,15 +765,15 @@ def test_get_nchoosek_constraints():
     samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
     constraints = get_nchoosek_constraints(domain=domain)
     assert torch.allclose(
-        constraints[0](samples),
+        constraints[0][0](samples),
         torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[1](samples),
+        constraints[1][0](samples),
         torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs),
     )
     assert torch.allclose(
-        constraints[2](samples),
+        constraints[2][0](samples),
         torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
     )
 
@@ -793,24 +808,27 @@ def test_get_product_constraints():
     )
     constraints = get_product_constraints(domain=domain)
     assert len(constraints) == 3
+    # check correct boolean to mark it as intrapoint constraint
+    for c in constraints:
+        assert c[1] is True
 
     samples = torch.tensor([[0.1, 0.5, 90], [0.2, 0.9, 100], [0.3, 0.1, 100]]).to(
         **tkwargs,
     )
     results = torch.tensor([35.0, -10.0, 70.0]).to(**tkwargs)
-    assert torch.allclose(constraints[0](samples), results)
+    assert torch.allclose(constraints[0][0](samples), results)
     for i in range(3):
-        assert torch.allclose(constraints[0](samples[i]), results[i])
+        assert torch.allclose(constraints[0][0](samples[i]), results[i])
 
     results = torch.tensor([25.0, 70, -10]).to(**tkwargs)
-    assert torch.allclose(constraints[1](samples), results)
+    assert torch.allclose(constraints[1][0](samples), results)
     for i in range(3):
-        assert torch.allclose(constraints[1](samples[i]), results[i])
+        assert torch.allclose(constraints[1][0](samples[i]), results[i])
 
     results = torch.tensor([0.18973666, 0.44444444444, 9.0]).to(**tkwargs)
-    assert torch.allclose(constraints[2](samples), results)
+    assert torch.allclose(constraints[2][0](samples), results)
     for i in range(3):
-        assert torch.allclose(constraints[2](samples[i]), results[i])
+        assert torch.allclose(constraints[2][0](samples[i]), results[i])
 
 
 def test_get_nonlinear_constraints():
