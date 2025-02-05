@@ -589,6 +589,7 @@ specs.add_valid(
         "n_center": 0,
         "n_generators": 0,
         "generator": "",
+        "randomize_runorder": False,
     },
 )
 
