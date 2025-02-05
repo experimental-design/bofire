@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.2">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.a40c8224.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.d7758b05.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -5029,7 +5029,9 @@ at zero.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_nchoosek_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_nchoosek_constraints</span><span class="p">(</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms NChooseK constraints into a list of non-linear inequality constraint callables</span>
 <span class="sd">    that can be parsed by pydantic. For this purpose the NChooseK constraint is continuously</span>
 <span class="sd">    relaxed by countig the number of zeros in a candidate by a sum of narrow gaussians centered</span>
@@ -5067,19 +5069,25 @@ at zero.</p>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">max_count</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">max_constraint</span><span class="p">(</span>
-                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
-                    <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span>
-                    <span class="n">max_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_count</span><span class="p">,</span>
-                <span class="p">),</span>
+                <span class="p">(</span>
+                    <span class="n">max_constraint</span><span class="p">(</span>
+                        <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+                        <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span>
+                        <span class="n">max_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_count</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">min_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">min_constraint</span><span class="p">(</span>
-                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
-                    <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span>
-                    <span class="n">min_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">min_count</span><span class="p">,</span>
-                <span class="p">),</span>
+                <span class="p">(</span>
+                    <span class="n">min_constraint</span><span class="p">(</span>
+                        <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+                        <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span>
+                        <span class="n">min_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">min_count</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>
@@ -5326,7 +5334,9 @@ based on the given domain.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_product_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_product_constraints</span><span class="p">(</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a list of nonlinear constraint functions that can be processed by botorch</span>
 <span class="sd">    based on the given domain.</span>
 
@@ -5349,7 +5359,10 @@ based on the given domain.</p>
             <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">product_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">exponents</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sign</span><span class="p">),</span>
+            <span class="p">(</span>
+                <span class="n">product_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">exponents</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sign</span><span class="p">),</span>
+                <span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>
@@ -5426,7 +5439,7 @@ based on the given domain.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.5090c770.min.js"></script>
+      <script src="../assets/javascripts/bundle.f13b1293.min.js"></script>
       
         <script src="../javascripts/mathjax.js"></script>
       
