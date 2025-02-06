@@ -4,7 +4,8 @@ import pandas as pd
 from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
-from bofire.data_models.features.api import CategoricalInput, Input
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     DoEOptimalityCriterion,
@@ -37,8 +38,7 @@ class DoEStrategy(Strategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.data_model = data_model
-        self._partially_fixed_candidates = None
-        self._fixed_candidates = None
+        self._allow_partially_filled_candidates = True
 
     @property
     def formula(self):
@@ -47,28 +47,6 @@ class DoEStrategy(Strategy):
                 self.data_model.criterion.formula, self.data_model.domain
             )
         return None
-
-    def set_candidates(self, candidates: pd.DataFrame):
-        original_columns = self.domain.inputs.get_keys(includes=Input)
-        to_many_columns = []
-        for col in candidates.columns:
-            if col not in original_columns:
-                to_many_columns.append(col)
-        if len(to_many_columns) > 0:
-            raise AttributeError(
-                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain",
-            )
-
-        to_few_columns = []
-        for col in original_columns:
-            if col not in candidates.columns:
-                to_few_columns.append(col)
-        if len(to_few_columns) > 0:
-            raise AttributeError(
-                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain",
-            )
-
-        self._candidates = candidates
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         all_new_categories = []
@@ -88,16 +66,29 @@ class DoEStrategy(Strategy):
             all_new_categories.extend(new_categories)
 
         # here we adapt the (partially) fixed experiments to the new domain
-        fixed_experiments_count = 0
         _candidate_count = candidate_count
         adapted_partially_fixed_candidates = self._transform_candidates_to_new_domain(
             new_domain,
             self.candidates,
         )
-
+        # not yet working,
+        # target is to also condition on self.experiments
         if self.candidates is not None:
             fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
             _candidate_count = candidate_count + fixed_experiments_count
+            adapted_partially_fixed_candidates = (
+                self._transform_candidates_to_new_domain(
+                    new_domain,
+                    self.candidates,
+                )
+            )
+
+        # we have to also adapt the experiments, commented now to convince ruff for now
+        # if self.experiments is not None:
+        #     adapted_fixed_experiments = self._transform_candidates_to_new_domain(
+        #         new_domain,
+        #         self.experiments,
+        #     )
 
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
@@ -183,7 +174,7 @@ class DoEStrategy(Strategy):
                     ignore_index=True,
                 )
                 print(
-                    f"Status: {i+1} of {_candidate_count} experiments determined \n"
+                    f"Status: {i + 1} of {_candidate_count} experiments determined \n"
                     f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}",
                 )
 
@@ -230,24 +221,34 @@ class DoEStrategy(Strategy):
             for col in missing_columns:
                 intermediate_candidates.insert(0, col, None)
 
-            cat_columns = self.domain.inputs.get(includes=CategoricalInput)
-            for cat in cat_columns:
-                for row_index, c in enumerate(intermediate_candidates[cat.key].values):
-                    if pd.isnull(c):
-                        continue
-                    if c not in cat.categories:  # type: ignore
-                        raise AttributeError(
-                            f"provided value {c} for categorical variable {cat.key} "
-                            f"does not exist in the corresponding categories {cat.categories}",  # type: ignore
-                        )
-                    intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
-                    intermediate_candidates.loc[row_index, c] = 1
-
-            intermediate_candidates = intermediate_candidates.drop(
-                [cat.key for cat in cat_columns],
-                axis=1,
+            # this is doing the one-hot encoding in a well tested way
+            intermediate_candidates = self.domain.inputs.transform(
+                intermediate_candidates,
+                {
+                    key: CategoricalEncodingEnum.ONE_HOT
+                    for key in self.domain.inputs.get_keys(CategoricalInput)
+                },
             )
 
+            # cat_columns = self.domain.inputs.get(includes=CategoricalInput)
+            # for cat in cat_columns:
+            #     for row_index, c in enumerate(intermediate_candidates[cat.key].values):
+            #         if pd.isnull(c):
+            #             continue
+            #         if c not in cat.categories:  # type: ignore
+            #             raise AttributeError(
+            #                 f"provided value {c} for categorical variable {cat.key} "
+            #                 f"does not exist in the corresponding categories {cat.categories}",  # type: ignore
+            #             )
+            #         intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
+            #         intermediate_candidates.loc[row_index, c] = 1
+
+            # intermediate_candidates = intermediate_candidates.drop(
+            #     [cat.key for cat in cat_columns],
+            #     axis=1,
+            # )
+
+            # What is this doing?
             adapted_partially_fixed_candidates = pd.concat(
                 [
                     intermediate_candidates[candidates.notnull().all(axis=1)],

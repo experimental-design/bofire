@@ -25,6 +25,7 @@ class Strategy(ABC):
         self.domain = data_model.domain
         self.seed = data_model.seed or np.random.default_rng().integers(1000)
         self.rng = np.random.default_rng(self.seed)
+        self._allow_partially_filled_candidates = False
         self._experiments = None
         self._candidates = None
 
@@ -195,6 +196,8 @@ class Strategy(ABC):
         candidates = self.domain.inputs.validate_experiments(
             candidates[self.domain.inputs.get_keys()],
             strict=False,
+            check_nan=self._allow_partially_filled_candidates is False,
+            check_missing_cols=self._allow_partially_filled_candidates is False,
         )
         self._candidates = candidates[self.domain.inputs.get_keys()]
 

@@ -366,19 +366,22 @@ class Inputs(_BaseFeatures[AnyInput]):
     def validate_experiments(
         self,
         experiments: pd.DataFrame,
-        strict=False,
+        strict: bool = False,
+        check_nan: bool = True,
+        check_missing_cols: bool = True,
     ) -> pd.DataFrame:
         for feature in self:
-            if feature.key not in experiments:
+            if (feature.key not in experiments) and check_missing_cols:
                 raise ValueError(f"no col for input feature `{feature.key}`")
             experiments[feature.key] = feature.validate_experimental(
                 experiments[feature.key],
                 strict=strict,
             )
-        if experiments[self.get_keys()].isnull().to_numpy().any():
-            raise ValueError("there are null values")
-        if experiments[self.get_keys()].isna().to_numpy().any():
-            raise ValueError("there are na values")
+        if check_nan:
+            if experiments[self.get_keys()].isnull().to_numpy().any():
+                raise ValueError("there are null values")
+            if experiments[self.get_keys()].isna().to_numpy().any():
+                raise ValueError("there are na values")
         return experiments
 
     def get_categorical_combinations(
