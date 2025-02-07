@@ -1,4 +1,5 @@
 from bofire.strategies.doe_strategy import DoEStrategy
+from bofire.strategies.factorial import FactorialStrategy
 from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
 from bofire.strategies.mapper import map
 from bofire.strategies.predictives.active_learning import ActiveLearningStrategy
