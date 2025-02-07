@@ -20,7 +20,7 @@ class QnehviStrategy(QehviStrategy):
         super().__init__(data_model=data_model, **kwargs)
         self.alpha = data_model.alpha
 
-    def _get_acqfs(self, n) -> List[qNoisyExpectedHypervolumeImprovement]:
+    def _get_acqfs(self, n) -> List[qNoisyExpectedHypervolumeImprovement]:  # type: ignore
         assert self.experiments is not None, "No experiments available."
         X_train, X_pending = self.get_acqf_input_tensors()
 
