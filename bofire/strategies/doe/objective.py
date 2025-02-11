@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from itertools import product
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -28,6 +28,7 @@ from bofire.data_models.strategies.doe import (
     KOptimalityCriterion,
     OptimalityCriterion,
     SpaceFillingCriterion,
+    WassersteinSpaceFillingCriterion,
 )
 from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
@@ -36,7 +37,7 @@ from bofire.strategies.doe.utils import (
     get_formula_from_string,
     nchoosek_constraints_as_bounds,
 )
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import InterpolateTransform, tkwargs
 
 
 class Objective:
@@ -737,6 +738,73 @@ class SpaceFilling(Objective):
         return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
 
 
+class WassersteinSpaceFilling(Objective):
+    def __init__(
+        self,
+        domain: Domain,
+        n_experiments: int,
+        transform_range: Bounds,
+        n_interpolation_points: int,
+        x_keys: List[str],
+        y_keys: List[str],
+        prepend_x: List[float],
+        prepend_y: List[float],
+        append_x: List[float],
+        append_y: List[float],
+        delta: float = 1e-6,
+    ) -> None:
+        super().__init__(
+            domain=domain,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform_range=transform_range,
+        )
+        lower, upper = transform_range
+        new_ts = torch.from_numpy(
+            np.linspace(lower, upper, n_interpolation_points),
+        ).to(dtype=torch.float64)
+        idx_x = [domain.inputs.get_keys().index(k) for k in x_keys]
+        idx_y = [domain.inputs.get_keys().index(k) for k in y_keys]
+
+        self.inter = InterpolateTransform(
+            new_x=new_ts,
+            idx_x=idx_x,
+            idx_y=idx_y,
+            prepend_x=torch.tensor(prepend_x).to(**tkwargs),
+            prepend_y=torch.tensor(prepend_y).to(**tkwargs),
+            append_x=torch.tensor(append_x).to(**tkwargs),
+            append_y=torch.tensor(append_y).to(**tkwargs),
+            keep_original=True,
+        )
+
+    def _evaluate(self, x: np.ndarray) -> float:
+        X = self._convert_input_to_tensor(x, requires_grad=False)
+        X = self.inter.transform(X)
+        return float(
+            -torch.sum(
+                torch.sort(torch.pdist(X.detach(), p=1))[0][: self.n_experiments]
+            ),
+        )
+
+    def _evaluate_jacobian(self, x: np.ndarray) -> float:  # type: ignore
+        X = self._convert_input_to_tensor(x, requires_grad=True)
+        X = self.inter.transform(X)
+        torch.sum(torch.sort(torch.pdist(X, p=1))[0][: self.n_experiments]).backward()
+
+        return -X.grad.detach().numpy().flatten()  # type: ignore
+
+    def _convert_input_to_tensor(
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
+    ) -> Tensor:
+        X = pd.DataFrame(
+            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            columns=self.vars,
+        )
+        return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
+
+
 def get_objective_function(
     criterion: Optional[OptimalityCriterion], domain: Domain, n_experiments: int
 ) -> Objective:
@@ -803,6 +871,20 @@ def get_objective_function(
             n_experiments=n_experiments,
             delta=criterion.delta,
             transform_range=criterion.transform_range,
+        )
+    if isinstance(criterion, WassersteinSpaceFillingCriterion):
+        return WassersteinSpaceFilling(
+            domain,
+            n_experiments=n_experiments,
+            transform_range=criterion.transform_range,  # type: ignore
+            n_interpolation_points=criterion.n_interpolation_points,
+            x_keys=criterion.x_keys,
+            y_keys=criterion.y_keys,
+            prepend_x=criterion.prepend_x,
+            prepend_y=criterion.prepend_y,
+            append_x=criterion.append_x,
+            append_y=criterion.append_y,
+            delta=criterion.delta,
         )
     else:
         raise NotImplementedError("Criterion type not implemented!")

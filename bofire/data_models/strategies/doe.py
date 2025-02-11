@@ -1,15 +1,16 @@
-from typing import Annotated, Dict, Literal, Optional, Type, Union
+from typing import Annotated, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
-from pydantic import Field, field_validator
+from pydantic import AfterValidator, Field, field_validator
+from pydantic.types import PositiveInt
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import Feature, MolecularInput
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.types import Bounds
+from bofire.data_models.types import Bounds, validate_monotonically_increasing
 
 
 PREDEFINED_MODEL_TYPES = Literal[
@@ -29,6 +30,19 @@ class OptimalityCriterion(BaseModel):
 class SpaceFillingCriterion(OptimalityCriterion):
     type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"  # type: ignore
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
+
+
+class WassersteinSpaceFillingCriterion(SpaceFillingCriterion):
+    type: Literal["WassersteinSpaceFillingCriterion"] = (  # type: ignore
+        "WassersteinSpaceFillingCriterion"
+    )
+    n_interpolation_points: PositiveInt = 1000
+    x_keys: list[str]
+    y_keys: list[str]
+    prepend_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
+    append_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
+    prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
+    append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
