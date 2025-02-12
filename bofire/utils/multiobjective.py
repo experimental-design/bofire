@@ -12,6 +12,10 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MinimizeObjective,
 )
+from bofire.data_models.strategies.predictives.mobo import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+)
 from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
 
@@ -134,11 +138,21 @@ def infer_ref_point(
     domain: Domain,
     experiments: pd.DataFrame,
     return_masked: bool = False,
+    reference_point: Optional[ExplicitReferencePoint] = None,
 ) -> Dict[str, float]:
     outputs = domain.outputs.get_by_objective(
         includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
     )
-    keys = [f.key for f in outputs]
+    keys = outputs.get_keys()
+
+    if reference_point is None:
+        reference_point = ExplicitReferencePoint(
+            values={
+                key: AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0)
+                for key in keys
+            }
+        )
+
     objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
 
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
@@ -146,14 +160,33 @@ def infer_ref_point(
         output_feature_keys=keys,
     )
 
-    ref_point_array = (
+    worst_values_array = (
         objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
         .numpy()
         .min(axis=0)
     )
 
+    best_values_array = (
+        objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
+        .numpy()
+        .max(axis=0)
+    )
+
+    # in the ref_point_array we have the masked values, which means that
+    # maximization is assumed for everything, this is because we used
+    # botorch objective for getting the best and worst values,
+    ref_point_array = np.array(
+        [
+            reference_point.values[key].get_reference_value(
+                best=best_values_array[i], worst=worst_values_array[i]
+            )
+            for i, key in enumerate(keys)
+        ]
+    )
+
     mask = get_ref_point_mask(domain)
-    # ref_point_array = (df[keys].values * mask).min(axis=0)
+
+    # here we unmask again by dividing by the mask
     if return_masked is False:
         ref_point_array /= mask
     return {feat: ref_point_array[i] for i, feat in enumerate(keys)}
