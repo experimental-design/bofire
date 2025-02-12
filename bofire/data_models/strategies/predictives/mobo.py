@@ -1,4 +1,5 @@
-from typing import Dict, Literal, Optional, Type
+from abc import abstractmethod
+from typing import Dict, Literal, Optional, Type, Union
 
 from pydantic import Field, model_validator
 
@@ -6,6 +7,7 @@ from bofire.data_models.acquisition_functions.api import (
     AnyMultiObjectiveAcquisitionFunction,
     qLogNEHVI,
 )
+from bofire.data_models.base import BaseModel
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -21,9 +23,126 @@ from bofire.data_models.strategies.predictives.multiobjective import (
 )
 
 
+class ReferenceValue(BaseModel):
+    type: str
+
+    @abstractmethod
+    def get_reference_value(self, best: float, worst: float) -> float:
+        """Get the reference value.
+
+        Args:
+            best: The best value that has been seen so far for the objective.
+            worst: The worst value that has been seen so far for the objective.
+
+        Returns:
+            float: The reference value.
+        """
+        pass
+
+
+class FixedReferenceValue(ReferenceValue):
+    """Reference value that is fixed.
+
+    Args:
+        value: The fixed reference value.
+    """
+
+    type: Literal["FixedReferenceValue"] = "FixedReferenceValue"  # type: ignore
+    value: float
+
+    def get_reference_value(self, best: float, worst: float) -> float:
+        """Get the reference value.
+
+        Returns:
+            float: The reference value.
+        """
+        return self.value
+
+
+class MovingReferenceValue(ReferenceValue):
+    """Reference values that is changing over execution time of the strategy, where the
+    change is parameterized here.
+
+    Attributes:
+        orient_at_best: If True, the reference value is oriented at the best value that has
+            been seen so far for the objective. If False, the reference value is oriented
+            at the worst value that has been seen so far for the objective.
+    """
+
+    type: str
+    orient_at_best: bool = True
+
+
+class AbsoluteMovingReferenceValue(MovingReferenceValue):
+    """Reference value that is changing over execution time of the strategy, where the change is
+    parameterized in absolute values.
+
+    Attributes:
+        orient_at_best: If True, the reference value is oriented at the best value that has
+            been seen so far for the objective. If False, the reference value is oriented
+            at the worst value that has been seen so far for the objective.
+        offset: The offset that is added to the reference value. In case of `orient_at_max==True`,
+            it holds that `reference_value = best_value + offset`, else it holds that
+            `reference_value = worst_value + offset`.
+    """
+
+    type: Literal["AbsoluteMovingReferenceValue"] = "AbsoluteMovingReferenceValue"  # type: ignore
+    offset: float
+
+    def get_reference_value(self, best: float, worst: float) -> float:
+        if self.orient_at_best:
+            return best + self.offset
+        return worst + self.offset
+
+
+class RelativeMovingReferenceValue(MovingReferenceValue):
+    """Reference value that is changing over execution time of the strategy, where the change is
+    parameterized in relative values.
+
+    Attributes:
+        orient_at_best: If True, the reference value is oriented at the best value that has
+            been seen so far for the objective. If False, the reference value is oriented
+            at the worst value that has been seen so far for the objective.
+        scaling: The scaling that is applied to the reference value. In case of `orient_at_max==True`,
+            it holds that `reference_value = best_value * offset`, else it holds that
+            `reference_value = worst_value * offset`.
+    """
+
+    type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"  # type: ignore
+    scaling: float = 1.0
+
+    def get_reference_value(self, best: float, worst: float) -> float:
+        if self.orient_at_best:
+            return best + self.scaling * (best - worst)
+        return worst + self.scaling * (best - worst)
+
+
+class ReferencePoint(BaseModel):
+    type: str
+
+
+class ExplicitReferencePoint(ReferencePoint):
+    """Reference point that is explicitly defined, and not inferred during the execution
+    of the strategy.
+
+    Attributes:
+        values: The values of the reference point for each output feature.
+    """
+
+    type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"  # type: ignore
+    values: Dict[
+        str,
+        Union[
+            FixedReferenceValue,
+            AbsoluteMovingReferenceValue,
+            RelativeMovingReferenceValue,
+        ],
+    ]
+
+
 class MoboStrategy(MultiobjectiveStrategy):
-    type: Literal["MoboStrategy"] = "MoboStrategy"
-    ref_point: Optional[Dict[str, float]] = None
+    type: Literal["MoboStrategy"] = "MoboStrategy"  # type: ignore
+    ref_point: Optional[ExplicitReferencePoint] = None
     acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
         default_factory=lambda: qLogNEHVI(),
     )
@@ -36,7 +155,7 @@ class MoboStrategy(MultiobjectiveStrategy):
         keys = self.domain.outputs.get_keys_by_objective(
             [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
-        if sorted(keys) != sorted(self.ref_point.keys()):
+        if sorted(keys) != sorted(self.ref_point.values.keys()):
             raise ValueError(
                 f"Provided refpoint do not match the domain, expected keys: {keys}",
             )
