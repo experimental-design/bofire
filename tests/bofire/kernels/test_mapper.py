@@ -16,6 +16,7 @@ from bofire.data_models.kernels.api import (
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
@@ -432,3 +433,35 @@ def test_compute_active_dims_fails_with_features_without_mapper():
             active_dims=[1, 2, 3],
             features_to_idx_mapper=None,
         )
+
+
+def test_map_PolynomialFeatureInteractionKernel():
+    k = kernels.map(
+        PolynomialFeatureInteractionKernel(
+            kernels=[
+                RBFKernel(features=["x1", "x2"]),
+                MaternKernel(features=["x2", "x3"]),
+            ],
+            max_degree=2,
+            include_self_interactions=False,
+            lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15),
+        ),
+        active_dims=[],
+        ard_num_dims=1,
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: [int(k[1:]) for k in ks],
+    )
+
+    from bofire.kernels.aggregation import (
+        PolynomialFeatureInteractionKernel as RealKernel,
+    )
+
+    assert isinstance(k, RealKernel)
+    assert k.indices == [(0,), (1,), (0, 1)]
+    assert k.lengthscale.shape == (3,)
+
+    assert isinstance(k.kernels[0], gpytorch.kernels.RBFKernel)
+    assert k.kernels[0].active_dims.tolist() == [1, 2]
+
+    assert isinstance(k.kernels[1], gpytorch.kernels.MaternKernel)
+    assert k.kernels[1].active_dims.tolist() == [2, 3]

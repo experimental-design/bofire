@@ -3,7 +3,7 @@ from typing import Literal, Optional, Union
 
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
-from bofire.data_models.kernels.kernel import AggregationKernel
+from bofire.data_models.kernels.kernel import AggregationKernel, Kernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import WassersteinKernel
 from bofire.data_models.priors.api import AnyGeneralPrior
@@ -56,6 +56,14 @@ class ScaleKernel(AggregationKernel):
         WassersteinKernel,
     ]
     outputscale_prior: Optional[AnyGeneralPrior] = None
+
+
+class PolynomialFeatureInteractionKernel(AggregationKernel):
+    type: Literal["PolynomialFeaturesKernel"] = "PolynomialFeaturesKernel"
+    kernels: Sequence[Kernel]
+    max_degree: int
+    include_self_interactions: bool
+    lengthscale_prior: Optional[AnyGeneralPrior] = None
 
 
 AdditiveKernel.model_rebuild()
