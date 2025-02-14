@@ -6,6 +6,7 @@ from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
 from botorch.models.kernels.categorical import CategoricalKernel
 
 import bofire
+import bofire.kernels.aggregation as aggregationKernels
 import bofire.kernels.api as kernels
 import bofire.kernels.shape as shapeKernels
 from bofire.data_models.kernels.api import (
@@ -40,6 +41,7 @@ EQUIVALENTS = {
     HammingDistanceKernel: CategoricalKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
+    PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
 }
 
 
@@ -452,11 +454,7 @@ def test_map_PolynomialFeatureInteractionKernel():
         features_to_idx_mapper=lambda ks: [int(k[1:]) for k in ks],
     )
 
-    from bofire.kernels.aggregation import (
-        PolynomialFeatureInteractionKernel as RealKernel,
-    )
-
-    assert isinstance(k, RealKernel)
+    assert isinstance(k, aggregationKernels.PolynomialFeatureInteractionKernel)
     assert k.indices == [(0,), (1,), (0, 1)]
     assert k.lengthscale.shape == (3,)
 
