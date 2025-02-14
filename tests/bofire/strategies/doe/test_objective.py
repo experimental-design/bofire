@@ -808,6 +808,7 @@ def test_SpaceFilling_evaluate_jacobian():
     assert np.allclose(space_filling.evaluate_jacobian(x), [-1, -1, 2, 0])
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_MinMaxTransform():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],

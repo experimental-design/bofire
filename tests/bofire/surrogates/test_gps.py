@@ -79,7 +79,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -136,6 +136,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
     [
@@ -400,7 +401,7 @@ def test_MixedSingleTaskGPHyperconfig():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -440,7 +441,7 @@ def test_MixedSingleTaskGPModel_invalid_preprocessing():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -469,7 +470,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
