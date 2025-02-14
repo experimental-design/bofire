@@ -3,6 +3,7 @@ from typing import Union
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
     MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
     ScaleKernel,
 )
 from bofire.data_models.kernels.categorical import (
@@ -50,6 +51,7 @@ AnyMolecularKernel = TanimotoKernel
 AnyKernel = Union[
     AdditiveKernel,
     MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
     ScaleKernel,
     HammingDistanceKernel,
     LinearKernel,
