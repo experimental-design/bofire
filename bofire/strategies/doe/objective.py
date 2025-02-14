@@ -7,7 +7,6 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
-from cyipopt import minimize_ipopt  # type: ignore
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 from torch import Tensor
@@ -243,6 +242,9 @@ class IOptimality(ModelBasedObjective):
                 domain, n_space_filling_points, ignore_nchoosek=True
             )
             bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
+
+            # import optional dependency only upon usage
+            from cyipopt import minimize_ipopt  # type: ignore
 
             result = minimize_ipopt(
                 objective.evaluate,

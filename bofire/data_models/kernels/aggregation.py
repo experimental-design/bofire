@@ -2,7 +2,13 @@ from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
-from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
+from bofire.data_models.kernels.continuous import (
+    InfiniteWidthBNNKernel,
+    LinearKernel,
+    MaternKernel,
+    PolynomialKernel,
+    RBFKernel,
+)
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import WassersteinKernel
@@ -56,6 +62,30 @@ class ScaleKernel(AggregationKernel):
         WassersteinKernel,
     ]
     outputscale_prior: Optional[AnyGeneralPrior] = None
+
+
+class PolynomialFeatureInteractionKernel(AggregationKernel):
+    type: Literal["PolynomialFeatureInteractionKernel"] = (
+        "PolynomialFeatureInteractionKernel"
+    )
+    kernels: Sequence[
+        Union[
+            AdditiveKernel,
+            MultiplicativeKernel,
+            ScaleKernel,
+            HammingDistanceKernel,
+            LinearKernel,
+            PolynomialKernel,
+            MaternKernel,
+            RBFKernel,
+            TanimotoKernel,
+            InfiniteWidthBNNKernel,
+            WassersteinKernel,
+        ]
+    ]
+    max_degree: int
+    include_self_interactions: bool
+    lengthscale_prior: Optional[AnyGeneralPrior] = None
 
 
 AdditiveKernel.model_rebuild()

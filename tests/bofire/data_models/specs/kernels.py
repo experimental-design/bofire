@@ -102,3 +102,15 @@ specs.add_valid(
         "features": None,
     },
 )
+specs.add_valid(
+    kernels.PolynomialFeatureInteractionKernel,
+    lambda: {
+        "max_degree": 2,
+        "include_self_interactions": False,
+        "kernels": [
+            specs.valid(kernels.LinearKernel).obj().model_dump(),
+            specs.valid(kernels.MaternKernel).obj().model_dump(),
+        ],
+        "lengthscale_prior": priors.valid(LogNormalPrior).obj().model_dump(),
+    },
+)
