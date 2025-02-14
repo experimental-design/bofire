@@ -144,6 +144,16 @@ def test_features_get_by_key(features, key, expected):
     assert id(returned) == id(expected)
 
 
+def test_features_get_by_key_regex():
+    feat = features.get_by_key("if")
+    assert feat.key == "if1"
+
+
+def test_features_get_by_key_failure():
+    with pytest.raises(KeyError, match="Feature with key if123 not found."):
+        inputs.get_by_key("if123")
+
+
 def test_features_get_by_keys_include():
     keys = ["of2", "if1"]
     feats = features.get_by_keys(keys)

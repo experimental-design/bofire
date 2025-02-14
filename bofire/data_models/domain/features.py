@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import re
 import warnings
 from collections.abc import Iterator, Sequence
 from enum import Enum
@@ -116,6 +117,10 @@ class _BaseFeatures(BaseModel, Generic[F]):
     def get_by_key(self, key: str) -> F:
         """Get a feature by its key.
 
+        First, the method tries to find the feature by its key. If no feature is
+        found, the method tries to find the feature by a regular expression match.
+        If no feature is found, a KeyError is raised.
+
         Args:
             key: Feature key of the feature of interest
 
@@ -123,7 +128,13 @@ class _BaseFeatures(BaseModel, Generic[F]):
             Feature: Feature of interest
 
         """
-        return {f.key: f for f in self.features}[key]
+        try:
+            return {f.key: f for f in self.features}[key]
+        except KeyError:
+            for f in self.get():
+                if re.match(key, f.key):
+                    return f
+        raise KeyError(f"Feature with key {key} not found.")
 
     def get_by_keys(self, keys: Sequence[str], include: bool = True) -> Self:
         """Get features of the domain specified by its keys.
