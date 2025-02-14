@@ -114,15 +114,19 @@ class _BaseFeatures(BaseModel, Generic[F]):
             return Outputs(features=cast(Tuple[AnyOutput, ...], new_feature_seq))
         return Features(features=new_feature_seq)
 
-    def get_by_key(self, key: str) -> F:
+    def get_by_key(self, key: str, regex: bool = False) -> F:
         """Get a feature by its key.
 
         First, the method tries to find the feature by its key. If no feature is
-        found, the method tries to find the feature by a regular expression match.
+        found, the method tries to find the feature by a regular expression match,
+        if `regex` is set to `True`.
+
         If no feature is found, a KeyError is raised.
 
         Args:
             key: Feature key of the feature of interest
+            regex: Boolean to distinguish if the key can be interpreted as a regular
+                expression.
 
         Returns:
             Feature: Feature of interest
@@ -131,9 +135,10 @@ class _BaseFeatures(BaseModel, Generic[F]):
         try:
             return {f.key: f for f in self.features}[key]
         except KeyError:
-            for f in self.get():
-                if re.match(key, f.key):
-                    return f
+            if regex:
+                for f in self.get():
+                    if re.match(key, f.key):
+                        return f
         raise KeyError(f"Feature with key {key} not found.")
 
     def get_by_keys(self, keys: Sequence[str], include: bool = True) -> Self:
