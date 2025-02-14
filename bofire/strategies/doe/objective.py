@@ -250,6 +250,9 @@ class IOptimality(ModelBasedObjective):
             )
             bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
 
+            # import optional dependency only upon usage
+            from cyipopt import minimize_ipopt  # type: ignore
+
             result = minimize_ipopt(
                 objective.evaluate,
                 x0=x0,
