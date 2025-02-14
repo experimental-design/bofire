@@ -337,6 +337,7 @@ def test_SingleTaskGPModel_feature_subsets():
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [2, 3, 4, 5]
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_SingleTaskGPModel_mixed_features():
     """test that we can use a single task gp with mixed features"""
     inputs = Inputs(
@@ -542,6 +543,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
     [

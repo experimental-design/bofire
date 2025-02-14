@@ -133,7 +133,7 @@ def test_get_scaler(
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -171,6 +171,7 @@ def test_get_scaler(
             assert (scaler.coefficient == expected_coefficient).all()
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices",
     [
@@ -233,7 +234,7 @@ def test_get_scaler_molecular(
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(0, 5),
             )
             for i in range(2)
