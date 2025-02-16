@@ -379,7 +379,7 @@ def test_Objective_model_jacobian_t():
     assert np.allclose(B, model_jacobian_t(x)[0])
 
 
-def test_Objective_convert_input_to_model_tensor():
+def test_Objective_convert_input_to_tensor():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
@@ -395,7 +395,7 @@ def test_Objective_convert_input_to_model_tensor():
     d_optimality = DOptimality(domain=domain, model=model, n_experiments=3)
     x = np.array([1, 0, 0, 0, 2, 0, 0, 0, 3])
     print(domain.inputs)
-    X = d_optimality._convert_input_to_model_tensor(x).detach().numpy()
+    X = d_optimality._convert_input_to_tensor(x).detach().numpy()
     assert np.allclose(X, np.array([[1, 1, 0, 0], [1, 0, 2, 0], [1, 0, 0, 3]]))
 
 

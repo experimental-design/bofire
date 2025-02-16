@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from copy import deepcopy
 from itertools import product
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -33,6 +33,7 @@ from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
+    convert_formula_to_string,
     get_formula_from_string,
     nchoosek_constraints_as_bounds,
 )
@@ -82,14 +83,16 @@ class Objective:
         pass
 
     def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
-        return self._evaluate_jacobian(self.transform(x)) * self.transform.jacobian(x=x)
+        return self._evaluate_jacobian(self.transform(x=x)) * self.transform.jacobian(
+            x=x
+        )
 
     @abstractmethod
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         pass
 
     @abstractmethod
-    def _convert_input_to_model_tensor(
+    def _convert_input_to_tensor(
         self,
         x: np.ndarray,
         requires_grad: bool = True,
@@ -109,6 +112,7 @@ class ModelBasedObjective(Objective):
         n_experiments: int,
         delta: float = 1e-6,
         transform_range: Optional[Bounds] = None,
+        evaluation_mode: Literal["torch", "formulaic"] = "torch",
     ) -> None:
         """Args:
         domain (Domain): A domain defining the DoE domain together with model_type.
@@ -116,7 +120,8 @@ class ModelBasedObjective(Objective):
         n_experiments (int): Number of experiments
         delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
         transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
-
+        evaluation_mode (str): The mode in which the model matrix and its jacobian is evaluated.
+        Either "torch" or "formulaic". Default is "torch". Hessian evaluation is only available in "torch" mode.
         """
         super().__init__(
             domain=domain,
@@ -126,9 +131,10 @@ class ModelBasedObjective(Objective):
         )
 
         self.model = deepcopy(model)
-
-        self.model_terms = list(np.array(model, dtype=str))
-        self.n_model_terms = len(self.model_terms)
+        self.model_terms_string_expression = convert_formula_to_string(
+            domain=domain, formula=model
+        )
+        self.n_model_terms = len(list(np.array(model, dtype=str)))
 
         # terms for model jacobian
         self.terms_jacobian_t = []
@@ -144,7 +150,9 @@ class ModelBasedObjective(Objective):
 
             self.terms_jacobian_t.append(terms)
 
-    def _convert_input_to_model_tensor(
+        self.evaluation_mode = evaluation_mode
+
+    def _convert_input_to_tensor(
         self,
         x: np.ndarray,
         requires_grad: bool = True,
@@ -153,19 +161,25 @@ class ModelBasedObjective(Objective):
         x: x (np.ndarray): values of design variables a 1d array.
         """
         assert x.ndim == 1, "values of design should be 1d array"
-        X = pd.DataFrame(
-            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
-            columns=self.vars,
-        )
-        # scale to [0, 1]
-        # lower, upper = self.domain.inputs.get_bounds(specs={}, experiments=X)
-        # lower = np.array(lower)
-        # upper = np.array(upper)
-        # X = (X - lower) / (upper - lower)
-        # X = X * 2 - 1
-        # get model matrix
-        X = self.model.get_model_matrix(X)
-        return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
+        if self.evaluation_mode == "torch":
+            return torch.tensor(
+                x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+                requires_grad=requires_grad,
+            )
+        else:
+            X = pd.DataFrame(
+                x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+                columns=self.vars,
+            )
+            # scale to [0, 1]
+            # lower, upper = self.domain.inputs.get_bounds(specs={}, experiments=X)
+            # lower = np.array(lower)
+            # upper = np.array(upper)
+            # X = (X - lower) / (upper - lower)
+            # X = X * 2 - 1
+            # get model matrix
+            X = self.model.get_model_matrix(X)
+            return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
 
     def _model_jacobian_t(self, x: np.ndarray) -> np.ndarray:
         """Computes the transpose of the model jacobian for each experiment in input x."""
@@ -315,7 +329,14 @@ class IOptimality(ModelBasedObjective):
         Returns:
             trace((Y.T@Y) / nY @ inv(X.T@X + delta))
         """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        D = self._convert_input_to_tensor(x, requires_grad=False)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+        else:
+            X = D
+
         return float(
             torch.trace(
                 self.YtY.detach()
@@ -333,27 +354,37 @@ class IOptimality(ModelBasedObjective):
         Returns:
             The jacobian of trace((Y.T@Y) / nY @ inv(X.T@X + delta))
         """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+        D = self._convert_input_to_tensor(x, requires_grad=True)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+            torch.trace(
+                self.YtY.detach()
+                @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+            ).backward()
+            return D.grad.detach().numpy().flatten()  # type: ignore
+        else:
+            X = D
 
-        # first part of jacobian
-        torch.trace(
-            self.YtY.detach()
-            @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
-        ).backward()
-        J1 = X.grad.detach().numpy()  # type: ignore
-        J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments, self.n_vars, self.n_model_terms
-        )
+            # first part of jacobian
+            torch.trace(
+                self.YtY.detach()
+                @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+            ).backward()
+            J1 = X.grad.detach().numpy()  # type: ignore
+            J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
+                self.n_experiments, self.n_vars, self.n_model_terms
+            )
 
-        # second part of jacobian
-        J2 = self._model_jacobian_t(x)
+            # second part of jacobian
+            J2 = self._model_jacobian_t(x)
 
-        # combine both parts
-        J = J1 * J2
-        J = np.sum(J, axis=-1)
+            # combine both parts
+            J = J1 * J2
+            J = np.sum(J, axis=-1)
 
-        return J.flatten()
+            return J.flatten()
 
 
 class DOptimality(ModelBasedObjective):
@@ -419,7 +450,14 @@ class DOptimality(ModelBasedObjective):
             -log(det(X.T@X+delta))
 
         """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        D = self._convert_input_to_tensor(x, requires_grad=False)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+        else:
+            X = D
+
         return float(
             -1
             * torch.logdet(
@@ -438,26 +476,38 @@ class DOptimality(ModelBasedObjective):
             The jacobian of -log(det(X.T@X+delta)) as numpy array
 
         """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+        D = self._convert_input_to_tensor(x, requires_grad=True)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
 
-        # first part of jacobian
-        torch.logdet(X.T @ X + self.delta * torch.eye(self.n_model_terms)).backward()
-        J1 = -1 * X.grad.detach().numpy()  # type: ignore
-        J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
-            self.n_experiments,
-            self.n_vars,
-            self.n_model_terms,
-        )
+            torch.logdet(
+                X.T @ X + self.delta * torch.eye(self.n_model_terms)
+            ).backward()
+            return -1 * D.grad.detach().numpy().flatten()  # type: ignore
+        else:
+            X = D
 
-        # second part of jacobian
-        J2 = self._model_jacobian_t(x)
+            # first part of jacobian
+            torch.logdet(
+                X.T @ X + self.delta * torch.eye(self.n_model_terms)
+            ).backward()
+            J1 = -1 * X.grad.detach().numpy()  # type: ignore
+            J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
+                self.n_experiments,
+                self.n_vars,
+                self.n_model_terms,
+            )
 
-        # combine both parts
-        J = J1 * J2
-        J = np.sum(J, axis=-1)
+            # second part of jacobian
+            J2 = self._model_jacobian_t(x)
 
-        return J.flatten()
+            # combine both parts
+            J = J1 * J2
+            J = np.sum(J, axis=-1)
+
+            return J.flatten()
 
 
 class AOptimality(ModelBasedObjective):
@@ -477,7 +527,14 @@ class AOptimality(ModelBasedObjective):
             tr((X.T@X+delta)^-1)
 
         """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        D = self._convert_input_to_tensor(x, requires_grad=False)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+        else:
+            X = D
+
         return float(
             torch.trace(
                 torch.linalg.inv(
@@ -498,8 +555,18 @@ class AOptimality(ModelBasedObjective):
             The jacobian of tr((X.T@X+delta)^-1) as numpy array
 
         """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+        D = self._convert_input_to_tensor(x, requires_grad=True)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+
+            torch.trace(
+                torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms)),
+            ).backward()
+            return D.grad.detach().numpy().flatten()  # type: ignore
+        else:
+            X = D
 
         # first part of jacobian
         torch.trace(
@@ -540,7 +607,14 @@ class GOptimality(ModelBasedObjective):
             max(diag(H))
 
         """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        D = self._convert_input_to_tensor(x, requires_grad=False)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+        else:
+            X = D
+
         H = (
             X.detach()
             @ torch.linalg.inv(
@@ -561,8 +635,24 @@ class GOptimality(ModelBasedObjective):
             The jacobian of max(diag(H)) as numpy array
 
         """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+        D = self._convert_input_to_tensor(x, requires_grad=True)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+
+            torch.max(
+                torch.diag(
+                    X
+                    @ torch.linalg.inv(
+                        X.T @ X + self.delta * torch.eye(self.n_model_terms)
+                    )
+                    @ X.T,
+                ),
+            ).backward()
+            return D.grad.detach().numpy().flatten()  # type: ignore
+        else:
+            X = D
 
         # first part of jacobian
         torch.max(
@@ -607,7 +697,14 @@ class EOptimality(ModelBasedObjective):
             min(eigvals(X.T @ X + delta))
 
         """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        D = self._convert_input_to_tensor(x, requires_grad=False)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+        else:
+            X = D
+
         return -1 * float(
             torch.min(
                 torch.linalg.eigvalsh(
@@ -628,8 +725,20 @@ class EOptimality(ModelBasedObjective):
             The jacobian of -1 * min(eigvals(X.T @ X + delta)) as numpy array
 
         """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+        D = self._convert_input_to_tensor(x, requires_grad=True)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+
+            torch.min(
+                torch.linalg.eigvalsh(
+                    X.T @ X + self.delta * torch.eye(self.n_model_terms)
+                ),
+            ).backward()
+            return -D.grad.detach().numpy().flatten()  # type: ignore
+        else:
+            X = D
 
         # first part of jacobian
         torch.min(
@@ -670,7 +779,14 @@ class KOptimality(ModelBasedObjective):
             cond(X.T @ X + delta)
 
         """
-        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        D = self._convert_input_to_tensor(x, requires_grad=False)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+        else:
+            X = D
+
         return float(
             torch.linalg.cond(
                 X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms),
@@ -688,8 +804,18 @@ class KOptimality(ModelBasedObjective):
             The jacobian of cond(X.T @ X + delta) as numpy array
 
         """
-        # get model matrix X
-        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+        D = self._convert_input_to_tensor(x, requires_grad=True)
+        if self.evaluation_mode == "torch":
+            var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
+            var_dict["torch"] = torch
+            X = eval(str(self.model_terms_string_expression), {}, var_dict)
+
+            torch.linalg.cond(
+                X.T @ X + self.delta * torch.eye(self.n_model_terms),
+            ).backward()
+            return D.grad.detach().numpy().flatten()  # type: ignore
+        else:
+            X = D
 
         # first part of jacobian
         torch.linalg.cond(
