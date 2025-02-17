@@ -294,9 +294,9 @@ def map_PolynomialFeatureInteractionKernel(
         ks,
         max_degree=data_model.max_degree,
         include_self_interactions=data_model.include_self_interactions,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
+        outputscale_prior=(
+            priors.map(data_model.outputscale_prior, d=len(active_dims))
+            if data_model.outputscale_prior is not None
             else None
         ),
     )

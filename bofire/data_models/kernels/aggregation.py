@@ -85,7 +85,7 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
     ]
     max_degree: int
     include_self_interactions: bool
-    lengthscale_prior: Optional[AnyGeneralPrior] = None
+    outputscale_prior: Optional[AnyGeneralPrior] = None
 
 
 AdditiveKernel.model_rebuild()

@@ -13,8 +13,8 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         kernels: list[gpytorch.kernels.Kernel],
         max_degree: int,
         include_self_interactions: bool,
-        lengthscale_prior: Optional[gpytorch.priors.Prior] = None,
-        lengthscale_constraint: Optional[gpytorch.constraints.Interval] = None,
+        outputscale_prior: Optional[gpytorch.priors.Prior] = None,
+        outputscale_constraint: Optional[gpytorch.constraints.Interval] = None,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -32,43 +32,49 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         ]
 
         n = sum(len(idx) for idx in self.indices)
-        lengthscale = (
+        outputscale = (
             torch.zeros(*self.batch_shape, n)
             if len(self.batch_shape)
             else torch.zeros(n)
         )
         self.register_parameter(
-            name="raw_lengthscale", parameter=torch.nn.Parameter(lengthscale)
+            name="raw_outputscale", parameter=torch.nn.Parameter(outputscale)
         )
-        if lengthscale_prior is not None:
-            if not isinstance(lengthscale_prior, gpytorch.priors.Prior):
+        if outputscale_prior is not None:
+            if not isinstance(outputscale_prior, gpytorch.priors.Prior):
                 raise TypeError(
                     "Expected gpytorch.priors.Prior but got "
-                    + type(lengthscale_prior).__name__
+                    + type(outputscale_prior).__name__
                 )
             self.register_prior(
-                "lengthscale_prior",
-                lengthscale_prior,
-                self._lengthscale_param,
-                self._lengthscale_closure,
+                "outputscale_prior",
+                outputscale_prior,
+                self._outputscale_param,
+                self._outputscale_closure,
             )
-        if lengthscale_constraint is None:
-            lengthscale_constraint = gpytorch.constraints.Positive()
-        self.register_constraint("raw_lengthscale", lengthscale_constraint)
+        if outputscale_constraint is None:
+            outputscale_constraint = gpytorch.constraints.Positive()
+        self.register_constraint("raw_outputscale", outputscale_constraint)
+
+    def _outputscale_param(self, m):
+        return m.outputscale
+
+    def _outputscale_closure(self, m, v):
+        m._set_outputscale(v)
 
     @property
-    def lengthscale(self):
-        return self.raw_lengthscale_constraint.transform(self.raw_lengthscale)
+    def outputscale(self):
+        return self.raw_outputscale_constraint.transform(self.raw_outputscale)
 
-    @lengthscale.setter
-    def lengthscale(self, value):
-        self._set_lengthscale(value)
+    @outputscale.setter
+    def outputscale(self, value):
+        self._set_outputscale(value)
 
-    def _set_lengthscale(self, value):
+    def _set_outputscale(self, value):
         if not torch.is_tensor(value):
-            value = torch.as_tensor(value).to(self.raw_lengthscale)
+            value = torch.as_tensor(value).to(self.raw_outputscale)
         self.initialize(
-            raw_lengthscale=self.raw_lengthscale_constraint.inverse_transform(value)
+            raw_outputscale=self.raw_outputscale_constraint.inverse_transform(value)
         )
 
     def forward(
@@ -86,7 +92,7 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
             dim=0,
         )
 
-        os = self.lengthscale
+        os = self.outputscale
         rr = torch.zeros_like(ks[0])
         i = 0
         for idx_n in self.indices:
