@@ -15,7 +15,7 @@ from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Feature, Output
+from bofire.data_models.features.feature import Feature, Output, get_encoded_name
 from bofire.data_models.types import DiscreteVals
 
 
@@ -57,8 +57,8 @@ def discrete_to_relaxable_domain_mapper(
     new_constraints = []
     categorical_groups: List[List[ContinuousInput]] = []
     for c_input in categorical_inputs:
-        current_group_keys = list(c_input.categories)  # type: ignore
-        pick_1_constraint, group_vars = generate_mixture_constraints(current_group_keys)
+        assert isinstance(c_input, CategoricalInput)
+        pick_1_constraint, group_vars = generate_mixture_constraints(c_input)
         categorical_groups.append(group_vars)
         relaxable_categorical_inputs.extend(group_vars)
         new_constraints.append(pick_1_constraint)
@@ -487,13 +487,18 @@ def NChooseKGroup(
 
 
 def generate_mixture_constraints(
-    keys: List[str],
+    feature: CategoricalInput,
 ) -> Tuple[LinearEqualityConstraint, List[ContinuousInput]]:
-    binary_vars = (ContinuousInput(key=x, bounds=[0, 1]) for x in keys)
+    binary_vars = (
+        ContinuousInput(key=get_encoded_name(feature.key, category), bounds=[0, 1])
+        for category in feature.categories
+    )
 
     mixture_constraint = LinearEqualityConstraint(
-        features=keys,
-        coefficients=[1 for x in range(len(keys))],
+        features=[
+            get_encoded_name(feature.key, category) for category in feature.categories
+        ],
+        coefficients=[1 for _ in range(len(feature.categories))],
         rhs=1,
     )
 
