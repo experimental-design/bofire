@@ -84,7 +84,7 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         diag: bool = False,
         last_dim_is_batch: bool = False,
     ) -> Tensor:
-        ks = torch.stack(
+        base_kernels = torch.stack(
             [
                 k(x1, x2, diag=diag, last_dim_is_batch=last_dim_is_batch).to_dense()
                 for k in self.kernels
@@ -93,11 +93,11 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         )
 
         os = self.outputscale
-        rr = torch.zeros_like(ks[0])
+        result = torch.zeros_like(base_kernels[0])
         i = 0
         for idx_n in self.indices:
-            for kk in idx_n:
-                rr += os[i] * ks[kk, ...].prod(dim=0)
+            for idx_k in idx_n:
+                result += os[i] * base_kernels[idx_k, ...].prod(dim=0)
                 i += 1
 
-        return rr
+        return result
