@@ -135,7 +135,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
         try:
             if use_regex:
                 return next(
-                    f for f in self.features if re.match(key, f.key) is not None
+                    f for f in self.features if re.search(key, f.key) is not None
                 )
             else:
                 return next(f for f in self.features if f.key == key)
