@@ -38,6 +38,32 @@ jobs:
       - name: Run data model tests
         run: pytest tests/bofire/data_models
 
+  testing_optimization_only:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.12' ]
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: uv pip install ".[optimization, tests]" --system
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: pytest -ra --cov=bofire --cov-report term-missing tests
+
   testing:
     runs-on: ubuntu-latest
     strategy:
