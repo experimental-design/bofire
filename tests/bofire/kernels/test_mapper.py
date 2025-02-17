@@ -455,7 +455,7 @@ def test_map_PolynomialFeatureInteractionKernel():
     )
 
     assert isinstance(k, aggregationKernels.PolynomialFeatureInteractionKernel)
-    assert k.indices == [(0,), (1,), (0, 1)]
+    assert k.indices == [[(0,), (1,)], [(0, 1)]]
     assert k.lengthscale.shape == (3,)
 
     assert isinstance(k.kernels[0], gpytorch.kernels.RBFKernel)

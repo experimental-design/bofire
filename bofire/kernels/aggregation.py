@@ -1,4 +1,3 @@
-import functools
 import itertools
 from typing import Any, Optional
 
@@ -24,23 +23,19 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         self.kernels = kernels
         self.max_degree = max_degree
         self.indices = [
-            kk
-            for n in range(1, self.max_degree + 1)
-            for kk in (
+            list(
                 itertools.combinations_with_replacement(range(len(kernels)), n)
                 if include_self_interactions
                 else itertools.combinations(range(len(kernels)), n)
             )
+            for n in range(1, self.max_degree + 1)
         ]
 
-        self.coefs = torch.nn.Parameter(
-            torch.sqrt(torch.ones(len(self.indices)) / len(self.indices))
-        )
-
+        n = sum(len(idx) for idx in self.indices)
         lengthscale = (
-            torch.zeros(*self.batch_shape, len(self.indices))
+            torch.zeros(*self.batch_shape, n)
             if len(self.batch_shape)
-            else torch.zeros(len(self.indices))
+            else torch.zeros(n)
         )
         self.register_parameter(
             name="raw_lengthscale", parameter=torch.nn.Parameter(lengthscale)
@@ -83,20 +78,20 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         diag: bool = False,
         last_dim_is_batch: bool = False,
     ) -> Tensor:
-        # FIXME we have to use to_dense otherwise there can be issues with mismatching dtypes during backward
-        ks = [
-            k(x1, x2, diag=diag, last_dim_is_batch=last_dim_is_batch).to_dense()
-            for k in self.kernels
-        ]
-
-        terms = torch.stack(
+        ks = torch.stack(
             [
-                functools.reduce(lambda x, y: x * y, (ks[j] for j in ix))
-                for ix in self.indices
+                k(x1, x2, diag=diag, last_dim_is_batch=last_dim_is_batch).to_dense()
+                for k in self.kernels
             ],
-            dim=-1,
+            dim=0,
         )
 
-        res = torch.sum(terms * self.lengthscale, dim=-1)
+        os = self.lengthscale
+        rr = torch.zeros_like(ks[0])
+        i = 0
+        for idx_n in self.indices:
+            for kk in idx_n:
+                rr += os[i] * ks[kk, ...].prod(dim=0)
+                i += 1
 
-        return res
+        return rr
