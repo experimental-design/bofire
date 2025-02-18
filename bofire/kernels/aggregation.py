@@ -31,7 +31,7 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
             for n in range(1, self.max_degree + 1)
         ]
 
-        n = sum(len(idx) for idx in self.indices)
+        n = 1 + sum(len(idx) for idx in self.indices)
         outputscale = (
             torch.zeros(*self.batch_shape, n)
             if len(self.batch_shape)
@@ -93,8 +93,8 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         )
 
         os = self.outputscale
-        result = torch.zeros_like(base_kernels[0])
-        i = 0
+        result = os[0] * torch.ones_like(base_kernels[0])
+        i = 1
         for idx_n in self.indices:
             for idx_k in idx_n:
                 result += os[i] * base_kernels[idx_k, ...].prod(dim=0)

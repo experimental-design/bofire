@@ -2,7 +2,13 @@ import itertools
 
 import pytest
 import torch
-from gpytorch.kernels import CosineKernel, MaternKernel, RBFKernel, ScaleKernel
+from gpytorch.kernels import (
+    ConstantKernel,
+    CosineKernel,
+    MaternKernel,
+    RBFKernel,
+    ScaleKernel,
+)
 
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 
@@ -19,7 +25,8 @@ def test_PolynomialFeatureInteractionKernel(
     k3 = CosineKernel()
 
     k_orig = (
-        ScaleKernel(k1)
+        ConstantKernel()
+        + ScaleKernel(k1)
         + ScaleKernel(k2)
         + ScaleKernel(k3)
         + ScaleKernel(k1 * k2)
