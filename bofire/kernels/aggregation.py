@@ -23,19 +23,19 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         self.kernels = kernels
         self.max_degree = max_degree
         self.indices = [
-            list(
+            idx
+            for n in range(1, self.max_degree + 1)
+            for idx in (
                 itertools.combinations_with_replacement(range(len(kernels)), n)
                 if include_self_interactions
                 else itertools.combinations(range(len(kernels)), n)
             )
-            for n in range(1, self.max_degree + 1)
         ]
 
-        n = 1 + sum(len(idx) for idx in self.indices)
         outputscale = (
-            torch.zeros(*self.batch_shape, n)
+            torch.zeros(*self.batch_shape, len(self.indices) + 1)
             if len(self.batch_shape)
-            else torch.zeros(n)
+            else torch.zeros(len(self.indices) + 1)
         )
         self.register_parameter(
             name="raw_outputscale", parameter=torch.nn.Parameter(outputscale)
@@ -95,9 +95,8 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         os = self.outputscale
         result = os[0] * torch.ones_like(base_kernels[0])
         i = 1
-        for idx_n in self.indices:
-            for idx_k in idx_n:
-                result += os[i] * base_kernels[idx_k, ...].prod(dim=0)
-                i += 1
+        for idx in self.indices:
+            result += os[i] * base_kernels[idx, ...].prod(dim=0)
+            i += 1
 
         return result
