@@ -142,7 +142,7 @@ class ExplicitReferencePoint(ReferencePoint):
 
 class MoboStrategy(MultiobjectiveStrategy):
     type: Literal["MoboStrategy"] = "MoboStrategy"  # type: ignore
-    ref_point: Optional[ExplicitReferencePoint] = None
+    ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
         default_factory=lambda: qLogNEHVI(),
     )
@@ -152,10 +152,17 @@ class MoboStrategy(MultiobjectiveStrategy):
         """Validate that the provided refpoint matches the provided domain."""
         if self.ref_point is None:
             return self
+        if isinstance(self.ref_point, dict):
+            self.ref_point = ExplicitReferencePoint(
+                values={
+                    k: FixedReferenceValue(value=v) for k, v in self.ref_point.items()
+                }
+            )
         keys = self.domain.outputs.get_keys_by_objective(
             [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
-        if sorted(keys) != sorted(self.ref_point.values.keys()):
+        ref_point_keys = self.ref_point.values.keys()
+        if sorted(keys) != sorted(ref_point_keys):
             raise ValueError(
                 f"Provided refpoint do not match the domain, expected keys: {keys}",
             )
