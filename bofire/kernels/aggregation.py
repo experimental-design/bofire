@@ -22,7 +22,10 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
 
         self.kernels = kernels
         self.max_degree = max_degree
-        self.indices = [
+
+        # each item corresponds to a different interaction term
+        # and contains the indices of the kernels that interact
+        self.indices: list[tuple[int, ...]] = [
             idx
             for n in range(1, self.max_degree + 1)
             for idx in (
@@ -93,9 +96,12 @@ class PolynomialFeatureInteractionKernel(gpytorch.kernels.Kernel):
         )
 
         os = self.outputscale
-        result = os[0] * torch.ones_like(base_kernels[0])
+        result = os[0] * torch.ones_like(base_kernels[0])  # constant term
         i = 1
         for idx in self.indices:
+            # compute each interaction term between specified kernels,
+            # that is, the product of the individual kernels scaled
+            # by the outputscale of the interaction
             result += os[i] * base_kernels[idx, ...].prod(dim=0)
             i += 1
 
