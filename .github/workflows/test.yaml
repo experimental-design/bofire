@@ -33,7 +33,7 @@ jobs:
           enable-cache: true
 
       - name: Install Dependencies
-        run: uv pip install ".[optimization]" pytest --system
+        run: uv pip install "." pytest --system
 
       - name: Run data model tests
         run: pytest tests/bofire/data_models
