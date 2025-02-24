@@ -61,12 +61,10 @@ def find_local_max_ipopt(
     # warn user if IPOPT scipy interface is not available
     try:
         from cyipopt import minimize_ipopt  # type: ignore
-    except ImportError as e:
-        warnings.warn(e.msg)
-        warnings.warn(
-            "please run `conda install -c conda-forge cyipopt` for this functionality.",
+    except ImportError:
+        raise ImportError(
+            "cyipopt is not installed. Install it via `conda install -c conda-forge cyipopt`"
         )
-        raise e
 
     objective_function = get_objective_function(
         criterion, domain=domain, n_experiments=n_experiments

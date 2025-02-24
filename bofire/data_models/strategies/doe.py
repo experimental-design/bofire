@@ -74,12 +74,19 @@ class KOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"  # type: ignore
 
 
+class IOptimalityCriterion(DoEOptimalityCriterion):
+    type: Literal["IOptimalityCriterion"] = "IOptimalityCriterion"  # type: ignore
+    n_space_filling_points: Optional[int] = None
+    ipopt_options: Optional[Dict] = None
+
+
 AnyDoEOptimalityCriterion = Union[
     KOptimalityCriterion,
     GOptimalityCriterion,
     AOptimalityCriterion,
     EOptimalityCriterion,
     DOptimalityCriterion,
+    IOptimalityCriterion,
 ]
 
 AnyOptimalityCriterion = Union[

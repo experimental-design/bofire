@@ -12,6 +12,7 @@ from bofire.data_models.objectives.api import (
     ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     Objective,
     TargetObjective,
 )
@@ -298,6 +299,32 @@ def test_outputs_call(features, samples):
         )
         + features.get_keys(CategoricalOutput)
     ]
+
+
+def test_outputs_call_adapt_experiment():
+    outputs = Outputs(
+        features=[
+            ContinuousOutput(key="of1", objective=MaximizeObjective()),
+            ContinuousOutput(
+                key="of2",
+                objective=MovingMaximizeSigmoidObjective(tp=0, steepness=10, w=1.0),
+            ),
+        ],
+    )
+    candidates = pd.DataFrame(
+        columns=["of1_pred", "of2_pred"], data=[[1.0, 5.0], [2.0, 5.0]]
+    )
+
+    experiments = pd.DataFrame(columns=["of1", "of2"], data=[[1.0, 5.0], [2.0, 6.0]])
+
+    with pytest.raises(
+        ValueError,
+        match="If predictions are used, `experiments_adapt` has to be provided.",
+    ):
+        outputs(candidates, predictions=True)
+
+    outputs(experiments)
+    outputs(candidates, experiments_adapt=experiments, predictions=True)
 
 
 def test_categorical_objective_methods():
