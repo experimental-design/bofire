@@ -77,6 +77,39 @@ def get_formula_from_string(
     return formula
 
 
+# TODO: test
+def convert_formula_to_string(
+    domain: Optional[Domain],
+    formula: Formula,
+) -> str:
+    """Converts a formula to a string.
+
+    Args:
+        domain (Domain): The domain that contain information about the input names.
+        formula (Formula): A formula object that should be converted to a string. If
+        the formula has both a left and right hand side, only the right hand side is
+        considered.
+
+    Returns:
+        A string representation of the formula that can be evaluated using pytorch.
+
+    """
+    if hasattr(formula, "rhs"):
+        formula = formula.rhs
+
+    term_list = [str(term) for term in list(formula)]
+
+    term_list_string = "torch.vstack(["
+    for term in term_list:
+        if term == "1":
+            term_list_string += "torch.ones_like(" + domain.inputs.get_keys()[0] + "), "
+        else:
+            term_list_string += term.replace(":", "*") + ", "
+    term_list_string += "]).T"
+
+    return term_list_string
+
+
 def linear_formula(
     domain: Optional[Domain],
 ) -> str:
