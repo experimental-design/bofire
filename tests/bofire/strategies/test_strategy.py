@@ -449,7 +449,7 @@ def test_strategy_ask_invalid_candidate_count(
         return candidates
 
     with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
-        with pytest.raises(ValueError):
+        with pytest.warns(UserWarning, match="Expected"):
             strategy.ask(candidate_count=4)
 
 
@@ -591,9 +591,13 @@ def test_predictive_strategy_predict(domain, experiments):
         ),
     ],
 )
-def test_predictive_strategy_predict_not_fitted(domain):
+def test_predictive_strategy_predict_not_ready(domain):
     strategy = dummy.DummyPredictiveStrategy(
         data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain),
     )
-    with pytest.raises(ValueError):
-        strategy.predict(generate_candidates(domain=domain))
+    candidates = generate_candidates(domain=domain)
+    with pytest.raises(ValueError, match="Model not yet fitted."):
+        strategy.predict(candidates)
+    strategy.is_fitted = True
+    with pytest.raises(ValueError, match="No experiments available."):
+        strategy.predict(candidates)

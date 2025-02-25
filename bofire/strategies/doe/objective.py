@@ -1,17 +1,40 @@
+import warnings
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Optional, Type
+from itertools import product
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 import torch
 from formulaic import Formula
+from scipy.optimize._minimize import standardize_constraints
 from torch import Tensor
 
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    EqualityConstraint,
+)
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.strategies.doe import (
+    AOptimalityCriterion,
+    DoEOptimalityCriterion,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    IOptimalityCriterion,
+    KOptimalityCriterion,
+    OptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
-from bofire.strategies.enum import OptimalityCriterionEnum
+from bofire.strategies.doe.utils import (
+    constraints_as_scipy_constraints,
+    get_formula_from_string,
+    nchoosek_constraints_as_bounds,
+)
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -19,7 +42,6 @@ class Objective:
     def __init__(
         self,
         domain: Domain,
-        model: Formula,
         n_experiments: int,
         delta: float = 1e-6,
         transform_range: Optional[Bounds] = None,
@@ -32,7 +54,6 @@ class Objective:
         transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
 
         """
-        self.model = deepcopy(model)
         self.domain = deepcopy(domain)
 
         if transform_range is None:
@@ -40,7 +61,7 @@ class Objective:
         else:
             self.transform = MinMaxTransform(
                 inputs=self.domain.inputs,
-                feature_range=transform_range,
+                feature_range=tuple(transform_range),  # type: ignore
             )
 
         self.n_experiments = n_experiments
@@ -48,23 +69,6 @@ class Objective:
 
         self.vars = self.domain.inputs.get_keys()
         self.n_vars = len(self.domain.inputs)
-
-        self.model_terms = list(np.array(model, dtype=str))
-        self.n_model_terms = len(self.model_terms)
-
-        # terms for model jacobian
-        self.terms_jacobian_t = []
-        for var in self.vars:
-            _terms = [
-                str(term).replace(":", "*") + f" + 0 * {self.vars[0]}"
-                for term in model.differentiate(var, use_sympy=True)
-            ]  # 0*vars[0] added to make sure terms are evaluated as series, not as number
-            terms = "["
-            for t in _terms:
-                terms += t + ", "
-            terms = terms[:-1] + "]"
-
-            self.terms_jacobian_t.append(terms)
 
     def __call__(self, x: np.ndarray) -> float:
         return self.evaluate(x)
@@ -82,6 +86,62 @@ class Objective:
     @abstractmethod
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         pass
+
+    @abstractmethod
+    def _convert_input_to_model_tensor(
+        self,
+        x: np.ndarray,
+        requires_grad: bool = True,
+    ) -> Tensor:
+        """Args:
+        x: x (np.ndarray): values of design variables a 1d array.
+        """
+        assert x.ndim == 1, "values of design should be 1d array"
+        pass
+
+
+class ModelBasedObjective(Objective):
+    def __init__(
+        self,
+        domain: Domain,
+        model: Formula,
+        n_experiments: int,
+        delta: float = 1e-6,
+        transform_range: Optional[Bounds] = None,
+    ) -> None:
+        """Args:
+        domain (Domain): A domain defining the DoE domain together with model_type.
+        model_type (str or Formula): A formula containing all model terms.
+        n_experiments (int): Number of experiments
+        delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+        transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
+
+        """
+        super().__init__(
+            domain=domain,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform_range=transform_range,
+        )
+
+        self.model = deepcopy(model)
+
+        self.model_terms = list(np.array(model, dtype=str))
+        self.n_model_terms = len(self.model_terms)
+
+        # terms for model jacobian
+        self.terms_jacobian_t = []
+        for var in self.vars:
+            _terms = [
+                str(term).replace(":", "*") + f" + 0 * {self.vars[0]}"
+                for term in model.differentiate(var, use_sympy=True)
+            ]  # 0*vars[0] added to make sure terms are evaluated as series, not as number
+            terms = "["
+            for t in _terms:
+                terms += t + ", "
+            terms = terms[:-1] + "]"
+
+            self.terms_jacobian_t.append(terms)
 
     def _convert_input_to_model_tensor(
         self,
@@ -112,8 +172,197 @@ class Objective:
         jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)  # type: ignore
         return np.swapaxes(jacobians, 1, 2)
 
+    def get_model_matrix(self, design: pd.DataFrame) -> pd.DataFrame:
+        return self.model.get_model_matrix(design)
 
-class DOptimality(Objective):
+
+class IOptimality(ModelBasedObjective):
+    """A class implementing the evaluation of I-criterion and its jacobian w.r.t.
+    the inputs.
+    """
+
+    def __init__(
+        self,
+        domain: Domain,
+        model: Formula,
+        n_experiments: int,
+        delta: float = 1e-6,
+        transform_range: Optional[Bounds] = None,
+        n_space_filling_points: Optional[int] = None,
+        ipopt_options: Optional[dict] = None,
+    ) -> None:
+        """
+        Args:
+            domain (Domain): A domain defining the DoE domain together with model_type.
+            model_type (str or Formula): A formula containing all model terms.
+            n_experiments (int): Number of experiments
+            delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+            transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
+            n_space_filling_points (int, optional): Number of space filling points. Only relevant if SpaceFilling is used
+            ipopt_options (dict, optional): Options for the Ipopt solver to generate space filling point.
+                If None is provided, the default options (maxiter = 500) are used.
+        """
+
+        try:
+            from cyipopt import minimize_ipopt  # type: ignore
+        except ImportError:
+            raise ImportError(
+                "cyipopt is not installed. Install it via `conda install -c conda-forge cyipopt`"
+            )
+
+        if transform_range is not None:
+            raise ValueError(
+                "IOptimality does not support transformations of the input variables."
+            )
+
+        super().__init__(
+            domain=domain,
+            model=model,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform_range=transform_range,
+        )
+
+        # uniformly fill the design space
+        if np.any([isinstance(obj, EqualityConstraint) for obj in domain.constraints]):
+            warnings.warn(
+                "Equality constraints were detected. No equidistant grid of points can be generated. The design space will be filled via SpaceFilling.",
+                UserWarning,
+            )
+            if n_space_filling_points is None:
+                n_space_filling_points = n_experiments * 10
+
+            x0 = (
+                domain.inputs.sample(
+                    n=n_space_filling_points, method=SamplingMethodEnum.UNIFORM
+                )
+                .to_numpy()
+                .flatten()
+            )
+            objective = SpaceFilling(
+                domain=domain,
+                n_experiments=n_space_filling_points,
+                delta=delta,
+                transform_range=None,
+            )
+            constraints = constraints_as_scipy_constraints(
+                domain, n_space_filling_points, ignore_nchoosek=True
+            )
+            bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
+
+            result = minimize_ipopt(
+                objective.evaluate,
+                x0=x0,
+                bounds=bounds,
+                constraints=standardize_constraints(constraints, x0, "SLSQP"),
+                options=ipopt_options
+                if ipopt_options is not None
+                else {"maxiter": 500, "disp": 0},
+                jac=objective.evaluate_jacobian,
+            )
+
+            self.Y = pd.DataFrame(
+                result["x"].reshape(n_space_filling_points, len(domain.inputs)),
+                columns=domain.inputs.get_keys(),
+                index=[f"gridpoint{i}" for i in range(n_space_filling_points)],
+            )
+
+        else:
+            low, high = domain.inputs.get_bounds(specs={})
+            points = [
+                list(
+                    np.linspace(
+                        low[i],
+                        high[i],
+                        int(100 * (high[i] - low[i])),
+                    )
+                )
+                for i in range(len(low))
+            ]
+            points = np.array(list(product(*points)))
+            points = pd.DataFrame(points, columns=domain.inputs.get_keys())
+            if len(domain.constraints) > 0:
+                fulfilled = domain.constraints(experiments=points)
+                fulfilled = np.array(
+                    [
+                        np.array(fulfilled.iloc[:, i]) <= 0.0
+                        for i in range(fulfilled.shape[1])
+                    ]
+                )
+                fulfilled = np.array(np.prod(fulfilled, axis=0), dtype=bool)
+                self.Y = points[fulfilled]
+            else:
+                self.Y = points
+            n_space_filling_points = len(self.Y)
+
+        try:
+            domain.validate_candidates(
+                candidates=self.Y.apply(lambda x: np.round(x, 8)),
+                only_inputs=True,
+                tol=1e-4,
+            )
+        except (ValueError, ConstraintNotFulfilledError):
+            warnings.warn(
+                "Some points do not lie inside the domain or violate constraints. Please check if the \
+                    results lie within your tolerance.",
+                UserWarning,
+            )
+
+        X = model.get_model_matrix(self.Y).to_numpy()
+        self.YtY = torch.from_numpy(X.T @ X) / n_space_filling_points
+        self.YtY.requires_grad = False
+
+    def _evaluate(self, x: np.ndarray) -> float:
+        """Computes trace((Y.T@Y) / nY @ inv(X.T@X + delta)).
+        Where X is the model matrix corresponding to x, Y is the model matrix of points
+        uniformly filling up the feasible space and nY is the number of such points.
+        Args:
+            x (np.ndarray): values of design variables a 1d array.
+        Returns:
+            trace((Y.T@Y) / nY @ inv(X.T@X + delta))
+        """
+        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+        return float(
+            torch.trace(
+                self.YtY.detach()
+                @ torch.linalg.inv(
+                    X.detach().T @ X.detach()
+                    + self.delta * torch.eye(self.n_model_terms)
+                )
+            )
+        )
+
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+        """Computes the jacobian of trace((Y.T@Y) / nY @ inv(X.T@X + delta)).
+        Args:
+            x (np.ndarray): values of design variables a 1d array.
+        Returns:
+            The jacobian of trace((Y.T@Y) / nY @ inv(X.T@X + delta))
+        """
+        # get model matrix X
+        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+
+        # first part of jacobian
+        torch.trace(
+            self.YtY.detach()
+            @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
+        ).backward()
+        J1 = X.grad.detach().numpy()  # type: ignore
+        J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
+            self.n_experiments, self.n_vars, self.n_model_terms
+        )
+
+        # second part of jacobian
+        J2 = self._model_jacobian_t(x)
+
+        # combine both parts
+        J = J1 * J2
+        J = np.sum(J, axis=-1)
+
+        return J.flatten()
+
+
+class DOptimality(ModelBasedObjective):
     """A class implementing the evaluation of logdet(X.T@X + delta) and its jacobian w.r.t. the inputs.
     The Jacobian can be divided into two parts, one for logdet(X.T@ + delta) w.r.t. X (there is a simple
     closed expression for this one) and one model dependent part for the jacobian of X.T@X
@@ -217,7 +466,7 @@ class DOptimality(Objective):
         return J.flatten()
 
 
-class AOptimality(Objective):
+class AOptimality(ModelBasedObjective):
     """A class implementing the evaluation of tr((X.T@X + delta)^-1) and its jacobian w.r.t. the inputs.
     The jacobian evaluation is done analogously to DOptimality with the first part of the jacobian being
     the jacobian of tr((X.T@X + delta)^-1) instead of logdet(X.T@X + delta).
@@ -279,7 +528,7 @@ class AOptimality(Objective):
         return J.flatten()
 
 
-class GOptimality(Objective):
+class GOptimality(ModelBasedObjective):
     """A class implementing the evaluation of max(diag(H)) and its jacobian w.r.t. the inputs where
     H = X @ (X.T@X + delta)^-1 @ X.T is the (regularized) hat matrix. The jacobian evaluation is done analogously
     to DOptimality with the first part of the jacobian being the jacobian of max(diag(H)) instead of
@@ -346,7 +595,7 @@ class GOptimality(Objective):
         return J.flatten()
 
 
-class EOptimality(Objective):
+class EOptimality(ModelBasedObjective):
     """A class implementing the evaluation of minus one times the minimum eigenvalue of (X.T @ X + delta)
     and its jacobian w.r.t. the inputs. The jacobian evaluation is done analogously to DOptimality with the
     first part of the jacobian being the jacobian of the smallest eigenvalue of (X.T @ X + delta) instead of
@@ -409,7 +658,7 @@ class EOptimality(Objective):
         return J.flatten()
 
 
-class KOptimality(Objective):
+class KOptimality(ModelBasedObjective):
     """A class implementing the evaluation of the condition number of (X.T @ X + delta)
     and its jacobian w.r.t. the inputs. The jacobian evaluation is done analogously to
     DOptimality with the first part of the jacobian being the jacobian of condition number
@@ -494,18 +743,72 @@ class SpaceFilling(Objective):
         return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
 
 
-def get_objective_class(objective: OptimalityCriterionEnum) -> Type:
-    objective = OptimalityCriterionEnum(objective)
-
-    if objective == OptimalityCriterionEnum.D_OPTIMALITY:
-        return DOptimality
-    if objective == OptimalityCriterionEnum.A_OPTIMALITY:
-        return AOptimality
-    if objective == OptimalityCriterionEnum.G_OPTIMALITY:
-        return GOptimality
-    if objective == OptimalityCriterionEnum.E_OPTIMALITY:
-        return EOptimality
-    if objective == OptimalityCriterionEnum.K_OPTIMALITY:
-        return KOptimality
-    if objective == OptimalityCriterionEnum.SPACE_FILLING:
-        return SpaceFilling
+def get_objective_function(
+    criterion: Optional[OptimalityCriterion], domain: Domain, n_experiments: int
+) -> Objective:
+    if criterion is None:
+        return DOptimality(
+            domain,
+            model=get_formula_from_string(domain=domain),
+            n_experiments=n_experiments,
+        )
+    if isinstance(criterion, DoEOptimalityCriterion):
+        if isinstance(criterion, DOptimalityCriterion):
+            return DOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, AOptimalityCriterion):
+            return AOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, GOptimalityCriterion):
+            return GOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, EOptimalityCriterion):
+            return EOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, KOptimalityCriterion):
+            return KOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+            )
+        if isinstance(criterion, IOptimalityCriterion):
+            return IOptimality(
+                domain,
+                model=get_formula_from_string(criterion.formula, domain),
+                n_experiments=n_experiments,
+                delta=criterion.delta,
+                transform_range=criterion.transform_range,
+                n_space_filling_points=criterion.n_space_filling_points,
+                ipopt_options=criterion.ipopt_options,
+            )
+    if isinstance(criterion, SpaceFillingCriterion):
+        return SpaceFilling(
+            domain,
+            n_experiments=n_experiments,
+            delta=criterion.delta,
+            transform_range=criterion.transform_range,
+        )
+    else:
+        raise NotImplementedError("Criterion type not implemented!")

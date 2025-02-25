@@ -14,12 +14,12 @@ from bofire.strategies.predictives.qparego import QparegoStrategy
 from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
-from bofire.strategies.space_filling import SpaceFillingStrategy
 from bofire.strategies.strategy import Strategy
 
 
@@ -29,13 +29,13 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.SoboStrategy: SoboStrategy,
     data_models.AdditiveSoboStrategy: AdditiveSoboStrategy,
     data_models.MultiplicativeSoboStrategy: MultiplicativeSoboStrategy,
+    data_models.MultiplicativeAdditiveSoboStrategy: MultiplicativeAdditiveSoboStrategy,
     data_models.CustomSoboStrategy: CustomSoboStrategy,
     data_models.MultiFidelityStrategy: MultiFidelityStrategy,
     data_models.QehviStrategy: QehviStrategy,
     data_models.QnehviStrategy: QnehviStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
     data_models.EntingStrategy: EntingStrategy,
-    data_models.SpaceFillingStrategy: SpaceFillingStrategy,
     data_models.DoEStrategy: DoEStrategy,
     data_models.FactorialStrategy: FactorialStrategy,
     data_models.MoboStrategy: MoboStrategy,

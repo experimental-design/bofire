@@ -1,10 +1,11 @@
-from typing import Literal, Optional, Tuple, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import field_validator
 
 from bofire.data_models.objectives.objective import Objective, TWeight
+from bofire.data_models.types import Bounds
 
 
 class IdentityObjective(Objective):
@@ -17,9 +18,9 @@ class IdentityObjective(Objective):
 
     """
 
-    type: Literal["IdentityObjective"] = "IdentityObjective"
+    type: Literal["IdentityObjective"] = "IdentityObjective"  # type: ignore
     w: TWeight = 1
-    bounds: Tuple[float, float] = (0, 1)
+    bounds: Bounds = [0, 1]
 
     @property
     def lower_bound(self) -> float:

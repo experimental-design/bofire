@@ -21,11 +21,16 @@ from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
     ConstrainedObjective,
+    DecreasingDesirabilityObjective,
+    IncreasingDesirabilityObjective,
+    InRangeDesirability,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
     MovingMaximizeSigmoidObjective,
+    Objective,
+    PeakDesirabilityObjective,
     TargetObjective,
 )
 from bofire.strategies.strategy import Strategy
@@ -139,7 +144,9 @@ def get_interpoint_constraints(
     return constraints
 
 
-def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_nchoosek_constraints(
+    domain: Domain,
+) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Transforms NChooseK constraints into a list of non-linear inequality constraint callables
     that can be parsed by pydantic. For this purpose the NChooseK constraint is continuously
     relaxed by countig the number of zeros in a candidate by a sum of narrow gaussians centered
@@ -177,24 +184,32 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
         )
         if c.max_count != len(c.features):
             constraints.append(
-                max_constraint(
-                    indices=indices,
-                    num_features=len(c.features),
-                    max_count=c.max_count,
-                ),
+                (
+                    max_constraint(
+                        indices=indices,
+                        num_features=len(c.features),
+                        max_count=c.max_count,
+                    ),
+                    True,
+                )
             )
         if c.min_count > 0:
             constraints.append(
-                min_constraint(
-                    indices=indices,
-                    num_features=len(c.features),
-                    min_count=c.min_count,
-                ),
+                (
+                    min_constraint(
+                        indices=indices,
+                        num_features=len(c.features),
+                        min_count=c.min_count,
+                    ),
+                    True,
+                )
             )
     return constraints
 
 
-def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_product_constraints(
+    domain: Domain,
+) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of nonlinear constraint functions that can be processed by botorch
     based on the given domain.
 
@@ -217,7 +232,10 @@ def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
             dtype=torch.int64,
         )
         constraints.append(
-            product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign),
+            (
+                product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign),
+                True,
+            )
         )
     return constraints
 
@@ -430,6 +448,99 @@ def get_objective_callable(
                 )
             )
         )
+
+    if isinstance(objective, IncreasingDesirabilityObjective):
+
+        def objective_callable_(x: Tensor, *args) -> Tensor:
+            x = x[..., idx]
+
+            y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
+            if objective.clip:
+                y[x < objective.lower_bound] = 0.0
+                y[x > objective.upper_bound] = 1.0
+                between = (x >= objective.lower_bound) & (x <= objective.upper_bound)
+            else:
+                between = torch.full(x.shape, True, dtype=torch.bool, device=x.device)
+
+            t: float = np.exp(objective.log_shape_factor)
+
+            y[between] = torch.pow(
+                (x[between] - objective.lower_bound)
+                / (objective.upper_bound - objective.lower_bound),
+                t,
+            )
+            return y
+
+        return objective_callable_
+
+    if isinstance(objective, DecreasingDesirabilityObjective):
+
+        def objective_callable_(x: Tensor, *args) -> Tensor:
+            x = x[..., idx]
+
+            y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
+            if objective.clip:
+                y[x < objective.lower_bound] = 1.0
+                y[x > objective.upper_bound] = 0.0
+                between = (x >= objective.lower_bound) & (x <= objective.upper_bound)
+            else:
+                between = torch.full(x.shape, True, dtype=torch.bool, device=x.device)
+
+            t: float = np.exp(objective.log_shape_factor)
+            y[between] = torch.pow(
+                (objective.upper_bound - x[between])
+                / (objective.upper_bound - objective.lower_bound),
+                t,
+            )
+            return y
+
+        return objective_callable_
+
+    if isinstance(objective, PeakDesirabilityObjective):
+
+        def objective_callable_(x: Tensor, *args) -> Tensor:
+            x = x[..., idx]
+            y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
+
+            if objective.clip:
+                Incr = (x >= objective.lower_bound) & (x <= objective.peak_position)
+                Decr = (x <= objective.upper_bound) & (x > objective.peak_position)
+            else:
+                Incr, Decr = x <= objective.peak_position, x > objective.peak_position
+
+            s: float = np.exp(objective.log_shape_factor)
+            t: float = np.exp(objective.log_shape_factor_decreasing)
+            y[Incr] = torch.pow(
+                torch.divide(
+                    (x[Incr] - objective.lower_bound),
+                    (objective.peak_position - objective.lower_bound),
+                ),
+                s,
+            )
+            y[Decr] = torch.pow(
+                torch.divide(
+                    (x[Decr] - objective.upper_bound),
+                    (objective.peak_position - objective.upper_bound),
+                ),
+                t,
+            )
+            return y * objective.w
+
+        return objective_callable_
+
+    if isinstance(objective, InRangeDesirability):
+
+        def objective_callable_(x: Tensor, *args) -> Tensor:
+            x = x[..., idx]
+            y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
+
+            in_range = (x >= objective.lower_bound) & (x <= objective.upper_bound)
+            y[in_range] = 1.0
+
+            return y * objective.w
+
+        return objective_callable_
+
     raise NotImplementedError(
         f"Objective {objective.__class__.__name__} not implemented.",
     )
@@ -484,33 +595,81 @@ def get_custom_botorch_objective(
     return objective
 
 
-def get_multiplicative_botorch_objective(
+def _callables_and_weights(
     outputs: Outputs,
     experiments: pd.DataFrame,
-) -> Callable[[Tensor, Tensor], Tensor]:
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
+    exclude_constraints: bool = False,
+    allowed_objectives: Optional[List[Type[Objective]]] = None,
+    adapt_weights_to_1_inf: bool = False,
+) -> Tuple[List[Callable], List[float], List[str]]:
+    """
+    Extract callables and weights from outputs object
+
+    Args:
+        outputs (Outputs): Outputs object
+        experiments (pd.DataFrame): DataFrame containing the experiments that are used for adapting the objectives
+        exclude_constraints (bool): exclude constraints
+        allowed_objectives (Optional[List[Type[Objective]]]): limit to allowed objectives
+        adapt_weights_to_1_inf (bool): transform weights from [0,1] to [1,inf) space
+
+    Returns:
+        callables (List[Callable]): list of callables
+        weights (List[float]): List of weights for callables
+        keys (List[str]): Output keys, for the corresponding callables and weights
+
+    """
+
+    def _x_adapt(feat):
+        """adapted output x, skipped for inputs"""
+        x = outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+            feat.key
+        ].values
+        return torch.from_numpy(x).to(**tkwargs)
+
+    callables, weights, keys = [], [], []
+
+    for i, feat in enumerate(outputs.get()):
+        if feat.objective is None:
+            continue
+
+        if exclude_constraints:
+            if isinstance(feat.objective, ConstrainedObjective):
+                continue
+
+        if allowed_objectives is not None:
+            if not any(isinstance(feat.objective, obj) for obj in allowed_objectives):
+                continue
+
+        callables.append(
+            get_objective_callable(
+                idx=i,
+                objective=feat.objective,
+                x_adapt=_x_adapt(feat),
+            )
         )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-    ]
-    weights = [
-        feat.objective.w
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-    ]
+
+        weights.append(feat.objective.w)
+
+        keys.append(feat.key)
+
+    if adapt_weights_to_1_inf:
+        min_w = min(weights)
+        weights = [w / min_w for w in weights]
+
+    return callables, weights, keys
+
+
+def get_multiplicative_botorch_objective(
+    outputs: Outputs, experiments: pd.DataFrame, adapt_weights_to_1_inf: bool = True
+) -> Callable[[Tensor, Tensor], Tensor]:
+    callables, weights, _ = _callables_and_weights(
+        outputs, experiments, adapt_weights_to_1_inf=adapt_weights_to_1_inf
+    )
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
-        val = 1.0
+        val = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables, weights):
-            val *= c(samples, None) ** w
+            val = val * c(samples, None) ** w
         return val  # type: ignore
 
     return objective
@@ -521,39 +680,17 @@ def get_additive_botorch_objective(
     experiments: pd.DataFrame,
     exclude_constraints: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
-        )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and (
-            not isinstance(feat.objective, ConstrainedObjective)
-            if exclude_constraints
-            else True
-        )
-    ]
-    weights = [
-        feat.objective.w
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and (
-            not isinstance(feat.objective, ConstrainedObjective)
-            if exclude_constraints
-            else True
-        )
-    ]
+    callables, weights, _ = _callables_and_weights(
+        outputs,
+        experiments,
+        exclude_constraints=exclude_constraints,
+        adapt_weights_to_1_inf=False,
+    )
 
     def objective(samples: Tensor, X: Tensor) -> Tensor:
-        val = 0.0
+        val = torch.tensor(0.0).to(**tkwargs)
         for c, w in zip(callables, weights):
-            val += c(samples, None) * w
+            val = val + c(samples, None) * w
         return val  # type: ignore
 
     return objective
@@ -575,26 +712,96 @@ def get_multiobjective_objective(
         Callable[[Tensor], Tensor]: _description_
 
     """
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
-        )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and isinstance(
-            feat.objective,
-            (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
-        )
-    ]
+    allowed_objectives = [MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+
+    callables_outputs, _, _ = _callables_and_weights(
+        outputs,
+        experiments,
+        allowed_objectives=allowed_objectives,
+        adapt_weights_to_1_inf=False,
+    )
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-        return torch.stack([c(samples, None) for c in callables], dim=-1)
+        return torch.stack([c(samples, None) for c in callables_outputs], dim=-1)
+
+    return objective
+
+
+def get_multiplicative_additive_objective(
+    outputs: Outputs,
+    experiments: pd.DataFrame,
+    exclude_constraints: bool = True,
+    additive_features: Optional[List[str]] = None,
+    adapt_weights_to_1_inf: bool = True,
+) -> Callable[[Tensor, Tensor], Tensor]:
+    """Computes the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
+    Additive features (inputs or outputs) can be specified in the `additive_features` list.
+
+    The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
+    additive features (f3 and f4 with weights w3 and w4) is:
+
+        additive_objective = 1 + f3*w3 + f4*w4
+
+        objective = f1^w1 * f2^w2 * additive_objective
+
+
+    Args:
+        outputs
+        experiments
+        exclude_constraints
+        additive_features (List[str]): list of features that should be treated as additive
+        adapt_weights_to_1_inf (bool): will transform weights from [0,1] to [1,inf) space
+
+    Returns:
+        objective (callable): callable that can be used by botorch for optimization
+
+    """
+
+    callables, weights, keys = _callables_and_weights(
+        outputs,
+        experiments,
+        exclude_constraints=exclude_constraints,
+        adapt_weights_to_1_inf=adapt_weights_to_1_inf,
+    )
+
+    if additive_features is None:
+        additive_features = []
+
+    def _differ_additive_and_multiplicative_features(callables, weights, feature_names):
+        callables_additive, weights_additive = [], []
+        callables_multiplicative, weights_multiplicative = [], []
+        for c, w, key in zip(callables, weights, feature_names):
+            if key in additive_features:
+                callables_additive.append(c)
+                weights_additive.append(w)
+            else:
+                callables_multiplicative.append(c)
+                weights_multiplicative.append(w)
+        return (
+            callables_additive,
+            weights_additive,
+            callables_multiplicative,
+            weights_multiplicative,
+        )
+
+    (
+        callables_additive,
+        weights_additive,
+        callables_multiplicative,
+        weights_multiplicative,
+    ) = _differ_additive_and_multiplicative_features(callables, weights, keys)
+
+    def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        additive_objective = torch.tensor(1.0).to(**tkwargs)
+        for c, w in zip(callables_additive, weights_additive):
+            additive_objective = additive_objective + c(samples, None) * w
+
+        multiplicative_objective = torch.tensor(1.0).to(**tkwargs)
+        for c, w in zip(callables_multiplicative, weights_multiplicative):
+            multiplicative_objective = multiplicative_objective * c(samples, None) ** w
+
+        y: Tensor = multiplicative_objective * additive_objective
+        return y
 
     return objective
 
