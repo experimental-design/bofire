@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from bofire.data_models.acquisition_functions.api import (
-    AnyMultiObjectiveAcquisitionFunction,
+    AnyMultiFidelityAcquisitionFunction,
     qMFVariance,
 )
 from bofire.data_models.domain.api import Domain, Outputs
@@ -15,7 +15,7 @@ from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurr
 class MultiFidelityStrategy(SoboStrategy):
     type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
 
-    fidelity_acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
+    fidelity_acquisition_function: AnyMultiFidelityAcquisitionFunction = Field(
         default_factory=lambda: qMFVariance(),
     )
 

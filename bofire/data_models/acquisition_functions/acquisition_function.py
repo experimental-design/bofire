@@ -109,4 +109,5 @@ class qMFGibbon(MultiFideltyAcquisitionFunction):
 
 class qMFVariance(MultiFideltyAcquisitionFunction):
     type: Literal["qMFVariance"] = "qMFVariance"
+    beta: Annotated[float, Field(ge=0)] = 0.2
     fidelity_thresholds: Union[List[float], float] = 0.1
