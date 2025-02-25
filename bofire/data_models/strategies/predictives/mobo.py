@@ -131,8 +131,8 @@ class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
     Note:
         This reference value is not scaled by the min/max values of the objective.
         This means you need to be mindful that the values of your objective are positive or negative.
-        i.e., scaling a positive number by 0.7 will result in a smaller positive number. While scaling a negative number
-        by 0.7 will result in a smaller negative number (thus having the opposite effect).
+        i.e., scaling a positive number by e.g. scaling=-0.3 will result in a smaller positive number. While scaling a negative number
+        by -0.3 will result in a smaller negative number (thus having the opposite effect).
     """
 
     type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"  # type: ignore
@@ -140,8 +140,8 @@ class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
 
     def get_reference_value(self, best: float, worst: float) -> float:
         if self.orient_at_best:
-            return best * self.scaling
-        return worst * self.scaling
+            return best + best * self.scaling
+        return worst + worst * self.scaling
 
 
 class ReferencePoint(BaseModel):
@@ -181,11 +181,18 @@ class MoboStrategy(MultiobjectiveStrategy):
         if self.ref_point is None:
             return self
         if isinstance(self.ref_point, dict):
-            self.ref_point = ExplicitReferencePoint(
-                values={
-                    k: FixedReferenceValue(value=v) for k, v in self.ref_point.items()
-                }
-            )
+            values = {}
+            for k, v in self.ref_point.items():
+                # assert that the key is in the domain
+                if k not in self.domain.outputs.get_keys():
+                    raise ValueError(
+                        f"Provided refpoint key {k} is not in the domain.",
+                    )
+                objective = self.domain.outputs.get_by_key(k).objective
+                if isinstance(objective, MinimizeObjective):
+                    v = -v
+                values[k] = FixedReferenceValue(value=v)
+            self.ref_point = ExplicitReferencePoint(values=values)
         keys = self.domain.outputs.get_keys_by_objective(
             [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
