@@ -80,11 +80,11 @@ proposing new experiments with multi-objective Bayesian optimization.
 
 ```python
 import bofire.strategies.api as strategies
-from bofire.benchmarks.api import Detergent
-from bofire.data_models.strategies.api import QnehviStrategy, RandomStrategy
+from bofire.benchmarks.api import DTLZ2
+from bofire.data_models.strategies.api import MoboStrategy, RandomStrategy
 
 # create benchmark
-detergent = Detergent()
+detergent = DTLZ2(3)
 domain = detergent.domain
 
 # create initial data with the random strategy while satisfying constraints
@@ -93,8 +93,8 @@ initial_samples = sampler.ask(2)
 experiments = detergent.f(initial_samples, return_complete=True)
 
 # Bayesian optimization
-mobo_strategy = strategies.map(QnehviStrategy(domain=domain))
-n_experiments = 4
+mobo_strategy = strategies.map(MoboStrategy(domain=domain))
+n_experiments = 2
 for _ in range(n_experiments):
     mobo_strategy.tell(experiments=experiments)
     candidates = mobo_strategy.ask(candidate_count=1)
