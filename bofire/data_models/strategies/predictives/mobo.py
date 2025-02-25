@@ -116,6 +116,33 @@ class RelativeMovingReferenceValue(MovingReferenceValue):
             return best + self.scaling * (best - worst)
         return worst + self.scaling * (best - worst)
 
+class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
+    """Reference value that is changing over execution time of the strategy, where the change is
+    parameterized in relative values to the maximum without min/max scaling.
+
+    Attributes:
+        orient_at_best: If True, the reference value is oriented at the best value that has
+            been seen so far for the objective. If False, the reference value is oriented
+            at the worst value that has been seen so far for the objective.
+        scaling: The scaling that is applied to the reference value. In case of `orient_at_max==True`,
+            it holds that `reference_value = best_value * offset`, else it holds that
+            `reference_value = worst_value * offset`.
+
+    Note:
+        This reference value is not scaled by the min/max values of the objective.
+        This means you need to be mindful that the values of your objective are positive or negative.
+        i.e., scaling a positive number by 0.7 will result in a smaller positive number. While scaling a negative number
+        by 0.7 will result in a smaller negative number (thus having the opposite effect).
+    """
+
+    type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"  # type: ignore
+    scaling: float = 1.0
+
+    def get_reference_value(self, best: float, worst: float) -> float:
+        if self.orient_at_best:
+            return best * self.scaling
+        return worst * self.scaling
+
 
 class ReferencePoint(BaseModel):
     type: str
@@ -136,6 +163,7 @@ class ExplicitReferencePoint(ReferencePoint):
             FixedReferenceValue,
             AbsoluteMovingReferenceValue,
             RelativeMovingReferenceValue,
+            RelativeToMaxMovingReferenceValue,
         ],
     ]
 
