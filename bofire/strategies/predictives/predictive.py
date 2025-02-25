@@ -134,6 +134,11 @@ class PredictiveStrategy(Strategy):
         """
         if self.is_fitted is not True:
             raise ValueError("Model not yet fitted.")
+        if self.experiments is None:
+            raise ValueError(
+                "No experiments available. Strategy needs experiments to perform "
+                "predictions. Use `tell` to provide experimental data.",
+            )
         # TODO: validate also here the experiments but only for the input_columns
         # transformed = self.transformer.transform(experiments)
         transformed = self.domain.inputs.transform(
