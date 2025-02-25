@@ -1,5 +1,11 @@
 import numpy as np
 import pandas as pd
+import torch
+from botorch.acquisition import (
+    qMultiFidelityLowerBoundMaxValueEntropy,
+    qMultiFidelityMaxValueEntropy,
+)
+from botorch.models.model import Model
 
 from bofire.data_models.features.api import TaskInput
 from bofire.data_models.strategies.predictives.multi_fidelity import (
@@ -9,14 +15,50 @@ from bofire.strategies.predictives.sobo import SoboStrategy
 from bofire.utils.naming_conventions import get_column_names
 
 
+def get_mf_acquisition_function(
+    acquisition_function_name: str,
+    model: Model,
+    candidate_set: torch.Tensor,
+    # objective: MCAcquisitionObjective,
+    # X_observed: Tensor,
+    # posterior_transform: Optional[PosteriorTransform] = None,
+    # X_pending: Optional[Tensor] = None,
+    # constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
+    # eta: Optional[Union[Tensor, float]] = 1e-3,
+    # mc_samples: int = 512,
+    # seed: Optional[int] = None,
+):
+    """Convenience function for initialiing multi-fidelity acquisition functions.
+
+    Mirrors the signature of botorch.acquisition.factory.get_acquisition_function()"""
+    if acquisition_function_name == "qMFMES":
+        return qMultiFidelityMaxValueEntropy(
+            model=model,
+            candidate_set=candidate_set,
+        )
+
+    elif acquisition_function_name == "qMFGibbon":
+        return qMultiFidelityLowerBoundMaxValueEntropy(
+            model=model,
+            candidate_set=candidate_set,
+        )
+
+    elif acquisition_function_name == "qMFVariance":
+        return
+
+    raise NotImplementedError(
+        f"Unknown acquisition function {acquisition_function_name}"
+    )
+
+
 class MultiFidelityStrategy(SoboStrategy):
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self.task_feature_key = self.domain.inputs.get_keys(TaskInput)[0]
 
-        ft = data_model.fidelity_thresholds
-        M = len(self.domain.inputs.get_by_key(self.task_feature_key).fidelities)  # type: ignore
-        self.fidelity_thresholds = ft if isinstance(ft, list) else [ft] * M
+        # ft = data_model.fidelity_thresholds
+        # M = len(self.domain.inputs.get_by_key(self.task_feature_key).fidelities)  # type: ignore
+        # self.fidelity_thresholds = ft if isinstance(ft, list) else [ft] * M
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         """Generate new candidates (x, m).

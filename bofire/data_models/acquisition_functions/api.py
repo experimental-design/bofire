@@ -2,6 +2,7 @@ from typing import Union
 
 from bofire.data_models.acquisition_functions.acquisition_function import (
     AcquisitionFunction,
+    MultiFideltyAcquisitionFunction,
     MultiObjectiveAcquisitionFunction,
     SingleObjectiveAcquisitionFunction,
     qEHVI,
@@ -10,6 +11,9 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qLogEI,
     qLogNEHVI,
     qLogNEI,
+    qMFGibbon,
+    qMFMES,
+    qMFVariance,
     qNegIntPosVar,
     qNEHVI,
     qNEI,
@@ -23,6 +27,7 @@ AbstractAcquisitionFunction = [
     AcquisitionFunction,
     SingleObjectiveAcquisitionFunction,
     MultiObjectiveAcquisitionFunction,
+    MultiFideltyAcquisitionFunction,
 ]
 
 AnyAcquisitionFunction = Union[
@@ -53,3 +58,5 @@ AnySingleObjectiveAcquisitionFunction = Union[
 AnyMultiObjectiveAcquisitionFunction = Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI]
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar
+
+AnyMultiFidelityAcquisitionFunction = Union[qMFMES, qMFGibbon, qMFVariance]

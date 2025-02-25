@@ -1,7 +1,11 @@
-from typing import List, Literal, Union
+from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
+from bofire.data_models.acquisition_functions.api import (
+    AnyMultiObjectiveAcquisitionFunction,
+    qMFVariance,
+)
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import TaskInput
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy
@@ -11,20 +15,24 @@ from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurr
 class MultiFidelityStrategy(SoboStrategy):
     type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
 
-    fidelity_thresholds: Union[List[float], float] = 0.1
+    fidelity_acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qMFVariance(),
+    )
 
     @model_validator(mode="after")
     def validate_tasks_and_fidelity_thresholds(self):
         """Ensures that there is one threshold per fidelity"""
         task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
         num_tasks = len(task_input.categories)  # type: ignore
+        fid_acqf = self.fidelity_acquisition_function
 
         if (
-            isinstance(self.fidelity_thresholds, list)
-            and len(self.fidelity_thresholds) != num_tasks
+            isinstance(fid_acqf, qMFVariance)
+            and isinstance(fid_acqf.fidelity_thresholds, list)
+            and len(fid_acqf.fidelity_thresholds) != num_tasks
         ):
             raise ValueError(
-                f"The number of tasks should be equal to the number of fidelity thresholds (got {num_tasks} tasks, {len(self.fidelity_thresholds)} thresholds)."
+                f"The number of tasks should be equal to the number of fidelity thresholds (got {num_tasks} tasks, {len(fid_acqf.fidelity_thresholds)} thresholds)."
             )
 
         return self
