@@ -240,7 +240,9 @@ def get_product_constraints(
     return constraints
 
 
-def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_nonlinear_constraints(
+    domain: Domain,
+) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
