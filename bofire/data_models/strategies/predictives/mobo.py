@@ -58,7 +58,6 @@ class FixedReferenceValue(ReferenceValue):
         """
         return self.value
 
-
 class MovingReferenceValue(ReferenceValue):
     """Reference values that is changing over execution time of the strategy, where the
     change is parameterized here.
@@ -181,18 +180,11 @@ class MoboStrategy(MultiobjectiveStrategy):
         if self.ref_point is None:
             return self
         if isinstance(self.ref_point, dict):
-            values = {}
-            for k, v in self.ref_point.items():
-                # assert that the key is in the domain
-                if k not in self.domain.outputs.get_keys():
-                    raise ValueError(
-                        f"Provided refpoint key {k} is not in the domain.",
-                    )
-                objective = self.domain.outputs.get_by_key(k).objective
-                if isinstance(objective, MinimizeObjective):
-                    v = -v
-                values[k] = FixedReferenceValue(value=v)
-            self.ref_point = ExplicitReferencePoint(values=values)
+            self.ref_point = ExplicitReferencePoint(
+                values={
+                    k: FixedReferenceValue(value=v) for k, v in self.ref_point.items()
+                }
+            )
         keys = self.domain.outputs.get_keys_by_objective(
             [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )

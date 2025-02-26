@@ -15,6 +15,7 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.strategies.predictives.mobo import (
     AbsoluteMovingReferenceValue,
     ExplicitReferencePoint,
+    FixedReferenceValue,
 )
 from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
@@ -175,9 +176,15 @@ def infer_ref_point(
     # in the ref_point_array we have the masked values, which means that
     # maximization is assumed for everything, this is because we used
     # botorch objective for getting the best and worst values,
+    # to account for botorch maximization and how FixedReferenceValue is setup
+    # we need to multiply with -1 here.
     ref_point_array = np.array(
         [
-            reference_point.values[key].get_reference_value(
+            -reference_point.values[key].get_reference_value(
+                best=best_values_array[i], worst=worst_values_array[i]
+            )
+            if isinstance(reference_point.values[key], FixedReferenceValue) and isinstance(outputs[i].objective, (MinimizeObjective, CloseToTargetObjective))
+            else reference_point.values[key].get_reference_value(
                 best=best_values_array[i], worst=worst_values_array[i]
             )
             for i, key in enumerate(keys)

@@ -93,11 +93,11 @@ def dict_to_explicit_ref_point_relativetomaxmoving(dict):
 @pytest.mark.parametrize(
     "domain, ref_point, experiments, expected",
     [
-        (valid_domains[0], {"of1": 0.5, "of2": 10.0}, dfs[0], [0.5, -10.0]), # of1 is maximized, of2 is minimized dfs[0] of1 max: 10, min:1, of2 max: 5, min: 2
-        (valid_domains[1], {"of1": 0.5, "of3": 0.5}, dfs[1], [0.5, 0.5]), # of1 is maximized of3 is maximized
-        (valid_domains[0], dict_to_explicit_ref_point_fixed({"of1": 0.5, "of2": 10.0}), dfs[0], [0.5, 10.0]),
+        (valid_domains[0], {"of1": 0.5, "of2": 10.0}, dfs[0], [0.5, -10.0]),
+        (valid_domains[1], {"of1": 0.5, "of3": 0.5}, dfs[1], [0.5, 0.5]),
+        (valid_domains[0], dict_to_explicit_ref_point_fixed({"of1": 0.5, "of2": 10.0}), dfs[0], [0.5, -10.0]),
         (valid_domains[1], dict_to_explicit_ref_point_fixed({"of1": 0.5, "of3": 0.5}), dfs[1], [0.5, 0.5]),
-        (valid_domains[0], dict_to_explicit_ref_point_absolutemoving({"of1": None, "of2": None}), dfs[0], [2.0, -4.0]), # double check with Johannes (is -4 what we want?)
+        (valid_domains[0], dict_to_explicit_ref_point_absolutemoving({"of1": None, "of2": None}), dfs[0], [2.0, -4.0]),
         (valid_domains[1], dict_to_explicit_ref_point_absolutemoving({"of1": None, "of3": None}), dfs[1], [2.0, 3.0]),
         (valid_domains[0], dict_to_explicit_ref_point_relativemoving({"of1": None, "of2": None}), dfs[0], [8.2, -2.6]),
         (valid_domains[1], dict_to_explicit_ref_point_relativemoving({"of1": None, "of3": None}), dfs[1], [8.2, 4.4]),
