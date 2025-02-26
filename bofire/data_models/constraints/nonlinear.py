@@ -4,9 +4,23 @@ from typing import Callable, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-import torch
 from pydantic import Field, field_validator
-from torch.autograd.functional import jacobian as torch_jacobian
+
+
+try:
+    import torch
+    from torch.autograd.functional import jacobian as torch_jacobian
+
+    torch_tensor = torch.tensor
+    torch_diag = torch.diag
+except ImportError:
+
+    def error_func(*args, **kwargs):
+        raise NotImplementedError("torch must be installed to use this functionality")
+
+    torch_jacobian = error_func
+    torch_tensor = error_func
+    torch_diag = error_func
 
 from bofire.data_models.constraints.constraint import (
     EqualityConstraint,
@@ -91,7 +105,7 @@ class NonlinearConstraint(IntrapointConstraint):
             return experiments.eval(self.expression)
         elif isinstance(self.expression, Callable):
             func_input = {
-                col: torch.tensor(experiments[col]) for col in experiments.columns
+                col: torch_tensor(experiments[col]) for col in experiments.columns
             }
             return pd.Series(self.expression(**func_input).cpu().numpy())
 
@@ -115,7 +129,7 @@ class NonlinearConstraint(IntrapointConstraint):
             elif isinstance(self.jacobian_expression, Callable):
                 args = inspect.getfullargspec(self.jacobian_expression).args
 
-                func_input = {arg: torch.tensor(experiments[arg]) for arg in args}
+                func_input = {arg: torch_tensor(experiments[arg]) for arg in args}
                 result = self.jacobian_expression(**func_input)
 
                 return pd.DataFrame(
@@ -132,10 +146,10 @@ class NonlinearConstraint(IntrapointConstraint):
         elif isinstance(self.expression, Callable):
             args = inspect.getfullargspec(self.expression).args
 
-            func_input = tuple([torch.tensor(experiments[arg]) for arg in args])
+            func_input = tuple([torch_tensor(experiments[arg]) for arg in args])
 
             result = torch_jacobian(self.expression, func_input)
-            result = [torch.diag(result[i]).cpu().numpy() for i in range(len(args))]
+            result = [torch_diag(result[i]).cpu().numpy() for i in range(len(args))]
 
             return pd.DataFrame(
                 np.array([result[args.index(col)] for col in args]),

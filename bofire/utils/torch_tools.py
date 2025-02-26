@@ -240,7 +240,9 @@ def get_product_constraints(
     return constraints
 
 
-def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_nonlinear_constraints(
+    domain: Domain,
+) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
@@ -450,23 +452,26 @@ def get_objective_callable(
         )
 
     if isinstance(objective, IncreasingDesirabilityObjective):
+        increasing_objective: IncreasingDesirabilityObjective = objective
 
         def objective_callable_(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
 
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
-            if objective.clip:
-                y[x < objective.lower_bound] = 0.0
-                y[x > objective.upper_bound] = 1.0
-                between = (x >= objective.lower_bound) & (x <= objective.upper_bound)
+            if increasing_objective.clip:
+                y[x < increasing_objective.lower_bound] = 0.0
+                y[x > increasing_objective.upper_bound] = 1.0
+                between = (x >= increasing_objective.lower_bound) & (
+                    x <= increasing_objective.upper_bound
+                )
             else:
                 between = torch.full(x.shape, True, dtype=torch.bool, device=x.device)
 
-            t: float = np.exp(objective.log_shape_factor)
+            t: float = np.exp(increasing_objective.log_shape_factor)
 
             y[between] = torch.pow(
-                (x[between] - objective.lower_bound)
-                / (objective.upper_bound - objective.lower_bound),
+                (x[between] - increasing_objective.lower_bound)
+                / (increasing_objective.upper_bound - increasing_objective.lower_bound),
                 t,
             )
             return y
@@ -474,22 +479,25 @@ def get_objective_callable(
         return objective_callable_
 
     if isinstance(objective, DecreasingDesirabilityObjective):
+        decreasing_objective: DecreasingDesirabilityObjective = objective
 
         def objective_callable_(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
 
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
-            if objective.clip:
-                y[x < objective.lower_bound] = 1.0
-                y[x > objective.upper_bound] = 0.0
-                between = (x >= objective.lower_bound) & (x <= objective.upper_bound)
+            if decreasing_objective.clip:
+                y[x < decreasing_objective.lower_bound] = 1.0
+                y[x > decreasing_objective.upper_bound] = 0.0
+                between = (x >= decreasing_objective.lower_bound) & (
+                    x <= decreasing_objective.upper_bound
+                )
             else:
                 between = torch.full(x.shape, True, dtype=torch.bool, device=x.device)
 
-            t: float = np.exp(objective.log_shape_factor)
+            t: float = np.exp(decreasing_objective.log_shape_factor)
             y[between] = torch.pow(
-                (objective.upper_bound - x[between])
-                / (objective.upper_bound - objective.lower_bound),
+                (decreasing_objective.upper_bound - x[between])
+                / (decreasing_objective.upper_bound - decreasing_objective.lower_bound),
                 t,
             )
             return y
@@ -497,30 +505,38 @@ def get_objective_callable(
         return objective_callable_
 
     if isinstance(objective, PeakDesirabilityObjective):
+        peak_objective: PeakDesirabilityObjective = objective
 
         def objective_callable_(x: Tensor, *args) -> Tensor:
             x = x[..., idx]
             y = torch.zeros(x.shape, dtype=x.dtype, device=x.device)
 
-            if objective.clip:
-                Incr = (x >= objective.lower_bound) & (x <= objective.peak_position)
-                Decr = (x <= objective.upper_bound) & (x > objective.peak_position)
+            if peak_objective.clip:
+                Incr = (x >= peak_objective.lower_bound) & (
+                    x <= peak_objective.peak_position
+                )
+                Decr = (x <= peak_objective.upper_bound) & (
+                    x > peak_objective.peak_position
+                )
             else:
-                Incr, Decr = x <= objective.peak_position, x > objective.peak_position
+                Incr, Decr = (
+                    x <= peak_objective.peak_position,
+                    x > peak_objective.peak_position,
+                )
 
-            s: float = np.exp(objective.log_shape_factor)
-            t: float = np.exp(objective.log_shape_factor_decreasing)
+            s: float = np.exp(peak_objective.log_shape_factor)
+            t: float = np.exp(peak_objective.log_shape_factor_decreasing)
             y[Incr] = torch.pow(
                 torch.divide(
-                    (x[Incr] - objective.lower_bound),
-                    (objective.peak_position - objective.lower_bound),
+                    (x[Incr] - peak_objective.lower_bound),
+                    (peak_objective.peak_position - peak_objective.lower_bound),
                 ),
                 s,
             )
             y[Decr] = torch.pow(
                 torch.divide(
-                    (x[Decr] - objective.upper_bound),
-                    (objective.peak_position - objective.upper_bound),
+                    (x[Decr] - peak_objective.upper_bound),
+                    (peak_objective.peak_position - peak_objective.upper_bound),
                 ),
                 t,
             )
