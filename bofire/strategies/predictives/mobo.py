@@ -100,17 +100,16 @@ class MoboStrategy(BotorchStrategy):
 
     def get_adjusted_refpoint(self) -> List[float]:
         assert self.experiments is not None, "No experiments available."
-        if self.ref_point is None:
-            df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments,
-            )
-            ref_point = infer_ref_point(
-                self.domain,
-                experiments=df,
-                return_masked=False,
-            )
-        else:
-            ref_point = self.ref_point
+        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments,
+        )
+        ref_point = infer_ref_point(
+            self.domain,
+            experiments=df,
+            return_masked=False,
+            reference_point=self.ref_point,
+        )
+
         return (
             self.ref_point_mask
             * np.array(
