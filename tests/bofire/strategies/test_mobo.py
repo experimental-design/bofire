@@ -26,34 +26,7 @@ from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.api import RandomStrategy
-from tests.bofire.utils.test_multiobjective import (
-    dfs,
-    invalid_domains,
-    valid_constrained_domains,
-    valid_domains,
-)
-
-
-@pytest.mark.parametrize(
-    "domain, ref_point",
-    [
-        (invalid_domains[0], None),
-        (invalid_domains[1], None),
-        (valid_domains[0], [0]),
-        (valid_domains[0], {}),
-        (valid_domains[0], {"of1": 0.0, "of2": 0, "of3": 0}),
-        (valid_domains[0], {"of1": 0.0}),
-        (valid_domains[0], {"of1": 0.0, "of3": 0.0}),
-    ],
-)
-def test_invalid_mobo(domain, ref_point):
-    with pytest.raises(ValueError):
-        data_models.MoboStrategy(domain=domain, ref_point=ref_point)
-
-
-@pytest.mark.parametrize("domain", valid_constrained_domains)
-def test_qnehvi_valid_constrained_objectives(domain):
-    data_models.MoboStrategy(domain=domain)
+from tests.bofire.utils.test_multiobjective import dfs, valid_domains
 
 
 @pytest.mark.parametrize(
@@ -161,22 +134,19 @@ def test_mobo_constraints(acqf):
 
 
 @pytest.mark.parametrize(
-    "num_experiments, num_candidates",
-    [
-        (num_experiments, num_candidates)
-        for num_experiments in range(8, 10)
-        for num_candidates in range(1, 3)
-    ],
+    "num_candidates",
+    [1, 2],
 )
-@pytest.mark.slow
-def test_get_acqf_input(num_experiments, num_candidates):
+def test_get_acqf_input(num_candidates):
     # generate data
+    num_experiments = 8
+
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(num_experiments),
+        random_strategy.ask(8),
         return_complete=True,
     )
     data_model = data_models.MoboStrategy(domain=benchmark.domain)

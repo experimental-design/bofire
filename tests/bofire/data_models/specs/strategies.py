@@ -47,23 +47,6 @@ strategy_commons = {
 
 
 specs.add_valid(
-    strategies.QehviStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "num_sobol_samples": 512,
-        **strategy_commons,
-    },
-)
-specs.add_valid(
-    strategies.QnehviStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "num_sobol_samples": 512,
-        **strategy_commons,
-        "alpha": 0.4,
-    },
-)
-specs.add_valid(
     strategies.QparegoStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -79,6 +62,19 @@ specs.add_valid(
         **strategy_commons,
     },
 )
+specs.add_invalid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        **strategy_commons,
+        "ref_point": {"o1": 0.5, "o3": 10.0},
+    },
+    error=ValueError,
+    message="Provided refpoint do not match the domain",
+)
+
+
 specs.add_valid(
     strategies.SoboStrategy,
     lambda: {
@@ -277,9 +273,8 @@ specs.add_valid(
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
             ).model_dump(),
             strategies.Step(
-                strategy_data=strategies.QehviStrategy(
-                    domain=tempdomain,
-                    batch_limit=1,
+                strategy_data=strategies.MoboStrategy(
+                    domain=tempdomain, batch_limit=1, acquisition_function=qLogNEHVI()
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),

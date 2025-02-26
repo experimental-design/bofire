@@ -30,8 +30,6 @@ from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
-from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
-from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -73,8 +71,6 @@ AnyPredictive = Union[
     MultiplicativeSoboStrategy,
     MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
-    QehviStrategy,
-    QnehviStrategy,
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,
