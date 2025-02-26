@@ -9,7 +9,11 @@ from botorch.acquisition import (
     qMultiFidelityLowerBoundMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
 )
-from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
+from botorch.acquisition.objective import (
+    MCAcquisitionObjective,
+    PosteriorTransform,
+    ScalarizedPosteriorTransform,
+)
 from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
@@ -94,6 +98,10 @@ class qMultiFidelityVariance(SampleReducingMCAcquisitionFunction):
         share information across a batch of samples across fidelities. We therefore
         need to override the forward method to handle this.
 
+        We return a simplified acquisition function, that is simply 1 / (m+1) if
+        the fidelity is above the variance threshold, and 0 otherwise. Maximizing
+        this will give the smallest fidelity that is above the threshold.
+
         Args:
             X: A `batch_shape x q=1 x d`-dim Tensor. X must be ordered from lowest
                 to highest fidelity.
@@ -102,18 +110,16 @@ class qMultiFidelityVariance(SampleReducingMCAcquisitionFunction):
             A `batch_shape`-dim Tensor of acquisition values.
         """
         acqf_values = super().forward(X)
-        acqf_over_threshold = torch.zeros_like(acqf_values)
 
         fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()
         fidelity_thresholds = self.fidelity_thresholds * fidelity_threshold_scale
         above_threshold = acqf_values > fidelity_thresholds
+        above_threshold[-1] = True  # selecting highest fidelity is always allowed
 
-        if above_threshold.sum() == 0:
-            acqf_over_threshold[-1] = 1.0
-        else:
-            first_above_threshold = torch.argmax(above_threshold, dim=0)
-            acqf_over_threshold[first_above_threshold] = 1.0
-        return acqf_over_threshold
+        acqf_indicator = (
+            1 / (1 + torch.arange(above_threshold.size(0))) * above_threshold.float()
+        )
+        return acqf_indicator
 
 
 def get_mf_acquisition_function(
@@ -138,6 +144,10 @@ def get_mf_acquisition_function(
     Mirrors the signature of botorch.acquisition.factory.get_acquisition_function.
     """
 
+    # we require a posterior transform since the MultiTaskGP model has
+    # model.num_outputs > 1, even though it is in fact a single output model.
+    posterior_transform = ScalarizedPosteriorTransform(weights=torch.tensor([1.0]))
+
     def project(X):
         return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
 
@@ -152,6 +162,7 @@ def get_mf_acquisition_function(
             model=model,
             candidate_set=candidate_set,  # type: ignore
             project=project,
+            posterior_transform=posterior_transform,
         )
 
     elif acquisition_function_name == "qMFGibbon":
@@ -159,6 +170,7 @@ def get_mf_acquisition_function(
             model=model,
             candidate_set=candidate_set,  # type: ignore
             project=project,
+            posterior_transform=posterior_transform,
         )
 
     elif acquisition_function_name == "qMFVariance":
@@ -170,6 +182,7 @@ def get_mf_acquisition_function(
             model=model,
             beta=beta,
             fidelity_thresholds=fidelity_thresholds,
+            posterior_transform=posterior_transform,
         )
 
     raise NotImplementedError(
@@ -218,11 +231,11 @@ class MultiFidelityStrategy(SoboStrategy):
         task_feature.allowed = [fidelity == 0 for fidelity in task_feature.fidelities]
         x = super()._ask(candidate_count)
         task_feature.allowed = prev_allowed
-        fidelity_pred = self._select_fidelity_and_get_predict(x)
-        x.update(fidelity_pred)
-        return x
+        fidelity_cand = self.select_fidelity_candidate(x)
+        pred = self.predict(fidelity_cand)
+        return pd.concat((fidelity_cand, pred), axis=1)
 
-    def _select_fidelity_and_get_predict(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def select_fidelity_candidate(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         """Select the fidelity for a given input.
 
         Uses the variance based approach (see [Kandasamy et al. 2016,
@@ -254,20 +267,31 @@ class MultiFidelityStrategy(SoboStrategy):
                 if isinstance(self.fidelity_acquisition_function, qMFVariance)
                 else 0.2
             ),
+            fidelity_thresholds=(
+                torch.tensor(self.fidelity_acquisition_function.fidelity_thresholds)
+                if isinstance(self.fidelity_acquisition_function, qMFVariance)
+                else None
+            ),
         )
 
-        X_fidelity_batched = X.loc[X.index.repeat(num_fidelities)]
-        X_fidelity_batched[self.task_feature_key] = np.repeat(
-            fidelity_input.categories, len(X)
-        )
+        X_fidelity_batched = X.loc[
+            X.index.repeat(num_fidelities), self.domain.inputs.get_keys()
+        ]
+        sorted_fidelity_labels = [
+            fidelity_input.categories[f] for f in sorted_fidelities
+        ]
+        X_fidelity_batched[self.task_feature_key] = sorted_fidelity_labels * len(X)
         # TODO: check that this transform is correct
-        X_fidelity_batched = self.domain.inputs.transform(
+        X_fidelity_batched_transformed = self.domain.inputs.transform(
             experiments=X_fidelity_batched, specs=self.input_preprocessing_specs
         )
-        X_fidelity_batched_tensor = torch.from_numpy(X_fidelity_batched.to_numpy()).to(
-            **tkwargs
-        )
-        acqf_values = fidelity_acqf(X_fidelity_batched_tensor)
+        X_fidelity_batched_tensor = torch.from_numpy(
+            X_fidelity_batched_transformed.to_numpy()
+        ).to(**tkwargs)
+        with torch.no_grad():
+            # since we optimize over a discrete set of fidelities, there is
+            # no need to compute gradients
+            acqf_values = fidelity_acqf(X_fidelity_batched_tensor)
 
         chosen_fidelity_idx = int(torch.argmax(acqf_values).item())
         candidate = X_fidelity_batched.iloc[[chosen_fidelity_idx]]
