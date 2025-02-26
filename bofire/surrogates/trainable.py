@@ -39,7 +39,7 @@ class TrainableSurrogate(ABC):
         Y = experiments[self.outputs.get_keys()]  # type: ignore
         # fit
         options = options or {}
-        self._fit(X=X, Y=Y, **options)
+        self._fit(X=X, Y=Y, **options)  # type: ignore
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """
