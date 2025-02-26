@@ -79,13 +79,14 @@ def test_mf_fidelity_selection():
     )
 
     experiments = benchmark.f(random_strategy.ask(4), return_complete=True)
+    experiments[benchmark.domain.outputs.get_keys()] *= 1000
     experiments[task_input.key] = ["task_1", "task_2", "task_2", "task_2"]
     experiments, withheld = experiments.iloc[:-1], experiments.iloc[-1:]
 
     strategy = MultiFidelityStrategy(
         data_model=MultiFidelityStrategyDataModel(
             domain=benchmark.domain,
-            fidelity_acquisition_function=qMFVariance(fidelity_thresholds=[0.1, 0.1]),
+            fidelity_acquisition_function=qMFVariance(fidelity_thresholds=0.1),
         )
     )
 

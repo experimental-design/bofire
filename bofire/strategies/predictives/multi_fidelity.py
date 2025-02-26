@@ -24,7 +24,6 @@ from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy as DataModel,
 )
 from bofire.strategies.predictives.sobo import SoboStrategy
-from bofire.utils.naming_conventions import get_column_names
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -256,7 +255,6 @@ class MultiFidelityStrategy(SoboStrategy):
         target_fidelity_idx = sorted_fidelities[-1]
         target_fidelity = fidelity_input.fidelities[target_fidelity_idx]
         num_fidelities = len(fidelity_input.fidelities)
-        _, sd_cols = get_column_names(self.domain.outputs)
 
         fidelity_acqf = get_mf_acquisition_function(
             acquisition_function_name=self.fidelity_acquisition_function.__class__.__name__,
@@ -268,7 +266,12 @@ class MultiFidelityStrategy(SoboStrategy):
                 else 0.2
             ),
             fidelity_thresholds=(
-                torch.tensor(self.fidelity_acquisition_function.fidelity_thresholds)
+                torch.atleast_1d(
+                    torch.tensor(
+                        self.fidelity_acquisition_function.fidelity_thresholds,
+                        **tkwargs,
+                    )
+                )
                 if isinstance(self.fidelity_acquisition_function, qMFVariance)
                 else None
             ),
@@ -285,9 +288,11 @@ class MultiFidelityStrategy(SoboStrategy):
         X_fidelity_batched_transformed = self.domain.inputs.transform(
             experiments=X_fidelity_batched, specs=self.input_preprocessing_specs
         )
-        X_fidelity_batched_tensor = torch.from_numpy(
-            X_fidelity_batched_transformed.to_numpy()
-        ).to(**tkwargs)
+        X_fidelity_batched_tensor = (
+            torch.from_numpy(X_fidelity_batched_transformed.to_numpy())
+            .to(**tkwargs)
+            .unsqueeze(-2)
+        )
         with torch.no_grad():
             # since we optimize over a discrete set of fidelities, there is
             # no need to compute gradients
@@ -296,26 +301,6 @@ class MultiFidelityStrategy(SoboStrategy):
         chosen_fidelity_idx = int(torch.argmax(acqf_values).item())
         candidate = X_fidelity_batched.iloc[[chosen_fidelity_idx]]
         return candidate
-
-        # for fidelity_idx in sorted_fidelities:
-        #     if not fidelity_input.allowed[fidelity_idx]:
-        #         continue
-
-        #     m = fidelity_input.fidelities[fidelity_idx]
-        #     fidelity_name = fidelity_input.categories[fidelity_idx]
-
-        #     fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()
-        #     fidelity_threshold = self.fidelity_thresholds[m] * fidelity_threshold_scale
-
-        #     X_fid = X.assign(**{self.task_feature_key: fidelity_name})
-        #     transformed = self.domain.inputs.transform(
-        #         experiments=X_fid, specs=self.input_preprocessing_specs
-        #     )
-        #     pred = self.predict(transformed)
-
-        #     if (pred[sd_cols] > fidelity_threshold).all().all() or m == target_fidelity:
-        #         pred[self.task_feature_key] = fidelity_name
-        #         return pred
 
     def _verify_all_fidelities_observed(self) -> None:
         """Get all fidelities that have at least one observation.
