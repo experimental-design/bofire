@@ -18,12 +18,17 @@ from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 
-from bofire.data_models.acquisition_functions.api import qMFVariance
+from bofire.data_models.acquisition_functions.api import qMFGibbon, qMFMES, qMFVariance
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import TaskInput
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy as DataModel,
 )
+from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.predictives.sobo import SoboStrategy
+from bofire.strategies.random import RandomStrategy
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -119,6 +124,28 @@ class qMultiFidelityVariance(SampleReducingMCAcquisitionFunction):
             1 / (1 + torch.arange(above_threshold.size(0))) * above_threshold.float()
         )
         return acqf_indicator
+
+
+def _gen_candidate_set(
+    domain: Domain,
+    transform_specs: InputTransformSpecs,
+    num_candidates: int,
+    seed: int | None = None,
+) -> torch.Tensor:
+    """Generate a candidate set for Gumbel sampling."""
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(
+            domain=domain,
+            fallback_sampling_method=SamplingMethodEnum.SOBOL,
+            seed=seed,
+        ),
+    )
+    candidate_df = random_strategy.ask(num_candidates)
+    candidate_set = domain.inputs.transform(
+        experiments=candidate_df,
+        specs=transform_specs,
+    )
+    return torch.from_numpy(candidate_set.to_numpy()).to(**tkwargs)
 
 
 def get_mf_acquisition_function(
@@ -248,6 +275,7 @@ class MultiFidelityStrategy(SoboStrategy):
             pd.DataFrame: selected fidelity and prediction
         """
         fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
+        fidelity_input_idx = self.domain.inputs.get_keys().index(fidelity_input.key)
         assert self.model is not None and self.experiments is not None
         assert fidelity_input.allowed is not None
 
@@ -259,7 +287,7 @@ class MultiFidelityStrategy(SoboStrategy):
         fidelity_acqf = get_mf_acquisition_function(
             acquisition_function_name=self.fidelity_acquisition_function.__class__.__name__,
             model=self.model,
-            target_fidelities={target_fidelity_idx: float(target_fidelity)},
+            target_fidelities={fidelity_input_idx: float(target_fidelity)},
             beta=(
                 self.fidelity_acquisition_function.beta
                 if isinstance(self.fidelity_acquisition_function, qMFVariance)
@@ -275,10 +303,18 @@ class MultiFidelityStrategy(SoboStrategy):
                 if isinstance(self.fidelity_acquisition_function, qMFVariance)
                 else None
             ),
+            candidate_set=_gen_candidate_set(
+                domain=self.domain,
+                transform_specs=self.input_preprocessing_specs,
+                num_candidates=1000,
+            )
+            if isinstance(self.fidelity_acquisition_function, (qMFMES, qMFGibbon))
+            else None,
         )
 
         X_fidelity_batched = X.loc[
-            X.index.repeat(num_fidelities), self.domain.inputs.get_keys()
+            X.index.repeat(num_fidelities),
+            self.domain.inputs.get_keys(excludes=TaskInput),
         ]
         sorted_fidelity_labels = [
             fidelity_input.categories[f] for f in sorted_fidelities
@@ -297,7 +333,7 @@ class MultiFidelityStrategy(SoboStrategy):
             # since we optimize over a discrete set of fidelities, there is
             # no need to compute gradients
             acqf_values = fidelity_acqf(X_fidelity_batched_tensor)
-
+        print(f"{acqf_values=}")
         chosen_fidelity_idx = int(torch.argmax(acqf_values).item())
         candidate = X_fidelity_batched.iloc[[chosen_fidelity_idx]]
         return candidate
