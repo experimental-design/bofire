@@ -30,6 +30,8 @@ from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.predictives.sobo import SoboStrategy
 from bofire.strategies.random import RandomStrategy
 from bofire.utils.torch_tools import tkwargs
+from botorch.models.cost import AffineFidelityCostModel
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 
 
 class qMultiFidelityVariance(SampleReducingMCAcquisitionFunction):
@@ -173,6 +175,10 @@ def get_mf_acquisition_function(
     # we require a posterior transform since the MultiTaskGP model has
     # model.num_outputs > 1, even though it is in fact a single output model.
     posterior_transform = ScalarizedPosteriorTransform(weights=torch.tensor([1.0]))
+    # TODO: use proper cost model
+    fidelity_task_idx = list(target_fidelities.keys())[0]
+    cost_model = AffineFidelityCostModel(fidelity_weights={fidelity_task_idx: -1.0}, fixed_cost=1.5)
+    cost_aware_utility = InverseCostWeightedUtility(cost_model)
 
     def project(X):
         return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
@@ -189,6 +195,7 @@ def get_mf_acquisition_function(
             candidate_set=candidate_set,  # type: ignore
             project=project,
             posterior_transform=posterior_transform,
+            cost_aware_utility=cost_aware_utility,
         )
 
     elif acquisition_function_name == "qMFGibbon":
@@ -197,6 +204,7 @@ def get_mf_acquisition_function(
             candidate_set=candidate_set,  # type: ignore
             project=project,
             posterior_transform=posterior_transform,
+            cost_aware_utility=cost_aware_utility,
         )
 
     elif acquisition_function_name == "qMFVariance":
@@ -333,7 +341,7 @@ class MultiFidelityStrategy(SoboStrategy):
             # since we optimize over a discrete set of fidelities, there is
             # no need to compute gradients
             acqf_values = fidelity_acqf(X_fidelity_batched_tensor)
-        print(f"{acqf_values=}")
+
         chosen_fidelity_idx = int(torch.argmax(acqf_values).item())
         candidate = X_fidelity_batched.iloc[[chosen_fidelity_idx]]
         return candidate
