@@ -122,7 +122,7 @@ class RandomStrategy(Strategy):
 
         """
         if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
-            _, unused = self.domain.get_nchoosek_combinations()
+            _, unused = self.domain.get_nchoosek_combinations(exhaustive=True)
 
             if candidate_count <= len(unused):
                 sampled_combinations = [
