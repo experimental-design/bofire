@@ -35,11 +35,14 @@ default_blocking_generators = pd.DataFrame(
             "n_factors": 6,
             "n_blocks": 16,
             "block_generator": (
-                "ABF; ACF; BDF; DEF; ABC; ABD; AD; ACDE; CE; CDF; BCDEF; "
-                "ABCEF; AEF; BE"
+                "ABF; ACF; BDF; DEF; ABC; ABD; AD; ACDE; CE; CDF; BCDEF; ABCEF; AEF; BE"
             ),
         },
-        {"n_factors": 7, "n_blocks": 2, "block_generator": "AB; BC; CD; DE; EF; FG"},
+        {
+            "n_factors": 7,
+            "n_blocks": 2,
+            "block_generator": "AB; BC; CD; DE; EF; FG",
+        },
         {"n_factors": 7, "n_blocks": 2, "block_generator": "ABCDEFG"},
         {"n_factors": 7, "n_blocks": 4, "block_generator": "ABCFG; CDEFG; ABDE"},
         {
