@@ -1,7 +1,7 @@
 import pytest
 
 from bofire.benchmarks.api import MultiTaskHimmelblau
-from bofire.data_models.acquisition_functions.api import qMFGibbon, qMFMES, qMFVariance
+from bofire.data_models.acquisition_functions.api import qMFMES, qMFVariance
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import TaskInput
@@ -69,7 +69,6 @@ def test_mf_requires_all_fidelities_observed():
     (
         qMFVariance(fidelity_thresholds=0.1, beta=0.2),
         qMFMES(fidelity_costs=[2.0, 1.0]),
-        qMFGibbon(fidelity_costs=[2.0, 1.0]),
     ),
 )
 def test_mf_fidelity_selection(fidelity_acqf):
@@ -86,9 +85,9 @@ def test_mf_fidelity_selection(fidelity_acqf):
         ),
     )
 
-    experiments = benchmark.f(random_strategy.ask(4), return_complete=True)
-    # experiments[benchmark.domain.outputs.get_keys()] *= 1000
-    experiments[task_input.key] = ["task_1", "task_2", "task_2", "task_2"]
+    N_train = 10
+    experiments = benchmark.f(random_strategy.ask(N_train), return_complete=True)
+    experiments[task_input.key] = ["task_1"] + ["task_2"] * (N_train - 1)
     experiments, withheld = experiments.iloc[:-1], experiments.iloc[-1:]
 
     strategy = MultiFidelityStrategy(
@@ -100,8 +99,10 @@ def test_mf_fidelity_selection(fidelity_acqf):
 
     strategy.tell(experiments)
     # test that for a point close to training data, the highest fidelity is selected
-    close_to_training = experiments.iloc[1:2].copy()
-    print(experiments)
+    good_training_point = experiments[benchmark.domain.outputs.get_keys()[0]].argmin()
+    close_to_training = experiments.iloc[
+        good_training_point : good_training_point + 1
+    ].copy()
     close_to_training[benchmark.domain.inputs.get_keys(excludes=TaskInput)] += 0.01
     pred = strategy.select_fidelity_candidate(close_to_training)
     assert (pred[task_input.key] == task_input.categories[0]).all()
@@ -116,7 +117,6 @@ def test_mf_fidelity_selection(fidelity_acqf):
     (
         qMFVariance(fidelity_thresholds=0.1, beta=0.2),
         qMFMES(fidelity_costs=[2.0, 1.0]),
-        qMFGibbon(fidelity_costs=[2.0, 1.0]),
     ),
 )
 def test_mf_point_selection(fidelity_acqf):

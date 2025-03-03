@@ -6,22 +6,24 @@ import pandas as pd
 import torch
 from botorch.acquisition import (
     SampleReducingMCAcquisitionFunction,
-    qMultiFidelityLowerBoundMaxValueEntropy,
     qMultiFidelityMaxValueEntropy,
 )
+from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 from botorch.acquisition.objective import (
     MCAcquisitionObjective,
     PosteriorTransform,
     ScalarizedPosteriorTransform,
 )
 from botorch.acquisition.utils import project_to_target_fidelity
+from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.model import Model
 from botorch.sampling.base import MCSampler
 
-from bofire.data_models.acquisition_functions.api import qMFGibbon, qMFMES, qMFVariance
+from bofire.data_models.acquisition_functions.api import qMFMES, qMFVariance
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import TaskInput
+from bofire.data_models.objectives.api import MaximizeObjective, Objective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy as DataModel,
@@ -30,8 +32,6 @@ from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.predictives.sobo import SoboStrategy
 from bofire.strategies.random import RandomStrategy
 from bofire.utils.torch_tools import tkwargs
-from botorch.models.cost import AffineFidelityCostModel
-from botorch.acquisition.cost_aware import InverseCostWeightedUtility
 
 
 class qMultiFidelityVariance(SampleReducingMCAcquisitionFunction):
@@ -119,11 +119,14 @@ class qMultiFidelityVariance(SampleReducingMCAcquisitionFunction):
 
         fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()
         fidelity_thresholds = self.fidelity_thresholds * fidelity_threshold_scale
+        fidelity_thresholds = fidelity_thresholds.view(
+            *([1] * (acqf_values.ndim - 1)), -1
+        )
         above_threshold = acqf_values > fidelity_thresholds
-        above_threshold[-1] = True  # selecting highest fidelity is always allowed
+        above_threshold[..., -1] = True  # selecting highest fidelity is always allowed
 
         acqf_indicator = (
-            1 / (1 + torch.arange(above_threshold.size(0))) * above_threshold.float()
+            1 / (1 + torch.arange(above_threshold.size(-1))) * above_threshold.float()
         )
         return acqf_indicator
 
@@ -154,12 +157,11 @@ def get_mf_acquisition_function(
     acquisition_function_name: str,
     model: Model,
     target_fidelities: dict[int, float],
-    # objective: MCAcquisitionObjective,
-    # X_observed: Tensor,
-    # posterior_transform: Optional[PosteriorTransform] = None,
-    # X_pending: Optional[Tensor] = None,
-    # mc_samples: int = 512,
-    # seed: Optional[int] = None,
+    objective: MCAcquisitionObjective,
+    maximize: bool = True,
+    X_pending: Optional[torch.Tensor] = None,
+    mc_samples: int = 512,
+    seed: Optional[int] = None,
     *,
     beta: Optional[float] = None,
     fidelity_thresholds: Optional[torch.Tensor] = None,
@@ -180,35 +182,29 @@ def get_mf_acquisition_function(
     def project(X):
         return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
 
-    if acquisition_function_name in ["qMFMES", "qMFGibbon"]:
+    if acquisition_function_name == "qMFMES":
         if candidate_set is None:
-            raise ValueError(
-                "`candidate_set` must not be None for qMFMES and qMFGibbon."
-            )
+            raise ValueError("`candidate_set` must not be None for qMFMES.")
         if fidelity_costs is None:
-            raise ValueError(
-                "`fidelity_costs` must not be None for qMFMES and qMFGibbon."
-            )
-        fidelity_fixed, fidelity_gradient = fidelity_costs[0], fidelity_costs[1] - fidelity_costs[0]
-        cost_model = AffineFidelityCostModel(fidelity_weights={fidelity_task_idx: fidelity_gradient}, fixed_cost=fidelity_fixed)
+            raise ValueError("`fidelity_costs` must not be None for qMFMES.")
+        fidelity_fixed, fidelity_gradient = (
+            fidelity_costs[0],
+            fidelity_costs[1] - fidelity_costs[0],
+        )
+        cost_model = AffineFidelityCostModel(
+            fidelity_weights={fidelity_task_idx: fidelity_gradient},
+            fixed_cost=fidelity_fixed,
+        )
         cost_aware_utility = InverseCostWeightedUtility(cost_model)
 
-    if acquisition_function_name == "qMFMES":
         return qMultiFidelityMaxValueEntropy(
             model=model,
             candidate_set=candidate_set,  # type: ignore
             project=project,
             posterior_transform=posterior_transform,
             cost_aware_utility=cost_aware_utility,
-        )
-
-    elif acquisition_function_name == "qMFGibbon":
-        return qMultiFidelityLowerBoundMaxValueEntropy(
-            model=model,
-            candidate_set=candidate_set,  # type: ignore
-            project=project,
-            posterior_transform=posterior_transform,
-            cost_aware_utility=cost_aware_utility,
+            X_pending=X_pending,
+            maximize=maximize,
         )
 
     elif acquisition_function_name == "qMFVariance":
@@ -221,6 +217,8 @@ def get_mf_acquisition_function(
             beta=beta,
             fidelity_thresholds=fidelity_thresholds,
             posterior_transform=posterior_transform,
+            objective=objective,
+            X_pending=X_pending,
         )
 
     raise NotImplementedError(
@@ -233,10 +231,6 @@ class MultiFidelityStrategy(SoboStrategy):
         super().__init__(data_model=data_model, **kwargs)
         self.task_feature_key = self.domain.inputs.get_keys(TaskInput)[0]
         self.fidelity_acquisition_function = data_model.fidelity_acquisition_function
-
-        # ft = data_model.fidelity_thresholds
-        # M = len(self.domain.inputs.get_by_key(self.task_feature_key).fidelities)  # type: ignore
-        # self.fidelity_thresholds = ft if isinstance(ft, list) else [ft] * M
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         """Generate new candidates (x, m).
@@ -273,33 +267,32 @@ class MultiFidelityStrategy(SoboStrategy):
         pred = self.predict(fidelity_cand)
         return pd.concat((fidelity_cand, pred), axis=1)
 
-    def select_fidelity_candidate(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
-        """Select the fidelity for a given input.
-
-        Uses the variance based approach (see [Kandasamy et al. 2016,
-        Folch et al. 2023]) to select the lowest fidelity that has a variance
-        exceeding a threshold. If no such fidelity exists, pick the target fidelity
-
-        Args:
-            X (pd.DataFrame): optimum input of target fidelity
-
-        Returns:
-            pd.DataFrame: selected fidelity and prediction
-        """
-        fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
-        fidelity_input_idx = self.domain.inputs.get_keys().index(fidelity_input.key)
+    def _get_fidelity_acqf(
+        self, fidelity_input: TaskInput
+    ) -> qMultiFidelityVariance | qMultiFidelityMaxValueEntropy:
+        _, X_pending = self.get_acqf_input_tensors()
         assert self.model is not None and self.experiments is not None
-        assert fidelity_input.allowed is not None
 
-        sorted_fidelities = np.argsort(fidelity_input.fidelities)[::-1]
-        target_fidelity_idx = sorted_fidelities[-1]
-        target_fidelity = fidelity_input.fidelities[target_fidelity_idx]
-        num_fidelities = len(fidelity_input.fidelities)
+        fidelity_input_idx = self.domain.inputs.get_keys().index(fidelity_input.key)
+        # TODO: target fidelity is not necessarily at index 0
+
+        # determine sense of optimization (max/min)
+        # qMFMES doesn't take an `objective` argument, so we need `maximize`
+        (
+            objective_callable,
+            _,
+            _,
+        ) = self._get_objective_and_constraints()
+        target_feature = self.domain.outputs.get_by_objective(includes=Objective)[0]
+        maximize = isinstance(target_feature.objective, MaximizeObjective)  # type: ignore
 
         fidelity_acqf = get_mf_acquisition_function(
             acquisition_function_name=self.fidelity_acquisition_function.__class__.__name__,
             model=self.model,
-            target_fidelities={fidelity_input_idx: float(target_fidelity)},
+            target_fidelities={fidelity_input_idx: 0.0},
+            objective=objective_callable,
+            maximize=maximize,
+            X_pending=X_pending,
             beta=(
                 self.fidelity_acquisition_function.beta
                 if isinstance(self.fidelity_acquisition_function, qMFVariance)
@@ -320,12 +313,35 @@ class MultiFidelityStrategy(SoboStrategy):
                 transform_specs=self.input_preprocessing_specs,
                 num_candidates=1000,
             )
-            if isinstance(self.fidelity_acquisition_function, (qMFMES, qMFGibbon))
+            if isinstance(self.fidelity_acquisition_function, qMFMES)
             else None,
             fidelity_costs=self.fidelity_acquisition_function.fidelity_costs
-            if isinstance(self.fidelity_acquisition_function, (qMFMES, qMFGibbon))
+            if isinstance(self.fidelity_acquisition_function, qMFMES)
             else None,
         )
+
+        return fidelity_acqf
+
+    def select_fidelity_candidate(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+        """Select the fidelity for a given input.
+
+        Uses the variance based approach (see [Kandasamy et al. 2016,
+        Folch et al. 2023]) to select the lowest fidelity that has a variance
+        exceeding a threshold. If no such fidelity exists, pick the target fidelity
+
+        Args:
+            X (pd.DataFrame): optimum input of target fidelity
+
+        Returns:
+            pd.DataFrame: selected fidelity and prediction
+        """
+        fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
+        assert fidelity_input.allowed is not None
+
+        sorted_fidelities = np.argsort(fidelity_input.fidelities)[::-1]
+        num_fidelities = len(fidelity_input.fidelities)
+
+        fidelity_acqf = self._get_fidelity_acqf(fidelity_input)
 
         X_fidelity_batched = X.loc[
             X.index.repeat(num_fidelities),
@@ -335,7 +351,6 @@ class MultiFidelityStrategy(SoboStrategy):
             fidelity_input.categories[f] for f in sorted_fidelities
         ]
         X_fidelity_batched[self.task_feature_key] = sorted_fidelity_labels * len(X)
-        # TODO: check that this transform is correct
         X_fidelity_batched_transformed = self.domain.inputs.transform(
             experiments=X_fidelity_batched, specs=self.input_preprocessing_specs
         )
@@ -348,7 +363,6 @@ class MultiFidelityStrategy(SoboStrategy):
             # since we optimize over a discrete set of fidelities, there is
             # no need to compute gradients
             acqf_values = fidelity_acqf(X_fidelity_batched_tensor)
-
         chosen_fidelity_idx = int(torch.argmax(acqf_values).item())
         candidate = X_fidelity_batched.iloc[[chosen_fidelity_idx]]
         return candidate

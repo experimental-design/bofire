@@ -11,7 +11,6 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qLogEI,
     qLogNEHVI,
     qLogNEI,
-    qMFGibbon,
     qMFMES,
     qMFVariance,
     qNegIntPosVar,
@@ -59,4 +58,4 @@ AnyMultiObjectiveAcquisitionFunction = Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI]
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar
 
-AnyMultiFidelityAcquisitionFunction = Union[qMFMES, qMFGibbon, qMFVariance]
+AnyMultiFidelityAcquisitionFunction = Union[qMFMES, qMFVariance]
