@@ -68,8 +68,8 @@ def test_mf_requires_all_fidelities_observed():
     "fidelity_acqf",
     (
         qMFVariance(fidelity_thresholds=0.1, beta=0.2),
-        qMFMES(),
-        qMFGibbon(),
+        qMFMES(fidelity_costs=[2.0, 1.0]),
+        qMFGibbon(fidelity_costs=[2.0, 1.0]),
     ),
 )
 def test_mf_fidelity_selection(fidelity_acqf):
@@ -115,8 +115,8 @@ def test_mf_fidelity_selection(fidelity_acqf):
     "fidelity_acqf",
     (
         qMFVariance(fidelity_thresholds=0.1, beta=0.2),
-        qMFMES(),
-        qMFGibbon(),
+        qMFMES(fidelity_costs=[2.0, 1.0]),
+        qMFGibbon(fidelity_costs=[2.0, 1.0]),
     ),
 )
 def test_mf_point_selection(fidelity_acqf):

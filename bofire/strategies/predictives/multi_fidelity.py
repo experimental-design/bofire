@@ -158,13 +158,12 @@ def get_mf_acquisition_function(
     # X_observed: Tensor,
     # posterior_transform: Optional[PosteriorTransform] = None,
     # X_pending: Optional[Tensor] = None,
-    # constraints: Optional[list[Callable[[Tensor], Tensor]]] = None,
-    # eta: Optional[Union[Tensor, float]] = 1e-3,
     # mc_samples: int = 512,
     # seed: Optional[int] = None,
     *,
     beta: Optional[float] = None,
     fidelity_thresholds: Optional[torch.Tensor] = None,
+    fidelity_costs: Optional[list[float]] = None,
     candidate_set: Optional[torch.Tensor] = None,
 ):
     """Convenience function for initialiing multi-fidelity acquisition functions.
@@ -177,8 +176,6 @@ def get_mf_acquisition_function(
     posterior_transform = ScalarizedPosteriorTransform(weights=torch.tensor([1.0]))
     # TODO: use proper cost model
     fidelity_task_idx = list(target_fidelities.keys())[0]
-    cost_model = AffineFidelityCostModel(fidelity_weights={fidelity_task_idx: -1.0}, fixed_cost=1.5)
-    cost_aware_utility = InverseCostWeightedUtility(cost_model)
 
     def project(X):
         return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
@@ -188,6 +185,13 @@ def get_mf_acquisition_function(
             raise ValueError(
                 "`candidate_set` must not be None for qMFMES and qMFGibbon."
             )
+        if fidelity_costs is None:
+            raise ValueError(
+                "`fidelity_costs` must not be None for qMFMES and qMFGibbon."
+            )
+        fidelity_fixed, fidelity_gradient = fidelity_costs[0], fidelity_costs[1] - fidelity_costs[0]
+        cost_model = AffineFidelityCostModel(fidelity_weights={fidelity_task_idx: fidelity_gradient}, fixed_cost=fidelity_fixed)
+        cost_aware_utility = InverseCostWeightedUtility(cost_model)
 
     if acquisition_function_name == "qMFMES":
         return qMultiFidelityMaxValueEntropy(
@@ -316,6 +320,9 @@ class MultiFidelityStrategy(SoboStrategy):
                 transform_specs=self.input_preprocessing_specs,
                 num_candidates=1000,
             )
+            if isinstance(self.fidelity_acquisition_function, (qMFMES, qMFGibbon))
+            else None,
+            fidelity_costs=self.fidelity_acquisition_function.fidelity_costs
             if isinstance(self.fidelity_acquisition_function, (qMFMES, qMFGibbon))
             else None,
         )

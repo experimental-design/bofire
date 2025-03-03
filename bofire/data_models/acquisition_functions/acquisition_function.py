@@ -98,6 +98,7 @@ class qMFMES(MultiFideltyAcquisitionFunction):
     num_fantasies: IntPowerOfTwo = 16
     num_mv_samples: int = 10
     num_y_samples: IntPowerOfTwo = 128
+    fidelity_costs: list[float] 
 
 
 class qMFGibbon(MultiFideltyAcquisitionFunction):
@@ -105,6 +106,7 @@ class qMFGibbon(MultiFideltyAcquisitionFunction):
     num_fantasies: IntPowerOfTwo = 16
     num_mv_samples: int = 10
     num_y_samples: IntPowerOfTwo = 128
+    fidelity_costs: list[float] 
 
 
 class qMFVariance(MultiFideltyAcquisitionFunction):
