@@ -22,7 +22,7 @@ extras_require = {
         "cvxpy[CLARABEL]",
         sklearn_dependency,
     ],
-    "entmoot": ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"],
+    "entmoot": ["entmoot~=2.0.4", "lightgbm~=4.6.0", "pyomo==6.7.1", "gurobipy"],
     "xgb": ["xgboost>=1.7.5"],
     "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
     "tests": [
