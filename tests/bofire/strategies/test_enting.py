@@ -82,8 +82,10 @@ def test_enting_param_consistency(common_args, params):
         **{**common_args, **params},
     )
     strategy = EntingStrategy(data_model=data_model)
+    strategy._init_problem_config()
 
     # check that the parameters propagate to the model correctly
+    assert strategy._enting is not None
     assert strategy._enting._acq_sense == data_model.acq_sense
     assert strategy._enting._beta == data_model.beta
 
