@@ -1,3 +1,5 @@
+import itertools
+
 import plotly.graph_objs as go
 import pytest
 
@@ -29,8 +31,15 @@ def test_cv_folds(folds):
         outputs=outputs,
     )
     model = surrogates.map(model)
-    train_cv, test_cv, _ = model.cross_validate(experiments, folds=folds)
-    plot = plot_cv_folds_plotly(train_cv)
-    plot2 = plot_cv_folds_plotly(test_cv)
-    assert isinstance(plot, go.Figure)
-    assert isinstance(plot2, go.Figure)
+    _, test_cv, _ = model.cross_validate(experiments, folds=folds)
+
+    permutations = list(itertools.product([True, False], repeat=3))
+
+    for plot_uncertainties, plot_labcodes, plot_X in permutations:
+        fig = plot_cv_folds_plotly(
+            test_cv,
+            plot_uncertainties=plot_uncertainties,
+            plot_labcodes=plot_labcodes,
+            plot_X=plot_X,
+        )
+        assert isinstance(fig, go.Figure)
