@@ -1,3 +1,4 @@
+from bofire.plot.cv_folds import plot_cv_folds_plotly
 from bofire.plot.duplicates import plot_duplicates_plotly
 from bofire.plot.feature_importance import plot_feature_importance_by_feature_plotly
 from bofire.plot.gp_slice import plot_gp_slice_plotly
