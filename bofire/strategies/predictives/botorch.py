@@ -226,6 +226,9 @@ class BotorchStrategy(PredictiveStrategy):
 
     def _setup_ask(self):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
+        # this is botorch optimizer dependent code and should be moved to the optimizer
+        # the bounds should be removed and we get in _ask
+
         num_categorical_features = len(
             self.domain.inputs.get([CategoricalInput, DiscreteInput]),
         )
@@ -405,6 +408,54 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return candidates, acqf_vals
 
+    def _optimize_acqf_discrete(
+        self, candidate_count: int, acqf: AcquisitionFunction
+    ) -> pd.DataFrame:
+        """Optimizes the acquisition function for a discrete search space.
+
+        Args:
+            candidate_count: Number of candidates that should be returned.
+            acqf: Acquisition function that should be optimized.
+
+        Returns:
+            Generated candidates
+        """
+        assert self.experiments is not None
+        choices = pd.DataFrame.from_dict(
+            [  # type: ignore
+                {e[0]: e[1] for e in combi}
+                for combi in self.domain.inputs.get_categorical_combinations()
+            ],
+        )
+        # adding categorical features that are fixed
+        for feat in self.domain.inputs.get_fixed():
+            choices[feat.key] = feat.fixed_value()[0]  # type: ignore
+        # compare the choices with the training data and remove all that are also part
+        # of the training data
+        merged = choices.merge(
+            self.experiments[self.domain.inputs.get_keys()],
+            on=list(choices.columns),
+            how="left",
+            indicator=True,
+        )
+        filtered_choices = merged[merged["_merge"] == "left_only"].copy()
+        filtered_choices.drop(columns=["_merge"], inplace=True)
+
+        # translate the filtered choice to torch
+        t_choices = torch.from_numpy(
+            self.domain.inputs.transform(
+                filtered_choices,
+                specs=self.input_preprocessing_specs,
+            ).values,
+        ).to(**tkwargs)
+        candidates, _ = optimize_acqf_discrete(
+            acq_function=acqf,
+            q=candidate_count,
+            unique=True,
+            choices=t_choices,
+        )
+        return self._postprocess_candidates(candidates=candidates)
+
     def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """[summary]
 
@@ -422,6 +473,7 @@ class BotorchStrategy(PredictiveStrategy):
         acqfs = self._get_acqfs(candidate_count)
 
         # we check here if we have a fully combinatorial search space
+        # and use _optimize_acqf_discrete in this case
         if len(
             self.domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
         ) == len(self.domain.inputs):
@@ -429,43 +481,13 @@ class BotorchStrategy(PredictiveStrategy):
                 raise NotImplementedError(
                     "Multiple Acqfs are currently not supported for purely combinatorial search spaces.",
                 )
-            # generate the choices as pandas dataframe
-            choices = pd.DataFrame.from_dict(
-                [  # type: ignore
-                    {e[0]: e[1] for e in combi}
-                    for combi in self.domain.inputs.get_categorical_combinations()
-                ],
+            return self._optimize_acqf_discrete(
+                candidate_count=candidate_count,
+                acqf=acqfs[0],
             )
-            # adding categorical features that are fixed
-            for feat in self.domain.inputs.get_fixed():
-                choices[feat.key] = feat.fixed_value()[0]  # type: ignore
-            # compare the choices with the training data and remove all that are also part
-            # of the training data
-            merged = choices.merge(
-                self.experiments[self.domain.inputs.get_keys()],
-                on=list(choices.columns),
-                how="left",
-                indicator=True,
-            )
-            filtered_choices = merged[merged["_merge"] == "left_only"].copy()
-            filtered_choices.drop(columns=["_merge"], inplace=True)
 
-            # translate the filtered choice to torch
-            t_choices = torch.from_numpy(
-                self.domain.inputs.transform(
-                    filtered_choices,
-                    specs=self.input_preprocessing_specs,
-                ).values,
-            ).to(**tkwargs)
-
-            candidates, _ = optimize_acqf_discrete(
-                acq_function=acqfs[0],
-                q=candidate_count,
-                unique=True,
-                choices=t_choices,
-            )
-            return self._postprocess_candidates(candidates=candidates)
-
+        # for continuous and mixed search spaces, here different optimizers could
+        # be used, so we have to abstract the stuff below
         (
             bounds,
             local_bounds,
@@ -537,6 +559,7 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features (dict): Dictionary of fixed features, keys are the feature indices, values the transformed feature values
 
         """
+        # does this go to the actual optimizer implementation, or is this optimizer agnostic?
         fixed_features = {}
         features2idx = self._features2idx
 
@@ -553,6 +576,7 @@ class BotorchStrategy(PredictiveStrategy):
         # one has to fix also them, this is abit of double work as it should be also reflected
         # in the bounds but helps to make it safer
 
+        # this could be removed if we drop support for FREE
         if (
             self.categorical_method == CategoricalMethodEnum.FREE
             and CategoricalEncodingEnum.ONE_HOT
@@ -601,6 +625,8 @@ class BotorchStrategy(PredictiveStrategy):
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
 
         """
+        # this is botorch specific, it should go to the new class
+
         fixed_basis = self.get_fixed_features()
 
         methods = [
