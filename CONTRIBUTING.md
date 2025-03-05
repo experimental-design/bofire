@@ -9,7 +9,7 @@ Pull requests are highly welcome:
 1. Create a fork from main.
 2. Add or adapt unit tests according to your change.
 3. Add doc-strings and update the documentation. You might consider contributing to the tutorials section.
-4. Make sure that the GitHub pipeline passes.
+4. Make sure that the GitHub pipelines passes.
 
 
 ## Development Environment
@@ -27,13 +27,11 @@ Afterwards, you can check that the tests are successful via
 pytest tests/
 ```
 ## Coding Style
-We format our code with [Black](https://github.com/psf/black).
+We use [Ruff](https://docs.astral.sh/ruff/) for linting, sorting and formatting of our code.
 Our doc-strings are in [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html).
-Further, we use [Ruff](https://beta.ruff.rs/docs/) for linting.
 
-In our CI/CD pipeline we check if contributions are compliant to Black and Ruff.
-To make contributors' lives easier, we have pre-commit hooks for Black and Ruff configured in the versions corresponding to the pipeline.
-Pre-commit hooks can be installed via
+In our CI/CD pipeline we check if contributions are compliant to Ruff.
+To make contributors' lives easier, we have pre-commit hooks for Ruff configured in the versions corresponding to the pipeline. They can be installed via
 
 ```
 pip install pre-commit
