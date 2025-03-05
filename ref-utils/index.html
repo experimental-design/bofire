@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.7">
     
     
       
@@ -706,6 +706,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bofire.utils.doe.apply_block_generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      apply_block_generator()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.utils.doe.compute_generator" class="md-nav__link">
     <span class="md-ellipsis">
       compute_generator()
@@ -742,6 +751,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.utils.doe.get_block_generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_block_generator()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.utils.doe.get_confounding_matrix" class="md-nav__link">
     <span class="md-ellipsis">
       get_confounding_matrix()
@@ -763,6 +781,15 @@
   <a href="#bofire.utils.doe.get_generator" class="md-nav__link">
     <span class="md-ellipsis">
       get_generator()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.doe.get_n_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_n_blocks()
     </span>
   </a>
   
@@ -1597,6 +1624,103 @@
 
 
 
+<h3 id="bofire.utils.doe.apply_block_generator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">apply_block_generator</span><span class="p">(</span><span class="n">design</span><span class="p">,</span> <span class="n">gen</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Applies blocking to a design matrix.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>design</code></td>
+        <td><code>ndarray</code></td>
+        <td><p>The design matrix.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>gen</code></td>
+        <td><code>str</code></td>
+        <td><p>The generator.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[int]</code></td>
+      <td><p>List of integers which assigns an experiment in the design matrix to a block.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">apply_block_generator</span><span class="p">(</span><span class="n">design</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">gen</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Applies blocking to a design matrix.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        design: The design matrix.</span>
+<span class="sd">        gen: The generator.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of integers which assigns an experiment in the design matrix to a block.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gen</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)]</span>
+
+    <span class="c1"># Fill in design with two level factorial design</span>
+    <span class="n">blocking_design</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">design</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">generators</span><span class="p">)))</span>
+
+    <span class="c1"># Recognize combinations and fill in the rest of matrix H2 with the proper</span>
+    <span class="c1"># products</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generators</span><span class="p">):</span>
+        <span class="c1"># For lowercase letters</span>
+        <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">g</span><span class="p">])</span> <span class="o">-</span> <span class="mi">97</span>
+        <span class="n">blocking_design</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">design</span><span class="p">[:,</span> <span class="n">xx</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Create a list to store the block assignments</span>
+    <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Iterate over each row in the design matrix</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">blocking_design</span><span class="p">:</span>
+        <span class="c1"># Find the index of the unique row in the blocking design</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">blocking_design</span> <span class="o">==</span> <span class="n">row</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">block</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">blocks</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h3 id="bofire.utils.doe.compute_generator" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">compute_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">)</span></code>
 
@@ -1799,7 +1923,7 @@
   <tbody>
       <tr>
         <td><code>gen</code></td>
-        <td></td>
+        <td><code>str</code></td>
         <td><p>The generator.</p></td>
         <td><em>required</em></td>
       </tr>
@@ -1822,7 +1946,7 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the fractional factorial design for a given generator.</span>
 
 <span class="sd">    Args:</span>
@@ -1995,6 +2119,142 @@ with positive signs.</p>
 
 
 
+<h3 id="bofire.utils.doe.get_block_generator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_block_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">,</span> <span class="n">n_blocks</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Gets the block generator for a given number of factors, generators, repetitions, and blocks.</p>
+<p>Should be only used if blocking cannot be reached by repetitions only.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>n_factors</code></td>
+        <td><code>int</code></td>
+        <td><p>number of factors</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_generators</code></td>
+        <td><code>int</code></td>
+        <td><p>number of generators/reducing factors</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_repetitions</code></td>
+        <td><code>int</code></td>
+        <td><p>number of repetitions</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_blocks</code></td>
+        <td><code>int</code></td>
+        <td><p>number of blocks that should be realized</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>If blocking can be reached by repetitions only.</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>str</code></td>
+      <td><p>The blocking generator.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_block_generator</span><span class="p">(</span>
+    <span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_blocks</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets the block generator for a given number of factors, generators, repetitions, and blocks.</span>
+
+<span class="sd">    Should be only used if blocking cannot be reached by repetitions only.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n_factors: number of factors</span>
+<span class="sd">        n_generators: number of generators/reducing factors</span>
+<span class="sd">        n_repetitions: number of repetitions</span>
+<span class="sd">        n_blocks: number of blocks that should be realized</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If blocking can be reached by repetitions only.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The blocking generator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n_repetitions</span> <span class="o">%</span> <span class="n">n_blocks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Blocking can be reached by repetitions only.&quot;</span><span class="p">)</span>
+
+    <span class="n">possible_blocks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="nb">set</span><span class="p">(</span>
+            <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_factors</span> <span class="o">==</span> <span class="n">n_factors</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">n_blocks</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n_blocks</span> <span class="ow">in</span> <span class="n">possible_blocks</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="p">(</span><span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_factors</span> <span class="o">==</span> <span class="n">n_factors</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_blocks</span> <span class="o">==</span> <span class="n">n_blocks</span><span class="p">)</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">block_generator</span><span class="o">.</span><span class="n">to_list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">possible_blocks</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">b</span> <span class="o">*</span> <span class="n">n_repetitions</span> <span class="o">%</span> <span class="n">n_blocks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_factors</span> <span class="o">==</span> <span class="n">n_factors</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_blocks</span> <span class="o">==</span> <span class="n">b</span><span class="p">)</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">block_generator</span><span class="o">.</span><span class="n">to_list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No block generator available for the requested combination.&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h3 id="bofire.utils.doe.get_confounding_matrix" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
@@ -2109,7 +2369,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">interactions</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Interaction has to be at least of degree two.&quot;</span>
-        <span class="k">assert</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Interaction has to be smaller than </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="k">assert</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Interaction has to be smaller than </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
         <span class="k">for</span> <span class="n">combi</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
             <span class="n">scaled_design</span><span class="p">[</span><span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
@@ -2309,6 +2569,114 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
 
 
 
+<h3 id="bofire.utils.doe.get_n_blocks" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_n_blocks</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Computes the number of possible blocks for a given number of factors, generators, and repetitions.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>n_factors</code></td>
+        <td><code>int</code></td>
+        <td><p>number of factors</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_generators</code></td>
+        <td><code>int</code></td>
+        <td><p>number of generators/reducing factors</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_repetitions</code></td>
+        <td><code>int</code></td>
+        <td><p>number of repetitions</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[int]</code></td>
+      <td><p>List of possible number of blocks.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_n_blocks</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_repetitions</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the number of possible blocks for a given number of factors, generators, and repetitions.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n_factors: number of factors</span>
+<span class="sd">        n_generators: number of generators/reducing factors</span>
+<span class="sd">        n_repetitions: number of repetitions</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[int]: List of possible number of blocks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># check if no repetitions are planned</span>
+    <span class="k">if</span> <span class="n">n_repetitions</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span>
+                <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                    <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_factors</span> <span class="o">==</span> <span class="n">n_factors</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">n_blocks</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># check if blocking can be reached just by repetitions</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_repetitions</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">n_repetitions</span> <span class="o">%</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">n_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># check if blocking can be reached by a combination of explicit blocks and repetitions</span>
+        <span class="n">n_blocks</span> <span class="o">+=</span> <span class="p">(</span>
+            <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_factors</span> <span class="o">==</span> <span class="n">n_factors</span><span class="p">,</span> <span class="s2">&quot;n_blocks&quot;</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+            <span class="o">*</span> <span class="p">(</span><span class="n">n_repetitions</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span> <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+            <span class="n">default_blocking_generators</span><span class="o">.</span><span class="n">n_factors</span> <span class="o">==</span> <span class="n">n_factors</span><span class="p">,</span> <span class="s2">&quot;n_blocks&quot;</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">n_blocks</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h3 id="bofire.utils.doe.validate_generator" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">generator</span><span class="p">)</span></code>
 
@@ -2345,7 +2713,7 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
         <span class="o">!=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)]</span>
     <span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Use the letters `</span><span class="si">{</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)])</span><span class="si">}</span><span class="s1">` for the main factors.&#39;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Use the letters `</span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)])</span><span class="si">}</span><span class="s2">` for the main factors.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># Indices of letter combinations.</span>
@@ -5439,7 +5807,7 @@ based on the given domain.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
       
         <script src="../javascripts/mathjax.js"></script>
       
