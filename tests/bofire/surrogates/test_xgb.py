@@ -15,9 +15,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.surrogates.api import XGBoostSurrogate
 
 
-pytest.importorskip("xgboost")
-
-
 XGB_AVAILABLE = importlib.util.find_spec("xgboost") is not None
 
 
@@ -50,6 +47,7 @@ def test_XGBoostSurrogate():
     assert_frame_equal(preds, preds2)
 
 
+@pytest.mark.skipif(not XGB_AVAILABLE, reason="requires xgboost")
 def test_XGBoostSurrogate_categorical():
     inputs = Inputs(
         features=[
