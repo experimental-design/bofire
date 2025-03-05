@@ -44,6 +44,7 @@ class FractionalFactorialStrategy(Strategy):
             self.n_blocks = 1
 
     def _get_continuous_design(self) -> pd.DataFrame:
+        # that is used to store the block information before it is converted to the block_feature_key
         continuous_inputs = self.domain.inputs.get(ContinuousInput)
         gen = self.generator or get_generator(
             n_factors=len(continuous_inputs),
@@ -51,26 +52,30 @@ class FractionalFactorialStrategy(Strategy):
         )
         design = pd.DataFrame(fracfact(gen=gen), columns=continuous_inputs.get_keys())
 
-        if self.n_blocks > 1 and self.n_repetitions % self.n_blocks != 0:
-            block_generator = get_block_generator(
-                n_factors=len(continuous_inputs),
-                n_blocks=self.n_blocks,
-                n_repetitions=self.n_repetitions,
-                n_generators=self.n_generators,
-            )
-            design["block"] = apply_block_generator(
-                design=design.to_numpy(), gen=block_generator
-            )
-        else:
-            design["block"] = 0
+        if self.n_blocks > 1:
+            if self.n_repetitions % self.n_blocks != 0:
+                block_generator = get_block_generator(
+                    n_factors=len(continuous_inputs),
+                    n_blocks=self.n_blocks,
+                    n_repetitions=self.n_repetitions,
+                    n_generators=self.n_generators,
+                )
+                design[self.block_feature_key] = apply_block_generator(
+                    design=design.to_numpy(), gen=block_generator
+                )
+            else:
+                design[self.block_feature_key] = 0
 
         # setup the repetitions
         if self.n_repetitions > 1:
-            if self.n_blocks > 1 and design["block"].max() + 1 != self.n_blocks:
+            if (
+                self.n_blocks > 1
+                and design[self.block_feature_key].max() + 1 != self.n_blocks
+            ):
                 designs = []
                 for i in range(self.n_repetitions):
                     d = design.copy()
-                    d.block += i
+                    d[self.block_feature_key] += i
                     designs.append(d)
             else:
                 designs = [design] * (self.n_repetitions)
@@ -80,14 +85,16 @@ class FractionalFactorialStrategy(Strategy):
         centers = pd.DataFrame(
             {key: [0] * self.n_center for key in continuous_inputs.get_keys()},
         )
-        centers["block"] = 0
 
         all_centers = []  # including blocking
-
-        for i in range(self.n_blocks):
-            c = centers.copy()
-            c.block += i
-            all_centers.append(c)
+        if self.n_blocks > 1:
+            centers[self.block_feature_key] = 0
+            for i in range(self.n_blocks):
+                c = centers.copy()
+                c[self.block_feature_key] += i
+                all_centers.append(c)
+        else:
+            all_centers = [centers]
 
         design = pd.concat([design, *all_centers], ignore_index=True)
         # scale the design to 0 and 1
@@ -107,8 +114,9 @@ class FractionalFactorialStrategy(Strategy):
                 if isinstance(block_feature, CategoricalInput)
                 else block_feature.values  # type: ignore
             )
-            design["block"] = design["block"].map(dict(enumerate(block_vals)))
-            design = design.rename(columns={"block": self.block_feature_key})
+            design[self.block_feature_key] = design[self.block_feature_key].map(
+                dict(enumerate(block_vals))
+            )
             return design
         return design[continuous_inputs.get_keys()]
 
