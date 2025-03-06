@@ -37,7 +37,7 @@ and a set of equations define additional experimental constraints, e.g.
 In the context of multi-objective optimization BoFire allows to define a vector-valued optimization problem
 
 $$
-\max_{x \in \mathbb{X}} s(y(x))
+\argmax_{x \in \mathbb{X}} s(y(x))
 $$
 
 where
@@ -58,7 +58,7 @@ This is done by using the experimental data to fit a probabilistic model $p(y|x,
 An acquisition function $a$ then formulates the desired trade-off between exploration and exploitation
 
 $$
-\max_{x \in \mathbb{X}} a(s(p_y(x)))
+\argmax_{x \in \mathbb{X}} a(s(p_y(x)))
 $$
 
 and the maximizer $x_\mathrm{opt}$ of this acquisition function determines the next experiment $y(x)$ to run.
