@@ -43,7 +43,7 @@ data = json.loads(serialized)
 data_model_ = parse_obj_as(AnyStrategy, data)
 assert data_model_ == data_model
 ```
-
+The data model of a strategy contains its hyperparameters.
 Using this data model of a strategy, we can create an instance of a (functional) strategy:
 
 ```python
