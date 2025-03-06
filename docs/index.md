@@ -42,9 +42,9 @@ $$
 
 where
 
-* $x \in \mathbb{X}$ is again the experimental design space
+* $\mathbb{X}$ is again the experimental design space
 * $y = \{y_1, \ldots y_M\}$ are known functions describing your experimental outputs and
-* $s = \{s_1, \ldots s_M\}$ are the objectives to be maximized, e.g. $s_1$ is the identity function if $y_1$ is to be maximized.
+* $s = \{s_1, \ldots s_M\}$ are the objectives to be maximized. For instance, $s_1$ is the identity function if $y_1$ is to be maximized.
 
 Since the objectives are usually conflicting, there is no point $x$ that simultaneously optimizes all objectives.
 Instead the goal is to find the Pareto front of all optimal compromises.
