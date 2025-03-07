@@ -1,9 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Type
+from typing import List, Tuple, Dict, Type, Optional
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.optim.initializers import gen_batch_initial_conditions
+from botorch.optim.optimize import (
+    optimize_acqf,
+    optimize_acqf_discrete,
+    optimize_acqf_list,
+    optimize_acqf_mixed,
+)
 
+from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
@@ -11,7 +19,27 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
 )
-
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+    ProductConstraint,
+)
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    CategoricalMolecularInput,
+    DiscreteInput,
+    Input,
+)
+from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
+from bofire.data_models.molfeatures.api import MolFeatures
+from bofire.data_models.strategies.api import (
+    ShortestPathStrategy as ShortestPathStrategyDataModel,
+)
+from bofire.data_models.strategies.shortest_path import has_local_search_region
+from bofire.utils.torch_tools import tkwargs
+from bofire.strategies.shortest_path import ShortestPathStrategy
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
@@ -23,29 +51,34 @@ class AcquisitionOptimizer(ABC):
         candidate_count: int,
         acqfs: List[AcquisitionFunction],  # this is a botorch object
         domain: Domain,  # we generate out of the domain all constraints in the format that is needed by the optimizer
-        input_processing_specs: Dict[str, Type],  # this is the preprocessing specs for the inputs
-        bounds: Tuple[
-            List[float], List[float]
-        ],  # the bounds are provided by the calling strategy itself and are not
+        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+        #bounds: Tuple[
+        #    List[float], List[float]
+        #],  # the bounds are provided by the calling strategy itself and are not
         # generated from the optimizer, this gives the calling strategy the possibility for more control logic
         # as needed for LSRBO or trust region methods
+        # wouldn`t the global bounds be defined by the domain, and local optimizations done in the successive calls,
+        # but in the BotorchOptimizer?
+        # if necessary, the "get_bounds" method can be overridden
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         pass
 
-    @property
-    def _features2idx(self) -> Dict[str, Tuple[int]]:
-        features2idx, _ = self.domain.inputs._get_transform_info(
-            self.input_preprocessing_specs,
+    def _features2idx(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs) -> Dict[str, Tuple[int]]:
+        features2idx, _ = domain.inputs._get_transform_info(
+            input_preprocessing_specs,
         )
         return features2idx
 
-    def get_bounds(self, domain: Domain) -> torch.Tensor:
-        lower, upper = self.domain.inputs.get_bounds(
-            specs=self.input_preprocessing_specs,
+    def get_bounds(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs) -> torch.Tensor:
+        lower, upper = domain.inputs.get_bounds(
+            specs=input_preprocessing_specs,
         )
-        bounds = torch.tensor([lower, upper]).to(**tkwargs)
+        return torch.tensor([lower, upper]).to(**tkwargs)
 
-    def get_fixed_features(self) -> Dict[int, float]:
+    def get_fixed_features(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+                           categorical_method: Optional[CategoricalMethodEnum] = None,
+                           descriptor_method: Optional[CategoricalMethodEnum] = None,
+                           ) -> Dict[int, float]:
         """Provides the values of all fixed features
 
         Raises:
@@ -56,10 +89,11 @@ class AcquisitionOptimizer(ABC):
 
         """
         # does this go to the actual optimizer implementation, or is this optimizer agnostic?
+        # -> maybe agnostic, and categorical_method, and
         fixed_features = {}
-        features2idx = self._features2idx
+        features2idx = self._features2idx(domain, input_preprocessing_specs)
 
-        for _, feat in enumerate(self.domain.inputs.get(Input)):
+        for _, feat in enumerate(domain.inputs.get(Input)):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
@@ -73,45 +107,48 @@ class AcquisitionOptimizer(ABC):
         # in the bounds but helps to make it safer
 
         # this could be removed if we drop support for FREE
-        if (
-                self.categorical_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.ONE_HOT
-                in list(self.input_preprocessing_specs.values())
-        ):
-            # for feat in self.get_true_categorical_features():
-            for feat in [
-                self.domain.inputs.get_by_key(featkey)
-                for featkey in self.domain.inputs.get_keys(CategoricalInput)
-                if self.input_preprocessing_specs[featkey]
-                   == CategoricalEncodingEnum.ONE_HOT
-            ]:
-                assert isinstance(feat, CategoricalInput)
-                if feat.is_fixed() is False:
-                    for cat in feat.get_forbidden_categories():
-                        transformed = feat.to_onehot_encoding(pd.Series([cat]))
-                        # we fix those indices to zero where one has a 1 as response from the transformer
-                        for j, idx in enumerate(features2idx[feat.key]):
-                            if transformed.values[0, j] == 1.0:
-                                fixed_features[idx] = 0
+        if categorical_method is not None:
+            if (
+                    categorical_method == CategoricalMethodEnum.FREE
+                    and CategoricalEncodingEnum.ONE_HOT
+                    in list(input_preprocessing_specs.values())
+            ):
+                # for feat in self.get_true_categorical_features():
+                for feat in [
+                    domain.inputs.get_by_key(featkey)
+                    for featkey in domain.inputs.get_keys(CategoricalInput)
+                    if input_preprocessing_specs[featkey]
+                       == CategoricalEncodingEnum.ONE_HOT
+                ]:
+                    assert isinstance(feat, CategoricalInput)
+                    if feat.is_fixed() is False:
+                        for cat in feat.get_forbidden_categories():
+                            transformed = feat.to_onehot_encoding(pd.Series([cat]))
+                            # we fix those indices to zero where one has a 1 as response from the transformer
+                            for j, idx in enumerate(features2idx[feat.key]):
+                                if transformed.values[0, j] == 1.0:
+                                    fixed_features[idx] = 0
+
         # for the descriptor ones
-        if (
-                self.descriptor_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.DESCRIPTOR
-                in list(self.input_preprocessing_specs.values())
-        ):
-            # for feat in self.get_true_categorical_features():
-            for feat in [
-                self.domain.inputs.get_by_key(featkey)
-                for featkey in self.domain.inputs.get_keys(CategoricalDescriptorInput)
-                if self.input_preprocessing_specs[featkey]
-                   == CategoricalEncodingEnum.DESCRIPTOR
-            ]:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                if feat.is_fixed() is False:
-                    lower, upper = feat.get_bounds(CategoricalEncodingEnum.DESCRIPTOR)
-                    for j, idx in enumerate(features2idx[feat.key]):
-                        if lower[j] == upper[j]:
-                            fixed_features[idx] = lower[j]
+        if descriptor_method is not None:
+            if (
+                    descriptor_method == CategoricalMethodEnum.FREE
+                    and CategoricalEncodingEnum.DESCRIPTOR
+                    in list(input_preprocessing_specs.values())
+            ):
+                # for feat in self.get_true_categorical_features():
+                for feat in [
+                    domain.inputs.get_by_key(featkey)
+                    for featkey in domain.inputs.get_keys(CategoricalDescriptorInput)
+                    if input_preprocessing_specs[featkey]
+                       == CategoricalEncodingEnum.DESCRIPTOR
+                ]:
+                    assert isinstance(feat, CategoricalDescriptorInput)
+                    if feat.is_fixed() is False:
+                        lower, upper = feat.get_bounds(CategoricalEncodingEnum.DESCRIPTOR)
+                        for j, idx in enumerate(features2idx[feat.key]):
+                            if lower[j] == upper[j]:
+                                fixed_features[idx] = lower[j]
         return fixed_features
 
 class BotorchOptimizer(AcquisitionOptimizer):
@@ -140,6 +177,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
         domain: Domain,
+        input_preprocessing_specs: Dict[str, Type],
         bounds: Tuple[List[float], List[float]],
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
@@ -421,7 +459,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 )
             )
         ):
-            fixed_features = self.get_fixed_features()
+            fixed_features = self.get_fixed_features(domain, input_preprocessing_specs,
+                                                     self.categorical_method, self.descriptor_method)
             fixed_features_list = None
         else:
             fixed_features = None

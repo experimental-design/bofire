@@ -8,22 +8,9 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
-from botorch.optim.initializers import gen_batch_initial_conditions
-from botorch.optim.optimize import (
-    optimize_acqf,
-    optimize_acqf_discrete,
-    optimize_acqf_list,
-    optimize_acqf_mixed,
-)
+
 from torch import Tensor
 
-from bofire.data_models.constraints.api import (
-    LinearEqualityConstraint,
-    LinearInequalityConstraint,
-    NChooseKConstraint,
-    ProductConstraint,
-)
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -31,19 +18,16 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Input,
 )
-from bofire.data_models.molfeatures.api import MolFeatures
+
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.api import (
-    ShortestPathStrategy as ShortestPathStrategyDataModel,
-)
-from bofire.data_models.strategies.shortest_path import has_local_search_region
+
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.random import RandomStrategy
-from bofire.strategies.shortest_path import ShortestPathStrategy
+
 from bofire.strategies.predictives.acqf_optimization import get_optimizer, AcquisitionOptimizer
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
