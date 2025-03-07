@@ -6,3 +6,13 @@ from bofire.data_models.strategies.api import SoboStrategy, BotorchOptimizer
 from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 
 
+def test_botorch_strategy():
+    domain = Domain(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    sobo = SoboStrategy(
+        domain=domain,
+        acquisition_optimizer=BotorchOptimizer(),
+    )
+    assert isinstance(sobo.acquisition_optimizer, BotorchOptimizer)
