@@ -5,10 +5,14 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.strategies.api import (
+    AcquisitionOptimizer as AcquisitionOptimizerDataModel,
+    BotorchOptimizer as BotorchOptimizerDataModel,
+)
 
 
 class AcquisitionOptimizer(ABC):
-    def __init__(self, data_model):
+    def __init__(self, data_model: AcquisitionOptimizerDataModel):
         pass
 
     @abstractmethod
@@ -27,7 +31,7 @@ class AcquisitionOptimizer(ABC):
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
-    def __init__(self, data_model):
+    def __init__(self, data_model: BotorchOptimizerDataModel):
         self.n_restarts = data_model.n_restarts  # we should rename it from num_ to n_ as this is more consistent with the rest of the code
         self.n_raw_samples = data_model.n_raw_samples
         self.maxiter = data_model.maxiter
@@ -39,6 +43,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
         self.descriptor_method = data_model.descriptor_method
+
+        super().__init__(data_model)
 
     def _setup(self):
         pass

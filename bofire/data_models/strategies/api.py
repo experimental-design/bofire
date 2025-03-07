@@ -26,6 +26,10 @@ from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy,
 )
+from bofire.data_models.strategies.predictives.acqf_optimization import (
+    AcquisitionOptimizer,
+    BotorchOptimizer,
+)
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
@@ -76,5 +80,9 @@ AnyPredictive = Union[
     MoboStrategy,
 ]
 
-
 AnyLocalSearchConfig = LSRBO
+
+AnyAcqfOptimizer = Union[
+    AcquisitionOptimizer,
+    BotorchOptimizer,
+]
