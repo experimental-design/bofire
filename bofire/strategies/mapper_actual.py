@@ -1,4 +1,4 @@
-from typing import Dict, Type, Union
+from typing import Dict, Type
 
 import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe_strategy import DoEStrategy
@@ -19,11 +19,9 @@ from bofire.strategies.predictives.sobo import (
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.strategy import Strategy
-from bofire.strategies.predictives.acqf_optimization import AcquisitionOptimizer, BotorchOptimizer
 
 
-STRATEGY_MAP: Dict[Union[Type[data_models.Strategy], Type[data_models.AcquisitionOptimizer]],
-    Union[Type[Strategy], Type[AcquisitionOptimizer]]] = {
+STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.ActiveLearningStrategy: ActiveLearningStrategy,
     data_models.RandomStrategy: RandomStrategy,
     data_models.SoboStrategy: SoboStrategy,
@@ -39,7 +37,6 @@ STRATEGY_MAP: Dict[Union[Type[data_models.Strategy], Type[data_models.Acquisitio
     data_models.MoboStrategy: MoboStrategy,
     data_models.ShortestPathStrategy: ShortestPathStrategy,
     data_models.FractionalFactorialStrategy: FractionalFactorialStrategy,
-    data_models.BotorchOptimizer: BotorchOptimizer,
 }
 
 

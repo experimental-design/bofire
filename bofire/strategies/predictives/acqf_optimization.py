@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Type
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -46,6 +46,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
         self.discrete_method = data_model.discrete_method
         self.descriptor_method = data_model.descriptor_method
 
+        self.local_search_config = data_model.local_search_config
+
         super().__init__(data_model)
 
     def _setup(self):
@@ -60,3 +62,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
         pass
+
+OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
+    BotorchOptimizerDataModel: BotorchOptimizer,
+}
+
+def get_optimizer(data_model: AcquisitionOptimizerDataModel) -> AcquisitionOptimizer:
+    return OPTIMIZER_MAP[type(data_model)](data_model)

@@ -44,6 +44,7 @@ from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
+from bofire.strategies.predictives.acqf_optimization import get_optimizer, AcquisitionOptimizer
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
@@ -61,11 +62,9 @@ class BotorchStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.n_restarts = data_model.n_restarts
-        self.n_raw_samples = data_model.n_raw_samples
-        self.descriptor_method = data_model.descriptor_method
-        self.categorical_method = data_model.categorical_method
-        self.discrete_method = data_model.discrete_method
+
+        self.acqf_optimizer: AcquisitionOptimizer = get_optimizer(data_model.acqf_optimizer)
+
         self.surrogate_specs = data_model.surrogate_specs
         if data_model.outlier_detection_specs is not None:
             self.outlier_detection_specs = OutlierDetections(
@@ -80,9 +79,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
         self.surrogates = None
-        self.local_search_config = data_model.local_search_config
-        self.maxiter = data_model.maxiter
-        self.batch_limit = data_model.batch_limit
+
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
