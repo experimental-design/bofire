@@ -1,4 +1,5 @@
 import bofire.data_models.strategies.api as strategies
+import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
@@ -29,8 +30,8 @@ specs = Specs([])
 
 
 strategy_commons = {
-    "num_raw_samples": 1024,
-    "num_restarts": 8,
+    "n_raw_samples": 1024,
+    "n_restarts": 8,
     "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
     "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
@@ -537,7 +538,7 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "local_search_config": strategies.LSRBO(),
+        "local_search_config": bofire.data_models.strategies.predictives.acqf_optimization.LSRBO(),
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
