@@ -72,7 +72,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
     @classmethod
     def validate_batch_limit(cls, batch_limit: int, info):
         batch_limit = min(
-            batch_limit or info.data["num_restarts"],
-            info.data["num_restarts"],
+            batch_limit or info.data["n_restarts"],
+            info.data["n_restarts"],
         )
         return batch_limit

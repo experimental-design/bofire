@@ -19,7 +19,7 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.outlier_detection.api import OutlierDetections
-from bofire.data_models.strategies.api import AcquisitionOptimizer, BotorchOptimizer
+from bofire.data_models.strategies.predictives.acqf_optimization import AcquisitionOptimizer, BotorchOptimizer
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
