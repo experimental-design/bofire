@@ -649,9 +649,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">bofire.data_models.features.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dm_features</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dm_strategies</span>
 
-<span class="n">in1</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in1&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">))</span>
-<span class="n">in2</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in2&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">2.0</span><span class="p">))</span>
-<span class="n">in3</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in3&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">3.0</span><span class="p">))</span>
+<span class="n">in1</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in1&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">])</span>
+<span class="n">in2</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in2&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">2.0</span><span class="p">])</span>
+<span class="n">in3</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in3&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">3.0</span><span class="p">])</span>
 
 <span class="n">out1</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;out1&quot;</span><span class="p">)</span>
 
@@ -668,14 +668,13 @@
 <span class="n">data_model</span> <span class="o">=</span> <span class="n">dm_strategies</span><span class="o">.</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
 </code></pre></div>
 <p>Such a data model can be (de)serialized as follows:</p>
-<p><div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_obj_as</span>
+<p><div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyStrategy</span>
 
 <span class="n">serialized</span> <span class="o">=</span> <span class="n">data_model</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">()</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
-<span class="c1"># alternative: data = data_model.dict()</span>
-<span class="n">data_model_</span> <span class="o">=</span> <span class="n">parse_obj_as</span><span class="p">(</span><span class="n">AnyStrategy</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+<span class="n">data_model_</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">AnyStrategy</span><span class="p">)</span><span class="o">.</span><span class="n">validate_json</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
+
 <span class="k">assert</span> <span class="n">data_model_</span> <span class="o">==</span> <span class="n">data_model</span>
 </code></pre></div>
 The data model of a strategy contains its hyperparameters.
