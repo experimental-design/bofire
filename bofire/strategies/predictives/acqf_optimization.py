@@ -7,6 +7,8 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
+)
+from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
 )
 
