@@ -1,0 +1,38 @@
+name: 🚀 Feature Request
+description: Request a feature or improvement to BoFire.
+labels: ["enhancement"]
+title: "[FEATURE REQUEST]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to request a new feature for BoFire!
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Provide a detailed description of the problem you would like to solve via this new feature or improvement.
+    validations:
+      required: true
+  - type: textarea
+    id: pitch
+    attributes:
+      label: Describe the solution you'd like to see implemented in BoFire.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe any alternatives you've considered to the above solution.
+  - type: textarea
+    id: related
+    attributes:
+      label: Is this related to an existing issue in BoFire or another repository? If so please include links to those issues here.
+  - type: dropdown
+    id: pull-request
+    attributes:
+      label: Pull Request
+      description: Are you willing to open a pull request implementing this feature? (See [Contributing to BoFire](https://github.com/experimental-design/bofire/blob/main/CONTRIBUTING.md))
+      options:
+        - "Yes"
+        - "No"
