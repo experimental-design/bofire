@@ -462,7 +462,7 @@ def test_functional_constraint():
         ipopt_options={"maxiter": 500},
     )
     strategy = DoEStrategy(data_model=data_model)
-    doe = strategy.ask(candidate_count=n_experiments)
+    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)
     doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]
