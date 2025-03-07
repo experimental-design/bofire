@@ -2,8 +2,82 @@ import pandas as pd
 
 
 # this are the default generators used for fractional factorial designs in BoFire
-default_fracfac_generators = pd.DataFrame.from_dict(
-    [
+# They are based on the book "Design and Analysis of Experiments" by Douglas C. Montgomery
+# Eighth Edition, 2013, ISBN-13: 978-1118146927
+
+
+default_blocking_generators = pd.DataFrame(
+    data=[
+        {"n_factors": 3, "n_blocks": 2, "block_generator": "ABC"},
+        {"n_factors": 3, "n_blocks": 4, "block_generator": "AB; AC; BC"},
+        {"n_factors": 4, "n_blocks": 2, "block_generator": "ABCD"},
+        {"n_factors": 4, "n_blocks": 4, "block_generator": "ABC; ACD"},
+        {
+            "n_factors": 4,
+            "n_blocks": 8,
+            "block_generator": "AB; BC; CD; AC; BD; AD; ABCD",
+        },
+        {"n_factors": 5, "n_blocks": 2, "block_generator": "ABCDE"},
+        {"n_factors": 5, "n_blocks": 4, "block_generator": "ABC; CDE; ABDE"},
+        {
+            "n_factors": 5,
+            "n_blocks": 8,
+            "block_generator": "ABE; BCE; CDE; AC; ABCD; BD; ADE",
+        },
+        {"n_factors": 6, "n_blocks": 2, "block_generator": "ABCDEF"},
+        {"n_factors": 6, "n_blocks": 4, "block_generator": "ABCF; CDEF"},
+        {
+            "n_factors": 6,
+            "n_blocks": 8,
+            "block_generator": "ABEF; ABCD; ACE; BCF; BDE; CDEF; ADF",
+        },
+        {
+            "n_factors": 6,
+            "n_blocks": 16,
+            "block_generator": (
+                "ABF; ACF; BDF; DEF; ABC; ABD; AD; ACDE; CE; CDF; BCDEF; ABCEF; AEF; BE"
+            ),
+        },
+        {
+            "n_factors": 7,
+            "n_blocks": 2,
+            "block_generator": "AB; BC; CD; DE; EF; FG",
+        },
+        {"n_factors": 7, "n_blocks": 2, "block_generator": "ABCDEFG"},
+        {"n_factors": 7, "n_blocks": 4, "block_generator": "ABCFG; CDEFG; ABDE"},
+        {
+            "n_factors": 7,
+            "n_blocks": 8,
+            "block_generator": (
+                "ABCD; CDEF; ADF; ABC; DEF; AFG; ABCDEF; BCF; ADEG; BCDEG"
+            ),
+        },
+        {"n_factors": 7, "n_blocks": 16, "block_generator": "ABCD; EFG; CDE; ADG"},
+        {
+            "n_factors": 7,
+            "n_blocks": 32,
+            "block_generator": (
+                "ABG; BCG; CDG; DEG; EFG; AC; BD; CE; DF; AE; BF; ABCE; ABDE; ABEF; "
+                "BCDE; BCEF; CDEF"
+            ),
+        },
+        {
+            "n_factors": 7,
+            "n_blocks": 64,
+            "block_generator": (
+                "AB; AC; AD; AE; AF; AG; BC; BD; BE; BF; BG; CD; CE; CF; CG; DE; DF; "
+                "DG; EF; EG; FG; ABCD; ABCE; ABCF; ABCG; ABDE; ABDF; ABDG; ABEF; "
+                "ABEG; ABFG; ACDE; ACDF; ACDG; ACEF; ACEG; ACFG; ADEF; ADEG; ADFG; "
+                "AEFG; BCDE; BCDF; BCDG; BCEF; BCEG; BCFG; BDEF; BDEG; BDFG; BEFG; "
+                "CDEF; CDEG; CDFG; CEFG; DEFG; ABCDEF; ABCDEG; ABCDFG; ABCEFG; "
+                "ABDEFG; ACDEFG; BCDEFG"
+            ),
+        },
+    ]
+)
+
+default_fracfac_generators = pd.DataFrame(
+    data=[
         {"n_factors": 3, "n_generators": 1, "generator": "C = AB"},
         {"n_factors": 4, "n_generators": 1, "generator": "D = ABC"},
         {"n_factors": 5, "n_generators": 1, "generator": "E = ABCD"},

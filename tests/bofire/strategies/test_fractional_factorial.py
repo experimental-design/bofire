@@ -155,6 +155,63 @@ def test_FractionalFactorialStrategy_ask():
     strategy = strategies.map(strategy_data)
     candidates = strategy.ask(None)
     assert len(candidates) == 10
+    # test blocking
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(key="alpha", categories=["a", "b"]),
+                ],
+            ),
+        ),
+        n_center=1,
+        n_repetitions=1,
+        block_feature_key="alpha",
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 10
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(key="alpha", categories=["a", "b"]),
+                ],
+            ),
+        ),
+        n_center=0,
+        n_repetitions=2,
+        block_feature_key="alpha",
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 16
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(
+                        key="alpha", categories=["a", "b", "c", "d", "e", "f", "g", "h"]
+                    ),
+                ],
+            ),
+        ),
+        n_center=0,
+        n_repetitions=2,
+        block_feature_key="alpha",
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 16
 
 
 def test_FractionalFactorialStrategy_randomize_runorder():

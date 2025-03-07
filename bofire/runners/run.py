@@ -46,7 +46,7 @@ def _single_run(
         filename = (
             "bofire_autosaves/" + benchmark_name + "/run" + str(run_idx) + ".json"
         )
-        parsed_domain = benchmark.domain.json()
+        parsed_domain = benchmark.domain.model_dump_json()
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
