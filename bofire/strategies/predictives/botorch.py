@@ -1,4 +1,3 @@
-import copy
 from abc import abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, get_args
 
@@ -8,35 +7,22 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
-
 from torch import Tensor
 
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalMolecularInput,
-    DiscreteInput,
-    Input,
-)
-
+from bofire.data_models.features.api import Input
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.outlier_detection.outlier_detections import OutlierDetections
+from bofire.strategies.predictives.acqf_optimization import (
+    AcquisitionOptimizer,
+    get_optimizer,
+)
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.random import RandomStrategy
-
-from bofire.strategies.predictives.acqf_optimization import get_optimizer, AcquisitionOptimizer
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
-from bofire.utils.torch_tools import (
-    get_initial_conditions_generator,
-    get_interpoint_constraints,
-    get_linear_constraints,
-    get_nonlinear_constraints,
-    tkwargs,
-)
+from bofire.utils.torch_tools import tkwargs
 
 
 class BotorchStrategy(PredictiveStrategy):
@@ -47,7 +33,9 @@ class BotorchStrategy(PredictiveStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
 
-        self.acqf_optimizer: AcquisitionOptimizer = get_optimizer(data_model.acqf_optimizer)
+        self.acqf_optimizer: AcquisitionOptimizer = get_optimizer(
+            data_model.acqf_optimizer
+        )
 
         self.surrogate_specs = data_model.surrogate_specs
         if data_model.outlier_detection_specs is not None:
@@ -229,7 +217,6 @@ class BotorchStrategy(PredictiveStrategy):
         )
 
         return self._postprocess_candidates(candidates=candidates)
-
 
     def _tell(self) -> None:
         pass
