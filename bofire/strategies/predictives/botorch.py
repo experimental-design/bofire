@@ -61,8 +61,8 @@ class BotorchStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.num_restarts = data_model.num_restarts
-        self.num_raw_samples = data_model.num_raw_samples
+        self.n_restarts = data_model.n_restarts
+        self.n_raw_samples = data_model.n_raw_samples
         self.descriptor_method = data_model.descriptor_method
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
@@ -341,8 +341,8 @@ class BotorchStrategy(PredictiveStrategy):
             candidates, acqf_vals = optimize_acqf_list(
                 acq_function_list=acqfs,
                 bounds=bounds,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
+                n_restarts=self.n_restarts,
+                raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
                     domain=self.domain,
                     constraint=LinearEqualityConstraint,
@@ -363,8 +363,8 @@ class BotorchStrategy(PredictiveStrategy):
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
+                n_restarts=self.n_restarts,
+                raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
                     domain=self.domain,
                     constraint=LinearEqualityConstraint,
@@ -388,8 +388,8 @@ class BotorchStrategy(PredictiveStrategy):
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
+                n_restarts=self.n_restarts,
+                raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
                     domain=self.domain,
                     constraint=LinearEqualityConstraint,

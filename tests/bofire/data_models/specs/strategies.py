@@ -30,8 +30,8 @@ specs = Specs([])
 
 
 strategy_commons = {
-    "num_raw_samples": 1024,
-    "num_restarts": 8,
+    "n_raw_samples": 1024,
+    "n_restarts": 8,
     "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
     "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
