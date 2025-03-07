@@ -34,7 +34,7 @@ class AcquisitionOptimizer(ABC):
 
 class BotorchOptimizer(AcquisitionOptimizer):
     def __init__(self, data_model: BotorchOptimizerDataModel):
-        self.n_restarts = data_model.n_restarts  # we should rename it from num_ to n_ as this is more consistent with the rest of the code
+        self.n_restarts = data_model.n_restarts
         self.n_raw_samples = data_model.n_raw_samples
         self.maxiter = data_model.maxiter
         self.batch_limit = data_model.batch_limit

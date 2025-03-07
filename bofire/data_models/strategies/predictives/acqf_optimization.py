@@ -5,7 +5,7 @@ from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import IntPowerOfTwo
-
+from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 
 class AcquisitionOptimizer(BaseModel):
     pass
@@ -54,10 +54,15 @@ AnyLocalSearchConfig = LSRBO
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
-    num_restarts: PositiveInt = 8
-    num_raw_samples: IntPowerOfTwo = 1024
+    n_restarts: PositiveInt = 8
+    n_raw_samples: IntPowerOfTwo = 1024
     maxiter: PositiveInt = 2000
     batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
+
+    # encoding params
+    descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
+    categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
+    discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
 
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None

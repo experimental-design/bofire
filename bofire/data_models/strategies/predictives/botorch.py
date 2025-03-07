@@ -34,10 +34,6 @@ class BotorchStrategy(PredictiveStrategy):
     # acquisition optimizer
     acquisition_optimizer: AcquisitionOptimizer
 
-    # encoding params
-    descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     surrogate_specs: BotorchSurrogates = Field(
         default_factory=lambda: BotorchSurrogates(surrogates=[]),
         validate_default=True,
@@ -104,27 +100,28 @@ class BotorchStrategy(PredictiveStrategy):
         # categorical_method = (
         #   values["categorical_method"] if "categorical_method" in values else None
         # )
-        if self.categorical_method == CategoricalMethodEnum.FREE:
-            for m in self.surrogate_specs.surrogates:
-                if isinstance(m, MixedSingleTaskGPSurrogate):
-                    raise ValueError(
-                        "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
-                    )
-        # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
-        # used for the descriptor as for the categoricals
-        for m in self.surrogate_specs.surrogates:
-            keys = m.inputs.get_keys(CategoricalDescriptorInput)
-            for k in keys:
-                input_proc_specs = (
-                    m.input_preprocessing_specs[k]
-                    if k in m.input_preprocessing_specs
-                    else None
-                )
-                if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
-                    if self.categorical_method != self.descriptor_method:
+        if isinstance(self.acquisition_optimizer, BotorchOptimizer):
+            if self.acquisition_optimizer.categorical_method == CategoricalMethodEnum.FREE:
+                for m in self.surrogate_specs.surrogates:
+                    if isinstance(m, MixedSingleTaskGPSurrogate):
                         raise ValueError(
-                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
+                            "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
                         )
+            # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
+            # used for the descriptor as for the categoricals
+            for m in self.surrogate_specs.surrogates:
+                keys = m.inputs.get_keys(CategoricalDescriptorInput)
+                for k in keys:
+                    input_proc_specs = (
+                        m.input_preprocessing_specs[k]
+                        if k in m.input_preprocessing_specs
+                        else None
+                    )
+                    if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
+                        if self.categorical_method != self.descriptor_method:
+                            raise ValueError(
+                                "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
+                            )
         return self
 
     @model_validator(mode="after")
