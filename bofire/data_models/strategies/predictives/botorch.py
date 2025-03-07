@@ -1,14 +1,14 @@
 import warnings
 from typing import Annotated, Optional, Type
 
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.constraints.api import (
     Constraint,
     InterpointConstraint,
+    LinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
-    LinearConstraint
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -19,19 +19,18 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.outlier_detection.api import OutlierDetections
+from bofire.data_models.strategies.api import AcquisitionOptimizer, BotorchOptimizer
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
+from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
-from bofire.data_models.strategies.api import AcquisitionOptimizer, BotorchOptimizer
-from bofire.data_models.strategies.shortest_path import has_local_search_region
 
 
 class BotorchStrategy(PredictiveStrategy):
-
     # acquisition optimizer
     acquisition_optimizer: AcquisitionOptimizer
 
@@ -62,9 +61,9 @@ class BotorchStrategy(PredictiveStrategy):
                     "`local_search_region` config is specified, but no local search region is defined in `domain`",
                 )
             if (
-                    len(self.domain.constraints)
-                    - len(self.domain.constraints.get(LinearConstraint))
-                    > 0
+                len(self.domain.constraints)
+                - len(self.domain.constraints.get(LinearConstraint))
+                > 0
             ):
                 raise ValueError("LSR-BO only supported for linear constraints.")
         return self

@@ -41,8 +41,8 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
-from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
 from tests.bofire.strategies.test_base import domains

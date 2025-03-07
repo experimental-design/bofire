@@ -18,8 +18,9 @@ from bofire.data_models.strategies.fractional_factorial import (
 )
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.acqf_optimization import (
+    LSRBO,
     AcquisitionOptimizer,
-    BotorchOptimizer, LSRBO,
+    BotorchOptimizer,
 )
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,

@@ -1,12 +1,11 @@
 from abc import abstractmethod
-from typing import Optional, Literal, Annotated
-import warnings
+from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, Field
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import IntPowerOfTwo
+
 
 class AcquisitionOptimizer(BaseModel):
     pass
@@ -52,6 +51,7 @@ class LSRBO(LocalSearchConfig):
 
 
 AnyLocalSearchConfig = LSRBO
+
 
 class BotorchOptimizer(AcquisitionOptimizer):
     num_restarts: PositiveInt = 8
