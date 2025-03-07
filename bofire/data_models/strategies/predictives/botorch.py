@@ -1,16 +1,14 @@
 import warnings
-from abc import abstractmethod
-from typing import Annotated, Literal, Optional, Type
+from typing import Annotated, Optional, Type
 
 from pydantic import Field, PositiveInt, field_validator, model_validator
 
-from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     Constraint,
     InterpointConstraint,
-    LinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    LinearConstraint
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -22,64 +20,21 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
-from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
-from bofire.data_models.types import IntPowerOfTwo
-
-
-class LocalSearchConfig(BaseModel):
-    """LocalSearchConfigs provide a way to define how to switch between global
-    acqf optimization in the global bounds and local acqf optimization in the local
-    reference bounds.
-    """
-
-    type: str
-
-    @abstractmethod
-    def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
-        """Abstract switching function between local and global acqf optimum.
-
-        Args:
-            acqf_local (float): Local acqf value.
-            acqf_global (float): Global acqf value.
-
-        Returns:
-            bool: If true, do local step, else a step towards the global acqf maximum.
-
-        """
-
-
-class LSRBO(LocalSearchConfig):
-    """LSRBO implements the local search region method published in.
-    https://www.merl.com/publications/docs/TR2023-057.pdf
-
-    Attributes:
-        gamma (float): The switsching parameter between local and global optimization.
-            Defaults to 0.1.
-
-    """
-
-    type: Literal["LSRBO"] = "LSRBO"
-    gamma: Annotated[float, Field(ge=0)] = 0.1
-
-    def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
-        return acqf_local >= self.gamma
-
-
-AnyLocalSearchConfig = LSRBO
+from bofire.data_models.strategies.api import AcquisitionOptimizer, BotorchOptimizer
+from bofire.data_models.strategies.shortest_path import has_local_search_region
 
 
 class BotorchStrategy(PredictiveStrategy):
-    # acqf optimizer params
-    num_restarts: PositiveInt = 8
-    num_raw_samples: IntPowerOfTwo = 1024
-    maxiter: PositiveInt = 2000
-    batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
+
+    # acquisition optimizer
+    acquisition_optimizer: AcquisitionOptimizer
+
     # encoding params
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
@@ -95,29 +50,21 @@ class BotorchStrategy(PredictiveStrategy):
     # hyperopt params
     frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
-    # local search region params
-    local_search_config: Optional[AnyLocalSearchConfig] = None
-
-    @field_validator("batch_limit")
-    @classmethod
-    def validate_batch_limit(cls, batch_limit: int, info):
-        batch_limit = min(
-            batch_limit or info.data["num_restarts"],
-            info.data["num_restarts"],
-        )
-        return batch_limit
 
     @model_validator(mode="after")
     def validate_local_search_config(self):
-        if self.local_search_config is not None:
+        if not isinstance(self.acquisition_optimizer, BotorchOptimizer):
+            return self
+
+        if self.acquisition_optimizer.local_search_config is not None:
             if has_local_search_region(self.domain) is False:
                 warnings.warn(
                     "`local_search_region` config is specified, but no local search region is defined in `domain`",
                 )
             if (
-                len(self.domain.constraints)
-                - len(self.domain.constraints.get(LinearConstraint))
-                > 0
+                    len(self.domain.constraints)
+                    - len(self.domain.constraints.get(LinearConstraint))
+                    > 0
             ):
                 raise ValueError("LSR-BO only supported for linear constraints.")
         return self
