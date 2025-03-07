@@ -101,7 +101,10 @@ class BotorchStrategy(PredictiveStrategy):
         #   values["categorical_method"] if "categorical_method" in values else None
         # )
         if isinstance(self.acquisition_optimizer, BotorchOptimizer):
-            if self.acquisition_optimizer.categorical_method == CategoricalMethodEnum.FREE:
+            if (
+                self.acquisition_optimizer.categorical_method
+                == CategoricalMethodEnum.FREE
+            ):
                 for m in self.surrogate_specs.surrogates:
                     if isinstance(m, MixedSingleTaskGPSurrogate):
                         raise ValueError(

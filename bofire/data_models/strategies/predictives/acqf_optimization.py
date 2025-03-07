@@ -4,8 +4,9 @@ from typing import Annotated, Literal, Optional
 from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.enum import CategoricalMethodEnum
 from bofire.data_models.types import IntPowerOfTwo
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
+
 
 class AcquisitionOptimizer(BaseModel):
     pass
