@@ -11,9 +11,9 @@ import bofire.data_models.domain.api as dm_domain
 import bofire.data_models.features.api as dm_features
 import bofire.data_models.strategies.api as dm_strategies
 
-in1 = dm_features.ContinuousInput(key="in1", bounds=(0.0,1.0))
-in2 = dm_features.ContinuousInput(key="in2", bounds=(0.0,2.0))
-in3 = dm_features.ContinuousInput(key="in3", bounds=(0.0,3.0))
+in1 = dm_features.ContinuousInput(key="in1", bounds=[0.0,1.0])
+in2 = dm_features.ContinuousInput(key="in2", bounds=[0.0,2.0])
+in3 = dm_features.ContinuousInput(key="in3", bounds=[0.0,3.0])
 
 out1 = dm_features.ContinuousOutput(key="out1")
 
@@ -33,14 +33,13 @@ data_model = dm_strategies.RandomStrategy(domain=domain)
 Such a data model can be (de)serialized as follows:
 
 ```python
-import json
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 from bofire.data_models.strategies.api import AnyStrategy
 
 serialized = data_model.model_dump_json()
-data = json.loads(serialized)
-# alternative: data = data_model.dict()
-data_model_ = parse_obj_as(AnyStrategy, data)
+
+data_model_ = TypeAdapter(AnyStrategy).validate_json(serialized)
+
 assert data_model_ == data_model
 ```
 The data model of a strategy contains its hyperparameters.
