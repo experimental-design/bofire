@@ -133,7 +133,7 @@ class AcquisitionOptimizer(ABC):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
-                    transform_type=self.input_preprocessing_specs.get(feat.key),  # type: ignore
+                    transform_type= input_preprocessing_specs.get(feat.key),  # type: ignore
                 )
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
@@ -298,6 +298,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             step = pd.DataFrame(sp.step(sp.start)).T
             return pd.concat((step, self.predict(step)), axis=1)
 
+        return candidates, global_acqf_val
+
     def _optimize_acqf_continuous(
         self,
         domain: Domain,
@@ -362,7 +364,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
-                n_restarts=self.n_restarts,
+                num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
                     domain=domain,
@@ -376,7 +378,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 fixed_features=fixed_features,
                 nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                 return_best_only=True,
-                options=self._get_optimizer_options(),  # type: ignore
+                options=self._get_optimizer_options(domain),  # type: ignore
                 ic_generator=ic_generator,
                 **ic_gen_kwargs,
             )

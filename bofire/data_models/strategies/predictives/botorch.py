@@ -35,7 +35,7 @@ from bofire.data_models.surrogates.api import (
 
 class BotorchStrategy(PredictiveStrategy):
     # acquisition optimizer
-    acquisition_optimizer: AcquisitionOptimizer
+    acquisition_optimizer: AcquisitionOptimizer = Field(default_factory=lambda: BotorchOptimizer())
 
     surrogate_specs: BotorchSurrogates = Field(
         default_factory=lambda: BotorchSurrogates(surrogates=[]),

@@ -34,7 +34,7 @@ class BotorchStrategy(PredictiveStrategy):
         super().__init__(data_model=data_model, **kwargs)
 
         self.acqf_optimizer: AcquisitionOptimizer = get_optimizer(
-            data_model.acqf_optimizer
+            data_model.acquisition_optimizer
         )
 
         self.surrogate_specs = data_model.surrogate_specs
