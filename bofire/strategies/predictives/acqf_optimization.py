@@ -133,7 +133,7 @@ class AcquisitionOptimizer(ABC):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
-                    transform_type= input_preprocessing_specs.get(feat.key),  # type: ignore
+                    transform_type=input_preprocessing_specs.get(feat.key),  # type: ignore
                 )
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
