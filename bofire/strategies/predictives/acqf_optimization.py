@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Tuple, Type
+import copy
+from typing import Dict, List, Optional, Tuple, Type, Callable
 
+import pandas as pd
 import torch
+from torch import Tensor
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
@@ -26,6 +29,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Input,
 )
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
@@ -39,7 +43,11 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.shortest_path import ShortestPathStrategy
-from bofire.utils.torch_tools import tkwargs
+from bofire.strategies.random import RandomStrategy
+from bofire.utils.torch_tools import (
+    tkwargs, get_initial_conditions_generator, get_nonlinear_constraints, get_linear_constraints,
+    get_interpoint_constraints,
+)
 
 
 class AcquisitionOptimizer(ABC):
@@ -48,20 +56,37 @@ class AcquisitionOptimizer(ABC):
 
     @abstractmethod
     def optimize(
-        self,
-        candidate_count: int,
-        acqfs: List[AcquisitionFunction],  # this is a botorch object
-        domain: Domain,  # we generate out of the domain all constraints in the format that is needed by the optimizer
-        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
-        # bounds: Tuple[
-        #    List[float], List[float]
-        # ],  # the bounds are provided by the calling strategy itself and are not
-        # generated from the optimizer, this gives the calling strategy the possibility for more control logic
-        # as needed for LSRBO or trust region methods
-        # wouldn`t the global bounds be defined by the domain, and local optimizations done in the successive calls,
-        # but in the BotorchOptimizer?
-        # if necessary, the "get_bounds" method can be overridden
+            self,
+            candidate_count: int,
+            acqfs: List[AcquisitionFunction],  # this is a botorch object
+            domain: Domain,
+            # we generate out of the domain all constraints in the format that is needed by the optimizer
+            input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+            # bounds: Tuple[
+            #    List[float], List[float]
+            # ],  # the bounds are provided by the calling strategy itself and are not
+            # generated from the optimizer, this gives the calling strategy the possibility for more control logic
+            # as needed for LSRBO or trust region methods
+            # wouldn`t the global bounds be defined by the domain, and local optimizations done in the successive calls,
+            # but in the BotorchOptimizer?
+            # if necessary, the "get_bounds" method can be overridden
+            experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
+
+        Args:
+            candidate_count (int): Number of candidates that should be returned.
+            acqfs (List[AcquisitionFunction]): List of acquisition functions that should be optimized.
+            domain (Domain): The domain of the optimization problem.
+            input_preprocessing_specs (InputTransformSpecs): The input preprocessing specs.
+
+        Returns:
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+
+        """
         pass
 
     def _features2idx(
@@ -184,20 +209,20 @@ class BotorchOptimizer(AcquisitionOptimizer):
         pass
 
     def optimize(
-        self,
-        candidate_count: int,
-        acqfs: List[AcquisitionFunction],
-        domain: Domain,
-        input_preprocessing_specs: Dict[str, Type],
-        bounds: Tuple[List[float], List[float]],
+            self,
+            candidate_count: int,
+            acqfs: List[AcquisitionFunction],
+            domain: Domain,
+            input_preprocessing_specs: InputTransformSpecs,
+            experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
 
         # we check here if we have a fully combinatorial search space
         # and use _optimize_acqf_discrete in this case
         if len(
-            self.domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
-        ) == len(self.domain.inputs):
+            domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
+        ) == len(domain.inputs):
             if len(acqfs) > 1:
                 raise NotImplementedError(
                     "Multiple Acqfs are currently not supported for purely combinatorial search spaces.",
@@ -205,6 +230,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             return self._optimize_acqf_discrete(
                 candidate_count=candidate_count,
                 acqf=acqfs[0],
+                domain=domain,
+                input_preprocessing_specs=input_preprocessing_specs,
+                experiments=experiments,
             )
 
         # for continuous and mixed search spaces, here different optimizers could
@@ -217,10 +245,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinears,
             fixed_features,
             fixed_features_list,
-        ) = self._setup_ask()
+        ) = self._setup_ask(domain, input_preprocessing_specs, experiments)
 
         # do the global opt
         candidates, global_acqf_val = self._optimize_acqf_continuous(
+            domain=domain,
+            input_preprocessing_specs=input_preprocessing_specs,
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
@@ -233,10 +263,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         if (
             self.local_search_config is not None
-            and has_local_search_region(self.domain)
+            and has_local_search_region(domain)
             and candidate_count == 1
         ):
             local_candidates, local_acqf_val = self._optimize_acqf_continuous(
+                domain=domain,
+                input_preprocessing_specs=input_preprocessing_specs,
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
@@ -250,7 +282,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 local_acqf_val.item(),
                 global_acqf_val.item(),
             ):
-                return self._postprocess_candidates(candidates=local_candidates)
+                return local_candidates, local_acqf_val
+
             sp = ShortestPathStrategy(
                 data_model=ShortestPathStrategyDataModel(
                     domain=self.domain,
@@ -258,11 +291,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
                 ),
             )
+
             step = pd.DataFrame(sp.step(sp.start)).T
             return pd.concat((step, self.predict(step)), axis=1)
 
     def _optimize_acqf_continuous(
         self,
+        domain: Domain, input_preprocessing_specs: InputTransformSpecs,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
         bounds: Tensor,
@@ -276,14 +311,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
             candidates, acqf_vals = optimize_acqf_list(
                 acq_function_list=acqfs,
                 bounds=bounds,
-                n_restarts=self.n_restarts,
+                num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
-                    domain=self.domain,
+                    domain=domain,
                     constraint=LinearEqualityConstraint,
                 ),
                 inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
+                    domain=domain,
                     constraint=LinearInequalityConstraint,
                 ),
                 nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
@@ -298,14 +333,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
-                n_restarts=self.n_restarts,
+                num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
-                    domain=self.domain,
+                    domain=domain,
                     constraint=LinearEqualityConstraint,
                 ),
                 inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
+                    domain=domain,
                     constraint=LinearInequalityConstraint,
                 ),
                 nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
@@ -316,7 +351,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             )
         else:
             interpoints = get_interpoint_constraints(
-                domain=self.domain,
+                domain=domain,
                 n_candidates=candidate_count,
             )
             candidates, acqf_vals = optimize_acqf(
@@ -326,12 +361,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 n_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
                 equality_constraints=get_linear_constraints(
-                    domain=self.domain,
+                    domain=domain,
                     constraint=LinearEqualityConstraint,
                 )
                 + interpoints,
                 inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
+                    domain=domain,
                     constraint=LinearInequalityConstraint,
                 ),
                 fixed_features=fixed_features,
@@ -344,8 +379,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
         return candidates, acqf_vals
 
     def _optimize_acqf_discrete(
-        self, candidate_count: int, acqf: AcquisitionFunction
-    ) -> pd.DataFrame:
+        self, candidate_count: int, acqf: AcquisitionFunction,
+            domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+            experiments: Optional[pd.DataFrame] = None,
+    ) -> Tuple[Tensor, Tensor]:
         """Optimizes the acquisition function for a discrete search space.
 
         Args:
@@ -353,22 +390,25 @@ class BotorchOptimizer(AcquisitionOptimizer):
             acqf: Acquisition function that should be optimized.
 
         Returns:
-            Generated candidates
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
         """
-        assert self.experiments is not None
+        #assert self.experiments is not None
         choices = pd.DataFrame.from_dict(
             [  # type: ignore
                 {e[0]: e[1] for e in combi}
-                for combi in self.domain.inputs.get_categorical_combinations()
+                for combi in domain.inputs.get_categorical_combinations()
             ],
         )
         # adding categorical features that are fixed
-        for feat in self.domain.inputs.get_fixed():
+        for feat in domain.inputs.get_fixed():
             choices[feat.key] = feat.fixed_value()[0]  # type: ignore
         # compare the choices with the training data and remove all that are also part
         # of the training data
         merged = choices.merge(
-            self.experiments[self.domain.inputs.get_keys()],
+            experiments[domain.inputs.get_keys()],
             on=list(choices.columns),
             how="left",
             indicator=True,
@@ -378,20 +418,20 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         # translate the filtered choice to torch
         t_choices = torch.from_numpy(
-            self.domain.inputs.transform(
+            domain.inputs.transform(
                 filtered_choices,
-                specs=self.input_preprocessing_specs,
+                specs=input_preprocessing_specs,
             ).values,
         ).to(**tkwargs)
-        candidates, _ = optimize_acqf_discrete(
+        return optimize_acqf_discrete(
             acq_function=acqf,
             q=candidate_count,
             unique=True,
             choices=t_choices,
         )
-        return self._postprocess_candidates(candidates=candidates)
+        #return self._postprocess_candidates(candidates=candidates)
 
-    def _get_optimizer_options(self) -> Dict[str, int]:
+    def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
         """Returns a dictionary of settings passed to `optimize_acqf` controlling
         the behavior of the optimizer.
 
@@ -403,7 +443,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             "batch_limit": (  # type: ignore
                 self.batch_limit
                 if len(
-                    self.domain.constraints.get(
+                    domain.constraints.get(
                         [NChooseKConstraint, ProductConstraint]
                     ),
                 )
@@ -413,30 +453,31 @@ class BotorchOptimizer(AcquisitionOptimizer):
             "maxiter": self.maxiter,
         }
 
-    def _setup_ask(self):
+    def _setup_ask(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+                   experiments: Optional[pd.DataFrame] = None):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
         # this is botorch optimizer dependent code and should be moved to the optimizer
         # the bounds should be removed and we get in _ask
 
         num_categorical_features = len(
-            self.domain.inputs.get([CategoricalInput, DiscreteInput]),
+            domain.inputs.get([CategoricalInput, DiscreteInput]),
         )
         num_categorical_combinations = len(
-            self.domain.inputs.get_categorical_combinations(),
+            domain.inputs.get_categorical_combinations(),
         )
-        bounds = self.get_bounds(self.domain)
+        bounds = self.get_bounds(domain, input_preprocessing_specs)
 
         # setup local bounds
-        assert self.experiments is not None
-        local_lower, local_upper = self.domain.inputs.get_bounds(
-            specs=self.input_preprocessing_specs,
-            reference_experiment=self.experiments.iloc[-1],
+        assert experiments is not None
+        local_lower, local_upper = domain.inputs.get_bounds(
+            specs=input_preprocessing_specs,
+            reference_experiment=experiments.iloc[-1],
         )
         local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
         # setup nonlinears
         if (
-            len(self.domain.constraints.get([NChooseKConstraint, ProductConstraint]))
+            len(domain.constraints.get([NChooseKConstraint, ProductConstraint]))
             == 0
         ):
             ic_generator = None
@@ -448,12 +489,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
             ic_gen_kwargs = {
                 "generator": get_initial_conditions_generator(
                     strategy=RandomStrategy(
-                        data_model=RandomStrategyDataModel(domain=self.domain),
+                        data_model=RandomStrategyDataModel(domain=domain),
                     ),
-                    transform_specs=self.input_preprocessing_specs,
+                    transform_specs=input_preprocessing_specs,
                 ),
             }
-            nonlinear_constraints = get_nonlinear_constraints(self.domain)
+            nonlinear_constraints = get_nonlinear_constraints(domain)
         # setup fixed features
         if (
             (num_categorical_features == 0)
@@ -489,7 +530,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features_list,
         )
 
-    def get_categorical_combinations(self) -> List[Dict[int, float]]:
+    def get_categorical_combinations(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+                                     ) -> List[Dict[int, float]]:
         """Provides all possible combinations of fixed values
 
         Returns:
@@ -498,7 +540,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         # this is botorch specific, it should go to the new class
 
-        fixed_basis = self.get_fixed_features()
+        fixed_basis = self.get_fixed_features(domain, input_preprocessing_specs,
+                                              self.categorical_method, self.descriptor_method)
 
         methods = [
             self.descriptor_method,
@@ -525,7 +568,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if not include:
             include = None
 
-        combos = self.domain.inputs.get_categorical_combinations(
+        combos = domain.inputs.get_categorical_combinations(
             include=(include if include else Input),
             exclude=exclude,  # type: ignore
         )
@@ -540,10 +583,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
             for pair in combo:
                 feat, val = pair
-                feature = self.domain.inputs.get_by_key(feat)
+                feature = domain.inputs.get_by_key(feat)
                 if (
                     isinstance(feature, CategoricalDescriptorInput)
-                    and self.input_preprocessing_specs[feat]
+                    and input_preprocessing_specs[feat]
                     == CategoricalEncodingEnum.DESCRIPTOR
                 ):
                     index = feature.categories.index(val)
@@ -552,7 +595,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         fixed_features[idx] = feature.values[index][j]
 
                 elif isinstance(feature, CategoricalMolecularInput):
-                    preproc = self.input_preprocessing_specs[feat]
+                    preproc = input_preprocessing_specs[feat]
                     if not isinstance(preproc, MolFeatures):
                         raise ValueError(
                             f"preprocessing for {feat} must be of type AnyMolFeatures"

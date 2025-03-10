@@ -209,11 +209,12 @@ class BotorchStrategy(PredictiveStrategy):
 
         acqfs = self._get_acqfs(candidate_count)
 
-        candidates = self.acqf_optimizer.optimize(
+        candidates, _ = self.acqf_optimizer.optimize(
             candidate_count,
             acqfs,
             self.domain,
             self.input_preprocessing_specs,
+            self.experiments,
         )
 
         return self._postprocess_candidates(candidates=candidates)
