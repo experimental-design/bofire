@@ -1,10 +1,9 @@
-from abc import ABC, abstractmethod
 import copy
-from typing import Dict, List, Optional, Tuple, Type, Callable
+from abc import ABC, abstractmethod
+from typing import Callable, Dict, List, Optional, Tuple, Type
 
 import pandas as pd
 import torch
-from torch import Tensor
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
@@ -13,6 +12,7 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from torch import Tensor
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -29,7 +29,6 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Input,
 )
-from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
@@ -37,16 +36,20 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
 )
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
     ShortestPathStrategy as ShortestPathStrategyDataModel,
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
-from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.random import RandomStrategy
+from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
-    tkwargs, get_initial_conditions_generator, get_nonlinear_constraints, get_linear_constraints,
+    get_initial_conditions_generator,
     get_interpoint_constraints,
+    get_linear_constraints,
+    get_nonlinear_constraints,
+    tkwargs,
 )
 
 
@@ -56,21 +59,21 @@ class AcquisitionOptimizer(ABC):
 
     @abstractmethod
     def optimize(
-            self,
-            candidate_count: int,
-            acqfs: List[AcquisitionFunction],  # this is a botorch object
-            domain: Domain,
-            # we generate out of the domain all constraints in the format that is needed by the optimizer
-            input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
-            # bounds: Tuple[
-            #    List[float], List[float]
-            # ],  # the bounds are provided by the calling strategy itself and are not
-            # generated from the optimizer, this gives the calling strategy the possibility for more control logic
-            # as needed for LSRBO or trust region methods
-            # wouldn`t the global bounds be defined by the domain, and local optimizations done in the successive calls,
-            # but in the BotorchOptimizer?
-            # if necessary, the "get_bounds" method can be overridden
-            experiments: Optional[pd.DataFrame] = None,
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],  # this is a botorch object
+        domain: Domain,
+        # we generate out of the domain all constraints in the format that is needed by the optimizer
+        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+        # bounds: Tuple[
+        #    List[float], List[float]
+        # ],  # the bounds are provided by the calling strategy itself and are not
+        # generated from the optimizer, this gives the calling strategy the possibility for more control logic
+        # as needed for LSRBO or trust region methods
+        # wouldn`t the global bounds be defined by the domain, and local optimizations done in the successive calls,
+        # but in the BotorchOptimizer?
+        # if necessary, the "get_bounds" method can be overridden
+        experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
@@ -209,12 +212,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
         pass
 
     def optimize(
-            self,
-            candidate_count: int,
-            acqfs: List[AcquisitionFunction],
-            domain: Domain,
-            input_preprocessing_specs: InputTransformSpecs,
-            experiments: Optional[pd.DataFrame] = None,
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
 
@@ -297,7 +300,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
     def _optimize_acqf_continuous(
         self,
-        domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
         bounds: Tensor,
@@ -379,9 +383,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
         return candidates, acqf_vals
 
     def _optimize_acqf_discrete(
-        self, candidate_count: int, acqf: AcquisitionFunction,
-            domain: Domain, input_preprocessing_specs: InputTransformSpecs,
-            experiments: Optional[pd.DataFrame] = None,
+        self,
+        candidate_count: int,
+        acqf: AcquisitionFunction,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[Tensor, Tensor]:
         """Optimizes the acquisition function for a discrete search space.
 
@@ -395,7 +402,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         - a `q x d`-dim tensor of generated candidates.
         - an associated acquisition value.
         """
-        #assert self.experiments is not None
+        # assert self.experiments is not None
         choices = pd.DataFrame.from_dict(
             [  # type: ignore
                 {e[0]: e[1] for e in combi}
@@ -429,7 +436,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             unique=True,
             choices=t_choices,
         )
-        #return self._postprocess_candidates(candidates=candidates)
+        # return self._postprocess_candidates(candidates=candidates)
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
         """Returns a dictionary of settings passed to `optimize_acqf` controlling
@@ -443,9 +450,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             "batch_limit": (  # type: ignore
                 self.batch_limit
                 if len(
-                    domain.constraints.get(
-                        [NChooseKConstraint, ProductConstraint]
-                    ),
+                    domain.constraints.get([NChooseKConstraint, ProductConstraint]),
                 )
                 == 0
                 else 1
@@ -453,8 +458,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
             "maxiter": self.maxiter,
         }
 
-    def _setup_ask(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
-                   experiments: Optional[pd.DataFrame] = None):
+    def _setup_ask(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        experiments: Optional[pd.DataFrame] = None,
+    ):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
         # this is botorch optimizer dependent code and should be moved to the optimizer
         # the bounds should be removed and we get in _ask
@@ -476,10 +485,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
         # setup nonlinears
-        if (
-            len(domain.constraints.get([NChooseKConstraint, ProductConstraint]))
-            == 0
-        ):
+        if len(domain.constraints.get([NChooseKConstraint, ProductConstraint])) == 0:
             ic_generator = None
             ic_gen_kwargs = {}
             nonlinear_constraints = None
@@ -530,8 +536,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features_list,
         )
 
-    def get_categorical_combinations(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
-                                     ) -> List[Dict[int, float]]:
+    def get_categorical_combinations(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+    ) -> List[Dict[int, float]]:
         """Provides all possible combinations of fixed values
 
         Returns:
@@ -540,8 +549,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         # this is botorch specific, it should go to the new class
 
-        fixed_basis = self.get_fixed_features(domain, input_preprocessing_specs,
-                                              self.categorical_method, self.descriptor_method)
+        fixed_basis = self.get_fixed_features(
+            domain,
+            input_preprocessing_specs,
+            self.categorical_method,
+            self.descriptor_method,
+        )
 
         methods = [
             self.descriptor_method,
