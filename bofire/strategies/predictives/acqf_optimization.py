@@ -527,7 +527,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features_list = None
         else:
             fixed_features = None
-            fixed_features_list = self.get_categorical_combinations(domain, input_preprocessing_specs)
+            fixed_features_list = self.get_categorical_combinations(
+                domain, input_preprocessing_specs
+            )
         return (
             bounds,
             local_bounds,
