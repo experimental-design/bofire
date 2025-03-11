@@ -353,7 +353,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 fixed_features_list=fixed_features_list,
                 ic_generator=ic_generator,
                 ic_gen_kwargs=ic_gen_kwargs,
-                options=self._get_optimizer_options(),  # type: ignore
+                options=self._get_optimizer_options(domain),  # type: ignore
             )
         else:
             interpoints = get_interpoint_constraints(
@@ -527,7 +527,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features_list = None
         else:
             fixed_features = None
-            fixed_features_list = self.get_categorical_combinations()
+            fixed_features_list = self.get_categorical_combinations(
+                domain, input_preprocessing_specs
+            )
         return (
             bounds,
             local_bounds,
@@ -590,7 +592,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
-        features2idx = self._features2idx
+        features2idx = self._features2idx(domain, input_preprocessing_specs)
         list_of_fixed_features = []
 
         for combo in combos:
