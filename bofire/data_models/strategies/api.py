@@ -17,10 +17,15 @@ from bofire.data_models.strategies.fractional_factorial import (
     FractionalFactorialStrategy,
 )
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
+from bofire.data_models.strategies.predictives.acqf_optimization import (
+    LSRBO,
+    AcquisitionOptimizer,
+    BotorchOptimizer,
+)
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,
 )
-from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multi_fidelity import (
@@ -76,5 +81,9 @@ AnyPredictive = Union[
     MoboStrategy,
 ]
 
-
 AnyLocalSearchConfig = LSRBO
+
+AnyAcqfOptimizer = Union[
+    AcquisitionOptimizer,
+    BotorchOptimizer,
+]

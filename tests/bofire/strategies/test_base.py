@@ -300,7 +300,7 @@ def test_base_create(domain: Domain):
         ValueError,
         match="Argument is not power of two.",
     ):
-        DummyStrategyDataModel(domain=domain, num_raw_samples=5)
+        DummyStrategyDataModel(domain=domain, n_raw_samples=5)
 
 
 def test_base_invalid_descriptor_method():

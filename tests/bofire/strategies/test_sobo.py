@@ -41,8 +41,8 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
-from bofire.data_models.strategies.api import LSRBO
-from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel, BotorchOptimizer
+from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
 from tests.bofire.strategies.test_base import domains
@@ -398,7 +398,7 @@ def test_sobo_lsrbo():
     strategy_data = data_models.SoboStrategy(
         domain=bench.domain,
         seed=42,
-        local_search_config=LSRBO(gamma=0),
+        acquisition_optimizer=BotorchOptimizer(local_search_config=LSRBO(gamma=0)),
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
@@ -408,7 +408,7 @@ def test_sobo_lsrbo():
     strategy_data = data_models.SoboStrategy(
         domain=bench.domain,
         seed=42,
-        local_search_config=LSRBO(gamma=500000),
+        acquisition_optimizer=BotorchOptimizer(local_search_config=LSRBO(gamma=500000)),
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
@@ -424,9 +424,10 @@ def test_sobo_get_optimizer_options():
         ],
         outputs=[ContinuousOutput(key="c")],  # type: ignore
     )
-    strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
+    strategy_data = data_models.SoboStrategy(
+        domain=domain, acquisition_optimizer=BotorchOptimizer(maxiter=500, batch_limit=4))
     strategy = SoboStrategy(data_model=strategy_data)
-    assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 4}
+    assert strategy.acqf_optimizer._get_optimizer_options(strategy.domain) == {"maxiter": 500, "batch_limit": 4}
     domain = Domain(
         inputs=[  # type: ignore
             ContinuousInput(key="a", bounds=(0, 1)),
@@ -442,9 +443,10 @@ def test_sobo_get_optimizer_options():
             ),
         ],
     )
-    strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
+    strategy_data = data_models.SoboStrategy(
+        domain=domain, acquisition_optimizer=BotorchOptimizer(maxiter=500, batch_limit=4))
     strategy = SoboStrategy(data_model=strategy_data)
-    assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 1}
+    assert strategy.acqf_optimizer._get_optimizer_options(strategy.domain) == {"maxiter": 500, "batch_limit": 1}
 
 
 def test_sobo_interpoint():
