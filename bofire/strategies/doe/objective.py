@@ -45,14 +45,14 @@ class Objective:
         self,
         domain: Domain,
         n_experiments: int,
-        delta: float = 1e-6,
+        delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
     ) -> None:
         """Args:
         domain (Domain): A domain defining the DoE domain together with model_type.
         model_type (str or Formula): A formula containing all model terms.
         n_experiments (int): Number of experiments
-        delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+        delta (float): A regularization parameter for the information matrix. Default value is 1e-7.
         transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
 
         """
@@ -106,14 +106,14 @@ class ModelBasedObjective(Objective):
         domain: Domain,
         model: Formula,
         n_experiments: int,
-        delta: float = 1e-6,
+        delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
     ) -> None:
         """Args:
         domain (Domain): A domain defining the DoE domain together with model_type.
         model_type (str or Formula): A formula containing all model terms.
         n_experiments (int): Number of experiments
-        delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+        delta (float): A regularization parameter for the information matrix. Default value is 1e-7.
         transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
         """
         super().__init__(
@@ -132,6 +132,7 @@ class ModelBasedObjective(Objective):
     def _evaluate(self, x: np.ndarray) -> float:
         D = torch.tensor(
             x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            **tkwargs,
             requires_grad=False,
         )
         return float(self._evaluate_tensor(D))
@@ -139,6 +140,7 @@ class ModelBasedObjective(Objective):
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         D = torch.tensor(
             x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            **tkwargs,
         )
 
         return jacobian(self._evaluate_tensor, D).detach().numpy().flatten()
@@ -148,6 +150,7 @@ class ModelBasedObjective(Objective):
     def _evaluate_hessian(self, x: np.ndarray) -> np.ndarray:
         D = torch.tensor(
             x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
+            **tkwargs,
         )
 
         return hessian(self._evaluate_tensor, D).detach().numpy()
@@ -182,7 +185,7 @@ class IOptimality(ModelBasedObjective):
         domain: Domain,
         model: Formula,
         n_experiments: int,
-        delta: float = 1e-6,
+        delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
         n_space_filling_points: Optional[int] = None,
         ipopt_options: Optional[dict] = None,

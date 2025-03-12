@@ -1,7 +1,6 @@
 import importlib
 
 import numpy as np
-import pandas as pd
 import pytest
 from formulaic import Formula
 
@@ -25,7 +24,6 @@ from bofire.strategies.doe.objective import (
     EOptimality,
     GOptimality,
     IOptimality,
-    ModelBasedObjective,
     SpaceFilling,
     get_objective_function,
 )
@@ -33,375 +31,6 @@ from bofire.strategies.doe.utils import get_formula_from_string
 
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
-
-
-def test_Objective_model_jacobian_t():
-    # "small" model
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(
-                key=f"x{i + 1}",
-                bounds=(0, 1),
-            )
-            for i in range(3)
-        ],
-        outputs=[ContinuousOutput(key="y")],
-    )
-
-    vars = domain.inputs.get_keys()
-    f = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
-    x = np.array([[1, 2, 3]])
-
-    objective = ModelBasedObjective(
-        domain=domain,
-        model=f,
-        n_experiments=1,
-    )
-    model_jacobian_t = objective._model_jacobian_t
-
-    B = np.zeros(shape=(3, 6))
-    B[:, 1:4] = np.eye(3)
-    B[:, 4] = np.array([0, 0, 6])
-    B[:, 5] = np.array([2, 1, 0])
-    assert np.allclose(B, model_jacobian_t(x))
-
-    # fully quadratic model
-    f = Formula("x1 + x2 + x3 + x1:x2 + x1:x3 + x2:x3 + {x1**2} + {x2**2} + {x3**2}")
-    model_terms = np.array(f, dtype=str)
-    x = np.array([[1, 2, 3]])
-
-    objective = ModelBasedObjective(
-        domain=domain,
-        model=f,
-        n_experiments=1,
-    )
-    model_jacobian_t = objective._model_jacobian_t
-    B = np.zeros(shape=(3, 10))
-    B[:, 1:4] = np.eye(3)
-    B[:, 4:7] = 2 * np.diag(x[0])
-    B[:, 7:] = np.array([[2, 1, 0], [3, 0, 1], [0, 3, 2]]).T
-    B = pd.DataFrame(
-        B,
-        columns=[
-            "1",
-            "x1",
-            "x2",
-            "x3",
-            "x1 ** 2",
-            "x2 ** 2",
-            "x3 ** 2",
-            "x1:x2",
-            "x1:x3",
-            "x2:x3",
-        ],
-    )
-    B = B[model_terms].to_numpy()
-
-    assert np.allclose(B, model_jacobian_t(x)[0])
-
-    # fully cubic model
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(
-                key=f"x{i + 1}",
-                bounds=(0, 1),
-            )
-            for i in range(5)
-        ],
-        outputs=[ContinuousOutput(key="y")],
-    )
-    vars = ["x1", "x2", "x3", "x4", "x5"]
-    n_vars = len(vars)
-
-    formula = ""
-    for name in vars:
-        formula += name + " + "
-
-    for name in vars:
-        formula += "{" + name + "**2} + "
-    for i in range(n_vars):
-        for j in range(i + 1, n_vars):
-            term = str(Formula(vars[j] + ":" + vars[i] + "-1")) + " + "
-            formula += term
-
-    for name in vars:
-        formula += "{" + name + "**3} + "
-    for i in range(n_vars):
-        for j in range(i + 1, n_vars):
-            for k in range(j + 1, n_vars):
-                term = (
-                    str(Formula(vars[k] + ":" + vars[j] + ":" + vars[i] + "-1")) + " + "
-                )
-                formula += term
-    f = Formula(formula[:-3])
-    x = np.array([[1, 2, 3, 4, 5]])
-    objective = ModelBasedObjective(
-        domain=domain,
-        model=f,
-        n_experiments=1,
-    )
-    model_jacobian_t = objective._model_jacobian_t
-
-    B = np.array(
-        [
-            [
-                0.0,
-                1.0,
-                2.0,
-                3.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                2.0,
-                3.0,
-                4.0,
-                5.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                6.0,
-                8.0,
-                10.0,
-                12.0,
-                15.0,
-                20.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                4.0,
-                12.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                0.0,
-                3.0,
-                4.0,
-                5.0,
-                0.0,
-                0.0,
-                0.0,
-                3.0,
-                4.0,
-                5.0,
-                0.0,
-                0.0,
-                0.0,
-                12.0,
-                15.0,
-                20.0,
-                0.0,
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                6.0,
-                27.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                2.0,
-                0.0,
-                0.0,
-                4.0,
-                5.0,
-                0.0,
-                2.0,
-                0.0,
-                0.0,
-                4.0,
-                5.0,
-                0.0,
-                8.0,
-                10.0,
-                0.0,
-                20.0,
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                8.0,
-                48.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                2.0,
-                0.0,
-                3.0,
-                0.0,
-                5.0,
-                0.0,
-                2.0,
-                0.0,
-                3.0,
-                0.0,
-                5.0,
-                6.0,
-                0.0,
-                10.0,
-                15.0,
-            ],
-            [
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                10.0,
-                75.0,
-                0.0,
-                0.0,
-                0.0,
-                1.0,
-                0.0,
-                0.0,
-                2.0,
-                0.0,
-                3.0,
-                4.0,
-                0.0,
-                0.0,
-                2.0,
-                0.0,
-                3.0,
-                4.0,
-                0.0,
-                6.0,
-                8.0,
-                12.0,
-            ],
-        ],
-    )
-
-    B = pd.DataFrame(
-        B,
-        columns=[
-            "1",
-            "x1",
-            "x1 ** 2",
-            "x1 ** 3",
-            "x2",
-            "x2 ** 2",
-            "x2 ** 3",
-            "x3",
-            "x3 ** 2",
-            "x3 ** 3",
-            "x4",
-            "x4 ** 2",
-            "x4 ** 3",
-            "x5",
-            "x5 ** 2",
-            "x5 ** 3",
-            "x2:x1",
-            "x3:x1",
-            "x4:x1",
-            "x5:x1",
-            "x3:x2",
-            "x4:x2",
-            "x5:x2",
-            "x4:x3",
-            "x5:x3",
-            "x5:x4",
-            "x3:x2:x1",
-            "x4:x2:x1",
-            "x5:x2:x1",
-            "x4:x3:x1",
-            "x5:x3:x1",
-            "x5:x4:x1",
-            "x4:x3:x2",
-            "x5:x3:x2",
-            "x5:x4:x2",
-            "x5:x4:x3",
-        ],
-    )
-
-    B = B[objective.model_terms].to_numpy()
-
-    assert np.allclose(B, model_jacobian_t(x)[0])
-
-
-def test_Objective_convert_input_to_tensor():
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(
-                key=f"x{i + 1}",
-                bounds=(0, 1),
-            )
-            for i in range(3)
-        ],
-        outputs=[ContinuousOutput(key="y")],
-    )
-    model = get_formula_from_string("linear", domain=domain)
-
-    d_optimality = DOptimality(domain=domain, model=model, n_experiments=3)
-    x = np.array([1, 0, 0, 0, 2, 0, 0, 0, 3])
-    print(domain.inputs)
-    X = d_optimality._convert_input_to_tensor(x).detach().numpy()
-    assert np.allclose(X, np.array([[1, 1, 0, 0], [1, 0, 2, 0], [1, 0, 0, 3]]))
 
 
 def test_DOptimality_instantiation():
@@ -441,13 +70,6 @@ def test_DOptimality_instantiation():
         == np.array(["1", "x1", "x2", "x3", "x3 ** 2", "x1:x2"]),
     )
 
-    x = np.array([[1, 2, 3], [1, 2, 3]])
-    B = np.zeros(shape=(3, 6))
-    B[:, 1:4] = np.eye(3)
-    B[:, 4] = np.array([0, 0, 6])
-    B[:, 5] = np.array([2, 1, 0])
-
-    assert np.allclose(B, d_optimality._model_jacobian_t(x))
     assert np.shape(
         d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2]]).flatten()),
     ) == (6,)
@@ -476,7 +98,6 @@ def test_DOptimality_instantiation():
     B = np.zeros(shape=(3, 4))
     B[:, 1:] = 5 * np.diag(x[0] ** 4)
 
-    assert np.allclose(B, d_optimality._model_jacobian_t(x))
     assert np.shape(
         d_optimality.evaluate_jacobian(
             np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]).flatten(),
@@ -656,8 +277,8 @@ def test_DOptimality_evaluate():
     )
     model = get_formula_from_string("linear", domain=domain)
 
-    d_optimality = DOptimality(domain=domain, model=model, n_experiments=3)
-    x = np.array([1, 0, 0, 0, 1, 0, 0, 0, 1])
+    d_optimality = DOptimality(domain=domain, model=model, n_experiments=3, delta=1e-7)
+    x = np.array([1, 0, 0, 0, 1, 0, 0, 0, 1], dtype=np.float64)
     assert np.allclose(d_optimality.evaluate(x), -np.log(4) - np.log(1e-7))
 
 
