@@ -36,7 +36,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 

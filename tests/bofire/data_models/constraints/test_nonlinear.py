@@ -13,7 +13,7 @@ TORCH_AVAILABLE = importlib.util.find_spec("torch") is not None
 
 
 @pytest.mark.skipif(not SYMPY_AVAILABLE, reason="requires rdkit")
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="requires rdkit")
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason="requires torch")
 def test_nonlinear_constraints_jacobian_expression():
     import torch
 

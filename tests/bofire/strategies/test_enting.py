@@ -27,7 +27,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    Input,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.strategies.api import EntingStrategy
@@ -83,8 +82,10 @@ def test_enting_param_consistency(common_args, params):
         **{**common_args, **params},
     )
     strategy = EntingStrategy(data_model=data_model)
+    strategy._init_problem_config()
 
     # check that the parameters propagate to the model correctly
+    assert strategy._enting is not None
     assert strategy._enting._acq_sense == data_model.acq_sense
     assert strategy._enting._beta == data_model.beta
 
@@ -106,7 +107,7 @@ def test_nchoosek_constraint_with_enting(common_args, allowed_k):
     strategy.tell(experiments)
     proposal = strategy.ask(1)
 
-    input_values = proposal[benchmark.domain.get_feature_keys(Input)]
+    input_values = proposal[benchmark.domain.inputs.get_keys()]
     assert (input_values != 0).sum().sum() <= allowed_k
 
 
@@ -123,8 +124,8 @@ def test_propose_optimal_point(common_args):
 
     # filter experiments to remove those in a box surrounding optimum
     radius = 0.5
-    X = experiments[benchmark.domain.get_feature_keys(Input)].values
-    X_opt = benchmark.get_optima()[benchmark.domain.get_feature_keys(Input)].values
+    X = experiments[benchmark.domain.inputs.get_keys()].to_numpy()
+    X_opt = benchmark.get_optima()[benchmark.domain.inputs.get_keys()].to_numpy()
     sq_dist_to_optimum = ((X - X_opt) ** 2).sum(axis=1)
     include = sq_dist_to_optimum > radius
 
@@ -132,7 +133,7 @@ def test_propose_optimal_point(common_args):
     proposal = strategy.ask(1)
 
     assert np.allclose(
-        proposal.loc[0, benchmark.domain.get_feature_keys(Input)].tolist(),
+        proposal.loc[0, benchmark.domain.inputs.get_keys()].tolist(),
         [0.0, 0.79439, 0.6124835, 0.0, 1.0, 0.0],
         atol=1e-6,
     )
@@ -184,7 +185,7 @@ def feat_equal(a: "FeatureType", b: "FeatureType") -> bool:
     )
 
 
-if1 = CategoricalInput(key="if1", categories=("blue", "orange", "gray"))
+if1 = CategoricalInput(key="if1", categories=["blue", "orange", "gray"])
 if1_ent = {
     "feat_type": "categorical",
     "bounds": ("blue", "orange", "gray"),

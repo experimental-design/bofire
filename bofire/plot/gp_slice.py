@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 
 
 def _create_contour_slice(
@@ -127,7 +127,7 @@ def plot_gp_slice_plotly(
     fixed_values: List[float],
     varied_input_features: List[ContinuousInput],
     output_feature: ContinuousOutput,
-    resolution: Optional[int] = 100,
+    resolution: int = 100,
     observed_data: Optional[pd.DataFrame] = None,
 ) -> Tuple[go.Figure, go.Figure]:
     """

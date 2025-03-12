@@ -519,6 +519,11 @@ class CvResult(BaseModel):
         predicted (pd.Series): Series holding the predicted values
         standard_deviation (pd.Series, optional): Series holding the standard deviation associated with
             the prediction. Defaults to None.
+        labcodes (pd.Series, optional): Series holding the labcodes associated with the prediction.
+            Defaults to None.
+        X (pd.DataFrame, optional): DataFrame holding the input features associated with the prediction.
+            Defaults to None.
+        model_config (Dict, optional): Model configuration. Defaults to {"arbitrary_types_allowed": True}.
 
     """
 

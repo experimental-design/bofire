@@ -158,7 +158,7 @@ class Output(Feature):
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
-        return pd.to_numeric(s, errors="coerce").notnull().all()
+        return pd.to_numeric(s, errors="coerce").notnull().all()  # type: ignore
     return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
 
 
