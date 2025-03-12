@@ -22,6 +22,7 @@ from bofire.strategies.doe.utils import (
     ConstraintWrapper,
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
+    convert_formula_to_string,
     get_formula_from_string,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
@@ -652,3 +653,19 @@ def test_nchoosek_constraints_as_bounds():
     # assert len(bounds) == 20
     # for i in range(20):
     #     assert _bounds[i] == bounds[i]
+
+
+def test_convert_formula_to_string():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+
+    formula_str = convert_formula_to_string(domain=domain, formula=formula)
+    assert (
+        formula_str
+        == "torch.vstack([torch.ones_like(x0), x0, x1, x2, x0 ** 2, x1 ** 2, x2 ** 2,"
+        + " x0*x1, x0*x2, x1*x2, ]).T"
+    )

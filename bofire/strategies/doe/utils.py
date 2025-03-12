@@ -77,7 +77,6 @@ def get_formula_from_string(
     return formula
 
 
-# TODO: test
 def convert_formula_to_string(
     domain: Optional[Domain],
     formula: Formula,
