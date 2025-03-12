@@ -9,7 +9,7 @@ from bofire.data_models.types import IntPowerOfTwo
 
 
 class AcquisitionOptimizer(BaseModel):
-    pass
+    prefer_exhaustive_search_for_purely_categorical_domains: bool = True
 
 
 class LocalSearchConfig(BaseModel):

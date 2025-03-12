@@ -55,25 +55,66 @@ from bofire.utils.torch_tools import (
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
-        pass
+        self.prefer_exhaustive_search_for_purely_categorical_domains =\
+            data_model.prefer_exhaustive_search_for_purely_categorical_domains
 
-    @abstractmethod
     def optimize(
         self,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],  # this is a botorch object
         domain: Domain,
-        # we generate out of the domain all constraints in the format that is needed by the optimizer
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
-        # bounds: Tuple[
-        #    List[float], List[float]
-        # ],  # the bounds are provided by the calling strategy itself and are not
-        # generated from the optimizer, this gives the calling strategy the possibility for more control logic
-        # as needed for LSRBO or trust region methods
-        # wouldn`t the global bounds be defined by the domain, and local optimizations done in the successive calls,
-        # but in the BotorchOptimizer?
-        # if necessary, the "get_bounds" method can be overridden
         experiments: Optional[pd.DataFrame] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
+
+        Args:
+            candidate_count (int): Number of candidates that should be returned.
+            acqfs (List[AcquisitionFunction]): List of acquisition functions that should be optimized.
+            domain (Domain): The domain of the optimization problem.
+            input_preprocessing_specs (InputTransformSpecs): The input preprocessing specs.
+
+        Returns:
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+
+        """
+        # we check here if we have a fully combinatorial search space
+        # and use _optimize_acqf_discrete in this case
+        if self.prefer_exhaustive_search_for_purely_categorical_domains:
+            if len(
+                    domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
+            ) == len(domain.inputs):
+                if len(acqfs) > 1:
+                    raise NotImplementedError(
+                        "Multiple Acqfs are currently not supported for purely combinatorial search spaces.",
+                    )
+                return self._optimize_acqf_discrete(
+                    candidate_count=candidate_count,
+                    acqf=acqfs[0],
+                    domain=domain,
+                    input_preprocessing_specs=input_preprocessing_specs,
+                    experiments=experiments,
+                )
+
+        return self._optimize(
+            candidate_count=candidate_count,
+            acqfs=acqfs,
+            domain=domain,
+            input_preprocessing_specs=input_preprocessing_specs,
+            experiments=experiments,
+        )
+
+    @abstractmethod
+    def _optimize(
+            self,
+            candidate_count: int,
+            acqfs: List[AcquisitionFunction],  # this is a botorch object
+            domain: Domain,
+            input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+            experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
@@ -189,6 +230,62 @@ class AcquisitionOptimizer(ABC):
                                 fixed_features[idx] = lower[j]
         return fixed_features
 
+    def _optimize_acqf_discrete(
+        self,
+        candidate_count: int,
+        acqf: AcquisitionFunction,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        experiments: Optional[pd.DataFrame] = None,
+    ) -> Tuple[Tensor, Tensor]:
+        """Optimizes the acquisition function for a discrete search space.
+
+        Args:
+            candidate_count: Number of candidates that should be returned.
+            acqf: Acquisition function that should be optimized.
+
+        Returns:
+        A two-element tuple containing
+
+        - a `q x d`-dim tensor of generated candidates.
+        - an associated acquisition value.
+        """
+        # assert self.experiments is not None
+        choices = pd.DataFrame.from_dict(
+            [  # type: ignore
+                {e[0]: e[1] for e in combi}
+                for combi in domain.inputs.get_categorical_combinations()
+            ],
+        )
+        # adding categorical features that are fixed
+        for feat in domain.inputs.get_fixed():
+            choices[feat.key] = feat.fixed_value()[0]  # type: ignore
+        # compare the choices with the training data and remove all that are also part
+        # of the training data
+        merged = choices.merge(
+            experiments[domain.inputs.get_keys()],
+            on=list(choices.columns),
+            how="left",
+            indicator=True,
+        )
+        filtered_choices = merged[merged["_merge"] == "left_only"].copy()
+        filtered_choices.drop(columns=["_merge"], inplace=True)
+
+        # translate the filtered choice to torch
+        t_choices = torch.from_numpy(
+            domain.inputs.transform(
+                filtered_choices,
+                specs=input_preprocessing_specs,
+            ).values,
+        ).to(**tkwargs)
+        return optimize_acqf_discrete(
+            acq_function=acqf,
+            q=candidate_count,
+            unique=True,
+            choices=t_choices,
+        )
+        # return self._postprocess_candidates(candidates=candidates)
+
 
 class BotorchOptimizer(AcquisitionOptimizer):
     def __init__(self, data_model: BotorchOptimizerDataModel):
@@ -211,7 +308,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
     def _setup(self):
         pass
 
-    def optimize(
+    def _optimize(
         self,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
@@ -221,22 +318,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
 
-        # we check here if we have a fully combinatorial search space
-        # and use _optimize_acqf_discrete in this case
-        if len(
-            domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
-        ) == len(domain.inputs):
-            if len(acqfs) > 1:
-                raise NotImplementedError(
-                    "Multiple Acqfs are currently not supported for purely combinatorial search spaces.",
-                )
-            return self._optimize_acqf_discrete(
-                candidate_count=candidate_count,
-                acqf=acqfs[0],
-                domain=domain,
-                input_preprocessing_specs=input_preprocessing_specs,
-                experiments=experiments,
-            )
+
 
         # for continuous and mixed search spaces, here different optimizers could
         # be used, so we have to abstract the stuff below
@@ -383,62 +465,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 **ic_gen_kwargs,
             )
         return candidates, acqf_vals
-
-    def _optimize_acqf_discrete(
-        self,
-        candidate_count: int,
-        acqf: AcquisitionFunction,
-        domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
-        experiments: Optional[pd.DataFrame] = None,
-    ) -> Tuple[Tensor, Tensor]:
-        """Optimizes the acquisition function for a discrete search space.
-
-        Args:
-            candidate_count: Number of candidates that should be returned.
-            acqf: Acquisition function that should be optimized.
-
-        Returns:
-        A two-element tuple containing
-
-        - a `q x d`-dim tensor of generated candidates.
-        - an associated acquisition value.
-        """
-        # assert self.experiments is not None
-        choices = pd.DataFrame.from_dict(
-            [  # type: ignore
-                {e[0]: e[1] for e in combi}
-                for combi in domain.inputs.get_categorical_combinations()
-            ],
-        )
-        # adding categorical features that are fixed
-        for feat in domain.inputs.get_fixed():
-            choices[feat.key] = feat.fixed_value()[0]  # type: ignore
-        # compare the choices with the training data and remove all that are also part
-        # of the training data
-        merged = choices.merge(
-            experiments[domain.inputs.get_keys()],
-            on=list(choices.columns),
-            how="left",
-            indicator=True,
-        )
-        filtered_choices = merged[merged["_merge"] == "left_only"].copy()
-        filtered_choices.drop(columns=["_merge"], inplace=True)
-
-        # translate the filtered choice to torch
-        t_choices = torch.from_numpy(
-            domain.inputs.transform(
-                filtered_choices,
-                specs=input_preprocessing_specs,
-            ).values,
-        ).to(**tkwargs)
-        return optimize_acqf_discrete(
-            acq_function=acqf,
-            q=candidate_count,
-            unique=True,
-            choices=t_choices,
-        )
-        # return self._postprocess_candidates(candidates=candidates)
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
         """Returns a dictionary of settings passed to `optimize_acqf` controlling
