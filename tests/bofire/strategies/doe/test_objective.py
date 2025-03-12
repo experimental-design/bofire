@@ -1,3 +1,5 @@
+import importlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -30,12 +32,15 @@ from bofire.strategies.doe.objective import (
 from bofire.strategies.doe.utils import get_formula_from_string
 
 
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+
+
 def test_Objective_model_jacobian_t():
     # "small" model
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(3)
@@ -98,7 +103,7 @@ def test_Objective_model_jacobian_t():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(5)
@@ -383,7 +388,7 @@ def test_Objective_convert_input_to_tensor():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(3)
@@ -404,7 +409,7 @@ def test_DOptimality_instantiation():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(3)
@@ -451,7 +456,7 @@ def test_DOptimality_instantiation():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(3)
@@ -487,7 +492,7 @@ def test_DOptimality_evaluate_jacobian():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(2)
@@ -642,7 +647,7 @@ def test_DOptimality_evaluate():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(3)
@@ -660,7 +665,7 @@ def test_AOptimality_evaluate():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(0, 1),
             )
             for i in range(3)
@@ -803,6 +808,7 @@ def test_SpaceFilling_evaluate_jacobian():
     assert np.allclose(space_filling.evaluate_jacobian(x), [-1, -1, 2, 0])
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_MinMaxTransform():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
@@ -888,6 +894,7 @@ def test_MinMaxTransform():
             )
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_IOptimality_instantiation():
     # no constraints
     domain = Domain.from_lists(
@@ -906,7 +913,7 @@ def test_IOptimality_instantiation():
 
     # inequality constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(2)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(2)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearInequalityConstraint(
@@ -930,7 +937,7 @@ def test_IOptimality_instantiation():
 
     # equality constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(2)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(2)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=1)

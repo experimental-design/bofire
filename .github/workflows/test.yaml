@@ -33,10 +33,36 @@ jobs:
           enable-cache: true
 
       - name: Install Dependencies
-        run: uv pip install ".[optimization]" pytest --system
+        run: uv pip install "." pytest --system
 
       - name: Run data model tests
         run: pytest tests/bofire/data_models
+
+  testing_optimization_only:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.12' ]
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: uv pip install ".[optimization, tests]" --system
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: pytest -ra --cov=bofire --cov-report term-missing tests
 
   testing:
     runs-on: ubuntu-latest
@@ -57,7 +83,7 @@ jobs:
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
-          conda install -c conda-forge cyipopt
+          conda install -c conda-forge cyipopt=1.5.0
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
 
       - name: Run tests
@@ -86,7 +112,7 @@ jobs:
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
-          conda install -c conda-forge cyipopt
+          conda install -c conda-forge cyipopt=1.5.0
           pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
           pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
           export ALLOW_LATEST_GPYTORCH_LINOP=true
@@ -121,7 +147,7 @@ jobs:
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
-          conda install -c conda-forge cyipopt
+          conda install -c conda-forge cyipopt=1.5.0
           pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
 
       - name: Run Notebooks

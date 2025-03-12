@@ -6,6 +6,7 @@ from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
 from botorch.models.kernels.categorical import CategoricalKernel
 
 import bofire
+import bofire.kernels.aggregation as aggregationKernels
 import bofire.kernels.api as kernels
 import bofire.kernels.shape as shapeKernels
 from bofire.data_models.kernels.api import (
@@ -16,6 +17,7 @@ from bofire.data_models.kernels.api import (
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
@@ -39,6 +41,7 @@ EQUIVALENTS = {
     HammingDistanceKernel: CategoricalKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
+    PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
 }
 
 
@@ -432,3 +435,31 @@ def test_compute_active_dims_fails_with_features_without_mapper():
             active_dims=[1, 2, 3],
             features_to_idx_mapper=None,
         )
+
+
+def test_map_PolynomialFeatureInteractionKernel():
+    k = kernels.map(
+        PolynomialFeatureInteractionKernel(
+            kernels=[
+                RBFKernel(features=["x1", "x2"]),
+                MaternKernel(features=["x2", "x3"]),
+            ],
+            max_degree=2,
+            include_self_interactions=False,
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ),
+        active_dims=[],
+        ard_num_dims=1,
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: [int(k[1:]) for k in ks],
+    )
+
+    assert isinstance(k, aggregationKernels.PolynomialFeatureInteractionKernel)
+    assert k.indices == [(0,), (1,), (0, 1)]
+    assert k.outputscale.shape == (4,)
+
+    assert isinstance(k.kernels[0], gpytorch.kernels.RBFKernel)
+    assert k.kernels[0].active_dims.tolist() == [1, 2]
+
+    assert isinstance(k.kernels[1], gpytorch.kernels.MaternKernel)
+    assert k.kernels[1].active_dims.tolist() == [2, 3]

@@ -9,6 +9,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 from bofire.kernels.categorical import HammingKernelWithOneHots
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
@@ -271,6 +272,36 @@ def map_WassersteinKernel(
     )
 
 
+def map_PolynomialFeatureInteractionKernel(
+    data_model: data_models.PolynomialFeatureInteractionKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> PolynomialFeatureInteractionKernel:
+    ks = [
+        map(
+            k,  # type: ignore
+            active_dims=active_dims,
+            ard_num_dims=ard_num_dims,
+            batch_shape=batch_shape,
+            features_to_idx_mapper=features_to_idx_mapper,
+        )
+        for k in data_model.kernels
+    ]
+
+    return PolynomialFeatureInteractionKernel(
+        ks,
+        max_degree=data_model.max_degree,
+        include_self_interactions=data_model.include_self_interactions,
+        outputscale_prior=(
+            priors.map(data_model.outputscale_prior, d=len(active_dims))
+            if data_model.outputscale_prior is not None
+            else None
+        ),
+    )
+
+
 KERNEL_MAP = {
     data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
@@ -283,6 +314,7 @@ KERNEL_MAP = {
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
+    data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
 }
 
 

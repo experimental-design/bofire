@@ -25,6 +25,7 @@ class FractionalFactorialStrategy(Strategy):
         self.n_center = data_model.n_center
         self.n_generators = data_model.n_generators
         self.generator = data_model.generator
+        self.randomize_runoder = data_model.randomize_runorder
 
     def _get_continuous_design(self) -> pd.DataFrame:
         continuous_inputs = self.domain.inputs.get(ContinuousInput)
@@ -69,23 +70,32 @@ class FractionalFactorialStrategy(Strategy):
         if len(self.domain.inputs.get(ContinuousInput)) > 0:
             design = self._get_continuous_design()
             if len(self.domain.inputs.get(ContinuousInput)) == len(self.domain.inputs):
-                return design
+                return self.randomize_design(design)
 
         categorical_design = self._get_categorical_design()
         if len(self.domain.inputs.get([CategoricalInput, DiscreteInput])) == len(
             self.domain.inputs
         ):
-            return categorical_design
+            return self.randomize_design(categorical_design)
 
         assert isinstance(design, pd.DataFrame)
         # combine the two designs
-        return pd.concat(
+        design = pd.concat(
             [
                 pd.concat([design] * len(categorical_design), ignore_index=True),
                 pd.concat([categorical_design] * len(design), ignore_index=True),  # type: ignore
             ],
             axis=1,
         ).sort_values(by=self.domain.inputs.get_keys([CategoricalInput, DiscreteInput]))
+        return self.randomize_design(design)
+
+    def randomize_design(self, design: pd.DataFrame) -> pd.DataFrame:
+        """Randomize the run order of the design if `self.randomize_runorder` is True."""
+        return (
+            design.sample(frac=1, random_state=self._get_seed()).reset_index(drop=True)
+            if self.randomize_runoder
+            else design
+        )
 
     def has_sufficient_experiments(self) -> bool:
         return True

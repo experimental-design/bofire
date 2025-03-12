@@ -46,6 +46,10 @@ class FractionalFactorialStrategy(Strategy):
         int,
         Field(description="Number of reducing factors", ge=0),
     ] = 0
+    randomize_runorder: bool = Field(
+        default=False,
+        description="If true, the run order is randomized, else it is deterministic.",
+    )
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
