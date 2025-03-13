@@ -51,8 +51,7 @@ class FractionalFactorialStrategy(Strategy):
         description="If true, the run order is randomized, else it is deterministic.",
     )
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return False
 
     @classmethod

@@ -69,9 +69,9 @@ class BotorchStrategy(PredictiveStrategy):
                 raise ValueError("LSR-BO only supported for linear constraints.")
         return self
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
-        """Method to check if a specific constraint type is implemented for the strategy
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
+        """Method to check if a specific constraint type is implemented for the strategy. For optimizer-specific
+        strategies, this is passed to the optimizer check.
 
         Args:
             my_type (Type[Constraint]): Constraint class
@@ -80,9 +80,7 @@ class BotorchStrategy(PredictiveStrategy):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type in [NonlinearInequalityConstraint, NonlinearEqualityConstraint]:
-            return False
-        return True
+        return self.acquisition_optimizer.is_constraint_implemented(my_type)
 
     @model_validator(mode="after")
     def validate_interpoint_constraints(self):

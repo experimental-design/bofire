@@ -113,8 +113,7 @@ class DoEStrategy(Strategy):
     verbose: bool = False  # get rid of this at a later stage
     ipopt_options: Optional[Dict] = None
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
 
     @classmethod

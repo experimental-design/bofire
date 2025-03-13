@@ -1,16 +1,28 @@
 from abc import abstractmethod
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalMethodEnum
 from bofire.data_models.types import IntPowerOfTwo
+from bofire.data_models.constraints import api as constraints
 
 
 class AcquisitionOptimizer(BaseModel):
     prefer_exhaustive_search_for_purely_categorical_domains: bool = True
 
+    def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
+        """Checks if a constraint is implemented. Currently only linear constraints are supported.
+
+        Args:
+            my_type (Type[Feature]): The type of the constraint.
+
+        Returns:
+            bool: True if the constraint is implemented, False otherwise.
+
+        """
+        return True
 
 class LocalSearchConfig(BaseModel):
     """LocalSearchConfigs provide a way to define how to switch between global
@@ -76,3 +88,17 @@ class BotorchOptimizer(AcquisitionOptimizer):
             info.data["n_restarts"],
         )
         return batch_limit
+
+    def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
+        """Method to check if a specific constraint type is implemented for the strategy
+
+        Args:
+            my_type (Type[Constraint]): Constraint class
+
+        Returns:
+            bool: True if the constraint type is valid for the strategy chosen, False otherwise
+
+        """
+        if my_type in [constraints.NonlinearInequalityConstraint, constraints.NonlinearEqualityConstraint]:
+            return False
+        return True
