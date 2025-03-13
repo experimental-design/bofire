@@ -1,28 +1,41 @@
 from typing import Tuple
 
+import numpy as np
 import pytest
 
 from bofire.benchmarks import api as benchmarks
 from bofire.data_models.strategies import api as data_models_strategies
+from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.strategies import api as strategies
 from bofire.strategies.predictives.acqf_optimization import get_optimizer
 
 
 @pytest.fixture(
-    params=[
-        ("Himmelblau", {}, "SoboStrategy"),
-        ("DTLZ2", {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy"),
+    params=[ # (benchmark, params, stategy, map_conti_inputs_to_discrete)
+        # ("Himmelblau", {}, "SoboStrategy", False),
+        # ("DTLZ2", {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy", False),
+        # (
+        #     "Ackley",
+        #     {"num_categories": 3, "categorical": True, "dim": 4},
+        #     "SoboStrategy", False),
+        # ("Detergent", {}, "SoboStrategy", False),
         (
-            "Ackley",
-            {"num_categories": 3, "categorical": True, "dim": 4},
-            "SoboStrategy",
-        ),
-        ("Detergent", {}, "SoboStrategy")
+                "Ackley",
+                {"num_categories": 3, "categorical": True, "dim": 3},
+                "SoboStrategy", True),      # this is for testing the "all-categoric" usecase
     ]
 )
 def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrategy]:
-    benchmark_name, params, strategy = request.param
+    benchmark_name, params, strategy, map_conti_inputs_to_discrete = request.param
     bm = getattr(benchmarks, benchmark_name)(**params)
+
+    if map_conti_inputs_to_discrete:
+        # replace a continuous input with a discrete input of the same name, but only 5 possible values
+        for idx, ft in enumerate(bm.domain.inputs.features):
+            if isinstance(ft, ContinuousInput):
+                bm.domain.inputs.features[idx] = DiscreteInput(
+                    key=ft.key, values=np.linspace(ft.bounds[0], ft.bounds[1], 5))
+
     strategy = getattr(data_models_strategies, strategy)(domain=bm.domain)
     return bm, strategy
 
