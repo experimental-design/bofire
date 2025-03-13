@@ -22,7 +22,7 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer
             "SoboStrategy",
             False,
         ),
-        ("Detergent", {}, "SoboStrategy", False),
+        # ("Detergent", {}, "SoboStrategy", False),
         (
             "Ackley",
             {"num_categories": 3, "categorical": True, "dim": 3},

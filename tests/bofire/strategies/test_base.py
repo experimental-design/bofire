@@ -680,7 +680,8 @@ def test_base_get_categorical_combinations(
     )
     myStrategy = DummyStrategy(data_model=data_model)
     c = unittest.TestCase()
-    combo = myStrategy.acqf_optimizer.get_categorical_combinations()
+    combo = myStrategy.acqf_optimizer.get_categorical_combinations(myStrategy.domain,
+                                                                   myStrategy.input_preprocessing_specs)
     c.assertCountEqual(combo, expected)
 
 
@@ -840,7 +841,8 @@ def test_base_setup_ask_fixed_features(
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs,
+                                             myStrategy.experiments)
     if any(
         enc == CategoricalMethodEnum.EXHAUSTIVE
         for enc in [
@@ -874,7 +876,8 @@ def test_base_setup_ask_fixed_features(
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs,
+                                             myStrategy.experiments)
     assert fixed_features == {1: 3.0}
     assert fixed_features_list is None
 
@@ -899,7 +902,8 @@ def test_base_setup_ask():
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs,
+                                             myStrategy.experiments)
     assert torch.allclose(
         bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
@@ -932,7 +936,8 @@ def test_base_setup_ask():
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs,
+                                             myStrategy.experiments)
     assert torch.allclose(
         bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
@@ -968,7 +973,8 @@ def test_base_setup_ask():
         nonlinears,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs,
+                                             myStrategy.experiments)
     assert torch.allclose(
         bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
