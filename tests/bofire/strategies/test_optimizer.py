@@ -1,10 +1,12 @@
 from typing import Tuple
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from bofire.benchmarks import api as benchmarks
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
+from bofire.data_models import api as domain
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies import api as strategies
 from bofire.strategies.predictives.acqf_optimization import get_optimizer
@@ -44,7 +46,7 @@ def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrat
 
 
 @pytest.fixture()
-def optimization_scope(benchmark):
+def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, list]:
     """ """
     benchmark, strategy_data = benchmark
     domain = benchmark.domain
