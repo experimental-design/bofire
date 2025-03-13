@@ -21,7 +21,7 @@ extras_require = {
         "sympy>=1.12",
         "cvxpy[CLARABEL]",
         sklearn_dependency,
-        "pymoo>=0.6.0"
+        "pymoo>=0.6.0",
     ],
     "entmoot": ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"],
     "xgb": ["xgboost>=1.7.5"],
