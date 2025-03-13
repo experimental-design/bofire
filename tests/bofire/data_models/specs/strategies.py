@@ -27,14 +27,16 @@ from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
-
-
 strategy_commons = {
-    "n_raw_samples": 1024,
-    "n_restarts": 8,
-    "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
+    "acquisition_optimizer": strategies.BotorchOptimizer(**{
+        "n_raw_samples": 1024,
+        "n_restarts": 8,
+        "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
+        "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
+        "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
+        "maxiter": 2000,
+        "batch_limit": 6,
+        }),
     "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
     "outlier_detection_specs": None,
     "seed": 42,
@@ -42,9 +44,9 @@ strategy_commons = {
     "frequency_check": 1,
     "frequency_hyperopt": 0,
     "folds": 5,
-    "maxiter": 2000,
-    "batch_limit": 6,
 }
+
+
 
 
 specs.add_valid(
