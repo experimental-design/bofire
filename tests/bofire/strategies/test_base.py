@@ -299,7 +299,7 @@ def test_base_create(domain: Domain):
         ValueError,
         match="Argument is not power of two.",
     ):
-        DummyStrategyDataModel(domain=domain, n_raw_samples=5)
+        DummyStrategyDataModel(domain=domain, acquisition_optimizer=data_models.BotorchOptimizer(n_raw_samples=5))
 
 
 def test_base_invalid_descriptor_method():
@@ -313,8 +313,10 @@ def test_base_invalid_descriptor_method():
                     input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 ),
             ],
-            descriptor_method="FREE",
-            categorical_method="EXHAUSTIVE",
+            acquisition_optimizer=data_models.BotorchOptimizer(
+                descriptor_method="FREE",
+                categorical_method="EXHAUSTIVE",
+            ),
         )
 
 
@@ -436,15 +438,18 @@ def test_base_get_fixed_features(
     data_model = DummyStrategyDataModel(
         domain=domain,
         surrogate_specs=surrogate_specs,
-        categorical_method=categorical_method,
-        descriptor_method=descriptor_method,
+        acquisition_optimizer=data_models.BotorchOptimizer(
+            categorical_method=categorical_method,
+            descriptor_method=descriptor_method,
+        ),
     )
     myStrategy = DummyStrategy(data_model=data_model)
 
     experiments = generate_experiments(domain, 100, tol=1.0)
     myStrategy.set_experiments(experiments)
 
-    fixed_features = myStrategy.get_fixed_features()
+    fixed_features = myStrategy.acqf_optimizer.get_fixed_features(domain, myStrategy.input_preprocessing_specs,
+                                                                  categorical_method, descriptor_method)
 
     assert fixed_features == expected
 
@@ -667,13 +672,15 @@ def test_base_get_categorical_combinations(
     data_model = DummyStrategyDataModel(
         domain=domain,
         surrogate_specs=surrogate_specs,
-        descriptor_method=descriptor_method,
-        categorical_method=categorical_method,
-        discrete_method=discrete_method,
+        acquisition_optimizer=data_models.BotorchOptimizer(
+            descriptor_method=descriptor_method,
+            categorical_method=categorical_method,
+            discrete_method=discrete_method,
+        ),
     )
     myStrategy = DummyStrategy(data_model=data_model)
     c = unittest.TestCase()
-    combo = myStrategy.get_categorical_combinations()
+    combo = myStrategy.acqf_optimizer.get_categorical_combinations()
     c.assertCountEqual(combo, expected)
 
 
@@ -808,9 +815,11 @@ def test_base_setup_ask_fixed_features(
     data_model = DummyStrategyDataModel(
         domain=domains[0],
         # acquisition_function=specs.acquisition_functions.valid().obj(),
-        categorical_method=categorical_method,
-        descriptor_method=descriptor_method,
-        discrete_method=discrete_method,
+        acquisition_optimizer=data_models.BotorchOptimizer(
+            categorical_method=categorical_method,
+            descriptor_method=descriptor_method,
+            discrete_method=discrete_method,
+        ),
         surrogate_specs=surrogate_data_models.BotorchSurrogates(
             surrogates=[
                 surrogate_data_models.SingleTaskGPSurrogate(
@@ -831,7 +840,7 @@ def test_base_setup_ask_fixed_features(
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy._setup_ask()
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
     if any(
         enc == CategoricalMethodEnum.EXHAUSTIVE
         for enc in [
@@ -849,9 +858,11 @@ def test_base_setup_ask_fixed_features(
     data_model = DummyStrategyDataModel(
         domain=domains[3],
         # acquisition_function=specs.acquisition_functions.valid().obj(),
-        categorical_method=categorical_method,
-        descriptor_method=descriptor_method,
-        discrete_method=discrete_method,
+        acquisition_optimizer=data_models.BotorchOptimizer(
+            categorical_method=categorical_method,
+            descriptor_method=descriptor_method,
+            discrete_method=discrete_method,
+        ),
     )
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy._experiments = domains[3].inputs.sample(3)
@@ -863,7 +874,7 @@ def test_base_setup_ask_fixed_features(
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy._setup_ask()
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
     assert fixed_features == {1: 3.0}
     assert fixed_features_list is None
 
@@ -888,7 +899,7 @@ def test_base_setup_ask():
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy._setup_ask()
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
     assert torch.allclose(
         bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
@@ -921,7 +932,7 @@ def test_base_setup_ask():
         nchooseks,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy._setup_ask()
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
     assert torch.allclose(
         bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
@@ -957,7 +968,7 @@ def test_base_setup_ask():
         nonlinears,
         fixed_features,
         fixed_features_list,
-    ) = myStrategy._setup_ask()
+    ) = myStrategy.acqf_optimizer._setup_ask(myStrategy.domain, myStrategy.input_preprocessing_specs)
     assert torch.allclose(
         bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
