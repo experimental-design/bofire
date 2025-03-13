@@ -277,7 +277,10 @@ specs.add_valid(
             ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.MoboStrategy(
-                    domain=tempdomain, batch_limit=1, acquisition_function=qLogNEHVI()
+                    domain=tempdomain, acquisition_function=qLogNEHVI(),
+                    acquisition_optimizer=strategies.BotorchOptimizer(
+                        batch_limit=1
+                    )
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),
@@ -540,7 +543,9 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "local_search_config": bofire.data_models.strategies.predictives.acqf_optimization.LSRBO(),
+        "aqcuisition_optimizer": strategies.BotorchOptimizer(
+            local_search_config=bofire.data_models.strategies.predictives.acqf_optimization.LSRBO(),
+        ).model_dump(),
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
