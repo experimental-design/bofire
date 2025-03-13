@@ -4,9 +4,9 @@ from typing import Annotated, Literal, Optional, Type
 from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.constraints import api as constraints
 from bofire.data_models.enum import CategoricalMethodEnum
 from bofire.data_models.types import IntPowerOfTwo
-from bofire.data_models.constraints import api as constraints
 
 
 class AcquisitionOptimizer(BaseModel):
@@ -23,6 +23,7 @@ class AcquisitionOptimizer(BaseModel):
 
         """
         return True
+
 
 class LocalSearchConfig(BaseModel):
     """LocalSearchConfigs provide a way to define how to switch between global
@@ -99,6 +100,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type in [constraints.NonlinearInequalityConstraint, constraints.NonlinearEqualityConstraint]:
+        if my_type in [
+            constraints.NonlinearInequalityConstraint,
+            constraints.NonlinearEqualityConstraint,
+        ]:
             return False
         return True

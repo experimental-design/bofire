@@ -28,9 +28,9 @@ class Strategy(BaseModel):
         for constraint in self.domain.constraints:
             if not self.is_constraint_implemented(type(constraint)):
                 raise ValueError(
-                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`",
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{type(self).__name__}`",
                 )
-        return domain
+        return self
 
     @field_validator("domain")
     @classmethod
@@ -72,7 +72,6 @@ class Strategy(BaseModel):
         if len(domain.inputs) == 0:
             raise ValueError("no input feature specified")
         return domain
-
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Abstract method to check if a specific constraint type is implemented for the strategy

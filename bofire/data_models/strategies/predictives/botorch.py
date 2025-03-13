@@ -7,8 +7,6 @@ from bofire.data_models.constraints.api import (
     Constraint,
     InterpointConstraint,
     LinearConstraint,
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
