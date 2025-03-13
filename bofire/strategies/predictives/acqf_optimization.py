@@ -73,6 +73,7 @@ class AcquisitionOptimizer(ABC):
             acqfs (List[AcquisitionFunction]): List of acquisition functions that should be optimized.
             domain (Domain): The domain of the optimization problem.
             input_preprocessing_specs (InputTransformSpecs): The input preprocessing specs.
+            experiments
 
         Returns:
         A two-element tuple containing
@@ -369,6 +370,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             ):
                 return local_candidates, local_acqf_val
 
+            raise NotImplementedError("Johannes to have a look at this")
             sp = ShortestPathStrategy(
                 data_model=ShortestPathStrategyDataModel(
                     domain=self.domain,

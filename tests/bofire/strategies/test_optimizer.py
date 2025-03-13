@@ -17,6 +17,7 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer
             {"num_categories": 3, "categorical": True, "dim": 4},
             "SoboStrategy",
         ),
+        ("Detergent", {}, "SoboStrategy")
     ]
 )
 def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrategy]:
