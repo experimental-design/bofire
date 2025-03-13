@@ -55,8 +55,9 @@ from bofire.utils.torch_tools import (
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
-        self.prefer_exhaustive_search_for_purely_categorical_domains =\
+        self.prefer_exhaustive_search_for_purely_categorical_domains = (
             data_model.prefer_exhaustive_search_for_purely_categorical_domains
+        )
 
     def optimize(
         self,
@@ -86,7 +87,7 @@ class AcquisitionOptimizer(ABC):
         # and use _optimize_acqf_discrete in this case
         if self.prefer_exhaustive_search_for_purely_categorical_domains:
             if len(
-                    domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
+                domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
             ) == len(domain.inputs):
                 if len(acqfs) > 1:
                     raise NotImplementedError(
@@ -110,12 +111,12 @@ class AcquisitionOptimizer(ABC):
 
     @abstractmethod
     def _optimize(
-            self,
-            candidate_count: int,
-            acqfs: List[AcquisitionFunction],  # this is a botorch object
-            domain: Domain,
-            input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
-            experiments: Optional[pd.DataFrame] = None,
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],  # this is a botorch object
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+        experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
@@ -318,8 +319,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
-
-
 
         # for continuous and mixed search spaces, here different optimizers could
         # be used, so we have to abstract the stuff below

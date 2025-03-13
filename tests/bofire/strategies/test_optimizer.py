@@ -4,14 +4,14 @@ import numpy as np
 import pytest
 
 from bofire.benchmarks import api as benchmarks
-from bofire.data_models.strategies import api as data_models_strategies
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
+from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies import api as strategies
 from bofire.strategies.predictives.acqf_optimization import get_optimizer
 
 
 @pytest.fixture(
-    params=[ # (benchmark, params, stategy, map_conti_inputs_to_discrete)
+    params=[  # (benchmark, params, stategy, map_conti_inputs_to_discrete)
         # ("Himmelblau", {}, "SoboStrategy", False),
         # ("DTLZ2", {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy", False),
         # (
@@ -20,9 +20,11 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer
         #     "SoboStrategy", False),
         # ("Detergent", {}, "SoboStrategy", False),
         (
-                "Ackley",
-                {"num_categories": 3, "categorical": True, "dim": 3},
-                "SoboStrategy", True),      # this is for testing the "all-categoric" usecase
+            "Ackley",
+            {"num_categories": 3, "categorical": True, "dim": 3},
+            "SoboStrategy",
+            True,
+        ),  # this is for testing the "all-categoric" usecase
     ]
 )
 def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrategy]:
@@ -34,7 +36,8 @@ def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrat
         for idx, ft in enumerate(bm.domain.inputs.features):
             if isinstance(ft, ContinuousInput):
                 bm.domain.inputs.features[idx] = DiscreteInput(
-                    key=ft.key, values=np.linspace(ft.bounds[0], ft.bounds[1], 5))
+                    key=ft.key, values=np.linspace(ft.bounds[0], ft.bounds[1], 5)
+                )
 
     strategy = getattr(data_models_strategies, strategy)(domain=bm.domain)
     return bm, strategy
