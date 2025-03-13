@@ -12,13 +12,13 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer
 
 @pytest.fixture(
     params=[  # (benchmark, params, stategy, map_conti_inputs_to_discrete)
-        # ("Himmelblau", {}, "SoboStrategy", False),
-        # ("DTLZ2", {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy", False),
-        # (
-        #     "Ackley",
-        #     {"num_categories": 3, "categorical": True, "dim": 4},
-        #     "SoboStrategy", False),
-        # ("Detergent", {}, "SoboStrategy", False),
+        ("Himmelblau", {}, "SoboStrategy", False),
+        ("DTLZ2", {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy", False),
+        (
+            "Ackley",
+            {"num_categories": 3, "categorical": True, "dim": 4},
+            "SoboStrategy", False),
+        ("Detergent", {}, "SoboStrategy", False),
         (
             "Ackley",
             {"num_categories": 3, "categorical": True, "dim": 3},
