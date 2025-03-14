@@ -90,6 +90,5 @@ class StepwiseStrategy(Strategy):
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         return True
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True

@@ -47,8 +47,7 @@ class QparegoStrategy(MultiobjectiveStrategy):
             return False
         return True
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Method to check if a specific constraint type is implemented for the strategy
 
         Args:
