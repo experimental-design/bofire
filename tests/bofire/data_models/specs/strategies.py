@@ -543,9 +543,9 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "aqcuisition_optimizer": strategies.BotorchOptimizer(
+        "acquisition_optimizer": strategies.BotorchOptimizer(
             local_search_config=bofire.data_models.strategies.predictives.acqf_optimization.LSRBO(),
-        ).model_dump(),
+        ),
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
