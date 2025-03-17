@@ -184,6 +184,21 @@ class PredictiveStrategy(Strategy):
         self._fit(self.experiments)
         self.is_fitted = True
 
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Postprocess the candidates.
+
+        Here we append the predictions to the candidates.
+
+        Args:
+            candidates (Tensor): Tensor of candidates returned from `optimize_acqf`.
+
+        Returns:
+            pd.DataFrame: Dataframe with candidates.
+
+        """
+        preds = self.predict(candidates)
+        return pd.concat((candidates, preds), axis=1)
+
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):
         """Abstract method where the actual prediction are occurring."""
