@@ -28,15 +28,17 @@ from tests.bofire.data_models.specs.specs import Specs
 
 specs = Specs([])
 strategy_commons = {
-    "acquisition_optimizer": strategies.BotorchOptimizer(**{
-        "n_raw_samples": 1024,
-        "n_restarts": 8,
-        "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
-        "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
-        "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
-        "maxiter": 2000,
-        "batch_limit": 6,
-        }),
+    "acquisition_optimizer": strategies.BotorchOptimizer(
+        **{
+            "n_raw_samples": 1024,
+            "n_restarts": 8,
+            "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
+            "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
+            "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
+            "maxiter": 2000,
+            "batch_limit": 6,
+        }
+    ),
     "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
     "outlier_detection_specs": None,
     "seed": 42,
@@ -45,8 +47,6 @@ strategy_commons = {
     "frequency_hyperopt": 0,
     "folds": 5,
 }
-
-
 
 
 specs.add_valid(
@@ -277,10 +277,9 @@ specs.add_valid(
             ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.MoboStrategy(
-                    domain=tempdomain, acquisition_function=qLogNEHVI(),
-                    acquisition_optimizer=strategies.BotorchOptimizer(
-                        batch_limit=1
-                    )
+                    domain=tempdomain,
+                    acquisition_function=qLogNEHVI(),
+                    acquisition_optimizer=strategies.BotorchOptimizer(batch_limit=1),
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),

@@ -232,7 +232,6 @@ class AcquisitionOptimizer(ABC):
                                 fixed_features[idx] = lower[j]
         return fixed_features
 
-
     def get_categorical_combinations(
         self,
         domain: Domain,

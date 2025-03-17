@@ -123,7 +123,10 @@ class BotorchStrategy(PredictiveStrategy):
                     )
                     if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
                         if isinstance(self.acquisition_optimizer, BotorchOptimizer):
-                            if self.acquisition_optimizer.categorical_method != self.acquisition_optimizer.descriptor_method:
+                            if (
+                                self.acquisition_optimizer.categorical_method
+                                != self.acquisition_optimizer.descriptor_method
+                            ):
                                 raise ValueError(
                                     "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
                                 )

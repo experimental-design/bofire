@@ -10,10 +10,12 @@ from bofire.data_models.types import IntPowerOfTwo
 
 
 class AcquisitionOptimizer(BaseModel):
+    type: str
     prefer_exhaustive_search_for_purely_categorical_domains: bool = True
 
+    @abstractmethod
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
-        """Checks if a constraint is implemented. Currently only linear constraints are supported.
+        """Checks if a constraint is implemented.
 
         Args:
             my_type (Type[Feature]): The type of the constraint.
@@ -22,8 +24,7 @@ class AcquisitionOptimizer(BaseModel):
             bool: True if the constraint is implemented, False otherwise.
 
         """
-        return True
-
+        pass
 
 class LocalSearchConfig(BaseModel):
     """LocalSearchConfigs provide a way to define how to switch between global
@@ -68,6 +69,7 @@ AnyLocalSearchConfig = LSRBO
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
+    type: Literal["BotorchOptimizer"] = "BotorchOptimizer"  # type: ignore
     n_restarts: PositiveInt = 8
     n_raw_samples: IntPowerOfTwo = 1024
     maxiter: PositiveInt = 2000
@@ -91,7 +93,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         return batch_limit
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
-        """Method to check if a specific constraint type is implemented for the strategy
+        """Checks if a constraint is implemented. Currently only linear constraints are supported.
 
         Args:
             my_type (Type[Constraint]): Constraint class
