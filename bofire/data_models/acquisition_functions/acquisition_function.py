@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Literal, Optional
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
 from pydantic import Field, PositiveFloat
 
@@ -15,6 +15,10 @@ class SingleObjectiveAcquisitionFunction(AcquisitionFunction):
 
 
 class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
+    type: str
+
+
+class MultiFideltyAcquisitionFunction(AcquisitionFunction):
     type: str
 
 
@@ -87,3 +91,17 @@ class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
     type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
     n_mc_samples: IntPowerOfTwo = 512
     weights: Optional[Dict[str, PositiveFloat]] = Field(default_factory=lambda: None)
+
+
+class qMFMES(MultiFideltyAcquisitionFunction):
+    type: Literal["qMFMES"] = "qMFMES"
+    num_fantasies: IntPowerOfTwo = 16
+    num_mv_samples: int = 10
+    num_y_samples: IntPowerOfTwo = 128
+    fidelity_costs: list[float]
+
+
+class qMFVariance(MultiFideltyAcquisitionFunction):
+    type: Literal["qMFVariance"] = "qMFVariance"
+    beta: Annotated[float, Field(ge=0)] = 0.2
+    fidelity_thresholds: Union[List[float], float] = 0.1
