@@ -26,6 +26,7 @@ class AcquisitionOptimizer(BaseModel):
         """
         pass
 
+
 class LocalSearchConfig(BaseModel):
     """LocalSearchConfigs provide a way to define how to switch between global
     acqf optimization in the global bounds and local acqf optimization in the local
