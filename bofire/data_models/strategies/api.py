@@ -84,6 +84,5 @@ AnyPredictive = Union[
 AnyLocalSearchConfig = LSRBO
 
 AnyAcqfOptimizer = Union[
-    AcquisitionOptimizer,
     BotorchOptimizer,
 ]
