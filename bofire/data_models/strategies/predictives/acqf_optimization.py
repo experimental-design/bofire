@@ -13,7 +13,7 @@ class AcquisitionOptimizer(BaseModel):
     prefer_exhaustive_search_for_purely_categorical_domains: bool = True
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
-        """Checks if a constraint is implemented. Currently only linear constraints are supported.
+        """Checks if a constraint is implemented.
 
         Args:
             my_type (Type[Feature]): The type of the constraint.
