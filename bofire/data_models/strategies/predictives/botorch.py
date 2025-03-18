@@ -1,19 +1,10 @@
-import warnings
 from typing import Annotated, Optional, Type
 
 from pydantic import Field, PositiveInt, model_validator
 
-from bofire.data_models.constraints.api import (
-    Constraint,
-    InterpointConstraint,
-    LinearConstraint,
-)
+from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import (
-    CategoricalInput,
-    ContinuousInput,
-    TaskInput,
-)
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput, TaskInput
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
@@ -51,7 +42,6 @@ class BotorchStrategy(PredictiveStrategy):
         self.domain = self.acquisition_optimizer.validate_domain(self.domain)
         return self
 
-
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Method to check if a specific constraint type is implemented for the strategy. For optimizer-specific
         strategies, this is passed to the optimizer check.
@@ -83,7 +73,9 @@ class BotorchStrategy(PredictiveStrategy):
             self.surrogate_specs,
         )
 
-        self.surrogate_specs = self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
+        self.surrogate_specs = self.acquisition_optimizer.validate_surrogate_specs(
+            self.surrogate_specs
+        )
 
         return self
 
