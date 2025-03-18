@@ -73,6 +73,7 @@ class Strategy(BaseModel):
             raise ValueError("no input feature specified")
         return domain
 
+    @abstractmethod
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Abstract method to check if a specific constraint type is implemented for the strategy
 
@@ -83,7 +84,7 @@ class Strategy(BaseModel):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
-        return True
+        pass
 
     @classmethod
     @abstractmethod
