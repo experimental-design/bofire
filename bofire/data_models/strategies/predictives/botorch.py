@@ -39,7 +39,7 @@ class BotorchStrategy(PredictiveStrategy):
 
     @model_validator(mode="after")
     def validate_domain_for_optimizer(self):
-        self.domain = self.acquisition_optimizer.validate_domain(self.domain)
+        self.acquisition_optimizer.validate_domain(self.domain)
         return self
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
@@ -73,9 +73,7 @@ class BotorchStrategy(PredictiveStrategy):
             self.surrogate_specs,
         )
 
-        self.surrogate_specs = self.acquisition_optimizer.validate_surrogate_specs(
-            self.surrogate_specs
-        )
+        self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
         return self
 

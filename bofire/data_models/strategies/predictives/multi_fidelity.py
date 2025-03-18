@@ -59,7 +59,7 @@ class MultiFidelityStrategy(SoboStrategy):
         ):
             raise ValueError(f"Must use a MultiTaskGPSurrogate with {self.type}.")
 
-        self.surrogate_specs = self.acquisition_optimizer.validate_surrogate_specs(
+        self.acquisition_optimizer.validate_surrogate_specs(
             self.surrogate_specs
         )
 

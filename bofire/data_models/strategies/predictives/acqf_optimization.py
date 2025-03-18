@@ -35,22 +35,17 @@ class AcquisitionOptimizer(BaseModel):
         pass
 
     @abstractmethod
-    def validate_domain(self, domain: Domain) -> Domain:
-        """Validates the domain for the optimizer.
+    def validate_domain(self, domain: Domain):
+        """Validates the fit of the domain to the optimizer.
 
         Args:
             domain (Domain): The domain to be validated.
-
-        Returns:
-            Domain: The validated domain.
-
         """
         pass
 
     @abstractmethod
     def validate_surrogate_specs(
-        self, surrogate_specs: BotorchSurrogates
-    ) -> BotorchSurrogates:
+        self, surrogate_specs: BotorchSurrogates):
         """Validates the surrogate specs for the optimizer.
 
         Args:
@@ -146,8 +141,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             return False
         return True
 
-    def validate_domain(self, domain: Domain) -> Domain:
-        def validate_local_search_config(domain: Domain) -> Domain:
+    def validate_domain(self, domain: Domain):
+        def validate_local_search_config(domain: Domain):
             if self.local_search_config is not None:
                 if has_local_search_region(domain) is False:
                     warnings.warn(
@@ -159,15 +154,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     > 0
                 ):
                     raise ValueError("LSR-BO only supported for linear constraints.")
-            return domain
 
-        domain = validate_local_search_config(domain)
+        validate_local_search_config(domain)
 
-        return domain
 
     def validate_surrogate_specs(
-        self, surrogate_specs: BotorchSurrogates
-    ) -> BotorchSurrogates:
+        self, surrogate_specs: BotorchSurrogates):
         # we also have to check here that the categorical method is compatible with the chosen models
         # categorical_method = (
         #   values["categorical_method"] if "categorical_method" in values else None
@@ -194,7 +186,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         raise ValueError(
                             "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
                         )
-        return surrogate_specs
 
 
 AnyAcqfOptimizer = Union[BotorchOptimizer,]
