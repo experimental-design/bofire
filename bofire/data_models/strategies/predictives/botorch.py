@@ -9,9 +9,7 @@ from bofire.data_models.constraints.api import (
     LinearConstraint,
 )
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     TaskInput,
@@ -22,7 +20,6 @@ from bofire.data_models.strategies.predictives.acqf_optimization import (
     BotorchOptimizer,
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
-from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
@@ -50,22 +47,10 @@ class BotorchStrategy(PredictiveStrategy):
     folds: int = 5
 
     @model_validator(mode="after")
-    def validate_local_search_config(self):
-        if not isinstance(self.acquisition_optimizer, BotorchOptimizer):
-            return self
-
-        if self.acquisition_optimizer.local_search_config is not None:
-            if has_local_search_region(self.domain) is False:
-                warnings.warn(
-                    "`local_search_region` config is specified, but no local search region is defined in `domain`",
-                )
-            if (
-                len(self.domain.constraints)
-                - len(self.domain.constraints.get(LinearConstraint))
-                > 0
-            ):
-                raise ValueError("LSR-BO only supported for linear constraints.")
+    def validate_domain_for_optimizer(self):
+        self.domain = self.acquisition_optimizer.validate_domain(self.domain)
         return self
+
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Method to check if a specific constraint type is implemented for the strategy. For optimizer-specific
@@ -97,39 +82,9 @@ class BotorchStrategy(PredictiveStrategy):
             self.domain,
             self.surrogate_specs,
         )
-        # we also have to check here that the categorical method is compatible with the chosen models
-        # categorical_method = (
-        #   values["categorical_method"] if "categorical_method" in values else None
-        # )
-        if isinstance(self.acquisition_optimizer, BotorchOptimizer):
-            if (
-                self.acquisition_optimizer.categorical_method
-                == CategoricalMethodEnum.FREE
-            ):
-                for m in self.surrogate_specs.surrogates:
-                    if isinstance(m, MixedSingleTaskGPSurrogate):
-                        raise ValueError(
-                            "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
-                        )
-            # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
-            # used for the descriptor as for the categoricals
-            for m in self.surrogate_specs.surrogates:
-                keys = m.inputs.get_keys(CategoricalDescriptorInput)
-                for k in keys:
-                    input_proc_specs = (
-                        m.input_preprocessing_specs[k]
-                        if k in m.input_preprocessing_specs
-                        else None
-                    )
-                    if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
-                        if isinstance(self.acquisition_optimizer, BotorchOptimizer):
-                            if (
-                                self.acquisition_optimizer.categorical_method
-                                != self.acquisition_optimizer.descriptor_method
-                            ):
-                                raise ValueError(
-                                    "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
-                                )
+
+        self.surrogate_specs = self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
+
         return self
 
     @model_validator(mode="after")

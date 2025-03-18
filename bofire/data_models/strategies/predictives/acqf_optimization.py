@@ -1,13 +1,17 @@
 from abc import abstractmethod
 from typing import Annotated, Literal, Optional, Type
+import warnings
 
 from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.constraints import api as constraints
-from bofire.data_models.enum import CategoricalMethodEnum
+from bofire.data_models.features.api import CategoricalDescriptorInput
 from bofire.data_models.types import IntPowerOfTwo
-
+from bofire.data_models.strategies.shortest_path import has_local_search_region
+from bofire.data_models.surrogates.api import BotorchSurrogates, MixedSingleTaskGPSurrogate
+from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 
 class AcquisitionOptimizer(BaseModel):
     type: str
@@ -22,6 +26,32 @@ class AcquisitionOptimizer(BaseModel):
 
         Returns:
             bool: True if the constraint is implemented, False otherwise.
+
+        """
+        pass
+
+    @abstractmethod
+    def validate_domain(self, domain: Domain) -> Domain:
+        """Validates the domain for the optimizer.
+
+        Args:
+            domain (Domain): The domain to be validated.
+
+        Returns:
+            Domain: The validated domain.
+
+        """
+        pass
+
+    @abstractmethod
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates) -> BotorchSurrogates:
+        """Validates the surrogate specs for the optimizer.
+
+        Args:
+            surrogate_specs: The surrogate specs to be validated.
+
+        Returns:
+            SurrogateSpecs: The validated surrogate specs.
 
         """
         pass
@@ -90,7 +120,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         batch_limit = min(
             batch_limit or info.data["n_restarts"],
             info.data["n_restarts"],
-        )
+            )
         return batch_limit
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
@@ -109,3 +139,61 @@ class BotorchOptimizer(AcquisitionOptimizer):
         ]:
             return False
         return True
+
+    def validate_domain(self, domain: Domain) -> Domain:
+
+        def validate_local_search_config(domain: Domain) -> Domain:
+            if self.local_search_config is not None:
+                if has_local_search_region(domain) is False:
+                    warnings.warn(
+                        "`local_search_region` config is specified, but no local search region is defined in `domain`",
+                    )
+                if (
+                        len(domain.constraints)
+                        - len(domain.constraints.get(constraints.LinearConstraint))
+                        > 0
+                ):
+                    raise ValueError("LSR-BO only supported for linear constraints.")
+            return domain
+
+
+        domain = validate_local_search_config(domain)
+
+        return domain
+
+
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates) -> BotorchSurrogates:
+
+        # we also have to check here that the categorical method is compatible with the chosen models
+        # categorical_method = (
+        #   values["categorical_method"] if "categorical_method" in values else None
+        # )
+
+        if (
+                self.categorical_method
+                == CategoricalMethodEnum.FREE
+        ):
+            for m in surrogate_specs.surrogates:
+                if isinstance(m, MixedSingleTaskGPSurrogate):
+                    raise ValueError(
+                        "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
+                    )
+        # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
+        # used for the descriptor as for the categoricals
+        for m in surrogate_specs.surrogates:
+            keys = m.inputs.get_keys(CategoricalDescriptorInput)
+            for k in keys:
+                input_proc_specs = (
+                    m.input_preprocessing_specs[k]
+                    if k in m.input_preprocessing_specs
+                    else None
+                )
+                if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
+                    if (
+                            self.categorical_method
+                            != self.descriptor_method
+                    ):
+                        raise ValueError(
+                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
+                        )
+        return surrogate_specs
