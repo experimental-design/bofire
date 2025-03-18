@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, Type
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pandas as pd
 import torch
@@ -181,6 +181,16 @@ class AcquisitionOptimizer(ABC):
 
         return fixed_features
 
+    def _include_exclude_categorical_combinations(self, domain: Domain) -> Tuple[Union[List[Type[Input]], None],
+    Union[List[Type[Input]], None]]:
+        """Returns include and exclude arguments for get_categorical_combinations methods.
+
+        Returns:
+            Tuple[List[Type[Input]], List[Type[Input]]]: Tuple of include and exclude arguments.
+
+        """
+        return [Input], None
+
     def get_categorical_combinations(
         self,
         domain: Domain,
@@ -199,33 +209,10 @@ class AcquisitionOptimizer(ABC):
             input_preprocessing_specs,
         )
 
-        methods = [
-            self.descriptor_method,
-            self.discrete_method,
-            self.categorical_method,
-        ]
-
-        if all(m == CategoricalMethodEnum.FREE for m in methods):
-            return [{}]
-        include = []
-        exclude = None
-
-        if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(DiscreteInput)
-
-        if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalInput)
-            exclude = CategoricalDescriptorInput
-
-        if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalDescriptorInput)
-            exclude = None
-
-        if not include:
-            include = None
+        include, exclude = self._include_exclude_categorical_combinations(domain)
 
         combos = domain.inputs.get_categorical_combinations(
-            include=(include if include else Input),
+            include=include,
             exclude=exclude,  # type: ignore
         )
         # now build up the fixed feature list
@@ -666,6 +653,46 @@ class BotorchOptimizer(AcquisitionOptimizer):
                             if lower[j] == upper[j]:
                                 fixed_features[idx] = lower[j]
         return fixed_features
+
+    def get_categorical_combinations(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+    ) -> List[Dict[int, float]]:
+
+        methods = [
+            self.descriptor_method,
+            self.discrete_method,
+            self.categorical_method,
+        ]
+
+        if all(m == CategoricalMethodEnum.FREE for m in methods):
+            return [{}]
+
+        return super().get_categorical_combinations(domain, input_preprocessing_specs)
+
+    def _include_exclude_categorical_combinations(self, domain: Domain) -> Tuple[Union[List[Type[Input]], None],
+        Union[List[Type[Input]], None]]:
+
+        include = []
+        exclude = None
+
+        if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
+            include.append(DiscreteInput)
+
+        if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
+            include.append(CategoricalInput)
+            exclude = CategoricalDescriptorInput
+
+        if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
+            include.append(CategoricalDescriptorInput)
+            exclude = None
+
+        if not include:
+            include = None
+
+        return include, exclude
+
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
