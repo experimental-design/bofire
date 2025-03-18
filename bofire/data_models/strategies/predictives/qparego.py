@@ -3,12 +3,7 @@ from typing import Literal, Type, Union
 from pydantic import Field
 
 from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
-from bofire.data_models.constraints.api import (
-    Constraint,
-    InterpointConstraint,
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
-)
+from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -57,9 +52,7 @@ class QparegoStrategy(MultiobjectiveStrategy):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type in (
-            InterpointConstraint,
-        ):
+        if my_type in (InterpointConstraint,):
             return False
 
         return super().is_constraint_implemented(my_type)
