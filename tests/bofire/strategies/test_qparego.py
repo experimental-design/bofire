@@ -87,7 +87,7 @@ def test_qparego_constraints(num_test_candidates):
         # init strategy
         data_model = data_models.QparegoStrategy(
             domain=benchmark.domain,
-            n_restarts=1,
+            acquisition_optimizer=data_models.BotorchOptimizer(n_restarts=1),
         )
         my_strategy = QparegoStrategy(data_model=data_model)
         my_strategy.tell(experiments)

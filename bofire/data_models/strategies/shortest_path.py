@@ -93,8 +93,7 @@ class ShortestPathStrategy(Strategy):
             raise ValueError("Domain has no local search region.")
         return domain
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Checks if a constraint is implemented. Currently only linear constraints are supported.
 
         Args:

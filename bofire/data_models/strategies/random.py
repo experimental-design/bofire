@@ -25,8 +25,7 @@ class RandomStrategy(Strategy):
     num_base_samples: Optional[Annotated[int, Field(gt=0)]] = None
     max_iters: Annotated[int, Field(gt=0)] = 1000
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearInequalityConstraint,
             LinearEqualityConstraint,
