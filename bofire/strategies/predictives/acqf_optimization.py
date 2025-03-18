@@ -181,8 +181,9 @@ class AcquisitionOptimizer(ABC):
 
         return fixed_features
 
-    def _include_exclude_categorical_combinations(self, domain: Domain) -> Tuple[Union[List[Type[Input]], None],
-    Union[List[Type[Input]], None]]:
+    def _include_exclude_categorical_combinations(
+        self, domain: Domain
+    ) -> Tuple[Union[List[Type[Input]], None], Union[List[Type[Input]], None]]:
         """Returns include and exclude arguments for get_categorical_combinations methods.
 
         Returns:
@@ -598,7 +599,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
     ) -> Dict[int, float]:
-
         fixed_features = super().get_fixed_features(domain, input_preprocessing_specs)
 
         features2idx = self._features2idx(domain, input_preprocessing_specs)
@@ -659,7 +659,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
     ) -> List[Dict[int, float]]:
-
         methods = [
             self.descriptor_method,
             self.discrete_method,
@@ -671,9 +670,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return super().get_categorical_combinations(domain, input_preprocessing_specs)
 
-    def _include_exclude_categorical_combinations(self, domain: Domain) -> Tuple[Union[List[Type[Input]], None],
-        Union[List[Type[Input]], None]]:
-
+    def _include_exclude_categorical_combinations(
+        self, domain: Domain
+    ) -> Tuple[Union[List[Type[Input]], None], Union[List[Type[Input]], None]]:
         include = []
         exclude = None
 
@@ -692,7 +691,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             include = None
 
         return include, exclude
-
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
