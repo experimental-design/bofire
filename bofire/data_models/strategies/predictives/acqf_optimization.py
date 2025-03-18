@@ -44,8 +44,7 @@ class AcquisitionOptimizer(BaseModel):
         pass
 
     @abstractmethod
-    def validate_surrogate_specs(
-        self, surrogate_specs: BotorchSurrogates):
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
         """Validates the surrogate specs for the optimizer.
 
         Args:
@@ -157,9 +156,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         validate_local_search_config(domain)
 
-
-    def validate_surrogate_specs(
-        self, surrogate_specs: BotorchSurrogates):
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
         # we also have to check here that the categorical method is compatible with the chosen models
         # categorical_method = (
         #   values["categorical_method"] if "categorical_method" in values else None
