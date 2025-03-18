@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Annotated, Literal, Optional, Type
+from typing import Annotated, Literal, Optional, Type, Union
 
 from pydantic import Field, PositiveInt, field_validator
 
@@ -195,3 +195,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                             "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
                         )
         return surrogate_specs
+
+
+AnyAcqfOptimizer = Union[BotorchOptimizer,]

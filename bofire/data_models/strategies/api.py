@@ -21,6 +21,7 @@ from bofire.data_models.strategies.predictives.acqf_optimization import (
     LSRBO,
     AcquisitionOptimizer,
     BotorchOptimizer,
+    AnyAcqfOptimizer,
 )
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,
@@ -82,5 +83,3 @@ AnyPredictive = Union[
 ]
 
 AnyLocalSearchConfig = LSRBO
-
-AnyAcqfOptimizer = Union[BotorchOptimizer,]
