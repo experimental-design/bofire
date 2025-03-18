@@ -454,8 +454,6 @@ def test_base_get_fixed_features(
     fixed_features = myStrategy.acqf_optimizer.get_fixed_features(
         domain,
         myStrategy.input_preprocessing_specs,
-        categorical_method,
-        descriptor_method,
     )
 
     assert fixed_features == expected

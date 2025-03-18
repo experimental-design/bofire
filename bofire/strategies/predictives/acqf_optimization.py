@@ -155,8 +155,6 @@ class AcquisitionOptimizer(ABC):
         self,
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
-        categorical_method: Optional[CategoricalMethodEnum] = None,
-        descriptor_method: Optional[CategoricalMethodEnum] = None,
     ) -> Dict[int, float]:
         """Provides the values of all fixed features
 
@@ -181,55 +179,6 @@ class AcquisitionOptimizer(ABC):
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
 
-        # in case the optimization method is free and not allowed categories are present
-        # one has to fix also them, this is abit of double work as it should be also reflected
-        # in the bounds but helps to make it safer
-
-        # this could be removed if we drop support for FREE
-        if categorical_method is not None:
-            if (
-                categorical_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.ONE_HOT
-                in list(input_preprocessing_specs.values())
-            ):
-                # for feat in self.get_true_categorical_features():
-                for feat in [
-                    domain.inputs.get_by_key(featkey)
-                    for featkey in domain.inputs.get_keys(CategoricalInput)
-                    if input_preprocessing_specs[featkey]
-                    == CategoricalEncodingEnum.ONE_HOT
-                ]:
-                    assert isinstance(feat, CategoricalInput)
-                    if feat.is_fixed() is False:
-                        for cat in feat.get_forbidden_categories():
-                            transformed = feat.to_onehot_encoding(pd.Series([cat]))
-                            # we fix those indices to zero where one has a 1 as response from the transformer
-                            for j, idx in enumerate(features2idx[feat.key]):
-                                if transformed.values[0, j] == 1.0:
-                                    fixed_features[idx] = 0
-
-        # for the descriptor ones
-        if descriptor_method is not None:
-            if (
-                descriptor_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.DESCRIPTOR
-                in list(input_preprocessing_specs.values())
-            ):
-                # for feat in self.get_true_categorical_features():
-                for feat in [
-                    domain.inputs.get_by_key(featkey)
-                    for featkey in domain.inputs.get_keys(CategoricalDescriptorInput)
-                    if input_preprocessing_specs[featkey]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ]:
-                    assert isinstance(feat, CategoricalDescriptorInput)
-                    if feat.is_fixed() is False:
-                        lower, upper = feat.get_bounds(
-                            CategoricalEncodingEnum.DESCRIPTOR
-                        )
-                        for j, idx in enumerate(features2idx[feat.key]):
-                            if lower[j] == upper[j]:
-                                fixed_features[idx] = lower[j]
         return fixed_features
 
     def get_categorical_combinations(
@@ -248,8 +197,6 @@ class AcquisitionOptimizer(ABC):
         fixed_basis = self.get_fixed_features(
             domain,
             input_preprocessing_specs,
-            self.categorical_method,
-            self.descriptor_method,
         )
 
         methods = [
@@ -642,8 +589,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features = self.get_fixed_features(
                 domain,
                 input_preprocessing_specs,
-                self.categorical_method,
-                self.descriptor_method,
             )
             fixed_features_list = None
         else:
@@ -660,6 +605,67 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features,
             fixed_features_list,
         )
+
+    def get_fixed_features(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+    ) -> Dict[int, float]:
+
+        fixed_features = super().get_fixed_features(domain, input_preprocessing_specs)
+
+        features2idx = self._features2idx(domain, input_preprocessing_specs)
+
+        # in case the optimization method is free and not allowed categories are present
+        # one has to fix also them, this is abit of double work as it should be also reflected
+        # in the bounds but helps to make it safer
+
+        # this could be removed if we drop support for FREE
+        if self.categorical_method is not None:
+            if (
+                self.categorical_method == CategoricalMethodEnum.FREE
+                and CategoricalEncodingEnum.ONE_HOT
+                in list(input_preprocessing_specs.values())
+            ):
+                # for feat in self.get_true_categorical_features():
+                for feat in [
+                    domain.inputs.get_by_key(featkey)
+                    for featkey in domain.inputs.get_keys(CategoricalInput)
+                    if input_preprocessing_specs[featkey]
+                    == CategoricalEncodingEnum.ONE_HOT
+                ]:
+                    assert isinstance(feat, CategoricalInput)
+                    if feat.is_fixed() is False:
+                        for cat in feat.get_forbidden_categories():
+                            transformed = feat.to_onehot_encoding(pd.Series([cat]))
+                            # we fix those indices to zero where one has a 1 as response from the transformer
+                            for j, idx in enumerate(features2idx[feat.key]):
+                                if transformed.values[0, j] == 1.0:
+                                    fixed_features[idx] = 0
+
+        # for the descriptor ones
+        if self.descriptor_method is not None:
+            if (
+                self.descriptor_method == CategoricalMethodEnum.FREE
+                and CategoricalEncodingEnum.DESCRIPTOR
+                in list(input_preprocessing_specs.values())
+            ):
+                # for feat in self.get_true_categorical_features():
+                for feat in [
+                    domain.inputs.get_by_key(featkey)
+                    for featkey in domain.inputs.get_keys(CategoricalDescriptorInput)
+                    if input_preprocessing_specs[featkey]
+                    == CategoricalEncodingEnum.DESCRIPTOR
+                ]:
+                    assert isinstance(feat, CategoricalDescriptorInput)
+                    if feat.is_fixed() is False:
+                        lower, upper = feat.get_bounds(
+                            CategoricalEncodingEnum.DESCRIPTOR
+                        )
+                        for j, idx in enumerate(features2idx[feat.key]):
+                            if lower[j] == upper[j]:
+                                fixed_features[idx] = lower[j]
+        return fixed_features
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
