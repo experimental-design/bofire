@@ -57,10 +57,9 @@ class QparegoStrategy(MultiobjectiveStrategy):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type in [
-            NonlinearInequalityConstraint,
-            NonlinearEqualityConstraint,
+        if my_type in (
             InterpointConstraint,
-        ]:
+        ):
             return False
-        return True
+
+        return super().is_constraint_implemented(my_type)
