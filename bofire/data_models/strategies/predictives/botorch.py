@@ -7,8 +7,8 @@ from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput, TaskInput
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import (
-    BotorchOptimizer,
     AnyAcqfOptimizer,
+    BotorchOptimizer,
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.surrogates.api import (
@@ -20,7 +20,6 @@ from bofire.data_models.surrogates.api import (
 
 
 class BotorchStrategy(PredictiveStrategy):
-
     # acquisition optimizer
     acquisition_optimizer: AnyAcqfOptimizer = Field(
         default_factory=lambda: BotorchOptimizer()
