@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import pandas as pd
-import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
@@ -12,7 +11,9 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+import torch
 from torch import Tensor
+from pymoo.core.problem import Problem
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -35,6 +36,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
+    GeneticAlgorithm as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
@@ -692,9 +694,50 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return include, exclude
 
+class GeneticAlgorithm(AcquisitionOptimizer):
+    def __init__(self, data_model: GeneticAlgorithmDataModel):
+        pass
+
+    def _optimize(
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],  # this is a botorch object
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+        experiments: Optional[pd.DataFrame] = None,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """main function for optimizing the acquisition function using pymoo's genetic algorithm"""
+
+
+        bounds = self.get_bounds(domain, input_preprocessing_specs)
+
+        raise NotImplementedError("to-do")
+
+    def _get_problem(
+            self,
+            candidate_count: int,
+            acqfs: List[AcquisitionFunction],  # this is a botorch object
+            domain: Domain,
+            input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+            experiments: Optional[pd.DataFrame] = None,
+    ) -> Problem:
+        """ definition of the pymoo Problem object"""
+
+        bound
+
+        return Problem(
+            n_var=domain.inputs.get_dim(),
+            n_obj=len(acqfs),
+            n_constr=0,
+            xl=domain.inputs.get_bounds()[0],
+            xu=domain.inputs.get_bounds()[1],
+            elementwise_evaluation=True,
+        )
+
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,
+    GeneticAlgorithmDataModel: GeneticAlgorithm,
 }
 
 

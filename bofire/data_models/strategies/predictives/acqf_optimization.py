@@ -185,4 +185,22 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         )
 
 
-AnyAcqfOptimizer = Union[BotorchOptimizer,]
+class GeneticAlgorithm(AcquisitionOptimizer):
+    type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
+
+    def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
+        return my_type in [
+            constraints.LinearEqualityConstraint,
+            constraints.LinearInequalityConstraint,
+            constraints.NonlinearInequalityConstraint,
+            constraints.NonlinearEqualityConstraint,
+        ]
+
+    def validate_domain(self, domain: Domain):
+        pass
+
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
+        pass
+
+
+AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithm]

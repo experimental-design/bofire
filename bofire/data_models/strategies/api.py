@@ -22,6 +22,7 @@ from bofire.data_models.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
     AnyAcqfOptimizer,
     BotorchOptimizer,
+    GeneticAlgorithm,
 )
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,

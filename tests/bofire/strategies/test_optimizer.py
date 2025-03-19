@@ -9,8 +9,16 @@ from bofire.data_models import api as domain
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies import api as strategies
-from bofire.strategies.predictives.acqf_optimization import get_optimizer
+from bofire.strategies.predictives.acqf_optimization import get_optimizer, AcquisitionOptimizer
 
+@pytest.fixture(
+    params=[ # (optimizer data model, params)
+               # ("BotorchOptimizer", {}),
+               ("GeneticAlgorithm", {}),
+           ])
+def optimizer(request) -> data_models_strategies.AcquisitionOptimizer:
+    optimizer_str, params = request.param
+    return getattr(data_models_strategies, optimizer_str)(**params)
 
 @pytest.fixture(
     params=[  # (benchmark, params, stategy, map_conti_inputs_to_discrete)
@@ -31,7 +39,7 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer
         ),  # this is for testing the "all-categoric" usecase
     ]
 )
-def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrategy]:
+def benchmark(request, optimizer) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrategy]:
     benchmark_name, params, strategy, map_conti_inputs_to_discrete = request.param
     bm = getattr(benchmarks, benchmark_name)(**params)
 
@@ -43,12 +51,12 @@ def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrat
                     key=ft.key, values=np.linspace(ft.bounds[0], ft.bounds[1], 5)
                 )
 
-    strategy = getattr(data_models_strategies, strategy)(domain=bm.domain)
+    strategy = getattr(data_models_strategies, strategy)(domain=bm.domain, acquisition_optimizer=optimizer)
     return bm, strategy
 
 
 @pytest.fixture()
-def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, list]:
+def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, list, AcquisitionOptimizer]:
     """ """
     benchmark, strategy_data = benchmark
     domain = benchmark.domain
@@ -60,14 +68,11 @@ def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, li
     input_preprocessing_specs = strategy.input_preprocessing_specs
     acqfs = strategy._get_acqfs(2)
 
-    return domain, input_preprocessing_specs, experiments, acqfs
+    return domain, input_preprocessing_specs, experiments, acqfs, strategy.acqf_optimizer
 
 
 def test_optimizer(optimization_scope):
-    domain, input_preprocessing_specs, experiments, acqfs = optimization_scope
-
-    optimizer_data_model = data_models_strategies.BotorchOptimizer()
-    optimizer = get_optimizer(optimizer_data_model)
+    domain, input_preprocessing_specs, experiments, acqfs, optimizer = optimization_scope
 
     candidates, acqf_vals = optimizer.optimize(
         candidate_count=2,
