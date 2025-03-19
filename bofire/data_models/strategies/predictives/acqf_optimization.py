@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Annotated, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, field_validator
 
@@ -86,12 +86,14 @@ class LSRBO(LocalSearchConfig):
 
     Attributes:
         gamma (float): The switsching parameter between local and global optimization.
-            Defaults to 0.1.
+            Defaults to 0.1. . The default is chosen for `qEI` as acquisition function.
+            It has to be adapted to the acquisition function used, especially when log
+            based acqfs are used.
 
     """
 
     type: Literal["LSRBO"] = "LSRBO"  # type: ignore
-    gamma: Annotated[float, Field(ge=0)] = 0.1
+    gamma: float = 0.1
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
         return acqf_local >= self.gamma
