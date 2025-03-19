@@ -49,7 +49,6 @@ def benchmark(request) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrat
 
 @pytest.fixture()
 def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, list]:
-    """ """
     benchmark, strategy_data = benchmark
     domain = benchmark.domain
 
@@ -69,10 +68,12 @@ def test_optimizer(optimization_scope):
     optimizer_data_model = data_models_strategies.BotorchOptimizer()
     optimizer = get_optimizer(optimizer_data_model)
 
-    candidates, acqf_vals = optimizer.optimize(
+    candidates = optimizer.optimize(
         candidate_count=2,
         acqfs=acqfs,
         domain=domain,
         input_preprocessing_specs=input_preprocessing_specs,
         experiments=experiments,
     )
+
+    assert isinstance(candidates, pd.DataFrame)
