@@ -188,6 +188,16 @@ class BotorchOptimizer(AcquisitionOptimizer):
 class GeneticAlgorithm(AcquisitionOptimizer):
     type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
 
+    # algorithm options
+    population_size: int = 1000
+
+    # termination criteria
+    xtol: float = 0.0005
+    cvtol: float = 1e-8
+    ftol: float = 1e-6
+    n_max_gen: int = 500
+    n_max_evals: int = 100000
+
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         return my_type in [
             constraints.LinearEqualityConstraint,

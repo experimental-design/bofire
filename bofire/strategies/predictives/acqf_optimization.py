@@ -1,6 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from copy import deepcopy
 
 import pandas as pd
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -13,15 +14,20 @@ from botorch.optim.optimize import (
 )
 import torch
 from torch import Tensor
-from pymoo.core.problem import Problem
+from pymoo.core.problem import Problem as PymooProblem
+from pymoo.algorithms.moo.nsga2 import NSGA2 as PymooNSGA2
+from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA
+from pymoo.optimize import minimize as pymoo_minimize
+from pymoo.termination import default as pymoo_default_termination
 
 from bofire.data_models.constraints.api import (
+    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     ProductConstraint,
 )
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Constraints
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -696,7 +702,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
 class GeneticAlgorithm(AcquisitionOptimizer):
     def __init__(self, data_model: GeneticAlgorithmDataModel):
-        pass
+        super().__init__(data_model)
+        self.population_size = data_model.population_size
+        self.xtol = data_model.xtol
+        self.cvtol = data_model.cvtol
+        self.ftol = data_model.ftol
+        self.n_max_gen = data_model.n_max_gen
+        self.n_max_evals = data_model.n_max_evals
+
 
     def _optimize(
         self,
@@ -710,30 +723,88 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
 
         bounds = self.get_bounds(domain, input_preprocessing_specs)
+        constraints = domain.constraints.get()  # todo: constraints: Probably exclude linear constr. and use them in repair function
 
-        raise NotImplementedError("to-do")
+        x_opt_all = []
+        base_X_pending = acqfs[0].X_pending
 
-    def _get_problem(
-            self,
-            candidate_count: int,
-            acqfs: List[AcquisitionFunction],  # this is a botorch object
-            domain: Domain,
-            input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
-            experiments: Optional[pd.DataFrame] = None,
-    ) -> Problem:
-        """ definition of the pymoo Problem object"""
+        for count in range(candidate_count):
 
-        bound
+            x_opt, f_opt = self._single_optimization(bounds, constraints, acqfs)
+            x_opt_all.append(x_opt)
 
-        return Problem(
-            n_var=domain.inputs.get_dim(),
-            n_obj=len(acqfs),
-            n_constr=0,
-            xl=domain.inputs.get_bounds()[0],
-            xu=domain.inputs.get_bounds()[1],
-            elementwise_evaluation=True,
+            is_last_iter = count >= (candidate_count - 1)
+
+            if not is_last_iter:
+                candidates = torch.cat([x.reshape((1, -1)) for x in x_opt_all], dim=0)
+                x_pending = torch.cat([base_X_pending, candidates], dim=-2) \
+                    if base_X_pending is not None \
+                    else candidates
+
+                acqfs = [
+                    acqf.set_X_pending(x_pending) for acqf in acqfs
+                ]
+
+
+    def _single_optimization(self, bounds: Tensor, constraints: Constraints, acqfs: List[AcquisitionFunction]) -> Tuple[Tensor, Tensor]:
+        """
+        optimization of a single experiment
+
+        Returns
+            x_opt: (d,) Tensor
+            f_opt: (n_y,) Tensor
+        """
+
+        class AcqfOptimizationProblem(PymooProblem):
+            def __init__(self, bounds, acqfs, constraints):
+                self.bofire_acqfs = acqfs
+                self.bofire_constraints = constraints
+
+                super().__init__(
+                    n_var=bounds.shape[1],
+                    n_obj=len(acqfs),
+                    n_ieq_constr=0,  # len(constraints),  # todo: implement constraints
+                    n_eq_constr=0,  # len(constraints),
+                    xl=bounds[0, :].detach().numpy(),
+                    xu=bounds[1, :].detach().numpy(),
+                    elementwise_evaluation=False,
+                )
+
+            def _evaluate(self, x, out, *args, **kwargs):
+                x = torch.from_numpy(x).to(**tkwargs)
+
+                out["F"] = [acqf(x.unsqueeze(1)).detach().numpy() for acqf in self.bofire_acqfs]
+
+
+        problem = AcqfOptimizationProblem(bounds, acqfs, constraints)
+
+        algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
+        algorithm = algorithm_class(
+            pop_size=self.population_size,
+            # todo: other algorithm options, like n_offspring, crossover-functions etc.
         )
 
+        termination_class = pymoo_default_termination.DefaultSingleObjectiveTermination if len(acqfs) == 1\
+            else pymoo_default_termination.DefaultMultiObjectiveTermination
+
+        termination = termination_class(
+            xtol=self.xtol,
+            cvtol=self.cvtol,
+            ftol=self.ftol,
+            n_max_gen=self.n_max_gen,
+            n_max_evals=self.n_max_evals,
+        )
+
+        res = pymoo_minimize(problem,
+                       algorithm,
+                       termination,
+                       save_history=True,
+                       verbose=True)
+
+        x_opt = torch.from_numpy(res.X).to(**tkwargs)
+        f_opt = torch.from_numpy(res.F).to(**tkwargs)
+
+        return x_opt, f_opt
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,
