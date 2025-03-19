@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Annotated, Literal, Optional, Type, Union
+from typing import Annotated, Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, field_validator
 
@@ -195,4 +195,4 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         )
 
 
-AnyAcqfOptimizer = Union[BotorchOptimizer]
+AnyAcqfOptimizer = BotorchOptimizer
