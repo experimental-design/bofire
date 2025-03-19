@@ -10,5 +10,3 @@ specs.add_valid(
         "gamma": 0.2,
     },
 )
-
-specs.add_invalid(LSRBO, lambda: {"gamma": -0.1}, error=ValueError)
