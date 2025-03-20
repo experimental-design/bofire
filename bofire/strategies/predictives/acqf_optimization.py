@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 from copy import deepcopy
 
+import numpy as np
 import pandas as pd
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.optim.initializers import gen_batch_initial_conditions
@@ -788,7 +789,12 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 x = torch.from_numpy(x).to(**tkwargs)
                 x = x.reshape((n_pop, self.q, self.d))
 
-                out["F"] = [acqf(x).detach().numpy() for acqf in self.bofire_acqfs]
+                # acqf = self.bofire_acqfs[0]
+                # non_reduced_acqval = acqf._non_reduced_forward(X=x)
+                # q_reduced = torch.max(non_reduced_acqval, dim=2)[0]
+                # y = torch.mean(q_reduced, dim=0)
+
+                out["F"] = [-acqf(x).unsqueeze(1).detach().numpy().reshape(-1) for acqf in self.bofire_acqfs]
 
 
         problem = AcqfOptimizationProblem(acqfs, constraints, n_var, xl, xu,
