@@ -725,28 +725,34 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         bounds = self.get_bounds(domain, input_preprocessing_specs)
         constraints = domain.constraints.get()  # todo: constraints: Probably exclude linear constr. and use them in repair function
 
-        x_opt_all = []
-        base_X_pending = acqfs[0].X_pending
+        self._single_experiment_optimization(bounds, constraints, acqfs, candidate_count)
 
-        for count in range(candidate_count):
+        # x_opt_all, f_opt_all = [], []
+        # base_X_pending = acqfs[0].X_pending
+        #
+        # for count in range(candidate_count):
+        #
+        #     x_opt, f_opt = self._single_experiment_optimization(bounds, constraints, deepcopy(acqfs))
+        #     x_opt_all.append(x_opt)
+        #     f_opt_all.append(f_opt)
+        #
+        #     is_last_iter = count >= (candidate_count - 1)
+        #
+        #     candidates = torch.cat([x.reshape((1, -1)) for x in x_opt_all], dim=0)
+        #
+        #     if not is_last_iter:
+        #         x_pending = torch.cat([base_X_pending, candidates], dim=-2) \
+        #             if base_X_pending is not None \
+        #             else candidates
+        #
+        #         [acqf.set_X_pending(x_pending) for acqf in acqfs]
+        #
+        # f_opt = torch.cat(f_opt_all).sum()
+        #
+        # return candidates, f_opt
 
-            x_opt, f_opt = self._single_optimization(bounds, constraints, acqfs)
-            x_opt_all.append(x_opt)
 
-            is_last_iter = count >= (candidate_count - 1)
-
-            if not is_last_iter:
-                candidates = torch.cat([x.reshape((1, -1)) for x in x_opt_all], dim=0)
-                x_pending = torch.cat([base_X_pending, candidates], dim=-2) \
-                    if base_X_pending is not None \
-                    else candidates
-
-                acqfs = [
-                    acqf.set_X_pending(x_pending) for acqf in acqfs
-                ]
-
-
-    def _single_optimization(self, bounds: Tensor, constraints: Constraints, acqfs: List[AcquisitionFunction]) -> Tuple[Tensor, Tensor]:
+    def _single_experiment_optimization(self, bounds: Tensor, constraints: Constraints, acqfs: List[AcquisitionFunction], q: int) -> Tuple[Tensor, Tensor]:
         """
         optimization of a single experiment
 
@@ -755,28 +761,38 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             f_opt: (n_y,) Tensor
         """
 
+        n_var = bounds.shape[1] * q
+        xl = bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
+        xu = bounds[1, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
+
+
         class AcqfOptimizationProblem(PymooProblem):
-            def __init__(self, bounds, acqfs, constraints):
+            def __init__(self, acqfs, constraints, n_var, xl, xu, d, q):
                 self.bofire_acqfs = acqfs
                 self.bofire_constraints = constraints
+                self.d = d
+                self.q = q
 
                 super().__init__(
-                    n_var=bounds.shape[1],
+                    n_var=n_var,
                     n_obj=len(acqfs),
                     n_ieq_constr=0,  # len(constraints),  # todo: implement constraints
                     n_eq_constr=0,  # len(constraints),
-                    xl=bounds[0, :].detach().numpy(),
-                    xu=bounds[1, :].detach().numpy(),
+                    xl=xl,
+                    xu=xu,
                     elementwise_evaluation=False,
                 )
 
             def _evaluate(self, x, out, *args, **kwargs):
+                n_pop = x.shape[0]
                 x = torch.from_numpy(x).to(**tkwargs)
+                x = x.reshape((n_pop, self.q, self.d))
 
-                out["F"] = [acqf(x.unsqueeze(1)).detach().numpy() for acqf in self.bofire_acqfs]
+                out["F"] = [acqf(x).detach().numpy() for acqf in self.bofire_acqfs]
 
 
-        problem = AcqfOptimizationProblem(bounds, acqfs, constraints)
+        problem = AcqfOptimizationProblem(acqfs, constraints, n_var, xl, xu,
+                                          d=bounds.shape[1], q=q)
 
         algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
         algorithm = algorithm_class(
@@ -801,7 +817,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                        save_history=True,
                        verbose=True)
 
-        x_opt = torch.from_numpy(res.X).to(**tkwargs)
+        x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
         f_opt = torch.from_numpy(res.F).to(**tkwargs)
 
         return x_opt, f_opt

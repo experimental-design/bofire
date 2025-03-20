@@ -13,7 +13,7 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer, Acqui
 
 @pytest.fixture(
     params=[ # (optimizer data model, params)
-               # ("BotorchOptimizer", {}),
+               ("BotorchOptimizer", {}),
                ("GeneticAlgorithm", {}),
            ])
 def optimizer(request) -> data_models_strategies.AcquisitionOptimizer:
@@ -74,10 +74,15 @@ def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, li
 def test_optimizer(optimization_scope):
     domain, input_preprocessing_specs, experiments, acqfs, optimizer = optimization_scope
 
+    domain.inputs.get_by_key("x_1").bounds = (-2, -1)
+    domain.inputs.get_by_key("x_2").bounds = (1, 2)
+
     candidates, acqf_vals = optimizer.optimize(
-        candidate_count=2,
+        candidate_count=10,
         acqfs=acqfs,
         domain=domain,
         input_preprocessing_specs=input_preprocessing_specs,
         experiments=experiments,
     )
+
+    assert candidates.shape[0] == 10
