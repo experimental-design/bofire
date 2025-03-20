@@ -726,7 +726,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         bounds = self.get_bounds(domain, input_preprocessing_specs)
         constraints = domain.constraints.get()  # todo: constraints: Probably exclude linear constr. and use them in repair function
 
-        self._single_experiment_optimization(bounds, constraints, acqfs, candidate_count)
+        return self._single_shot_optimization(bounds, constraints, acqfs, candidate_count)
 
         # x_opt_all, f_opt_all = [], []
         # base_X_pending = acqfs[0].X_pending
@@ -753,7 +753,8 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         # return candidates, f_opt
 
 
-    def _single_experiment_optimization(self, bounds: Tensor, constraints: Constraints, acqfs: List[AcquisitionFunction], q: int) -> Tuple[Tensor, Tensor]:
+    def _single_shot_optimization(self, bounds: Tensor, constraints: Constraints,
+                                        acqfs: List[AcquisitionFunction], q: int) -> Tuple[Tensor, Tensor]:
         """
         optimization of a single experiment
 
@@ -789,13 +790,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 x = torch.from_numpy(x).to(**tkwargs)
                 x = x.reshape((n_pop, self.q, self.d))
 
-                # acqf = self.bofire_acqfs[0]
-                # non_reduced_acqval = acqf._non_reduced_forward(X=x)
-                # q_reduced = torch.max(non_reduced_acqval, dim=2)[0]
-                # y = torch.mean(q_reduced, dim=0)
-
-                out["F"] = [-acqf(x).unsqueeze(1).detach().numpy().reshape(-1) for acqf in self.bofire_acqfs]
-
+                out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.bofire_acqfs]
 
         problem = AcqfOptimizationProblem(acqfs, constraints, n_var, xl, xu,
                                           d=bounds.shape[1], q=q)
