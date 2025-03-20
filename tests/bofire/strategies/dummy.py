@@ -24,8 +24,7 @@ from bofire.strategies.api import BotorchStrategy, PredictiveStrategy, Strategy
 class DummyStrategyDataModel(data_models.BotorchStrategy):
     type: Literal["DummyStrategyDataModel"] = "DummyStrategyDataModel"  # type: ignore
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearEqualityConstraint,
             LinearInequalityConstraint,
@@ -92,8 +91,7 @@ class DummyPredictiveStrategyDataModel(data_models.PredictiveStrategy):
         "DummyPredictiveStrategyDataModel"
     )
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearEqualityConstraint,
             LinearInequalityConstraint,

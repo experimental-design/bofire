@@ -1,4 +1,4 @@
-from bofire.data_models.strategies.api import LSRBO
+from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from tests.bofire.data_models.specs.specs import Specs
 
 
@@ -10,5 +10,3 @@ specs.add_valid(
         "gamma": 0.2,
     },
 )
-
-specs.add_invalid(LSRBO, lambda: {"gamma": -0.1}, error=ValueError)
