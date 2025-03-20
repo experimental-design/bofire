@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type
 
 import pandas as pd
 import torch
@@ -221,85 +221,6 @@ class AcquisitionOptimizer(ABC):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
 
         return fixed_features
-
-    def _include_exclude_categorical_combinations(
-        self, domain: Domain
-    ) -> Tuple[Union[List[Type[Input]], None], Union[List[Type[Input]], None]]:
-        """Returns include and exclude arguments for get_categorical_combinations methods.
-
-        Returns:
-            Tuple[List[Type[Input]], List[Type[Input]]]: Tuple of include and exclude arguments.
-
-        """
-        return [Input], None
-
-    def get_categorical_combinations(
-        self,
-        domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
-    ) -> List[Dict[int, float]]:
-        """Provides all possible combinations of fixed values
-
-        Returns:
-            list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
-
-        """
-
-        fixed_basis = self.get_fixed_features(
-            domain,
-            input_preprocessing_specs,
-        )
-
-        include, exclude = self._include_exclude_categorical_combinations(domain)
-
-        combos = domain.inputs.get_categorical_combinations(
-            include=include,
-            exclude=exclude,  # type: ignore
-        )
-        # now build up the fixed feature list
-        if len(combos) == 1:
-            return [fixed_basis]
-        features2idx = self._features2idx(domain, input_preprocessing_specs)
-        list_of_fixed_features = []
-
-        for combo in combos:
-            fixed_features = copy.deepcopy(fixed_basis)
-
-            for pair in combo:
-                feat, val = pair
-                feature = domain.inputs.get_by_key(feat)
-                if (
-                    isinstance(feature, CategoricalDescriptorInput)
-                    and input_preprocessing_specs[feat]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ):
-                    index = feature.categories.index(val)
-
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = feature.values[index][j]
-
-                elif isinstance(feature, CategoricalMolecularInput):
-                    preproc = input_preprocessing_specs[feat]
-                    if not isinstance(preproc, MolFeatures):
-                        raise ValueError(
-                            f"preprocessing for {feat} must be of type AnyMolFeatures"
-                        )
-                    transformed = feature.to_descriptor_encoding(
-                        preproc, pd.Series([val])
-                    )
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
-                elif isinstance(feature, CategoricalInput):
-                    # it has to be onehot in this case
-                    transformed = feature.to_onehot_encoding(pd.Series([val]))
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
-
-                elif isinstance(feature, DiscreteInput):
-                    fixed_features[features2idx[feat][0]] = val  # type: ignore
-
-            list_of_fixed_features.append(fixed_features)
-        return list_of_fixed_features
 
     def _optimize_acqf_discrete(
         self,
@@ -706,6 +627,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
     ) -> List[Dict[int, float]]:
+        """Provides all possible combinations of fixed values
+
+        Returns:
+            list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
+        """
         methods = [
             self.descriptor_method,
             self.discrete_method,
@@ -715,11 +641,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if all(m == CategoricalMethodEnum.FREE for m in methods):
             return [{}]
 
-        return super().get_categorical_combinations(domain, input_preprocessing_specs)
+        fixed_basis = self.get_fixed_features(
+            domain,
+            input_preprocessing_specs,
+        )
 
-    def _include_exclude_categorical_combinations(
-        self, domain: Domain
-    ) -> Tuple[Union[List[Type[Input]], None], Union[List[Type[Input]], None]]:
         include = []
         exclude = None
 
@@ -737,7 +663,54 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if not include:
             include = None
 
-        return include, exclude
+        combos = domain.inputs.get_categorical_combinations(
+            include=include if include else Input,
+            exclude=exclude,  # type: ignore
+        )
+        # now build up the fixed feature list
+        if len(combos) == 1:
+            return [fixed_basis]
+        features2idx = self._features2idx(domain, input_preprocessing_specs)
+        list_of_fixed_features = []
+
+        for combo in combos:
+            fixed_features = copy.deepcopy(fixed_basis)
+
+            for pair in combo:
+                feat, val = pair
+                feature = domain.inputs.get_by_key(feat)
+                if (
+                    isinstance(feature, CategoricalDescriptorInput)
+                    and input_preprocessing_specs[feat]
+                    == CategoricalEncodingEnum.DESCRIPTOR
+                ):
+                    index = feature.categories.index(val)
+
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = feature.values[index][j]
+
+                elif isinstance(feature, CategoricalMolecularInput):
+                    preproc = input_preprocessing_specs[feat]
+                    if not isinstance(preproc, MolFeatures):
+                        raise ValueError(
+                            f"preprocessing for {feat} must be of type AnyMolFeatures"
+                        )
+                    transformed = feature.to_descriptor_encoding(
+                        preproc, pd.Series([val])
+                    )
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = transformed.values[0, j]
+                elif isinstance(feature, CategoricalInput):
+                    # it has to be onehot in this case
+                    transformed = feature.to_onehot_encoding(pd.Series([val]))
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = transformed.values[0, j]
+
+                elif isinstance(feature, DiscreteInput):
+                    fixed_features[features2idx[feat][0]] = val  # type: ignore
+
+            list_of_fixed_features.append(fixed_features)
+        return list_of_fixed_features
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
