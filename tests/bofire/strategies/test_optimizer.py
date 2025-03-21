@@ -14,12 +14,11 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer, Acqui
 
 @pytest.fixture(
     params=[ # (optimizer data model, params)
-               # ("BotorchOptimizer", {}),
-               ("GeneticAlgorithm", {}),
+            data_models_strategies.BotorchOptimizer(),
+            data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
            ])
 def optimizer_data_model(request) -> data_models_strategies.AcquisitionOptimizer:
-    optimizer_str, params = request.param
-    return getattr(data_models_strategies, optimizer_str)(**params)
+    return request.param
 
 
 class ContraintCollection:
@@ -75,7 +74,7 @@ class OptimizerBenchmark:
             benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
         ),
         OptimizerBenchmark(
-            benchmarks.Detergent(), 5, data_models_strategies.MultiobjectiveStrategy,
+            benchmarks.Detergent(), 5, data_models_strategies.MoboStrategy,
         ),
         OptimizerBenchmark(
             benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,

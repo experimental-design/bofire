@@ -756,7 +756,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
     def _single_shot_optimization(self, bounds: Tensor, constraints: Constraints,
                                         acqfs: List[AcquisitionFunction], q: int) -> Tuple[Tensor, Tensor]:
         """
-        optimization of a single experiment
+        single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
 
         Returns
             x_opt: (d,) Tensor
