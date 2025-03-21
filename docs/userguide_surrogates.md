@@ -60,6 +60,7 @@ HammingDistanceKernel|Similarity is defined by the [Hamming distance](https://en
 Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has potentially higher similarity. Polynomial kernels are often suitable for high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.
 
 **Note:**
+
 - SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
 - SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.
 - SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
