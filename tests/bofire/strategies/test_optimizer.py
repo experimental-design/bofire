@@ -1,11 +1,12 @@
-from typing import Tuple
+from typing import Tuple, Callable, List, Type
+from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from bofire.benchmarks import api as benchmarks
-from bofire.data_models import api as domain
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies import api as strategies
@@ -20,9 +21,62 @@ def optimizer(request) -> data_models_strategies.AcquisitionOptimizer:
     optimizer_str, params = request.param
     return getattr(data_models_strategies, optimizer_str)(**params)
 
+
+class ContraintCollection:
+    @staticmethod
+    def nonliner_ineq_for_himmelblau(domain: Domain):
+        pass
+
+
+@dataclass
+class OptimizerBenchmark:
+    """ collects information for optimization benchmark, excluding the optimizer"""
+    benchmark: benchmarks.Benchmark
+    n_experiments: int
+    strategy: Type[data_models_strategies.Strategy]
+    additional_constraint_functions: List[Callable[[Domain], Domain]] = field(default_factory=lambda: {})
+    map_conti_inputs_to_discrete: bool = False  # for testing fully categorical problems
+
+    def __call__(self, optimizer: data_models_strategies.AcquisitionOptimizer):
+        """ map data-models of strategy and optimizer, tell the predictive strategy"""
+
+        domain = self.benchmark.domain
+
+        if self.map_conti_inputs_to_discrete:
+            # replace a continuous input with a discrete input of the same name, but only 5 possible values
+            for idx, ft in enumerate(domain.inputs.features):
+                if isinstance(ft, ContinuousInput):
+                    domain.inputs.features[idx] = DiscreteInput(
+                        key=ft.key, values=np.linspace(ft.bounds[0], ft.bounds[1], 5)
+                    )
+
+        for f_constr in self.additional_constraint_functions:
+            domain = f_constr(domain)
+
+        strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
+        strategy = strategies.map(strategy)
+
+        experiments = self.benchmark.f(domain.inputs.sample(self.n_experiments), return_complete=True)
+        strategy.tell(experiments=experiments)
+
+        input_preprocessing_specs = strategy.input_preprocessing_specs
+        acqfs = strategy._get_acqfs(2)
+
+        return acqfs, input_preprocessing_specs, strategy.acqf_optimizer
+
 @pytest.fixture(
     params=[  # (benchmark, n_experiments, params, stategy, map_conti_inputs_to_discrete)
-        ("Himmelblau", 2, {}, "SoboStrategy", False),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(), 5, data_models_strategies.MultiobjectiveStrategy,
+        ),
         ("DTLZ2", 3, {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy", False),
         (
             "Ackley", 10,
@@ -39,40 +93,14 @@ def optimizer(request) -> data_models_strategies.AcquisitionOptimizer:
         ),  # this is for testing the "all-categoric" usecase
     ]
 )
-def benchmark(request, optimizer) -> Tuple[benchmarks.Benchmark, strategies.PredictiveStrategy, int]:
-    benchmark_name, n_experiments, params, strategy, map_conti_inputs_to_discrete = request.param
-    bm = getattr(benchmarks, benchmark_name)(**params)
-
-    if map_conti_inputs_to_discrete:
-        # replace a continuous input with a discrete input of the same name, but only 5 possible values
-        for idx, ft in enumerate(bm.domain.inputs.features):
-            if isinstance(ft, ContinuousInput):
-                bm.domain.inputs.features[idx] = DiscreteInput(
-                    key=ft.key, values=np.linspace(ft.bounds[0], ft.bounds[1], 5)
-                )
-
-    strategy = getattr(data_models_strategies, strategy)(domain=bm.domain, acquisition_optimizer=optimizer)
-    return bm, strategy, n_experiments
+def optimizer_benchmark(request) -> OptimizerBenchmark:
+    return request.param
 
 
-@pytest.fixture()
-def optimization_scope(benchmark) -> Tuple[domain.Domain, dict, pd.DataFrame, list, AcquisitionOptimizer]:
-    """ """
-    benchmark, strategy_data, n_experiments = benchmark
-    domain = benchmark.domain
 
-    strategy = strategies.map(strategy_data)
-
-    experiments = benchmark.f(domain.inputs.sample(n_experiments), return_complete=True)
-    strategy.tell(experiments=experiments)
-    input_preprocessing_specs = strategy.input_preprocessing_specs
-    acqfs = strategy._get_acqfs(2)
-
-    return domain, input_preprocessing_specs, experiments, acqfs, strategy.acqf_optimizer
-
-
-def test_optimizer(optimization_scope):
+def test_optimizer(optimizer_benchmark, optimizer):
     domain, input_preprocessing_specs, experiments, acqfs, optimizer = optimization_scope
+    print(domain.constraints)
 
     candidates, acqf_vals = optimizer.optimize(
         candidate_count=10,
