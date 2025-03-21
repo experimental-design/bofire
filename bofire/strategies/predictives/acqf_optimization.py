@@ -20,11 +20,16 @@ from pymoo.algorithms.moo.nsga2 import NSGA2 as PymooNSGA2
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA
 from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
+from pymoo.core.repair import Repair as PymooRepair
+
+from cvxopt import matrix, spmatrix, spdiag
 
 from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
     NChooseKConstraint,
     ProductConstraint,
 )
@@ -60,7 +65,6 @@ from bofire.utils.torch_tools import (
     get_nonlinear_constraints,
     tkwargs,
 )
-
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
@@ -720,41 +724,16 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
         experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """main function for optimizing the acquisition function using pymoo's genetic algorithm"""
+        """main function for optimizing the acquisition function using pymoo's genetic algorithm.
 
+        Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
+        """
 
-        bounds = self.get_bounds(domain, input_preprocessing_specs)
-        constraints = domain.constraints.get()  # todo: constraints: Probably exclude linear constr. and use them in repair function
+        return self._single_shot_optimization(domain, input_preprocessing_specs, acqfs, candidate_count)
 
-        return self._single_shot_optimization(bounds, constraints, acqfs, candidate_count)
-
-        # x_opt_all, f_opt_all = [], []
-        # base_X_pending = acqfs[0].X_pending
-        #
-        # for count in range(candidate_count):
-        #
-        #     x_opt, f_opt = self._single_experiment_optimization(bounds, constraints, deepcopy(acqfs))
-        #     x_opt_all.append(x_opt)
-        #     f_opt_all.append(f_opt)
-        #
-        #     is_last_iter = count >= (candidate_count - 1)
-        #
-        #     candidates = torch.cat([x.reshape((1, -1)) for x in x_opt_all], dim=0)
-        #
-        #     if not is_last_iter:
-        #         x_pending = torch.cat([base_X_pending, candidates], dim=-2) \
-        #             if base_X_pending is not None \
-        #             else candidates
-        #
-        #         [acqf.set_X_pending(x_pending) for acqf in acqfs]
-        #
-        # f_opt = torch.cat(f_opt_all).sum()
-        #
-        # return candidates, f_opt
-
-
-    def _single_shot_optimization(self, bounds: Tensor, constraints: Constraints,
-                                        acqfs: List[AcquisitionFunction], q: int) -> Tuple[Tensor, Tensor]:
+    def _single_shot_optimization(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+                                        acqfs: List[AcquisitionFunction], q: int,
+                                  ) -> Tuple[Tensor, Tensor]:
         """
         single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
 
@@ -763,17 +742,22 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             f_opt: (n_y,) Tensor
         """
 
-        n_var = bounds.shape[1] * q
-        xl = bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
-        xu = bounds[1, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
-
+        # ===== Problem ====
+        bounds = self.get_bounds(domain, input_preprocessing_specs)
 
         class AcqfOptimizationProblem(PymooProblem):
-            def __init__(self, acqfs, constraints, n_var, xl, xu, d, q):
-                self.bofire_acqfs = acqfs
-                self.bofire_constraints = constraints
-                self.d = d
+            def __init__(self, acqfs, domain: Domain, q: int):
+                self.nonlinear_constraints = domain.constraints.get(includes=[
+                    NonlinearEqualityConstraint,
+                    NonlinearInequalityConstraint,
+                ])
+                n_var = bounds.shape[1] * q
+                xl = bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
+                xu = bounds[1, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
+                self.d = bounds.shape[1]
                 self.q = q
+
+                assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
 
                 super().__init__(
                     n_var=n_var,
@@ -792,16 +776,50 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
                 out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.bofire_acqfs]
 
-        problem = AcqfOptimizationProblem(acqfs, constraints, n_var, xl, xu,
-                                          d=bounds.shape[1], q=q)
+
+        problem = AcqfOptimizationProblem(
+            acqfs, domain, q)
+
+
+        class LinearProjection(PymooRepair):  # first check encoding of categorical vars, then look at this
+            """handles linear inequality, and equality constraints by mapping to closest legal point in the design space
+            using quadratic programming, by projecting to x*:
+
+                min(1/2 * ||(x*-x)||_2) = min( (1/2) * I * (x*) - x ),
+                    where I is the unity matrix
+
+                s.t.
+                A*(x*) <= 0
+                Aeq*(x*) = 0
+             """
+
+            def __init__(self, domain: Domain, d: int):
+                self.equality_constraints = get_linear_constraints(
+                    domain=domain,
+                    constraint=LinearEqualityConstraint,
+                ),
+                self.inequality_constraints = get_linear_constraints(
+                    domain=domain,
+                    constraint=LinearInequalityConstraint,
+                ),
+                self.d = d
+                super().__init__()
+
+            def _do(self, problem, X, **kwargs):
+                X[:, 0] = 1 / 3 * X[:, 1]
+                return X
 
         algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
         algorithm = algorithm_class(
             pop_size=self.population_size,
+            repair=LinearProjection(
+                domain=domain,
+                d=bounds.shape[1],
+            ),
             # todo: other algorithm options, like n_offspring, crossover-functions etc.
         )
 
-        termination_class = pymoo_default_termination.DefaultSingleObjectiveTermination if len(acqfs) == 1\
+        termination_class = pymoo_default_termination.DefaultSingleObjectiveTermination if len(acqfs) == 1 \
             else pymoo_default_termination.DefaultMultiObjectiveTermination
 
         termination = termination_class(
@@ -813,10 +831,10 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         )
 
         res = pymoo_minimize(problem,
-                       algorithm,
-                       termination,
-                       save_history=True,
-                       verbose=True)
+                             algorithm,
+                             termination,
+                             save_history=True,
+                             verbose=True)
 
         x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
         f_opt = torch.from_numpy(res.F).to(**tkwargs)

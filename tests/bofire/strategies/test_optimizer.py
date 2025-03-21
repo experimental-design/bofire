@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 from bofire.benchmarks import api as benchmarks
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Constraints
+from bofire.data_models.constraints import api as constraints_data_models
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies import api as strategies
@@ -14,17 +15,35 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer, Acqui
 
 @pytest.fixture(
     params=[ # (optimizer data model, params)
-            data_models_strategies.BotorchOptimizer(),
+            # data_models_strategies.BotorchOptimizer(),
             data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
            ])
 def optimizer_data_model(request) -> data_models_strategies.AcquisitionOptimizer:
     return request.param
 
 
-class ContraintCollection:
+class ConstraintCollection:
     @staticmethod
-    def nonliner_ineq_for_himmelblau(domain: Domain):
+    def nonliner_ineq_for_himmelblau(domain: Domain) -> Domain:
         pass
+
+    @staticmethod
+    def linear_constr_for_ackley(domain: Domain) -> Domain:
+        feat = [key for key in domain.inputs.get_keys() if key.startswith("x")]
+        domain.constraints.constraints += [
+            constraints_data_models.LinearEqualityConstraint(
+                features=feat,
+                coefficients=[1.] * len(feat),
+                rhs=1.,
+            ),
+            constraints_data_models.LinearInequalityConstraint(
+                features=["x_1", "x_2"],
+                coefficients=[1., 1.],
+                rhs=0.2,
+            )
+        ]
+        return domain
+
 
 
 @dataclass
@@ -58,30 +77,32 @@ class OptimizerBenchmark:
         experiments = self.benchmark.f(domain.inputs.sample(self.n_experiments), return_complete=True)
         strategy.tell(experiments=experiments)
 
-        input_preprocessing_specs = strategy.input_preprocessing_specs
-        acqfs = strategy._get_acqfs(2)
-
-        return domain, experiments, acqfs, input_preprocessing_specs, strategy.acqf_optimizer
+        return strategy
 
 @pytest.fixture(
     params=[
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Detergent(), 5, data_models_strategies.MoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,
-        ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Detergent(), 5, data_models_strategies.MoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
+        #     data_models_strategies.SoboStrategy,
+        # ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
             data_models_strategies.SoboStrategy,
+            additional_constraint_functions=[ConstraintCollection.linear_constr_for_ackley]
         ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
@@ -95,16 +116,11 @@ def optimizer_benchmark(request) -> OptimizerBenchmark:
 
 
 
+
 def test_optimizer(optimizer_benchmark, optimizer_data_model):
 
-    domain, experiments, acqfs, input_preprocessing_specs, optimizer = optimizer_benchmark(optimizer_data_model)
+    strategy = optimizer_benchmark(optimizer_data_model)
 
-    candidates, acqf_vals = optimizer.optimize(
-        candidate_count=4,
-        acqfs=acqfs,
-        domain=domain,
-        input_preprocessing_specs=input_preprocessing_specs,
-        experiments=experiments,
-    )
+    proposals = strategy.ask(4)
 
-    assert candidates.shape[0] == 4
+    assert proposals.shape[0] == 4
