@@ -17,7 +17,7 @@ from bofire.strategies.predictives.acqf_optimization import get_optimizer, Acqui
                # ("BotorchOptimizer", {}),
                ("GeneticAlgorithm", {}),
            ])
-def optimizer(request) -> data_models_strategies.AcquisitionOptimizer:
+def optimizer_data_model(request) -> data_models_strategies.AcquisitionOptimizer:
     optimizer_str, params = request.param
     return getattr(data_models_strategies, optimizer_str)(**params)
 
@@ -62,10 +62,10 @@ class OptimizerBenchmark:
         input_preprocessing_specs = strategy.input_preprocessing_specs
         acqfs = strategy._get_acqfs(2)
 
-        return acqfs, input_preprocessing_specs, strategy.acqf_optimizer
+        return domain, experiments, acqfs, input_preprocessing_specs, strategy.acqf_optimizer
 
 @pytest.fixture(
-    params=[  # (benchmark, n_experiments, params, stategy, map_conti_inputs_to_discrete)
+    params=[
         OptimizerBenchmark(
             benchmarks.Himmelblau(),
             2,
@@ -77,19 +77,17 @@ class OptimizerBenchmark:
         OptimizerBenchmark(
             benchmarks.Detergent(), 5, data_models_strategies.MultiobjectiveStrategy,
         ),
-        ("DTLZ2", 3, {"dim": 2, "num_objectives": 2}, "AdditiveSoboStrategy", False),
-        (
-            "Ackley", 10,
-            {"num_categories": 3, "categorical": True, "dim": 4},
-            "SoboStrategy",
-            False,
+        OptimizerBenchmark(
+            benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,
         ),
-        # ("Detergent", {}, "SoboStrategy", False),
-        (
-            "Ackley", 10,
-            {"num_categories": 3, "categorical": True, "dim": 3},
-            "SoboStrategy",
-            True,
+        OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
+            data_models_strategies.SoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
+            data_models_strategies.SoboStrategy,
+            map_conti_inputs_to_discrete=True,
         ),  # this is for testing the "all-categoric" usecase
     ]
 )
@@ -98,16 +96,16 @@ def optimizer_benchmark(request) -> OptimizerBenchmark:
 
 
 
-def test_optimizer(optimizer_benchmark, optimizer):
-    domain, input_preprocessing_specs, experiments, acqfs, optimizer = optimization_scope
-    print(domain.constraints)
+def test_optimizer(optimizer_benchmark, optimizer_data_model):
+
+    domain, experiments, acqfs, input_preprocessing_specs, optimizer = optimizer_benchmark(optimizer_data_model)
 
     candidates, acqf_vals = optimizer.optimize(
-        candidate_count=10,
+        candidate_count=4,
         acqfs=acqfs,
         domain=domain,
         input_preprocessing_specs=input_preprocessing_specs,
         experiments=experiments,
     )
 
-    assert candidates.shape[0] == 10
+    assert candidates.shape[0] == 4
