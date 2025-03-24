@@ -22,7 +22,7 @@ from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
 from pymoo.core.repair import Repair as PymooRepair
 
-from cvxopt import matrix, spmatrix, spdiag
+import cvxopt
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -747,17 +747,17 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
         class AcqfOptimizationProblem(PymooProblem):
             def __init__(self, acqfs, domain: Domain, q: int):
-                self.nonlinear_constraints = domain.constraints.get(includes=[
+                self.constraints = domain.constraints.get(includes=[
                     NonlinearEqualityConstraint,
                     NonlinearInequalityConstraint,
-                ])
+                ])  # linear constraints handled in repair function
                 n_var = bounds.shape[1] * q
                 xl = bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
                 xu = bounds[1, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
                 self.d = bounds.shape[1]
                 self.q = q
 
-                assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
+                #assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
 
                 super().__init__(
                     n_var=n_var,
@@ -781,29 +781,93 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             acqfs, domain, q)
 
 
-        class LinearProjection(PymooRepair):  # first check encoding of categorical vars, then look at this
-            """handles linear inequality, and equality constraints by mapping to closest legal point in the design space
-            using quadratic programming, by projecting to x*:
+        class LinearProjection(PymooRepair):
+            """handles linear equality constraints by mapping to closest legal point in the design space
+            using quadratic programming, by projecting to x':
 
-                min(1/2 * ||(x*-x)||_2) = min( (1/2) * I * (x*) - x ),
-                    where I is the unity matrix
+                min(1/2 * ||(x'-x)||_2)
 
                 s.t.
-                A*(x*) <= 0
-                Aeq*(x*) = 0
+                A*x' = 0
+                G*x' <= 0
+
+            we will transform the Problem to the type:
+
+                min( 1/2 * x'^T * P * x' + q*x')
+
+                s.t.
+                    ...
+
+
+            in order to solve this with the performant cvxopt.qp solver
+            (https://cvxopt.org/userguide/coneprog.html#quadratic-programming)
+
+            For performance, the problem is solved for the complete generation X = [x1 ; x2; ...]
+            where x1, x2, ... are the vectors of each individual in the population
+
              """
 
-            def __init__(self, domain: Domain, d: int):
-                self.equality_constraints = get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                self.inequality_constraints = get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearInequalityConstraint,
-                ),
+            def __init__(self, domain: Domain, d: int, n_pop: int):
                 self.d = d
-                super().__init__()
+                self.n_pop = n_pop
+
+                def _eq_constr_to_list(eq_constr_) -> Tuple[List[int], List[float], float]:
+                    """decode "get_linear_constraints" output: x-index, coefficients, and b"""
+                    index: List[int] = [int(x) for x in (eq_constr_[0].detach().numpy())]
+                    coeffs: List[float] = list(eq_constr_[1].detach().numpy())
+                    b: float = eq_constr_[2]
+                    return index, coeffs, b
+                eq_constr = [_eq_constr_to_list(eq_constr_) for eq_constr_ in\
+                             get_linear_constraints(domain, LinearEqualityConstraint)]
+                ineq_constr = [_eq_constr_to_list(eq_constr_) for eq_constr_ in \
+                             get_linear_constraints(domain, LinearInequalityConstraint)]
+
+                def repeated_blkdiag(m: cvxopt.matrix, N: int) -> cvxopt.spmatrix:
+                    """ construct large matrix with block-diagolal matrix in the center of arbitrary size"""
+                    m_zeros = cvxopt.spmatrix([], [], [], m.size)
+                    return cvxopt.sparse([[m_zeros] * i + [m] + [m_zeros] * (N - i - 1) for i in range(N)])
+
+                def vstack(m: List[cvxopt.matrix]) -> cvxopt.matrix:
+                    return cvxopt.matrix([[mi] for mi in m])
+
+                def _build_A_b_matrices_for_single_constr(index, coeffs, b)\
+                        -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+                    """ a single-line constraint matrix of the form A*x = b or A*x <= b"""
+                    A = cvxopt.spmatrix(coeffs, [0] * len(index), index, (1, self.d))
+                    b = cvxopt.matrix(b)
+                    return A, b
+
+                def _build_A_b_matrices_for_n_points(constr: List[tuple]) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+                    """build big sparse matrix for a constraint A*x = b, or A*x <= b"""
+
+                    # vertically combine all linear equality constr.
+                    Ab_single_eq = [_build_A_b_matrices_for_single_constr(*constr_) for constr_ in constr]
+                    A = vstack([Ab[0] for Ab in Ab_single_eq])
+                    b = vstack([Ab[1] for Ab in Ab_single_eq])
+                    # repeat for each x in the population
+                    A = repeated_blkdiag(A, self.n_pop)
+                    b = cvxopt.matrix([b] * self.n_pop)
+                    return A, b
+
+                def _build_G_h_for_box_bounds() -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+                    """ build linear inequality matrices, such that lb<=x<=ub -> G*x<=h """
+                    G_bounds_ = cvxopt.sparse([
+                        cvxopt.spmatrix(1, range(self.d), range(self.d)),     # unity matrix
+                        cvxopt.spmatrix(-1, range(self.d), range(self.d)),    # negative unity matrix
+                    ])
+                    lb, ub = (bounds[i, :].detach().numpy() for i in range(2))
+                    h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), lb.reshape(-1))))
+                    G = repeated_blkdiag(G_bounds_, self.n_pop)
+                    h = cvxopt.matrix([h_bounds_] * self.n_pop)
+                    return G, h
+
+                # Prepare Matrices for solving the estimation problem
+                self.P = cvxopt.spmatrix(1.0, range(self.d * self.n_pop), range(self.d * self.n_pop))  # the unit-matrix
+
+                self.A, self.b = _build_A_b_matrices_for_n_points(eq_constr)
+                G_bounds, h_bounds = _build_G_h_for_box_bounds()
+                G, h = _build_A_b_matrices_for_n_points(ineq_constr)
+                self.G, self.h = cvxopt.sparse([G_bounds, G]), cvxopt.sparse([h_bounds, h])
 
             def _do(self, problem, X, **kwargs):
                 X[:, 0] = 1 / 3 * X[:, 1]
@@ -815,6 +879,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             repair=LinearProjection(
                 domain=domain,
                 d=bounds.shape[1],
+                n_pop=self.population_size,
             ),
             # todo: other algorithm options, like n_offspring, crossover-functions etc.
         )
