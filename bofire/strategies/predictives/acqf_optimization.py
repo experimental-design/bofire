@@ -803,13 +803,15 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             (https://cvxopt.org/userguide/coneprog.html#quadratic-programming)
 
             For performance, the problem is solved for the complete generation X = [x1 ; x2; ...]
-            where x1, x2, ... are the vectors of each individual in the population
+            where x1, x2, ... are the vectors of each individual in the population and q-opt. points
 
              """
 
-            def __init__(self, domain: Domain, d: int, n_pop: int):
+            def __init__(self, domain: Domain, d: int, n_pop: int, q: int):
                 self.d = d
                 self.n_pop = n_pop
+                self.q = q
+                n_x_points = n_pop * q
 
                 def _eq_constr_to_list(eq_constr_) -> Tuple[List[int], List[float], float]:
                     """decode "get_linear_constraints" output: x-index, coefficients, and b"""
@@ -845,8 +847,8 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                     A = vstack([Ab[0] for Ab in Ab_single_eq])
                     b = vstack([Ab[1] for Ab in Ab_single_eq])
                     # repeat for each x in the population
-                    A = repeated_blkdiag(A, self.n_pop)
-                    b = cvxopt.matrix([b] * self.n_pop)
+                    A = repeated_blkdiag(A, n_x_points)
+                    b = cvxopt.matrix([b] * n_x_points)
                     return A, b
 
                 def _build_G_h_for_box_bounds() -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
@@ -857,20 +859,30 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                     ])
                     lb, ub = (bounds[i, :].detach().numpy() for i in range(2))
                     h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), lb.reshape(-1))))
-                    G = repeated_blkdiag(G_bounds_, self.n_pop)
-                    h = cvxopt.matrix([h_bounds_] * self.n_pop)
+                    G = repeated_blkdiag(G_bounds_, n_x_points)
+                    h = cvxopt.matrix([h_bounds_] * n_x_points)
                     return G, h
 
                 # Prepare Matrices for solving the estimation problem
-                self.P = cvxopt.spmatrix(1.0, range(self.d * self.n_pop), range(self.d * self.n_pop))  # the unit-matrix
+                self.P = cvxopt.spmatrix(1.0, range(self.d * n_x_points), range(self.d * n_x_points))  # the unit-matrix
 
                 self.A, self.b = _build_A_b_matrices_for_n_points(eq_constr)
                 G_bounds, h_bounds = _build_G_h_for_box_bounds()
                 G, h = _build_A_b_matrices_for_n_points(ineq_constr)
-                self.G, self.h = cvxopt.sparse([G_bounds, G]), cvxopt.sparse([h_bounds, h])
+                self.G, self.h = cvxopt.sparse([G_bounds, G]), cvxopt.matrix([h_bounds, h])
+
+
+                super().__init__()
 
             def _do(self, problem, X, **kwargs):
-                X[:, 0] = 1 / 3 * X[:, 1]
+
+                x = X.reshape(-1)
+                q = cvxopt.matrix(-x)
+
+                sol = cvxopt.solvers.qp(self.P, q, G=self.G, h=self.h, A=self.A, b=self.b, initvals=cvxopt.matrix(x))
+                x_corrected = np.array(sol["x"])
+                X_corrected = x_corrected.reshape(X.shape)
+
                 return X
 
         algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
@@ -880,6 +892,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 domain=domain,
                 d=bounds.shape[1],
                 n_pop=self.population_size,
+                q=q,
             ),
             # todo: other algorithm options, like n_offspring, crossover-functions etc.
         )
