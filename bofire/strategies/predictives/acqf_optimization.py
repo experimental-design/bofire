@@ -883,7 +883,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 x_corrected = np.array(sol["x"])
                 X_corrected = x_corrected.reshape(X.shape)
 
-                return X
+                return X_corrected
 
         algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
         algorithm = algorithm_class(
