@@ -462,14 +462,31 @@ def test_functional_constraint():
         ipopt_options={"maxiter": 500},
     )
     strategy = DoEStrategy(data_model=data_model)
-    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)
-    doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
-    doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
-    doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]
-    doe["T_conc"] = doe["T"] / (doe["T"] + doe["W_T"])
 
-    assert np.allclose(doe["T_conc"], 0.03)
-    assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
+    # try three times to avoid random failing of this test (it passes most of the time)
+    test_passed = False
+    for _ in range(3):
+        try:
+            doe = strategy.ask(
+                candidate_count=n_experiments, raise_validation_error=True
+            )
+            doe["SC"] = calc_solid_content(
+                *[doe[col] for col in ["A", "B", "T", "W", "W_T"]]
+            )
+            doe["VC"] = calc_volume_content(
+                *[doe[col] for col in ["A", "B", "T", "W", "W_T"]]
+            )
+            doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]
+            doe["T_conc"] = doe["T"] / (doe["T"] + doe["W_T"])
+
+            assert np.allclose(doe["T_conc"], 0.03)
+            assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
+            test_passed = True
+            break
+        except ValueError as e:
+            warnings.warn(f"Validation error: {e}")
+
+    assert test_passed
 
 
 if __name__ == "__main__":
