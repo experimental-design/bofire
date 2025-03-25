@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#installation-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -340,38 +340,26 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#domain-and-optimization-algorithms" class="md-nav__link">
+  <a href="#installation-from-python-package-index-pypi" class="md-nav__link">
     <span class="md-ellipsis">
-      Domain and Optimization Algorithms
+      Installation from Python Package Index (PyPI)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation from Python Package Index (PyPI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#additional-optional-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Additional optional dependencies
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#design-of-experiments" class="md-nav__link">
-    <span class="md-ellipsis">
-      Design of Experiments
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#just-domain" class="md-nav__link">
-    <span class="md-ellipsis">
-      Just Domain
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cheminformatics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Cheminformatics
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -715,34 +703,49 @@
   
 
 
-<h1 id="installation">Installation</h1>
-<p>In BoFire we have several optional dependencies.</p>
-<h3 id="domain-and-optimization-algorithms">Domain and Optimization Algorithms</h3>
-<p>To install BoFire with optimization tools you can use
-<div class="highlight"><pre><span></span><code>pip install bofire[optimization]
+<h1 id="installation-guide">Installation Guide</h1>
+<h2 id="installation-from-python-package-index-pypi">Installation from Python Package Index (PyPI)</h2>
+<p>BoFire can be installed to your Python environment by using <code>pip</code>. It can be done by executing</p>
+<div class="highlight"><pre><span></span><code>pip install bofire
 </code></pre></div>
-This will also install <a href="https://botorch.org/">BoTorch</a> that depends on <a href="https://pytorch.org/">PyTorch</a>.</p>
-<h3 id="design-of-experiments">Design of Experiments</h3>
-<p>BoFire has functionality to create D-optimal experimental designs via the <code>doe</code> module. This module is depends on
-<a href="https://cyipopt.readthedocs.io/en/stable/">Cyipopt</a>. A comfortable way to install Cyipopt and the dependencies is via
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The command from above will install a minimal BoFire version, consisting only of the <a href="../data_models_functionals/">data models</a>. To install BoFire's including its core optimization features, execute:
+<div class="highlight"><pre><span></span><code>pip install &#39;bofire[optimization]&#39;
+</code></pre></div></p>
+</div>
+<h3 id="additional-optional-dependencies">Additional optional dependencies</h3>
+<p>In BoFire, there are several optional dependencies that can be selected during installation via pip, like</p>
+<div class="highlight"><pre><span></span><code>pip install &#39;bofire[optimization, cheminfo] # will install bofire with additional dependencies `optimization` and `cheminfo`
+</code></pre></div>
+<p>To get the most our of BoFire, it is recommended to install at least
+<div class="highlight"><pre><span></span><code>pip install &#39;bofire[optimization]&#39;
+</code></pre></div></p>
+<p>The available dependencies are:</p>
+<ul>
+<li><code>optimization</code>: Core Bayesian optimization features.</li>
+<li><code>cheminfo</code>: Cheminformatics utilities.</li>
+<li><code>entmoot</code>: <a href="https://github.com/cog-imperial/entmoot">Entmoot functionality.</a></li>
+<li><code>xgb</code>: XGboost surrogates.</li>
+<li><code>tests</code>: Required for running the test suite.</li>
+<li><code>docs</code>: Required for building the documentation.</li>
+<li><code>tutorials</code>: Required for running the <a href="https://github.com/experimental-design/bofire/tree/main/tutorials">tutorials.</a></li>
+<li><code>all</code>: Install all possible options (except DoE)</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>BoFire has the functionalities for creating D, E, A, G, K and I-optimal experimental designs via the <code>DoEStrategy</code>. This feature depends on <a href="https://cyipopt.readthedocs.io/en/stable/">cyipopt</a> which is a python interface to <code>ipopt</code>. Unfortunately, it is not possible to install <code>cyipopt</code> including <code>ipopt</code> via pip. A solution is to install <code>cyipopt</code> and its dependencies via conda:</p>
 <div class="highlight"><pre><span></span><code>conda install -c conda-forge cyipopt
 </code></pre></div>
-You have to install Cyipopt manually.</p>
-<h3 id="just-domain">Just Domain</h3>
-<p>If you just want a data structure that represents the domain of an optimization problem you can
-<div class="highlight"><pre><span></span><code>pip install bofire
-</code></pre></div></p>
-<h3 id="cheminformatics">Cheminformatics</h3>
-<p>Some features related to molecules and their representation depend on <a href="https://www.rdkit.org/">Rdkit</a>.
-<div class="highlight"><pre><span></span><code>pip install bofire[optimization,cheminfo]
-</code></pre></div></p>
-<h3 id="development-installation">Development Installation</h3>
-<p>If you want to <a href="../CONTRIBUTING/">contribute</a> to BoFire, you might want to install in editable mode including the test dependencies.
-After cloning the repository via
+<p>We are working on a solution that makes BoFire's model based DoE functionalities also accessible to users which do not have <code>cyipopt</code> available.</p>
+</div>
+<h2 id="development-installation">Development Installation</h2>
+<p>If you want to <a href="../CONTRIBUTING/">contribute</a> to BoFire, it is recommended to install the repository in editable mode (<code>-e</code>).</p>
+<p>After cloning the repository via
 <div class="highlight"><pre><span></span><code>git clone https://github.com/experimental-design/bofire.git
 </code></pre></div>
-and cd <code>bofire</code>, you can proceed with
-<div class="highlight"><pre><span></span><code>pip install -e .[optimization,cheminfo,docs,tests]
+and navigating to the repositories root folder (<code>cd bofire</code>), you can proceed with
+<div class="highlight"><pre><span></span><code>pip install -e &quot;.[optimization, tests]&quot; # include optional dependencies as you wish
 </code></pre></div></p>
 
 
