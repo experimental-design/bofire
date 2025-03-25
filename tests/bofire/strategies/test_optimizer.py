@@ -139,9 +139,28 @@ def test_linear_projection_repair_function():
     strategy = optimizer_benchmark(optimizer_data_model)
 
     # test the repair function, population size 100, and q=3. Dimension of the problem is 5
-    sample_population = np.random.uniform(-30, 30, (100, 5*3))
     problem, algorithm, termination = strategy.acqf_optimizer._get_problem_and_algorithm(
         strategy.domain, strategy.input_preprocessing_specs, strategy._get_acqfs(3), q=3,
     )
+    repair_function = algorithm.repair._do
 
-    strategy.ask(3)
+    sample_population = np.random.uniform(-30, 30, (100, 5*3))
+    sample_population_repaired = repair_function(problem, sample_population)
+
+    assert sample_population_repaired.shape == sample_population.shape
+
+    def get_x12_points_from_population(X: np.ndarray) -> np.ndarray:
+        dims = [np.array([i*5, 1 + i*5]) for i in range(3)]
+        return np.vstack([X[:, dim] for dim in dims])
+
+    Xpop = get_x12_points_from_population(sample_population)
+    Xpop_c = get_x12_points_from_population(sample_population_repaired)
+
+    assert np.abs(Xpop_c.sum(axis=1)).mean() < 10.
+
+    import matplotlib.pyplot as plt
+    plt.figure()
+    for i in range(Xpop.shape[0]):
+        plt.plot((Xpop[i, 0], Xpop_c[i, 0]), (Xpop[i, 1], Xpop_c[i, 1]), '-', c='grey', lw=.3)
+    plt.scatter(Xpop_c[:, 0], Xpop_c[:, 1], color="red", marker="x")
+    plt.show()
