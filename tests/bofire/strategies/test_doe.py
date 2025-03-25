@@ -463,7 +463,7 @@ def test_functional_constraint():
     )
     strategy = DoEStrategy(data_model=data_model)
 
-    # either get validation error or check asserts
+    test_passed = False
     for _ in range(3):
         try:
             doe = strategy.ask(
@@ -480,9 +480,12 @@ def test_functional_constraint():
 
             assert np.allclose(doe["T_conc"], 0.03)
             assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
+            test_passed = True
             break
         except ValueError as e:
             print(f"Validation error: {e}")
+
+    assert test_passed
 
 
 if __name__ == "__main__":
