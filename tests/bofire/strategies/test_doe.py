@@ -463,6 +463,7 @@ def test_functional_constraint():
     )
     strategy = DoEStrategy(data_model=data_model)
 
+    # try three times to avoid random failing of this test (it passes most of the time)
     test_passed = False
     for _ in range(3):
         try:
@@ -483,7 +484,7 @@ def test_functional_constraint():
             test_passed = True
             break
         except ValueError as e:
-            print(f"Validation error: {e}")
+            warnings.warn(f"Validation error: {e}")
 
     assert test_passed
 
