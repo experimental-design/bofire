@@ -1,7 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
-from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -15,14 +14,11 @@ from botorch.optim.optimize import (
 )
 import torch
 from torch import Tensor
-from pymoo.core.problem import Problem as PymooProblem
+
 from pymoo.algorithms.moo.nsga2 import NSGA2 as PymooNSGA2
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA
 from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
-from pymoo.core.repair import Repair as PymooRepair
-
-import cvxopt
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -65,6 +61,7 @@ from bofire.utils.torch_tools import (
     get_nonlinear_constraints,
     tkwargs,
 )
+from bofire.strategies.predictives.acqf_optimization_utils import GA_utils
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
@@ -741,161 +738,53 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             x_opt: (d,) Tensor
             f_opt: (n_y,) Tensor
         """
+        problem, algorithm, termination = self._get_problem_and_algorithm(domain, input_preprocessing_specs, acqfs, q)
 
-        # ===== Problem ====
+        res = pymoo_minimize(problem,
+                             algorithm,
+                             termination,
+                             save_history=True,
+                             verbose=True)
+
+        x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
+        f_opt = torch.from_numpy(res.F).to(**tkwargs)
+
+        return x_opt, f_opt
+
+    def _get_problem_and_algorithm(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
+                                        acqfs: List[AcquisitionFunction], q: int):
+
         bounds = self.get_bounds(domain, input_preprocessing_specs)
 
-        class AcqfOptimizationProblem(PymooProblem):
-            def __init__(self, acqfs, domain: Domain, q: int):
-                self.constraints = domain.constraints.get(includes=[
-                    NonlinearEqualityConstraint,
-                    NonlinearInequalityConstraint,
-                ])  # linear constraints handled in repair function
-                n_var = bounds.shape[1] * q
-                xl = bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
-                xu = bounds[1, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
-                self.d = bounds.shape[1]
-                self.q = q
+        # ===== Problem ====
+        problem = GA_utils.AcqfOptimizationProblem(
+            acqfs, domain, bounds, q, constraints_include=[
+                LinearInequalityConstraint,
+                NonlinearInequalityConstraint,
+                NonlinearEqualityConstraint,
+            ])
 
-                #assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
-
-                super().__init__(
-                    n_var=n_var,
-                    n_obj=len(acqfs),
-                    n_ieq_constr=0,  # len(constraints),  # todo: implement constraints
-                    n_eq_constr=0,  # len(constraints),
-                    xl=xl,
-                    xu=xu,
-                    elementwise_evaluation=False,
-                )
-
-            def _evaluate(self, x, out, *args, **kwargs):
-                n_pop = x.shape[0]
-                x = torch.from_numpy(x).to(**tkwargs)
-                x = x.reshape((n_pop, self.q, self.d))
-
-                out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.bofire_acqfs]
-
-
-        problem = AcqfOptimizationProblem(
-            acqfs, domain, q)
-
-
-        class LinearProjection(PymooRepair):
-            """handles linear equality constraints by mapping to closest legal point in the design space
-            using quadratic programming, by projecting to x':
-
-                min(1/2 * ||(x'-x)||_2)
-
-                s.t.
-                A*x' = 0
-                G*x' <= 0
-
-            we will transform the Problem to the type:
-
-                min( 1/2 * x'^T * P * x' + q*x')
-
-                s.t.
-                    ...
-
-
-            in order to solve this with the performant cvxopt.qp solver
-            (https://cvxopt.org/userguide/coneprog.html#quadratic-programming)
-
-            For performance, the problem is solved for the complete generation X = [x1 ; x2; ...]
-            where x1, x2, ... are the vectors of each individual in the population and q-opt. points
-
-             """
-
-            def __init__(self, domain: Domain, d: int, n_pop: int, q: int):
-                self.d = d
-                self.n_pop = n_pop
-                self.q = q
-                n_x_points = n_pop * q
-
-                def _eq_constr_to_list(eq_constr_) -> Tuple[List[int], List[float], float]:
-                    """decode "get_linear_constraints" output: x-index, coefficients, and b"""
-                    index: List[int] = [int(x) for x in (eq_constr_[0].detach().numpy())]
-                    coeffs: List[float] = list(eq_constr_[1].detach().numpy())
-                    b: float = eq_constr_[2]
-                    return index, coeffs, b
-                eq_constr = [_eq_constr_to_list(eq_constr_) for eq_constr_ in\
-                             get_linear_constraints(domain, LinearEqualityConstraint)]
-                ineq_constr = [_eq_constr_to_list(eq_constr_) for eq_constr_ in \
-                             get_linear_constraints(domain, LinearInequalityConstraint)]
-
-                def repeated_blkdiag(m: cvxopt.matrix, N: int) -> cvxopt.spmatrix:
-                    """ construct large matrix with block-diagolal matrix in the center of arbitrary size"""
-                    m_zeros = cvxopt.spmatrix([], [], [], m.size)
-                    return cvxopt.sparse([[m_zeros] * i + [m] + [m_zeros] * (N - i - 1) for i in range(N)])
-
-                def vstack(m: List[cvxopt.matrix]) -> cvxopt.matrix:
-                    return cvxopt.matrix([[mi] for mi in m])
-
-                def _build_A_b_matrices_for_single_constr(index, coeffs, b)\
-                        -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
-                    """ a single-line constraint matrix of the form A*x = b or A*x <= b"""
-                    A = cvxopt.spmatrix(coeffs, [0] * len(index), index, (1, self.d))
-                    b = cvxopt.matrix(b)
-                    return A, b
-
-                def _build_A_b_matrices_for_n_points(constr: List[tuple]) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
-                    """build big sparse matrix for a constraint A*x = b, or A*x <= b"""
-
-                    # vertically combine all linear equality constr.
-                    Ab_single_eq = [_build_A_b_matrices_for_single_constr(*constr_) for constr_ in constr]
-                    A = vstack([Ab[0] for Ab in Ab_single_eq])
-                    b = vstack([Ab[1] for Ab in Ab_single_eq])
-                    # repeat for each x in the population
-                    A = repeated_blkdiag(A, n_x_points)
-                    b = cvxopt.matrix([b] * n_x_points)
-                    return A, b
-
-                def _build_G_h_for_box_bounds() -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
-                    """ build linear inequality matrices, such that lb<=x<=ub -> G*x<=h """
-                    G_bounds_ = cvxopt.sparse([
-                        cvxopt.spmatrix(1, range(self.d), range(self.d)),     # unity matrix
-                        cvxopt.spmatrix(-1, range(self.d), range(self.d)),    # negative unity matrix
-                    ])
-                    lb, ub = (bounds[i, :].detach().numpy() for i in range(2))
-                    h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), lb.reshape(-1))))
-                    G = repeated_blkdiag(G_bounds_, n_x_points)
-                    h = cvxopt.matrix([h_bounds_] * n_x_points)
-                    return G, h
-
-                # Prepare Matrices for solving the estimation problem
-                self.P = cvxopt.spmatrix(1.0, range(self.d * n_x_points), range(self.d * n_x_points))  # the unit-matrix
-
-                self.A, self.b = _build_A_b_matrices_for_n_points(eq_constr)
-                G_bounds, h_bounds = _build_G_h_for_box_bounds()
-                G, h = _build_A_b_matrices_for_n_points(ineq_constr)
-                self.G, self.h = cvxopt.sparse([G_bounds, G]), cvxopt.matrix([h_bounds, h])
-
-
-                super().__init__()
-
-            def _do(self, problem, X, **kwargs):
-
-                x = X.reshape(-1)
-                q = cvxopt.matrix(-x)
-
-                sol = cvxopt.solvers.qp(self.P, q, G=self.G, h=self.h, A=self.A, b=self.b, initvals=cvxopt.matrix(x))
-                x_corrected = np.array(sol["x"])
-                X_corrected = x_corrected.reshape(X.shape)
-
-                return X_corrected
-
+        # ==== Algorithm ====
         algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
-        algorithm = algorithm_class(
-            pop_size=self.population_size,
-            repair=LinearProjection(
+        algorithm_args = {
+            "pop_size": self.population_size,
+            # todo: other algorithm options, like n_offspring, crossover-functions etc.
+        }
+
+        # We handle linear equality constraint with a repair function
+        repair_constraints = domain.constraints.get(
+            includes=[LinearEqualityConstraint]
+        )
+        if len(repair_constraints) > 0:
+            algorithm_args["repair"] = GA_utils.LinearProjection(
                 domain=domain,
                 d=bounds.shape[1],
                 n_pop=self.population_size,
+                bounds=bounds,
                 q=q,
-            ),
-            # todo: other algorithm options, like n_offspring, crossover-functions etc.
-        )
+                constraints_include=[LinearEqualityConstraint],
+            )
+        algorithm = algorithm_class(**algorithm_args)
 
         termination_class = pymoo_default_termination.DefaultSingleObjectiveTermination if len(acqfs) == 1 \
             else pymoo_default_termination.DefaultMultiObjectiveTermination
@@ -908,16 +797,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             n_max_evals=self.n_max_evals,
         )
 
-        res = pymoo_minimize(problem,
-                             algorithm,
-                             termination,
-                             save_history=True,
-                             verbose=True)
-
-        x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
-        f_opt = torch.from_numpy(res.F).to(**tkwargs)
-
-        return x_opt, f_opt
+        return problem, algorithm, termination
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,

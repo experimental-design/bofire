@@ -55,7 +55,7 @@ class OptimizerBenchmark:
     additional_constraint_functions: List[Callable[[Domain], Domain]] = field(default_factory=lambda: {})
     map_conti_inputs_to_discrete: bool = False  # for testing fully categorical problems
 
-    def __call__(self, optimizer: data_models_strategies.AcquisitionOptimizer):
+    def __call__(self, optimizer: data_models_strategies.AcquisitionOptimizer) -> strategies.BotorchStrategy:
         """ map data-models of strategy and optimizer, tell the predictive strategy"""
 
         domain = self.benchmark.domain
@@ -124,3 +124,24 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
     proposals = strategy.ask(4)
 
     assert proposals.shape[0] == 4
+
+
+
+def test_linear_projection_repair_function():
+
+    optimizer_benchmark = OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=2), 4,
+            data_models_strategies.SoboStrategy,
+            additional_constraint_functions=[ConstraintCollection.linear_constr_for_ackley]
+        )
+    optimizer_data_model = data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100)
+
+    strategy = optimizer_benchmark(optimizer_data_model)
+
+    # test the repair function, population size 100, and q=3. Dimension of the problem is 5
+    sample_population = np.random.uniform(-30, 30, (100, 5*3))
+    problem, algorithm, termination = strategy.acqf_optimizer._get_problem_and_algorithm(
+        strategy.domain, strategy.input_preprocessing_specs, strategy._get_acqfs(3), q=3,
+    )
+
+    strategy.ask(3)
