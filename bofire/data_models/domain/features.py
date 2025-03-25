@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import re
 import warnings
 from collections.abc import Iterator, Sequence
 from enum import Enum
@@ -113,17 +114,33 @@ class _BaseFeatures(BaseModel, Generic[F]):
             return Outputs(features=cast(Tuple[AnyOutput, ...], new_feature_seq))
         return Features(features=new_feature_seq)
 
-    def get_by_key(self, key: str) -> F:
+    def get_by_key(self, key: str, use_regex: bool = False) -> F:
         """Get a feature by its key.
+
+        First, the method tries to find the feature by its key. If no feature is
+        found, the method tries to find the feature by a regular expression match,
+        if `use_regex` is set to `True`.
+
+        If no feature is found, a KeyError is raised.
 
         Args:
             key: Feature key of the feature of interest
+            use_regex: Boolean to distinguish if the key can be interpreted as a regular
+                expression.
 
         Returns:
             Feature: Feature of interest
 
         """
-        return {f.key: f for f in self.features}[key]
+        try:
+            if use_regex:
+                return next(
+                    f for f in self.features if re.search(key, f.key) is not None
+                )
+            else:
+                return next(f for f in self.features if f.key == key)
+        except StopIteration:
+            raise KeyError(f"Feature with key {key} not found.")
 
     def get_by_keys(self, keys: Sequence[str], include: bool = True) -> Self:
         """Get features of the domain specified by its keys.
@@ -622,6 +639,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
+
         return specs
 
     def get_bounds(
@@ -782,24 +800,43 @@ class Outputs(_BaseFeatures[AnyOutput]):
     def __call__(
         self,
         experiments: pd.DataFrame,
+        experiments_adapt: Optional[pd.DataFrame] = None,
         predictions: bool = False,
     ) -> pd.DataFrame:
         """Evaluate the objective for every feature.
 
         Args:
-            experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
-            predictions (bool, optional): If True use the prediction columns in the dataframe to calc the
-                desirabilities `f"{feat.key}_pred`.
+            experiments (pd.DataFrame): Experiments for which the objectives
+                should be evaluated.
+            experiments_adapt (pd.DataFrame, optional): Experimental values
+                which are used to update the objective parameters on the fly.
+                This is for example needed when a `MovingMaximizeSigmoidObjective`
+                is used as this depends on the best experimental value achieved
+                so far. For this reason `experiments_adapt` has to be provided
+                if `predictions=True` ie. that the objectives of candidates
+                are evaluated. Defaults to None.
+            predictions (bool, optional): If True use the prediction columns in
+                the dataframe to calc the desirabilities `f"{feat.key}_pred`,
+                furthermore `experiments_adapt` has to be provided.
 
         Returns:
             pd.DataFrame: Objective values for the experiments of interest.
 
         """
+        if predictions and experiments_adapt is None:
+            raise ValueError(
+                "If predictions are used, `experiments_adapt` has to be provided.",
+            )
+        else:
+            experiments_adapt = (
+                experiments if experiments_adapt is None else experiments_adapt
+            )
+
         desis = pd.concat(
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments[f"{feat.key}_pred" if predictions else feat.key],
+                    experiments_adapt[feat.key].dropna(),  # type: ignore
                 )
                 for feat in self.features
                 if feat.objective is not None

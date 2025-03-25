@@ -1,0 +1,50 @@
+name: 🐛 Bug Report
+description: File a bug report.
+labels: ["bug"]
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for filing a bug report.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Provide a detailed description of the bug as well as the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Please provide a minimal, reproducible example of the unexpected behavior.
+      description: Follow [these guidelines](https://stackoverflow.com/help/minimal-reproducible-example) for writing your example. Please ensure that the provided example is complete & runnable, including with dummy data if necessary.
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Please paste any relevant traceback/logs produced by the example provided.
+      description: This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: input
+    id: bofire-version
+    attributes:
+      label: BoFire Version
+      description: What version of BoFire are you using?
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: What version of Python are you using?
+    validations:
+      required: false
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+    validations:
+      required: false

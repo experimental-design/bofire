@@ -5,13 +5,16 @@ from bofire.data_models.domain.api import Inputs
 from bofire.data_models.domain.features import ContinuousInput
 from bofire.utils.default_fracfac_generators import default_fracfac_generators
 from bofire.utils.doe import (
+    apply_block_generator,
     compute_generator,
     ff2n,
     fracfact,
     get_alias_structure,
+    get_block_generator,
     get_confounding_matrix,
     get_default_generator,
     get_generator,
+    get_n_blocks,
     validate_generator,
 )
 
@@ -195,3 +198,76 @@ def test_get_default_generator():
 def test_get_generator():
     assert get_generator(6, 2) != compute_generator(6, 2)
     assert get_generator(16, 1) == compute_generator(16, 1)
+
+
+@pytest.mark.parametrize(
+    "n_factors, n_generators, n_repetitions, expected",
+    [
+        (3, 0, 1, [2, 4]),
+        (3, 0, 2, [2, 4, 8]),
+        (3, 0, 3, [2, 3, 4, 6, 12]),
+        (4, 0, 1, [2, 4, 8]),
+        (4, 0, 2, [2, 4, 8, 16]),
+        (4, 0, 3, [2, 3, 4, 6, 8, 12, 24]),
+    ],
+)
+def test_get_n_blocks(n_factors, n_generators, n_repetitions, expected):
+    n_blocks = get_n_blocks(
+        n_factors=n_factors, n_generators=n_generators, n_repetitions=n_repetitions
+    )
+    assert n_blocks == expected
+
+
+@pytest.mark.parametrize(
+    "n_factors, n_generators, n_repetitions, n_blocks, expected",
+    [(3, 0, 1, 2, "ABC"), (3, 0, 1, 4, "AB; AC; BC"), (3, 0, 2, 8, "AB; AC; BC")],
+)
+def test_get_block_generator(
+    n_factors,
+    n_generators,
+    n_repetitions,
+    n_blocks,
+    expected,
+):
+    block_generator = get_block_generator(
+        n_factors=n_factors,
+        n_blocks=n_blocks,
+        n_repetitions=n_repetitions,
+        n_generators=n_generators,
+    )
+    assert block_generator == expected
+
+
+def test_get_block_generator_invalid():
+    with pytest.raises(
+        ValueError, match="Blocking can be reached by repetitions only."
+    ):
+        get_block_generator(
+            n_factors=3,
+            n_blocks=2,
+            n_repetitions=2,
+            n_generators=0,
+        )
+    with pytest.raises(
+        ValueError, match="No block generator available for the requested combination."
+    ):
+        get_block_generator(
+            n_factors=3,
+            n_blocks=27,
+            n_repetitions=2,
+            n_generators=0,
+        )
+
+
+@pytest.mark.parametrize(
+    "design, block_generator, expected",
+    [
+        (fracfact("a b c"), "AB; AC; BC", [0, 1, 2, 3, 3, 2, 1, 0]),
+        (fracfact("a b c"), "ABC", [0, 1, 1, 0, 1, 0, 0, 1]),
+    ],
+)
+def test_apply_block_generator(design, block_generator, expected):
+    apply_block_generator(
+        design=fracfact("a b c"),
+        gen="AB; AC; BC",
+    )

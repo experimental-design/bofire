@@ -21,7 +21,6 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
-from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -48,23 +47,6 @@ strategy_commons = {
 
 
 specs.add_valid(
-    strategies.QehviStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "num_sobol_samples": 512,
-        **strategy_commons,
-    },
-)
-specs.add_valid(
-    strategies.QnehviStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "num_sobol_samples": 512,
-        **strategy_commons,
-        "alpha": 0.4,
-    },
-)
-specs.add_valid(
     strategies.QparegoStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -80,6 +62,19 @@ specs.add_valid(
         **strategy_commons,
     },
 )
+specs.add_invalid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        **strategy_commons,
+        "ref_point": {"o1": 0.5, "o3": 10.0},
+    },
+    error=ValueError,
+    message="Provided refpoint do not match the domain",
+)
+
+
 specs.add_valid(
     strategies.SoboStrategy,
     lambda: {
@@ -106,6 +101,16 @@ specs.add_valid(
         "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
         "acquisition_function": qPI(tau=0.1).model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.MultiplicativeAdditiveSoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "use_output_constraints": False,
+        "additive_features": ["o1"],
     },
 )
 specs.add_valid(
@@ -206,28 +211,52 @@ specs.add_valid(
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
     },
 )
-
-
+for criterion in [
+    strategies.AOptimalityCriterion,
+    strategies.DOptimalityCriterion,
+    strategies.EOptimalityCriterion,
+    strategies.GOptimalityCriterion,
+    strategies.KOptimalityCriterion,
+]:
+    for formula in [
+        "linear",
+        "linear-and-interactions",
+        "quadratic",
+        "fully-quadratic",
+    ]:
+        for optimization_strategy in [
+            "default",
+            "exhaustive",
+            "branch-and-bound",
+            "partially-random",
+            "relaxed",
+            "iterative",
+        ]:
+            specs.add_valid(
+                strategies.DoEStrategy,
+                lambda criterion=criterion,
+                formula=formula,
+                optimization_strategy=optimization_strategy: {
+                    "domain": domain.valid().obj().model_dump(),
+                    "optimization_strategy": optimization_strategy,
+                    "verbose": False,
+                    "seed": 42,
+                    "criterion": criterion(
+                        formula=formula, transform_range=None
+                    ).model_dump(),
+                },
+            )
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "formula": "linear",
+        "domain": domain.valid().obj().dict(),
         "optimization_strategy": "default",
         "verbose": False,
-        "seed": 42,
-        "objective": OptimalityCriterionEnum.D_OPTIMALITY,
-        "transform_range": None,
-    },
-)
-specs.add_valid(
-    strategies.SpaceFillingStrategy,
-    lambda: {
-        "domain": domain.valid().obj().dict(),
-        "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
+        "criterion": strategies.SpaceFillingCriterion(
+            sampling_fraction=0.3, transform_range=[-1, 1]
+        ).model_dump(),
         "seed": 42,
-        "transform_range": (-1, 1),
     },
 )
 
@@ -244,9 +273,8 @@ specs.add_valid(
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
             ).model_dump(),
             strategies.Step(
-                strategy_data=strategies.QehviStrategy(
-                    domain=tempdomain,
-                    batch_limit=1,
+                strategy_data=strategies.MoboStrategy(
+                    domain=tempdomain, batch_limit=1, acquisition_function=qLogNEHVI()
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),
@@ -540,6 +568,7 @@ specs.add_invalid(
     message="Interpoint constraints can only be used for pure continuous search spaces.",
 )
 
+
 specs.add_valid(
     strategies.FractionalFactorialStrategy,
     lambda: {
@@ -556,8 +585,96 @@ specs.add_valid(
         "n_center": 0,
         "n_generators": 0,
         "generator": "",
+        "randomize_runorder": False,
     },
 )
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                ],
+            ),
+        ),
+        "block_feature_key": "a",
+    },
+    error=ValueError,
+    message="Feature a not found in discrete/categorical features of domain.",
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    CategoricalInput(
+                        key="c",
+                        categories=["a", "b", "c"],
+                        allowed=[True, False, False],
+                    ),
+                ],
+            ),
+        ),
+        "block_feature_key": "c",
+    },
+    error=ValueError,
+    message="Feature c has only one allowed category/value, blocking is not possible.",
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(
+                        key="d",
+                        categories=["a", "b", "c"],
+                        allowed=[True, True, False],
+                    ),
+                ],
+            ),
+        ),
+        "block_feature_key": "d",
+        "generator": "a b ab",
+    },
+    error=NotImplementedError,
+    message="Blocking is not implemented for custom generators.",
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(
+                        key="d",
+                        categories=["a", "b", "c"],
+                        allowed=[True, True, True],
+                    ),
+                ],
+            ),
+        ),
+        "block_feature_key": "d",
+    },
+    error=ValueError,
+    message="Number of blocks 3 is not possible with 1 repetitions.",
+)
+
 
 specs.add_invalid(
     strategies.FractionalFactorialStrategy,

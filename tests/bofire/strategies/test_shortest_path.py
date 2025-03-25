@@ -42,7 +42,9 @@ def test_step():
 def test_ask():
     data_model = specs.valid(data_models.ShortestPathStrategy).obj()
     strategy = strategies.map(data_model=data_model)
-    with pytest.raises(ValueError, match="ShortestPath will ignore the specified "):
+    with pytest.warns(
+        UserWarning, match="ShortestPathStrategy will ignore the specified "
+    ):
         strategy.ask(candidate_count=4)
     steps = strategy.ask()
     assert np.allclose(

@@ -1,7 +1,17 @@
 from typing import Union
 
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
-from bofire.data_models.strategies.doe import DoEStrategy
+from bofire.data_models.strategies.doe import (
+    AnyDoEOptimalityCriterion,
+    AnyOptimalityCriterion,
+    AOptimalityCriterion,
+    DoEStrategy,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    KOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.fractional_factorial import (
     FractionalFactorialStrategy,
@@ -20,18 +30,16 @@ from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
-from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
-from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
-from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     AnyCondition,
@@ -61,9 +69,8 @@ AnyPredictive = Union[
     ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
-    QehviStrategy,
-    QnehviStrategy,
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,

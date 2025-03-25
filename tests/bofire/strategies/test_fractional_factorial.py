@@ -155,6 +155,120 @@ def test_FractionalFactorialStrategy_ask():
     strategy = strategies.map(strategy_data)
     candidates = strategy.ask(None)
     assert len(candidates) == 10
+    # test blocking
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(key="alpha", categories=["a", "b"]),
+                ],
+            ),
+        ),
+        n_center=1,
+        n_repetitions=1,
+        block_feature_key="alpha",
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 10
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(key="alpha", categories=["a", "b"]),
+                ],
+            ),
+        ),
+        n_center=0,
+        n_repetitions=2,
+        block_feature_key="alpha",
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 16
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                    CategoricalInput(
+                        key="alpha", categories=["a", "b", "c", "d", "e", "f", "g", "h"]
+                    ),
+                ],
+            ),
+        ),
+        n_center=0,
+        n_repetitions=2,
+        block_feature_key="alpha",
+    )
+    strategy = strategies.map(strategy_data)
+    candidates = strategy.ask(None)
+    assert len(candidates) == 16
+
+
+def test_FractionalFactorialStrategy_randomize_runorder():
+    # test no randomization
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(-2, 8)),
+                ],
+            ),
+        ),
+        randomize_runorder=False,
+    )
+    strategy = strategies.map(strategy_data)
+    design = strategy.ask(None)
+    design2 = strategy.ask(None)
+    # test with randomization
+    assert_frame_equal(design, design2)
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(-2, 8)),
+                ],
+            ),
+        ),
+        randomize_runorder=True,
+        seed=42,
+    )
+    strategy = strategies.map(strategy_data)
+    design = strategy.ask(None)
+    design2 = strategy.ask(None)
+    with pytest.raises(AssertionError):
+        assert_frame_equal(design, design2)
+    # test reproducibility with same seed for randomization
+    strategy_data = FractionalFactorialStrategy(
+        domain=Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(-2, 8)),
+                ],
+            ),
+        ),
+        randomize_runorder=True,
+        seed=42,
+    )
+    strategy = strategies.map(strategy_data)
+    design3 = strategy.ask(None)
+    design4 = strategy.ask(None)
+    with pytest.raises(AssertionError):
+        assert_frame_equal(design3, design4)
+    assert_frame_equal(design, design3)
+    assert_frame_equal(design2, design4)
 
 
 def test_FractionalFactorialStrategy_ask_invalid():
@@ -169,10 +283,11 @@ def test_FractionalFactorialStrategy_ask_invalid():
         ),
     )
     strategy = strategies.map(strategy_data)
-    with pytest.raises(
-        ValueError,
+    with pytest.warns(
+        UserWarning,
         match="FractionalFactorialStrategy will ignore the specified value of candidate_count. "
         "The strategy automatically determines how many candidates to "
         "propose.",
     ):
-        strategy.ask(5)
+        candidates = strategy.ask(7)
+    assert len(candidates) == 5

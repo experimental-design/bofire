@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -22,6 +23,11 @@ class Strategy(ABC):
         data_model: DataModel,
     ):
         self.domain = data_model.domain
+        # if data_model.seed is None (no explicit seed provided by the user),
+        # we draw a random seed from the default random number generator
+        # This is done to ensure reproducibility of the strategy,
+        # even if the user does not provide a seed one can extract the used seed
+        # from the strategy object via `strategy.seed`.
         self.seed = data_model.seed or np.random.default_rng().integers(1000)
         self.rng = np.random.default_rng(self.seed)
         self._experiments = None
@@ -129,8 +135,9 @@ class Strategy(ABC):
 
         if candidate_count is not None:
             if len(candidates) != candidate_count:
-                raise ValueError(
-                    f"expected {candidate_count} candidates, got {len(candidates)}",
+                warnings.warn(
+                    f"Expected {candidate_count} candidates, got {len(candidates)}",
+                    UserWarning,
                 )
 
         if add_pending:

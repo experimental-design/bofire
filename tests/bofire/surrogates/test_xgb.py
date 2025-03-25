@@ -47,6 +47,7 @@ def test_XGBoostSurrogate():
     assert_frame_equal(preds, preds2)
 
 
+@pytest.mark.skipif(not XGB_AVAILABLE, reason="requires xgboost")
 def test_XGBoostSurrogate_categorical():
     inputs = Inputs(
         features=[

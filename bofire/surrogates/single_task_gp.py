@@ -36,7 +36,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
@@ -53,6 +53,9 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 batch_shape=torch.Size(),
                 active_dims=list(range(tX.shape[1])),
                 ard_num_dims=1,  # this keyword is ignored
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
             ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])

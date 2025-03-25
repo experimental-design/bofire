@@ -3,6 +3,7 @@ from typing import Union
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
     MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
     ScaleKernel,
 )
 from bofire.data_models.kernels.categorical import (
@@ -17,12 +18,23 @@ from bofire.data_models.kernels.continuous import (
     PolynomialKernel,
     RBFKernel,
 )
-from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.kernel import (
+    AggregationKernel,
+    FeatureSpecificKernel,
+    Kernel,
+)
 from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
 from bofire.data_models.kernels.shape import WassersteinKernel
 
 
-AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
+AbstractKernel = Union[
+    Kernel,
+    CategoricalKernel,
+    ContinuousKernel,
+    MolecularKernel,
+    FeatureSpecificKernel,
+    AggregationKernel,
+]
 
 AnyContinuousKernel = Union[
     MaternKernel,
@@ -39,6 +51,7 @@ AnyMolecularKernel = TanimotoKernel
 AnyKernel = Union[
     AdditiveKernel,
     MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
     ScaleKernel,
     HammingDistanceKernel,
     LinearKernel,

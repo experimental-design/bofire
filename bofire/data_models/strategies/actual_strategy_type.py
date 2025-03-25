@@ -13,18 +13,16 @@ from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy,
 )
-from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
-from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
-from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 
 
 ActualStrategy = Union[
@@ -32,13 +30,11 @@ ActualStrategy = Union[
     AdditiveSoboStrategy,
     ActiveLearningStrategy,
     MultiplicativeSoboStrategy,
+    MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiFidelityStrategy,
-    QehviStrategy,
-    QnehviStrategy,
     QparegoStrategy,
     EntingStrategy,
-    SpaceFillingStrategy,
     RandomStrategy,
     DoEStrategy,
     FactorialStrategy,

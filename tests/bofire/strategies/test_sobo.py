@@ -23,7 +23,6 @@ from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
-    SingleObjectiveAcquisitionFunction,
     qEI,
     qLogEI,
     qLogNEI,
@@ -49,74 +48,8 @@ from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrate
 from tests.bofire.strategies.test_base import domains
 
 
-# from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
-
-VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
-    "domain": domains[1],
-    "acquisition_function": specs.acquisition_functions.valid(
-        SingleObjectiveAcquisitionFunction,
-        exact=False,
-    ).obj(),
-    # "num_sobol_samples": 1024,
-    # "num_restarts": 8,
-    # "num_raw_samples": 1024,
-    "descriptor_method": "EXHAUSTIVE",
-    "categorical_method": "EXHAUSTIVE",
-}
-
-BOTORCH_SOBO_STRATEGY_SPECS = {
-    "valids": [
-        VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "seed": 1},
-        # {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "surrogate_specs": VALID_MODEL_SPEC_LIST},
-    ],
-    "invalids": [
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "acquisition_function": None},
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "descriptor_method": None},
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "categorical_method": None},
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "seed": -1},
-    ],
-}
-
-VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC = {
-    "domain": domains[2],
-    "acquisition_function": specs.acquisition_functions.valid(
-        SingleObjectiveAcquisitionFunction,
-        exact=False,
-    ).obj(),
-    "descriptor_method": "EXHAUSTIVE",
-    "categorical_method": "EXHAUSTIVE",
-}
-
-BOTORCH_ADDITIVE_AND_MULTIPLICATIVE_SOBO_STRATEGY_SPECS = {
-    "valids": [
-        VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
-        {**VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC, "seed": 1},
-    ],
-    "invalids": [
-        {
-            **VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
-            "acquisition_function": None,
-        },
-        {
-            **VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
-            "descriptor_method": None,
-        },
-        {
-            **VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
-            "categorical_method": None,
-        },
-        {**VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC, "seed": -1},
-    ],
-}
-
-
-@pytest.mark.parametrize(
-    "domain, acqf",
-    [(domains[0], VALID_BOTORCH_SOBO_STRATEGY_SPEC["acquisition_function"])],
-)
-def test_SOBO_not_fitted(domain, acqf):
-    data_model = data_models.SoboStrategy(domain=domain, acquisition_function=acqf)
+def test_SOBO_not_fitted():
+    data_model = data_models.SoboStrategy(domain=domains[0])
     strategy = SoboStrategy(data_model=data_model)
 
     msg = "Model not trained."
@@ -125,22 +58,18 @@ def test_SOBO_not_fitted(domain, acqf):
 
 
 @pytest.mark.parametrize(
-    "acqf, expected, num_test_candidates",
+    "acqf, expected",
     [
-        (acqf_inp[0], acqf_inp[1], num_test_candidates)
-        for acqf_inp in [
-            (qEI(), qExpectedImprovement),
-            (qNEI(), qNoisyExpectedImprovement),
-            (qPI(), qProbabilityOfImprovement),
-            (qUCB(), qUpperConfidenceBound),
-            (qSR(), qSimpleRegret),
-            (qLogEI(), qLogExpectedImprovement),
-            (qLogNEI(), qLogNoisyExpectedImprovement),
-        ]
-        for num_test_candidates in range(1, 3)
+        (qEI(), qExpectedImprovement),
+        (qNEI(), qNoisyExpectedImprovement),
+        (qPI(), qProbabilityOfImprovement),
+        (qUCB(), qUpperConfidenceBound),
+        (qSR(), qSimpleRegret),
+        (qLogEI(), qLogExpectedImprovement),
+        (qLogNEI(), qLogNoisyExpectedImprovement),
     ],
 )
-def test_SOBO_get_acqf(acqf, expected, num_test_candidates):
+def test_SOBO_get_acqf(acqf, expected):
     # generate data
     benchmark = Himmelblau()
 
@@ -203,24 +132,22 @@ def test_SOBO_init_qUCB():
 
 
 @pytest.mark.parametrize(
-    "acqf, num_experiments, num_candidates",
+    "acqf, num_candidates",
     [
-        (acqf.obj(), num_experiments, num_candidates)
+        (acqf.obj(), num_candidates)
         for acqf in specs.acquisition_functions.valids
-        for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
         if isinstance(acqf, to_list(AnySingleObjectiveAcquisitionFunction))  # type: ignore
     ],
 )
-@pytest.mark.slow
-def test_get_acqf_input(acqf, num_experiments, num_candidates):
+def test_get_acqf_input(acqf, num_candidates):
     # generate data
     benchmark = Himmelblau()
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy._ask(candidate_count=num_experiments),
+        random_strategy._ask(candidate_count=5),
         return_complete=True,  # type: ignore
     )
 
@@ -242,7 +169,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
     assert torch.is_tensor(X_train)
     assert torch.is_tensor(X_pending)
     assert X_train.shape == (
-        num_experiments,
+        5,
         len(set(chain(*names.values()))),
     )
     assert X_pending.shape == (  # type: ignore

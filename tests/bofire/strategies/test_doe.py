@@ -2,12 +2,14 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -16,6 +18,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.strategies.doe import DOptimalityCriterion
 from bofire.strategies.api import DoEStrategy
 
 
@@ -23,6 +26,9 @@ from bofire.strategies.api import DoEStrategy
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
+
+
+pytest.importorskip("cyipopt")
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -61,13 +67,17 @@ domain = Domain.from_lists(
 
 
 def test_doe_strategy_init():
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     assert strategy is not None
 
 
 def test_doe_strategy_ask():
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
     assert candidates.shape == (12, 3)
@@ -78,7 +88,9 @@ def test_doe_strategy_ask_with_candidates():
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
         columns=["x1", "x2", "x3"],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(candidates_fixed)
     candidates = strategy.ask(candidate_count=12)
@@ -99,7 +111,7 @@ def test_nchoosek_implemented():
     )
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         optimization_strategy="partially-random",
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -108,6 +120,10 @@ def test_nchoosek_implemented():
 
 
 def test_formulas_implemented():
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
     expected_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
         "linear-and-quadratic": 10,  # 1+a+b+c+a**2+b**2+c**2+3
@@ -116,9 +132,11 @@ def test_formulas_implemented():
     }
 
     for formula, num_candidates in expected_num_candidates.items():
-        data_model = data_models.DoEStrategy(domain=domain, formula=formula)
+        data_model = data_models.DoEStrategy(
+            domain=domain, criterion=DOptimalityCriterion(formula=formula)
+        )
         strategy = DoEStrategy(data_model=data_model)
-        candidates = strategy.ask()
+        candidates = strategy.ask(strategy.get_required_number_of_experiments())
         assert candidates.shape == (num_candidates, 3)
 
 
@@ -127,7 +145,9 @@ def test_doe_strategy_correctness():
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
         columns=["x1", "x2", "x3"],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(candidates_fixed)
     candidates = strategy.ask(candidate_count=12)
@@ -147,7 +167,9 @@ def test_doe_strategy_amount_of_candidates():
         np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
         columns=["x1", "x2", "x3"],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(candidates_fixed)
     candidates = strategy.ask(candidate_count=12)
@@ -193,7 +215,7 @@ def test_categorical_discrete_doe():
     ]
 
     n_experiments = 10
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=all_inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=all_constraints,
@@ -201,7 +223,7 @@ def test_categorical_discrete_doe():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         optimization_strategy="partially-random",
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -232,7 +254,7 @@ def test_partially_fixed_experiments():
     n_experiments = 10
 
     all_inputs = all_inputs + continuous_var
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=all_inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=all_constraints,
@@ -240,7 +262,7 @@ def test_partially_fixed_experiments():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         optimization_strategy="relaxed",
         verbose=True,
     )
@@ -283,7 +305,6 @@ def test_partially_fixed_experiments():
     )
 
     candidates = strategy.ask(candidate_count=n_experiments)
-    print(candidates)
     only_partially_fixed = only_partially_fixed.mask(
         only_partially_fixed.isnull(),
         candidates[:4],
@@ -310,8 +331,7 @@ def test_scaled_doe():
     )
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
-        transform_range=(-1, 1),
+        criterion=DOptimalityCriterion(formula="linear", transform_range=(-1, 1)),
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=6).to_numpy()
@@ -339,7 +359,7 @@ def test_categorical_doe_iterative():
     ]
 
     n_experiments = 5
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=all_inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=all_constraints,
@@ -347,7 +367,7 @@ def test_categorical_doe_iterative():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        formula="linear",
+        criterion=DOptimalityCriterion(formula="linear"),
         optimization_strategy="iterative",
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -357,3 +377,100 @@ def test_categorical_doe_iterative():
     )
 
     assert candidates.shape == (5, 3)
+
+
+def test_functional_constraint():
+    inputs = [
+        ContinuousInput(key="A", bounds=(0.2, 0.4)),
+        ContinuousInput(key="B", bounds=(0, 0.8)),
+        ContinuousInput(key="T", bounds=(0, 1)),
+        ContinuousInput(key="W_T", bounds=(0, 1)),
+        ContinuousInput(key="W", bounds=(0, 1)),
+    ]
+
+    outputs = [ContinuousOutput(key="y")]
+
+    # Aggregate the solids content as well as the density of the materials in a dictionary
+    # First col: solids content, second col= density
+    raw_materials_data = {
+        "A": [0.4, 2],
+        "B": [1, 1.5],
+        "T": [1, 1],
+        "W": [0, 1],
+        "W_T": [0, 1],
+    }
+
+    df_raw_materials = pd.DataFrame(raw_materials_data, index=["sc", "density"]).T
+
+    # Mixture constraint: All components should sum up to 1
+    constraint1 = LinearEqualityConstraint(
+        features=["A", "B", "T", "W", "W_T"], coefficients=[1, 1, 1, 1, 1], rhs=1.0
+    )
+    # Set the lower bound of the volume content to 0.3.
+    constraint2 = LinearInequalityConstraint(
+        features=["A", "B", "W_T", "W"], coefficients=[0.04, -0.467, 0.3, 0.3], rhs=0
+    )
+
+    # Set the upper bound of the volume content to 0.45.
+    constraint3 = LinearInequalityConstraint(
+        features=["A", "B", "W_T", "W"],
+        coefficients=[-0.16, 0.367, -0.45, -0.45],
+        rhs=0,
+    )
+
+    # Calculate the solid content of the formulation
+    def calc_solid_content(A, B, T, W, W_T):
+        # Ensure same order as in the dictionary containing the material properties
+        return np.array([A, B, T, W, W_T]).T @ (df_raw_materials["sc"].values)
+
+    # Calculate the volume content of the formulation
+    def calc_volume_content(A, B, T, W, W_T):
+        volume_solid = (
+            A * raw_materials_data["A"][0] / raw_materials_data["A"][1]
+            + B * raw_materials_data["B"][0] / raw_materials_data["B"][1]
+        )
+        volume_total = volume_solid + (1 - calc_solid_content(A, B, T, W, W_T) / 1)
+        return volume_solid / volume_total
+
+    constraint5 = NonlinearEqualityConstraint(
+        expression=lambda A, B, T, W, W_T: T
+        - 0.0182
+        + 0.03704 * calc_volume_content(A, B, T, W, W_T),
+    )
+
+    # Set the thinner solution to 3 %.
+    constraint4 = LinearEqualityConstraint(
+        features=["T", "W_T"], coefficients=[0.97, -0.03], rhs=0
+    )
+
+    n_experiments = 4
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=outputs,
+        constraints=[
+            constraint1,
+            constraint2,
+            constraint3,
+            constraint4,
+            constraint5,
+        ],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        ipopt_options={"maxiter": 500},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)
+    doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
+    doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
+    doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]
+    doe["T_conc"] = doe["T"] / (doe["T"] + doe["W_T"])
+
+    assert np.allclose(doe["T_conc"], 0.03)
+    assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
+
+
+if __name__ == "__main__":
+    test_functional_constraint()

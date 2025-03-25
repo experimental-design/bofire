@@ -70,6 +70,9 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                     range(tX.shape[1] - 1),
                 ),  # kernel is for input space so we subtract one for the fidelity index
                 ard_num_dims=1,  # this keyword is ignored
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
             ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])

@@ -347,7 +347,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                     feat: ContinuousInput = ContinuousInput(
                         **domain.inputs.get_by_key(_features[0]).model_dump(),
                     )
-                    feat.bounds = (_coefficients[0], _coefficients[0])
+                    feat.bounds = [_coefficients[0], _coefficients[0]]
                     totally_removed = True
             elif len(_features) > 1:
                 _c = LinearInequalityConstraint(
@@ -430,6 +430,6 @@ def adjust_boundary(feature: ContinuousInput, coef: float, rhs: float):
     boundary = rhs / coef
     if coef > 0:
         if boundary > feature.lower_bound:
-            feature.bounds = (boundary, feature.upper_bound)
+            feature.bounds = [boundary, feature.upper_bound]
     elif boundary < feature.upper_bound:
-        feature.bounds = (feature.lower_bound, boundary)
+        feature.bounds = [feature.lower_bound, boundary]
