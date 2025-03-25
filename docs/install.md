@@ -1,80 +1,63 @@
-<h1><img src="..\graphics\logos\bofire-long.png" alt="BoFire" style="vertical-align: middle;"> Installation Guide</h1>
+# Installation Guide
 
-### Installation from package index
+## Installation from Python Package Index (PyPI)
 
-If you just want a data structure that represents the domain of an optimization problem you can run :
+BoFire can be installed to your Python environment by using `pip`. It can be done by executing
 
 ```
 pip install bofire
 ```
 
+
+!!! tip
+    The command from above will install a minimal BoFire version, consisting only of the [data models](data_models_functionals.md). To install BoFire's including its core optimization features, execute:
+    ```
+    pip install 'bofire[optimization]'
+    ```
+
 ### Additional optional dependencies
 
-In BoFire we have several optional dependencies.
-
-- `[optimization]`\: access to optimization tools
-- `[cheminfo]`\: includes features related to molecules and their representation
-- `[entmoot]`\: enable the ensemble tree model optimization tool
-- `[xgb]`\: for extreme gradient boosting
-- `[all]`\: install all possible options (except DoE)
-- `Design of Experiments (DoE)`\: manual installation necessary
-
-### Domain and Optimization Algorithms
-
-To install BoFire with optimization tools you can use
+In BoFire, there are several optional dependencies that can be selected during installation via pip, like
 
 ```
-pip install bofire[optimization]
+pip install 'bofire[optimization, cheminfo] # will install bofire with additional dependencies `optimization` and `cheminfo`
 ```
 
-This will also install [BoTorch](https://botorch.org/) that depends on [PyTorch](https://pytorch.org/).
-
-### Cheminformatics
-
-Some features related to molecules and their representation depend on [Rdkit](https://www.rdkit.org/).
-
+To get the most our of BoFire, it is recommended to install at least
 ```
-pip install bofire[cheminfo]
+pip install 'bofire[optimization]'
 ```
 
-### Ensemble Tree Model
+The available dependencies are:
 
-This option enables tree-based optimization using the Ensemble Tree Model Optimization Tool using tree-based surrogate models and will install [entmoot](https://entmoot.readthedocs.io/) and [lightgbm](https://lightgbm.readthedocs.io/).
+- `optimization`: Core Bayesian optimization features.
+- `cheminfo`: Cheminformatics utilities.
+- `entmoot`: [Entmoot functionality.](https://github.com/cog-imperial/entmoot)
+- `xgb`: XGboost surrogates.
+- `tests`: Required for running the test suite.
+- `docs`: Required for building the documentation.
+- `tutorials`: Required for running the [tutorials.](https://github.com/experimental-design/bofire/tree/main/tutorials)
+- `all`: Install all possible options (except DoE)
 
-```
-pip install bofire[entmoot]
-```
+!!! warning
+    BoFire has the functionalities for creating D, E, A, G, K and I-optimal experimental designs via the `DoEStrategy`. This feature depends on [cyipopt](https://cyipopt.readthedocs.io/en/stable/) which is a python interface to `ipopt`. Unfortunately, it is not possible to install `cyipopt` including `ipopt` via pip. A solution is to install `cyipopt` and its dependencies via conda:
 
-### Extreme Gradient Boost
+    ```
+    conda install -c conda-forge cyipopt
+    ```
 
-For extreme gradient boosting this option will also install [xgboost](https://xgboost.readthedocs.io/).
+    We are working on a solution that makes BoFire's model based DoE functionalities also accessible to users which do not have `cyipopt` available.
 
-```
-pip install bofire[xgb]
-```
 
-### Design of Experiments
+## Development Installation
 
-BoFire has functionality to create D-optimal experimental designs via the `doe` module. This module is depends on
-[Cyipopt](https://cyipopt.readthedocs.io/en/stable/). A comfortable way to install Cyipopt and the dependencies is via
+If you want to [contribute](CONTRIBUTING.md) to BoFire, it is recommended to install the repository in editable mode (`-e`).
 
-```
-conda install -c conda-forge cyipopt
-```
-
-You have to install Cyipopt manually.
-
-### Development Installation
-
-If you want to [contribute](CONTRIBUTING.md) to BoFire, you might want to install in editable mode including the test dependencies.
 After cloning the repository via
-
 ```
 git clone https://github.com/experimental-design/bofire.git
 ```
-
-and cd `bofire`, you can proceed with
-
+and navigating to the repositories root folder (`cd bofire`), you can proceed with
 ```
-pip install -e .[optimization,cheminfo,docs,tests]
+pip install -e ".[optimization, tests]" # include optional dependencies as you wish
 ```
