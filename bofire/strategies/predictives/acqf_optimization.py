@@ -2,8 +2,8 @@ import copy
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
-import numpy as np
 import pandas as pd
+import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
@@ -12,24 +12,21 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
-import torch
-from torch import Tensor
-
 from pymoo.algorithms.moo.nsga2 import NSGA2 as PymooNSGA2
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA
 from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
+from torch import Tensor
 
 from bofire.data_models.constraints.api import (
-    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
-    NChooseKConstraint,
     ProductConstraint,
 )
-from bofire.data_models.domain.api import Domain, Constraints
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -44,6 +41,8 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
+)
+from bofire.data_models.strategies.api import (
     GeneticAlgorithm as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
@@ -52,6 +51,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
+from bofire.strategies.predictives.acqf_optimization_utils import GA_utils
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -61,7 +61,7 @@ from bofire.utils.torch_tools import (
     get_nonlinear_constraints,
     tkwargs,
 )
-from bofire.strategies.predictives.acqf_optimization_utils import GA_utils
+
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
@@ -702,6 +702,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return include, exclude
 
+
 class GeneticAlgorithm(AcquisitionOptimizer):
     def __init__(self, data_model: GeneticAlgorithmDataModel):
         super().__init__(data_model)
@@ -711,7 +712,6 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         self.ftol = data_model.ftol
         self.n_max_gen = data_model.n_max_gen
         self.n_max_evals = data_model.n_max_evals
-
 
     def _optimize(
         self,
@@ -726,11 +726,17 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
         """
 
-        return self._single_shot_optimization(domain, input_preprocessing_specs, acqfs, candidate_count)
+        return self._single_shot_optimization(
+            domain, input_preprocessing_specs, acqfs, candidate_count
+        )
 
-    def _single_shot_optimization(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
-                                        acqfs: List[AcquisitionFunction], q: int,
-                                  ) -> Tuple[Tensor, Tensor]:
+    def _single_shot_optimization(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        acqfs: List[AcquisitionFunction],
+        q: int,
+    ) -> Tuple[Tensor, Tensor]:
         """
         single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
 
@@ -738,30 +744,39 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             x_opt: (d,) Tensor
             f_opt: (n_y,) Tensor
         """
-        problem, algorithm, termination = self._get_problem_and_algorithm(domain, input_preprocessing_specs, acqfs, q)
+        problem, algorithm, termination = self._get_problem_and_algorithm(
+            domain, input_preprocessing_specs, acqfs, q
+        )
 
-        res = pymoo_minimize(problem,
-                             algorithm,
-                             termination,
-                             save_history=True,
-                             verbose=True)
+        res = pymoo_minimize(
+            problem, algorithm, termination, save_history=True, verbose=True
+        )
 
         x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
         f_opt = torch.from_numpy(res.F).to(**tkwargs)
 
         return x_opt, f_opt
 
-    def _get_problem_and_algorithm(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs,
-                                        acqfs: List[AcquisitionFunction], q: int):
-
+    def _get_problem_and_algorithm(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        acqfs: List[AcquisitionFunction],
+        q: int,
+    ):
         bounds = self.get_bounds(domain, input_preprocessing_specs)
 
         # ===== Problem ====
         problem = GA_utils.AcqfOptimizationProblem(
-            acqfs, domain, bounds, q, constraints_include=[
+            acqfs,
+            domain,
+            bounds,
+            q,
+            constraints_include=[
                 NonlinearInequalityConstraint,
                 NonlinearEqualityConstraint,
-            ])
+            ],
+        )
 
         # ==== Algorithm ====
         algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
@@ -781,12 +796,18 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 n_pop=self.population_size,
                 bounds=bounds,
                 q=q,
-                constraints_include=[LinearEqualityConstraint, LinearInequalityConstraint],
+                constraints_include=[
+                    LinearEqualityConstraint,
+                    LinearInequalityConstraint,
+                ],
             )
         algorithm = algorithm_class(**algorithm_args)
 
-        termination_class = pymoo_default_termination.DefaultSingleObjectiveTermination if len(acqfs) == 1 \
+        termination_class = (
+            pymoo_default_termination.DefaultSingleObjectiveTermination
+            if len(acqfs) == 1
             else pymoo_default_termination.DefaultMultiObjectiveTermination
+        )
 
         termination = termination_class(
             xtol=self.xtol,
@@ -797,6 +818,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         )
 
         return problem, algorithm, termination
+
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,
