@@ -38,8 +38,8 @@ class ConstraintCollection:
             ),
             constraints_data_models.LinearInequalityConstraint(
                 features=["x_1", "x_2"],
-                coefficients=[1., 1.],
-                rhs=0.2,
+                coefficients=[-1., 1.],
+                rhs=0.0,
             )
         ]
         return domain
@@ -128,6 +128,8 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
 
 
 def test_linear_projection_repair_function():
+    """ test the repair function for the linear projection repair function: projecting x_1 / x_2 into the feasible
+    space, adhering to a linear constraint x_1 + x_2 = 1 and x_2 <= x_1 """
 
     optimizer_benchmark = OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=2), 4,
@@ -156,7 +158,9 @@ def test_linear_projection_repair_function():
     Xpop = get_x12_points_from_population(sample_population)
     Xpop_c = get_x12_points_from_population(sample_population_repaired)
 
-    assert np.abs(Xpop_c.sum(axis=1)).mean() < 10.
+    # checking constraint adherence (see benchmark constraint functions
+    assert np.abs(Xpop_c.sum(axis=1)).mean() - 1. < 1e-5
+    assert (Xpop_c[:, 0] - Xpop_c[:, 1] > -1e-5).all()
 
     import matplotlib.pyplot as plt
     plt.figure()

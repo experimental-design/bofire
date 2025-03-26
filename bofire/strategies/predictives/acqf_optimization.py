@@ -759,7 +759,6 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         # ===== Problem ====
         problem = GA_utils.AcqfOptimizationProblem(
             acqfs, domain, bounds, q, constraints_include=[
-                LinearInequalityConstraint,
                 NonlinearInequalityConstraint,
                 NonlinearEqualityConstraint,
             ])
@@ -773,7 +772,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
         # We handle linear equality constraint with a repair function
         repair_constraints = domain.constraints.get(
-            includes=[LinearEqualityConstraint]
+            includes=[LinearEqualityConstraint, LinearInequalityConstraint]
         )
         if len(repair_constraints) > 0:
             algorithm_args["repair"] = GA_utils.LinearProjection(
@@ -782,7 +781,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 n_pop=self.population_size,
                 bounds=bounds,
                 q=q,
-                constraints_include=[LinearEqualityConstraint],
+                constraints_include=[LinearEqualityConstraint, LinearInequalityConstraint],
             )
         algorithm = algorithm_class(**algorithm_args)
 

@@ -47,7 +47,7 @@ def get_linear_constraints(
     constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
-    """Converts linear constraints to the form required by BoTorch.
+    """Converts linear constraints to the form required by BoTorch. For inequality constraints, this is A * x >= b (!).
 
     Args:
         domain: Optimization problem definition.

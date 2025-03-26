@@ -34,7 +34,6 @@ class AcqfOptimizationProblem(PymooProblem):
             constraints_include = [
                 NonlinearEqualityConstraint,
                 NonlinearInequalityConstraint,
-                LinearInequalityConstraint
             ]
 
         self.constraints = domain.constraints.get(includes=constraints_include)  # linear constraints handled in repair function
@@ -97,7 +96,7 @@ class LinearProjection(PymooRepair):
                  constraints_include: Optional[List[Type[Constraint]]] = None):
 
         if constraints_include is None:
-            constraints_include = [LinearEqualityConstraint]
+            constraints_include = [LinearEqualityConstraint, LinearInequalityConstraint]
         else:
             for constr in constraints_include:
                 assert constr in (LinearEqualityConstraint, LinearInequalityConstraint),\
@@ -109,10 +108,13 @@ class LinearProjection(PymooRepair):
         n_x_points = n_pop * q
 
         def _eq_constr_to_list(eq_constr_) -> Tuple[List[int], List[float], float]:
-            """decode "get_linear_constraints" output: x-index, coefficients, and b"""
+            """decode "get_linear_constraints" output: x-index, coefficients, and b
+            - convert from tensor to list of ints and floats
+            - multiply with (-1) to adhere to (usual) cvxopt format A*x <= b, instead of Botorch A*x >= b
+            """
             index: List[int] = [int(x) for x in (eq_constr_[0].detach().numpy())]
-            coeffs: List[float] = list(eq_constr_[1].detach().numpy())
-            b: float = eq_constr_[2]
+            coeffs: List[float] = list(-eq_constr_[1].detach().numpy())
+            b: float = -eq_constr_[2]
             return index, coeffs, b
 
         eq_constr, ineq_constr = [], []
@@ -157,7 +159,7 @@ class LinearProjection(PymooRepair):
                 cvxopt.spmatrix(-1, range(self.d), range(self.d)),  # negative unity matrix
             ])
             lb, ub = (bounds[i, :].detach().numpy() for i in range(2))
-            h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), lb.reshape(-1))))
+            h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
             G = repeated_blkdiag(G_bounds_, n_x_points)
             h = cvxopt.matrix([h_bounds_] * n_x_points)
             return G, h
