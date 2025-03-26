@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Annotated, Optional, Type
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -14,13 +14,9 @@ class Strategy(BaseModel):
     domain: Domain
     seed: Optional[Annotated[int, Field(ge=0)]] = None
 
-    @field_validator("domain")
-    @classmethod
-    def validate_constraints(cls, domain: Domain):
+    @model_validator(mode="after")
+    def validate_constraints(self):
         """Validator to ensure that all constraints defined in the domain are valid for the chosen strategy
-
-        Args:
-            domain (Domain): The domain to be used in the strategy
 
         Raises:
             ValueError: if a constraint is defined in the domain but is invalid for the strategy chosen
@@ -29,12 +25,12 @@ class Strategy(BaseModel):
             Domain: the domain
 
         """
-        for constraint in domain.constraints:
-            if not cls.is_constraint_implemented(type(constraint)):
+        for constraint in self.domain.constraints:
+            if not self.is_constraint_implemented(type(constraint)):
                 raise ValueError(
-                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`",
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{type(self).__name__}`",
                 )
-        return domain
+        return self
 
     @field_validator("domain")
     @classmethod
@@ -77,9 +73,8 @@ class Strategy(BaseModel):
             raise ValueError("no input feature specified")
         return domain
 
-    @classmethod
     @abstractmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         """Abstract method to check if a specific constraint type is implemented for the strategy
 
         Args:
@@ -89,6 +84,7 @@ class Strategy(BaseModel):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
+        pass
 
     @classmethod
     @abstractmethod
