@@ -159,7 +159,7 @@ def test_linear_projection_repair_function():
     Xpop_c = get_x12_points_from_population(sample_population_repaired)
 
     # checking constraint adherence (see benchmark constraint functions
-    assert np.abs(Xpop_c.sum(axis=1)).mean() - 1. < 1e-5
+    assert (np.abs(Xpop_c.sum(axis=1) - 1.) < 1e-5).all()
     assert (Xpop_c[:, 0] - Xpop_c[:, 1] > -1e-5).all()
 
     import matplotlib.pyplot as plt
