@@ -294,7 +294,7 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features_list,
         )
 
-    def _postprocess_candidates(self, candidates: Tensor) -> pd.DataFrame:
+    def _candidates_tensor_to_dataframe(self, candidates: Tensor) -> pd.DataFrame:
         """Converts a tensor of candidates to a pandas Dataframe.
 
         Args:
@@ -319,9 +319,7 @@ class BotorchStrategy(PredictiveStrategy):
             df_candidates,
             self.input_preprocessing_specs,
         )
-
-        preds = self.predict(df_candidates)
-        return pd.concat((df_candidates, preds), axis=1)
+        return df_candidates
 
     def _optimize_acqf_continuous(
         self,
@@ -464,7 +462,7 @@ class BotorchStrategy(PredictiveStrategy):
                 unique=True,
                 choices=t_choices,
             )
-            return self._postprocess_candidates(candidates=candidates)
+            return self._candidates_tensor_to_dataframe(candidates=candidates)
 
         (
             bounds,
@@ -507,18 +505,20 @@ class BotorchStrategy(PredictiveStrategy):
                 local_acqf_val.item(),
                 global_acqf_val.item(),
             ):
-                return self._postprocess_candidates(candidates=local_candidates)
+                return self._candidates_tensor_to_dataframe(candidates=local_candidates)
             sp = ShortestPathStrategy(
                 data_model=ShortestPathStrategyDataModel(
                     domain=self.domain,
                     start=self.experiments.iloc[-1].to_dict(),
-                    end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+                    end=self._candidates_tensor_to_dataframe(candidates)
+                    .iloc[-1]
+                    .to_dict(),
                 ),
             )
             step = pd.DataFrame(sp.step(sp.start)).T
             return pd.concat((step, self.predict(step)), axis=1)
 
-        return self._postprocess_candidates(candidates=candidates)
+        return self._candidates_tensor_to_dataframe(candidates=candidates)
 
     def _tell(self) -> None:
         pass
