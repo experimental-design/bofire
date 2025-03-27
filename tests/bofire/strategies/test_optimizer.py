@@ -25,7 +25,12 @@ def optimizer_data_model(request) -> data_models_strategies.AcquisitionOptimizer
 class ConstraintCollection:
     @staticmethod
     def nonliner_ineq_for_himmelblau(domain: Domain) -> Domain:
-        pass
+        domain.constraints.constraints += [
+            constraints_data_models.NonlinearInequalityConstraint(
+                features=["x_1", "x_2"],
+                expression="x_1**2 + x_2**2 <= 5",
+            ),
+        ]
 
     @staticmethod
     def linear_constr_for_ackley(domain: Domain) -> Domain:
@@ -93,19 +98,25 @@ class OptimizerBenchmark:
         #     2,
         #     data_models_strategies.SoboStrategy,
         # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Detergent(), 5, data_models_strategies.MoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
-        #     data_models_strategies.SoboStrategy,
-        # ),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+            additional_constraint_functions=ConstraintCollection.nonliner_ineq_for_himmelblau,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(), 5, data_models_strategies.MoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
+            data_models_strategies.SoboStrategy,
+        ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
             10,

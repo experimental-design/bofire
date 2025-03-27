@@ -13,6 +13,8 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    ProductInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
@@ -29,8 +31,8 @@ class AcqfOptimizationProblem(PymooProblem):
     ):
         if constraints_include is None:
             constraints_include = [
-                NonlinearEqualityConstraint,
                 NonlinearInequalityConstraint,
+                ProductInequalityConstraint,
             ]
 
         self.constraints = domain.constraints.get(
