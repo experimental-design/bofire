@@ -202,9 +202,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         return my_type in [
             constraints.LinearEqualityConstraint,
             constraints.LinearInequalityConstraint,
-            #  constraints.NonlinearInequalityConstraint,
             constraints.ProductInequalityConstraint,
-            constraints.NChooseKConstraint,
         ]
 
     def validate_domain(self, domain: Domain):

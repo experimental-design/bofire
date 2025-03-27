@@ -32,13 +32,12 @@ class AcqfOptimizationProblem(PymooProblem):
 
         self.acqfs = acqfs
 
-        if constraints_include is None:
+        if constraints_include is None:  # we chould possibly extend this list in the future
             constraints_include = [
-                NChooseKConstraint,
                 ProductInequalityConstraint,
             ]
         else:
-            assert all(c in (NChooseKConstraint, ProductInequalityConstraint) for c in constraints_include)
+            assert all(c in (ProductInequalityConstraint, ) for c in constraints_include)
 
         self.nonlinear_constraints = get_nonlinear_constraints(domain, includes=constraints_include)
 

@@ -14,7 +14,7 @@ from bofire.strategies import api as strategies
 
 @pytest.fixture(
     params=[  # (optimizer data model, params)
-        # data_models_strategies.BotorchOptimizer(),
+        data_models_strategies.BotorchOptimizer(),
         data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
     ]
 )
@@ -57,7 +57,6 @@ class ConstraintCollection:
             ),
         ]
         return domain
-
 
 @dataclass
 class OptimizerBenchmark:
@@ -102,11 +101,11 @@ class OptimizerBenchmark:
 
 @pytest.fixture(
     params=[
-        # OptimizerBenchmark(
-        #     benchmarks.Himmelblau(),
-        #     2,
-        #     data_models_strategies.SoboStrategy,
-        # ),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+        ),
         OptimizerBenchmark(
             benchmarks.Himmelblau(),
             2,
@@ -193,7 +192,6 @@ def test_linear_projection_repair_function():
         dims = [np.array([i * 5, 1 + i * 5]) for i in range(3)]
         return np.vstack([X[:, dim] for dim in dims])
 
-    Xpop = get_x12_points_from_population(sample_population)
     Xpop_c = get_x12_points_from_population(sample_population_repaired)
 
     # checking constraint adherence (see benchmark constraint functions

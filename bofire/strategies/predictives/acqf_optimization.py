@@ -26,6 +26,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
     ProductEqualityConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -750,7 +751,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         )
 
         res = pymoo_minimize(
-            problem, algorithm, termination, save_history=True, verbose=True
+            problem, algorithm, termination, verbose=True
         )
 
         x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
