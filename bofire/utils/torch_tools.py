@@ -10,12 +10,12 @@ from torch.nn import Module
 
 from bofire.data_models.api import AnyObjective, Domain, Outputs
 from bofire.data_models.constraints.api import (
+    Constraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     ProductInequalityConstraint,
-    Constraint,
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
@@ -242,7 +242,8 @@ def get_product_constraints(
 
 
 def get_nonlinear_constraints(
-    domain: Domain, includes: Optional[List[Type[Constraint]]] = None,
+    domain: Domain,
+    includes: Optional[List[Type[Constraint]]] = None,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
@@ -261,8 +262,9 @@ def get_nonlinear_constraints(
             ProductInequalityConstraint,
         ]
     else:
-        assert all([c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes]),\
-            "Only NChooseK and ProductInequality constraints are supported."
+        assert all(
+            (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
+        ), "Only NChooseK and ProductInequality constraints are supported."
 
     callables = []
     if NChooseKConstraint in includes:

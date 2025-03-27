@@ -22,10 +22,6 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
-    ProductInequalityConstraint,
-    ProductEqualityConstraint,
     ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
@@ -750,9 +746,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             domain, input_preprocessing_specs, acqfs, q
         )
 
-        res = pymoo_minimize(
-            problem, algorithm, termination, verbose=True
-        )
+        res = pymoo_minimize(problem, algorithm, termination, verbose=True)
 
         x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
         f_opt = torch.from_numpy(res.F).to(**tkwargs)

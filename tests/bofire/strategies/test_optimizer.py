@@ -26,13 +26,11 @@ class ConstraintCollection:
     @staticmethod
     def constraint_mix_for_himmelblau(domain: Domain) -> Domain:
         domain.constraints.constraints += [
-
             constraints_data_models.ProductInequalityConstraint(
                 features=["x_1", "x_2"],
                 exponents=[2, 2],
                 rhs=5,
             ),
-
             constraints_data_models.LinearInequalityConstraint(
                 features=["x_1", "x_2"],
                 coefficients=[-1.0, 1.0],
@@ -57,6 +55,7 @@ class ConstraintCollection:
             ),
         ]
         return domain
+
 
 @dataclass
 class OptimizerBenchmark:
@@ -110,19 +109,28 @@ class OptimizerBenchmark:
             benchmarks.Himmelblau(),
             2,
             data_models_strategies.SoboStrategy,
-            additional_constraint_functions=[ConstraintCollection.constraint_mix_for_himmelblau],
+            additional_constraint_functions=[
+                ConstraintCollection.constraint_mix_for_himmelblau
+            ],
         ),
         OptimizerBenchmark(
-            benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
+            benchmarks.Detergent(),
+            5,
+            data_models_strategies.AdditiveSoboStrategy,
         ),
         OptimizerBenchmark(
-            benchmarks.Detergent(), 5, data_models_strategies.MoboStrategy,
+            benchmarks.Detergent(),
+            5,
+            data_models_strategies.MoboStrategy,
         ),
         OptimizerBenchmark(
-            benchmarks.DTLZ2(dim=2, num_objectives=2), 3, data_models_strategies.AdditiveSoboStrategy,
+            benchmarks.DTLZ2(dim=2, num_objectives=2),
+            3,
+            data_models_strategies.AdditiveSoboStrategy,
         ),
         OptimizerBenchmark(
-            benchmarks.Ackley(num_categories=3, categorical=True, dim=4), 10,
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+            10,
             data_models_strategies.SoboStrategy,
         ),
         OptimizerBenchmark(

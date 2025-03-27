@@ -11,13 +11,14 @@ from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
     ProductInequalityConstraint,
-    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.utils.torch_tools import get_linear_constraints, get_nonlinear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_linear_constraints,
+    get_nonlinear_constraints,
+    tkwargs,
+)
 
 
 class AcqfOptimizationProblem(PymooProblem):
@@ -29,17 +30,20 @@ class AcqfOptimizationProblem(PymooProblem):
         q: int,
         constraints_include: Optional[List[Type[Constraint]]] = None,
     ):
-
         self.acqfs = acqfs
 
-        if constraints_include is None:  # we chould possibly extend this list in the future
+        if (
+            constraints_include is None
+        ):  # we chould possibly extend this list in the future
             constraints_include = [
                 ProductInequalityConstraint,
             ]
         else:
-            assert all(c in (ProductInequalityConstraint, ) for c in constraints_include)
+            assert all(c in (ProductInequalityConstraint,) for c in constraints_include)
 
-        self.nonlinear_constraints = get_nonlinear_constraints(domain, includes=constraints_include)
+        self.nonlinear_constraints = get_nonlinear_constraints(
+            domain, includes=constraints_include
+        )
 
         n_var = bounds.shape[1] * q
         xl = (
@@ -72,11 +76,12 @@ class AcqfOptimizationProblem(PymooProblem):
 
         if self.nonlinear_constraints:
             G = []
-            for i, constr in enumerate(self.nonlinear_constraints):
+            for constr in self.nonlinear_constraints:
                 constr_val = -constr[0](x)  # converting to form g(x) <= 0
                 G.append(constr_val.detach().numpy())
 
             out["G"] = np.hstack(G)
+
 
 class LinearProjection(PymooRepair):
     """handles linear equality constraints by mapping to closest legal point in the design space
@@ -132,7 +137,6 @@ class LinearProjection(PymooRepair):
         super().__init__()
 
     def _create_qp_problem_input(self, X: np.ndarray) -> dict:
-
         n_pop = X.shape[0]
         n_x_points = n_pop * self.q
 
@@ -186,7 +190,9 @@ class LinearProjection(PymooRepair):
             """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point"""
 
             if not constr:
-                return cvxopt.spmatrix([], [], [], (0, self.d*n_x_points)), cvxopt.matrix([], (0, 1), tc='d')
+                return cvxopt.spmatrix(
+                    [], [], [], (0, self.d * n_x_points)
+                ), cvxopt.matrix([], (0, 1), tc="d")
 
             # vertically combine all linear equality constr.
             Ab_single_eq = [
@@ -240,7 +246,6 @@ class LinearProjection(PymooRepair):
         }
 
     def _do(self, problem, X, **kwargs):
-
         sol = cvxopt.solvers.qp(**self._create_qp_problem_input(X))
         x_corrected = np.array(sol["x"])
         X_corrected = x_corrected.reshape(X.shape)
