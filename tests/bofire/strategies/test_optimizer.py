@@ -24,13 +24,22 @@ def optimizer_data_model(request) -> data_models_strategies.AcquisitionOptimizer
 
 class ConstraintCollection:
     @staticmethod
-    def nonliner_ineq_for_himmelblau(domain: Domain) -> Domain:
+    def constraint_mix_for_himmelblau(domain: Domain) -> Domain:
         domain.constraints.constraints += [
-            constraints_data_models.NonlinearInequalityConstraint(
+
+            constraints_data_models.ProductInequalityConstraint(
                 features=["x_1", "x_2"],
-                expression="x_1**2 + x_2**2 <= 5",
+                exponents=[2, 2],
+                rhs=5,
+            ),
+
+            constraints_data_models.LinearInequalityConstraint(
+                features=["x_1", "x_2"],
+                coefficients=[-1.0, 1.0],
+                rhs=0.0,
             ),
         ]
+        return domain
 
     @staticmethod
     def linear_constr_for_ackley(domain: Domain) -> Domain:
@@ -102,7 +111,7 @@ class OptimizerBenchmark:
             benchmarks.Himmelblau(),
             2,
             data_models_strategies.SoboStrategy,
-            additional_constraint_functions=ConstraintCollection.nonliner_ineq_for_himmelblau,
+            additional_constraint_functions=[ConstraintCollection.constraint_mix_for_himmelblau],
         ),
         OptimizerBenchmark(
             benchmarks.Detergent(), 5, data_models_strategies.AdditiveSoboStrategy,
@@ -143,6 +152,9 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
     proposals = strategy.ask(4)
 
     assert proposals.shape[0] == 4
+
+    constr = strategy.domain.constraints.get()
+    assert (constr(proposals).values <= 1e-5).all()
 
 
 def test_linear_projection_repair_function():

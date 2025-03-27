@@ -198,16 +198,13 @@ class GeneticAlgorithm(AcquisitionOptimizer):
     n_max_gen: int = 500
     n_max_evals: int = 100000
 
-    # "repair" function for linear constraints
-    repair_linear_equality_constraints: bool = True
-    repair_linear_inequality_constraints: bool = True
-
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         return my_type in [
             constraints.LinearEqualityConstraint,
             constraints.LinearInequalityConstraint,
-            constraints.NonlinearInequalityConstraint,
+            #  constraints.NonlinearInequalityConstraint,
             constraints.ProductInequalityConstraint,
+            constraints.NChooseKConstraint,
         ]
 
     def validate_domain(self, domain: Domain):

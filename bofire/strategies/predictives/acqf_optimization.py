@@ -714,9 +714,6 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         self.n_max_gen = data_model.n_max_gen
         self.n_max_evals = data_model.n_max_evals
 
-        self.repair_linear_equality_constraints = data_model.repair_linear_equality_constraints
-        self.repair_linear_inequality_constraints = data_model.repair_linear_inequality_constraints
-
     def _optimize(
         self,
         candidate_count: int,
@@ -770,27 +767,12 @@ class GeneticAlgorithm(AcquisitionOptimizer):
     ):
         bounds = self.get_bounds(domain, input_preprocessing_specs)
 
-        constraints_include = [
-            NonlinearInequalityConstraint,
-            ProductInequalityConstraint,
-        ]
-        constraints_repair = []
-        if not self.repair_linear_inequality_constraints:
-            constraints_include.append(LinearInequalityConstraint)
-        else:
-            constraints_repair.append(LinearInequalityConstraint)
-        if not self.repair_linear_equality_constraints:
-            constraints_include.append(LinearEqualityConstraint)
-        else:
-            constraints_repair.append(LinearEqualityConstraint)
-
         # ===== Problem ====
         problem = GA_utils.AcqfOptimizationProblem(
             acqfs,
             domain,
             bounds,
             q,
-            constraints_include=constraints_include,
         )
 
         # ==== Algorithm ====
@@ -802,7 +784,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
         # We handle linear equality constraint with a repair function
         repair_constraints = domain.constraints.get(
-            includes=[LinearEqualityConstraint, LinearInequalityConstraint]
+            includes=[LinearEqualityConstraint, LinearInequalityConstraint],
         )
         if len(repair_constraints) > 0:
             algorithm_args["repair"] = GA_utils.LinearProjection(
@@ -811,7 +793,6 @@ class GeneticAlgorithm(AcquisitionOptimizer):
                 n_pop=self.population_size,
                 bounds=bounds,
                 q=q,
-                constraints_include=constraints_repair,
             )
         algorithm = algorithm_class(**algorithm_args)
 

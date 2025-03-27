@@ -17,7 +17,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import get_linear_constraints, get_nonlinear_constraints, tkwargs
 
 
 class AcqfOptimizationProblem(PymooProblem):
@@ -29,15 +29,19 @@ class AcqfOptimizationProblem(PymooProblem):
         q: int,
         constraints_include: Optional[List[Type[Constraint]]] = None,
     ):
+
+        self.acqfs = acqfs
+
         if constraints_include is None:
             constraints_include = [
-                NonlinearInequalityConstraint,
+                NChooseKConstraint,
                 ProductInequalityConstraint,
             ]
+        else:
+            assert all(c in (NChooseKConstraint, ProductInequalityConstraint) for c in constraints_include)
 
-        self.constraints = domain.constraints.get(
-            includes=constraints_include
-        )  # linear constraints handled in repair function
+        self.nonlinear_constraints = get_nonlinear_constraints(domain, includes=constraints_include)
+
         n_var = bounds.shape[1] * q
         xl = (
             bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
@@ -53,8 +57,8 @@ class AcqfOptimizationProblem(PymooProblem):
         super().__init__(
             n_var=n_var,
             n_obj=len(acqfs),
-            n_ieq_constr=0,  # len(constraints),  # todo: implement constraints
-            n_eq_constr=0,  # len(constraints),
+            n_ieq_constr=len(self.nonlinear_constraints) * q,
+            n_eq_constr=0,
             xl=xl,
             xu=xu,
             elementwise_evaluation=False,
@@ -65,10 +69,15 @@ class AcqfOptimizationProblem(PymooProblem):
         x = torch.from_numpy(x).to(**tkwargs)
         x = x.reshape((n_pop, self.q, self.d))
 
-        out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.bofire_acqfs]
+        out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.acqfs]
 
-        # todo: add nonlinear constraints
+        if self.nonlinear_constraints:
+            G = []
+            for i, constr in enumerate(self.nonlinear_constraints):
+                constr_val = -constr[0](x)  # converting to form g(x) <= 0
+                G.append(constr_val.detach().numpy())
 
+            out["G"] = np.hstack(G)
 
 class LinearProjection(PymooRepair):
     """handles linear equality constraints by mapping to closest legal point in the design space
