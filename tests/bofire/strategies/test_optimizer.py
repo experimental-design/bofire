@@ -153,7 +153,8 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
     assert proposals.shape[0] == 4
 
     constr = strategy.domain.constraints.get()
-    assert (constr(proposals).values <= 1e-5).all()
+    if constr.constraints:
+        assert (constr(proposals).values <= 1e-5).all()
 
 
 def test_linear_projection_repair_function():
