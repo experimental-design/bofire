@@ -1,14 +1,15 @@
 import warnings
 from abc import abstractmethod
-from typing import Annotated, Literal, Optional, Type, Union
+from typing import Literal, Optional, Type, Union
 
 from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints
+from bofire.data_models.constraints.api import InterpointConstraint
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalDescriptorInput
+from bofire.data_models.features.api import CategoricalDescriptorInput, ContinuousInput
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -85,12 +86,14 @@ class LSRBO(LocalSearchConfig):
 
     Attributes:
         gamma (float): The switsching parameter between local and global optimization.
-            Defaults to 0.1.
+            Defaults to 0.1. . The default is chosen for `qEI` as acquisition function.
+            It has to be adapted to the acquisition function used, especially when log
+            based acqfs are used.
 
     """
 
-    type: Literal["LSRBO"] = "LSRBO"
-    gamma: Annotated[float, Field(ge=0)] = 0.1
+    type: Literal["LSRBO"] = "LSRBO"  # type: ignore
+    gamma: float = 0.1
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
         return acqf_local >= self.gamma
@@ -154,7 +157,16 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 ):
                     raise ValueError("LSR-BO only supported for linear constraints.")
 
+        def validate_interpoint_constraints(domain: Domain):
+            if domain.constraints.get(InterpointConstraint) and len(
+                domain.inputs.get(ContinuousInput),
+            ) != len(domain.inputs):
+                raise ValueError(
+                    "Interpoint constraints can only be used for pure continuous search spaces.",
+                )
+
         validate_local_search_config(domain)
+        validate_interpoint_constraints(domain)
 
     def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
         # we also have to check here that the categorical method is compatible with the chosen models

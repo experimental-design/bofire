@@ -164,7 +164,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         return vals
 
-    def _postprocess_candidates(self, candidates: Tensor) -> pd.DataFrame:
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Converts a tensor of candidates to a pandas Dataframe.
 
         Args:
@@ -174,24 +174,8 @@ class BotorchStrategy(PredictiveStrategy):
             pd.DataFrame: Dataframe with candidates.
 
         """
-        input_feature_keys = [
-            item
-            for key in self.domain.inputs.get_keys()
-            for item in self._features2names[key]
-        ]
-
-        df_candidates = pd.DataFrame(
-            data=candidates.detach().numpy(),
-            columns=input_feature_keys,
-        )
-
-        df_candidates = self.domain.inputs.inverse_transform(
-            df_candidates,
-            self.input_preprocessing_specs,
-        )
-
-        preds = self.predict(df_candidates)
-        return pd.concat((df_candidates, preds), axis=1)
+        preds = self.predict(candidates)
+        return pd.concat((candidates, preds), axis=1)
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """[summary]
@@ -209,7 +193,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         acqfs = self._get_acqfs(candidate_count)
 
-        candidates, _ = self.acqf_optimizer.optimize(
+        candidates = self.acqf_optimizer.optimize(
             candidate_count,
             acqfs,
             self.domain,

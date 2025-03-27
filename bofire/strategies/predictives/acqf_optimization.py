@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type
 
 import pandas as pd
 import torch
@@ -74,15 +74,15 @@ class AcquisitionOptimizer(ABC):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
         experiments: Optional[pd.DataFrame] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> pd.DataFrame:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
         Args:
-            candidate_count (int): Number of candidates that should be returned.
-            acqfs (List[AcquisitionFunction]): List of acquisition functions that should be optimized.
-            domain (Domain): The domain of the optimization problem.
-            input_preprocessing_specs (InputTransformSpecs): The input preprocessing specs.
-            experiments
+            candidate_count: Number of candidates that should be returned.
+            acqfs: List of acquisition functions that should be optimized.
+            domain: The domain of the optimization problem.
+            input_preprocessing_specs: The input preprocessing specs of the surrogates.
+            experiments: The experiments that have been conducted so far.
 
         Returns:
         A two-element tuple containing
@@ -106,7 +106,7 @@ class AcquisitionOptimizer(ABC):
                     acqf=acqfs[0],
                     domain=domain,
                     input_preprocessing_specs=input_preprocessing_specs,
-                    experiments=experiments,
+                    experiments=experiments,  # type: ignore
                 )
 
         return self._optimize(
@@ -125,7 +125,7 @@ class AcquisitionOptimizer(ABC):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
         experiments: Optional[pd.DataFrame] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> pd.DataFrame:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
         Args:
@@ -151,6 +151,48 @@ class AcquisitionOptimizer(ABC):
         )
         return features2idx
 
+    def _features2names(
+        self, domain, input_preprocessing_specs: InputTransformSpecs
+    ) -> Dict[str, Tuple[str]]:
+        _, features2names = domain.inputs._get_transform_info(
+            input_preprocessing_specs,
+        )
+        return features2names
+
+    def _candidates_tensor_to_dataframe(
+        self,
+        candidates: Tensor,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+    ) -> pd.DataFrame:
+        """Converts a tensor of candidates to a pandas Dataframe.
+
+        Args:
+            candidates (Tensor): Tensor of candidates returned from `optimize_acqf`.
+
+        Returns:
+            pd.DataFrame: Dataframe of candidates.
+        """
+        # This method is needed here as we use a botorch method to optimize over
+        # purely categorical spaces
+
+        features2names = self._features2names(domain, input_preprocessing_specs)
+
+        input_feature_keys = [
+            item for key in domain.inputs.get_keys() for item in features2names[key]
+        ]
+
+        df_candidates = pd.DataFrame(
+            data=candidates.detach().numpy(),
+            columns=input_feature_keys,
+        )
+
+        df_candidates = domain.inputs.inverse_transform(
+            df_candidates,
+            input_preprocessing_specs,
+        )
+        return df_candidates
+
     def get_bounds(
         self, domain: Domain, input_preprocessing_specs: InputTransformSpecs
     ) -> torch.Tensor:
@@ -173,8 +215,7 @@ class AcquisitionOptimizer(ABC):
             fixed_features (dict): Dictionary of fixed features, keys are the feature indices, values the transformed feature values
 
         """
-        # does this go to the actual optimizer implementation, or is this optimizer agnostic?
-        # -> maybe agnostic, and categorical_method, and
+
         fixed_features = {}
         features2idx = self._features2idx(domain, input_preprocessing_specs)
 
@@ -189,94 +230,14 @@ class AcquisitionOptimizer(ABC):
 
         return fixed_features
 
-    def _include_exclude_categorical_combinations(
-        self, domain: Domain
-    ) -> Tuple[Union[List[Type[Input]], None], Union[List[Type[Input]], None]]:
-        """Returns include and exclude arguments for get_categorical_combinations methods.
-
-        Returns:
-            Tuple[List[Type[Input]], List[Type[Input]]]: Tuple of include and exclude arguments.
-
-        """
-        return [Input], None
-
-    def get_categorical_combinations(
-        self,
-        domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
-    ) -> List[Dict[int, float]]:
-        """Provides all possible combinations of fixed values
-
-        Returns:
-            list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
-
-        """
-        # this is botorch specific, it should go to the new class
-
-        fixed_basis = self.get_fixed_features(
-            domain,
-            input_preprocessing_specs,
-        )
-
-        include, exclude = self._include_exclude_categorical_combinations(domain)
-
-        combos = domain.inputs.get_categorical_combinations(
-            include=include,
-            exclude=exclude,  # type: ignore
-        )
-        # now build up the fixed feature list
-        if len(combos) == 1:
-            return [fixed_basis]
-        features2idx = self._features2idx(domain, input_preprocessing_specs)
-        list_of_fixed_features = []
-
-        for combo in combos:
-            fixed_features = copy.deepcopy(fixed_basis)
-
-            for pair in combo:
-                feat, val = pair
-                feature = domain.inputs.get_by_key(feat)
-                if (
-                    isinstance(feature, CategoricalDescriptorInput)
-                    and input_preprocessing_specs[feat]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ):
-                    index = feature.categories.index(val)
-
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = feature.values[index][j]
-
-                elif isinstance(feature, CategoricalMolecularInput):
-                    preproc = input_preprocessing_specs[feat]
-                    if not isinstance(preproc, MolFeatures):
-                        raise ValueError(
-                            f"preprocessing for {feat} must be of type AnyMolFeatures"
-                        )
-                    transformed = feature.to_descriptor_encoding(
-                        preproc, pd.Series([val])
-                    )
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
-                elif isinstance(feature, CategoricalInput):
-                    # it has to be onehot in this case
-                    transformed = feature.to_onehot_encoding(pd.Series([val]))
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
-
-                elif isinstance(feature, DiscreteInput):
-                    fixed_features[features2idx[feat][0]] = val  # type: ignore
-
-            list_of_fixed_features.append(fixed_features)
-        return list_of_fixed_features
-
     def _optimize_acqf_discrete(
         self,
         candidate_count: int,
         acqf: AcquisitionFunction,
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
-        experiments: Optional[pd.DataFrame] = None,
-    ) -> Tuple[Tensor, Tensor]:
+        experiments: pd.DataFrame,
+    ) -> pd.DataFrame:
         """Optimizes the acquisition function for a discrete search space.
 
         Args:
@@ -289,7 +250,6 @@ class AcquisitionOptimizer(ABC):
         - a `q x d`-dim tensor of generated candidates.
         - an associated acquisition value.
         """
-        # assert self.experiments is not None
         choices = pd.DataFrame.from_dict(
             [  # type: ignore
                 {e[0]: e[1] for e in combi}
@@ -317,11 +277,16 @@ class AcquisitionOptimizer(ABC):
                 specs=input_preprocessing_specs,
             ).values,
         ).to(**tkwargs)
-        return optimize_acqf_discrete(
+        candidates, _ = optimize_acqf_discrete(
             acq_function=acqf,
             q=candidate_count,
             unique=True,
             choices=t_choices,
+        )
+        return self._candidates_tensor_to_dataframe(
+            candidates=candidates,
+            domain=domain,
+            input_preprocessing_specs=input_preprocessing_specs,
         )
         # return self._postprocess_candidates(candidates=candidates)
 
@@ -354,7 +319,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> pd.DataFrame:
         # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
 
         # for continuous and mixed search spaces, here different optimizers could
@@ -372,7 +337,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         # do the global opt
         candidates, global_acqf_val = self._optimize_acqf_continuous(
             domain=domain,
-            input_preprocessing_specs=input_preprocessing_specs,
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
@@ -383,6 +347,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features_list=fixed_features_list,
         )
 
+        candidates = self._candidates_tensor_to_dataframe(
+            candidates, domain, input_preprocessing_specs
+        )
+
         if (
             self.local_search_config is not None
             and has_local_search_region(domain)
@@ -390,7 +358,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         ):
             local_candidates, local_acqf_val = self._optimize_acqf_continuous(
                 domain=domain,
-                input_preprocessing_specs=input_preprocessing_specs,
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
@@ -404,26 +371,27 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 local_acqf_val.item(),
                 global_acqf_val.item(),
             ):
-                return local_candidates, local_acqf_val
+                return self._candidates_tensor_to_dataframe(
+                    local_candidates, domain, input_preprocessing_specs
+                )
 
-            raise NotImplementedError("Johannes to have a look at this")
+            assert experiments is not None
             sp = ShortestPathStrategy(
                 data_model=ShortestPathStrategyDataModel(
-                    domain=self.domain,
-                    start=self.experiments.iloc[-1].to_dict(),
-                    end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+                    domain=domain,
+                    start=experiments.iloc[-1].to_dict(),
+                    end=candidates.iloc[-1].to_dict(),
                 ),
             )
 
             step = pd.DataFrame(sp.step(sp.start)).T
-            return pd.concat((step, self.predict(step)), axis=1)
+            return step
 
-        return candidates, global_acqf_val
+        return candidates
 
     def _optimize_acqf_continuous(
         self,
         domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
         bounds: Tensor,
@@ -667,6 +635,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
     ) -> List[Dict[int, float]]:
+        """Provides all possible combinations of fixed values
+
+        Returns:
+            list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
+        """
         methods = [
             self.descriptor_method,
             self.discrete_method,
@@ -676,11 +649,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if all(m == CategoricalMethodEnum.FREE for m in methods):
             return [{}]
 
-        return super().get_categorical_combinations(domain, input_preprocessing_specs)
+        fixed_basis = self.get_fixed_features(
+            domain,
+            input_preprocessing_specs,
+        )
 
-    def _include_exclude_categorical_combinations(
-        self, domain: Domain
-    ) -> Tuple[Union[List[Type[Input]], None], Union[List[Type[Input]], None]]:
         include = []
         exclude = None
 
@@ -698,7 +671,54 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if not include:
             include = None
 
-        return include, exclude
+        combos = domain.inputs.get_categorical_combinations(
+            include=include if include else Input,
+            exclude=exclude,  # type: ignore
+        )
+        # now build up the fixed feature list
+        if len(combos) == 1:
+            return [fixed_basis]
+        features2idx = self._features2idx(domain, input_preprocessing_specs)
+        list_of_fixed_features = []
+
+        for combo in combos:
+            fixed_features = copy.deepcopy(fixed_basis)
+
+            for pair in combo:
+                feat, val = pair
+                feature = domain.inputs.get_by_key(feat)
+                if (
+                    isinstance(feature, CategoricalDescriptorInput)
+                    and input_preprocessing_specs[feat]
+                    == CategoricalEncodingEnum.DESCRIPTOR
+                ):
+                    index = feature.categories.index(val)
+
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = feature.values[index][j]
+
+                elif isinstance(feature, CategoricalMolecularInput):
+                    preproc = input_preprocessing_specs[feat]
+                    if not isinstance(preproc, MolFeatures):
+                        raise ValueError(
+                            f"preprocessing for {feat} must be of type AnyMolFeatures"
+                        )
+                    transformed = feature.to_descriptor_encoding(
+                        preproc, pd.Series([val])
+                    )
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = transformed.values[0, j]
+                elif isinstance(feature, CategoricalInput):
+                    # it has to be onehot in this case
+                    transformed = feature.to_onehot_encoding(pd.Series([val]))
+                    for j, idx in enumerate(features2idx[feat]):
+                        fixed_features[idx] = transformed.values[0, j]
+
+                elif isinstance(feature, DiscreteInput):
+                    fixed_features[features2idx[feat][0]] = val  # type: ignore
+
+            list_of_fixed_features.append(fixed_features)
+        return list_of_fixed_features
 
 
 class GeneticAlgorithm(AcquisitionOptimizer):
