@@ -173,9 +173,6 @@ class LinearProjection(PymooRepair):
                 [[m_zeros] * i + [m] + [m_zeros] * (N - i - 1) for i in range(N)]
             )
 
-        def vstack(m: List[cvxopt.matrix]) -> cvxopt.matrix:
-            return cvxopt.matrix([[mi] for mi in m])
-
         def _build_A_b_matrices_for_single_constr(
             index, coeffs, b
         ) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
@@ -198,8 +195,8 @@ class LinearProjection(PymooRepair):
             Ab_single_eq = [
                 _build_A_b_matrices_for_single_constr(*constr_) for constr_ in constr
             ]
-            A = vstack([Ab[0] for Ab in Ab_single_eq])
-            b = vstack([Ab[1] for Ab in Ab_single_eq])
+            A = cvxopt.sparse([Ab[0] for Ab in Ab_single_eq])
+            b = cvxopt.matrix([Ab[1] for Ab in Ab_single_eq])
             # repeat for each x in the population
             A = repeated_blkdiag(A, n_x_points)
             b = cvxopt.matrix([b] * n_x_points)

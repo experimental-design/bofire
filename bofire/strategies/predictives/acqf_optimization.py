@@ -738,14 +738,18 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
         experiments: Optional[pd.DataFrame] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> pd.DataFrame:
         """main function for optimizing the acquisition function using pymoo's genetic algorithm.
 
         Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
         """
 
-        return self._single_shot_optimization(
+        candidates, _ = self._single_shot_optimization(
             domain, input_preprocessing_specs, acqfs, candidate_count
+        )
+
+        return self._candidates_tensor_to_dataframe(
+            candidates, domain, input_preprocessing_specs,
         )
 
     def _single_shot_optimization(
