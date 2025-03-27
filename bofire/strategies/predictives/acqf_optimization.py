@@ -790,7 +790,6 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             algorithm_args["repair"] = GA_utils.LinearProjection(
                 domain=domain,
                 d=bounds.shape[1],
-                n_pop=self.population_size,
                 bounds=bounds,
                 q=q,
             )

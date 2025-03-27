@@ -111,7 +111,6 @@ class LinearProjection(PymooRepair):
         self,
         domain: Domain,
         d: int,
-        n_pop: int,
         bounds: Tensor,
         q: int,
         constraints_include: Optional[List[Type[Constraint]]] = None,
@@ -125,10 +124,18 @@ class LinearProjection(PymooRepair):
                     LinearInequalityConstraint,
                 ), "Only linear constraints supported for LinearProjection"
 
+        self.constraints_include = constraints_include
         self.d = d
-        self.n_pop = n_pop
         self.q = q
-        n_x_points = n_pop * q
+        self.domain = domain
+        self.bounds = bounds
+
+        super().__init__()
+
+    def _create_qp_problem_input(self, X: np.ndarray) -> dict:
+
+        n_pop = X.shape[0]
+        n_x_points = n_pop * self.q
 
         def _eq_constr_to_list(eq_constr_) -> Tuple[List[int], List[float], float]:
             """decode "get_linear_constraints" output: x-index, coefficients, and b
@@ -141,18 +148,18 @@ class LinearProjection(PymooRepair):
             return index, coeffs, b
 
         eq_constr, ineq_constr = [], []
-        if LinearEqualityConstraint in constraints_include:
+        if LinearEqualityConstraint in self.constraints_include:
             eq_constr = [
                 _eq_constr_to_list(eq_constr_)
                 for eq_constr_ in get_linear_constraints(
-                    domain, LinearEqualityConstraint
+                    self.domain, LinearEqualityConstraint
                 )
             ]
-        if LinearInequalityConstraint in constraints_include:
+        if LinearInequalityConstraint in self.constraints_include:
             ineq_constr = [
                 _eq_constr_to_list(eq_constr_)
                 for eq_constr_ in get_linear_constraints(
-                    domain, LinearInequalityConstraint
+                    self.domain, LinearInequalityConstraint
                 )
             ]
 
@@ -177,7 +184,10 @@ class LinearProjection(PymooRepair):
         def _build_A_b_matrices_for_n_points(
             constr: List[tuple],
         ) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
-            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b natrices fir n_x_point"""
+            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point"""
+
+            if not constr:
+                return cvxopt.spmatrix([], [], [], (0, self.d*n_x_points)), cvxopt.matrix([], (0, 1), tc='d')
 
             # vertically combine all linear equality constr.
             Ab_single_eq = [
@@ -200,33 +210,39 @@ class LinearProjection(PymooRepair):
                     ),  # negative unity matrix
                 ]
             )
-            lb, ub = (bounds[i, :].detach().numpy() for i in range(2))
+            lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
             h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
             G = repeated_blkdiag(G_bounds_, n_x_points)
             h = cvxopt.matrix([h_bounds_] * n_x_points)
             return G, h
 
         # Prepare Matrices for solving the estimation problem
-        self.P = cvxopt.spmatrix(
+        P = cvxopt.spmatrix(
             1.0, range(self.d * n_x_points), range(self.d * n_x_points)
         )  # the unit-matrix
 
-        self.A, self.b = _build_A_b_matrices_for_n_points(eq_constr)
+        A, b = _build_A_b_matrices_for_n_points(eq_constr)
         G, h = _build_G_h_for_box_bounds()
         if ineq_constr:
             G_, h_ = _build_A_b_matrices_for_n_points(ineq_constr)
             G, h = cvxopt.sparse([G, G_]), cvxopt.matrix([h, h_])
-        self.G, self.h = G, h
 
-        super().__init__()
-
-    def _do(self, problem, X, **kwargs):
         x = X.reshape(-1)
         q = cvxopt.matrix(-x)
 
-        sol = cvxopt.solvers.qp(
-            self.P, q, G=self.G, h=self.h, A=self.A, b=self.b, initvals=cvxopt.matrix(x)
-        )
+        return {
+            "P": P,
+            "q": q,
+            "G": G,
+            "h": h,
+            "A": A,
+            "b": b,
+            "initvals": cvxopt.matrix(x),
+        }
+
+    def _do(self, problem, X, **kwargs):
+
+        sol = cvxopt.solvers.qp(**self._create_qp_problem_input(X))
         x_corrected = np.array(sol["x"])
         X_corrected = x_corrected.reshape(X.shape)
 
