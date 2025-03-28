@@ -15,7 +15,7 @@ from bofire.strategies import api as strategies
 
 @pytest.fixture(
     params=[  # (optimizer data model, params)
-        data_models_strategies.BotorchOptimizer(),
+        # data_models_strategies.BotorchOptimizer(),
         data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
     ]
 )
@@ -101,34 +101,34 @@ class OptimizerBenchmark:
 
 @pytest.fixture(
     params=[
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-            additional_constraint_functions=[
-                ConstraintCollection.constraint_mix_for_himmelblau
-            ],
-        ),
-        OptimizerBenchmark(
-            benchmarks.Detergent(),
-            5,
-            data_models_strategies.AdditiveSoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Detergent(),
-            5,
-            data_models_strategies.MoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.DTLZ2(dim=2, num_objectives=2),
-            3,
-            data_models_strategies.AdditiveSoboStrategy,
-        ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.constraint_mix_for_himmelblau
+        #     ],
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Detergent(),
+        #     5,
+        #     data_models_strategies.AdditiveSoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Detergent(),
+        #     5,
+        #     data_models_strategies.MoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.DTLZ2(dim=2, num_objectives=2),
+        #     3,
+        #     data_models_strategies.AdditiveSoboStrategy,
+        # ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
             10,

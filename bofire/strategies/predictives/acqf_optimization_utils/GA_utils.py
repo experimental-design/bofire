@@ -1,10 +1,11 @@
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type, Dict, Callable
 
 import cvxopt
 import numpy as np
 import torch
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
+from pymoo.core import variable as pymoo_variable
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -13,24 +14,122 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import (
     get_linear_constraints,
     get_nonlinear_constraints,
     tkwargs,
 )
 
+class OneHotEncodingToOrdinalEncoding:
+    """Helper class for transfering bounds, and data from a domain with One-Hot-Encoded input
+    features, to ordinal encoded features, as they are used for the GA """
+    def __init__(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs):
+
+        self.bounds_org: List[Tuple[float, float]]
+        self.bounds_transformed: List[Tuple[float, float]]
+        self.transformer: List[Callable[[Tensor], Tensor]]
+
+
+        for key in domain.inputs.get_keys():
+
+            spec_ = input_preprocessing_specs.get(key)
+
+            bounds_org = domain.inputs.get_by_key(key).get_bounds(spec_)
+            self.bounds_org.append(bounds_org)
+
+            replace = False
+            if spec_ is not None:
+                if spec_ == CategoricalEncodingEnum.ONE_HOT:
+                    replace = True
+
+            if not replace:
+                self.bounds_transformed.append(bounds_org)
+
+            else:
+                bounds_transformed = domain.inputs.get_by_key(key).get_bounds(CategoricalEncodingEnum.ORDINAL)
+                self.bounds_transformed.append(bounds_transformed)
+
+                idx_transformed = sum([len(x[0]) for x in self.bounds_transformed]) - 1
+
+                self.transformer.append(\
+                    OneHotEncodingToOrdinalEncoding._transform_function_factory(idx_transformed, bounds_org))
+
+    def get_bounds_transformed(self) -> Tuple[List[float], List[float]]:
+        """return the new bounds, given ordinal-encodings"""
+        lb, ub = [list(np.concatenate([x[i] for x in self.bounds_transformed])) for i in (0, 1)]
+        return lb, ub
+
+    def get_pymoo_types(self) -> List[pymoo_variable.Variable]:
+        """return the pymoo types for the transformed input"""
+        return [
+            pymoo_variable.Real()
+        ]
+
+    def transform(self, x: Tensor) -> Tensor:
+        """transform ordinal encoded input (from GA) to one-hot encoded input (for BoTorch model)
+
+        Parameters:
+            x: Tensor of shape (..., d_ord), where d is the number of input features in ordinal-encoded space
+
+        Returns:
+            x: Tensor, transformed input of shape (..., d)
+        """
+        for transform in self.transformer:
+            x = transform(x)
+
+        return x
+
+    @staticmethod
+    def _transform_function_factory(idx_transformed: int, bounds_org: Tuple[float, float]) \
+            -> Callable[[Tensor], Tensor]:
+        di = len(bounds_org[0])
+        def _transform(x: Tensor) -> Tensor:
+            """transform ordinal encoded input (from GA) to one-hot encoded input (for BoTorch model), for a single
+            encoded column
+
+            Parameters:
+                x: Tensor of shape (..., d_ord), where d is the number of input features in ordinal-encoded space
+
+            Returns:
+                x: Tensor, transformed input of shape (..., d)
+            """
+
+            xl, xr = x[..., :idx_transformed], x[..., idx_transformed+1:]
+            x_replace = x[..., idx_transformed]  # should be (0, 1, ...) ordinal encoded
+            x_replace = torch.round(x_replace)
+            x_new = torch.zeros(list(x.shape[:-1]) + [di])
+
+            for i in range(di):
+                mask_true = x_replace == i
+                x_new[..., ~mask_true] = bounds_org[0][i]
+                x_new[..., mask_true] = bounds_org[1][i]
+
+            return torch.cat((xl, x_new, xr), dim=-1)
+
+        return _transform
+
 
 class AcqfOptimizationProblem(PymooProblem):
+    """Transfers the acquisition function optimization problem on the bofire domain, into a pymoo-
+    problem, which can be solved with e.g. the pymoo GA.
+
+    The optimizer will handle one-hot encoded input features as
+    """
     def __init__(
         self,
         acqfs,
         domain: Domain,
-        bounds: Tensor,
+        input_preprocessing_specs: InputTransformSpecs,
         q: int,
         constraints_include: Optional[List[Type[Constraint]]] = None,
     ):
         self.acqfs = acqfs
+
+        self.encoding_switcher = OneHotEncodingToOrdinalEncoding(domain, input_preprocessing_specs)
+        lb, ub = self.encoding_switcher.get_bounds_transformed()
 
         if (
             constraints_include is None
@@ -45,14 +144,10 @@ class AcqfOptimizationProblem(PymooProblem):
             domain, includes=constraints_include
         )
 
-        n_var = bounds.shape[1] * q
-        xl = (
-            bounds[0, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
-        )
-        xu = (
-            bounds[1, :].detach().numpy().reshape((1, -1)).repeat(q, axis=0).reshape(-1)
-        )
-        self.d = bounds.shape[1]
+        n_var = len(ub) * q
+        xl = lb * q
+        xu = ub * q
+        self.d = len(lb)
         self.q = q
 
         # assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
@@ -65,6 +160,7 @@ class AcqfOptimizationProblem(PymooProblem):
             xl=xl,
             xu=xu,
             elementwise_evaluation=False,
+            vars=
         )
 
     def _evaluate(self, x, out, *args, **kwargs):

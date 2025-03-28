@@ -790,7 +790,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         problem = GA_utils.AcqfOptimizationProblem(
             acqfs,
             domain,
-            bounds,
+            input_preprocessing_specs,
             q,
         )
 
