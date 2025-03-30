@@ -1,6 +1,7 @@
 import pytest
 
 from bofire.benchmarks.api import MultiTaskHimmelblau
+from bofire.data_models.acquisition_functions.api import qMFMES, qMFVariance
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import TaskInput
@@ -42,7 +43,9 @@ def test_mf_requires_all_fidelities_observed():
     strategy = MultiFidelityStrategy(
         data_model=MultiFidelityStrategyDataModel(
             domain=domain_with_extra_task,
-            fidelity_thresholds=0.1,
+            fidelity_acquisition_function=qMFVariance(
+                fidelity_thresholds=[0.1, 0.1, 0.1]
+            ),
         )
     )
 
@@ -57,11 +60,18 @@ def test_mf_requires_all_fidelities_observed():
 
     # test that the strategy does not raise an error if all fidelities are observed
     experiments.loc[experiments.index[-1], task_input.key] = "task_dummy"
-    strategy.tell(experiments)
+    strategy.tell(experiments, replace=True)
     strategy.ask(1)
 
 
-def test_mf_fidelity_selection():
+@pytest.mark.parametrize(
+    "fidelity_acqf",
+    (
+        qMFVariance(fidelity_thresholds=0.1, beta=0.2),
+        qMFMES(fidelity_costs=[2.0, 1.0]),
+    ),
+)
+def test_mf_fidelity_selection(fidelity_acqf):
     benchmark = MultiTaskHimmelblau()
     (task_input,) = benchmark.domain.inputs.get(TaskInput, exact=True)
     assert task_input.type == "TaskInput"
@@ -75,30 +85,41 @@ def test_mf_fidelity_selection():
         ),
     )
 
-    experiments = benchmark.f(random_strategy.ask(4), return_complete=True)
-    experiments[task_input.key] = ["task_1", "task_2", "task_2", "task_2"]
+    N_train = 10
+    experiments = benchmark.f(random_strategy.ask(N_train), return_complete=True)
+    experiments[task_input.key] = ["task_1"] + ["task_2"] * (N_train - 1)
     experiments, withheld = experiments.iloc[:-1], experiments.iloc[-1:]
 
     strategy = MultiFidelityStrategy(
         data_model=MultiFidelityStrategyDataModel(
             domain=benchmark.domain,
-            fidelity_thresholds=0.1,
+            fidelity_acquisition_function=fidelity_acqf,
         )
     )
 
     strategy.tell(experiments)
     # test that for a point close to training data, the highest fidelity is selected
-    close_to_training = experiments.iloc[2:3].copy()
+    good_training_point = experiments[benchmark.domain.outputs.get_keys()[0]].argmin()
+    close_to_training = experiments.iloc[
+        good_training_point : good_training_point + 1
+    ].copy()
     close_to_training[benchmark.domain.inputs.get_keys(excludes=TaskInput)] += 0.01
-    pred = strategy._select_fidelity_and_get_predict(close_to_training)
+    pred = strategy.select_fidelity_candidate(close_to_training)
     assert (pred[task_input.key] == task_input.categories[0]).all()
 
     # test that for a point far from training data, the lowest fidelity is selected
-    pred = strategy._select_fidelity_and_get_predict(withheld)
+    pred = strategy.select_fidelity_candidate(withheld)
     assert (pred[task_input.key] == task_input.categories[1]).all()
 
 
-def test_mf_point_selection():
+@pytest.mark.parametrize(
+    "fidelity_acqf",
+    (
+        qMFVariance(fidelity_thresholds=0.1, beta=0.2),
+        qMFMES(fidelity_costs=[2.0, 1.0]),
+    ),
+)
+def test_mf_point_selection(fidelity_acqf):
     benchmark = MultiTaskHimmelblau()
     (task_input,) = benchmark.domain.inputs.get(TaskInput, exact=True)
     assert task_input.type == "TaskInput"
@@ -118,7 +139,7 @@ def test_mf_point_selection():
     strategy = MultiFidelityStrategy(
         data_model=MultiFidelityStrategyDataModel(
             domain=benchmark.domain,
-            fidelity_thresholds=0.1,
+            fidelity_acquisition_function=fidelity_acqf,
         )
     )
 
