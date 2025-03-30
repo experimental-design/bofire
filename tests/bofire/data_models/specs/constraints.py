@@ -47,6 +47,7 @@ specs.add_valid(
     lambda: {
         "expression": "f1*f2",
         "jacobian_expression": "[f2,f1,0]",
+        "hessian_expression": "[[0,1,0],[1,0,0],[0,0,0]]",
         "features": ["f1", "f2", "f3"],
     },
 )
@@ -55,6 +56,7 @@ specs.add_valid(
     lambda: {
         "expression": "f1*f2",
         "jacobian_expression": "[f2,f1,0]",
+        "hessian_expression": "[[0,1,0],[1,0,0],[0,0,0]]",
         "features": ["f1", "f2", "f3"],
     },
 )

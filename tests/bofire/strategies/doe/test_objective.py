@@ -74,6 +74,10 @@ def test_DOptimality_instantiation():
         d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2]]).flatten()),
     ) == (6,)
 
+    assert np.shape(
+        d_optimality.evaluate_hessian(np.array([[1, 1, 1], [2, 2, 2]]).flatten()),
+    ) == (6, 6)
+
     # 5th order model
     domain = Domain.from_lists(
         inputs=[
@@ -103,6 +107,12 @@ def test_DOptimality_instantiation():
             np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]).flatten(),
         ),
     ) == (9,)
+
+    assert np.shape(
+        d_optimality.evaluate_hessian(
+            np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]).flatten()
+        ),
+    ) == (9, 9)
 
 
 def test_DOptimality_evaluate_jacobian():
@@ -496,7 +506,7 @@ def test_MinMaxTransform():
                 delta=0,
                 transform_range=None,
                 n_space_filling_points=4,
-                ipopt_options={"maxiter": 200},
+                ipopt_options={"max_iter": 200},
             ),
             domain=domain,
             n_experiments=4,
@@ -508,7 +518,7 @@ def test_MinMaxTransform():
                     delta=0,
                     transform_range=(-1.0, 1.0),
                     n_space_filling_points=4,
-                    ipopt_options={"maxiter": 200},
+                    ipopt_options={"max_iter": 200},
                 ),
                 domain=domain,
                 n_experiments=4,

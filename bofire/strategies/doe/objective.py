@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import torch
 from formulaic import Formula
-from scipy.optimize._minimize import standardize_constraints
 from torch import Tensor
 from torch.autograd.functional import hessian, jacobian
 
@@ -30,7 +29,8 @@ from bofire.data_models.strategies.doe import (
     SpaceFillingCriterion,
 )
 from bofire.data_models.types import Bounds
-from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
+from bofire.strategies.doe.doe_problem import FirstOrderDoEProblem
+from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
     convert_formula_to_string,
@@ -40,78 +40,18 @@ from bofire.strategies.doe.utils import (
 from bofire.utils.torch_tools import tkwargs
 
 
-class Objective:
-    def __init__(
-        self,
-        domain: Domain,
-        n_experiments: int,
-        delta: float = 1e-7,
-        transform_range: Optional[Bounds] = None,
-    ) -> None:
-        """Args:
-        domain (Domain): A domain defining the DoE domain together with model_type.
-        model_type (str or Formula): A formula containing all model terms.
-        n_experiments (int): Number of experiments
-        delta (float): A regularization parameter for the information matrix. Default value is 1e-7.
-        transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
-
-        """
-        self.domain = deepcopy(domain)
-
-        if transform_range is None:
-            self.transform = IndentityTransform()
-        else:
-            self.transform = MinMaxTransform(
-                inputs=self.domain.inputs,
-                feature_range=tuple(transform_range),  # type: ignore
-            )
-
-        self.n_experiments = n_experiments
-        self.delta = delta
-
-        self.vars = self.domain.inputs.get_keys()
-        self.n_vars = len(self.domain.inputs)
-
-    def __call__(self, x: np.ndarray) -> float:
-        return self.evaluate(x)
-
-    def evaluate(self, x: np.ndarray) -> float:
-        return self._evaluate(self.transform(x=x))
-
-    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
-        return self._evaluate_jacobian(self.transform(x=x)) * self.transform.jacobian(
-            x=x
-        )
-
-    # TODO: implement hessian evaluation
-    def evaluate_hessian(self, x: np.ndarray) -> np.ndarray:
-        pass
-
-    @abstractmethod
-    def _evaluate(self, x: np.ndarray) -> float:
-        pass
-
-    @abstractmethod
-    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
-        pass
-
-    @abstractmethod
-    def _evaluate_hessian(self, x: np.ndarray) -> np.ndarray:
-        pass
-
-
 class ModelBasedObjective(Objective):
     def __init__(
         self,
         domain: Domain,
-        model: Formula,
+        formula: Formula,
         n_experiments: int,
         delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
     ) -> None:
         """Args:
-        domain (Domain): A domain defining the DoE domain together with model_type.
-        model_type (str or Formula): A formula containing all model terms.
+        domain (Domain): A domain defining the DoE domain together with formula.
+        formula (str or Formula): A formula containing all model terms.
         n_experiments (int): Number of experiments
         delta (float): A regularization parameter for the information matrix. Default value is 1e-7.
         transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
@@ -123,11 +63,11 @@ class ModelBasedObjective(Objective):
             transform_range=transform_range,
         )
 
-        self.model = deepcopy(model)
+        self.formula = deepcopy(formula)
         self.model_terms_string_expression = convert_formula_to_string(
-            domain=domain, formula=model
+            domain=domain, formula=formula
         )
-        self.n_model_terms = len(list(np.array(model, dtype=str)))
+        self.n_model_terms = len(list(np.array(formula, dtype=str)))
 
     def _evaluate(self, x: np.ndarray) -> float:
         D = torch.tensor(
@@ -143,22 +83,29 @@ class ModelBasedObjective(Objective):
             **tkwargs,
         )
 
-        return jacobian(self._evaluate_tensor, D).detach().numpy().flatten()
+        return (
+            torch.tensor(jacobian(self._evaluate_tensor, D)).detach().numpy().flatten()
+        )
 
     # FIXME: currently not returning the hessian in a way that is compatible with ipopt
     # also, the hessians of the constraints are missing
     def _evaluate_hessian(self, x: np.ndarray) -> np.ndarray:
-        D = torch.tensor(
-            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars),
-            **tkwargs,
-        )
+        def _evaluate_from_flat_tensor(x: Tensor) -> Tensor:
+            D = x.reshape(len(x.flatten()) // self.n_vars, self.n_vars)
+            return self._evaluate_tensor(D)
 
-        return hessian(self._evaluate_tensor, D).detach().numpy()
+        return (
+            torch.tensor(
+                hessian(_evaluate_from_flat_tensor, torch.tensor(x, **tkwargs))
+            )
+            .detach()
+            .numpy()
+        )
 
     def _evaluate_tensor(self, D: Tensor) -> Tensor:
         """Evaluate the objective function on the design matrix as a tensor."""
         var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
-        var_dict["torch"] = torch
+        var_dict["torch"] = torch  # type: ignore
         X = eval(str(self.model_terms_string_expression), {}, var_dict)
         return self._criterion(X)
 
@@ -183,7 +130,7 @@ class IOptimality(ModelBasedObjective):
     def __init__(
         self,
         domain: Domain,
-        model: Formula,
+        formula: Formula,
         n_experiments: int,
         delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
@@ -193,21 +140,14 @@ class IOptimality(ModelBasedObjective):
         """
         Args:
             domain (Domain): A domain defining the DoE domain together with model_type.
-            model_type (str or Formula): A formula containing all model terms.
+            formula (str or Formula): A formula containing all model terms.
             n_experiments (int): Number of experiments
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
             transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
             n_space_filling_points (int, optional): Number of space filling points. Only relevant if SpaceFilling is used
             ipopt_options (dict, optional): Options for the Ipopt solver to generate space filling point.
-                If None is provided, the default options (maxiter = 500) are used.
+                If None is provided, the default options (max_iter = 500) are used.
         """
-
-        try:
-            from cyipopt import minimize_ipopt  # type: ignore
-        except ImportError:
-            raise ImportError(
-                "cyipopt is not installed. Install it via `conda install -c conda-forge cyipopt`"
-            )
 
         if transform_range is not None:
             raise ValueError(
@@ -216,7 +156,7 @@ class IOptimality(ModelBasedObjective):
 
         super().__init__(
             domain=domain,
-            model=model,
+            formula=formula,
             n_experiments=n_experiments,
             delta=delta,
             transform_range=transform_range,
@@ -238,7 +178,7 @@ class IOptimality(ModelBasedObjective):
                 .to_numpy()
                 .flatten()
             )
-            objective = SpaceFilling(
+            objective_function = SpaceFilling(
                 domain=domain,
                 n_experiments=n_space_filling_points,
                 delta=delta,
@@ -249,19 +189,16 @@ class IOptimality(ModelBasedObjective):
             )
             bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
 
-            result = minimize_ipopt(
-                objective.evaluate,
-                x0=x0,
+            problem = FirstOrderDoEProblem(
+                doe_objective=objective_function,
                 bounds=bounds,
-                constraints=standardize_constraints(constraints, x0, "SLSQP"),
-                options=ipopt_options
-                if ipopt_options is not None
-                else {"maxiter": 500, "disp": 0},
-                jac=objective.evaluate_jacobian,
+                constraints=constraints,
             )
 
+            x, info = problem.solve(x0)
+
             self.Y = pd.DataFrame(
-                result["x"].reshape(n_space_filling_points, len(domain.inputs)),
+                x.reshape(n_space_filling_points, len(domain.inputs)),
                 columns=domain.inputs.get_keys(),
                 index=[f"gridpoint{i}" for i in range(n_space_filling_points)],
             )
@@ -307,7 +244,7 @@ class IOptimality(ModelBasedObjective):
                 UserWarning,
             )
 
-        X = model.get_model_matrix(self.Y).to_numpy()
+        X = formula.get_model_matrix(self.Y).to_numpy()
         self.YtY = torch.from_numpy(X.T @ X) / n_space_filling_points
         self.YtY.requires_grad = False
 
@@ -413,14 +350,14 @@ def get_objective_function(
     if criterion is None:
         return DOptimality(
             domain,
-            model=get_formula_from_string(domain=domain),
+            formula=get_formula_from_string(domain=domain),
             n_experiments=n_experiments,
         )
     if isinstance(criterion, DoEOptimalityCriterion):
         if isinstance(criterion, DOptimalityCriterion):
             return DOptimality(
                 domain,
-                model=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -428,7 +365,7 @@ def get_objective_function(
         if isinstance(criterion, AOptimalityCriterion):
             return AOptimality(
                 domain,
-                model=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -436,7 +373,7 @@ def get_objective_function(
         if isinstance(criterion, GOptimalityCriterion):
             return GOptimality(
                 domain,
-                model=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -444,7 +381,7 @@ def get_objective_function(
         if isinstance(criterion, EOptimalityCriterion):
             return EOptimality(
                 domain,
-                model=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -452,7 +389,7 @@ def get_objective_function(
         if isinstance(criterion, KOptimalityCriterion):
             return KOptimality(
                 domain,
-                model=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -460,7 +397,7 @@ def get_objective_function(
         if isinstance(criterion, IOptimalityCriterion):
             return IOptimality(
                 domain,
-                model=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(criterion.formula, domain),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,

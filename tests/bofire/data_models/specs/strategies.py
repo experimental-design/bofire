@@ -244,6 +244,7 @@ for criterion in [
                     "criterion": criterion(
                         formula=formula, transform_range=None
                     ).model_dump(),
+                    "use_hessian": False,
                 },
             )
 specs.add_valid(
@@ -252,11 +253,12 @@ specs.add_valid(
         "domain": domain.valid().obj().dict(),
         "optimization_strategy": "default",
         "verbose": False,
-        "ipopt_options": {"maxiter": 200, "disp": 0},
+        "ipopt_options": {"max_iter": 200, "print_level": 0},
         "criterion": strategies.SpaceFillingCriterion(
             sampling_fraction=0.3, transform_range=[-1, 1]
         ).model_dump(),
         "seed": 42,
+        "use_hessian": False,
     },
 )
 

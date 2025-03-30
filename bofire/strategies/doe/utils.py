@@ -78,7 +78,7 @@ def get_formula_from_string(
 
 
 def convert_formula_to_string(
-    domain: Optional[Domain],
+    domain: Domain,
     formula: Formula,
 ) -> str:
     """Converts a formula to a string.
@@ -101,7 +101,7 @@ def convert_formula_to_string(
     term_list_string = "torch.vstack(["
     for term in term_list:
         if term == "1":
-            term_list_string += "torch.ones_like(" + domain.inputs.get_keys()[0] + "), "
+            term_list_string += f"torch.ones_like({domain.inputs.get_keys()[0]}), "
         else:
             term_list_string += term.replace(":", "*") + ", "
     term_list_string += "]).T"
@@ -256,10 +256,9 @@ def constraints_as_scipy_constraints(
             NonlinearInequalityConstraint,
         ):
             fun, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            if c.jacobian_expression is not None:
-                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
-            else:
-                constraints.append(NonlinearConstraint(fun, lb, ub))
+            constraints.append(
+                NonlinearConstraint(fun, lb, ub, jac=fun.jacobian, hess=fun.hessian)
+            )
 
         elif isinstance(c, NChooseKConstraint):
             if ignore_nchoosek:
@@ -270,7 +269,9 @@ def constraints_as_scipy_constraints(
                     domain,
                     n_experiments,
                 )
-                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+                constraints.append(
+                    NonlinearConstraint(fun, lb, ub, jac=fun.jacobian, hess=fun.hessian)
+                )
 
         elif isinstance(c, InterpointEqualityConstraint):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
@@ -432,25 +433,48 @@ class ConstraintWrapper:
         violation[np.abs(violation) < 0] = 0
         return violation
 
-    def jacobian(self, x: np.ndarray) -> np.ndarray:
-        """Call constraint gradient with flattened numpy array."""
+    def jacobian(self, x: np.ndarray, sparse: bool = False) -> np.ndarray:
+        """Call constraint gradient with flattened numpy array.  If sparse is set to True, the output is a vector containing the entries of the sparse matrix representation of the jacobian."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
         gradient_compressed = self.constraint.jacobian(x).to_numpy()  # type: ignore
 
-        jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
-        rows = np.repeat(
-            np.arange(self.n_experiments),
-            len(self.constraint_feature_indices),
-        )
         cols = np.repeat(
             self.D * np.arange(self.n_experiments),
             len(self.constraint_feature_indices),
         ).reshape((self.n_experiments, len(self.constraint_feature_indices)))
         cols = (cols + self.constraint_feature_indices).flatten()
 
+        if sparse:
+            jacobian = np.zeros(shape=(self.D * self.n_experiments))
+            jacobian[cols] = gradient_compressed.flatten()
+            return jacobian
+
+        rows = np.repeat(
+            np.arange(self.n_experiments),
+            len(self.constraint_feature_indices),
+        )
+        jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
         jacobian[rows, cols] = gradient_compressed.flatten()
 
         return jacobian
+
+    def hessian(self, x: np.ndarray):
+        """Call constraint hessian with flattened numpy array."""
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
+        hessian_dict = self.constraint.hessian(x)  # type: ignore
+
+        hessian = np.zeros(
+            shape=(self.D * self.n_experiments, self.D * self.n_experiments)
+        )
+
+        cols, rows = np.meshgrid(
+            self.constraint_feature_indices,
+            self.constraint_feature_indices,
+        )
+        for i, idx in enumerate(hessian_dict.keys()):
+            hessian[i * self.D + cols, i * self.D + rows] = hessian_dict[idx]
+
+        return hessian
 
 
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:

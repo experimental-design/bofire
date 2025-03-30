@@ -425,6 +425,11 @@ def test_functional_constraint():
 
     # Calculate the volume content of the formulation
     def calc_volume_content(A, B, T, W, W_T):
+        A = A.detach() if not isinstance(A, pd.Series) else A
+        B = B.detach() if not isinstance(B, pd.Series) else B
+        T = T.detach() if not isinstance(T, pd.Series) else T
+        W = W.detach() if not isinstance(W, pd.Series) else W
+        W_T = W_T.detach() if not isinstance(W_T, pd.Series) else W_T
         volume_solid = (
             A * raw_materials_data["A"][0] / raw_materials_data["A"][1]
             + B * raw_materials_data["B"][0] / raw_materials_data["B"][1]
@@ -459,7 +464,7 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={"maxiter": 500},
+        ipopt_options={"max_iter": 500},
     )
     strategy = DoEStrategy(data_model=data_model)
     doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)

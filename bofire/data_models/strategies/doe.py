@@ -112,6 +112,7 @@ class DoEStrategy(Strategy):
 
     verbose: bool = False  # get rid of this at a later stage
     ipopt_options: Optional[Dict] = None
+    use_hessian: bool = False
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

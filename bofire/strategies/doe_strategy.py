@@ -117,6 +117,7 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
+                use_hessian=self.data_model.use_hessian,
             )
         # TODO adapt to when exhaustive search accepts discrete variables
         elif (
@@ -133,6 +134,7 @@ class DoEStrategy(Strategy):
                 discrete_variables=new_discretes,
                 ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
+                use_hessian=self.data_model.use_hessian,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -149,6 +151,7 @@ class DoEStrategy(Strategy):
                 discrete_variables=new_discretes,
                 ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
+                use_hessian=self.data_model.use_hessian,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -173,6 +176,7 @@ class DoEStrategy(Strategy):
                     discrete_variables=new_discretes,
                     ipopt_options=self.data_model.ipopt_options,
                     criterion=self.data_model.criterion,
+                    use_hessian=self.data_model.use_hessian,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [
