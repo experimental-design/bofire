@@ -99,7 +99,11 @@ class FirstOrderDoEProblem(Problem):  # type: ignore
         return self.doe_objective.evaluate_jacobian(x)
 
     def constraints(self, x: np.ndarray) -> np.ndarray:
-        linear = self.A @ x if len(self.linear_constraints) > 0 else np.array([])
+        linear = (
+            np.array(self.A @ x) if len(self.linear_constraints) > 0 else np.array([])
+        )
+        if len(linear.shape) == 0:
+            linear = np.array([linear])
         nonlinear = (
             np.array([c.fun(x) for c in self.nonlinear_constraints]).flatten()
             if len(self.nonlinear_constraints) > 0

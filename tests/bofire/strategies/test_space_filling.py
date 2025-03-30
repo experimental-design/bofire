@@ -69,6 +69,9 @@ def test_ask(domain, num_samples):
     assert len(samples) == num_samples
 
 
+test_ask(domain=domains[0], num_samples=1)
+
+
 def test_ask_pending_candidates():
     data_model = data_models.DoEStrategy(
         domain=domains[0],

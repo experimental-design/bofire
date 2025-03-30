@@ -24,7 +24,7 @@ from bofire.strategies.doe.utils import (
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
-@pytest.mark.skipif(CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_FirstOrderDoEProblem():
     n_experiments = 4
     criterion = DOptimalityCriterion(formula="linear")
@@ -86,6 +86,7 @@ def test_FirstOrderDoEProblem():
         problem.hessianstructure()
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_SecondOrderDoEProblem():
     n_experiments = 4
     criterion = DOptimalityCriterion(formula="linear")
