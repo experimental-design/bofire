@@ -46,11 +46,11 @@ def test_DOptimality_instantiation():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    model = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
+    formula = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
 
     d_optimality = DOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=2,
     )
 
@@ -64,9 +64,9 @@ def test_DOptimality_instantiation():
         assert i.lower_bound == 0
     assert all(np.array(d_optimality.domain.outputs.get_keys()) == np.array(["y"]))
 
-    assert isinstance(d_optimality.model, Formula)
+    assert isinstance(d_optimality.formula, Formula)
     assert all(
-        np.array(d_optimality.model, dtype=str)
+        np.array(d_optimality.formula, dtype=str)
         == np.array(["1", "x1", "x2", "x3", "x3 ** 2", "x1:x2"]),
     )
 
@@ -90,11 +90,11 @@ def test_DOptimality_instantiation():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    model = Formula("{x1**5} + {x2**5} + {x3**5}")
+    formula = Formula("{x1**5} + {x2**5} + {x3**5}")
 
     d_optimality = DOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=3,
     )
 
@@ -131,11 +131,11 @@ def test_DOptimality_evaluate_jacobian():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    model = Formula("x1 + x2 - 1")
+    formula = Formula("x1 + x2 - 1")
     n_experiments = 1
     d_optimality = DOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=n_experiments,
         delta=1e-3,
     )
@@ -147,14 +147,14 @@ def test_DOptimality_evaluate_jacobian():
             d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
         )
 
-    # n_experiment = 1, n_inputs = 2, model: x1**2 + x2**2
+    # n_experiment = 1, n_inputs = 2, formula: x1**2 + x2**2
     def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -4 * x**3 / (x[0] ** 4 + x[1] ** 4 + delta)
 
-    model = Formula("{x1**2} + {x2**2} - 1")
+    formula = Formula("{x1**2} + {x2**2} - 1")
     d_optimality = DOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=n_experiments,
         delta=1e-3,
     )
@@ -165,7 +165,7 @@ def test_DOptimality_evaluate_jacobian():
             d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
         )
 
-    # n_experiment = 2, n_inputs = 2, model = x1 + x2
+    # n_experiment = 2, n_inputs = 2, formula = x1 + x2
     def get_jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         X = x.reshape(2, 2)
 
@@ -205,11 +205,11 @@ def test_DOptimality_evaluate_jacobian():
 
         return y
 
-    model = Formula("x1 + x2 - 1")
+    formula = Formula("x1 + x2 - 1")
     n_experiments = 2
     d_optimality = DOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=n_experiments,
         delta=1e-3,
     )
@@ -220,7 +220,7 @@ def test_DOptimality_evaluate_jacobian():
             d_optimality.evaluate_jacobian(x), get_jacobian(x), rtol=1e-3
         )
 
-    # n_experiment = 2, n_inputs = 2, model = x1**2 + x2**2
+    # n_experiment = 2, n_inputs = 2, formula = x1**2 + x2**2
     def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
         X = x.reshape(2, 2) ** 2
 
@@ -260,10 +260,10 @@ def test_DOptimality_evaluate_jacobian():
 
         return y
 
-    model = Formula("{x1**2} + {x2**2} - 1")
+    formula = Formula("{x1**2} + {x2**2} - 1")
     d_optimality = DOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=n_experiments,
         delta=1e-3,
     )
@@ -285,9 +285,11 @@ def test_DOptimality_evaluate():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    d_optimality = DOptimality(domain=domain, model=model, n_experiments=3, delta=1e-7)
+    d_optimality = DOptimality(
+        domain=domain, formula=formula, n_experiments=3, delta=1e-7
+    )
     x = np.array([1, 0, 0, 0, 1, 0, 0, 0, 1], dtype=np.float64)
     assert np.allclose(d_optimality.evaluate(x), -np.log(4) - np.log(1e-7))
 
@@ -303,9 +305,9 @@ def test_AOptimality_evaluate():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    a_optimality = AOptimality(domain=domain, model=model, n_experiments=4)
+    a_optimality = AOptimality(domain=domain, formula=formula, n_experiments=4)
 
     x = np.array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0])
     assert np.allclose(a_optimality.evaluate(x), 3 * 1.9999991 + 0.9999996)
@@ -316,9 +318,9 @@ def test_AOptimality_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    a_optimality = AOptimality(domain=domain, model=model, n_experiments=2, delta=0)
+    a_optimality = AOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
     x = np.array([1, 0.5])
 
@@ -337,9 +339,9 @@ def test_EOptimality_evaluate():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    e_optimality = EOptimality(domain=domain, model=model, n_experiments=2, delta=0)
+    e_optimality = EOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
     x = np.array([1, 0.5])
 
@@ -360,9 +362,9 @@ def test_EOptimality_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    e_optimality = EOptimality(domain=domain, model=model, n_experiments=2, delta=0)
+    e_optimality = EOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
     x = np.array([1, 0.5])
 
@@ -385,9 +387,9 @@ def test_GOptimality_evaluate():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    g_optimality = GOptimality(domain=domain, model=model, n_experiments=2, delta=0)
+    g_optimality = GOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
     x = np.array([1, 0.5])
 
@@ -401,9 +403,9 @@ def test_GOptimality_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
-    g_optimality = GOptimality(domain=domain, model=model, n_experiments=2, delta=0)
+    g_optimality = GOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
     x = np.array([1, 0.5])
 
@@ -533,11 +535,11 @@ def test_IOptimality_instantiation():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
     i_optimality = IOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=2,
     )
     assert np.allclose(np.linspace(0, 1, 100), i_optimality.Y.to_numpy().flatten())
@@ -553,11 +555,11 @@ def test_IOptimality_instantiation():
         ],
     )
 
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
     i_optimality = IOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=2,
     )
 
@@ -575,11 +577,11 @@ def test_IOptimality_instantiation():
         ],
     )
 
-    model = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", domain=domain)
 
     i_optimality = IOptimality(
         domain=domain,
-        model=model,
+        formula=formula,
         n_experiments=2,
     )
 
