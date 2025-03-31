@@ -143,24 +143,26 @@ class AcquisitionOptimizer(ABC):
         """
         pass
 
+    @staticmethod
     def _features2idx(
-        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs
+        domain: Domain, input_preprocessing_specs: InputTransformSpecs
     ) -> Dict[str, Tuple[int]]:
         features2idx, _ = domain.inputs._get_transform_info(
             input_preprocessing_specs,
         )
         return features2idx
 
+    @staticmethod
     def _features2names(
-        self, domain, input_preprocessing_specs: InputTransformSpecs
+        domain, input_preprocessing_specs: InputTransformSpecs
     ) -> Dict[str, Tuple[str]]:
         _, features2names = domain.inputs._get_transform_info(
             input_preprocessing_specs,
         )
         return features2names
 
+    @staticmethod
     def _candidates_tensor_to_dataframe(
-        self,
         candidates: Tensor,
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
@@ -176,7 +178,7 @@ class AcquisitionOptimizer(ABC):
         # This method is needed here as we use a botorch method to optimize over
         # purely categorical spaces
 
-        features2names = self._features2names(domain, input_preprocessing_specs)
+        features2names = AcquisitionOptimizer._features2names(domain, input_preprocessing_specs)
 
         input_feature_keys = [
             item for key in domain.inputs.get_keys() for item in features2names[key]
@@ -193,16 +195,17 @@ class AcquisitionOptimizer(ABC):
         )
         return df_candidates
 
+    @staticmethod
     def get_bounds(
-        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs
+        domain: Domain, input_preprocessing_specs: InputTransformSpecs
     ) -> torch.Tensor:
         lower, upper = domain.inputs.get_bounds(
             specs=input_preprocessing_specs,
         )
         return torch.tensor([lower, upper]).to(**tkwargs)
 
+    @staticmethod
     def get_fixed_features(
-        self,
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
     ) -> Dict[int, float]:
@@ -217,7 +220,7 @@ class AcquisitionOptimizer(ABC):
         """
 
         fixed_features = {}
-        features2idx = self._features2idx(domain, input_preprocessing_specs)
+        features2idx = AcquisitionOptimizer._features2idx(domain, input_preprocessing_specs)
 
         for _, feat in enumerate(domain.inputs.get(Input)):
             assert isinstance(feat, Input)
@@ -230,8 +233,8 @@ class AcquisitionOptimizer(ABC):
 
         return fixed_features
 
+    @staticmethod
     def _optimize_acqf_discrete(
-        self,
         candidate_count: int,
         acqf: AcquisitionFunction,
         domain: Domain,
@@ -283,12 +286,11 @@ class AcquisitionOptimizer(ABC):
             unique=True,
             choices=t_choices,
         )
-        return self._candidates_tensor_to_dataframe(
+        return AcquisitionOptimizer._candidates_tensor_to_dataframe(
             candidates=candidates,
             domain=domain,
             input_preprocessing_specs=input_preprocessing_specs,
         )
-        # return self._postprocess_candidates(candidates=candidates)
 
 
 class BotorchOptimizer(AcquisitionOptimizer):

@@ -19,7 +19,6 @@ from bofire.data_models.types import IntPowerOfTwo
 
 
 class AcquisitionOptimizer(BaseModel):
-    type: str
     prefer_exhaustive_search_for_purely_categorical_domains: bool = True
 
     @abstractmethod
@@ -64,7 +63,6 @@ class LocalSearchConfig(BaseModel):
     reference bounds.
     """
 
-    type: str
 
     @abstractmethod
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
