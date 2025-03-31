@@ -106,14 +106,14 @@ class OptimizerBenchmark:
         #     2,
         #     data_models_strategies.SoboStrategy,
         # ),
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-            additional_constraint_functions=[
-                ConstraintCollection.constraint_mix_for_himmelblau
-            ],
-        ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.constraint_mix_for_himmelblau
+        #     ],
+        # ),
         # OptimizerBenchmark(
         #     benchmarks.Detergent(),
         #     5,
@@ -129,11 +129,11 @@ class OptimizerBenchmark:
         #     3,
         #     data_models_strategies.AdditiveSoboStrategy,
         # ),
-        OptimizerBenchmark(
-            benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
-            10,
-            data_models_strategies.SoboStrategy,
-        ),
+        # OptimizerBenchmark(
+        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+        #     10,
+        #     data_models_strategies.SoboStrategy,
+        # ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
             10,

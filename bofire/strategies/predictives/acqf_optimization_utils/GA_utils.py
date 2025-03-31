@@ -15,6 +15,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.features.categorical import get_encoded_name
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.types import InputTransformSpecs
@@ -126,7 +127,8 @@ class BofireDomainMixedVars:
                 xi = X[:, np.array(idx)]
 
                 if hasattr(input_ref, "from_onehot_encoding"):
-                    xi = input_ref.from_onehot_encoding(pd.Series(xi)).values.reshape(-1)
+                    cat_cols = [get_encoded_name(input_ref.key, c) for c in input_ref.categories]
+                    xi = input_ref.from_onehot_encoding(pd.DataFrame(xi, columns=cat_cols)).values.reshape(-1)
                 else:
                     xi = xi.reshape(-1)
 
