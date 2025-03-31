@@ -39,7 +39,7 @@ class BofireDomainMixedVars:
 
             spec_ = input_preprocessing_specs.get(key)
 
-            bounds_org = domain.inputs.get_by_key(key).get_bounds(spec_)
+            bounds_org = np.array(domain.inputs.get_by_key(key).get_bounds(spec_)).reshape(-1)
 
             replace = False
             if spec_ is not None:

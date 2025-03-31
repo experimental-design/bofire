@@ -773,7 +773,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
         res = pymoo_minimize(problem, algorithm, termination, verbose=True)
 
-        x_opt = torch.from_numpy(res.X).to(**tkwargs).reshape(q, -1)
+        x_opt = problem.domain_handler.transform_to_botorch_domain([res.X]).reshape((q, -1))
         f_opt = torch.from_numpy(res.F).to(**tkwargs)
 
         return x_opt, f_opt
