@@ -14,6 +14,7 @@ from botorch.optim.optimize import (
 )
 from pymoo.algorithms.moo.nsga2 import NSGA2 as PymooNSGA2
 from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA
+from pymoo.core.mixed import MixedVariableGA
 from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
 from torch import Tensor
@@ -795,7 +796,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         )
 
         # ==== Algorithm ====
-        algorithm_class = PymooGA if len(acqfs) == 1 else PymooNSGA2
+        algorithm_class = MixedVariableGA  #PymooGA if len(acqfs) == 1 else PymooNSGA2
         algorithm_args = {
             "pop_size": self.population_size,
             # todo: other algorithm options, like n_offspring, crossover-functions etc.
