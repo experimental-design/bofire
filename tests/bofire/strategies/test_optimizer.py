@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Type
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from bofire.benchmarks import api as benchmarks
