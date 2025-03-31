@@ -53,37 +53,87 @@ class BofireDomainMixedVars:
                 self.vars[key] = pymoo_variable.Choice(options=domain.inputs.get_by_key(key).get_allowed_categories())
 
     def pymoo_vars(self) -> Dict[str, pymoo_variable]:
-        """ return the variables in the format required by pymoo. Includes repeats for q-points"""
+        """return the variables in the format required by pymoo. Includes repeats for q-points"""
         vars = {}
         for qi in range(self.q):
             vars = {**vars, **{f"{key}_q{qi}": var for key, var in self.vars.items()}}
         return vars
 
-    def transform_to_botorch_domain(self, X: List[dict]) -> Tensor:
-        """Transform the variables from the pymoo format to the format required by botorch, including one-hot encoding
-        Will produce an n_pop x q x d tensor
+    def _transform(self, X: List[dict]) -> np.ndarray:
+        """Transform to numerical, encoded format: (n_pop, q, d), where:
+            d is the (numerical, encoded) dimension
         """
-        x = torch.zeros(len(X), self.q, len(self.vars))
-
-        def _sub_tensor(key) -> Tensor:
+        def _sub_array_key(key) -> np.ndarray:
             if isinstance(self.vars[key], pymoo_variable.Real):
-                def _sub_tensor_qi(qi: int):
+                def _sub_array_key_qi(qi: int):
                     dict_key = f"{key}_q{qi}"
-                    return Tensor([xi[dict_key] for xi in X]).reshape((-1, 1, 1)).to(**tkwargs)
+                    return np.array([xi[dict_key] for xi in X]).reshape((-1, 1, 1))
 
             else:
-                def _sub_tensor_qi(qi: int):
+                def _sub_array_key_qi(qi: int) -> np.ndarray:
                     dict_key = f"{key}_q{qi}"
                     cat_vals = pd.Series([xi[dict_key] for xi in X])
                     enc_vals = self.domain.inputs.get_by_key(key).to_onehot_encoding(cat_vals).values
                     d_encoded = enc_vals.shape[1]
-                    enc_vals = torch.from_numpy(enc_vals).to(**tkwargs)
                     return enc_vals.reshape((-1, 1, d_encoded))
 
-            return torch.concatenate([_sub_tensor_qi(qi) for qi in range(self.q)], dim=1)
+            return np.concatenate([_sub_array_key_qi(qi) for qi in range(self.q)], axis=1)
 
-        x = torch.cat([_sub_tensor(key) for key in self.vars.keys()], dim=2)
+        x = np.concatenate([_sub_array_key(key) for key in self.vars.keys()], axis=2)
         return x
+
+
+    def transform_mixed_to_botorch_domain(self, X: List[dict]) -> Tensor:
+        """Transform the variables from the pymoo format to the format required by botorch, including one-hot encoding
+        Will produce an n_pop x q x d tensor
+        """
+        return torch.from_numpy(self._transform(X)).to(**tkwargs)
+
+    def transform_mixed_to_2D(self, X: List[dict]) -> np.ndarray:
+        """Transform the variables from the mixed pymoo domain, to the form required by the 'repair' function, as
+        2D matrix with shape (n_pop, d * q), where
+            d is the (numerical, encoded) dimension
+
+        """
+        x = self._transform(X)
+        return np.concatenate([x[:, i, :] for i in range(self.q)], axis=1)
+
+    def _mixed_2D_idx(self) -> Dict[str, List[int]]:
+        idx = {}
+        last_idx: int = -1
+        for qi in range(self.q):
+            for key, type_ in self.vars.items():
+                if isinstance(type_, pymoo_variable.Real):
+                    idx[f"{key}_q{qi}"] = [last_idx+1]
+                    last_idx += 1
+                elif isinstance(type_, pymoo_variable.Choice):
+                    idx[f"{key}_q{qi}"] = [last_idx+1+i for i in range(len(type_.options))]
+                    last_idx += len(type_.options)
+        return idx
+
+    def inverse_transform_to_mixed(self, X: np.ndarray) -> List[dict]:
+
+        idx_map = self._mixed_2D_idx()
+        out = pd.DataFrame(columns=list(idx_map))
+        for key, type_ in self.vars.items():
+
+            input_ref = self.domain.inputs.get_by_key(key)
+            for qi in range(self.q):
+
+                key_qi = f"{key}_q{qi}"
+                idx = idx_map[key_qi]
+
+                xi = X[:, np.array(idx)]
+
+                if hasattr(input_ref, "from_onehot_encoding"):
+                    xi = input_ref.from_onehot_encoding(pd.Series(xi)).values.reshape(-1)
+                else:
+                    xi = xi.reshape(-1)
+
+                out[key_qi] = list(xi)
+
+        # reformat to list of dicts
+        return out.to_dict('records')
 
 
 class AcqfOptimizationProblem(PymooProblem):
@@ -130,7 +180,7 @@ class AcqfOptimizationProblem(PymooProblem):
 
     def _evaluate(self, x, out, *args, **kwargs):
 
-        x = self.domain_handler.transform_to_botorch_domain(x)
+        x = self.domain_handler.transform_mixed_to_botorch_domain(x)
 
         out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.acqfs]
 
@@ -177,6 +227,7 @@ class LinearProjection(PymooRepair):
         d: int,
         bounds: Tensor,
         q: int,
+        domain_handler: Optional[BofireDomainMixedVars] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
     ):
         if constraints_include is None:
@@ -188,6 +239,7 @@ class LinearProjection(PymooRepair):
                     LinearInequalityConstraint,
                 ), "Only linear constraints supported for LinearProjection"
 
+        self.domain_handler = domain_handler
         self.constraints_include = constraints_include
         self.d = d
         self.q = q
@@ -303,8 +355,15 @@ class LinearProjection(PymooRepair):
         }
 
     def _do(self, problem, X, **kwargs):
+
+        if self.domain_handler is not None:
+            X = self.domain_handler.transform_mixed_to_2D(X)
+
         sol = cvxopt.solvers.qp(**self._create_qp_problem_input(X))
         x_corrected = np.array(sol["x"])
         X_corrected = x_corrected.reshape(X.shape)
+
+        if self.domain_handler is not None:
+            X_corrected = self.domain_handler.inverse_transform_to_mixed(X_corrected)
 
         return X_corrected
