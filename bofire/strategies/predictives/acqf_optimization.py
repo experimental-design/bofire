@@ -170,7 +170,9 @@ class AcquisitionOptimizer(ABC):
         # This method is needed here as we use a botorch method to optimize over
         # purely categorical spaces
 
-        features2names = AcquisitionOptimizer._features2names(domain, input_preprocessing_specs)
+        features2names = AcquisitionOptimizer._features2names(
+            domain, input_preprocessing_specs
+        )
 
         input_feature_keys = [
             item for key in domain.inputs.get_keys() for item in features2names[key]
@@ -212,7 +214,9 @@ class AcquisitionOptimizer(ABC):
         """
 
         fixed_features = {}
-        features2idx = AcquisitionOptimizer._features2idx(domain, input_preprocessing_specs)
+        features2idx = AcquisitionOptimizer._features2idx(
+            domain, input_preprocessing_specs
+        )
 
         for _, feat in enumerate(domain.inputs.get(Input)):
             assert isinstance(feat, Input)

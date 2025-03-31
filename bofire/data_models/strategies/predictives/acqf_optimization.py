@@ -63,7 +63,6 @@ class LocalSearchConfig(BaseModel):
     reference bounds.
     """
 
-
     @abstractmethod
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
         """Abstract switching function between local and global acqf optimum.
