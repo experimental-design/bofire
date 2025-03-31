@@ -358,6 +358,8 @@ class LinearProjection(PymooRepair):
 
     def _do(self, problem, X, **kwargs):
 
+        print("repairing population...")
+
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
@@ -367,5 +369,7 @@ class LinearProjection(PymooRepair):
 
         if self.domain_handler is not None:
             X_corrected = self.domain_handler.inverse_transform_to_mixed(X_corrected)
+
+        print("done")
 
         return X_corrected
