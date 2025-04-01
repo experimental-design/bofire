@@ -1,50 +1,60 @@
-from typing import List, Optional, Tuple, Type, Dict, Callable
+from typing import Dict, List, Optional, Tuple, Type
 
 import cvxopt
 import numpy as np
 import pandas as pd
 import torch
-from torch import Tensor
+from botorch.acquisition.acquisition import AcquisitionFunction
+from pymoo.core import variable as pymoo_variable
+from pymoo.core.mixed import (
+    MixedVariableDuplicateElimination,
+    MixedVariableGA,
+    MixedVariableMating,
+)
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
-from pymoo.core import variable as pymoo_variable
-from pymoo.core.mixed import MixedVariableGA, MixedVariableMating, MixedVariableDuplicateElimination
 from pymoo.termination import default as pymoo_default_termination
+from torch import Tensor
 
-from bofire.data_models.strategies.api import GeneticAlgorithm as GeneticAlgorithmDataModel
 from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.features.categorical import get_encoded_name
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.categorical import get_encoded_name
+from bofire.data_models.strategies.api import (
+    GeneticAlgorithm as GeneticAlgorithmDataModel,
+)
 from bofire.data_models.types import InputTransformSpecs
-from botorch.acquisition.acquisition import AcquisitionFunction
 from bofire.utils.torch_tools import (
     get_linear_constraints,
     get_nonlinear_constraints,
     tkwargs,
 )
 
+
 class BofireDomainMixedVars:
     """Helper class for transfering bounds, and data from a domain with One-Hot-Encoded input
     features, to mixed-variable encoded features, as they are used for the GA
     see, e.g. https://pymoo.org/customization/mixed.html?highlight=variable%20type
     """
-    def __init__(self, domain: Domain, input_preprocessing_specs: InputTransformSpecs, q: int):
 
+    def __init__(
+        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs, q: int
+    ):
         self.domain = domain
         self.vars = {}
         self.q = q
 
         for key in domain.inputs.get_keys():
-
             spec_ = input_preprocessing_specs.get(key)
 
-            bounds_org = np.array(domain.inputs.get_by_key(key).get_bounds(spec_)).reshape(-1)
+            bounds_org = np.array(
+                domain.inputs.get_by_key(key).get_bounds(spec_)
+            ).reshape(-1)
 
             replace = False
             if spec_ is not None:
@@ -55,7 +65,9 @@ class BofireDomainMixedVars:
                 self.vars[key] = pymoo_variable.Real(bounds=bounds_org)
 
             else:
-                self.vars[key] = pymoo_variable.Choice(options=domain.inputs.get_by_key(key).get_allowed_categories())
+                self.vars[key] = pymoo_variable.Choice(
+                    options=domain.inputs.get_by_key(key).get_allowed_categories()
+                )
 
     def pymoo_vars(self) -> Dict[str, pymoo_variable]:
         """return the variables in the format required by pymoo. Includes repeats for q-points"""
@@ -66,27 +78,35 @@ class BofireDomainMixedVars:
 
     def _transform(self, X: List[dict]) -> np.ndarray:
         """Transform to numerical, encoded format: (n_pop, q, d), where:
-            d is the (numerical, encoded) dimension
+        d is the (numerical, encoded) dimension
         """
+
         def _sub_array_key(key) -> np.ndarray:
             if isinstance(self.vars[key], pymoo_variable.Real):
+
                 def _sub_array_key_qi(qi: int):
                     dict_key = f"{key}_q{qi}"
                     return np.array([xi[dict_key] for xi in X]).reshape((-1, 1, 1))
 
             else:
+
                 def _sub_array_key_qi(qi: int) -> np.ndarray:
                     dict_key = f"{key}_q{qi}"
                     cat_vals = pd.Series([xi[dict_key] for xi in X])
-                    enc_vals = self.domain.inputs.get_by_key(key).to_onehot_encoding(cat_vals).values
+                    enc_vals = (
+                        self.domain.inputs.get_by_key(key)
+                        .to_onehot_encoding(cat_vals)
+                        .values
+                    )
                     d_encoded = enc_vals.shape[1]
                     return enc_vals.reshape((-1, 1, d_encoded))
 
-            return np.concatenate([_sub_array_key_qi(qi) for qi in range(self.q)], axis=1)
+            return np.concatenate(
+                [_sub_array_key_qi(qi) for qi in range(self.q)], axis=1
+            )
 
         x = np.concatenate([_sub_array_key(key) for key in self.vars.keys()], axis=2)
         return x
-
 
     def transform_mixed_to_botorch_domain(self, X: List[dict]) -> Tensor:
         """Transform the variables from the pymoo format to the format required by botorch, including one-hot encoding
@@ -109,37 +129,40 @@ class BofireDomainMixedVars:
         for qi in range(self.q):
             for key, type_ in self.vars.items():
                 if isinstance(type_, pymoo_variable.Real):
-                    idx[f"{key}_q{qi}"] = [last_idx+1]
+                    idx[f"{key}_q{qi}"] = [last_idx + 1]
                     last_idx += 1
                 elif isinstance(type_, pymoo_variable.Choice):
-                    idx[f"{key}_q{qi}"] = [last_idx+1+i for i in range(len(type_.options))]
+                    idx[f"{key}_q{qi}"] = [
+                        last_idx + 1 + i for i in range(len(type_.options))
+                    ]
                     last_idx += len(type_.options)
         return idx
 
     def inverse_transform_to_mixed(self, X: np.ndarray) -> List[dict]:
-
         idx_map = self._mixed_2D_idx()
         out = pd.DataFrame(columns=list(idx_map))
         for key, type_ in self.vars.items():
-
             input_ref = self.domain.inputs.get_by_key(key)
             for qi in range(self.q):
-
                 key_qi = f"{key}_q{qi}"
                 idx = idx_map[key_qi]
 
                 xi = X[:, np.array(idx)]
 
                 if hasattr(input_ref, "from_onehot_encoding"):
-                    cat_cols = [get_encoded_name(input_ref.key, c) for c in input_ref.categories]
-                    xi = input_ref.from_onehot_encoding(pd.DataFrame(xi, columns=cat_cols)).values.reshape(-1)
+                    cat_cols = [
+                        get_encoded_name(input_ref.key, c) for c in input_ref.categories
+                    ]
+                    xi = input_ref.from_onehot_encoding(
+                        pd.DataFrame(xi, columns=cat_cols)
+                    ).values.reshape(-1)
                 else:
                     xi = xi.reshape(-1)
 
                 out[key_qi] = list(xi)
 
         # reformat to list of dicts
-        return out.to_dict('records')
+        return out.to_dict("records")
 
 
 class AcqfOptimizationProblem(PymooProblem):
@@ -148,6 +171,7 @@ class AcqfOptimizationProblem(PymooProblem):
 
     The optimizer will handle one-hot encoded input features as
     """
+
     def __init__(
         self,
         acqfs,
@@ -158,7 +182,9 @@ class AcqfOptimizationProblem(PymooProblem):
     ):
         self.acqfs = acqfs
 
-        self.domain_handler = BofireDomainMixedVars(domain, input_preprocessing_specs, q)
+        self.domain_handler = BofireDomainMixedVars(
+            domain, input_preprocessing_specs, q
+        )
 
         if (
             constraints_include is None
@@ -173,7 +199,6 @@ class AcqfOptimizationProblem(PymooProblem):
             domain, includes=constraints_include
         )
 
-
         # assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
 
         super().__init__(
@@ -185,7 +210,6 @@ class AcqfOptimizationProblem(PymooProblem):
         )
 
     def _evaluate(self, x, out, *args, **kwargs):
-
         x = self.domain_handler.transform_mixed_to_botorch_domain(x)
 
         out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.acqfs]
@@ -252,7 +276,7 @@ class LinearProjection(PymooRepair):
         self.domain = domain
         self.bounds = bounds
 
-        cvxopt.solvers.options['show_progress'] = False
+        cvxopt.solvers.options["show_progress"] = False
 
         super().__init__()
 
@@ -363,7 +387,6 @@ class LinearProjection(PymooRepair):
         }
 
     def _do(self, problem, X, **kwargs):
-
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
@@ -376,6 +399,7 @@ class LinearProjection(PymooRepair):
 
         return X_corrected
 
+
 def get_problem_and_algorithm(
     data_model: GeneticAlgorithmDataModel,
     domain: Domain,
@@ -384,7 +408,6 @@ def get_problem_and_algorithm(
     q: int,
     bounds_botorch_space: Tensor,
 ):
-
     # ===== Problem ====
     problem = AcqfOptimizationProblem(
         acqfs,
@@ -414,8 +437,8 @@ def get_problem_and_algorithm(
 
         algorithm_args["repair"] = repair
         algorithm_args["mating"] = MixedVariableMating(
-            eliminate_duplicates=MixedVariableDuplicateElimination(),
-            repair=repair)# see https://github.com/anyoptimization/pymoo/issues/575
+            eliminate_duplicates=MixedVariableDuplicateElimination(), repair=repair
+        )  # see https://github.com/anyoptimization/pymoo/issues/575
 
     algorithm = MixedVariableGA(**algorithm_args)
 

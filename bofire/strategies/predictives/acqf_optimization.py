@@ -13,7 +13,6 @@ from botorch.optim.optimize import (
     optimize_acqf_mixed,
 )
 from pymoo.optimize import minimize as pymoo_minimize
-
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -769,13 +768,18 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         """
         problem, algorithm, termination = GA_utils.get_problem_and_algorithm(
             self.data_model,
-            domain, input_preprocessing_specs, acqfs, q,
+            domain,
+            input_preprocessing_specs,
+            acqfs,
+            q,
             bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
         )
 
         res = pymoo_minimize(problem, algorithm, termination, verbose=True)
 
-        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain([res.X]).reshape((q, -1))
+        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
+            [res.X]
+        ).reshape((q, -1))
         f_opt = torch.from_numpy(res.F).to(**tkwargs)
 
         return x_opt, f_opt
