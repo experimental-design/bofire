@@ -219,9 +219,6 @@ class AcqfOptimizationProblem(PymooProblem):
         self.nonlinear_pandas_constraints = domain.constraints.get(
             includes=nonlinear_pandas_constraints)
 
-
-        # assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
-
         super().__init__(
             n_obj=len(acqfs),
             n_ieq_constr=(len(self.nonlinear_torch_constraints) + len(self.nonlinear_pandas_constraints)) * q,
