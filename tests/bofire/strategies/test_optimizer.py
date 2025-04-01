@@ -36,6 +36,11 @@ class ConstraintCollection:
                 coefficients=[-1.0, 1.0],
                 rhs=0.0,
             ),
+            constraints_data_models.NonlinearInequalityConstraint(
+                expression="x_1**2 + x_2**2 - 5",
+                features=["x_1", "x_2"],
+                jacobian_expression="2*x_1, 2*x_2",
+            )
         ]
         return domain
 
@@ -105,14 +110,14 @@ class OptimizerBenchmark:
         #     2,
         #     data_models_strategies.SoboStrategy,
         # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Himmelblau(),
-        #     2,
-        #     data_models_strategies.SoboStrategy,
-        #     additional_constraint_functions=[
-        #         ConstraintCollection.constraint_mix_for_himmelblau
-        #     ],
-        # ),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+            additional_constraint_functions=[
+                ConstraintCollection.constraint_mix_for_himmelblau
+            ],
+        ),
         # OptimizerBenchmark(
         #     benchmarks.Detergent(),
         #     5,

@@ -21,6 +21,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     ProductInequalityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -108,6 +109,20 @@ class BofireDomainMixedVars:
         x = np.concatenate([_sub_array_key(key) for key in self.vars.keys()], axis=2)
         return x
 
+    def transform_to_experiments(self, X: List[dict]) -> List[pd.DataFrame]:
+        """Transform to a list of "experiments" dataframes for each q-point"""
+        experiments = pd.DataFrame.from_records(X)
+        q_column = np.array([int(x.split("_q")[-1]) for x in list(experiments)])
+
+        experiments_out = []
+
+        for qi in range(self.q):
+            experiments_qi = experiments.iloc[:, q_column == qi]
+            experiments_qi.columns = [x.split("_q")[0] for x in experiments_qi.columns]
+            experiments_out.append(experiments_qi)
+
+        return experiments_out
+
     def transform_mixed_to_botorch_domain(self, X: List[dict]) -> Tensor:
         """Transform the variables from the pymoo format to the format required by botorch, including one-hot encoding
         Will produce an n_pop x q x d tensor
@@ -178,7 +193,8 @@ class AcqfOptimizationProblem(PymooProblem):
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
         q: int,
-        constraints_include: Optional[List[Type[Constraint]]] = None,
+        nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
+        nonlinear_pandas_constraints: Optional[List[Constraint]] = None,
     ):
         self.acqfs = acqfs
 
@@ -186,41 +202,52 @@ class AcqfOptimizationProblem(PymooProblem):
             domain, input_preprocessing_specs, q
         )
 
-        if (
-            constraints_include is None
-        ):  # we chould possibly extend this list in the future
-            constraints_include = [
-                ProductInequalityConstraint,
-            ]
+        # torch constraints: evaluated in encoded space
+        if nonlinear_torch_constraints is None:
+            nonlinear_torch_constraints = [ProductInequalityConstraint]
         else:
-            assert all(c in (ProductInequalityConstraint,) for c in constraints_include)
-
-        self.nonlinear_constraints = get_nonlinear_constraints(
-            domain, includes=constraints_include
+            assert all(c in (ProductInequalityConstraint,) for c in nonlinear_torch_constraints)
+        self.nonlinear_torch_constraints = get_nonlinear_constraints(
+            domain, includes=nonlinear_torch_constraints
         )
+
+        # pandas constraints: evaluated in original space
+        if nonlinear_pandas_constraints is None:
+            nonlinear_pandas_constraints = [NonlinearInequalityConstraint]
+        else:
+            assert all(c in (NonlinearInequalityConstraint,) for c in nonlinear_pandas_constraints)
+        self.nonlinear_pandas_constraints = domain.constraints.get(
+            includes=nonlinear_pandas_constraints)
+
 
         # assert len(self.nonlinear_constraints) == 0, "To-Do: Nonlinear Constr."
 
         super().__init__(
             n_obj=len(acqfs),
-            n_ieq_constr=len(self.nonlinear_constraints) * q,
+            n_ieq_constr=(len(self.nonlinear_torch_constraints) + len(self.nonlinear_pandas_constraints)) * q,
             n_eq_constr=0,
             elementwise_evaluation=False,
             vars=self.domain_handler.pymoo_vars(),
         )
 
-    def _evaluate(self, x, out, *args, **kwargs):
-        x = self.domain_handler.transform_mixed_to_botorch_domain(x)
+    def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
+        x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
 
         out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.acqfs]
 
-        if self.nonlinear_constraints:
+        if self.nonlinear_torch_constraints:
             G = []
-            for constr in self.nonlinear_constraints:
+            for constr in self.nonlinear_torch_constraints:
                 constr_val = -constr[0](x)  # converting to form g(x) <= 0
                 G.append(constr_val.detach().numpy())
 
             out["G"] = np.hstack(G)
+
+        if self.nonlinear_pandas_constraints:
+            experiments = self.domain_handler.transform_to_experiments(x_ga_encoded)
+            for constr in self.nonlinear_pandas_constraints:
+                G = np.hstack([constr(exp).values.reshape((-1, 1)) for exp in experiments])
+                out["G"] = np.hstack([out["G"], G]) if "G" in out else G
 
 
 class LinearProjection(PymooRepair):
