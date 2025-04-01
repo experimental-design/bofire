@@ -14,12 +14,9 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.doe import AnyOptimalityCriterion
-from bofire.strategies.doe.doe_problem import (
-    FirstOrderDoEProblem,
-    SecondOrderDoEProblem,
-)
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import (
+    _minimize,
     constraints_as_scipy_constraints,
     nchoosek_constraints_as_bounds,
 )
@@ -172,22 +169,14 @@ def find_local_max_ipopt(
     #
     # Do the optimization
     #
-    if use_hessian:
-        problem = SecondOrderDoEProblem(
-            doe_objective=objective_function,
-            bounds=bounds,
-            constraints=constraints,
-        )
-    else:
-        problem = FirstOrderDoEProblem(
-            doe_objective=objective_function,
-            bounds=bounds,
-            constraints=constraints,
-        )
-    for key in _ipopt_options.keys():
-        problem.add_option(key, _ipopt_options[key])
-
-    x, info = problem.solve(x0)
+    x = _minimize(
+        objective_function=objective_function,
+        x0=x0,
+        bounds=bounds,
+        constraints=constraints,
+        use_hessian=use_hessian,
+        ipopt_options=_ipopt_options,
+    )
 
     design = pd.DataFrame(
         x.reshape(n_experiments, len(domain.inputs)),

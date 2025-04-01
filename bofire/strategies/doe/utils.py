@@ -1,11 +1,14 @@
+import importlib.util
 import sys
 from itertools import combinations
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import scipy.optimize as opt
 from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
+from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -19,7 +22,15 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.strategies.doe.doe_problem import (
+    FirstOrderDoEProblem,
+    SecondOrderDoEProblem,
+)
+from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.random import RandomStrategy
+
+
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
 def get_formula_from_string(
@@ -569,3 +580,63 @@ def nchoosek_constraints_as_bounds(
     bounds = [(b[0], b[1]) for b in bounds]
 
     return bounds
+
+
+def _minimize(
+    objective_function: Objective,
+    x0: np.ndarray,
+    bounds: List[Tuple[float, float]],
+    constraints: Optional[List[Union[NonlinearConstraint, LinearConstraint]]],
+    ipopt_options: dict,
+    use_hessian: bool,
+    use_cyipopt: bool = CYIPOPT_AVAILABLE,
+) -> np.ndarray:
+    """Minimize the objective function using the given constraints and bounds.
+    Uses Ipopt if available, otherwise uses SLSQP.
+
+    Args:
+        objective_function (Objective): Objective function to minimize.
+        x0 (np.ndarray): Initial guess for the minimization.
+        bounds (List[Tuple[float, float]]): Bounds for the decision variables.
+        constraints (Optional[List[Union[NonlinearConstraint, LinearConstraint]]]): Constraints for the optimization problem.
+        ipopt_options (dict): Options for Ipopt solver. If Ipopt is not available, only the fields "max_iter" and "print_level" of this argument are used.
+        use_hessian (bool): Use hessian if set to True.
+        use_cyipopt (bool): Use cyipopt if set to True. Defaults to true if cyipopt is available.
+
+    Returns:
+        np.ndarray: The optimized design as flattened numpy array.
+    """
+
+    if use_cyipopt:
+        if use_hessian:
+            problem = SecondOrderDoEProblem(
+                doe_objective=objective_function,
+                bounds=bounds,
+                constraints=constraints,
+            )
+        else:
+            problem = FirstOrderDoEProblem(
+                doe_objective=objective_function,
+                bounds=bounds,
+                constraints=constraints,
+            )
+        for key in ipopt_options.keys():
+            problem.add_option(key, ipopt_options[key])
+
+        x, info = problem.solve(x0)
+        return x
+    else:
+        options = {}
+        if "max_iter" in ipopt_options.keys():
+            options["maxiter"] = ipopt_options["max_iter"]
+        if "print_level" in ipopt_options.keys():
+            options["disp"] = ipopt_options["print_level"]
+        result = opt.minimize(
+            fun=objective_function.evaluate,
+            x0=x0,
+            bounds=bounds,
+            options=options,
+            constraints=standardize_constraints(constraints, x0, "SLSQP"),
+            hess=objective_function.evaluate_hessian if use_hessian else None,
+        )
+        return result.x
