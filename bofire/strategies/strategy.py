@@ -24,16 +24,12 @@ class Strategy(ABC):
     ):
         self.domain = data_model.domain
         # if data_model.seed is None (no explicit seed provided by the user),
-        # we draw a random seed from the default random number generator
-        # This is done to ensure reproducibility of the strategy,
+        # we use the randomly generated entropy from the seed sequence.
+        # This is done to ensure reproducibility of the strategy:
         # even if the user does not provide a seed one can extract the used seed
         # from the strategy object via `strategy.seed`.
-        self.seed = (
-            data_model.seed
-            if data_model.seed is not None
-            else np.random.default_rng().integers(1000)
-        )
-        self.seed_seq = np.random.SeedSequence(self.seed)
+        self.seed_seq = np.random.SeedSequence(data_model.seed)
+        self.seed = self.seed_seq.entropy
         self._experiments = None
         self._candidates = None
 
