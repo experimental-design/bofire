@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.11">
     
     
       
@@ -164,11 +164,13 @@
     
     
     
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
@@ -200,6 +202,7 @@
     </div>
   </div>
 </div>
+      
     
     
       <div class="md-header__source">
@@ -274,6 +277,7 @@
       <a href=".." class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Home
     
@@ -295,6 +299,7 @@
       <a href="../install/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Install
     
@@ -315,6 +320,7 @@
     <li class="md-nav__item">
       <a href="../getting_started/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Getting started
@@ -346,6 +352,7 @@
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
+  
   <span class="md-ellipsis">
     Examples
     
@@ -357,6 +364,7 @@
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
+  
   
   <span class="md-ellipsis">
     Examples
@@ -391,6 +399,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bayesian-optimization-for-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bayesian Optimization for Chemistry
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#api-with-bofire" class="md-nav__link">
     <span class="md-ellipsis">
       API with BoFire
@@ -417,6 +434,7 @@
       <a href="../data_models_functionals/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Data Models vs Functional Components
     
@@ -437,6 +455,7 @@
     <li class="md-nav__item">
       <a href="../userguide_surrogates/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Surrogate Models
@@ -459,6 +478,7 @@
     
     
     
+    
     <li class="md-nav__item md-nav__item--nested">
       
         
@@ -468,6 +488,7 @@
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
+  
   
   <span class="md-ellipsis">
     API Reference
@@ -495,6 +516,7 @@
       <a href="../ref-domain/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Domain
     
@@ -516,6 +538,7 @@
     <li class="md-nav__item">
       <a href="../ref-constraints/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Constraints
@@ -539,6 +562,7 @@
       <a href="../ref-objectives/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Objectives
     
@@ -560,6 +584,7 @@
     <li class="md-nav__item">
       <a href="../ref-features/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Features
@@ -583,6 +608,7 @@
       <a href="../ref-domain-util/" class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Domain Util
     
@@ -604,6 +630,7 @@
     <li class="md-nav__item">
       <a href="../ref-utils/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Utils
@@ -644,14 +671,23 @@
 
 
 <h1 id="examples">Examples</h1>
-<p>This is a collection of code examples to allow for an easy exploration of the functionalities that BoFire offers.</p>
+<p>This is a collection of code examples to allow for an easy exploration of the functionalities that BoFire offers.
+We provide <a href="https://github.com/experimental-design/bofire/tree/main/tutorials">even more tutorials</a> in the repository.</p>
 <h2 id="doe">DoE</h2>
 <ul>
-<li><a href="../basic_examples/">creating designs for constrained design spaces</a></li>
-<li><a href="../optimality_criteria/">optimizing designs with respect to various optimality criteria</a></li>
-<li><a href="../design_with_explicit_formula/">creating designs for a custom model</a></li>
-<li><a href="../nchoosek_constraint/">creating designs with NChooseK constraints</a></li>
-<li><a href="../fractional_factorial/">creating full and fractional factorial designs</a></li>
+<li><a href="../basic_examples/">Creating designs for constrained design spaces</a></li>
+<li><a href="../optimality_criteria/">Optimizing designs with respect to various optimality criteria</a></li>
+<li><a href="../design_with_explicit_formula/">Creating designs for a custom model</a></li>
+<li><a href="../nchoosek_constraint/">Creating designs with NChooseK constraints</a></li>
+<li><a href="../fractional_factorial/">Creating full and fractional factorial designs</a></li>
+</ul>
+<h2 id="bayesian-optimization-for-chemistry">Bayesian Optimization for Chemistry</h2>
+<p>These examples show how the tools provided by BoFire can be used for Bayesian
+Optimization with some of the challenges faced in real-world experiments:</p>
+<ul>
+<li><a href="../reaction_optimization/">A toy example for optimizing a reaction</a></li>
+<li><a href="../fingerprint_bayesopt/">Using a Tanimoto fingerprint kernel to optimize over molecules</a></li>
+<li><a href="../multifidelity_bo/">Using a MultiFidelity strategy with cheap, approximate experiments</a></li>
 </ul>
 <h2 id="api-with-bofire">API with BoFire</h2>
 <p>You can find an examples of how BoFire can be used in APIs in separate repositories:</p>
@@ -705,7 +741,9 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
       <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
