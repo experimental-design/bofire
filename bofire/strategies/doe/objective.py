@@ -29,9 +29,9 @@ from bofire.data_models.strategies.doe import (
     SpaceFillingCriterion,
 )
 from bofire.data_models.types import Bounds
-from bofire.strategies.doe.doe_problem import FirstOrderDoEProblem
 from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.doe.utils import (
+    _minimize,
     constraints_as_scipy_constraints,
     convert_formula_to_string,
     get_formula_from_string,
@@ -189,13 +189,14 @@ class IOptimality(ModelBasedObjective):
             )
             bounds = nchoosek_constraints_as_bounds(domain, n_space_filling_points)
 
-            problem = FirstOrderDoEProblem(
-                doe_objective=objective_function,
+            x = _minimize(
+                objective_function=objective_function,
+                x0=x0,
                 bounds=bounds,
                 constraints=constraints,
+                ipopt_options={"print_level": 0},
+                use_hessian=False,
             )
-
-            x, info = problem.solve(x0)
 
             self.Y = pd.DataFrame(
                 x.reshape(n_space_filling_points, len(domain.inputs)),
