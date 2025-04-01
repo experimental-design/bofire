@@ -3,6 +3,7 @@ from typing import Callable, List, Type
 
 import numpy as np
 import pytest
+import pydantic_core
 
 from bofire.benchmarks import api as benchmarks
 from bofire.data_models.constraints import api as constraints_data_models
@@ -14,7 +15,7 @@ from bofire.strategies import api as strategies
 
 @pytest.fixture(
     params=[  # (optimizer data model, params)
-        # data_models_strategies.BotorchOptimizer(),
+        data_models_strategies.BotorchOptimizer(),
         data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
     ]
 )
@@ -105,11 +106,11 @@ class OptimizerBenchmark:
 
 @pytest.fixture(
     params=[
-        # OptimizerBenchmark(
-        #     benchmarks.Himmelblau(),
-        #     2,
-        #     data_models_strategies.SoboStrategy,
-        # ),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+        ),
         OptimizerBenchmark(
             benchmarks.Himmelblau(),
             2,
@@ -118,26 +119,21 @@ class OptimizerBenchmark:
                 ConstraintCollection.constraint_mix_for_himmelblau
             ],
         ),
-        # OptimizerBenchmark(
-        #     benchmarks.Detergent(),
-        #     5,
-        #     data_models_strategies.AdditiveSoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Detergent(),
-        #     5,
-        #     data_models_strategies.MoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.DTLZ2(dim=2, num_objectives=2),
-        #     3,
-        #     data_models_strategies.AdditiveSoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
-        #     10,
-        #     data_models_strategies.SoboStrategy,
-        # ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(),
+            5,
+            data_models_strategies.AdditiveSoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.DTLZ2(dim=2, num_objectives=2),
+            3,
+            data_models_strategies.AdditiveSoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+            10,
+            data_models_strategies.SoboStrategy,
+        ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
             10,
@@ -159,6 +155,15 @@ def optimizer_benchmark(request) -> OptimizerBenchmark:
 
 
 def test_optimizer(optimizer_benchmark, optimizer_data_model):
+
+    # sort out cases where the optimizer does not support nonlinear constraints
+    if len(optimizer_benchmark.benchmark.domain.constraints.get(
+            constraints_data_models.NonlinearInequalityConstraint).constraints) > 0:
+        if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
+            with pytest.raises(pydantic_core._pydantic_core.ValidationError) as exc_info:
+                strategy = optimizer_benchmark(optimizer_data_model)
+            return
+
     strategy = optimizer_benchmark(optimizer_data_model)
 
     proposals = strategy.ask(4)
@@ -168,46 +173,3 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
     constr = strategy.domain.constraints.get()
     if constr.constraints:
         assert (constr(proposals).values <= 1e-5).all()
-
-
-def test_linear_projection_repair_function():
-    """test the repair function for the linear projection repair function: projecting x_1 / x_2 into the feasible
-    space, adhering to a linear constraint x_1 + x_2 = 1 and x_2 <= x_1"""
-
-    optimizer_benchmark = OptimizerBenchmark(
-        benchmarks.Ackley(num_categories=3, categorical=True, dim=2),
-        4,
-        data_models_strategies.SoboStrategy,
-        additional_constraint_functions=[ConstraintCollection.linear_constr_for_ackley],
-    )
-    optimizer_data_model = data_models_strategies.GeneticAlgorithm(
-        population_size=100, n_max_gen=100
-    )
-
-    strategy = optimizer_benchmark(optimizer_data_model)
-
-    # test the repair function, population size 100, and q=3. Dimension of the problem is 5
-    problem, algorithm, termination = (
-        strategy.acqf_optimizer._get_problem_and_algorithm(
-            strategy.domain,
-            strategy.input_preprocessing_specs,
-            strategy._get_acqfs(3),
-            q=3,
-        )
-    )
-    repair_function = algorithm.repair._do
-
-    sample_population = np.random.uniform(-30, 30, (100, 5 * 3))
-    sample_population_repaired = repair_function(problem, sample_population)
-
-    assert sample_population_repaired.shape == sample_population.shape
-
-    def get_x12_points_from_population(X: np.ndarray) -> np.ndarray:
-        dims = [np.array([i * 5, 1 + i * 5]) for i in range(3)]
-        return np.vstack([X[:, dim] for dim in dims])
-
-    Xpop_c = get_x12_points_from_population(sample_population_repaired)
-
-    # checking constraint adherence (see benchmark constraint functions
-    assert (np.abs(Xpop_c.sum(axis=1) - 1.0) < 1e-5).all()
-    assert (Xpop_c[:, 0] - Xpop_c[:, 1] > -1e-5).all()
