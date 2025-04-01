@@ -33,7 +33,7 @@ class Strategy(ABC):
             if data_model.seed is not None
             else np.random.default_rng().integers(1000)
         )
-        self.rng = np.random.default_rng(self.seed)
+        self.seed_seq = np.random.SeedSequence(self.seed)
         self._experiments = None
         self._candidates = None
 
@@ -45,7 +45,8 @@ class Strategy(ABC):
             int: random seed.
 
         """
-        return int(self.rng.integers(1, 100000))
+        (spawned_seed_seq,) = self.seed_seq.spawn(1)
+        return spawned_seed_seq.generate_state(1).item()
 
     @classmethod
     def from_spec(cls, data_model: DataModel) -> "Strategy":

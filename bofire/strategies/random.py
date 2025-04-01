@@ -127,7 +127,7 @@ class RandomStrategy(Strategy):
             if candidate_count <= len(unused):
                 sampled_combinations = [
                     unused[i]
-                    for i in self.rng.choice(
+                    for i in np.random.default_rng(self._get_seed()).choice(
                         len(unused),
                         size=candidate_count,
                         replace=False,
