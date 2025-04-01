@@ -127,21 +127,21 @@ class BofireDomainMixedVars:
         idx = {}
         last_idx: int = -1
         for qi in range(self.q):
-            for key, type_ in self.vars.items():
-                if isinstance(type_, pymoo_variable.Real):
+            for key, pymoo_type_ in self.vars.items():
+                if isinstance(pymoo_type_, pymoo_variable.Real):
                     idx[f"{key}_q{qi}"] = [last_idx + 1]
                     last_idx += 1
-                elif isinstance(type_, pymoo_variable.Choice):
+                elif isinstance(pymoo_type_, pymoo_variable.Choice):
                     idx[f"{key}_q{qi}"] = [
-                        last_idx + 1 + i for i in range(len(type_.options))
+                        last_idx + 1 + i for i in range(len(pymoo_type_.options))
                     ]
-                    last_idx += len(type_.options)
+                    last_idx += len(pymoo_type_.options)
         return idx
 
     def inverse_transform_to_mixed(self, X: np.ndarray) -> List[dict]:
         idx_map = self._mixed_2D_idx()
         out = pd.DataFrame(columns=list(idx_map))
-        for key, type_ in self.vars.items():
+        for key in list(self.vars):
             input_ref = self.domain.inputs.get_by_key(key)
             for qi in range(self.q):
                 key_qi = f"{key}_q{qi}"
