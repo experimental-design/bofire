@@ -12,11 +12,8 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
-from pymoo.algorithms.moo.nsga2 import NSGA2 as PymooNSGA2
-from pymoo.algorithms.soo.nonconvex.ga import GA as PymooGA
-from pymoo.core.mixed import MixedVariableGA
 from pymoo.optimize import minimize as pymoo_minimize
-from pymoo.termination import default as pymoo_default_termination
+
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -725,12 +722,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 class GeneticAlgorithm(AcquisitionOptimizer):
     def __init__(self, data_model: GeneticAlgorithmDataModel):
         super().__init__(data_model)
-        self.population_size = data_model.population_size
-        self.xtol = data_model.xtol
-        self.cvtol = data_model.cvtol
-        self.ftol = data_model.ftol
-        self.n_max_gen = data_model.n_max_gen
-        self.n_max_evals = data_model.n_max_evals
+        self.data_model = data_model
 
     def _optimize(
         self,
@@ -767,8 +759,10 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             x_opt: (d,) Tensor
             f_opt: (n_y,) Tensor
         """
-        problem, algorithm, termination = self._get_problem_and_algorithm(
-            domain, input_preprocessing_specs, acqfs, q
+        problem, algorithm, termination = GA_utils.get_problem_and_algorithm(
+            self.data_model,
+            domain, input_preprocessing_specs, acqfs, q,
+            bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
         )
 
         res = pymoo_minimize(problem, algorithm, termination, verbose=True)
@@ -777,60 +771,6 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         f_opt = torch.from_numpy(res.F).to(**tkwargs)
 
         return x_opt, f_opt
-
-    def _get_problem_and_algorithm(
-        self,
-        domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
-        acqfs: List[AcquisitionFunction],
-        q: int,
-    ):
-        bounds = self.get_bounds(domain, input_preprocessing_specs)
-
-        # ===== Problem ====
-        problem = GA_utils.AcqfOptimizationProblem(
-            acqfs,
-            domain,
-            input_preprocessing_specs,
-            q,
-        )
-
-        # ==== Algorithm ====
-        algorithm_class = MixedVariableGA  #PymooGA if len(acqfs) == 1 else PymooNSGA2
-        algorithm_args = {
-            "pop_size": self.population_size,
-            # todo: other algorithm options, like n_offspring, crossover-functions etc.
-        }
-
-        # We handle linear equality constraint with a repair function
-        repair_constraints = domain.constraints.get(
-            includes=[LinearEqualityConstraint, LinearInequalityConstraint],
-        )
-        if len(repair_constraints) > 0:
-            algorithm_args["repair"] = GA_utils.LinearProjection(
-                domain=domain,
-                d=bounds.shape[1],
-                bounds=bounds,
-                q=q,
-                domain_handler=problem.domain_handler,
-            )
-        algorithm = algorithm_class(**algorithm_args)
-
-        termination_class = (
-            pymoo_default_termination.DefaultSingleObjectiveTermination
-            if len(acqfs) == 1
-            else pymoo_default_termination.DefaultMultiObjectiveTermination
-        )
-
-        termination = termination_class(
-            xtol=self.xtol,
-            cvtol=self.cvtol,
-            ftol=self.ftol,
-            n_max_gen=self.n_max_gen,
-            n_max_evals=self.n_max_evals,
-        )
-
-        return problem, algorithm, termination
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {

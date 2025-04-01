@@ -4,11 +4,14 @@ import cvxopt
 import numpy as np
 import pandas as pd
 import torch
+from torch import Tensor
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.core import variable as pymoo_variable
-from torch import Tensor
+from pymoo.core.mixed import MixedVariableGA, MixedVariableMating, MixedVariableDuplicateElimination
+from pymoo.termination import default as pymoo_default_termination
 
+from bofire.data_models.strategies.api import GeneticAlgorithm as GeneticAlgorithmDataModel
 from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
@@ -19,6 +22,7 @@ from bofire.data_models.features.categorical import get_encoded_name
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.types import InputTransformSpecs
+from botorch.acquisition.acquisition import AcquisitionFunction
 from bofire.utils.torch_tools import (
     get_linear_constraints,
     get_nonlinear_constraints,
@@ -373,3 +377,62 @@ class LinearProjection(PymooRepair):
         print("done")
 
         return X_corrected
+
+def get_problem_and_algorithm(
+    data_model: GeneticAlgorithmDataModel,
+    domain: Domain,
+    input_preprocessing_specs: InputTransformSpecs,
+    acqfs: List[AcquisitionFunction],
+    q: int,
+    bounds_botorch_space: Tensor,
+):
+
+    # ===== Problem ====
+    problem = AcqfOptimizationProblem(
+        acqfs,
+        domain,
+        input_preprocessing_specs,
+        q,
+    )
+
+    # ==== Algorithm ====
+    algorithm_args = {
+        "pop_size": data_model.population_size,
+        # todo: other algorithm options, like n_offspring, crossover-functions etc.
+    }
+
+    # We handle linear equality constraint with a repair function
+    repair_constraints = domain.constraints.get(
+        includes=[LinearEqualityConstraint, LinearInequalityConstraint],
+    )
+    if len(repair_constraints) > 0:
+        repair = LinearProjection(
+            domain=domain,
+            d=bounds_botorch_space.shape[1],
+            bounds=bounds_botorch_space,
+            q=q,
+            domain_handler=problem.domain_handler,
+        )
+
+        algorithm_args["repair"] = repair
+        algorithm_args["mating"] = MixedVariableMating(
+            eliminate_duplicates=MixedVariableDuplicateElimination(),
+            repair=repair)# see https://github.com/anyoptimization/pymoo/issues/575
+
+    algorithm = MixedVariableGA(**algorithm_args)
+
+    termination_class = (
+        pymoo_default_termination.DefaultSingleObjectiveTermination
+        if len(acqfs) == 1
+        else pymoo_default_termination.DefaultMultiObjectiveTermination
+    )
+
+    termination = termination_class(
+        xtol=data_model.xtol,
+        cvtol=data_model.cvtol,
+        ftol=data_model.ftol,
+        n_max_gen=data_model.n_max_gen,
+        n_max_evals=data_model.n_max_evals,
+    )
+
+    return problem, algorithm, termination
