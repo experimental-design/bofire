@@ -40,7 +40,7 @@ class ConstraintCollection:
                 expression="x_1**2 + x_2**2 - 5",
                 features=["x_1", "x_2"],
                 jacobian_expression="2*x_1, 2*x_2",
-            )
+            ),
         ]
         return domain
 

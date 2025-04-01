@@ -20,8 +20,8 @@ from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    ProductInequalityConstraint,
     NonlinearInequalityConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -206,7 +206,9 @@ class AcqfOptimizationProblem(PymooProblem):
         if nonlinear_torch_constraints is None:
             nonlinear_torch_constraints = [ProductInequalityConstraint]
         else:
-            assert all(c in (ProductInequalityConstraint,) for c in nonlinear_torch_constraints)
+            assert all(
+                c in (ProductInequalityConstraint,) for c in nonlinear_torch_constraints
+            )
         self.nonlinear_torch_constraints = get_nonlinear_constraints(
             domain, includes=nonlinear_torch_constraints
         )
@@ -215,13 +217,21 @@ class AcqfOptimizationProblem(PymooProblem):
         if nonlinear_pandas_constraints is None:
             nonlinear_pandas_constraints = [NonlinearInequalityConstraint]
         else:
-            assert all(c in (NonlinearInequalityConstraint,) for c in nonlinear_pandas_constraints)
+            assert all(
+                c in (NonlinearInequalityConstraint,)
+                for c in nonlinear_pandas_constraints
+            )
         self.nonlinear_pandas_constraints = domain.constraints.get(
-            includes=nonlinear_pandas_constraints)
+            includes=nonlinear_pandas_constraints
+        )
 
         super().__init__(
             n_obj=len(acqfs),
-            n_ieq_constr=(len(self.nonlinear_torch_constraints) + len(self.nonlinear_pandas_constraints)) * q,
+            n_ieq_constr=(
+                len(self.nonlinear_torch_constraints)
+                + len(self.nonlinear_pandas_constraints)
+            )
+            * q,
             n_eq_constr=0,
             elementwise_evaluation=False,
             vars=self.domain_handler.pymoo_vars(),
@@ -243,7 +253,9 @@ class AcqfOptimizationProblem(PymooProblem):
         if self.nonlinear_pandas_constraints:
             experiments = self.domain_handler.transform_to_experiments(x_ga_encoded)
             for constr in self.nonlinear_pandas_constraints:
-                G = np.hstack([constr(exp).values.reshape((-1, 1)) for exp in experiments])
+                G = np.hstack(
+                    [constr(exp).values.reshape((-1, 1)) for exp in experiments]
+                )
                 out["G"] = np.hstack([out["G"], G]) if "G" in out else G
 
 
