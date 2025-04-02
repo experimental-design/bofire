@@ -1,4 +1,5 @@
 import bofire.data_models.strategies.api as strategies
+import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
@@ -26,14 +27,18 @@ from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
-
-
 strategy_commons = {
-    "num_raw_samples": 1024,
-    "num_restarts": 8,
-    "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
+    "acquisition_optimizer": strategies.BotorchOptimizer(
+        **{
+            "n_raw_samples": 1024,
+            "n_restarts": 8,
+            "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
+            "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
+            "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
+            "maxiter": 2000,
+            "batch_limit": 6,
+        }
+    ),
     "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
     "outlier_detection_specs": None,
     "seed": 42,
@@ -41,8 +46,6 @@ strategy_commons = {
     "frequency_check": 1,
     "frequency_hyperopt": 0,
     "folds": 5,
-    "maxiter": 2000,
-    "batch_limit": 6,
 }
 
 
@@ -282,7 +285,9 @@ specs.add_valid(
             ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.MoboStrategy(
-                    domain=tempdomain, batch_limit=1, acquisition_function=qLogNEHVI()
+                    domain=tempdomain,
+                    acquisition_function=qLogNEHVI(),
+                    acquisition_optimizer=strategies.BotorchOptimizer(batch_limit=1),
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),
@@ -545,7 +550,9 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "local_search_config": strategies.LSRBO(),
+        "acquisition_optimizer": strategies.BotorchOptimizer(
+            local_search_config=bofire.data_models.strategies.predictives.acqf_optimization.LSRBO(),
+        ),
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",

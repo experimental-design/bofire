@@ -115,8 +115,7 @@ class DoEStrategy(Strategy):
     use_hessian: bool = False
     use_cyipopt: Optional[bool] = None
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
 
     @classmethod

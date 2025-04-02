@@ -55,8 +55,7 @@ class EntingStrategy(PredictiveStrategy):
     # a value of zero implies future observations will be exactly the mean
     kappa_fantasy: float = 1.96
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearEqualityConstraint,
             LinearInequalityConstraint,
