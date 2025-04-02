@@ -40,9 +40,23 @@ from bofire.utils.torch_tools import (
 
 
 class BofireDomainMixedVars:
-    """Helper class for transfering bounds, and data from a domain with One-Hot-Encoded input
+    """Helper class for transferring bounds, and data from a domain with One-Hot-Encoded input
     features, to mixed-variable encoded features, as they are used for the GA
-    see, e.g. https://pymoo.org/customization/mixed.html?highlight=variable%20type
+    see, e.g. https://pymoo.org/customization/mixed.html?highlight=variable%20type.
+
+    The GA optimizes all q-experiments in a batch simultaneuously. The variables for the pymoo optimizer are:
+
+        [feature1_q0, feature2_q0, ..., feature1_q1, feature2_q1, ....].
+
+    Features, which are encoded in the input_preprocessing_specs are transformed to different pymoo types (e.g.
+     'CHOICE').
+
+    Args:
+        domain (Domain): problem domain
+         input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for the models in
+                the acquisition functions
+        q (int): Number of experiments.
+
     """
 
     def __init__(
@@ -50,6 +64,7 @@ class BofireDomainMixedVars:
     ):
         self.domain = domain
         self.vars = {}
+        self.input_preprocessing_specs = input_preprocessing_specs
         self.q = q
 
         for key in domain.inputs.get_keys():
@@ -59,57 +74,46 @@ class BofireDomainMixedVars:
                 domain.inputs.get_by_key(key).get_bounds(spec_)
             ).reshape(-1)
 
-            replace = False
+
+            var = pymoo_variable.Real(bounds=bounds_org)  # default variable
             if spec_ is not None:
                 if spec_ == CategoricalEncodingEnum.ONE_HOT:
-                    replace = True
+                    var = pymoo_variable.Choice(
+                        options=domain.inputs.get_by_key(key).get_allowed_categories(),
+                    )
 
-            if not replace:
-                self.vars[key] = pymoo_variable.Real(bounds=bounds_org)
+                elif spec_ == CategoricalEncodingEnum.DESCRIPTOR:
+                    var = pymoo_variable.Choice(
+                        options=domain.inputs.get_by_key(key).get_allowed_categories(),
+                    )
+                else:
+                    raise NotImplementedError(f"feature {key}: Encoding type {spec_} not implemented for GA")
 
-            else:
-                self.vars[key] = pymoo_variable.Choice(
-                    options=domain.inputs.get_by_key(key).get_allowed_categories()
-                )
+
+            self.vars[key] = var
 
     def pymoo_vars(self) -> Dict[str, pymoo_variable]:
-        """return the variables in the format required by pymoo. Includes repeats for q-points"""
+        """return the variables in the format required by pymoo. Includes repeats for q-points.
+
+        Returns:
+            Dict[str, pymoo_variable]: dictionary, to be used in pymoo.Problem __init__. The keys
+
+        """
         vars = {}
         for qi in range(self.q):
             vars = {**vars, **{f"{key}_q{qi}": var for key, var in self.vars.items()}}
         return vars
 
     def _transform(self, X: List[dict]) -> np.ndarray:
-        """Transform to numerical, encoded format: (n_pop, q, d), where:
+        """Transform from pymoo mixed List[dict]-format to numerical, encoded format: (n_pop, q, d), where
         d is the (numerical, encoded) dimension
         """
 
-        def _sub_array_key(key) -> np.ndarray:
-            if isinstance(self.vars[key], pymoo_variable.Real):
-
-                def _sub_array_key_qi(qi: int):
-                    dict_key = f"{key}_q{qi}"
-                    return np.array([xi[dict_key] for xi in X]).reshape((-1, 1, 1))
-
-            else:
-
-                def _sub_array_key_qi(qi: int) -> np.ndarray:
-                    dict_key = f"{key}_q{qi}"
-                    cat_vals = pd.Series([xi[dict_key] for xi in X])
-                    enc_vals = (
-                        self.domain.inputs.get_by_key(key)
-                        .to_onehot_encoding(cat_vals)
-                        .values
-                    )
-                    d_encoded = enc_vals.shape[1]
-                    return enc_vals.reshape((-1, 1, d_encoded))
-
-            return np.concatenate(
-                [_sub_array_key_qi(qi) for qi in range(self.q)], axis=1
-            )
-
-        x = np.concatenate([_sub_array_key(key) for key in self.vars.keys()], axis=2)
-        return x
+        experiments = self.transform_to_experiments(X)
+        x_numeric = [self.domain.inputs.transform(ex_, self.input_preprocessing_specs).values.astype(float) \
+                     for ex_ in experiments]
+        x_numeric = np.concatenate([np.expand_dims(x, 1) for x in x_numeric], axis=1)
+        return x_numeric
 
     def transform_to_experiments(self, X: List[dict]) -> List[pd.DataFrame]:
         """Transform to a list of "experiments" dataframes for each q-point"""

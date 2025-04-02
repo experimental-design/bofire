@@ -195,6 +195,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
 
 class GeneticAlgorithm(AcquisitionOptimizer):
+    """ implementation of a Genetic Algorithm for acquisition function optimization"""
+
     type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
 
     # algorithm options

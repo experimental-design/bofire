@@ -725,6 +725,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
 
 class GeneticAlgorithm(AcquisitionOptimizer):
+    """Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm.
+    """
     def __init__(self, data_model: GeneticAlgorithmDataModel):
         super().__init__(data_model)
         self.data_model = data_model
@@ -738,10 +740,9 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """main function for optimizing the acquisition function using pymoo's genetic algorithm.
-
-        Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
         """
 
+        # Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
         candidates, _ = self._single_shot_optimization(
             domain, input_preprocessing_specs, acqfs, candidate_count
         )
@@ -762,9 +763,14 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         """
         single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
 
+        Args:
+            domain (Domain)
+            input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for the models in
+                the acquisition functions
+
         Returns
-            x_opt: (d,) Tensor
-            f_opt: (n_y,) Tensor
+            Tensor: x_opt as (d,) Tensor
+            Tensor: f_opt as (n_y,) Tensor
         """
         problem, algorithm, termination = GA_utils.get_problem_and_algorithm(
             self.data_model,
