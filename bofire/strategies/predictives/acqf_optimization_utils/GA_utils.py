@@ -402,12 +402,14 @@ class LinearProjection(PymooRepair):
 
                 return [(lb[i, :], ub[i, :]) for i in range(x.shape[0])]
 
-        self.n_choose_k_constr = []
+        self.n_choose_k_constr = None
         if NChooseKConstraint in constraints_include:
-            for constr in domain.constraints.get(includes=[NChooseKConstraint]):
-                self.n_choose_k_constr.append(
-                    NChooseKBoundProjection(constr, bounds.detach().numpy(), n_choose_k_constr_min_delta)
+            n_choose_k_constraints = domain.constraints.get(includes=[NChooseKConstraint])
+            if n_choose_k_constraints.constraints:
+                self.n_choose_k_constr = NChooseKBoundProjection(
+                    n_choose_k_constraints.constraints, bounds.detach().numpy(), n_choose_k_constr_min_delta,
                 )
+
 
 
         self.domain_handler = domain_handler
@@ -473,12 +475,15 @@ class LinearProjection(PymooRepair):
             lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
             G = repeated_blkdiag(G_bounds_, n_x_points)
 
-            if not self.n_choose_k_constr:
+            if (self.n_choose_k_constr is None):  # use the normal lb/ub
                 h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
                 h = cvxopt.matrix([h_bounds_] * n_x_points)
             else:
                 # correct bounds for NChooseK constraints
-                bounds =
+                bounds = self.n_choose_k_constr(X)
+                # alternate lower- and upper bound
+                bounds = np.concatenate([np.concatenate(b[0], b[1]) for b in bounds])
+                h = cvxopt.matrix(bounds)
 
             return G, h
 
