@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import cvxopt
 import numpy as np
@@ -77,15 +77,11 @@ class BofireDomainMixedVars:
 
             var = pymoo_variable.Real(bounds=bounds_org)  # default variable
             if spec_ is not None:
-                if spec_ == CategoricalEncodingEnum.ONE_HOT:
+                if spec_ in (CategoricalEncodingEnum.ONE_HOT, CategoricalEncodingEnum.DESCRIPTOR, ):
                     var = pymoo_variable.Choice(
                         options=domain.inputs.get_by_key(key).get_allowed_categories(),
                     )
 
-                elif spec_ == CategoricalEncodingEnum.DESCRIPTOR:
-                    var = pymoo_variable.Choice(
-                        options=domain.inputs.get_by_key(key).get_allowed_categories(),
-                    )
                 else:
                     raise NotImplementedError(f"feature {key}: Encoding type {spec_} not implemented for GA")
 
@@ -160,6 +156,7 @@ class BofireDomainMixedVars:
         return idx
 
     def inverse_transform_to_mixed(self, X: np.ndarray) -> List[dict]:
+        """Transform from numeric 2D format to pymoo mixed format"""
         idx_map = self._mixed_2D_idx()
         out = pd.DataFrame(columns=list(idx_map))
         for key in list(self.vars):
@@ -190,7 +187,16 @@ class AcqfOptimizationProblem(PymooProblem):
     """Transfers the acquisition function optimization problem on the bofire domain, into a pymoo-
     problem, which can be solved with e.g. the pymoo GA.
 
-    The optimizer will handle one-hot encoded input features as
+    The optimizer will handle encoded input features as different pymoo-types (Choice), as the model. The problem
+    contains the function for evaluating the objective functions, including constraints.
+        - Transformation from the mixed-variable type domain, into the numeric torch domain
+        - Evaluation of acquisition functions
+        - Evaluation of constraints:
+            Nonlinear inequality constraints are evaluated in the mixed-domain (using pandas 'eval')
+            Other constraints are evaluated in the numeric torch-domain
+
+    Some constraints are not evaluated in the objective function: They are handled in the 'repair' function
+
     """
 
     def __init__(
@@ -542,7 +548,27 @@ def get_problem_and_algorithm(
     acqfs: List[AcquisitionFunction],
     q: int,
     bounds_botorch_space: Tensor,
-):
+    ) -> Tuple[AcqfOptimizationProblem, MixedVariableGA,
+        Union[pymoo_default_termination.DefaultMultiObjectiveTermination,
+        pymoo_default_termination.DefaultSingleObjectiveTermination]]:
+    """Convenience function to generate all pymoo- classes, needed for the optimization of the acquistion function(s)
+
+    Args:
+        data_model (GeneticAlgorithmDataModel): specifications for the algorithm
+        domain (Domain): optimization domain
+        input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
+        acqfs (List[AcquisitionFunction]): list of acquision function(s) to optimize (assumes MAXIMIZATION)
+        q (int): number of experiments
+        bounds_botorch_space (Tensor): The tensor of numerical bounds for the optimization
+
+    Returns
+        problem
+        algorithm
+        termination
+    """
+
+
+
     # ===== Problem ====
     problem = AcqfOptimizationProblem(
         acqfs,
