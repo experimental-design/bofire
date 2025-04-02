@@ -26,6 +26,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.categorical import get_encoded_name
 from bofire.data_models.strategies.api import (
     GeneticAlgorithm as GeneticAlgorithmDataModel,
@@ -301,6 +302,7 @@ class LinearProjection(PymooRepair):
         q: int,
         domain_handler: Optional[BofireDomainMixedVars] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
+        n_choose_k_constr_min_delta: float = 1e-3,
     ):
         if constraints_include is None:
             constraints_include = [LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint]
@@ -341,39 +343,40 @@ class LinearProjection(PymooRepair):
 
         # NChooseKConstrains
         class NChooseKBoundProjection:
-            """helper class for correcting upper and lower bounds to fullfill NChooseK constraints
+            """helper class for correcting upper and lower bounds to fulfill NChooseK constraints
             in QP projection"""
-            def __init__(self, constraint: NChooseKConstraint, bounds: np.ndarray, min_delta: float = 1e-3):
+            def __init__(self, constraints: List[NChooseKConstraint], bounds: np.ndarray, min_delta):
 
                 self.lb, self.ub = bounds[0, :].reshape((1, -1)), bounds[1, :].reshape((1, -1))
-                self.d = bounds.shape[1]
                 self.min_delta = min_delta
 
-                self.n_zero = self.d - constraint.max_count
-                self.n_non_zero = constraint.min_count
+                self.n_zero, self.n_non_zero, self.idx = [], [], []
+                for constraint in constraints:
+                    di = len(constraint.features)
+                    self.idx.append(np.array([domain.inputs.get_keys(ContinuousInput).index(key) \
+                                              for key in constraint.features]))
+                    self.n_zero.append(di - constraint.max_count)
+                    self.n_non_zero.append(constraint.min_count)
 
-            def _ub_correction(self, x: np.ndarray) -> np.ndarray:
+            @staticmethod
+            def _ub_correction(ub: np.ndarray, x: np.ndarray, n_zero: int) -> np.ndarray:
                 """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
-                n_pop = x.shape[0]
-                ub = np.repeat(self.ub, n_pop, axis=0)
-
-                if self.n_zero == 0:
+                if n_zero == 0:
                     return ub
 
                 # sort each row, and set the smallest n_zero elements to zero
-                ub[np.argsort(x) < self.n_zero] = 0
+                ub[np.argsort(x) < n_zero] = 0
                 return ub
 
-            def _lb_correction(self, x: np.ndarray) -> np.ndarray:
-                """correct lower bounds: set the lower bound of the largest n_non_zero elements in each row to min_delta"""
-                n_pop = x.shape[0]
-                lb = np.repeat(self.lb, n_pop, axis=0)
-
-                if self.n_non_zero == 0:
+            @staticmethod
+            def _lb_correction(lb: np.ndarray, x: np.ndarray, n_non_zero: int) -> np.ndarray:
+                """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
+                if n_non_zero == 0:
                     return lb
 
                 # sort each row, and set the largest n_non_zero elements to min_delta
-                lb[np.argsort(x) >= self.d - self.n_non_zero] = self.min_delta
+                d = x.shape[1]
+                lb[np.argsort(x) >= d - n_non_zero] = self.min_delta
                 return lb
 
             def __call__(self, x: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
@@ -385,15 +388,26 @@ class LinearProjection(PymooRepair):
 
                 """
                 x = x.reshape((-1, self.d))
-                lb, ub = self._lb_correction(x), self._ub_correction(x)
-                return [(lb[i, :], ub[i, :]) for i in range(x.shape[0])]
 
+                lb, ub = self.lb.copy(), self.ub.copy()
+                lb, ub = np.repeat(lb, x.shape[0], axis=0), np.repeat(ub, x.shape[0], axis=0)
+
+                for (n_zero, n_non_zero, idx) in zip(self.n_zero, self.n_non_zero, self.idx):
+
+                    x_, lb_, ub_ = x[:, idx], lb[:, idx].copy(), ub[:, idx].copy()
+                    lb_ = self._lb_correction(lb_, x_, n_non_zero)
+                    ub_ = self._ub_correction(ub_, x_, n_zero)
+
+                    lb[:, idx], ub[:, idx] = lb_, ub_
+
+                return [(lb[i, :], ub[i, :]) for i in range(x.shape[0])]
 
         self.n_choose_k_constr = []
         if NChooseKConstraint in constraints_include:
-            self.n_choose_k_constr += [
-                get_nonlinear_constraints(domain, includes=[NChooseKConstraint])
-            ]
+            for constr in domain.constraints.get(includes=[NChooseKConstraint]):
+                self.n_choose_k_constr.append(
+                    NChooseKBoundProjection(constr, bounds.detach().numpy(), n_choose_k_constr_min_delta)
+                )
 
 
         self.domain_handler = domain_handler
@@ -457,9 +471,15 @@ class LinearProjection(PymooRepair):
                 ]
             )
             lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
-            h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
             G = repeated_blkdiag(G_bounds_, n_x_points)
-            h = cvxopt.matrix([h_bounds_] * n_x_points)
+
+            if not self.n_choose_k_constr:
+                h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
+                h = cvxopt.matrix([h_bounds_] * n_x_points)
+            else:
+                # correct bounds for NChooseK constraints
+                bounds =
+
             return G, h
 
         # Prepare Matrices for solving the estimation problem
