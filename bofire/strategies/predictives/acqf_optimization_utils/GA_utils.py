@@ -349,6 +349,7 @@ class LinearProjection(PymooRepair):
 
                 self.lb, self.ub = bounds[0, :].reshape((1, -1)), bounds[1, :].reshape((1, -1))
                 self.min_delta = min_delta
+                self.d = bounds.shape[1]
 
                 self.n_zero, self.n_non_zero, self.idx = [], [], []
                 for constraint in constraints:
@@ -369,14 +370,14 @@ class LinearProjection(PymooRepair):
                 return ub
 
             @staticmethod
-            def _lb_correction(lb: np.ndarray, x: np.ndarray, n_non_zero: int) -> np.ndarray:
+            def _lb_correction(lb: np.ndarray, x: np.ndarray, n_non_zero: int, min_delta: float) -> np.ndarray:
                 """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
                 if n_non_zero == 0:
                     return lb
 
                 # sort each row, and set the largest n_non_zero elements to min_delta
                 d = x.shape[1]
-                lb[np.argsort(x) >= d - n_non_zero] = self.min_delta
+                lb[np.argsort(x) >= d - n_non_zero] = min_delta
                 return lb
 
             def __call__(self, x: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
@@ -395,7 +396,7 @@ class LinearProjection(PymooRepair):
                 for (n_zero, n_non_zero, idx) in zip(self.n_zero, self.n_non_zero, self.idx):
 
                     x_, lb_, ub_ = x[:, idx], lb[:, idx].copy(), ub[:, idx].copy()
-                    lb_ = self._lb_correction(lb_, x_, n_non_zero)
+                    lb_ = self._lb_correction(lb_, x_, n_non_zero, self.min_delta)
                     ub_ = self._ub_correction(ub_, x_, n_zero)
 
                     lb[:, idx], ub[:, idx] = lb_, ub_
@@ -463,7 +464,12 @@ class LinearProjection(PymooRepair):
             return A, b
 
         def _build_G_h_for_box_bounds() -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
-            """build linear inequality matrices, such that lb<=x<=ub -> G*x<=h"""
+            """build linear inequality matrices, such that lb<=x<=ub -> G*x<=h:
+
+            G = [I; -I]
+            h = [ub; -lb]
+
+            """
             G_bounds_ = cvxopt.sparse(
                 [
                     cvxopt.spmatrix(1, range(self.d), range(self.d)),  # unity matrix
@@ -472,17 +478,17 @@ class LinearProjection(PymooRepair):
                     ),  # negative unity matrix
                 ]
             )
-            lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
             G = repeated_blkdiag(G_bounds_, n_x_points)
 
             if (self.n_choose_k_constr is None):  # use the normal lb/ub
+                lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
                 h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
                 h = cvxopt.matrix([h_bounds_] * n_x_points)
             else:
                 # correct bounds for NChooseK constraints
                 bounds = self.n_choose_k_constr(X)
-                # alternate lower- and upper bound
-                bounds = np.concatenate([np.concatenate(b[0], b[1]) for b in bounds])
+                # alternate upper- and (-1*lower) bound
+                bounds = np.concatenate([np.concatenate((b[1], -b[0])) for b in bounds])
                 h = cvxopt.matrix(bounds)
 
             return G, h
