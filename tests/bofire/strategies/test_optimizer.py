@@ -152,7 +152,6 @@ class OptimizerBenchmark:
             benchmarks.CrossCoupling(),
             4,
             data_models_strategies.AdditiveSoboStrategy,
-            # map_conti_inputs_to_discrete=True,
         ),
         # OptimizerBenchmark(
         #     benchmarks.DTLZ2(dim=2, num_objectives=2),
