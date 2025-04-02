@@ -22,6 +22,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -260,7 +261,7 @@ class AcqfOptimizationProblem(PymooProblem):
 
 
 class LinearProjection(PymooRepair):
-    """handles linear equality constraints by mapping to closest legal point in the design space
+    """handles linear equality constraints by mapping to closest feasible point in the design space
     using quadratic programming, by projecting to x':
 
         min(1/2 * ||(x'-x)||_2)
@@ -268,6 +269,7 @@ class LinearProjection(PymooRepair):
         s.t.
         A*x' = 0
         G*x' <= 0
+        lb <= x' <= ub
 
     we will transform the Problem to the type:
 
@@ -283,6 +285,10 @@ class LinearProjection(PymooRepair):
     For performance, the problem is solved for the complete generation X = [x1 ; x2; ...]
     where x1, x2, ... are the vectors of each individual in the population and q-opt. points
 
+    NChooseK-constraints can be added to the problem:
+    - the lower bound of the largest n_non_zero elements in each experiment is set to min_delta
+    - the upper bound of the smallest n_zero elements in each experiment is set to zero
+
     This class is passed to the pymoo algorithm class to correct the population after each generation
 
     """
@@ -297,16 +303,100 @@ class LinearProjection(PymooRepair):
         constraints_include: Optional[List[Type[Constraint]]] = None,
     ):
         if constraints_include is None:
-            constraints_include = [LinearEqualityConstraint, LinearInequalityConstraint]
+            constraints_include = [LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint]
         else:
             for constr in constraints_include:
                 assert constr in (
                     LinearEqualityConstraint,
                     LinearInequalityConstraint,
-                ), "Only linear constraints supported for LinearProjection"
+                    NChooseKConstraint,
+                ), "Only linear constraints and NChooseK supported for LinearProjection"
+
+        def lin_constr_to_list(constr_) -> Tuple[List[int], List[float], float]:
+            """decode "get_linear_constraints" output: x-index, coefficients, and b
+            - convert from tensor to list of ints and floats
+            - multiply with (-1) to adhere to (usual) cvxopt format A*x <= b, instead of Botorch A*x >= b
+            """
+            index: List[int] = [int(x) for x in (constr_[0].detach().numpy())]
+            coeffs: List[float] = list(-constr_[1].detach().numpy())
+            b: float = -constr_[2]
+            return index, coeffs, b
+
+        # linear constraints
+        self.eq_constr, self.ineq_constr = [], []
+        if LinearEqualityConstraint in constraints_include:
+            self.eq_constr = [
+                lin_constr_to_list(eq_constr_)
+                for eq_constr_ in get_linear_constraints(
+                    domain, LinearEqualityConstraint
+                )
+            ]
+        if LinearInequalityConstraint in constraints_include:
+            self.ineq_constr = [
+                lin_constr_to_list(ineq_constr_)
+                for ineq_constr_ in get_linear_constraints(
+                    domain, LinearInequalityConstraint
+                )
+            ]
+
+        # NChooseKConstrains
+        class NChooseKBoundProjection:
+            """helper class for correcting upper and lower bounds to fullfill NChooseK constraints
+            in QP projection"""
+            def __init__(self, constraint: NChooseKConstraint, bounds: np.ndarray, min_delta: float = 1e-3):
+
+                self.lb, self.ub = bounds[0, :].reshape((1, -1)), bounds[1, :].reshape((1, -1))
+                self.d = bounds.shape[1]
+                self.min_delta = min_delta
+
+                self.n_zero = self.d - constraint.max_count
+                self.n_non_zero = constraint.min_count
+
+            def _ub_correction(self, x: np.ndarray) -> np.ndarray:
+                """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
+                n_pop = x.shape[0]
+                ub = np.repeat(self.ub, n_pop, axis=0)
+
+                if self.n_zero == 0:
+                    return ub
+
+                # sort each row, and set the smallest n_zero elements to zero
+                ub[np.argsort(x) < self.n_zero] = 0
+                return ub
+
+            def _lb_correction(self, x: np.ndarray) -> np.ndarray:
+                """correct lower bounds: set the lower bound of the largest n_non_zero elements in each row to min_delta"""
+                n_pop = x.shape[0]
+                lb = np.repeat(self.lb, n_pop, axis=0)
+
+                if self.n_non_zero == 0:
+                    return lb
+
+                # sort each row, and set the largest n_non_zero elements to min_delta
+                lb[np.argsort(x) >= self.d - self.n_non_zero] = self.min_delta
+                return lb
+
+            def __call__(self, x: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
+                """will generate bounds for the QP projection for all n_pop*q vectors of x, with
+                dimensions (n_pop, d*q)
+
+                Returns:
+                    List[Tuple[np.ndarray, np.ndarray]]: lower and upper bounds for each x in the population
+
+                """
+                x = x.reshape((-1, self.d))
+                lb, ub = self._lb_correction(x), self._ub_correction(x)
+                return [(lb[i, :], ub[i, :]) for i in range(x.shape[0])]
+
+
+        self.n_choose_k_constr = []
+        if NChooseKConstraint in constraints_include:
+            self.n_choose_k_constr += [
+                get_nonlinear_constraints(domain, includes=[NChooseKConstraint])
+            ]
+
 
         self.domain_handler = domain_handler
-        self.constraints_include = constraints_include
         self.d = d
         self.q = q
         self.domain = domain
@@ -319,32 +409,6 @@ class LinearProjection(PymooRepair):
     def _create_qp_problem_input(self, X: np.ndarray) -> dict:
         n_pop = X.shape[0]
         n_x_points = n_pop * self.q
-
-        def _eq_constr_to_list(eq_constr_) -> Tuple[List[int], List[float], float]:
-            """decode "get_linear_constraints" output: x-index, coefficients, and b
-            - convert from tensor to list of ints and floats
-            - multiply with (-1) to adhere to (usual) cvxopt format A*x <= b, instead of Botorch A*x >= b
-            """
-            index: List[int] = [int(x) for x in (eq_constr_[0].detach().numpy())]
-            coeffs: List[float] = list(-eq_constr_[1].detach().numpy())
-            b: float = -eq_constr_[2]
-            return index, coeffs, b
-
-        eq_constr, ineq_constr = [], []
-        if LinearEqualityConstraint in self.constraints_include:
-            eq_constr = [
-                _eq_constr_to_list(eq_constr_)
-                for eq_constr_ in get_linear_constraints(
-                    self.domain, LinearEqualityConstraint
-                )
-            ]
-        if LinearInequalityConstraint in self.constraints_include:
-            ineq_constr = [
-                _eq_constr_to_list(eq_constr_)
-                for eq_constr_ in get_linear_constraints(
-                    self.domain, LinearInequalityConstraint
-                )
-            ]
 
         def repeated_blkdiag(m: cvxopt.matrix, N: int) -> cvxopt.spmatrix:
             """construct large matrix with block-diagolal matrix in the center of arbitrary size"""
@@ -403,10 +467,10 @@ class LinearProjection(PymooRepair):
             1.0, range(self.d * n_x_points), range(self.d * n_x_points)
         )  # the unit-matrix
 
-        A, b = _build_A_b_matrices_for_n_points(eq_constr)
+        A, b = _build_A_b_matrices_for_n_points(self.eq_constr)
         G, h = _build_G_h_for_box_bounds()
-        if ineq_constr:
-            G_, h_ = _build_A_b_matrices_for_n_points(ineq_constr)
+        if self.ineq_constr:
+            G_, h_ = _build_A_b_matrices_for_n_points(self.ineq_constr)
             G, h = cvxopt.sparse([G, G_]), cvxopt.matrix([h, h_])
 
         x = X.reshape(-1)
@@ -460,7 +524,7 @@ def get_problem_and_algorithm(
 
     # We handle linear equality constraint with a repair function
     repair_constraints = domain.constraints.get(
-        includes=[LinearEqualityConstraint, LinearInequalityConstraint],
+        includes=[LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint],
     )
     if len(repair_constraints) > 0:
         repair = LinearProjection(
