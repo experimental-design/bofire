@@ -15,7 +15,7 @@ from bofire.strategies import api as strategies
 
 @pytest.fixture(
     params=[  # (optimizer data model, params)
-        # data_models_strategies.BotorchOptimizer(),
+        data_models_strategies.BotorchOptimizer(),
         data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
     ]
 )
@@ -63,13 +63,14 @@ class ConstraintCollection:
         return domain
 
     @staticmethod
-    def nchoosek_constr_for_ackley(domain: Domain) -> Domain:
-        feat = [key for key in domain.inputs.get_keys() if key.startswith("x")]
+    def nchoosek_constr_for_detergent(domain: Domain) -> Domain:
+        lb = domain.inputs.get_bounds({})[0]
+        feat = [key for (key, lb_) in zip(domain.inputs.get_keys(), lb) if (key.startswith("x") and lb_==0.)]  # leave out x3
         domain.constraints.constraints += [
             constraints_data_models.NChooseKConstraint(
                 features=feat,
                 min_count=1,
-                max_count=len(feat)-1,
+                max_count=2,  # of 4
                 none_also_valid=False,
             )
         ]
@@ -87,6 +88,7 @@ class OptimizerBenchmark:
         default_factory=lambda: {}
     )
     map_conti_inputs_to_discrete: bool = False  # for testing fully categorical problems
+    n_add: int = 5
 
     def __call__(
         self, optimizer: data_models_strategies.AcquisitionOptimizer
@@ -119,41 +121,42 @@ class OptimizerBenchmark:
 
 @pytest.fixture(
     params=[
-        # OptimizerBenchmark(
-        #     benchmarks.Himmelblau(),
-        #     2,
-        #     data_models_strategies.SoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Himmelblau(),
-        #     2,
-        #     data_models_strategies.SoboStrategy,
-        #     additional_constraint_functions=[
-        #         ConstraintCollection.constraint_mix_for_himmelblau
-        #     ],
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Detergent(),
-        #     5,
-        #     data_models_strategies.AdditiveSoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.DTLZ2(dim=2, num_objectives=2),
-        #     3,
-        #     data_models_strategies.AdditiveSoboStrategy,
-        # ),
-        # OptimizerBenchmark(
-        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
-        #     10,
-        #     data_models_strategies.SoboStrategy,
-        # ),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Himmelblau(),
+            2,
+            data_models_strategies.SoboStrategy,
+            additional_constraint_functions=[
+                ConstraintCollection.constraint_mix_for_himmelblau
+            ],
+        ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(),
+            5,
+            data_models_strategies.AdditiveSoboStrategy,
+        ),
+        OptimizerBenchmark(
+            benchmarks.Detergent(),
+            5,
+            data_models_strategies.AdditiveSoboStrategy,
+            additional_constraint_functions=[
+                ConstraintCollection.nchoosek_constr_for_detergent,
+            ],
+            n_add=10,
+        ),
+        OptimizerBenchmark(
+            benchmarks.DTLZ2(dim=2, num_objectives=2),
+            3,
+            data_models_strategies.AdditiveSoboStrategy,
+        ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
             10,
             data_models_strategies.SoboStrategy,
-            additional_constraint_functions=[
-                ConstraintCollection.nchoosek_constr_for_ackley
-            ],
         ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
@@ -187,7 +190,7 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
 
     strategy = optimizer_benchmark(optimizer_data_model)
 
-    proposals = strategy.ask(4)
+    proposals = strategy.ask(optimizer_benchmark.n_add)
 
     assert proposals.shape[0] == 4
 
