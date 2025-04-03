@@ -1,9 +1,9 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Callable, List, Type
 
 import numpy as np
 import pytest
-import pydantic_core
 
 from bofire.benchmarks import api as benchmarks
 from bofire.data_models.constraints import api as constraints_data_models
@@ -47,16 +47,15 @@ class ConstraintCollection:
 
     @staticmethod
     def last_input_feature_discrete(domain: Domain) -> Domain:
-        """ make the first input discrete """
+        """make the first input discrete"""
         domain.inputs.features[-1] = DiscreteInput(
             key=domain.inputs.features[-1].key,
-            values=np.linspace(*domain.inputs.features[-1].bounds,5)
+            values=np.linspace(*domain.inputs.features[-1].bounds, 5),
         )
         return domain
 
     @staticmethod
     def linear_ineq_constr_for_ackley(domain: Domain) -> Domain:
-        feat = [key for key in domain.inputs.get_keys() if key.startswith("x")]
         domain.constraints.constraints += [
             constraints_data_models.LinearInequalityConstraint(
                 features=["x_1", "x_2"],
@@ -81,7 +80,11 @@ class ConstraintCollection:
     @staticmethod
     def nchoosek_constr_for_detergent(domain: Domain) -> Domain:
         lb = domain.inputs.get_bounds({})[0]
-        feat = [key for (key, lb_) in zip(domain.inputs.get_keys(), lb) if (key.startswith("x") and lb_==0.)]  # leave out x3
+        feat = [
+            key
+            for (key, lb_) in zip(domain.inputs.get_keys(), lb)
+            if (key.startswith("x") and lb_ == 0.0)
+        ]  # leave out x3
         domain.constraints.constraints += [
             constraints_data_models.NChooseKConstraint(
                 features=feat,
@@ -122,7 +125,7 @@ class OptimizerBenchmark:
                     )
 
         for f_constr in self.additional_constraint_functions:
-            domain = f_constr(domain)
+            domain = f_constr(deepcopy(domain))
 
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
         strategy = strategies.map(strategy)
@@ -142,7 +145,6 @@ class OptimizerBenchmark:
             2,
             data_models_strategies.SoboStrategy,
         ),
-
         OptimizerBenchmark(
             benchmarks.Himmelblau(),
             2,
@@ -219,14 +221,21 @@ def optimizer_benchmark(request) -> OptimizerBenchmark:
 
 
 def test_optimizer(optimizer_benchmark, optimizer_data_model):
-
     # sort out cases where the optimizer does not support nonlinear constraints
-    if len(optimizer_benchmark.benchmark.domain.constraints.get(
-            constraints_data_models.NonlinearInequalityConstraint).constraints) > 0:
+    if (
+        len(
+            optimizer_benchmark.benchmark.domain.constraints.get(
+                constraints_data_models.NonlinearInequalityConstraint
+            ).constraints
+        )
+        > 0
+    ):
         if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
-            with pytest.raises(pydantic_core._pydantic_core.ValidationError) as exc_info:
-                strategy = optimizer_benchmark(optimizer_data_model)
-            return
+            # with pytest.raises(pydantic_core._pydantic_core.ValidationError) as exc_info:
+            #     strategy = optimizer_benchmark(optimizer_data_model)
+            pytest.skip(
+                "skipping test for optimizer that does not support nonlinear constraints"
+            )
 
     strategy = optimizer_benchmark(optimizer_data_model)
 

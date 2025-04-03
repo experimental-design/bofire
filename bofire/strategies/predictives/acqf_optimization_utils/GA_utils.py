@@ -20,14 +20,17 @@ from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
-    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import ContinuousInput, DiscreteInput, CategoricalDescriptorInput
-from bofire.data_models.features.categorical import get_encoded_name
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 from bofire.data_models.strategies.api import (
     GeneticAlgorithm as GeneticAlgorithmDataModel,
 )
@@ -64,7 +67,9 @@ class BofireDomainMixedVars:
     ):
         self.domain = domain
         self.vars = {}
-        self.pymoo_conversion: Dict[str, dict] = {}  # conversions, which are not handled by the "domain"
+        self.pymoo_conversion: Dict[
+            str, dict
+        ] = {}  # conversions, which are not handled by the "domain"
         self.input_preprocessing_specs = input_preprocessing_specs
         self.q = q
 
@@ -76,38 +81,44 @@ class BofireDomainMixedVars:
                 domain.inputs.get_by_key(key).get_bounds(spec_)
             ).reshape(-1)
 
-
             var = pymoo_variable.Real(bounds=bounds_org)  # default variable
             if spec_ is not None:
-                if spec_ in (CategoricalEncodingEnum.ONE_HOT, CategoricalEncodingEnum.DESCRIPTOR, ):
-
+                if spec_ in (
+                    CategoricalEncodingEnum.ONE_HOT,
+                    CategoricalEncodingEnum.DESCRIPTOR,
+                ):
                     if spec_ == CategoricalEncodingEnum.DESCRIPTOR:
-                        assert isinstance(input_ref, CategoricalDescriptorInput), \
-                            f"Can only handle CategoricalDescriptorInput as inputs for the GA. Found {type(input_ref)}"\
+                        assert isinstance(input_ref, CategoricalDescriptorInput), (
+                            f"Can only handle CategoricalDescriptorInput as inputs for the GA. Found {type(input_ref)}"
                             f" for input {key}"
+                        )
 
                     var = pymoo_variable.Choice(
                         options=domain.inputs.get_by_key(key).get_allowed_categories(),
                     )
 
                 else:
-                    raise NotImplementedError(f"feature {key}: Encoding type {spec_} not implemented for GA")
+                    raise NotImplementedError(
+                        f"feature {key}: Encoding type {spec_} not implemented for GA"
+                    )
 
             if isinstance(input_ref, DiscreteInput):
                 # convert Discrete inputs to Integer type values
-                assert spec_ is None, "Cannot handle encoding specifications for DiscreteInput"
-                conversion = {i: val_ for (i, val_) in enumerate(input_ref.values)}
-                var = pymoo_variable.Integer(bounds=[0, len(conversion) -1])
+                assert (
+                    spec_ is None
+                ), "Cannot handle encoding specifications for DiscreteInput"
+                conversion = dict(enumerate(input_ref.values))
+                var = pymoo_variable.Integer(bounds=[0, len(conversion) - 1])
                 self.pymoo_conversion[key] = conversion
-
 
             self.vars[key] = var
 
-
     @property
     def pymoo_conversion_inverse(self) -> Dict[str, dict]:
-        return {factor: {value: key for (key, value) in conv_dict.items()} \
-                for (factor, conv_dict) in self.pymoo_conversion.items()}
+        return {
+            factor: {value: key for (key, value) in conv_dict.items()}
+            for (factor, conv_dict) in self.pymoo_conversion.items()
+        }
 
     def pymoo_vars(self) -> Dict[str, pymoo_variable]:
         """return the variables in the format required by pymoo. Includes repeats for q-points.
@@ -122,7 +133,7 @@ class BofireDomainMixedVars:
         return vars
 
     def _pymoo_specific_transform(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        """ handles the non-domain encodings (e.g. pymoo-type 'Integer' to discrete"""
+        """handles the non-domain encodings (e.g. pymoo-type 'Integer' to discrete"""
         for key, conversion in self.pymoo_conversion.items():
             experiments[key] = [conversion[i] for i in experiments[key]]
         return experiments
@@ -133,8 +144,12 @@ class BofireDomainMixedVars:
         """
 
         experiments = self.transform_to_experiments(X)
-        x_numeric = [self.domain.inputs.transform(ex_, self.input_preprocessing_specs).values.astype(float) \
-                     for ex_ in experiments]
+        x_numeric = [
+            self.domain.inputs.transform(
+                ex_, self.input_preprocessing_specs
+            ).values.astype(float)
+            for ex_ in experiments
+        ]
         x_numeric = np.concatenate([np.expand_dims(x, 1) for x in x_numeric], axis=1)
         return x_numeric
 
@@ -187,17 +202,22 @@ class BofireDomainMixedVars:
         """Transform from numeric 2D format to pymoo mixed format"""
 
         d = int(X.shape[1] / self.q)
-        q_ranges = [range(i*d, (i+1)*d) for i in range(self.q)]
+        q_ranges = [range(i * d, (i + 1) * d) for i in range(self.q)]
         x_numeric = [X[:, idx] for idx in q_ranges]
 
-        columns = list(self.domain.inputs.transform(
-            pd.DataFrame(columns=list(self.vars)), self.input_preprocessing_specs,
-        ))
+        columns = list(
+            self.domain.inputs.transform(
+                pd.DataFrame(columns=list(self.vars)),
+                self.input_preprocessing_specs,
+            )
+        )
 
-        experiments = [self.domain.inputs.inverse_transform(
-            pd.DataFrame(x, columns=columns),
-            self.input_preprocessing_specs) \
-            for x in x_numeric]
+        experiments = [
+            self.domain.inputs.inverse_transform(
+                pd.DataFrame(x, columns=columns), self.input_preprocessing_specs
+            )
+            for x in x_numeric
+        ]
 
         # pymoo-type conversion
         for i, experiment in enumerate(experiments):
@@ -347,7 +367,11 @@ class LinearProjection(PymooRepair):
         n_choose_k_constr_min_delta: float = 1e-3,
     ):
         if constraints_include is None:
-            constraints_include = [LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint]
+            constraints_include = [
+                LinearEqualityConstraint,
+                LinearInequalityConstraint,
+                NChooseKConstraint,
+            ]
         else:
             for constr in constraints_include:
                 assert constr in (
@@ -387,22 +411,38 @@ class LinearProjection(PymooRepair):
         class NChooseKBoundProjection:
             """helper class for correcting upper and lower bounds to fulfill NChooseK constraints
             in QP projection"""
-            def __init__(self, constraints: List[NChooseKConstraint], bounds: np.ndarray, min_delta):
 
-                self.lb, self.ub = bounds[0, :].reshape((1, -1)), bounds[1, :].reshape((1, -1))
+            def __init__(
+                self,
+                constraints: List[NChooseKConstraint],
+                bounds: np.ndarray,
+                min_delta,
+            ):
+                self.lb, self.ub = (
+                    bounds[0, :].reshape((1, -1)),
+                    bounds[1, :].reshape((1, -1)),
+                )
                 self.min_delta = min_delta
                 self.d = bounds.shape[1]
 
                 self.n_zero, self.n_non_zero, self.idx = [], [], []
                 for constraint in constraints:
                     di = len(constraint.features)
-                    self.idx.append(np.array([domain.inputs.get_keys(ContinuousInput).index(key) \
-                                              for key in constraint.features]))
+                    self.idx.append(
+                        np.array(
+                            [
+                                domain.inputs.get_keys(ContinuousInput).index(key)
+                                for key in constraint.features
+                            ]
+                        )
+                    )
                     self.n_zero.append(di - constraint.max_count)
                     self.n_non_zero.append(constraint.min_count)
 
             @staticmethod
-            def _ub_correction(ub: np.ndarray, x: np.ndarray, n_zero: int) -> np.ndarray:
+            def _ub_correction(
+                ub: np.ndarray, x: np.ndarray, n_zero: int
+            ) -> np.ndarray:
                 """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
                 if n_zero == 0:
                     return ub
@@ -412,7 +452,9 @@ class LinearProjection(PymooRepair):
                 return ub
 
             @staticmethod
-            def _lb_correction(lb: np.ndarray, x: np.ndarray, n_non_zero: int, min_delta: float) -> np.ndarray:
+            def _lb_correction(
+                lb: np.ndarray, x: np.ndarray, n_non_zero: int, min_delta: float
+            ) -> np.ndarray:
                 """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
                 if n_non_zero == 0:
                     return lb
@@ -433,10 +475,14 @@ class LinearProjection(PymooRepair):
                 x = x.reshape((-1, self.d))
 
                 lb, ub = self.lb.copy(), self.ub.copy()
-                lb, ub = np.repeat(lb, x.shape[0], axis=0), np.repeat(ub, x.shape[0], axis=0)
+                lb, ub = (
+                    np.repeat(lb, x.shape[0], axis=0),
+                    np.repeat(ub, x.shape[0], axis=0),
+                )
 
-                for (n_zero, n_non_zero, idx) in zip(self.n_zero, self.n_non_zero, self.idx):
-
+                for n_zero, n_non_zero, idx in zip(
+                    self.n_zero, self.n_non_zero, self.idx
+                ):
                     x_, lb_, ub_ = x[:, idx], lb[:, idx].copy(), ub[:, idx].copy()
                     lb_ = self._lb_correction(lb_, x_, n_non_zero, self.min_delta)
                     ub_ = self._ub_correction(ub_, x_, n_zero)
@@ -447,13 +493,15 @@ class LinearProjection(PymooRepair):
 
         self.n_choose_k_constr = None
         if NChooseKConstraint in constraints_include:
-            n_choose_k_constraints = domain.constraints.get(includes=[NChooseKConstraint])
+            n_choose_k_constraints = domain.constraints.get(
+                includes=[NChooseKConstraint]
+            )
             if n_choose_k_constraints.constraints:
                 self.n_choose_k_constr = NChooseKBoundProjection(
-                    n_choose_k_constraints.constraints, bounds.detach().numpy(), n_choose_k_constr_min_delta,
+                    n_choose_k_constraints.constraints,
+                    bounds.detach().numpy(),
+                    n_choose_k_constr_min_delta,
                 )
-
-
 
         self.domain_handler = domain_handler
         self.d = d
@@ -522,9 +570,11 @@ class LinearProjection(PymooRepair):
             )
             G = repeated_blkdiag(G_bounds_, n_x_points)
 
-            if (self.n_choose_k_constr is None):  # use the normal lb/ub
+            if self.n_choose_k_constr is None:  # use the normal lb/ub
                 lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
-                h_bounds_ = cvxopt.matrix(np.concatenate((ub.reshape(-1), -lb.reshape(-1))))
+                h_bounds_ = cvxopt.matrix(
+                    np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
+                )
                 h = cvxopt.matrix([h_bounds_] * n_x_points)
             else:
                 # correct bounds for NChooseK constraints
@@ -580,9 +630,14 @@ def get_problem_and_algorithm(
     acqfs: List[AcquisitionFunction],
     q: int,
     bounds_botorch_space: Tensor,
-    ) -> Tuple[AcqfOptimizationProblem, MixedVariableGA,
-        Union[pymoo_default_termination.DefaultMultiObjectiveTermination,
-        pymoo_default_termination.DefaultSingleObjectiveTermination]]:
+) -> Tuple[
+    AcqfOptimizationProblem,
+    MixedVariableGA,
+    Union[
+        pymoo_default_termination.DefaultMultiObjectiveTermination,
+        pymoo_default_termination.DefaultSingleObjectiveTermination,
+    ],
+]:
     """Convenience function to generate all pymoo- classes, needed for the optimization of the acquisition function(s)
 
     Args:
@@ -598,8 +653,6 @@ def get_problem_and_algorithm(
         algorithm
         termination
     """
-
-
 
     # ===== Problem ====
     problem = AcqfOptimizationProblem(
@@ -617,7 +670,11 @@ def get_problem_and_algorithm(
 
     # We handle linear equality constraint with a repair function
     repair_constraints = domain.constraints.get(
-        includes=[LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint],
+        includes=[
+            LinearEqualityConstraint,
+            LinearInequalityConstraint,
+            NChooseKConstraint,
+        ],
     )
     if len(repair_constraints) > 0:
         repair = LinearProjection(
