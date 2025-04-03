@@ -26,7 +26,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.api import ContinuousInput, DiscreteInput, CategoricalDescriptorInput
 from bofire.data_models.features.categorical import get_encoded_name
 from bofire.data_models.strategies.api import (
     GeneticAlgorithm as GeneticAlgorithmDataModel,
@@ -64,11 +64,13 @@ class BofireDomainMixedVars:
     ):
         self.domain = domain
         self.vars = {}
+        self.pymoo_conversion: Dict[str, dict] = {}  # conversions, which are not handled by the "domain"
         self.input_preprocessing_specs = input_preprocessing_specs
         self.q = q
 
         for key in domain.inputs.get_keys():
             spec_ = input_preprocessing_specs.get(key)
+            input_ref = domain.inputs.get_by_key(key)
 
             bounds_org = np.array(
                 domain.inputs.get_by_key(key).get_bounds(spec_)
@@ -78,6 +80,12 @@ class BofireDomainMixedVars:
             var = pymoo_variable.Real(bounds=bounds_org)  # default variable
             if spec_ is not None:
                 if spec_ in (CategoricalEncodingEnum.ONE_HOT, CategoricalEncodingEnum.DESCRIPTOR, ):
+
+                    if spec_ == CategoricalEncodingEnum.DESCRIPTOR:
+                        assert isinstance(input_ref, CategoricalDescriptorInput), \
+                            f"Can only handle CategoricalDescriptorInput as inputs for the GA. Found {type(input_ref)}"\
+                            f" for input {key}"
+
                     var = pymoo_variable.Choice(
                         options=domain.inputs.get_by_key(key).get_allowed_categories(),
                     )
@@ -85,8 +93,21 @@ class BofireDomainMixedVars:
                 else:
                     raise NotImplementedError(f"feature {key}: Encoding type {spec_} not implemented for GA")
 
+            if isinstance(input_ref, DiscreteInput):
+                # convert Discrete inputs to Integer type values
+                assert spec_ is None, "Cannot handle encoding specifications for DiscreteInput"
+                conversion = {i: val_ for (i, val_) in enumerate(input_ref.values)}
+                var = pymoo_variable.Integer(bounds=[0, len(conversion) -1])
+                self.pymoo_conversion[key] = conversion
+
 
             self.vars[key] = var
+
+
+    @property
+    def pymoo_conversion_inverse(self) -> Dict[str, dict]:
+        return {factor: {value: key for (key, value) in conv_dict.items()} \
+                for (factor, conv_dict) in self.pymoo_conversion.items()}
 
     def pymoo_vars(self) -> Dict[str, pymoo_variable]:
         """return the variables in the format required by pymoo. Includes repeats for q-points.
@@ -99,6 +120,12 @@ class BofireDomainMixedVars:
         for qi in range(self.q):
             vars = {**vars, **{f"{key}_q{qi}": var for key, var in self.vars.items()}}
         return vars
+
+    def _pymoo_specific_transform(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """ handles the non-domain encodings (e.g. pymoo-type 'Integer' to discrete"""
+        for key, conversion in self.pymoo_conversion.items():
+            experiments[key] = [conversion[i] for i in experiments[key]]
+        return experiments
 
     def _transform(self, X: List[dict]) -> np.ndarray:
         """Transform from pymoo mixed List[dict]-format to numerical, encoded format: (n_pop, q, d), where
@@ -121,6 +148,7 @@ class BofireDomainMixedVars:
         for qi in range(self.q):
             experiments_qi = experiments.iloc[:, q_column == qi]
             experiments_qi.columns = [x.split("_q")[0] for x in experiments_qi.columns]
+            experiments_qi = self._pymoo_specific_transform(experiments_qi)
             experiments_out.append(experiments_qi)
 
         return experiments_out
@@ -157,30 +185,34 @@ class BofireDomainMixedVars:
 
     def inverse_transform_to_mixed(self, X: np.ndarray) -> List[dict]:
         """Transform from numeric 2D format to pymoo mixed format"""
-        idx_map = self._mixed_2D_idx()
-        out = pd.DataFrame(columns=list(idx_map))
-        for key in list(self.vars):
-            input_ref = self.domain.inputs.get_by_key(key)
-            for qi in range(self.q):
-                key_qi = f"{key}_q{qi}"
-                idx = idx_map[key_qi]
 
-                xi = X[:, np.array(idx)]
+        d = int(X.shape[1] / self.q)
+        q_ranges = [range(i*d, (i+1)*d) for i in range(self.q)]
+        x_numeric = [X[:, idx] for idx in q_ranges]
 
-                if hasattr(input_ref, "from_onehot_encoding"):
-                    cat_cols = [
-                        get_encoded_name(input_ref.key, c) for c in input_ref.categories
-                    ]
-                    xi = input_ref.from_onehot_encoding(
-                        pd.DataFrame(xi, columns=cat_cols)
-                    ).values.reshape(-1)
-                else:
-                    xi = xi.reshape(-1)
+        columns = list(self.domain.inputs.transform(
+            pd.DataFrame(columns=list(self.vars)), self.input_preprocessing_specs,
+        ))
 
-                out[key_qi] = list(xi)
+        experiments = [self.domain.inputs.inverse_transform(
+            pd.DataFrame(x, columns=columns),
+            self.input_preprocessing_specs) \
+            for x in x_numeric]
+
+        # pymoo-type conversion
+        for i, experiment in enumerate(experiments):
+            for key, conversion_dict in self.pymoo_conversion_inverse.items():
+                experiments[i][key] = [conversion_dict[x] for x in experiment[key]]
+
+        # appending "_qi" to headers
+        for i, experiment in enumerate(experiments):
+            experiment.columns = [f"{col}_q{i}" for col in list(experiment)]
+
+        # concatenate
+        experiments = pd.concat(experiments, axis=1)
 
         # reformat to list of dicts
-        return out.to_dict("records")
+        return experiments.to_dict("records")
 
 
 class AcqfOptimizationProblem(PymooProblem):
@@ -551,7 +583,7 @@ def get_problem_and_algorithm(
     ) -> Tuple[AcqfOptimizationProblem, MixedVariableGA,
         Union[pymoo_default_termination.DefaultMultiObjectiveTermination,
         pymoo_default_termination.DefaultSingleObjectiveTermination]]:
-    """Convenience function to generate all pymoo- classes, needed for the optimization of the acquistion function(s)
+    """Convenience function to generate all pymoo- classes, needed for the optimization of the acquisition function(s)
 
     Args:
         data_model (GeneticAlgorithmDataModel): specifications for the algorithm

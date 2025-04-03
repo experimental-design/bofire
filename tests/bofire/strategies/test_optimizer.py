@@ -46,18 +46,34 @@ class ConstraintCollection:
         return domain
 
     @staticmethod
-    def linear_constr_for_ackley(domain: Domain) -> Domain:
+    def last_input_feature_discrete(domain: Domain) -> Domain:
+        """ make the first input discrete """
+        domain.inputs.features[-1] = DiscreteInput(
+            key=domain.inputs.features[-1].key,
+            values=np.linspace(*domain.inputs.features[-1].bounds,5)
+        )
+        return domain
+
+    @staticmethod
+    def linear_ineq_constr_for_ackley(domain: Domain) -> Domain:
+        feat = [key for key in domain.inputs.get_keys() if key.startswith("x")]
+        domain.constraints.constraints += [
+            constraints_data_models.LinearInequalityConstraint(
+                features=["x_1", "x_2"],
+                coefficients=[-1.0, 1.0],
+                rhs=0.0,
+            ),
+        ]
+        return domain
+
+    @staticmethod
+    def linear_eq_constr_for_ackley(domain: Domain) -> Domain:
         feat = [key for key in domain.inputs.get_keys() if key.startswith("x")]
         domain.constraints.constraints += [
             constraints_data_models.LinearEqualityConstraint(
                 features=feat,
                 coefficients=[1.0] * len(feat),
                 rhs=1.0,
-            ),
-            constraints_data_models.LinearInequalityConstraint(
-                features=["x_1", "x_2"],
-                coefficients=[-1.0, 1.0],
-                rhs=0.0,
             ),
         ]
         return domain
@@ -126,6 +142,15 @@ class OptimizerBenchmark:
         #     2,
         #     data_models_strategies.SoboStrategy,
         # ),
+
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.last_input_feature_discrete
+        #     ],
+        # ),
         # OptimizerBenchmark(
         #     benchmarks.Himmelblau(),
         #     2,
@@ -148,11 +173,11 @@ class OptimizerBenchmark:
         #     ],
         #     n_add=10,
         # ),
-        OptimizerBenchmark(
-            benchmarks.CrossCoupling(),
-            4,
-            data_models_strategies.AdditiveSoboStrategy,
-        ),
+        # OptimizerBenchmark(
+        #     benchmarks.CrossCoupling(),
+        #     4,
+        #     data_models_strategies.AdditiveSoboStrategy,
+        # ),
         # OptimizerBenchmark(
         #     benchmarks.DTLZ2(dim=2, num_objectives=2),
         #     3,
@@ -163,12 +188,22 @@ class OptimizerBenchmark:
         #     10,
         #     data_models_strategies.SoboStrategy,
         # ),
+        OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+            10,
+            data_models_strategies.SoboStrategy,
+            additional_constraint_functions=[
+                ConstraintCollection.linear_ineq_constr_for_ackley,
+                ConstraintCollection.last_input_feature_discrete,
+            ],
+        ),
         # OptimizerBenchmark(
         #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
         #     10,
         #     data_models_strategies.SoboStrategy,
         #     additional_constraint_functions=[
-        #         ConstraintCollection.linear_constr_for_ackley
+        #         ConstraintCollection.linear_ineq_constr_for_ackley,
+        #         ConstraintCollection.linear_eq_constr_for_ackley,
         #     ],
         # ),
         OptimizerBenchmark(
