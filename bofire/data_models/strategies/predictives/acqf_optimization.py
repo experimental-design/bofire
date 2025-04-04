@@ -209,6 +209,9 @@ class GeneticAlgorithm(AcquisitionOptimizer):
     n_max_gen: int = 500
     n_max_evals: int = 100000
 
+    # verbosity
+    verbose: bool = False
+
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         return my_type in [
             constraints.LinearEqualityConstraint,

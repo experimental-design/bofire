@@ -320,7 +320,7 @@ class AcqfOptimizationProblem(PymooProblem):
                 G = np.hstack(
                     [constr(exp).values.reshape((-1, 1)) for exp in experiments]
                 )
-                out["G"] = np.hstack([out["G"], G]) if "G" in out else G
+                out["G"] = np.hstack([out["G"], G]) if (out["G"] is not None) else G
 
 
 class LinearProjection(PymooRepair):
