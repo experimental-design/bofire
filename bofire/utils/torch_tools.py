@@ -336,6 +336,11 @@ def constrained_objective2botorch(
     if isinstance(objective, ConstrainedCategoricalObjective):
         # The output of a categorical objective has final dim `c` where `c` is number of classes
         # Pass in the expected acceptance probability and perform an inverse sigmoid to attain the original probabilities
+        # as Botorch does sigmoid transformation for the constraint by default, therefore we need to unsigmoid the probability
+        # (0-1) to (-inf,inf) also we need to invert the probability, where -inf means the constraint is satisfied.
+        # Finally, we add some slack (`eps`) 1e-8 to avoid log(0). Have also a look at this botorch community notebook
+        # https://github.com/pytorch/botorch/blob/main/notebooks_community/clf_constrained_bo.ipynb and this botorch issue
+        # https://github.com/pytorch/botorch/issues/725 which is inspired by this implementation.
         return (
             [
                 lambda Z: torch.log(

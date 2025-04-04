@@ -240,8 +240,8 @@ class EntingStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self._init_problem_config()
-        self._enting = Enting(self._problem_config, _dump_enting_params(data_model))  # type: ignore
+        self._enting = None
+        self._enting_params = _dump_enting_params(data_model)
         self._solver_params = _dump_solver_params(data_model)
         self._kappa_fantasy = data_model.kappa_fantasy
 
@@ -249,6 +249,7 @@ class EntingStrategy(PredictiveStrategy):
         cfg = domain_to_problem_config(self.domain, self.seed)
         self._problem_config: ProblemConfig = cfg[0]  # type: ignore
         self._model_pyo: pyo.ConcreteModel = cfg[1]  # type: ignore
+        self._enting = Enting(self._problem_config, self._enting_params)  # type: ignore
 
     @property
     def input_preprocessing_specs(self):
@@ -321,6 +322,9 @@ class EntingStrategy(PredictiveStrategy):
             pd.DataFrame: DataFrame with a candidates.
 
         """
+        assert (
+            self._enting is not None
+        ), "Uncertainty model needs fit function call before it can predict."
         # First, fit the model on fantasies generated for any pending candidates
         # This ensures that new points are far from pending candidates
         experiments_plus_fantasy = (
@@ -358,6 +362,9 @@ class EntingStrategy(PredictiveStrategy):
         return pd.concat(new_candidates)
 
     def _fit(self, experiments: pd.DataFrame):
+        self._init_problem_config()
+        assert self._enting is not None
+
         input_keys = self.domain.inputs.get_keys()
         output_keys = self.domain.outputs.get_keys()
 
@@ -370,6 +377,7 @@ class EntingStrategy(PredictiveStrategy):
         self._enting.fit(X, y)
 
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore
+        assert self._enting is not None
         X = transformed.to_numpy()
         pred = self._enting.predict(X)
         # pred has shape [([mu1], std1), ([mu2], std2), ... ]

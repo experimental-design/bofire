@@ -43,9 +43,9 @@ optimization = [
     "pymoo>=0.6.0",
     "cvxopt",
 ]
-entmoot = ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"]
+entmoot = ["entmoot>=2.0.6"]
 xgb = ["xgboost>=1.7.5"]
-cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred"]
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred>=1.2.0"]
 tests = [
     "mopti",
     "pytest",
@@ -57,7 +57,7 @@ docs = [
     "mkdocs-material",
     "mkdocs-jupyter",
     "mkdocstrings>=0.18",
-    "mkdocstrings-python-legacy",
+    "mkdocstrings-python",
     "mike",
 ]
 tutorials = ["jupyter", "matplotlib", "seaborn"]
@@ -71,13 +71,10 @@ all = [
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
     "scikit-learn>=1.0.0,<1.6",
-    "entmoot>=2.0",
-    "lightgbm==4.0.0",
-    "pyomo==6.7.1",
-    "gurobipy",
+    "entmoot>=2.0.6",
     "xgboost>=1.7.5",
     "rdkit>=2023.3.2",
-    "mordred",
+    "mordred>=1.2.0",
     "mopti",
     "pytest",
     "pytest-cov",

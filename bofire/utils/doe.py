@@ -9,7 +9,10 @@ import pandas as pd
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
-from bofire.utils.default_fracfac_generators import default_fracfac_generators
+from bofire.utils.default_fracfac_generators import (
+    default_blocking_generators,
+    default_fracfac_generators,
+)
 
 
 def get_confounding_matrix(
@@ -59,7 +62,7 @@ def get_confounding_matrix(
 
     for i in interactions:
         assert i > 1, "Interaction has to be at least of degree two."
-        assert i < len(keys) + 1, f"Interaction has to be smaller than {len(keys)+1}."
+        assert i < len(keys) + 1, f"Interaction has to be smaller than {len(keys) + 1}."
         for combi in itertools.combinations(keys, i):
             scaled_design[":".join(combi)] = scaled_design[list(combi)].prod(axis=1)
 
@@ -103,7 +106,7 @@ def validate_generator(n_factors: int, generator: str) -> str:
         != string.ascii_lowercase[: len(idx_main)]
     ):
         raise ValueError(
-            f'Use the letters `{" ".join(string.ascii_lowercase[: len(idx_main)])}` for the main factors.',
+            f"Use the letters `{' '.join(string.ascii_lowercase[: len(idx_main)])}` for the main factors.",
         )
 
     # Indices of letter combinations.
@@ -127,7 +130,7 @@ def validate_generator(n_factors: int, generator: str) -> str:
     return generator
 
 
-def fracfact(gen) -> np.ndarray:
+def fracfact(gen: str) -> np.ndarray:
     """Computes the fractional factorial design for a given generator.
 
     Args:
@@ -329,3 +332,124 @@ def get_generator(n_factors: int, n_generators: int) -> str:
         return get_default_generator(n_factors, n_generators)
     except ValueError:
         return compute_generator(n_factors, n_generators)
+
+
+def get_block_generator(
+    n_factors: int, n_generators: int, n_repetitions: int, n_blocks: int
+) -> str:
+    """Gets the block generator for a given number of factors, generators, repetitions, and blocks.
+
+    Should be only used if blocking cannot be reached by repetitions only.
+
+    Args:
+        n_factors: number of factors
+        n_generators: number of generators/reducing factors
+        n_repetitions: number of repetitions
+        n_blocks: number of blocks that should be realized
+
+    Raises:
+        ValueError: If blocking can be reached by repetitions only.
+
+    Returns:
+        The blocking generator.
+    """
+    if n_repetitions % n_blocks == 0:
+        raise ValueError("Blocking can be reached by repetitions only.")
+
+    possible_blocks = sorted(
+        set(
+            default_blocking_generators.loc[
+                default_blocking_generators.n_factors == n_factors
+            ].n_blocks.to_list()
+        )
+    )
+
+    if n_blocks in possible_blocks:
+        return default_blocking_generators.loc[
+            (default_blocking_generators.n_factors == n_factors)
+            & (default_blocking_generators.n_blocks == n_blocks)
+        ].block_generator.to_list()[0]
+
+    for b in possible_blocks:
+        if b * n_repetitions % n_blocks == 0:
+            return default_blocking_generators.loc[
+                (default_blocking_generators.n_factors == n_factors)
+                & (default_blocking_generators.n_blocks == b)
+            ].block_generator.to_list()[0]
+
+    raise ValueError("No block generator available for the requested combination.")
+
+
+def get_n_blocks(n_factors: int, n_generators: int, n_repetitions: int) -> List[int]:
+    """Computes the number of possible blocks for a given number of factors, generators, and repetitions.
+
+    Args:
+        n_factors: number of factors
+        n_generators: number of generators/reducing factors
+        n_repetitions: number of repetitions
+
+    Returns:
+        List[int]: List of possible number of blocks.
+    """
+    n_blocks = []
+    # check if no repetitions are planned
+    if n_repetitions == 1:
+        return sorted(
+            set(
+                default_blocking_generators.loc[
+                    default_blocking_generators.n_factors == n_factors
+                ].n_blocks.to_list()
+            )
+        )
+    else:
+        # check if blocking can be reached just by repetitions
+        for i in range(2, n_repetitions + 1):
+            if n_repetitions % i == 0:
+                n_blocks.append(i)
+
+        # check if blocking can be reached by a combination of explicit blocks and repetitions
+        n_blocks += (
+            default_blocking_generators.loc[
+                default_blocking_generators.n_factors == n_factors, "n_blocks"
+            ].to_numpy()
+            * (n_repetitions)
+        ).tolist() + default_blocking_generators.loc[
+            default_blocking_generators.n_factors == n_factors, "n_blocks"
+        ].to_list()
+
+        return sorted(set(n_blocks))
+
+
+def apply_block_generator(design: np.ndarray, gen: str) -> List[int]:
+    """Applies blocking to a design matrix.
+
+    Args:
+        design: The design matrix.
+        gen: The generator.
+
+    Returns:
+        List of integers which assigns an experiment in the design matrix to a block.
+
+    """
+    generators = [i.strip().lower() for i in gen.split(";")]
+
+    # Fill in design with two level factorial design
+    blocking_design = np.zeros((design.shape[0], len(generators)))
+
+    # Recognize combinations and fill in the rest of matrix H2 with the proper
+    # products
+    for i, g in enumerate(generators):
+        # For lowercase letters
+        xx = np.array([ord(c) for c in g]) - 97
+        blocking_design[:, i] = np.prod(design[:, xx], axis=1)
+
+    # Create a list to store the block assignments
+    blocks = []
+
+    # Iterate over each row in the design matrix
+    for row in blocking_design:
+        # Find the index of the unique row in the blocking design
+        block = np.where((blocking_design == row).all(axis=1))[0][0]
+        blocks.append(block)
+
+    return blocks

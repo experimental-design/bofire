@@ -4,7 +4,7 @@ The notebooks in this folder demonstrate the usage of bofire. The are organized 
 
 ### Getting Started
 
-`getting_started.ipynb` contains the python code of the getting started section of the  [GH pages getting started](https://experimental-design.github.io/bofire/start)
+`getting_started.ipynb` contains the python code of the getting started section of the  [GH pages getting started](https://experimental-design.github.io/bofire/getting_started/)
 
 ### Basic Examples
 

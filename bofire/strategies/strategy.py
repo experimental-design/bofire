@@ -23,8 +23,17 @@ class Strategy(ABC):
         data_model: DataModel,
     ):
         self.domain = data_model.domain
-        self.seed = data_model.seed or np.random.default_rng().integers(1000)
-        self.rng = np.random.default_rng(self.seed)
+        # if data_model.seed is None (no explicit seed provided by the user),
+        # we use a randomly generated seed from the seed sequence.
+        # This is done to ensure reproducibility of the strategy:
+        # even if the user does not provide a seed one can extract the used seed
+        # from the strategy object via `strategy.seed`.
+        seed = data_model.seed
+        if seed is None:
+            # we generate a new random seed since the default entropy is 128-bits,
+            # which is too large for the `long` dtype
+            seed = np.random.SeedSequence().generate_state(1, dtype=np.uint32).item()
+        self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
 
@@ -36,12 +45,18 @@ class Strategy(ABC):
             int: random seed.
 
         """
-        return int(self.rng.integers(1, 100000))
+        (spawned_seed_seq,) = self.seed_seq.spawn(1)
+        return spawned_seed_seq.generate_state(1).item()
 
     @classmethod
     def from_spec(cls, data_model: DataModel) -> "Strategy":
         """Used by the mapper to map from data model to functional strategy."""
         return cls(data_model=data_model)
+
+    @property
+    def seed(self) -> int:
+        """Returns the seed of the strategy."""
+        return self.seed_seq.entropy  # type: ignore
 
     @property
     def experiments(self) -> Optional[pd.DataFrame]:
