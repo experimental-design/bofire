@@ -1,61 +1,66 @@
-const selectorTabStrategies = {
-    // map from tab labels to group names
-    "single-objective": "objective",
-    "multi-objective": "objective",
-    "single-task": "tasks",
-    "multi-task": "tasks",
-    "multi-fidelity": "tasks",
-    "simple-domain": "domain",
-    "many-categorical-features": "domain",
-}
+// set default strategy
+let problemDescription = new Map([
+    ["objective", "single-objective"],
+    ["tasks", "single-task"],
+    ["domain", "simple-domain"],
+])
 
-let strategies = {
-    "objective": "single-objective",
-    "tasks": "single-task",
-    "domain": "simple-domain",
-}
+const strategyMap = new Map([
+    ["single-objective__single-task__simple-domain", ["SoboStrategy", ""]],
+    ["single-objective__single-task__many-categorical-features", ["EntingStrategy", ""]],
+    ["single-objective__multi-task__simple-domain", ["SoboStrategy", "MultiTaskGPSurrogate"]],
+    ["single-objective__multi-fidelity__simple-domain", ["MultiFidelity", ""]],
 
-const getStrategyCode = () => {
-    const objective = strategies["objective"];
-    const tasks = strategies["tasks"];
-    const domain = strategies["domain"];
+    ["multi-objective__single-task__simple-domain", ["MoboStrategy", ""]],
+])
 
-    let strategyDataModel = ""
-    if (objective == "single-objective") {
-        if (tasks == "single-task") {
-            if (domain == "simple-domain") {
-                strategyDataModel = "SoboStrategy"
-            } else if (domain == "many-categorical-features") {
-                strategyDataModel = "EntingStrategy"
-            }
-        } else if (tasks == "multi-task") {
-            strategyDataModel = "SoboStrategy"
-        } else if (tasks == "multi-fidelity") {
-            strategyDataModel = "MultiFidelityStrategy"
-            // we define multi fidelity as a multi-task where you can query the other fidelities
-        }
-    } else if (objective == "multi-objective") {
-        if (tasks == "single-task" && domain == "simple-domain") {
-            strategyDataModel = "MoboStrategy"
-        }
+const getSurrogateCode = (surrogateDataModel) => {
+    if (surrogateDataModel === "") {
+        return ""
     }
-
-    return hljs.highlight(
-`# import the data model
-from bofire.data_models.strategies.api import ${strategyDataModel}
-import bofire.strategies.api as strategies
-
+    return `
+# define the surrogate data model
 surrogate_data_model = BotorchSurrogates(surrogates=[
-    MultiTaskGPSurrogate(
+    ${surrogateDataModel}(
         inputs=domain.inputs,
         outputs=domain.outputs,
     )
 ])
+`}
 
+const getStrategyComment = (strategyDataModel) => {
+    return (strategyDataModel !== "EntingStrategy") ? "" : `
+# the default GP surrogate is slow to optimize when many discrete features are present
+# the ENTMOOT model can optimize over domains with many categories`
+}
+
+const getStrategyCode = () => {
+    const dataModels = strategyMap.get([...problemDescription.values()].join("__"))
+    if (dataModels === undefined) {
+        return hljs.highlight("# There isn't currently a BoFire model that works for this problem.", {language: "python"})
+    }
+
+    const [strategyDataModel, surrogateDataModel] = dataModels
+    const requiresSurrogate = (surrogateDataModel !== "")
+    const surrogateImport = (!requiresSurrogate) ? "" : `
+from bofire.data_models.surrogates.api import ${surrogateDataModel}`
+
+    const strategyComment = getStrategyComment(strategyDataModel)
+    const surrogateCode = getSurrogateCode(surrogateDataModel)
+
+    return hljs.highlight(
+`from bofire.data_models.strategies.api import ${strategyDataModel} ${surrogateImport}
+import bofire.strategies.api as strategies
+${surrogateCode}
+# define the strategy data model ${strategyComment}
 strategy_data_model = ${strategyDataModel}(
-    domain=domain
-    surrogate=surrogate_data_model
+    domain=domain${!requiresSurrogate ? "" : `
+    surrogate=surrogate_data_model`}
 )
+
+# create an instance of the functional strategy
+# to understand the difference between data models and functional components,
+# see https://experimental-design.github.io/bofire/data_models_functionals/
 strategy = strategies.map(strategy_data_model)
 `, { language : "python"}
     )
@@ -71,12 +76,12 @@ const tabSync = () => {
     for (const tab of tabs) {
       tab.addEventListener("click", () => {
         const current = document.querySelector(`label[for=${tab.id}]`)
-        console.log(tab.id)
         const pos = current.getBoundingClientRect().top
         // const labels = document.querySelectorAll('.tabbed-set > label, .tabbed-alternate > .tabbed-labels > label')
         
-        const updatedGroup = selectorTabStrategies[tab.id]
-        strategies[updatedGroup] = tab.id
+        const updatedGroup = tab.parentElement.id
+        // const updatedGroup = selectorTabStrategies[tab.id]
+        problemDescription.set(updatedGroup, tab.id)
         updateStrategyCodeBlock()
 
         // Preserve scroll position
@@ -87,6 +92,9 @@ const tabSync = () => {
   }
 
 document$.subscribe(function() {
-    console.log(document.title)
+    ["objective", "tasks", "domain"].forEach(k => {
+        document.querySelector(`#${k}-marker`).nextElementSibling.setAttribute("id", k)
+    })
     tabSync()
+    updateStrategyCodeBlock()
 })
