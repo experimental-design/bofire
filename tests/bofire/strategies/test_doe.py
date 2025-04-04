@@ -494,7 +494,6 @@ def test_functional_constraint():
     )
     strategy = DoEStrategy(data_model=data_model)
 
-    # try three times to avoid random failing of this test (it passes most of the time)
     doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=True)
 
     doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
