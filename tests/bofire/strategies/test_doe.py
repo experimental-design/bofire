@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -380,6 +381,35 @@ def test_categorical_doe_iterative():
 
 
 def test_functional_constraint():
+    np.random.seed(1)
+    torch.manual_seed(1)
+    torch.cuda.manual_seed(1)
+
+    sampling = [
+        [
+            0.36531936,
+            0.774256,
+            0.0457612,
+            0.10232313,
+            0.66522677,
+        ],
+        [
+            0.39283984,
+            0.30091256,
+            0.3751583,
+            0.72181405,
+            0.37838284,
+        ],
+        [
+            0.38254448,
+            0.35407898,
+            0.47484388,
+            0.337307,
+            0.76760944,
+        ],
+        [0.31534748, 0.51893979, 0.42009135, 0.30568969, 0.85966],
+    ]
+
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),
         ContinuousInput(key="B", bounds=(0, 0.8)),
@@ -465,9 +495,12 @@ def test_functional_constraint():
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
         ipopt_options={"max_iter": 500},
+        sampling=sampling,
     )
     strategy = DoEStrategy(data_model=data_model)
-    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)
+
+    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=True)
+
     doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]

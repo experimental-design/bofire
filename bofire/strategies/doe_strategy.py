@@ -39,6 +39,11 @@ class DoEStrategy(Strategy):
         self.data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
+        self._sampling = (
+            pd.DataFrame(self.data_model.sampling)
+            if self.data_model.sampling is not None
+            else None
+        )
 
     @property
     def formula(self):
@@ -56,7 +61,7 @@ class DoEStrategy(Strategy):
                 to_many_columns.append(col)
         if len(to_many_columns) > 0:
             raise AttributeError(
-                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain",
+                f"provided candidates have columns: {(*to_many_columns,)},  which do not exist in original domain",
             )
 
         to_few_columns = []
@@ -65,7 +70,7 @@ class DoEStrategy(Strategy):
                 to_few_columns.append(col)
         if len(to_few_columns) > 0:
             raise AttributeError(
-                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain",
+                f"provided candidates are missing columns: {(*to_few_columns,)} which exist in original domain",
             )
 
         self._candidates = candidates
@@ -119,6 +124,7 @@ class DoEStrategy(Strategy):
                 criterion=self.data_model.criterion,
                 use_hessian=self.data_model.use_hessian,
                 use_cyipopt=self.data_model.use_cyipopt,
+                sampling=self._sampling,
             )
         # TODO adapt to when exhaustive search accepts discrete variables
         elif (
@@ -137,6 +143,7 @@ class DoEStrategy(Strategy):
                 criterion=self.data_model.criterion,
                 use_hessian=self.data_model.use_hessian,
                 use_cyipopt=self.data_model.use_cyipopt,
+                sampling=self._sampling,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -155,6 +162,7 @@ class DoEStrategy(Strategy):
                 criterion=self.data_model.criterion,
                 use_hessian=self.data_model.use_hessian,
                 use_cyipopt=self.data_model.use_cyipopt,
+                sampling=self._sampling,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -181,6 +189,7 @@ class DoEStrategy(Strategy):
                     criterion=self.data_model.criterion,
                     use_hessian=self.data_model.use_hessian,
                     use_cyipopt=self.data_model.use_cyipopt,
+                    sampling=self._sampling,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [
@@ -191,7 +200,7 @@ class DoEStrategy(Strategy):
                     ignore_index=True,
                 )
                 print(
-                    f"Status: {i+1} of {_candidate_count} experiments determined \n"
+                    f"Status: {i + 1} of {_candidate_count} experiments determined \n"
                     f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}",
                 )
 
