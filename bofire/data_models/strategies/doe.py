@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Literal, Optional, Type, Union
+from typing import Annotated, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -112,6 +112,7 @@ class DoEStrategy(Strategy):
 
     verbose: bool = False  # get rid of this at a later stage
     ipopt_options: Optional[Dict] = None
+    sampling: Optional[List[List]] = None
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
