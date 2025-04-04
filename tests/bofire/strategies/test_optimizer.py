@@ -127,6 +127,18 @@ class OptimizerBenchmark:
         for f_constr in self.additional_constraint_functions:
             domain = f_constr(deepcopy(domain))
 
+        # check if the optimizer supports nonlinear constraints
+        if (
+            len(
+                domain.constraints.get(
+                    constraints_data_models.NonlinearInequalityConstraint
+                ).constraints
+            )
+            > 0
+        ):
+            if isinstance(optimizer, data_models_strategies.BotorchOptimizer):
+                pytest.skip("skipping nonlinear constraints for botorch optimizer")
+
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
         strategy = strategies.map(strategy)
 
@@ -222,20 +234,6 @@ def optimizer_benchmark(request) -> OptimizerBenchmark:
 
 def test_optimizer(optimizer_benchmark, optimizer_data_model):
     # sort out cases where the optimizer does not support nonlinear constraints
-    if (
-        len(
-            optimizer_benchmark.benchmark.domain.constraints.get(
-                constraints_data_models.NonlinearInequalityConstraint
-            ).constraints
-        )
-        > 0
-    ):
-        if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
-            # with pytest.raises(pydantic_core._pydantic_core.ValidationError) as exc_info:
-            #     strategy = optimizer_benchmark(optimizer_data_model)
-            pytest.skip(
-                "skipping test for optimizer that does not support nonlinear constraints"
-            )
 
     strategy = optimizer_benchmark(optimizer_data_model)
 
