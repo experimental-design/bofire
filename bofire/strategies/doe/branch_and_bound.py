@@ -235,6 +235,8 @@ def find_local_max_ipopt_BaB(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
+    use_hessian: bool = False,
+    use_cyipopt: Optional[bool] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
@@ -261,6 +263,9 @@ def find_local_max_ipopt_BaB(
             verbose (bool): if true, print information during the optimization process
             transform_range (Optional[Bounds]): range to which the input variables are transformed.
                 If None is provided, the features will not be scaled. Defaults to None.
+            use_hessian (bool): if true, the hessian will be used in the optimization process. Defaults to False.
+            use_cyipopt (Optional[bool]): if true, the cyipopt solver will be used, otherwise scipy.minimize(). Defaults to None.
+                If None is provided, the cyipopt solver will be used if available.
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -324,6 +329,8 @@ def find_local_max_ipopt_BaB(
         sampling,
         None,
         partially_fixed_experiments=initial_branch,
+        use_hessian=use_hessian,
+        use_cyipopt=use_cyipopt,
     )
     initial_value = objective_function.evaluate(
         initial_design.to_numpy().flatten(),
@@ -367,6 +374,8 @@ def find_local_max_ipopt_exhaustive(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
+    use_hessian: bool = False,
+    use_cyipopt: Optional[bool] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
@@ -392,6 +401,9 @@ def find_local_max_ipopt_exhaustive(
                 with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
             transform_range (Optional[Bounds]): range to which the input variables are transformed.
+            use_hessian (bool): if true, the hessian will be used in the optimization process. Defaults to False.
+            use_cyipopt (Optional[bool]): if true, the cyipopt solver will be used, otherwise scipy.minimize(). Defaults to None.
+                If None is provided, the cyipopt solver will be used if available.
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -503,6 +515,8 @@ def find_local_max_ipopt_exhaustive(
                 sampling,
                 None,
                 one_set_of_experiments,
+                use_hessian=use_hessian,
+                use_cyipopt=use_cyipopt,
             )
             domain.validate_candidates(
                 candidates=current_design.apply(lambda x: np.round(x, 8)),

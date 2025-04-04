@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 
 import numpy as np
@@ -13,19 +14,26 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.strategies.doe.objective import DOptimalityCriterion, get_objective_function
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
+    _minimize,
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
+    convert_formula_to_string,
     get_formula_from_string,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
 )
+
+
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
 def get_formula_from_string_recursion_limit():
@@ -475,6 +483,99 @@ def test_ConstraintWrapper():
             ],
         ),
     )
+    assert np.allclose(
+        c.jacobian(x, sparse=True), np.array([2, 0, 0, 2, 1, 0, 0, 1, 6, 0, 0, 0])
+    )
+
+    assert np.allclose(
+        c.hessian(x),
+        [
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+        ],
+    )
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="cyipopt required")
+def test_minimize():
+    # Run _minimize() with and without ipopt
+    n_experiments = 4
+    criterion = DOptimalityCriterion(formula="linear")
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3"],
+                coefficients=[1, 1, 1],
+                rhs=1,
+            ),
+        ],
+    )
+
+    objective_function = get_objective_function(
+        criterion, domain=domain, n_experiments=n_experiments
+    )
+
+    x0 = (
+        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+        .to_numpy()
+        .flatten()
+    )
+    constraints = constraints_as_scipy_constraints(
+        domain,
+        n_experiments,
+        ignore_nchoosek=True,
+    )
+    bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
+
+    result_ipopt = _minimize(
+        objective_function=objective_function,
+        x0=x0,
+        bounds=bounds,
+        constraints=constraints,
+        ipopt_options={"max_iter": 500, "print_level": 0},
+        use_hessian=False,
+        use_cyipopt=True,
+    )
+
+    result_scipy = _minimize(
+        objective_function=objective_function,
+        x0=x0,
+        bounds=bounds,
+        constraints=constraints,
+        ipopt_options={"max_iter": 500},
+        use_hessian=False,
+        use_cyipopt=False,
+    )
+
+    for i in range(n_experiments):
+        assert np.any(
+            [
+                np.allclose(result_ipopt[j], result_scipy[i])
+                for j in range(n_experiments)
+            ]
+        )
+        assert np.any(
+            [
+                np.allclose(result_scipy[j], result_ipopt[i])
+                for j in range(n_experiments)
+            ]
+        )
 
 
 def test_check_nchoosek_constraints_as_bounds():
@@ -652,3 +753,19 @@ def test_nchoosek_constraints_as_bounds():
     # assert len(bounds) == 20
     # for i in range(20):
     #     assert _bounds[i] == bounds[i]
+
+
+def test_convert_formula_to_string():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+
+    formula_str = convert_formula_to_string(domain=domain, formula=formula)
+    assert (
+        formula_str
+        == "torch.vstack([torch.ones_like(x0), x0, x1, x2, x0 ** 2, x1 ** 2, x2 ** 2,"
+        + " x0*x1, x0*x2, x1*x2, ]).T"
+    )

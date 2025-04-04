@@ -235,33 +235,41 @@ for criterion in [
             "relaxed",
             "iterative",
         ]:
-            specs.add_valid(
-                strategies.DoEStrategy,
-                lambda criterion=criterion,
-                formula=formula,
-                optimization_strategy=optimization_strategy: {
-                    "domain": domain.valid().obj().model_dump(),
-                    "optimization_strategy": optimization_strategy,
-                    "verbose": False,
-                    "seed": 42,
-                    "criterion": criterion(
-                        formula=formula, transform_range=None
-                    ).model_dump(),
-                },
-            )
-specs.add_valid(
-    strategies.DoEStrategy,
-    lambda: {
-        "domain": domain.valid().obj().dict(),
-        "optimization_strategy": "default",
-        "verbose": False,
-        "ipopt_options": {"maxiter": 200, "disp": 0},
-        "criterion": strategies.SpaceFillingCriterion(
-            sampling_fraction=0.3, transform_range=[-1, 1]
-        ).model_dump(),
-        "seed": 42,
-    },
-)
+            for use_cyipopt in [True, False, None]:
+                specs.add_valid(
+                    strategies.DoEStrategy,
+                    lambda criterion=criterion,
+                    formula=formula,
+                    optimization_strategy=optimization_strategy,
+                    use_cyipopt=use_cyipopt: {
+                        "domain": domain.valid().obj().model_dump(),
+                        "optimization_strategy": optimization_strategy,
+                        "verbose": False,
+                        "seed": 42,
+                        "criterion": criterion(
+                            formula=formula, transform_range=None
+                        ).model_dump(),
+                        "use_hessian": False,
+                        "use_cyipopt": use_cyipopt,
+                    },
+                )
+
+for use_cyipopt in [True, False, None]:
+    specs.add_valid(
+        strategies.DoEStrategy,
+        lambda use_cyipopt=use_cyipopt: {
+            "domain": domain.valid().obj().dict(),
+            "optimization_strategy": "default",
+            "verbose": False,
+            "ipopt_options": {"max_iter": 200, "print_level": 0},
+            "criterion": strategies.SpaceFillingCriterion(
+                sampling_fraction=0.3, transform_range=[-1, 1]
+            ).model_dump(),
+            "seed": 42,
+            "use_hessian": False,
+            "use_cyipopt": use_cyipopt,
+        },
+    )
 
 
 tempdomain = domain.valid().obj()

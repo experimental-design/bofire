@@ -1,5 +1,5 @@
 import math
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Dict, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -83,3 +83,6 @@ class InterpointEqualityConstraint(InterpointConstraint):
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError("Method `jacobian` currently not implemented.")
+
+    def hessian(self, experiments: pd.DataFrame) -> Dict[Union[str, int], pd.DataFrame]:
+        raise NotImplementedError("Method `hessian` currently not implemented.")

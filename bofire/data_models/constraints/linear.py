@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Tuple
+from typing import Annotated, Dict, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -63,6 +63,9 @@ class LinearConstraint(IntrapointConstraint):
             ),
             columns=[f"dg/d{name}" for name in self.features],
         )
+
+    def hessian(self, experiments: pd.DataFrame) -> Dict[Union[int, str], float]:
+        return {idx: 0.0 for idx in range(experiments.shape[0])}
 
 
 class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):

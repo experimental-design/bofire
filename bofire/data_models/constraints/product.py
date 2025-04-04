@@ -83,6 +83,11 @@ class ProductConstraint(IntrapointConstraint):
             "Jacobian for product constraints is not yet implemented.",
         )
 
+    def hessian(self, experiments: pd.DataFrame) -> List[pd.DataFrame]:
+        raise NotImplementedError(
+            "Hessian for product constraints is not yet implemented.",
+        )
+
 
 class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
     """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
