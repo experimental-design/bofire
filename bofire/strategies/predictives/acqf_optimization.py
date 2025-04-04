@@ -780,7 +780,9 @@ class GeneticAlgorithm(AcquisitionOptimizer):
             bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
         )
 
-        res = pymoo_minimize(problem, algorithm, termination, verbose=self.data_model.verbose)
+        res = pymoo_minimize(
+            problem, algorithm, termination, verbose=self.data_model.verbose
+        )
 
         x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
             [res.X]
