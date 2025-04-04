@@ -32,6 +32,7 @@ def find_local_max_ipopt(
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     use_hessian: bool = False,
+    use_cyipopt: Optional[bool] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
@@ -50,6 +51,8 @@ def find_local_max_ipopt(
             Non-fixed variables have to be set to None or nan.
         criterion (OptimalityCriterion): OptimalityCriterion object indicating which criterion function to use.
         use_hessian (bool): If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt (bool, optional): If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+            If None, cyipopt is used if available.
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -176,6 +179,7 @@ def find_local_max_ipopt(
         constraints=constraints,
         use_hessian=use_hessian,
         ipopt_options=_ipopt_options,
+        use_cyipopt=use_cyipopt,
     )
 
     design = pd.DataFrame(

@@ -589,7 +589,7 @@ def _minimize(
     constraints: Optional[List[Union[NonlinearConstraint, LinearConstraint]]],
     ipopt_options: dict,
     use_hessian: bool,
-    use_cyipopt: bool = CYIPOPT_AVAILABLE,
+    use_cyipopt: Optional[bool] = CYIPOPT_AVAILABLE,
 ) -> np.ndarray:
     """Minimize the objective function using the given constraints and bounds.
     Uses Ipopt if available, otherwise uses SLSQP.
@@ -606,6 +606,8 @@ def _minimize(
     Returns:
         np.ndarray: The optimized design as flattened numpy array.
     """
+    if use_cyipopt is None:
+        use_cyipopt = CYIPOPT_AVAILABLE
 
     if use_cyipopt:
         if use_hessian:
@@ -637,6 +639,7 @@ def _minimize(
             bounds=bounds,
             options=options,
             constraints=standardize_constraints(constraints, x0, "SLSQP"),
+            jac=objective_function.evaluate_jacobian,
             hess=objective_function.evaluate_hessian if use_hessian else None,
         )
         return result.x

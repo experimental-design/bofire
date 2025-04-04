@@ -45,7 +45,10 @@ def test_nonlinear_constraints_jacobian_expression():
     assert np.allclose(constraint2.jacobian(data), constraint0.jacobian(data))
     assert np.allclose(constraint3.jacobian(data), constraint0.jacobian(data))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Features must be None if expression is a callable. They will be inferred from the callable.",
+    ):
         NonlinearInequalityConstraint(
             expression=lambda x1, x2, x3: x1**2 + x2**2 - x3,
             features=["x1", "x2", "x3"],
@@ -94,7 +97,10 @@ def test_nonlinear_constraints_hessian_expression():
         assert np.allclose(constraint2.hessian(data)[i], constraint0.hessian(data)[i])
         assert np.allclose(constraint3.hessian(data)[i], constraint0.hessian(data)[i])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError,
+        match="Features must be None if expression is a callable. They will be inferred from the callable.",
+    ):
         NonlinearInequalityConstraint(
             expression=lambda x1, x2, x3: x1**2 + x2**2 - x3,
             features=["x1", "x2", "x3"],
