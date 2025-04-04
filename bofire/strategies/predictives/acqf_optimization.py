@@ -12,6 +12,7 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from pymoo.optimize import minimize as pymoo_minimize
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -36,12 +37,16 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
 )
+from bofire.data_models.strategies.api import (
+    GeneticAlgorithm as GeneticAlgorithmDataModel,
+)
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
     ShortestPathStrategy as ShortestPathStrategyDataModel,
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
+from bofire.strategies.predictives.acqf_optimization_utils import GA_utils
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -719,8 +724,77 @@ class BotorchOptimizer(AcquisitionOptimizer):
         return list_of_fixed_features
 
 
+class GeneticAlgorithm(AcquisitionOptimizer):
+    """Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm."""
+
+    def __init__(self, data_model: GeneticAlgorithmDataModel):
+        super().__init__(data_model)
+        self.data_model = data_model
+
+    def _optimize(
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],  # this is a botorch object
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+        experiments: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        """main function for optimizing the acquisition function using pymoo's genetic algorithm."""
+
+        # Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
+        candidates, _ = self._single_shot_optimization(
+            domain, input_preprocessing_specs, acqfs, candidate_count
+        )
+
+        return self._candidates_tensor_to_dataframe(
+            candidates,
+            domain,
+            input_preprocessing_specs,
+        )
+
+    def _single_shot_optimization(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        acqfs: List[AcquisitionFunction],
+        q: int,
+    ) -> Tuple[Tensor, Tensor]:
+        """
+        single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
+
+        Args:
+            domain (Domain)
+            input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for the models in
+                the acquisition functions
+
+        Returns
+            Tensor: x_opt as (d,) Tensor
+            Tensor: f_opt as (n_y,) Tensor
+        """
+        problem, algorithm, termination = GA_utils.get_problem_and_algorithm(
+            self.data_model,
+            domain,
+            input_preprocessing_specs,
+            acqfs,
+            q,
+            bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
+        )
+
+        res = pymoo_minimize(
+            problem, algorithm, termination, verbose=self.data_model.verbose
+        )
+
+        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
+            [res.X]
+        ).reshape((q, -1))
+        f_opt = torch.from_numpy(res.F).to(**tkwargs)
+
+        return x_opt, f_opt
+
+
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,
+    GeneticAlgorithmDataModel: GeneticAlgorithm,
 }
 
 

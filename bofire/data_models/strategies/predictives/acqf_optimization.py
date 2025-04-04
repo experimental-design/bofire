@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, Union
 
 from pydantic import Field, PositiveInt, field_validator
 
@@ -194,4 +194,38 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         )
 
 
-AnyAcqfOptimizer = BotorchOptimizer
+class GeneticAlgorithm(AcquisitionOptimizer):
+    """implementation of a Genetic Algorithm for acquisition function optimization"""
+
+    type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
+
+    # algorithm options
+    population_size: int = 1000
+
+    # termination criteria
+    xtol: float = 0.0005
+    cvtol: float = 1e-8
+    ftol: float = 1e-6
+    n_max_gen: int = 500
+    n_max_evals: int = 100000
+
+    # verbosity
+    verbose: bool = False
+
+    def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
+        return my_type in [
+            constraints.LinearEqualityConstraint,
+            constraints.LinearInequalityConstraint,
+            constraints.ProductInequalityConstraint,
+            constraints.NonlinearInequalityConstraint,
+            constraints.NChooseKConstraint,
+        ]
+
+    def validate_domain(self, domain: Domain):
+        pass
+
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
+        pass
+
+
+AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithm]
