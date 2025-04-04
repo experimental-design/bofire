@@ -599,7 +599,7 @@ def test_nchoosek_constraints_as_bounds():
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
-                bounds=(-1, 1),
+                bounds=(0, 1),
             )
             for i in range(5)
         ],
