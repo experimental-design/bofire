@@ -469,7 +469,7 @@ class ConstraintWrapper:
 
         return jacobian
 
-    def hessian(self, x: np.ndarray):
+    def hessian(self, x: np.ndarray, *args):
         """Call constraint hessian with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
         hessian_dict = self.constraint.hessian(x)  # type: ignore

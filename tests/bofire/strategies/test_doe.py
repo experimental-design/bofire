@@ -451,19 +451,24 @@ def test_functional_constraint():
     # Calculate the solid content of the formulation
     def calc_solid_content(A, B, T, W, W_T):
         # Ensure same order as in the dictionary containing the material properties
-        return np.array([A, B, T, W, W_T]).T @ (df_raw_materials["sc"].values)
+        if isinstance(A, torch.Tensor):
+            return torch.stack([A, B, T, W, W_T], 0).T @ torch.tensor(
+                df_raw_materials["sc"].values
+            )
+        else:
+            return np.array([A, B, T, W, W_T]).T @ df_raw_materials["sc"].values
 
     # Calculate the volume content of the formulation
     def calc_volume_content(A, B, T, W, W_T):
-        A = A.detach() if not isinstance(A, pd.Series) else A
-        B = B.detach() if not isinstance(B, pd.Series) else B
-        T = T.detach() if not isinstance(T, pd.Series) else T
-        W = W.detach() if not isinstance(W, pd.Series) else W
-        W_T = W_T.detach() if not isinstance(W_T, pd.Series) else W_T
         volume_solid = (
             A * raw_materials_data["A"][0] / raw_materials_data["A"][1]
             + B * raw_materials_data["B"][0] / raw_materials_data["B"][1]
         )
+        A = A
+        B = B
+        T = T
+        W = W
+        W_T = W_T
         volume_total = volume_solid + (1 - calc_solid_content(A, B, T, W, W_T) / 1)
         return volume_solid / volume_total
 
@@ -494,8 +499,13 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={"max_iter": 500},
+        ipopt_options={
+            "max_iter": 500,
+            "derivative_test": "first-order",
+            "print_level": 5,
+        },
         sampling=sampling,
+        use_cyipopt=True,
     )
     strategy = DoEStrategy(data_model=data_model)
 
