@@ -506,6 +506,8 @@ def test_functional_constraint():
         },
         sampling=sampling,
         use_cyipopt=True,
+        ipopt_options={"maxiter": 500},
+        sampling=sampling,
     )
     strategy = DoEStrategy(data_model=data_model)
 
