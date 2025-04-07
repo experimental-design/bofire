@@ -58,6 +58,7 @@ class FixedReferenceValue(ReferenceValue):
         """
         return self.value
 
+
 class MovingReferenceValue(ReferenceValue):
     """Reference values that is changing over execution time of the strategy, where the
     change is parameterized here.
@@ -115,6 +116,7 @@ class RelativeMovingReferenceValue(MovingReferenceValue):
             return best + self.scaling * (best - worst)
         return worst + self.scaling * (best - worst)
 
+
 class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
     """Reference value that is changing over execution time of the strategy, where the change is
     parameterized in relative values to the maximum without min/max scaling.
@@ -134,7 +136,9 @@ class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
         by -0.3 will result in a smaller negative number (thus having the opposite effect).
     """
 
-    type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"  # type: ignore
+    type: Literal["RelativeToMaxMovingReferenceValue"] = (
+        "RelativeToMaxMovingReferenceValue"  # type: ignore
+    )
     scaling: float = 1.0
 
     def get_reference_value(self, best: float, worst: float) -> float:
