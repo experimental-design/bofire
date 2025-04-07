@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from formulaic import Formula
-from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import (
     ConstraintNotFulfilledError,
@@ -17,6 +16,7 @@ from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDa
 from bofire.data_models.strategies.doe import AnyOptimalityCriterion
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import (
+    _minimize,
     constraints_as_scipy_constraints,
     nchoosek_constraints_as_bounds,
 )
@@ -31,6 +31,8 @@ def find_local_max_ipopt(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
+    use_hessian: bool = False,
+    use_cyipopt: Optional[bool] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
@@ -48,6 +50,9 @@ def find_local_max_ipopt(
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
         criterion (OptimalityCriterion): OptimalityCriterion object indicating which criterion function to use.
+        use_hessian (bool): If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt (bool, optional): If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+            If None, cyipopt is used if available.
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -57,14 +62,6 @@ def find_local_max_ipopt(
     #
     # Checks and preparation steps
     #
-
-    # warn user if IPOPT scipy interface is not available
-    try:
-        from cyipopt import minimize_ipopt  # type: ignore
-    except ImportError:
-        raise ImportError(
-            "cyipopt is not installed. Install it via `conda install -c conda-forge cyipopt`"
-        )
 
     objective_function = get_objective_function(
         criterion, domain=domain, n_experiments=n_experiments
@@ -166,28 +163,27 @@ def find_local_max_ipopt(
     # set ipopt options
     if ipopt_options is None:
         ipopt_options = {}
-    _ipopt_options = {"maxiter": 500, "disp": 0}
+    _ipopt_options = {"max_iter": 500, "print_level": 0}
     for key in ipopt_options.keys():
         _ipopt_options[key] = ipopt_options[key]
-    if _ipopt_options["disp"] > 12:
-        _ipopt_options["disp"] = 0
+    if _ipopt_options["print_level"] > 12:
+        _ipopt_options["print_level"] = 0
 
     #
     # Do the optimization
     #
-
-    result = minimize_ipopt(
-        objective_function.evaluate,
+    x = _minimize(
+        objective_function=objective_function,
         x0=x0,
         bounds=bounds,
-        # "SLSQP" has no deeper meaning here and just ensures correct constraint standardization
-        constraints=standardize_constraints(constraints, x0, "SLSQP"),
-        options=_ipopt_options,
-        jac=objective_function.evaluate_jacobian,
+        constraints=constraints,
+        use_hessian=use_hessian,
+        ipopt_options=_ipopt_options,
+        use_cyipopt=use_cyipopt,
     )
 
     design = pd.DataFrame(
-        result["x"].reshape(n_experiments, len(domain.inputs)),
+        x.reshape(n_experiments, len(domain.inputs)),
         columns=domain.inputs.get_keys(),
         index=[f"exp{i}" for i in range(n_experiments)],
     )
