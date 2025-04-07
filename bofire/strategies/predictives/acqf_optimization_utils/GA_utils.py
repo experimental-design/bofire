@@ -120,11 +120,11 @@ class BofireDomainMixedVars:
             for (factor, conv_dict) in self.pymoo_conversion.items()
         }
 
-    def pymoo_vars(self) -> Dict[str, pymoo_variable]:
+    def pymoo_vars(self) -> Dict[str, pymoo_variable.Variable]:
         """return the variables in the format required by pymoo. Includes repeats for q-points.
 
         Returns:
-            Dict[str, pymoo_variable]: dictionary, to be used in pymoo.Problem __init__. The keys
+            Dict[str, pymoo_variable.Variable]: dictionary, to be used in pymoo.Problem __init__. The keys
 
         """
         vars = {}
