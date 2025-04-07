@@ -1130,7 +1130,7 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
 <span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
     <span class="n">criterion</span><span class="o">=</span><span class="n">DOptimalityCriterion</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="s2">"fully-quadratic"</span><span class="p">),</span>
-    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">},</span>
+    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_iter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
 <span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">candidate_count</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
@@ -1182,7 +1182,7 @@ domain = Domain(
 data_model = DoEStrategy(
     domain=domain,
     criterion=DOptimalityCriterion(formula="fully-quadratic"),
-    ipopt_options={"maxiter": 500},
+    ipopt_options={"max_iter": 500},
 )
 strategy = strategies.map(data_model=data_model)
 candidates = strategy.ask(candidate_count=12)

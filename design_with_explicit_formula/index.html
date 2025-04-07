@@ -1231,7 +1231,7 @@ model_type</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
     <span class="n">criterion</span><span class="o">=</span><span class="n">DOptimalityCriterion</span><span class="p">(</span><span class="n">formula</span><span class="o">=</span><span class="n">model_type</span><span class="p">),</span>
-    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_iter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"print_level"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
 <span class="n">design</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="mi">17</span><span class="p">)</span>
@@ -1240,7 +1240,7 @@ model_type</div>
 <div class="clipboard-copy-txt" id="cell-4">data_model = DoEStrategy(
     domain=domain,
     criterion=DOptimalityCriterion(formula=model_type),
-    ipopt_options={"maxiter": 100, "disp": 0},
+    ipopt_options={"max_iter": 100, "print_level": 0},
 )
 strategy = strategies.map(data_model=data_model)
 design = strategy.ask(17)
@@ -1253,156 +1253,83 @@ design</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>a</th>
-<th>b</th>
-<th>c</th>
-<th>d</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>5.000000e+00</td>
-<td>40.000000</td>
-<td>180.000002</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>1</th>
-<td>2.047832e+00</td>
-<td>40.000000</td>
-<td>180.000002</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>2</th>
-<td>5.000000e+00</td>
-<td>40.000000</td>
-<td>180.000002</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>3</th>
-<td>5.000000e+00</td>
-<td>800.000008</td>
-<td>79.999999</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>4</th>
-<td>5.000000e+00</td>
-<td>800.000008</td>
-<td>79.999999</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>5</th>
-<td>-9.973772e-09</td>
-<td>40.000000</td>
-<td>180.000002</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>6</th>
-<td>5.000000e+00</td>
-<td>800.000008</td>
-<td>180.000002</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>7</th>
-<td>-9.973772e-09</td>
-<td>800.000008</td>
-<td>180.000002</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>8</th>
-<td>-8.091201e-09</td>
-<td>40.000000</td>
-<td>79.999999</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>9</th>
-<td>5.000000e+00</td>
-<td>40.000000</td>
-<td>79.999999</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>10</th>
-<td>-9.981833e-09</td>
-<td>40.000000</td>
-<td>79.999999</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>11</th>
-<td>2.907832e+00</td>
-<td>40.000000</td>
-<td>79.999999</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>12</th>
-<td>-9.976118e-09</td>
-<td>800.000008</td>
-<td>180.000002</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>13</th>
-<td>-9.906825e-09</td>
-<td>800.000008</td>
-<td>79.999999</td>
-<td>199.999998</td>
-</tr>
-<tr>
-<th>14</th>
-<td>-9.981833e-09</td>
-<td>40.000000</td>
-<td>79.999999</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>15</th>
-<td>-8.091050e-09</td>
-<td>800.000008</td>
-<td>79.999999</td>
-<td>800.000008</td>
-</tr>
-<tr>
-<th>16</th>
-<td>5.000000e+00</td>
-<td>800.000008</td>
-<td>180.000002</td>
-<td>800.000008</td>
-</tr>
-</tbody>
-</table>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Tried to set Option: disp. It is not a valid option. Please check the list of available options.
+</pre>
 </div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">TypeError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[4], line 7</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> data_model <span style="color: rgb(98,98,98)">=</span> DoEStrategy(
+<span class="ansi-green-intense-fg ansi-bold">      2</span>     domain<span style="color: rgb(98,98,98)">=</span>domain,
+<span class="ansi-green-intense-fg ansi-bold">      3</span>     criterion<span style="color: rgb(98,98,98)">=</span>DOptimalityCriterion(formula<span style="color: rgb(98,98,98)">=</span>model_type),
+<span class="ansi-green-intense-fg ansi-bold">      4</span>     ipopt_options<span style="color: rgb(98,98,98)">=</span>{<span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">max_iter</span><span style="color: rgb(175,0,0)">"</span>: <span style="color: rgb(98,98,98)">100</span>, <span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">disp</span><span style="color: rgb(175,0,0)">"</span>: <span style="color: rgb(98,98,98)">0</span>},
+<span class="ansi-green-intense-fg ansi-bold">      5</span> )
+<span class="ansi-green-intense-fg ansi-bold">      6</span> strategy <span style="color: rgb(98,98,98)">=</span> strategies<span style="color: rgb(98,98,98)">.</span>map(data_model<span style="color: rgb(98,98,98)">=</span>data_model)
+<span class="ansi-green-fg">----&gt; 7</span> design <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">strategy</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">ask</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">17</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      8</span> design
+
+File <span class="ansi-green-fg">~/Documents/temporary/bofire/bofire/strategies/strategy.py:128</span>, in <span class="ansi-cyan-fg">Strategy.ask</span><span class="ansi-blue-fg">(self, candidate_count, add_pending, raise_validation_error)</span>
+<span class="ansi-green-intense-fg ansi-bold">    123</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>has_sufficient_experiments():
+<span class="ansi-green-intense-fg ansi-bold">    124</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> <span class="ansi-bold" style="color: rgb(215,95,95)">ValueError</span>(
+<span class="ansi-green-intense-fg ansi-bold">    125</span>         <span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">Not enough experiments available to execute the strategy.</span><span style="color: rgb(175,0,0)">"</span>,
+<span class="ansi-green-intense-fg ansi-bold">    126</span>     )
+<span class="ansi-green-fg">--&gt; 128</span> candidates <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_ask</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">candidate_count</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">candidate_count</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    130</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>domain<span style="color: rgb(98,98,98)">.</span>validate_candidates(
+<span class="ansi-green-intense-fg ansi-bold">    131</span>     candidates<span style="color: rgb(98,98,98)">=</span>candidates,
+<span class="ansi-green-intense-fg ansi-bold">    132</span>     only_inputs<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>,
+<span class="ansi-green-intense-fg ansi-bold">    133</span>     raise_validation_error<span style="color: rgb(98,98,98)">=</span>raise_validation_error,
+<span class="ansi-green-intense-fg ansi-bold">    134</span> )
+<span class="ansi-green-intense-fg ansi-bold">    136</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> candidate_count <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+
+File <span class="ansi-green-fg">~/Documents/temporary/bofire/bofire/strategies/doe_strategy.py:113</span>, in <span class="ansi-cyan-fg">DoEStrategy._ask</span><span class="ansi-blue-fg">(self, candidate_count)</span>
+<span class="ansi-green-intense-fg ansi-bold">    103</span> num_discrete_vars <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">len</span>(new_discretes)
+<span class="ansi-green-intense-fg ansi-bold">    104</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> (
+<span class="ansi-green-intense-fg ansi-bold">    105</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>data_model<span style="color: rgb(98,98,98)">.</span>optimization_strategy <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">relaxed</span><span style="color: rgb(175,0,0)">"</span>
+<span class="ansi-green-intense-fg ansi-bold">    106</span>     <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> (num_binary_vars <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(98,98,98)">0</span> <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> num_discrete_vars <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(98,98,98)">0</span>)
+<span class="ansi-green-fg">   (...)</span>
+<span class="ansi-green-intense-fg ansi-bold">    111</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    112</span> ):
+<span class="ansi-green-fg">--&gt; 113</span>     design <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">find_local_max_ipopt</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-intense-fg ansi-bold">    114</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">new_domain</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    115</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">n_experiments</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">_candidate_count</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    116</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">fixed_experiments</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">None</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    117</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">partially_fixed_experiments</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">adapted_partially_fixed_candidates</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    118</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">ipopt_options</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_model</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">ipopt_options</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    119</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">criterion</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_model</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">criterion</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    120</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">use_hessian</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">data_model</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">use_hessian</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">    121</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    122</span> <span style="color: rgb(95,135,135)"># TODO adapt to when exhaustive search accepts discrete variables</span>
+<span class="ansi-green-intense-fg ansi-bold">    123</span> <span class="ansi-bold" style="color: rgb(0,135,0)">elif</span> (
+<span class="ansi-green-intense-fg ansi-bold">    124</span>     <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>data_model<span style="color: rgb(98,98,98)">.</span>optimization_strategy <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">exhaustive</span><span style="color: rgb(175,0,0)">"</span>
+<span class="ansi-green-intense-fg ansi-bold">    125</span>     <span class="ansi-bold" style="color: rgb(175,0,255)">and</span> num_discrete_vars <span style="color: rgb(98,98,98)">==</span> <span style="color: rgb(98,98,98)">0</span>
+<span class="ansi-green-intense-fg ansi-bold">    126</span> ):
+
+File <span class="ansi-green-fg">~/Documents/temporary/bofire/bofire/strategies/doe/design.py:188</span>, in <span class="ansi-cyan-fg">find_local_max_ipopt</span><span class="ansi-blue-fg">(domain, n_experiments, criterion, ipopt_options, sampling, fixed_experiments, partially_fixed_experiments, use_hessian)</span>
+<span class="ansi-green-intense-fg ansi-bold">    182</span>     problem <span style="color: rgb(98,98,98)">=</span> FirstOrderDoEProblem(
+<span class="ansi-green-intense-fg ansi-bold">    183</span>         doe_objective<span style="color: rgb(98,98,98)">=</span>objective_function,
+<span class="ansi-green-intense-fg ansi-bold">    184</span>         bounds<span style="color: rgb(98,98,98)">=</span>bounds,
+<span class="ansi-green-intense-fg ansi-bold">    185</span>         constraints<span style="color: rgb(98,98,98)">=</span>constraints,
+<span class="ansi-green-intense-fg ansi-bold">    186</span>     )
+<span class="ansi-green-intense-fg ansi-bold">    187</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> key <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> _ipopt_options<span style="color: rgb(98,98,98)">.</span>keys():
+<span class="ansi-green-fg">--&gt; 188</span>     <span class="ansi-yellow-bg">problem</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">add_option</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">key</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">_ipopt_options</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">key</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    190</span> x, info <span style="color: rgb(98,98,98)">=</span> problem<span style="color: rgb(98,98,98)">.</span>solve(x0)
+<span class="ansi-green-intense-fg ansi-bold">    192</span> design <span style="color: rgb(98,98,98)">=</span> pd<span style="color: rgb(98,98,98)">.</span>DataFrame(
+<span class="ansi-green-intense-fg ansi-bold">    193</span>     x<span style="color: rgb(98,98,98)">.</span>reshape(n_experiments, <span style="color: rgb(0,135,0)">len</span>(domain<span style="color: rgb(98,98,98)">.</span>inputs)),
+<span class="ansi-green-intense-fg ansi-bold">    194</span>     columns<span style="color: rgb(98,98,98)">=</span>domain<span style="color: rgb(98,98,98)">.</span>inputs<span style="color: rgb(98,98,98)">.</span>get_keys(),
+<span class="ansi-green-intense-fg ansi-bold">    195</span>     index<span style="color: rgb(98,98,98)">=</span>[<span style="color: rgb(175,0,0)">f</span><span style="color: rgb(175,0,0)">"</span><span style="color: rgb(175,0,0)">exp</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>i<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span style="color: rgb(175,0,0)">"</span> <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> i <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">range</span>(n_experiments)],
+<span class="ansi-green-intense-fg ansi-bold">    196</span> )
+
+File <span class="ansi-green-fg">~/anaconda3/envs/bofire/lib/python3.11/site-packages/cyipopt/cython/ipopt_wrapper.pyx:495</span>, in <span class="ansi-cyan-fg">ipopt_wrapper.Problem.add_option</span><span class="ansi-blue-fg">()</span>
+
+<span class="ansi-red-fg">TypeError</span>: Error while assigning an option</pre>
 </div>
 </div>
 </div>

@@ -1156,7 +1156,7 @@ from bofire.strategies.doe.objective import get_objective_function</div>
     <span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
         <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
         <span class="n">criterion</span><span class="o">=</span><span class="n">criterion</span><span class="p">,</span>
-        <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">300</span><span class="p">},</span>
+        <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_iter"</span><span class="p">:</span> <span class="mi">300</span><span class="p">},</span>
     <span class="p">)</span>
     <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
     <span class="n">design</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">candidate_count</span><span class="o">=</span><span class="n">n_experiments</span><span class="p">)</span>
@@ -1195,7 +1195,7 @@ for crit in [
     data_model = DoEStrategy(
         domain=domain,
         criterion=criterion,
-        ipopt_options={"maxiter": 300},
+        ipopt_options={"max_iter": 300},
     )
     strategy = strategies.map(data_model=data_model)
     design = strategy.ask(candidate_count=n_experiments)
@@ -1286,7 +1286,7 @@ This program contains Ipopt, a library for large-scale nonlinear optimization.
     <span class="p">],</span>
 <span class="p">)</span>
 <span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
-    <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">SpaceFillingCriterion</span><span class="p">(),</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">}</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">criterion</span><span class="o">=</span><span class="n">SpaceFillingCriterion</span><span class="p">(),</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"max_iter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">}</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">candidate_count</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
@@ -1318,7 +1318,7 @@ domain = Domain(
     ],
 )
 data_model = DoEStrategy(
-    domain=domain, criterion=SpaceFillingCriterion(), ipopt_options={"maxiter": 500}
+    domain=domain, criterion=SpaceFillingCriterion(), ipopt_options={"max_iter": 500}
 )
 strategy = strategies.map(data_model=data_model)
 X = strategy.ask(candidate_count=40).to_numpy()
