@@ -22,8 +22,7 @@ class FactorialStrategy(Strategy):
 
     type: Literal["FactorialStrategy"] = "FactorialStrategy"  # type: ignore
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return False
 
     @classmethod

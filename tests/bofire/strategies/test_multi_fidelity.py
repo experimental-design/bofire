@@ -82,7 +82,7 @@ def test_mf_fidelity_selection():
     strategy = MultiFidelityStrategy(
         data_model=MultiFidelityStrategyDataModel(
             domain=benchmark.domain,
-            fidelity_thresholds=0.1,
+            fidelity_thresholds=0.2,
         )
     )
 

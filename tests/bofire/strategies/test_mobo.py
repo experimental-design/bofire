@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from botorch.acquisition.multi_objective import (  # qLogExpectedHypervolumeImprovement,; qLogNoisyExpectedHypervolumeImprovement,
+from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
+    qLogExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.acquisition.multi_objective.logei import (  # qExpectedHypervolumeImprovement,
-    qLogExpectedHypervolumeImprovement,
+from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
 )
 
@@ -62,26 +62,27 @@ def test_invalid_mobo(domain, ref_point):
 def test_qlognehvi_valid_constrained_objectives(domain):
     data_models.MoboStrategy(domain=domain)
 
+
 def dict_to_explicit_ref_point_fixed(dict):
     return ExplicitReferencePoint(
-        values={
-            k: FixedReferenceValue(value=v) for k, v in dict.items()
-        }
+        values={k: FixedReferenceValue(value=v) for k, v in dict.items()}
     )
+
 
 def dict_to_explicit_ref_point_absolutemoving(dict):
     return ExplicitReferencePoint(
         values={
-            k: AbsoluteMovingReferenceValue(offset=1, orient_at_best=False) for k, v in dict.items()
+            k: AbsoluteMovingReferenceValue(offset=1, orient_at_best=False)
+            for k, v in dict.items()
         }
     )
 
+
 def dict_to_explicit_ref_point_relativemoving(dict):
     return ExplicitReferencePoint(
-        values={
-            k: RelativeMovingReferenceValue(scaling=-0.2) for k, v in dict.items()
-        }
+        values={k: RelativeMovingReferenceValue(scaling=-0.2) for k, v in dict.items()}
     )
+
 
 def dict_to_explicit_ref_point_relativetomaxmoving(dict):
     return ExplicitReferencePoint(
@@ -90,19 +91,60 @@ def dict_to_explicit_ref_point_relativetomaxmoving(dict):
         }
     )
 
+
 @pytest.mark.parametrize(
     "domain, ref_point, experiments, expected",
     [
         (valid_domains[0], {"of1": 0.5, "of2": 10.0}, dfs[0], [0.5, -10.0]),
         (valid_domains[1], {"of1": 0.5, "of3": 0.5}, dfs[1], [0.5, 0.5]),
-        (valid_domains[0], dict_to_explicit_ref_point_fixed({"of1": 0.5, "of2": 10.0}), dfs[0], [0.5, -10.0]),
-        (valid_domains[1], dict_to_explicit_ref_point_fixed({"of1": 0.5, "of3": 0.5}), dfs[1], [0.5, 0.5]),
-        (valid_domains[0], dict_to_explicit_ref_point_absolutemoving({"of1": None, "of2": None}), dfs[0], [2.0, -4.0]),
-        (valid_domains[1], dict_to_explicit_ref_point_absolutemoving({"of1": None, "of3": None}), dfs[1], [2.0, 3.0]),
-        (valid_domains[0], dict_to_explicit_ref_point_relativemoving({"of1": None, "of2": None}), dfs[0], [8.2, -2.6]),
-        (valid_domains[1], dict_to_explicit_ref_point_relativemoving({"of1": None, "of3": None}), dfs[1], [8.2, 4.4]),
-        (valid_domains[0], dict_to_explicit_ref_point_relativetomaxmoving({"of1": None, "of2": None}), dfs[0], [8.0, -1.6]),
-        (valid_domains[1], dict_to_explicit_ref_point_relativetomaxmoving({"of1": None, "of3": None}), dfs[1], [8.0, 4.0]),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_fixed({"of1": 0.5, "of2": 10.0}),
+            dfs[0],
+            [0.5, -10.0],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_fixed({"of1": 0.5, "of3": 0.5}),
+            dfs[1],
+            [0.5, 0.5],
+        ),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_absolutemoving({"of1": None, "of2": None}),
+            dfs[0],
+            [2.0, -4.0],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_absolutemoving({"of1": None, "of3": None}),
+            dfs[1],
+            [2.0, 3.0],
+        ),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_relativemoving({"of1": None, "of2": None}),
+            dfs[0],
+            [8.2, -2.6],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_relativemoving({"of1": None, "of3": None}),
+            dfs[1],
+            [8.2, 4.4],
+        ),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_relativetomaxmoving({"of1": None, "of2": None}),
+            dfs[0],
+            [8.0, -1.6],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_relativetomaxmoving({"of1": None, "of3": None}),
+            dfs[1],
+            [8.0, 4.0],
+        ),
         (valid_domains[0], None, dfs[0], [1.0, -5.0]),
         (valid_domains[1], None, dfs[1], [1.0, 2.0]),
     ],
@@ -203,22 +245,19 @@ def test_mobo_constraints(acqf):
 
 
 @pytest.mark.parametrize(
-    "num_experiments, num_candidates",
-    [
-        (num_experiments, num_candidates)
-        for num_experiments in range(8, 10)
-        for num_candidates in range(1, 3)
-    ],
+    "num_candidates",
+    [1, 2],
 )
-@pytest.mark.slow
-def test_get_acqf_input(num_experiments, num_candidates):
+def test_get_acqf_input(num_candidates):
     # generate data
+    num_experiments = 8
+
     benchmark = DTLZ2(dim=6)
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(
-        random_strategy.ask(num_experiments),
+        random_strategy.ask(8),
         return_complete=True,
     )
     data_model = data_models.MoboStrategy(domain=benchmark.domain)

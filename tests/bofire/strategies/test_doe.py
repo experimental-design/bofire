@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -380,6 +381,35 @@ def test_categorical_doe_iterative():
 
 
 def test_functional_constraint():
+    np.random.seed(1)
+    torch.manual_seed(1)
+    torch.cuda.manual_seed(1)
+
+    sampling = [
+        [
+            0.36531936,
+            0.774256,
+            0.0457612,
+            0.10232313,
+            0.66522677,
+        ],
+        [
+            0.39283984,
+            0.30091256,
+            0.3751583,
+            0.72181405,
+            0.37838284,
+        ],
+        [
+            0.38254448,
+            0.35407898,
+            0.47484388,
+            0.337307,
+            0.76760944,
+        ],
+        [0.31534748, 0.51893979, 0.42009135, 0.30568969, 0.85966],
+    ]
+
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),
         ContinuousInput(key="B", bounds=(0, 0.8)),
@@ -421,7 +451,12 @@ def test_functional_constraint():
     # Calculate the solid content of the formulation
     def calc_solid_content(A, B, T, W, W_T):
         # Ensure same order as in the dictionary containing the material properties
-        return np.array([A, B, T, W, W_T]).T @ (df_raw_materials["sc"].values)
+        if isinstance(A, torch.Tensor):
+            return torch.stack([A, B, T, W, W_T], 0).T @ torch.tensor(
+                df_raw_materials["sc"].values
+            )
+        else:
+            return np.array([A, B, T, W, W_T]).T @ df_raw_materials["sc"].values
 
     # Calculate the volume content of the formulation
     def calc_volume_content(A, B, T, W, W_T):
@@ -429,6 +464,11 @@ def test_functional_constraint():
             A * raw_materials_data["A"][0] / raw_materials_data["A"][1]
             + B * raw_materials_data["B"][0] / raw_materials_data["B"][1]
         )
+        A = A
+        B = B
+        T = T
+        W = W
+        W_T = W_T
         volume_total = volume_solid + (1 - calc_solid_content(A, B, T, W, W_T) / 1)
         return volume_solid / volume_total
 
@@ -459,10 +499,18 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={"maxiter": 500},
+        ipopt_options={
+            "max_iter": 500,
+            "derivative_test": "first-order",
+            "print_level": 5,
+        },
+        sampling=sampling,
+        use_cyipopt=True,
     )
     strategy = DoEStrategy(data_model=data_model)
-    doe = strategy.ask(candidate_count=n_experiments)
+
+    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=True)
+
     doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]

@@ -806,14 +806,18 @@ class Outputs(_BaseFeatures[AnyOutput]):
         """Evaluate the objective for every feature.
 
         Args:
-            experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
-            experiments_adapt (pd.DataFrame, optional): Experimental values which are used to update the objective
-                parameters on the fly. This is for example needed when a `MovingMaximizeSigmoidObjective` is used
-                as this depends on the best experimental value achieved so far. For this reason `experiments_adapt`
-                has to be provided if `predictions=True` ie. that the objectives of candidates are evaluated.
-                Defaults to None.
-            predictions (bool, optional): If True use the prediction columns in the dataframe to calc the
-                desirabilities `f"{feat.key}_pred`, furthermore `experiments_adapt` has to be provided.
+            experiments (pd.DataFrame): Experiments for which the objectives
+                should be evaluated.
+            experiments_adapt (pd.DataFrame, optional): Experimental values
+                which are used to update the objective parameters on the fly.
+                This is for example needed when a `MovingMaximizeSigmoidObjective`
+                is used as this depends on the best experimental value achieved
+                so far. For this reason `experiments_adapt` has to be provided
+                if `predictions=True` ie. that the objectives of candidates
+                are evaluated. Defaults to None.
+            predictions (bool, optional): If True use the prediction columns in
+                the dataframe to calc the desirabilities `f"{feat.key}_pred`,
+                furthermore `experiments_adapt` has to be provided.
 
         Returns:
             pd.DataFrame: Objective values for the experiments of interest.
@@ -832,7 +836,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments_adapt[feat.key].dropna(),
+                    experiments_adapt[feat.key].dropna(),  # type: ignore
                 )
                 for feat in self.features
                 if feat.objective is not None
