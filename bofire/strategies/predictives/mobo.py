@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import torch
@@ -16,6 +16,7 @@ from bofire.data_models.acquisition_functions.api import (
     qNEHVI,
 )
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
@@ -37,7 +38,7 @@ class MoboStrategy(BotorchStrategy):
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
 
-    ref_point: Optional[dict] = None
+    ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     objective: Optional[MCMultiOutputObjective] = None
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
