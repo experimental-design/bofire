@@ -177,13 +177,17 @@ def infer_ref_point(
     # maximization is assumed for everything, this is because we used
     # botorch objective for getting the best and worst values,
     # to account for botorch maximization and how FixedReferenceValue is setup
-    # we need to multiply with -1 here.
+    # we need to multiply with -1 here in case of `MinimizeObjective` or
+    # `CloseToTargetObjective`.
     ref_point_array = np.array(
         [
             -reference_point.values[key].get_reference_value(
                 best=best_values_array[i], worst=worst_values_array[i]
             )
-            if isinstance(reference_point.values[key], FixedReferenceValue) and isinstance(outputs[i].objective, (MinimizeObjective, CloseToTargetObjective))
+            if isinstance(reference_point.values[key], FixedReferenceValue)
+            and isinstance(
+                outputs[i].objective, (MinimizeObjective, CloseToTargetObjective)
+            )
             else reference_point.values[key].get_reference_value(
                 best=best_values_array[i], worst=worst_values_array[i]
             )
