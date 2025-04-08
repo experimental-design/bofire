@@ -101,7 +101,9 @@ class MoboStrategy(BotorchStrategy):
 
     def get_adjusted_refpoint(self) -> List[float]:
         assert self.experiments is not None, "No experiments available."
-        assert isinstance(self.ref_point, ExplicitReferencePoint)
+        assert (
+            isinstance(self.ref_point, ExplicitReferencePoint) or self.ref_point is None
+        )
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments,
         )
