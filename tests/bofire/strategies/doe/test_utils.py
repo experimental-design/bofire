@@ -144,7 +144,7 @@ def test_get_formula_from_string():
 def test_n_zero_eigvals_unconstrained():
     # 5 continuous
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 100)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
     )
 
@@ -290,7 +290,7 @@ def test_constraints_as_scipy_constraints():
 
     # domain with nonlinear constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NonlinearEqualityConstraint(
@@ -379,7 +379,7 @@ def test_constraints_as_scipy_constraints():
 def test_ConstraintWrapper():
     # define domain with all types of constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
@@ -581,20 +581,22 @@ def test_minimize():
 def test_check_nchoosek_constraints_as_bounds():
     # define domain: possible to formulate as bounds, no NChooseK constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-1, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(-1, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-np.inf, 1)) for i in range(4)],
+        inputs=[
+            ContinuousInput(key=f"x{i + 1}", bounds=(-np.inf, 1)) for i in range(4)
+        ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
@@ -636,7 +638,7 @@ def test_check_nchoosek_constraints_as_bounds():
 
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.1, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
@@ -673,7 +675,7 @@ def test_check_nchoosek_constraints_as_bounds():
 
     # Not allowed: names parameters of two NChooseK overlap
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
@@ -699,7 +701,7 @@ def test_nchoosek_constraints_as_bounds():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
+                key=f"x{i + 1}",
                 bounds=(-1, 1),
             )
             for i in range(5)
@@ -715,44 +717,6 @@ def test_nchoosek_constraints_as_bounds():
     ] * 4
     for i in range(20):
         assert _bounds[i] == bounds[i]
-
-    # define domain: with NChooseK constraints
-    # define domain: no NChooseK constraints
-    # domain = Domain(
-    #     inputs=[
-    #         ContinuousInput(key=f"x{i+1}", bounds=(-1, 1),)
-    #         for i in range(5)
-    #     ],
-    #     outputs=[ContinuousOutput(key="y")],
-    #     constraints=[opti.NChooseK(["x1", "x2", "x3"], max_active=1)],
-    # )
-    # np.random.seed(1)
-    # bounds = nchoosek_constraints_as_bounds(domain, n_experiments=4)
-    # _bounds = [
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    # ]
-    # assert len(bounds) == 20
-    # for i in range(20):
-    #     assert _bounds[i] == bounds[i]
 
 
 def test_convert_formula_to_string():
