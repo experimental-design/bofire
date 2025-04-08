@@ -31,7 +31,7 @@ from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import (
     AbsoluteMovingReferenceValue,
     ExplicitReferencePoint,
-    FixedReferenceVaue,
+    FixedReferenceValue,
     MoboStrategy,
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
