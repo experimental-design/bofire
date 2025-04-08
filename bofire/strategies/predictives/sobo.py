@@ -27,7 +27,9 @@ from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
 from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy as SoboDataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.strategies.strategy import copy_datamodel_kwargs
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
@@ -40,6 +42,8 @@ from bofire.utils.torch_tools import (
 
 
 class SoboStrategy(BotorchStrategy):
+    data_model_cls = SoboDataModel
+
     def __init__(
         self,
         data_model: DataModel,
@@ -150,6 +154,11 @@ class SoboStrategy(BotorchStrategy):
             constraint_callables,
             etas,
         )
+
+    @classmethod
+    @copy_datamodel_kwargs(SoboDataModel.__init__)
+    def make(cls, **kwargs):
+        return cls.from_spec(cls.data_model_cls(**kwargs))
 
 
 class AdditiveSoboStrategy(SoboStrategy):

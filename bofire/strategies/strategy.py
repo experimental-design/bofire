@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, Callable, Concatenate, List, Optional, ParamSpec, TypeVar, cast
 
 import numpy as np
 import pandas as pd
@@ -11,12 +11,34 @@ from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
 
 
+# Paramspec and typevar used for copying signature
+P = ParamSpec("P")
+T = TypeVar("T")
+C = TypeVar("C")
+
+
+def copy_datamodel_kwargs(
+    data_model_init: Callable[Concatenate[Any, P], Any],
+) -> Callable[[Callable[Concatenate[C, ...], T]], Callable[Concatenate[C, P], T]]:
+    """Decorator to match datamodel
+
+    Casts the `Strategy.make` method to accept the same keyword arguments
+    as the corresponding `DataModel`, to enable useful type hinting."""
+
+    def return_func(func: Callable[Concatenate[C, ...], T]):
+        return cast(Callable[Concatenate[C, P], T], func)
+
+    return return_func
+
+
 class Strategy(ABC):
     """Base class for all strategies
 
     Attributes:
 
     """
+
+    data_model_cls = DataModel
 
     def __init__(
         self,
@@ -275,3 +297,9 @@ class Strategy(ABC):
         if self.experiments is None:
             return 0
         return len(self.experiments)
+
+    @classmethod
+    @abstractmethod
+    @copy_datamodel_kwargs(DataModel.__init__)
+    def make(cls, **kwargs) -> "Strategy":
+        pass
