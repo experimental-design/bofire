@@ -104,8 +104,8 @@ class RelativeMovingReferenceValue(MovingReferenceValue):
             been seen so far for the objective. If False, the reference value is oriented
             at the worst value that has been seen so far for the objective.
         scaling: The scaling that is applied to the reference value. In case of `orient_at_max==True`,
-            it holds that `reference_value = best_value * offset`, else it holds that
-            `reference_value = worst_value * offset`.
+            it holds that `reference_value = best + scaling * (best-worst)`, else it holds that
+            `reference_value = worst + scaling * (best - worst)`.
     """
 
     type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"  # type: ignore
@@ -126,8 +126,8 @@ class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
             been seen so far for the objective. If False, the reference value is oriented
             at the worst value that has been seen so far for the objective.
         scaling: The scaling that is applied to the reference value. In case of `orient_at_max==True`,
-            it holds that `reference_value = best_value * offset`, else it holds that
-            `reference_value = worst_value * offset`.
+            it holds that `reference_value = best * (1 + scaling)`, else it holds that
+            `reference_value = worst * (1 + scaling)`.
 
     Note:
         This reference value is not scaled by the min/max values of the objective.
