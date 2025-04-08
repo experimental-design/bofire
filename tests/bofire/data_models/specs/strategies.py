@@ -21,6 +21,14 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
+from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.strategies.api import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+    RelativeMovingReferenceValue,
+    RelativeToMaxMovingReferenceValue,
+)
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -65,6 +73,54 @@ specs.add_valid(
         **strategy_commons,
     },
 )
+
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "alpha": FixedReferenceValue(value=0.5),
+                "beta": AbsoluteMovingReferenceValue(offset=1),
+            }
+        ),
+        **strategy_commons,
+    },
+)
+
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "alpha": RelativeMovingReferenceValue(scaling=0.5),
+                "beta": RelativeToMaxMovingReferenceValue(scaling=1),
+            }
+        ),
+        **strategy_commons,
+    },
+)
+
+
 specs.add_invalid(
     strategies.MoboStrategy,
     lambda: {
