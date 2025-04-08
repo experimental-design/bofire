@@ -241,6 +241,6 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
 
     assert proposals.shape[0] == optimizer_benchmark.n_add
 
-    constr = strategy.domain.constraints.get()
-    if constr.constraints:
-        assert (constr(proposals).values <= 1e-5).all()
+    constraints = strategy.domain.constraints.get()
+    for constr in constraints.constraints:
+        assert constr.is_fulfilled(proposals).all()
