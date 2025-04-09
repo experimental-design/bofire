@@ -37,8 +37,8 @@ def get_ref_point_mask(
             `CloseToTargetObjective`. Defaults to None.
 
     Returns:
-        Array ones with 1.0 for maximization and -1.0 for
-        minimization.
+        Array of ones for maximization and array of negative ones for
+            minimization.
 
     """
     if output_feature_keys is None:
@@ -215,13 +215,15 @@ def infer_ref_point(
         .numpy()
         .max(axis=0)
     )
-
-    # in the ref_point_array we have the masked values, which means that
-    # maximization is assumed for everything, this is because we used
-    # botorch objective for getting the best and worst values,
-    # to account for botorch maximization and how FixedReferenceValue is setup
-    # we need to multiply with -1 here in case of `MinimizeObjective` or
-    # `CloseToTargetObjective`.
+    # In the ref_point_array want masked values, which means that
+    # maximization is assumed for everything, this is because we use
+    # botorch objective for getting the best and worst values
+    # that are passed to the reference values. Botorch always assumes
+    # maximization.
+    # In case of FixedReferenceValue, the unmasked values are stored in the data model,
+    # this means the need to mask them to account for the botorch convention.
+    # In case of FixedReferenceValue, we multiply with -1 in for `MinimizeObjective`
+    # and `CloseToTargetObjective`.
     ref_point_array = np.array(
         [
             -reference_point.values[key].get_reference_value(

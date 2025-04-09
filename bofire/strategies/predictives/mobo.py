@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -38,7 +38,7 @@ class MoboStrategy(BotorchStrategy):
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
 
-    ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
+    ref_point: Optional[ExplicitReferencePoint] = None
     objective: Optional[MCMultiOutputObjective] = None
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:

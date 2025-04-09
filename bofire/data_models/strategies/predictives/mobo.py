@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, Literal, Optional, Type, Union
+from typing import Any, Dict, Literal, Optional, Type, Union
 
 from pydantic import Field, model_validator
 
@@ -24,7 +24,7 @@ from bofire.data_models.strategies.predictives.multiobjective import (
 
 
 class ReferenceValue(BaseModel):
-    type: str
+    type: Any
 
     @abstractmethod
     def get_reference_value(self, best: float, worst: float) -> float:
@@ -47,7 +47,7 @@ class FixedReferenceValue(ReferenceValue):
         value: The fixed reference value.
     """
 
-    type: Literal["FixedReferenceValue"] = "FixedReferenceValue"  # type: ignore
+    type: Literal["FixedReferenceValue"] = "FixedReferenceValue"
     value: float
 
     def get_reference_value(self, best: float, worst: float) -> float:
@@ -59,34 +59,24 @@ class FixedReferenceValue(ReferenceValue):
         return self.value
 
 
-class MovingReferenceValue(ReferenceValue):
-    """Reference values that is changing over execution time of the strategy, where the
-    change is parameterized here.
-
-    Attributes:
-        orient_at_best: If True, the reference value is oriented at the best value that has
-            been seen so far for the objective. If False, the reference value is oriented
-            at the worst value that has been seen so far for the objective.
-    """
-
-    type: str
-    orient_at_best: bool = True
-
-
-class AbsoluteMovingReferenceValue(MovingReferenceValue):
+class AbsoluteMovingReferenceValue(ReferenceValue):
     """Reference value that is changing over execution time of the strategy, where the change is
     parameterized in absolute values.
 
     Attributes:
         orient_at_best: If True, the reference value is oriented at the best value that has
             been seen so far for the objective. If False, the reference value is oriented
-            at the worst value that has been seen so far for the objective.
+            at the worst value that has been seen so far for the objective. Have a look below
+            on the exact formula.
         offset: The offset that is added to the reference value. In case of `orient_at_max==True`,
             it holds that `reference_value = best_value + offset`, else it holds that
-            `reference_value = worst_value + offset`.
+            `reference_value = worst_value + offset`, , where best is the best value that has been
+            seen so far for the objective and worst is the worst value that has been seen so far
+            for the objective.
     """
 
-    type: Literal["AbsoluteMovingReferenceValue"] = "AbsoluteMovingReferenceValue"  # type: ignore
+    type: Literal["AbsoluteMovingReferenceValue"] = "AbsoluteMovingReferenceValue"
+    orient_at_best: bool = True
     offset: float
 
     def get_reference_value(self, best: float, worst: float) -> float:
@@ -95,20 +85,24 @@ class AbsoluteMovingReferenceValue(MovingReferenceValue):
         return worst + self.offset
 
 
-class RelativeMovingReferenceValue(MovingReferenceValue):
+class RelativeMovingReferenceValue(ReferenceValue):
     """Reference value that is changing over execution time of the strategy, where the change is
     parameterized in relative values.
 
     Attributes:
         orient_at_best: If True, the reference value is oriented at the best value that has
             been seen so far for the objective. If False, the reference value is oriented
-            at the worst value that has been seen so far for the objective.
+            at the worst value that has been seen so far for the objective. Have a look below
+            on the exact formula.
         scaling: The scaling that is applied to the reference value. In case of `orient_at_max==True`,
             it holds that `reference_value = best + scaling * (best-worst)`, else it holds that
-            `reference_value = worst + scaling * (best - worst)`.
+            `reference_value = worst + scaling * (best - worst)`, where best is the best value that has been
+            seen so far for the objective and worst is the worst value that has been seen so far for the
+            objective.
     """
 
-    type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"  # type: ignore
+    type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"
+    orient_at_best: bool = True
     scaling: float = 1.0
 
     def get_reference_value(self, best: float, worst: float) -> float:
@@ -117,17 +111,20 @@ class RelativeMovingReferenceValue(MovingReferenceValue):
         return worst + self.scaling * (best - worst)
 
 
-class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
+class RelativeToMaxMovingReferenceValue(ReferenceValue):
     """Reference value that is changing over execution time of the strategy, where the change is
     parameterized in relative values to the maximum without min/max scaling.
 
     Attributes:
         orient_at_best: If True, the reference value is oriented at the best value that has
             been seen so far for the objective. If False, the reference value is oriented
-            at the worst value that has been seen so far for the objective.
+            at the worst value that has been seen so far for the objective. Have a look below
+            on the exact formula.
         scaling: The scaling that is applied to the reference value. In case of `orient_at_max==True`,
             it holds that `reference_value = best * (1 + scaling)`, else it holds that
-            `reference_value = worst * (1 + scaling)`.
+            `reference_value = worst * (1 + scaling)`, where best is the best value that has been
+            seen so far for the objective and worst is the worst value that has been seen so far for the
+            objective.
 
     Note:
         This reference value is not scaled by the min/max values of the objective.
@@ -137,8 +134,9 @@ class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
     """
 
     type: Literal["RelativeToMaxMovingReferenceValue"] = (
-        "RelativeToMaxMovingReferenceValue"  # type: ignore
+        "RelativeToMaxMovingReferenceValue"
     )
+    orient_at_best: bool = True
     scaling: float = 1.0
 
     def get_reference_value(self, best: float, worst: float) -> float:
@@ -148,18 +146,18 @@ class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
 
 
 class ReferencePoint(BaseModel):
-    type: str
+    type: Any
 
 
 class ExplicitReferencePoint(ReferencePoint):
-    """Reference point that is explicitly defined, and not inferred during the execution
-    of the strategy.
+    """Data model used to define the reference point (and how it is possibly inferred)
+    in an explicit per feature based way.
 
     Attributes:
         values: The values of the reference point for each output feature.
     """
 
-    type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"  # type: ignore
+    type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"
     values: Dict[
         str,
         Union[
