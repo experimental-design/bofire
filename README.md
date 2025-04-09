@@ -160,7 +160,7 @@ By contributing you agree that your contributions will be licensed under the sam
 
 ## Versioning
 
-We follow a pragmatic versioning scheme.
+Starting with release `0.1.0`, we follow a pragmatic versioning scheme.
 
 ```
 BIGRELEASE.MAJOR.MINOR
