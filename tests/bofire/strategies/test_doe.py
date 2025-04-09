@@ -520,5 +520,40 @@ def test_functional_constraint():
     assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
 
 
+def test_discrete_doe_w_constraints():
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
+    all_inputs = [
+        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
+        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
+    assert candidates.shape == (5, 6)
+
+
 if __name__ == "__main__":
-    test_functional_constraint()
+    test_discrete_doe_w_constraints()

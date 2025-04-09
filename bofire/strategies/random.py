@@ -1,7 +1,7 @@
 import math
 import warnings
 from copy import deepcopy
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -108,6 +108,35 @@ class RandomStrategy(Strategy):
             n_iters += 1
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
+    def validate_nchoosek_combination(self, nchoosek_combination: List[str]) -> bool:
+        domain = deepcopy(self.domain)
+        domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
+        # fix the unused features
+        for key in nchoosek_combination:
+            feat = domain.inputs.get_by_key(key=key)
+            assert isinstance(feat, ContinuousInput)
+            feat.bounds = [0.0, 0.0]
+        # setup then sampler for this situation
+        # not every combination of features has feasible points so try and except
+        try:
+            self._sample_from_polytope(
+                domain=domain,
+                fallback_sampling_method=self.fallback_sampling_method,
+                n_burnin=self.n_burnin,
+                n_thinning=self.n_thinning,
+                seed=self._get_seed(),
+                n=1,
+            )
+            return True
+        except ValueError:
+            # if the domain is infeasible, just skip this combination
+            # and continue with the next one
+            warnings.warn(
+                f"Combination {nchoosek_combination} is infeasible. Skipping...",
+                UserWarning,
+            )
+            return False
+
     def _sample_with_nchooseks(
         self,
         candidate_count: int,
@@ -121,6 +150,43 @@ class RandomStrategy(Strategy):
             pd.DataFrame: A DataFrame containing the sampled data.
 
         """
+
+        def sample_combinations(sampled_combinations: List[str]):
+            samples = []
+            sampled_combinations_with_feasibility = []
+            for u in sampled_combinations:
+                # create new domain without the nchoosekconstraints
+                domain = deepcopy(self.domain)
+                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
+                # fix the unused features
+                for key in u:
+                    feat = domain.inputs.get_by_key(key=key)
+                    assert isinstance(feat, ContinuousInput)
+                    feat.bounds = [0.0, 0.0]
+                # setup then sampler for this situation
+                # not every combination of features has feasible points so try and except
+                try:
+                    samples.append(
+                        self._sample_from_polytope(
+                            domain=domain,
+                            fallback_sampling_method=self.fallback_sampling_method,
+                            n_burnin=self.n_burnin,
+                            n_thinning=self.n_thinning,
+                            seed=self._get_seed(),
+                            n=num_samples_per_it,
+                        ),
+                    )
+                    sampled_combinations_with_feasibility.append(u)
+                except ValueError:
+                    # if the domain is infeasible, just skip this combination
+                    # and continue with the next one
+                    warnings.warn(
+                        f"Combination {u} is infeasible. Skipping...",
+                        UserWarning,
+                    )
+                    continue
+            return samples, sampled_combinations_with_feasibility
+
         if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
             _, unused = self.domain.get_nchoosek_combinations()
 
@@ -138,35 +204,29 @@ class RandomStrategy(Strategy):
                 sampled_combinations = unused
                 num_samples_per_it = math.ceil(candidate_count / len(unused))
 
-            samples = []
-            for u in sampled_combinations:
-                # create new domain without the nchoosekconstraints
-                domain = deepcopy(self.domain)
-                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-                # fix the unused features
-                for key in u:
-                    feat = domain.inputs.get_by_key(key=key)
-                    assert isinstance(feat, ContinuousInput)
-                    feat.bounds = [0.0, 0.0]
-                # setup then sampler for this situation
-                samples.append(
-                    self._sample_from_polytope(
-                        domain=domain,
-                        fallback_sampling_method=self.fallback_sampling_method,
-                        n_burnin=self.n_burnin,
-                        n_thinning=self.n_thinning,
-                        seed=self._get_seed(),
-                        n=num_samples_per_it,
-                    ),
-                )
+            samples, sampled_combinations_with_feasibility = sample_combinations(
+                sampled_combinations
+            )
             samples = pd.concat(samples, axis=0, ignore_index=True)
+            if len(samples) < candidate_count:
+                _samples, _ = sample_combinations(
+                    [
+                        sampled_combinations_with_feasibility[i]
+                        for i in np.random.randint(
+                            len(sampled_combinations_with_feasibility),
+                            size=candidate_count - len(samples),
+                        )
+                    ]
+                )
+                samples = pd.concat(
+                    [samples, pd.concat(_samples, axis=0, ignore_index=True)]
+                )
             return samples.sample(
                 n=candidate_count,
                 replace=False,
                 ignore_index=True,
                 random_state=self._get_seed(),
             )
-
         return self._sample_from_polytope(
             domain=self.domain,
             fallback_sampling_method=self.fallback_sampling_method,
