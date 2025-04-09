@@ -70,6 +70,12 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "o1": AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0),
+                "o2": AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0),
+            }
+        ).model_dump(),
         **strategy_commons,
     },
 )
@@ -92,7 +98,7 @@ specs.add_valid(
                 "alpha": FixedReferenceValue(value=0.5),
                 "beta": AbsoluteMovingReferenceValue(offset=1),
             }
-        ),
+        ).model_dump(),
         **strategy_commons,
     },
 )
@@ -115,7 +121,7 @@ specs.add_valid(
                 "alpha": RelativeMovingReferenceValue(scaling=0.5),
                 "beta": RelativeToMaxMovingReferenceValue(scaling=1),
             }
-        ),
+        ).model_dump(),
         **strategy_commons,
     },
 )
@@ -344,6 +350,16 @@ specs.add_valid(
                     domain=tempdomain,
                     acquisition_function=qLogNEHVI(),
                     acquisition_optimizer=strategies.BotorchOptimizer(batch_limit=1),
+                    ref_point=ExplicitReferencePoint(
+                        values={
+                            "o1": AbsoluteMovingReferenceValue(
+                                orient_at_best=False, offset=0.0
+                            ),
+                            "o2": AbsoluteMovingReferenceValue(
+                                orient_at_best=False, offset=0.0
+                            ),
+                        }
+                    ),
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),

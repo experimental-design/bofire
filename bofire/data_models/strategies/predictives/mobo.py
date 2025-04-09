@@ -180,7 +180,18 @@ class MoboStrategy(MultiobjectiveStrategy):
     def validate_ref_point(self):
         """Validate that the provided refpoint matches the provided domain."""
         if self.ref_point is None:
-            return self
+            self.ref_point = ExplicitReferencePoint(
+                values={
+                    k: AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0)
+                    for k in self.domain.outputs.get_keys_by_objective(
+                        [
+                            MaximizeObjective,
+                            MinimizeObjective,
+                            CloseToTargetObjective,
+                        ],
+                    )
+                }
+            )
         if isinstance(self.ref_point, dict):
             self.ref_point = ExplicitReferencePoint(
                 values={

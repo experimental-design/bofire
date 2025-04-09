@@ -34,11 +34,11 @@ class MoboStrategy(BotorchStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.ref_point = data_model.ref_point
+        assert isinstance(data_model.ref_point, ExplicitReferencePoint)
+        self.ref_point: ExplicitReferencePoint = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
 
-    ref_point: Optional[ExplicitReferencePoint] = None
     objective: Optional[MCMultiOutputObjective] = None
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
