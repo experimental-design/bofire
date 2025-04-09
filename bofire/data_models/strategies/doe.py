@@ -94,15 +94,6 @@ class DoEStrategy(Strategy):
     criterion: AnyOptimalityCriterion = Field(
         default_factory=lambda: DOptimalityCriterion(formula="fully-quadratic")
     )
-    optimization_strategy: Literal[
-        "default",
-        "exhaustive",
-        "branch-and-bound",
-        "partially-random",
-        "relaxed",
-        "iterative",
-    ] = "default"
-
     verbose: bool = False  # get rid of this at a later stage
     ipopt_options: Optional[Dict] = None
 

@@ -223,7 +223,6 @@ def test_categorical_discrete_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="partially-random",
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)
@@ -239,8 +238,8 @@ def test_partially_fixed_experiments():
     all_constraints = [
         NChooseKConstraint(
             features=[var.key for var in continuous_var],
-            min_count=1,
-            max_count=2,
+            min_count=0,
+            max_count=1,
             none_also_valid=True,
         ),
     ]
@@ -367,7 +366,6 @@ def test_categorical_doe_iterative():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="iterative",
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(
@@ -378,5 +376,42 @@ def test_categorical_doe_iterative():
     assert candidates.shape == (5, 3)
 
 
+def test_discrete_doe_w_constraints():
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
+    all_inputs = [
+        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
+        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(
+            formula="1+continuous_var_0+continuous_var_1+a_discrete"
+        ),
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
+    assert candidates.shape == (5, 6)
+
+
 if __name__ == "__main__":
-    test_formulas_implemented()
+    test_discrete_doe_w_constraints()

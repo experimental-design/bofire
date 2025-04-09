@@ -137,6 +137,7 @@ def find_local_max_ipopt(
             .to_numpy()
             .flatten()
         )
+    bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
 
     # write constraints as scipy constraints
     constraints = constraints_as_scipy_constraints(
@@ -144,9 +145,6 @@ def find_local_max_ipopt(
         n_experiments,
         ignore_nchoosek=True,
     )
-
-    # find bounds imposing NChooseK constraints
-    bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
 
     # fix experiments if any are given
     if fixed_experiments is not None:
