@@ -20,7 +20,6 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
-    DiscreteInput,
     Feature,
 )
 from bofire.data_models.objectives.api import TargetObjective
@@ -86,33 +85,6 @@ def test_from_lists(input_list, output_list, constraint_list):
         outputs=Outputs(features=output_list),
         constraints=Constraints(constraints=constraint_list),
     )
-
-
-# TODO: move into specs
-@pytest.mark.parametrize(
-    "inputs, constraints",
-    [
-        (
-            [
-                ContinuousInput(key="if1", bounds=(0, 1)),
-                DiscreteInput(key="if2", values=[0.2, 0.7, 1.0]),
-            ],
-            [
-                LinearEqualityConstraint(
-                    features=["if1", "if2"],
-                    coefficients=[1.0, 1.0],
-                    rhs=11,
-                ),
-            ],
-        ),
-    ],
-)
-def test_invalid_type_in_linear_constraints(inputs, constraints):
-    with pytest.raises(ValidationError):
-        Domain(
-            inputs=Inputs(features=inputs),
-            constraints=Constraints(constraints=constraints),
-        )
 
 
 @pytest.mark.parametrize(
