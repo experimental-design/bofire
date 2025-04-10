@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     NonlinearEqualityConstraint,
 )
+from bofire.data_models.constraints.constraint import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -531,5 +532,86 @@ def test_discrete_doe_w_constraints():
     assert candidates.shape == (5, 6)
 
 
+def test_compare_discrete_to_continuous_mapping_with_thresholding():
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
+    all_inputs = [
+        ContinuousInput(key="a_discrete", bounds=[0.1, 2]),
+        ContinuousInput(key="b_discrete", bounds=[0.1, 2]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
+
+    # Apply thresholding
+    a_discrete_grid = [0.1, 0.2, 0.3, 1.6, 2]
+    b_discrete_grid = [0.1, 0.2, 0.3, 1.6, 2]
+
+    candidates["a_discrete"] = candidates["a_discrete"].apply(
+        lambda x: min(a_discrete_grid, key=lambda y: abs(x - y))
+    )
+    candidates["b_discrete"] = candidates["b_discrete"].apply(
+        lambda x: min(b_discrete_grid, key=lambda y: abs(x - y))
+    )
+
+    try:
+        # validate the candidates
+        domain.validate_candidates(
+            candidates=candidates,
+            only_inputs=True,
+            raise_validation_error=True,
+        )
+    except ConstraintNotFulfilledError as e:
+        assert isinstance(e, ConstraintNotFulfilledError)
+
+    all_inputs = [
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
+
+    # validate the candidates
+    domain.validate_candidates(
+        candidates=candidates,
+        only_inputs=True,
+        raise_validation_error=True,
+    )
+    assert candidates.shape == (5, 4)
+
+
 if __name__ == "__main__":
-    test_partially_fixed_experiments()
+    test_compare_discrete_to_continuous_mapping_with_thresholding()
