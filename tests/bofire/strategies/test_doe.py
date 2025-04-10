@@ -553,7 +553,3 @@ def test_discrete_doe_w_constraints():
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
     assert candidates.shape == (5, 6)
-
-
-if __name__ == "__main__":
-    test_discrete_doe_w_constraints()
