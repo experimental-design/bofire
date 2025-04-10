@@ -724,7 +724,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         return list_of_fixed_features
 
 
-class GeneticAlgorithm(AcquisitionOptimizer):
+class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     """Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm."""
 
     def __init__(self, data_model: GeneticAlgorithmDataModel):
@@ -794,7 +794,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,
-    GeneticAlgorithmDataModel: GeneticAlgorithm,
+    GeneticAlgorithmDataModel: GeneticAlgorithmOptimizer,
 }
 
 
