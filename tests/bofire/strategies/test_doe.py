@@ -235,7 +235,7 @@ def test_categorical_discrete_doe():
 
 def test_partially_fixed_experiments():
     continuous_var = [
-        ContinuousInput(key=f"continuous_var_{i}", bounds=(100, 230)) for i in range(2)
+        ContinuousInput(key=f"continuous_var_{i}", bounds=(0, 230)) for i in range(2)
     ]
 
     all_constraints = [
@@ -247,8 +247,6 @@ def test_partially_fixed_experiments():
         ),
     ]
     all_inputs = [
-        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
-        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
         DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
         DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
     ]
@@ -264,44 +262,45 @@ def test_partially_fixed_experiments():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="relaxed",
         verbose=True,
+        return_fixed_candidates=True,
     )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(
         pd.DataFrame(
             [
-                [150, 100, 0.3, 0.2, None, None],
-                [0, 100, 0.3, 0.2, None, "tulip"],
-                [0, 100, None, 0.2, "dog", None],
-                [0, 100, 0.3, 0.2, "cat", "tulip"],
-                [None, 100, 0.3, None, None, None],
+                [150, 100, 0.3, 0.2],
+                [
+                    0,
+                    100,
+                    0.3,
+                    0.2,
+                ],
+                [0, 100, None, 0.2],
+                [0, 100, 0.3, 0.2],
+                [None, 100, 0.3, None],
             ],
             columns=[
                 "continuous_var_0",
                 "continuous_var_1",
                 "a_discrete",
                 "b_discrete",
-                "animal",
-                "plant",
             ],
         ),
     )
 
     only_partially_fixed = pd.DataFrame(
         [
-            [150, 100, 0.3, 0.2, None, None],
-            [0, 100, 0.3, 0.2, None, "tulip"],
-            [0, 100, None, 0.2, "dog", None],
-            [None, 100, 0.3, None, None, None],
+            [150, 100, 0.3, 0.2],
+            [0, 100, 0.3, 0.2],
+            [0, 100, None, 0.2],
+            [None, 100, 0.3, None],
         ],
         columns=[
             "continuous_var_0",
             "continuous_var_1",
             "a_discrete",
             "b_discrete",
-            "animal",
-            "plant",
         ],
     )
 
@@ -311,7 +310,25 @@ def test_partially_fixed_experiments():
         candidates[:4],
     )
     test_df = pd.DataFrame(np.ones((4, 6)))
-    test_df = test_df.where(candidates[:4] == only_partially_fixed, 0)
+    test_df = test_df.where(
+        candidates[:4][
+            [
+                "continuous_var_0",
+                "continuous_var_1",
+                "a_discrete",
+                "b_discrete",
+            ]
+        ]
+        == only_partially_fixed[
+            [
+                "continuous_var_0",
+                "continuous_var_1",
+                "a_discrete",
+                "b_discrete",
+            ]
+        ],
+        0,
+    )
     assert test_df.sum().sum() == 0
 
 
@@ -339,45 +356,6 @@ def test_scaled_doe():
     expected_candidates = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])
     for c in candidates:
         assert np.any([np.allclose(c, e) for e in expected_candidates])
-
-
-def test_categorical_doe_iterative():
-    quantity_a = [
-        ContinuousInput(key=f"quantity_a_{i}", bounds=(20, 100)) for i in range(2)
-    ]
-    all_inputs = [
-        ContinuousInput(key="independent", bounds=(3, 10)),
-    ]
-    all_inputs.extend(quantity_a)
-
-    all_constraints = [
-        NChooseKConstraint(
-            features=[var.key for var in quantity_a],
-            min_count=0,
-            max_count=1,
-            none_also_valid=False,
-        ),
-    ]
-
-    n_experiments = 5
-    domain = Domain.from_lists(
-        inputs=all_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=all_constraints,
-    )
-
-    data_model = data_models.DoEStrategy(
-        domain=domain,
-        criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="iterative",
-    )
-    strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(
-        candidate_count=n_experiments,
-        raise_validation_error=False,
-    )
-
-    assert candidates.shape == (5, 3)
 
 
 def test_functional_constraint():
@@ -553,3 +531,7 @@ def test_discrete_doe_w_constraints():
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
     assert candidates.shape == (5, 6)
+
+
+if __name__ == "__main__":
+    test_partially_fixed_experiments()

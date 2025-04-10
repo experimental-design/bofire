@@ -40,6 +40,7 @@ class DoEStrategy(Strategy):
             if self.data_model.sampling is not None
             else None
         )
+        self._return_fixed_candidates = data_model.return_fixed_candidates
 
     @property
     def formula(self):
@@ -106,6 +107,8 @@ class DoEStrategy(Strategy):
             mappings_categorical_inputs=mappings_categorical_inputs,
             mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
         )
+        if self._return_fixed_candidates:
+            fixed_experiments_count = 0
         return design.iloc[fixed_experiments_count:, :].reset_index(
             drop=True,
         )
