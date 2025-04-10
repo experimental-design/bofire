@@ -241,7 +241,7 @@ def test_partially_fixed_experiments():
     all_constraints = [
         NChooseKConstraint(
             features=[var.key for var in continuous_var],
-            min_count=1,
+            min_count=0,
             max_count=2,
             none_also_valid=True,
         ),
@@ -353,7 +353,7 @@ def test_categorical_doe_iterative():
     all_constraints = [
         NChooseKConstraint(
             features=[var.key for var in quantity_a],
-            min_count=1,
+            min_count=0,
             max_count=1,
             none_also_valid=False,
         ),
