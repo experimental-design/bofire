@@ -357,9 +357,9 @@ def test_scaled_doe():
 
 
 def test_functional_constraint():
-    np.random.seed(1)
-    torch.manual_seed(1)
-    torch.cuda.manual_seed(1)
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
 
     sampling = [
         [
