@@ -739,7 +739,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """main function for optimizing the acquisition function using pymoo's genetic algorithm."""
+        """Main function for optimizing the acquisition function using pymoo's genetic algorithm."""
 
         # Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
         candidates, _ = self._single_shot_optimization(
@@ -760,7 +760,7 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         q: int,
     ) -> Tuple[Tensor, Tensor]:
         """
-        single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
+        Single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
 
         Args:
             domain (Domain)

@@ -261,6 +261,7 @@ class AcqfOptimizationProblem(PymooProblem):
         nonlinear_pandas_constraints: Optional[List[Constraint]] = None,
     ):
         self.acqfs = acqfs
+        assert len(acqfs) == 1, "Only one acquisition function is supported for now"
 
         self.domain_handler = BofireDomainMixedVars(
             domain, input_preprocessing_specs, q
