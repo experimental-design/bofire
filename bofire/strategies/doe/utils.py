@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+import warnings
 from itertools import combinations
 from typing import List, Optional, Tuple, Union
 
@@ -567,13 +568,18 @@ def nchoosek_constraints_as_bounds(
                     # find and shuffle all combinations of elements of ind of length max_active
                     ind = np.array(list(combinations(ind, r=n_inactive)))
                     # filter non feasible bounds
-                    ind = [
-                        row
-                        for row in ind
-                        if sampler.validate_nchoosek_combination(
-                            [domain.inputs.get_keys()[i] for i in row]
+                    if len(domain.constraints.get(NonlinearConstraint)) == 0:
+                        ind = [
+                            row
+                            for row in ind
+                            if sampler.validate_nchoosek_combination(
+                                [domain.inputs.get_keys()[i] for i in row]
+                            )
+                        ]
+                    else:
+                        warnings.warn(
+                            f"{NChooseKConstraint.__name__} constraints validity can not be checked in the presence of {NonlinearConstraint.__name__}."
                         )
-                    ]
                     np.random.shuffle(ind)
 
                     # set bounds to zero in each experiments for the variables that should be inactive
