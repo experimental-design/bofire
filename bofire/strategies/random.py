@@ -32,6 +32,17 @@ from bofire.utils.torch_tools import (
 )
 
 
+def set_nchoosek_as_bounds(domain: Domain, u: List[str]) -> Domain:
+    domain = deepcopy(domain)
+    domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
+    # fix the unused features
+    for key in u:
+        feat = domain.inputs.get_by_key(key=key)
+        assert isinstance(feat, ContinuousInput)
+        feat.bounds = [0.0, 0.0]
+    return domain
+
+
 class RandomStrategy(Strategy):
     """Strategy for randomly selecting new candidates.
 
@@ -109,13 +120,10 @@ class RandomStrategy(Strategy):
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
     def validate_nchoosek_combination(self, nchoosek_combination: List[str]) -> bool:
-        domain = deepcopy(self.domain)
-        domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-        # fix the unused features
-        for key in nchoosek_combination:
-            feat = domain.inputs.get_by_key(key=key)
-            assert isinstance(feat, ContinuousInput)
-            feat.bounds = [0.0, 0.0]
+        domain = set_nchoosek_as_bounds(
+            domain=self.domain,
+            u=nchoosek_combination,
+        )
         # setup then sampler for this situation
         # not every combination of features has feasible points so try and except
         try:
@@ -132,7 +140,7 @@ class RandomStrategy(Strategy):
             # if the domain is infeasible, just skip this combination
             # and continue with the next one
             warnings.warn(
-                f"Combination {nchoosek_combination} is infeasible. Skipping...",
+                f"Combination {nchoosek_combination} is infeasible.",
                 UserWarning,
             )
             return False
@@ -151,18 +159,12 @@ class RandomStrategy(Strategy):
 
         """
 
-        def sample_combinations(sampled_combinations: List[str]):
+        def sample_combinations(sampled_combinations: List[List[str]]):
             samples = []
             sampled_combinations_with_feasibility = []
             for u in sampled_combinations:
                 # create new domain without the nchoosekconstraints
-                domain = deepcopy(self.domain)
-                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-                # fix the unused features
-                for key in u:
-                    feat = domain.inputs.get_by_key(key=key)
-                    assert isinstance(feat, ContinuousInput)
-                    feat.bounds = [0.0, 0.0]
+                domain = set_nchoosek_as_bounds(domain=self.domain, u=u)
                 # setup then sampler for this situation
                 # not every combination of features has feasible points so try and except
                 try:
