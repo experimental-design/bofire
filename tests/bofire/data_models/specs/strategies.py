@@ -239,6 +239,7 @@ for criterion in [
                     ).model_dump(),
                     "use_hessian": False,
                     "use_cyipopt": use_cyipopt,
+                    "return_fixed_candidates": False,
                 },
             )
 
@@ -255,6 +256,7 @@ for use_cyipopt in [True, False, None]:
             "seed": 42,
             "use_hessian": False,
             "use_cyipopt": use_cyipopt,
+            "return_fixed_candidates": False,
         },
     )
 
