@@ -194,7 +194,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         )
 
 
-class GeneticAlgorithm(AcquisitionOptimizer):
+class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     """Genetic Algorithm for acquisition function optimization"""
 
     type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
@@ -228,4 +228,4 @@ class GeneticAlgorithm(AcquisitionOptimizer):
         pass
 
 
-AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithm]
+AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithmOptimizer]

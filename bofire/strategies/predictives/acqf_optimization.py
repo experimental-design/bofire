@@ -38,7 +38,7 @@ from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
 )
 from bofire.data_models.strategies.api import (
-    GeneticAlgorithm as GeneticAlgorithmDataModel,
+    GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (

@@ -32,7 +32,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.strategies.api import (
-    GeneticAlgorithm as GeneticAlgorithmDataModel,
+    GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import (

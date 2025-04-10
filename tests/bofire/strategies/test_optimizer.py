@@ -16,7 +16,7 @@ from bofire.strategies import api as strategies
 @pytest.fixture(
     params=[  # (optimizer data model, params)
         data_models_strategies.BotorchOptimizer(),
-        data_models_strategies.GeneticAlgorithm(population_size=100, n_max_gen=100),
+        data_models_strategies.GeneticAlgorithmOptimizer(population_size=100, n_max_gen=100),
     ]
 )
 def optimizer_data_model(request) -> data_models_strategies.AcquisitionOptimizer:
