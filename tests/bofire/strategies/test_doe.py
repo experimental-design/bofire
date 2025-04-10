@@ -584,9 +584,19 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
     except ConstraintNotFulfilledError as e:
         assert isinstance(e, ConstraintNotFulfilledError)
 
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
     all_inputs = [
         DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
         DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
     ]
 
     all_inputs = all_inputs + continuous_var
@@ -603,13 +613,6 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
-
-    # validate the candidates
-    domain.validate_candidates(
-        candidates=candidates,
-        only_inputs=True,
-        raise_validation_error=True,
-    )
     assert candidates.shape == (5, 4)
 
 
