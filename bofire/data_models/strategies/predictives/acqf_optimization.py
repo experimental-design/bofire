@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from typing import Literal, Optional, Type, Union
 
-from pydantic import Field, PositiveInt, field_validator, PositiveFloat
+from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints

@@ -91,15 +91,23 @@ class GaMixedDomainHandler:
                 bounds_org = np.array(
                     domain.inputs.get_by_key(key).get_bounds(spec_)
                 ).reshape(-1)
-                self.vars[key] = pymoo_variable.Real(bounds=bounds_org)  # default variable
+                self.vars[key] = pymoo_variable.Real(
+                    bounds=bounds_org
+                )  # default variable
 
-            elif isinstance(input_ref, CategoricalDescriptorInput) and spec_ == CategoricalEncodingEnum.DESCRIPTOR:
+            elif (
+                isinstance(input_ref, CategoricalDescriptorInput)
+                and spec_ == CategoricalEncodingEnum.DESCRIPTOR
+            ):
                 # categorical descriptor
                 self.vars[key] = pymoo_variable.Choice(
                     options=domain.inputs.get_by_key(key).get_allowed_categories(),
                 )
 
-            elif isinstance(input_ref, CategoricalInput) and spec_ == CategoricalEncodingEnum.ONE_HOT:
+            elif (
+                isinstance(input_ref, CategoricalInput)
+                and spec_ == CategoricalEncodingEnum.ONE_HOT
+            ):
                 # one-hot encoded categorical input
                 self.vars[key] = pymoo_variable.Choice(
                     options=domain.inputs.get_by_key(key).get_allowed_categories(),
@@ -266,9 +274,7 @@ class AcqfOptimizationProblem(PymooProblem):
         self.acqfs = acqfs
         assert len(acqfs) == 1, "Only one acquisition function is supported for now"
 
-        self.domain_handler = GaMixedDomainHandler(
-            domain, input_preprocessing_specs, q
-        )
+        self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
 
         # torch constraints: evaluated in encoded space
         if nonlinear_torch_constraints is None:
