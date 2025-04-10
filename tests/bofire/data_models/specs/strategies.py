@@ -227,32 +227,20 @@ for criterion in [
         "quadratic",
         "fully-quadratic",
     ]:
-        for optimization_strategy in [
-            "default",
-            "exhaustive",
-            "branch-and-bound",
-            "partially-random",
-            "relaxed",
-            "iterative",
-        ]:
-            for use_cyipopt in [True, False, None]:
-                specs.add_valid(
-                    strategies.DoEStrategy,
-                    lambda criterion=criterion,
-                    formula=formula,
-                    optimization_strategy=optimization_strategy,
-                    use_cyipopt=use_cyipopt: {
-                        "domain": domain.valid().obj().model_dump(),
-                        "optimization_strategy": optimization_strategy,
-                        "verbose": False,
-                        "seed": 42,
-                        "criterion": criterion(
-                            formula=formula, transform_range=None
-                        ).model_dump(),
-                        "use_hessian": False,
-                        "use_cyipopt": use_cyipopt,
-                    },
-                )
+        for use_cyipopt in [True, False, None]:
+            specs.add_valid(
+                strategies.DoEStrategy,
+                lambda criterion=criterion, formula=formula, use_cyipopt=use_cyipopt: {
+                    "domain": domain.valid().obj().model_dump(),
+                    "verbose": False,
+                    "seed": 42,
+                    "criterion": criterion(
+                        formula=formula, transform_range=None
+                    ).model_dump(),
+                    "use_hessian": False,
+                    "use_cyipopt": use_cyipopt,
+                },
+            )
 
 for use_cyipopt in [True, False, None]:
     specs.add_valid(
