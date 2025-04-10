@@ -247,7 +247,6 @@ for use_cyipopt in [True, False, None]:
         strategies.DoEStrategy,
         lambda use_cyipopt=use_cyipopt: {
             "domain": domain.valid().obj().dict(),
-            "optimization_strategy": "default",
             "verbose": False,
             "ipopt_options": {"max_iter": 200, "print_level": 0},
             "criterion": strategies.SpaceFillingCriterion(
