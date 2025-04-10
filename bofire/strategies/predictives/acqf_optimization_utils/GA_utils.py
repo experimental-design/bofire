@@ -28,6 +28,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
+    CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
@@ -42,17 +43,25 @@ from bofire.utils.torch_tools import (
 )
 
 
-class BofireDomainMixedVars:
-    """Helper class for transferring bounds, and data from a domain with One-Hot-Encoded input
+class GaMixedDomainHandler:
+    """Helper class for transferring bounds, and data from different (encoded) input
     features, to mixed-variable encoded features, as they are used for the GA
     see, e.g. https://pymoo.org/customization/mixed.html?highlight=variable%20type.
+
+    Transformations in this class are:
+        (1) from the "original" non-encoded domain of the problem to the mixed-GA domain
+        (2) from the encoded "botorch" domain (e.g. including one-hot, and descriptor encodings) to the mixed-GA domain
 
     The GA optimizes all q-experiments in a batch simultaneuously. The variables for the pymoo optimizer are:
 
         [feature1_q0, feature2_q0, ..., feature1_q1, feature2_q1, ....].
 
-    Features, which are encoded in the input_preprocessing_specs are transformed to different pymoo types (e.g.
-     'CHOICE').
+    Features, which are encoded in the input_preprocessing_specs are transformed to different pymoo types:
+        - Categoric variables (descriptor- or one-hot-encoded) -> 'Choice'
+        - Numerical discrete -> 'Integer'
+
+    For the evaluation of the objective function and constraints, the variables in the GA-domain are transferred back
+    to the other domains.
 
     Args:
         domain (Domain): problem domain
@@ -77,41 +86,35 @@ class BofireDomainMixedVars:
             spec_ = input_preprocessing_specs.get(key)
             input_ref = domain.inputs.get_by_key(key)
 
-            bounds_org = np.array(
-                domain.inputs.get_by_key(key).get_bounds(spec_)
-            ).reshape(-1)
+            if isinstance(input_ref, ContinuousInput) and spec_ is None:
+                # simple case: non-transformed continuous variable
+                bounds_org = np.array(
+                    domain.inputs.get_by_key(key).get_bounds(spec_)
+                ).reshape(-1)
+                self.vars[key] = pymoo_variable.Real(bounds=bounds_org)  # default variable
 
-            var = pymoo_variable.Real(bounds=bounds_org)  # default variable
-            if spec_ is not None:
-                if spec_ in (
-                    CategoricalEncodingEnum.ONE_HOT,
-                    CategoricalEncodingEnum.DESCRIPTOR,
-                ):
-                    if spec_ == CategoricalEncodingEnum.DESCRIPTOR:
-                        assert isinstance(input_ref, CategoricalDescriptorInput), (
-                            f"Can only handle CategoricalDescriptorInput as inputs for the GA. Found {type(input_ref)}"
-                            f" for input {key}"
-                        )
+            elif isinstance(input_ref, CategoricalDescriptorInput) and spec_ == CategoricalEncodingEnum.DESCRIPTOR:
+                # categorical descriptor
+                self.vars[key] = pymoo_variable.Choice(
+                    options=domain.inputs.get_by_key(key).get_allowed_categories(),
+                )
 
-                    var = pymoo_variable.Choice(
-                        options=domain.inputs.get_by_key(key).get_allowed_categories(),
-                    )
+            elif isinstance(input_ref, CategoricalInput) and spec_ == CategoricalEncodingEnum.ONE_HOT:
+                # one-hot encoded categorical input
+                self.vars[key] = pymoo_variable.Choice(
+                    options=domain.inputs.get_by_key(key).get_allowed_categories(),
+                )
 
-                else:
-                    raise NotImplementedError(
-                        f"feature {key}: Encoding type {spec_} not implemented for GA"
-                    )
-
-            if isinstance(input_ref, DiscreteInput):
-                # convert Discrete inputs to Integer type values
-                assert (
-                    spec_ is None
-                ), "Cannot handle encoding specifications for DiscreteInput"
+            if isinstance(input_ref, DiscreteInput) and spec_ is None:
+                # numerical discrete input
                 conversion = dict(enumerate(input_ref.values))
-                var = pymoo_variable.Integer(bounds=[0, len(conversion) - 1])
+                self.vars[key] = pymoo_variable.Integer(bounds=[0, len(conversion) - 1])
                 self.pymoo_conversion[key] = conversion
 
-            self.vars[key] = var
+            else:
+                raise NotImplementedError(
+                    f"Input {input_ref.key}: Input type {type(input_ref)} with preprocessing spec {spec_} not supported"
+                )
 
     @property
     def pymoo_conversion_inverse(self) -> Dict[str, dict]:
@@ -263,7 +266,7 @@ class AcqfOptimizationProblem(PymooProblem):
         self.acqfs = acqfs
         assert len(acqfs) == 1, "Only one acquisition function is supported for now"
 
-        self.domain_handler = BofireDomainMixedVars(
+        self.domain_handler = GaMixedDomainHandler(
             domain, input_preprocessing_specs, q
         )
 
@@ -363,7 +366,7 @@ class LinearProjection(PymooRepair):
         d: int,
         bounds: Tensor,
         q: int,
-        domain_handler: Optional[BofireDomainMixedVars] = None,
+        domain_handler: Optional[GaMixedDomainHandler] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
     ):
