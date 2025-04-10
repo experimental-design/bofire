@@ -545,7 +545,6 @@ def nchoosek_constraints_as_bounds(
         onto the decision variables.
 
     """
-    sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
     check_nchoosek_constraints_as_bounds(domain)
 
     # bounds without NChooseK constraints
@@ -569,6 +568,9 @@ def nchoosek_constraints_as_bounds(
                     ind = np.array(list(combinations(ind, r=n_inactive)))
                     # filter non feasible bounds
                     if len(domain.constraints.get(NonlinearConstraint)) == 0:
+                        sampler = RandomStrategy(
+                            data_model=RandomStrategyDataModel(domain=domain)
+                        )
                         ind = [
                             row
                             for row in ind
