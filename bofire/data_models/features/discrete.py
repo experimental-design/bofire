@@ -77,10 +77,8 @@ class DiscreteInput(NumericalInput):
         candidates_close_to_allowed_values = (
             np.array(
                 [
-                    np.array(
-                        [np.isclose(x, y, rtol=10 - 3) for x in values.to_numpy()]
-                    ).any()
-                    for y in self.values
+                    np.array([np.isclose(x, y, rtol=1e-3) for x in self.values]).any()
+                    for y in values.to_numpy()
                 ]
             )
         ).all()
