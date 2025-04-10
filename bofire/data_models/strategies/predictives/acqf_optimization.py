@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from typing import Literal, Optional, Type, Union
 
-from pydantic import Field, PositiveInt, field_validator
+from pydantic import Field, PositiveInt, field_validator, PositiveFloat
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints
@@ -195,19 +195,19 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
 
 class GeneticAlgorithm(AcquisitionOptimizer):
-    """implementation of a Genetic Algorithm for acquisition function optimization"""
+    """Genetic Algorithm for acquisition function optimization"""
 
     type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
 
     # algorithm options
-    population_size: int = 1000
+    population_size: PositiveInt = 1000
 
     # termination criteria
-    xtol: float = 0.0005
-    cvtol: float = 1e-8
-    ftol: float = 1e-6
-    n_max_gen: int = 500
-    n_max_evals: int = 100000
+    xtol: PositiveFloat = 0.0005
+    cvtol: PositiveFloat = 1e-8
+    ftol: PositiveFloat = 1e-6
+    n_max_gen: PositiveInt = 500
+    n_max_evals: PositiveInt = 100000
 
     # verbosity
     verbose: bool = False
