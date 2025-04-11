@@ -11,6 +11,7 @@ from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy as DataModel,
 )
 from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.utils.torch_tools import tkwargs
 
 
 class ActiveLearningStrategy(BotorchStrategy):
@@ -33,7 +34,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         random_model = RandomStrategy(domain=self.domain)
         sampler = strategies.map(random_model)
         mc_samples = sampler.ask(candidate_count=self.acquisition_function.n_mc_samples)
-        mc_samples = torch.tensor(mc_samples.values)
+        mc_samples = torch.tensor(mc_samples.values).to(**tkwargs)
 
         _, X_pending = self.get_acqf_input_tensors()
 
