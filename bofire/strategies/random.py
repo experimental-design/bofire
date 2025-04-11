@@ -159,7 +159,9 @@ class RandomStrategy(Strategy):
 
         """
 
-        def sample_combinations(sampled_combinations: List[List[str]]):
+        def sample_combinations(
+            sampled_combinations: List[List[str]], num_samples_per_it: int
+        ):
             samples = []
             sampled_combinations_with_feasibility = []
             for u in sampled_combinations:
@@ -207,7 +209,7 @@ class RandomStrategy(Strategy):
                 num_samples_per_it = math.ceil(candidate_count / len(unused))
 
             samples, sampled_combinations_with_feasibility = sample_combinations(
-                sampled_combinations
+                sampled_combinations, num_samples_per_it
             )
             samples = pd.concat(samples, axis=0, ignore_index=True)
             if len(samples) < candidate_count:
@@ -218,7 +220,8 @@ class RandomStrategy(Strategy):
                             len(sampled_combinations_with_feasibility),
                             size=candidate_count - len(samples),
                         )
-                    ]
+                    ],
+                    num_samples_per_it=1,
                 )
                 samples = pd.concat(
                     [samples, pd.concat(_samples, axis=0, ignore_index=True)]
