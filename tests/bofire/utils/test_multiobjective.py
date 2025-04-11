@@ -62,7 +62,7 @@ valid_domains = [
 ]
 
 valid_constrained_domains = [
-    Domain(inputs=[if1, if2], outputs=[of1, of2, of5]),
+    Domain(inputs=[if1, if2], outputs=[of5, of2, of1]),
     Domain(inputs=[if1, if2], outputs=[of1, of2, of6]),
     Domain(inputs=[if1, if2], outputs=[of1, of2, of5, of6]),
 ]
