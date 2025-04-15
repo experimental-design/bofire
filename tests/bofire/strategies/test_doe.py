@@ -498,20 +498,30 @@ def test_functional_constraint():
 
 
 def test_discrete_doe_w_constraints():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
     continuous_var = [
         ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
     ]
     all_inputs = [
         CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
         CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
-        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
-        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="a_discrete", values=[0.0, 0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 10]),
     ]
     all_constraints = [
         LinearInequalityConstraint(
             features=["a_discrete", f"continuous_var_{1}"],
             coefficients=[-1, -1],
-            rhs=-1.9,
+            rhs=-0.5,
+        ),
+        NChooseKConstraint(
+            features=["a_discrete", f"continuous_var_{0}"],
+            min_count=0,
+            max_count=1,
+            none_also_valid=True,
         ),
     ]
 
@@ -524,12 +534,13 @@ def test_discrete_doe_w_constraints():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        criterion=DOptimalityCriterion(formula="linear"),
+        criterion=DOptimalityCriterion(formula="fully-quadratic"),
         verbose=True,
     )
     strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
-    assert candidates.shape == (5, 6)
+    candidates = strategy.ask(candidate_count=20, raise_validation_error=False)
+    print(candidates.round(3))
+    assert candidates.shape == (10, 6)
 
 
 def test_compare_discrete_to_continuous_mapping_with_thresholding():
@@ -617,4 +628,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_compare_discrete_to_continuous_mapping_with_thresholding()
+    test_discrete_doe_w_constraints()

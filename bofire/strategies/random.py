@@ -170,16 +170,19 @@ class RandomStrategy(Strategy):
                 # setup then sampler for this situation
                 # not every combination of features has feasible points so try and except
                 try:
-                    samples.append(
-                        self._sample_from_polytope(
-                            domain=domain,
-                            fallback_sampling_method=self.fallback_sampling_method,
-                            n_burnin=self.n_burnin,
-                            n_thinning=self.n_thinning,
-                            seed=self._get_seed(),
-                            n=num_samples_per_it,
-                        ),
+                    sample = self._sample_from_polytope(
+                        domain=domain,
+                        fallback_sampling_method=self.fallback_sampling_method,
+                        n_burnin=self.n_burnin,
+                        n_thinning=self.n_thinning,
+                        seed=self._get_seed(),
+                        n=num_samples_per_it,
                     )
+
+                    # check if samples contains NaN values
+                    if sample.isnull().values.any():
+                        raise ValueError("Sample contains NaN values.")
+                    samples.append(sample)
                     sampled_combinations_with_feasibility.append(u)
                 except ValueError:
                     # if the domain is infeasible, just skip this combination

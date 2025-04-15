@@ -27,7 +27,7 @@ def map_discrete_to_continuous(
     """
 
     def generate_value_key(input: DiscreteInput, d: float):
-        return f"aux_{input.key}_{d}".replace(".", "_")
+        return f"aux_{input.key}_{str(d).replace('.', '_')}"
 
     # Create a new list of inputs
     new_inputs = []

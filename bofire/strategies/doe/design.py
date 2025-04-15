@@ -120,7 +120,11 @@ def find_local_max_ipopt(
         x0 = sampling.values.flatten()
     elif len(domain.constraints.get(NonlinearConstraint)) == 0:
         sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
-        x0 = sampler.ask(n_experiments).to_numpy().flatten()
+        x0 = (
+            sampler.ask(n_experiments, raise_validation_error=False)
+            .to_numpy()
+            .flatten()
+        )
     else:
         warnings.warn(
             "Sampling failed. Falling back to uniform sampling on input domain.\
