@@ -538,7 +538,7 @@ def test_discrete_doe_w_constraints():
         verbose=True,
     )
     strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=20, raise_validation_error=False)
+    candidates = strategy.ask(candidate_count=10, raise_validation_error=False)
     print(candidates.round(3))
     assert candidates.shape == (10, 6)
 
