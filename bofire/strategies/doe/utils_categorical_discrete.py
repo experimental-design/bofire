@@ -37,7 +37,7 @@ def map_discrete_to_continuous(
     new_inputs = []
     new_auxiliary_inputs = []
     new_constraints = []
-    mappings_aux_to_discrete_values = {}
+    mappings_discrete_var_key_to_aux_var_keys = {}
     # Iterate over the inputs of the original domain
     for input in inputs:
         # If the input is a DiscreteInput, replace it with a ContinuousInput
@@ -62,7 +62,9 @@ def map_discrete_to_continuous(
             )
             mapping_aux_to_discrete_value += [generate_value_key(input, d)]
         new_auxiliary_inputs += new_aux_inputs_for_input
-        mappings_aux_to_discrete_values[input.key] = mapping_aux_to_discrete_value
+        mappings_discrete_var_key_to_aux_var_keys[input.key] = (
+            mapping_aux_to_discrete_value
+        )
         # Create a new list of constraints
         new_constraints.append(
             LinearEqualityConstraint(
@@ -81,7 +83,7 @@ def map_discrete_to_continuous(
             )
         )
     return (
-        mappings_aux_to_discrete_values,
+        mappings_discrete_var_key_to_aux_var_keys,
         new_inputs,
         new_auxiliary_inputs,
         Constraints(constraints=new_constraints),
@@ -159,17 +161,17 @@ def create_continuous_domain(
     """
     # Create a new domain
     (
-        mappings_aux_to_discrete_values,
-        mapped_discrete_inputs,
-        mapped_aux_inputs_for_discrete,
-        mapped_constraints_for_discrete,
+        mappings_discrete_var_key_to_aux_var_keys,
+        relaxed_discrete_inputs,
+        aux_vars_for_discrete,
+        aux_constraints_for_discrete_var_relaxation,
     ) = map_discrete_to_continuous(
         [input for input in domain.inputs if isinstance(input, DiscreteInput)]
     )
     (
-        mappings_categorical_inputs,
+        mappings_categorical_var_key_to_aux_var_key_state_pairs,
         mapped_aux_categorical_inputs,
-        mapped_constraints_for_categorical,
+        aux_constraints_for_categorical_var_relaxation,
     ) = map_categorical_to_continuous(
         [input for input in domain.inputs if isinstance(input, CategoricalInput)]
     )
@@ -178,14 +180,14 @@ def create_continuous_domain(
     ]
     # Combine the inputs and constraints
     all_inputs = (
-        mapped_discrete_inputs
+        relaxed_discrete_inputs
         + mapped_aux_categorical_inputs
         + mapped_continous_inputs
-        + mapped_aux_inputs_for_discrete
+        + aux_vars_for_discrete
     )
     all_constraints = (
-        mapped_constraints_for_discrete
-        + mapped_constraints_for_categorical
+        aux_constraints_for_discrete_var_relaxation
+        + aux_constraints_for_categorical_var_relaxation
         + domain.constraints
     )
     # Create the domain
@@ -197,9 +199,9 @@ def create_continuous_domain(
     # Return the domain
     return (
         domain,
-        mappings_categorical_inputs,
-        mappings_aux_to_discrete_values,
-        mapped_aux_inputs_for_discrete,
+        mappings_categorical_var_key_to_aux_var_key_state_pairs,
+        mappings_discrete_var_key_to_aux_var_keys,
+        aux_vars_for_discrete,
         mapped_aux_categorical_inputs,
         mapped_continous_inputs,
     )
@@ -207,34 +209,39 @@ def create_continuous_domain(
 
 def project_df_to_orginal_domain(
     df: pd.DataFrame,
-    mapped_aux_inputs_for_discrete: Optional[List[ContinuousInput]] = None,
+    aux_vars_for_discrete: Optional[List[ContinuousInput]] = None,
     mapped_aux_categorical_inputs: Optional[List[ContinuousInput]] = None,
-    mappings_categorical_inputs: Optional[Dict[str, Dict[str, str]]] = None,
+    mappings_categorical_var_key_to_aux_var_key_state_pairs: Optional[
+        Dict[str, Dict[str, str]]
+    ] = None,
 ) -> pd.DataFrame:
     """
     Projects the dataframe to the original domain by removing the auxiliary inputs and mapping the discrete inputs
     back to their original values.
     Args:
         df (pd.DataFrame): The dataframe to project.
-        mapped_aux_inputs_for_discrete (Inputs): The auxiliary inputs for discrete inputs.
+        aux_vars_for_discrete (Inputs): The auxiliary inputs for discrete inputs.
         mapped_aux_categorical_inputs (Inputs): The auxiliary inputs for categorical inputs.
-        mappings_categorical_inputs (Dict[str, Dict[str, str]]): The mappings for categorical inputs.
+         mappings_categorical_var_key_to_aux_var_key_state_pairs (Dict[str, Dict[str, str]]): The mappings for categorical inputs.
     Returns:
         pd.DataFrame: The projected dataframe.
     """
     # set the categorical inputs according to the auxiliary inputs
     if (mapped_aux_categorical_inputs is not None) and (
-        mappings_categorical_inputs is not None
+        mappings_categorical_var_key_to_aux_var_key_state_pairs is not None
     ):
-        for input_key, mapping in mappings_categorical_inputs.items():
+        for (
+            input_key,
+            mapping,
+        ) in mappings_categorical_var_key_to_aux_var_key_state_pairs.items():
             aux_keys = mapping.keys()
             df[input_key] = df[aux_keys].idxmax(axis=1)
             df[input_key] = df[input_key].map(mapping)
         # drop the auxiliary inputs
         df = df.drop(columns=[input.key for input in mapped_aux_categorical_inputs])
     # drop the auxiliary inputs
-    if mapped_aux_inputs_for_discrete is not None:
-        df = df.drop(columns=[input.key for input in mapped_aux_inputs_for_discrete])
+    if aux_vars_for_discrete is not None:
+        df = df.drop(columns=[input.key for input in aux_vars_for_discrete])
     return df
 
 
@@ -356,10 +363,6 @@ def smart_round(
     objective = cp.Minimize(
         cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
     )
-
-    # bounds = nchoosek_constraints_as_bounds(domain=domain, n_experiments=n_experiments)
-    # cp_input_bounds = _bounds_to_cp_constraints(y, bounds)
-
     prob = cp.Problem(objective=objective, constraints=constraints)
     prob.solve()
     print(candidates)

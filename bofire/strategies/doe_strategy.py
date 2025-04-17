@@ -76,9 +76,9 @@ class DoEStrategy(Strategy):
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         (
             relaxed_domain,
-            mappings_categorical_inputs,
+            mappings_categorical_var_key_to_aux_var_key_state_pairs,
             mapping_discrete_input_to_discrete_aux,
-            mapped_aux_inputs_for_discrete,
+            aux_vars_for_discrete,
             mapped_aux_categorical_inputs,
             mapped_continous_inputs,
         ) = create_continuous_domain(domain=self.domain)
@@ -115,8 +115,8 @@ class DoEStrategy(Strategy):
 
         design = project_df_to_orginal_domain(
             design_partially_fixed,
-            mapped_aux_inputs_for_discrete=mapped_aux_inputs_for_discrete,
-            mappings_categorical_inputs=mappings_categorical_inputs,
+            aux_vars_for_discrete=aux_vars_for_discrete,
+            mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,
             mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
         )
         if self._return_fixed_candidates:
