@@ -11,6 +11,7 @@ from bofire.data_models.strategies.doe import (
     DoEOptimalityCriterion,
 )
 from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
+from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
@@ -96,13 +97,19 @@ class DoEStrategy(Strategy):
         if self.candidates is not None:
             fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
             _candidate_count = candidate_count + fixed_experiments_count
+        objective_function = get_objective_function(
+            self.data_model.criterion,
+            domain=self.domain,
+            n_experiments=_candidate_count,
+        )
+        assert objective_function is not None, "Criterion type is not supported!"
         design_relaxed = find_local_max_ipopt(
             relaxed_domain,
             n_experiments=_candidate_count,
             fixed_experiments=None,
             partially_fixed_experiments=adapted_partially_fixed_candidates,
             ipopt_options=self.data_model.ipopt_options,
-            criterion=self.data_model.criterion,
+            objective_function=objective_function,
         )
         design_partially_fixed = smart_round(
             domain=self.domain,

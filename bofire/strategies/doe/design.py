@@ -13,8 +13,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import AnyOptimalityCriterion
-from bofire.strategies.doe.objective import get_objective_function
+from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
     _minimize,
     constraints_as_scipy_constraints,
@@ -26,7 +25,7 @@ from bofire.strategies.random import RandomStrategy
 def find_local_max_ipopt(
     domain: Domain,
     n_experiments: int,
-    criterion: Optional[AnyOptimalityCriterion] = None,
+    objective_function: Objective,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
@@ -62,11 +61,6 @@ def find_local_max_ipopt(
     #
     # Checks and preparation steps
     #
-
-    objective_function = get_objective_function(
-        criterion, domain=domain, n_experiments=n_experiments
-    )
-    assert objective_function is not None, "Criterion type is not supported!"
 
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
