@@ -60,7 +60,6 @@ domains = [
 def test_ask(domain, num_samples):
     data_model = data_models.DoEStrategy(
         domain=domain,
-        optimization_strategy="partially-random",
         criterion=SpaceFillingCriterion(),
         ipopt_options={"max_iter": 300, "print_level": 0},
     )
@@ -75,7 +74,6 @@ test_ask(domain=domains[0], num_samples=1)
 def test_ask_pending_candidates():
     data_model = data_models.DoEStrategy(
         domain=domains[0],
-        optimization_strategy="partially-random",
         criterion=SpaceFillingCriterion(),
         ipopt_options={"max_iter": 300, "print_level": 0},
     )
