@@ -15,6 +15,7 @@ from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
     project_df_to_orginal_domain,
+    smart_round,
 )
 from bofire.strategies.strategy import Strategy
 
@@ -74,17 +75,19 @@ class DoEStrategy(Strategy):
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         (
-            domain,
+            relaxed_domain,
             mappings_categorical_inputs,
+            mapping_discrete_input_to_discrete_aux,
             mapped_aux_inputs_for_discrete,
             mapped_aux_categorical_inputs,
+            mapped_continous_inputs,
         ) = create_continuous_domain(domain=self.domain)
         fixed_experiments_count = 0
         _candidate_count = candidate_count
         if self.candidates is not None:
             adapted_partially_fixed_candidates = (
                 self._transform_candidates_to_new_domain(
-                    domain,
+                    relaxed_domain,
                     self.candidates,
                 )
             )
@@ -93,16 +96,25 @@ class DoEStrategy(Strategy):
         if self.candidates is not None:
             fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
             _candidate_count = candidate_count + fixed_experiments_count
-        design = find_local_max_ipopt(
-            domain,
+        design_relaxed = find_local_max_ipopt(
+            relaxed_domain,
             n_experiments=_candidate_count,
             fixed_experiments=None,
             partially_fixed_experiments=adapted_partially_fixed_candidates,
             ipopt_options=self.data_model.ipopt_options,
             criterion=self.data_model.criterion,
         )
+        design_partially_fixed = smart_round(
+            domain=self.domain,
+            candidates=design_relaxed,
+            mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
+            keys_continuous_inputs=[
+                continuous_input.key for continuous_input in mapped_continous_inputs
+            ],
+        )
+
         design = project_df_to_orginal_domain(
-            design,
+            design_partially_fixed,
             mapped_aux_inputs_for_discrete=mapped_aux_inputs_for_discrete,
             mappings_categorical_inputs=mappings_categorical_inputs,
             mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,

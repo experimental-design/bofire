@@ -506,19 +506,18 @@ def test_discrete_doe_w_constraints():
         ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
     ]
     all_inputs = [
-        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
-        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
-        DiscreteInput(key="a_discrete", values=[0.0, 0.1, 0.2, 0.3, 1.6, 2]),
-        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 10]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10]),
+        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10]),
     ]
     all_constraints = [
         LinearInequalityConstraint(
             features=["a_discrete", f"continuous_var_{1}"],
             coefficients=[-1, -1],
-            rhs=-0.5,
+            rhs=-1.9,
         ),
         NChooseKConstraint(
-            features=["a_discrete", f"continuous_var_{0}"],
+            features=["b_discrete", f"continuous_var_{0}"],
             min_count=0,
             max_count=1,
             none_also_valid=True,
@@ -534,7 +533,7 @@ def test_discrete_doe_w_constraints():
 
     data_model = data_models.DoEStrategy(
         domain=domain,
-        criterion=DOptimalityCriterion(formula="fully-quadratic"),
+        criterion=DOptimalityCriterion(formula="linear"),
         verbose=True,
     )
     strategy = DoEStrategy(data_model=data_model)

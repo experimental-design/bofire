@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Tuple
 
+import cvxpy as cp
+import numpy as np
 import pandas as pd
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
-    NChooseKConstraint,
+    LinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs
 from bofire.data_models.features.api import (
@@ -16,7 +18,9 @@ from bofire.data_models.features.api import (
 
 def map_discrete_to_continuous(
     inputs: List[DiscreteInput],
-) -> Tuple[List[ContinuousInput], List[ContinuousInput], Constraints]:
+) -> Tuple[
+    Dict[str, List[str]], List[ContinuousInput], List[ContinuousInput], Constraints
+]:
     """
     Maps a discrete input to a constrained set of continuous inputs. Each discrete value is represented by a
     continuous variable between 0 and 1. As only one can be active at a time, the sum of all continuous variables
@@ -33,9 +37,11 @@ def map_discrete_to_continuous(
     new_inputs = []
     new_auxiliary_inputs = []
     new_constraints = []
+    mappings_aux_to_discrete_values = {}
     # Iterate over the inputs of the original domain
     for input in inputs:
         # If the input is a DiscreteInput, replace it with a ContinuousInput
+        mapping_aux_to_discrete_value = []
         assert isinstance(
             input, DiscreteInput
         ), f"Expected {DiscreteInput.__name__}, got {type(input)}"
@@ -54,21 +60,15 @@ def map_discrete_to_continuous(
                     bounds=[0, 1],
                 )
             )
+            mapping_aux_to_discrete_value += [generate_value_key(input, d)]
         new_auxiliary_inputs += new_aux_inputs_for_input
+        mappings_aux_to_discrete_values[input.key] = mapping_aux_to_discrete_value
         # Create a new list of constraints
         new_constraints.append(
             LinearEqualityConstraint(
                 features=[i.key for i in new_aux_inputs_for_input],
                 coefficients=[1] * len(new_aux_inputs_for_input),
                 rhs=1,
-            )
-        )
-        new_constraints.append(
-            NChooseKConstraint(
-                features=[i.key for i in new_aux_inputs_for_input],
-                min_count=0,
-                max_count=1,
-                none_also_valid=True,
             )
         )
         new_constraints.append(
@@ -81,6 +81,7 @@ def map_discrete_to_continuous(
             )
         )
     return (
+        mappings_aux_to_discrete_values,
         new_inputs,
         new_auxiliary_inputs,
         Constraints(constraints=new_constraints),
@@ -140,7 +141,12 @@ def map_categorical_to_continuous(
 def create_continuous_domain(
     domain: Domain,
 ) -> Tuple[
-    Domain, Dict[str, Dict[str, str]], List[ContinuousInput], List[ContinuousInput]
+    Domain,
+    Dict[str, Dict[str, str]],
+    Dict[str, List[str]],
+    List[ContinuousInput],
+    List[ContinuousInput],
+    List[ContinuousInput],
 ]:
     """
     Creates a domain from the inputs, constraints and outputs.
@@ -153,6 +159,7 @@ def create_continuous_domain(
     """
     # Create a new domain
     (
+        mappings_aux_to_discrete_values,
         mapped_discrete_inputs,
         mapped_aux_inputs_for_discrete,
         mapped_constraints_for_discrete,
@@ -191,8 +198,10 @@ def create_continuous_domain(
     return (
         domain,
         mappings_categorical_inputs,
+        mappings_aux_to_discrete_values,
         mapped_aux_inputs_for_discrete,
         mapped_aux_categorical_inputs,
+        mapped_continous_inputs,
     )
 
 
@@ -227,3 +236,183 @@ def project_df_to_orginal_domain(
     if mapped_aux_inputs_for_discrete is not None:
         df = df.drop(columns=[input.key for input in mapped_aux_inputs_for_discrete])
     return df
+
+
+def smart_round(
+    domain: Domain,
+    candidates: pd.DataFrame,
+    mapping_discrete_input_to_discrete_aux: Dict[str, List[str]],
+    keys_continuous_inputs: List[str],
+) -> pd.DataFrame:
+    def n_choosek_on_boolean(x, k):
+        return cp.sum(x) == k
+
+    def linear_equality_constraint(w, x, y):
+        return cp.sum(w @ x) == y
+
+    def linear_inequality_constraint(w, x, y):
+        return cp.sum(w @ x) <= y
+
+    def lower_bound(w, x):
+        return x >= w
+
+    def upper_bound(w, x):
+        return x <= w
+
+    candidates_rounded = candidates.copy()
+    n_experiments, _ = candidates_rounded.shape
+    # sort all columns to the following order:
+    # 1. auxiliary inputs for discrete input 1
+    # 2. auxiliary inputs for discrete input 2
+    # 3. ...
+    # 4. original inputs
+    cp_variables = []
+    columns = []
+    for u, k in mapping_discrete_input_to_discrete_aux.items():
+        for i in range(len(k)):
+            columns.append(k[i])
+        columns.append(u)
+    columns += keys_continuous_inputs
+    constraints = []
+    b = []
+
+    for i in range(n_experiments):
+        map_original_inputs_to_cp_variables = {}
+        for u, k in mapping_discrete_input_to_discrete_aux.items():
+            x = cp.Variable(len(k), boolean=True)
+
+            # add the nchoosek constraint for the discrete input
+            # this constraint ensures that only one of the auxiliary inputs is selected
+            constraints += [n_choosek_on_boolean(x, 1)]
+
+            cp_variables += [x]
+            b += list(candidates_rounded[k].iloc[i, :].values)
+            x_u = cp.Variable(1)
+            cp_variables += [x_u]
+            map_original_inputs_to_cp_variables[u] = x_u
+
+            # enforce that the sum of the auxiliary inputs times the allowed discrete values is equal to the discrete input
+            constraints += [
+                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)
+            ]
+            b += [candidates_rounded[u].iloc[i]]
+        y = cp.Variable(len(keys_continuous_inputs))
+        cp_variables += [y]
+        map_original_inputs_to_cp_variables.update(
+            {k: y[i] for i, k in enumerate(keys_continuous_inputs)}
+        )
+
+        # get linear inequality contraints in domain
+        for constraint in domain.constraints.constraints:
+            if isinstance(constraint, LinearInequalityConstraint):
+                variables = [
+                    map_original_inputs_to_cp_variables[feature]
+                    for feature in constraint.features
+                ]
+                if constraint.rhs is not None:
+                    constraints += [
+                        linear_inequality_constraint(
+                            constraint.coefficients,
+                            cp.hstack(variables),
+                            constraint.rhs,
+                        )
+                    ]
+                else:
+                    raise ValueError(
+                        "The right-hand side of the linear inequality constraint must be provided."
+                    )
+            elif isinstance(constraint, LinearEqualityConstraint):
+                variables = [
+                    map_original_inputs_to_cp_variables[feature]
+                    for feature in constraint.features
+                ]
+                if constraint.rhs is not None:
+                    constraints += [
+                        linear_equality_constraint(
+                            constraint.coefficients,
+                            cp.hstack(variables),
+                            constraint.rhs,
+                        )
+                    ]
+                else:
+                    raise ValueError(
+                        "The right-hand side of the linear equality constraint must be provided."
+                    )
+
+        # add upper and lower bounds for the continuous inputs
+        lower_bounds = [
+            domain.inputs.get_by_key(continuous_input).get_bounds()[0]
+            for continuous_input in keys_continuous_inputs
+        ]
+        upper_bounds = [
+            domain.inputs.get_by_key(continuous_input).get_bounds()[1]
+            for continuous_input in keys_continuous_inputs
+        ]
+        constraints += [lower_bound(x=y, w=lower_bounds)]
+        constraints += [upper_bound(x=y, w=upper_bounds)]
+        b += list(candidates_rounded[keys_continuous_inputs].iloc[i, :].values)
+
+    # Create the objective function
+    objective = cp.Minimize(
+        cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
+    )
+
+    # bounds = nchoosek_constraints_as_bounds(domain=domain, n_experiments=n_experiments)
+    # cp_input_bounds = _bounds_to_cp_constraints(y, bounds)
+
+    prob = cp.Problem(objective=objective, constraints=constraints)
+    prob.solve()
+    print(candidates)
+    return pd.DataFrame(
+        data=np.concatenate([var.value for var in cp_variables], axis=0).reshape(
+            candidates.shape[0], candidates.shape[1]
+        ),
+        columns=columns,
+    )
+
+
+if __name__ == "__main__":
+    # Example usage
+    domain = Domain(
+        inputs=[
+            DiscreteInput(key="x1", values=[0.3, 5]),
+            DiscreteInput(key="x2", values=[0.7, 10]),
+            ContinuousInput(key="x3", bounds=[10, 11]),
+            ContinuousInput(key="x4", bounds=[5, 11]),
+        ],
+        constraints=Constraints(
+            constraints=[
+                LinearInequalityConstraint(
+                    features=["x1", "x2"],
+                    coefficients=[-1, -1],
+                    rhs=-10,
+                ),
+                LinearEqualityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1, 1],
+                    rhs=15,
+                ),
+            ]
+        ),
+        outputs=[],
+    )
+    candidates = pd.DataFrame(
+        {
+            "x1": [1, 4],
+            "x1_aux_1": [0.7, 0.3],
+            "x1_aux_2": [0.3, 0.7],
+            "x2": [3, 9],
+            "x2_aux_1": [0.3, 0.7],
+            "x2_aux_2": [0.7, 0.7],
+            "x3": [10.1, 10.8],
+            "x4": [3, 8.9],
+        }
+    )
+    df = smart_round(
+        domain,
+        candidates,
+        {"x1": ["x1_aux_1", "x1_aux_2"], "x2": ["x2_aux_1", "x2_aux_2"]},
+        ["x3", "x4"],
+    )
+    print(df)
+    print(candidates)
