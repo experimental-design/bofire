@@ -348,11 +348,11 @@ def smart_round(
 
         # add upper and lower bounds for the continuous inputs
         lower_bounds = [
-            domain.inputs.get_by_key(continuous_input).get_bounds()[0]
+            domain.inputs.get(ContinuousInput).get_by_key(continuous_input).bounds[0]
             for continuous_input in keys_continuous_inputs
         ]
         upper_bounds = [
-            domain.inputs.get_by_key(continuous_input).get_bounds()[1]
+            domain.inputs.get(ContinuousInput).get_by_key(continuous_input).bounds[1]
             for continuous_input in keys_continuous_inputs
         ]
         constraints += [lower_bound(x=y, w=lower_bounds)]
