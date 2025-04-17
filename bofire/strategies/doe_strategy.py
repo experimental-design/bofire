@@ -112,7 +112,6 @@ class DoEStrategy(Strategy):
                 continuous_input.key for continuous_input in mapped_continous_inputs
             ],
         )
-
         design = project_df_to_orginal_domain(
             design_partially_fixed,
             aux_vars_for_discrete=aux_vars_for_discrete,

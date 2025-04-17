@@ -377,12 +377,14 @@ def smart_round(
 if __name__ == "__main__":
     # Example usage
     domain = Domain(
-        inputs=[
-            DiscreteInput(key="x1", values=[0.3, 5]),
-            DiscreteInput(key="x2", values=[0.7, 10]),
-            ContinuousInput(key="x3", bounds=[10, 11]),
-            ContinuousInput(key="x4", bounds=[5, 11]),
-        ],
+        inputs=Inputs(
+            features=[
+                DiscreteInput(key="x1", values=[0.3, 5]),
+                DiscreteInput(key="x2", values=[0.7, 10]),
+                ContinuousInput(key="x3", bounds=[10, 11]),
+                ContinuousInput(key="x4", bounds=[5, 11]),
+            ]
+        ),
         constraints=Constraints(
             constraints=[
                 LinearInequalityConstraint(
