@@ -99,8 +99,13 @@ class DoEStrategy(Strategy):
             _candidate_count = candidate_count + fixed_experiments_count
         objective_function = get_objective_function(
             self.data_model.criterion,
-            domain=self.domain,
+            domain=relaxed_domain,
             n_experiments=_candidate_count,
+            formula=get_formula_from_string(
+                self.data_model.criterion.formula, self.domain
+            )
+            if isinstance(self.data_model.criterion, DoEOptimalityCriterion)
+            else None,
         )
         assert objective_function is not None, "Criterion type is not supported!"
         design_relaxed = find_local_max_ipopt(
