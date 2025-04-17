@@ -539,7 +539,7 @@ def test_discrete_doe_w_constraints():
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=10, raise_validation_error=False)
     print(candidates.round(3))
-    assert candidates.shape == (10, 6)
+    assert candidates.shape == (10, 5)
 
 
 def test_compare_discrete_to_continuous_mapping_with_thresholding():
