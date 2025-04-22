@@ -365,7 +365,6 @@ def smart_round(
     )
     prob = cp.Problem(objective=objective, constraints=constraints)
     prob.solve()
-    print(candidates)
     return pd.DataFrame(
         data=np.concatenate([var.value for var in cp_variables], axis=0).reshape(
             candidates.shape[0], candidates.shape[1]
