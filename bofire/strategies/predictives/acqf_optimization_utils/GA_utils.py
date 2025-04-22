@@ -113,7 +113,7 @@ class GaMixedDomainHandler:
                     options=domain.inputs.get_by_key(key).get_allowed_categories(),
                 )
 
-            if isinstance(input_ref, DiscreteInput) and spec_ is None:
+            elif isinstance(input_ref, DiscreteInput) and spec_ is None:
                 # numerical discrete input
                 conversion = dict(enumerate(input_ref.values))
                 self.vars[key] = pymoo_variable.Integer(bounds=[0, len(conversion) - 1])
