@@ -1,11 +1,14 @@
+import importlib.util
 import sys
 from itertools import combinations
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import scipy.optimize as opt
 from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
+from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -19,7 +22,15 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.strategies.doe.doe_problem import (
+    FirstOrderDoEProblem,
+    SecondOrderDoEProblem,
+)
+from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.random import RandomStrategy
+
+
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
 def get_formula_from_string(
@@ -75,6 +86,38 @@ def get_formula_from_string(
     sys.setrecursionlimit(recursion_limit)
 
     return formula
+
+
+def convert_formula_to_string(
+    domain: Domain,
+    formula: Formula,
+) -> str:
+    """Converts a formula to a string.
+
+    Args:
+        domain (Domain): The domain that contain information about the input names.
+        formula (Formula): A formula object that should be converted to a string. If
+        the formula has both a left and right hand side, only the right hand side is
+        considered.
+
+    Returns:
+        A string representation of the formula that can be evaluated using pytorch.
+
+    """
+    if hasattr(formula, "rhs"):
+        formula = formula.rhs
+
+    term_list = [str(term) for term in list(formula)]
+
+    term_list_string = "torch.vstack(["
+    for term in term_list:
+        if term == "1":
+            term_list_string += f"torch.ones_like({domain.inputs.get_keys()[0]}), "
+        else:
+            term_list_string += term.replace(":", "*") + ", "
+    term_list_string += "]).T"
+
+    return term_list_string
 
 
 def linear_formula(
@@ -224,10 +267,9 @@ def constraints_as_scipy_constraints(
             NonlinearInequalityConstraint,
         ):
             fun, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            if c.jacobian_expression is not None:
-                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
-            else:
-                constraints.append(NonlinearConstraint(fun, lb, ub))
+            constraints.append(
+                NonlinearConstraint(fun, lb, ub, jac=fun.jacobian, hess=fun.hessian)
+            )
 
         elif isinstance(c, NChooseKConstraint):
             if ignore_nchoosek:
@@ -238,7 +280,9 @@ def constraints_as_scipy_constraints(
                     domain,
                     n_experiments,
                 )
-                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+                constraints.append(
+                    NonlinearConstraint(fun, lb, ub, jac=fun.jacobian, hess=fun.hessian)
+                )
 
         elif isinstance(c, InterpointEqualityConstraint):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
@@ -400,25 +444,48 @@ class ConstraintWrapper:
         violation[np.abs(violation) < 0] = 0
         return violation
 
-    def jacobian(self, x: np.ndarray) -> np.ndarray:
-        """Call constraint gradient with flattened numpy array."""
+    def jacobian(self, x: np.ndarray, sparse: bool = False) -> np.ndarray:
+        """Call constraint gradient with flattened numpy array.  If sparse is set to True, the output is a vector containing the entries of the sparse matrix representation of the jacobian."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
         gradient_compressed = self.constraint.jacobian(x).to_numpy()  # type: ignore
 
-        jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
-        rows = np.repeat(
-            np.arange(self.n_experiments),
-            len(self.constraint_feature_indices),
-        )
         cols = np.repeat(
             self.D * np.arange(self.n_experiments),
             len(self.constraint_feature_indices),
         ).reshape((self.n_experiments, len(self.constraint_feature_indices)))
         cols = (cols + self.constraint_feature_indices).flatten()
 
+        if sparse:
+            jacobian = np.zeros(shape=(self.D * self.n_experiments))
+            jacobian[cols] = gradient_compressed.flatten()
+            return jacobian
+
+        rows = np.repeat(
+            np.arange(self.n_experiments),
+            len(self.constraint_feature_indices),
+        )
+        jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
         jacobian[rows, cols] = gradient_compressed.flatten()
 
         return jacobian
+
+    def hessian(self, x: np.ndarray, *args):
+        """Call constraint hessian with flattened numpy array."""
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
+        hessian_dict = self.constraint.hessian(x)  # type: ignore
+
+        hessian = np.zeros(
+            shape=(self.D * self.n_experiments, self.D * self.n_experiments)
+        )
+
+        cols, rows = np.meshgrid(
+            self.constraint_feature_indices,
+            self.constraint_feature_indices,
+        )
+        for i, idx in enumerate(hessian_dict.keys()):
+            hessian[i * self.D + cols, i * self.D + rows] = hessian_dict[idx]
+
+        return hessian
 
 
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
@@ -513,3 +580,66 @@ def nchoosek_constraints_as_bounds(
     bounds = [(b[0], b[1]) for b in bounds]
 
     return bounds
+
+
+def _minimize(
+    objective_function: Objective,
+    x0: np.ndarray,
+    bounds: List[Tuple[float, float]],
+    constraints: Optional[List[Union[NonlinearConstraint, LinearConstraint]]],
+    ipopt_options: dict,
+    use_hessian: bool,
+    use_cyipopt: Optional[bool] = CYIPOPT_AVAILABLE,
+) -> np.ndarray:
+    """Minimize the objective function using the given constraints and bounds.
+    Uses Ipopt if available, otherwise uses SLSQP.
+
+    Args:
+        objective_function (Objective): Objective function to minimize.
+        x0 (np.ndarray): Initial guess for the minimization.
+        bounds (List[Tuple[float, float]]): Bounds for the decision variables.
+        constraints (Optional[List[Union[NonlinearConstraint, LinearConstraint]]]): Constraints for the optimization problem.
+        ipopt_options (dict): Options for Ipopt solver. If Ipopt is not available, only the fields "max_iter" and "print_level" of this argument are used.
+        use_hessian (bool): Use hessian if set to True.
+        use_cyipopt (bool): Use cyipopt if set to True. Defaults to true if cyipopt is available.
+
+    Returns:
+        np.ndarray: The optimized design as flattened numpy array.
+    """
+    if use_cyipopt is None:
+        use_cyipopt = CYIPOPT_AVAILABLE
+
+    if use_cyipopt:
+        if use_hessian:
+            problem = SecondOrderDoEProblem(
+                doe_objective=objective_function,
+                bounds=bounds,
+                constraints=constraints,
+            )
+        else:
+            problem = FirstOrderDoEProblem(
+                doe_objective=objective_function,
+                bounds=bounds,
+                constraints=constraints,
+            )
+        for key in ipopt_options.keys():
+            problem.add_option(key, ipopt_options[key])
+
+        x, info = problem.solve(x0)
+        return x
+    else:
+        options = {}
+        if "max_iter" in ipopt_options.keys():
+            options["maxiter"] = ipopt_options["max_iter"]
+        if "print_level" in ipopt_options.keys():
+            options["disp"] = ipopt_options["print_level"]
+        result = opt.minimize(
+            fun=objective_function.evaluate,
+            x0=x0,
+            bounds=bounds,
+            options=options,
+            constraints=standardize_constraints(constraints, x0, "SLSQP"),
+            jac=objective_function.evaluate_jacobian,
+            hess=objective_function.evaluate_hessian if use_hessian else None,
+        )
+        return result.x

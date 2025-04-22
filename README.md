@@ -157,3 +157,14 @@ For molecular optimizations, BoFire uses the molecular kernels from the [Gauche 
 See our [Contributing](./CONTRIBUTING.md) guidelines. If you are not sure about something or find bugs, feel free to create an issue.
 
 By contributing you agree that your contributions will be licensed under the same license as BoFire: [BSD 3-Clause License](./LICENSE).
+
+## Versioning
+
+Starting with release `0.1.0`, we follow a pragmatic versioning scheme.
+
+```
+BIGRELEASE.MAJOR.MINOR
+```
+
+Thereby, `BIGRELEASE` and `MAJOR` releases can contain breaking changes to our public API. Vice versa, every breaking change of our API
+is at least a `MAJOR` release.

@@ -122,6 +122,8 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
+                use_hessian=self.data_model.use_hessian,
+                use_cyipopt=self.data_model.use_cyipopt,
                 sampling=self._sampling,
             )
         # TODO adapt to when exhaustive search accepts discrete variables
@@ -139,6 +141,8 @@ class DoEStrategy(Strategy):
                 discrete_variables=new_discretes,
                 ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
+                use_hessian=self.data_model.use_hessian,
+                use_cyipopt=self.data_model.use_cyipopt,
                 sampling=self._sampling,
             )
         elif self.data_model.optimization_strategy in [
@@ -156,6 +160,8 @@ class DoEStrategy(Strategy):
                 discrete_variables=new_discretes,
                 ipopt_options=self.data_model.ipopt_options,
                 criterion=self.data_model.criterion,
+                use_hessian=self.data_model.use_hessian,
+                use_cyipopt=self.data_model.use_cyipopt,
                 sampling=self._sampling,
             )
         elif self.data_model.optimization_strategy == "iterative":
@@ -181,6 +187,8 @@ class DoEStrategy(Strategy):
                     discrete_variables=new_discretes,
                     ipopt_options=self.data_model.ipopt_options,
                     criterion=self.data_model.criterion,
+                    use_hessian=self.data_model.use_hessian,
+                    use_cyipopt=self.data_model.use_cyipopt,
                     sampling=self._sampling,
                 )
                 adapted_partially_fixed_candidates = pd.concat(

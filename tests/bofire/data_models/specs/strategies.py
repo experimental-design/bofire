@@ -21,6 +21,14 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
+from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.strategies.api import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+    RelativeMovingReferenceValue,
+    RelativeToMaxMovingReferenceValue,
+)
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -62,9 +70,63 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "o1": AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0),
+                "o2": AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0),
+            }
+        ).model_dump(),
         **strategy_commons,
     },
 )
+
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "alpha": FixedReferenceValue(value=0.5),
+                "beta": AbsoluteMovingReferenceValue(offset=1),
+            }
+        ).model_dump(),
+        **strategy_commons,
+    },
+)
+
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "alpha": RelativeMovingReferenceValue(scaling=0.5),
+                "beta": RelativeToMaxMovingReferenceValue(scaling=1),
+            }
+        ).model_dump(),
+        **strategy_commons,
+    },
+)
+
+
 specs.add_invalid(
     strategies.MoboStrategy,
     lambda: {
@@ -235,33 +297,41 @@ for criterion in [
             "relaxed",
             "iterative",
         ]:
-            specs.add_valid(
-                strategies.DoEStrategy,
-                lambda criterion=criterion,
-                formula=formula,
-                optimization_strategy=optimization_strategy: {
-                    "domain": domain.valid().obj().model_dump(),
-                    "optimization_strategy": optimization_strategy,
-                    "verbose": False,
-                    "seed": 42,
-                    "criterion": criterion(
-                        formula=formula, transform_range=None
-                    ).model_dump(),
-                },
-            )
-specs.add_valid(
-    strategies.DoEStrategy,
-    lambda: {
-        "domain": domain.valid().obj().dict(),
-        "optimization_strategy": "default",
-        "verbose": False,
-        "ipopt_options": {"maxiter": 200, "disp": 0},
-        "criterion": strategies.SpaceFillingCriterion(
-            sampling_fraction=0.3, transform_range=[-1, 1]
-        ).model_dump(),
-        "seed": 42,
-    },
-)
+            for use_cyipopt in [True, False, None]:
+                specs.add_valid(
+                    strategies.DoEStrategy,
+                    lambda criterion=criterion,
+                    formula=formula,
+                    optimization_strategy=optimization_strategy,
+                    use_cyipopt=use_cyipopt: {
+                        "domain": domain.valid().obj().model_dump(),
+                        "optimization_strategy": optimization_strategy,
+                        "verbose": False,
+                        "seed": 42,
+                        "criterion": criterion(
+                            formula=formula, transform_range=None
+                        ).model_dump(),
+                        "use_hessian": False,
+                        "use_cyipopt": use_cyipopt,
+                    },
+                )
+
+for use_cyipopt in [True, False, None]:
+    specs.add_valid(
+        strategies.DoEStrategy,
+        lambda use_cyipopt=use_cyipopt: {
+            "domain": domain.valid().obj().dict(),
+            "optimization_strategy": "default",
+            "verbose": False,
+            "ipopt_options": {"max_iter": 200, "print_level": 0},
+            "criterion": strategies.SpaceFillingCriterion(
+                sampling_fraction=0.3, transform_range=[-1, 1]
+            ).model_dump(),
+            "seed": 42,
+            "use_hessian": False,
+            "use_cyipopt": use_cyipopt,
+        },
+    )
 
 
 tempdomain = domain.valid().obj()
@@ -280,6 +350,16 @@ specs.add_valid(
                     domain=tempdomain,
                     acquisition_function=qLogNEHVI(),
                     acquisition_optimizer=strategies.BotorchOptimizer(batch_limit=1),
+                    ref_point=ExplicitReferencePoint(
+                        values={
+                            "o1": AbsoluteMovingReferenceValue(
+                                orient_at_best=False, offset=0.0
+                            ),
+                            "o2": AbsoluteMovingReferenceValue(
+                                orient_at_best=False, offset=0.0
+                            ),
+                        }
+                    ),
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),

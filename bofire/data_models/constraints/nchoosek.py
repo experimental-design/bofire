@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Dict, Literal, Union
 
 import numpy as np
 import pandas as pd
@@ -127,3 +127,6 @@ class NChooseKConstraint(IntrapointConstraint):
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError("Jacobian not implemented for NChooseK constraints.")
+
+    def hessian(self, experiments: pd.DataFrame) -> Dict[Union[str, int], pd.DataFrame]:
+        raise NotImplementedError("Hessian not implemented for NChooseK constraints.")
