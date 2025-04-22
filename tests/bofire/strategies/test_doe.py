@@ -225,6 +225,7 @@ def test_categorical_discrete_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
+        scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)
@@ -263,6 +264,7 @@ def test_partially_fixed_experiments():
         criterion=DOptimalityCriterion(formula="linear"),
         verbose=True,
         return_fixed_candidates=True,
+        scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
     )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(
@@ -630,4 +632,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_discrete_doe_w_constraints()
+    test_categorical_discrete_doe()

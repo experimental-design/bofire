@@ -390,6 +390,8 @@ def project_candidates_into_domain(
         cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
     )
     prob = cp.Problem(objective=objective, constraints=constraints)
+    if scip_params is None:
+        scip_params = {"numerics/feastol": 1e-8}
     prob.solve(solver="SCIP", scip_params=scip_params)
     return pd.DataFrame(
         index=candidates.index,

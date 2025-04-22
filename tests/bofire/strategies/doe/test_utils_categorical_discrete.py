@@ -246,7 +246,7 @@ def test_project_candidates_into_domain_categorical_discrete():
             "x2": ["x2_aux_1", "x2_aux_2"],
         },
         keys_continuous_inputs=["x3", "x4"],
-        scip_params={"parallel/maxnthreads": 1},
+        scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
     )
     df_true = pd.DataFrame(
         {
