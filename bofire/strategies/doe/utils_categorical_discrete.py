@@ -279,10 +279,9 @@ def filter_out_categorical_vars(
         df = df.drop(columns=[input.key for input in mapped_aux_categorical_inputs])
     # drop the categorical inputs
     if mappings_categorical_var_key_to_aux_var_key_state_pairs is not None:
-        categorical_inputs = [
-            input_key
-            for input_key, _ in mappings_categorical_var_key_to_aux_var_key_state_pairs.keys()
-        ]
+        categorical_inputs = list(
+            mappings_categorical_var_key_to_aux_var_key_state_pairs.keys()
+        )
         df_categorical = df[categorical_inputs].copy()
         df = df.drop(columns=categorical_inputs)
     return df, df_categorical

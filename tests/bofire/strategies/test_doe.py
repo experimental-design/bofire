@@ -509,6 +509,8 @@ def test_discrete_doe_w_constraints():
         DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
         DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10]),
         DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10]),
+        CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
+        CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
     ]
     all_constraints = [
         LinearInequalityConstraint(
@@ -540,7 +542,7 @@ def test_discrete_doe_w_constraints():
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=10, raise_validation_error=False)
     print(candidates.round(3))
-    assert candidates.shape == (10, 5)
+    assert candidates.shape == (10, 7)
 
 
 def test_compare_discrete_to_continuous_mapping_with_thresholding():
@@ -629,4 +631,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_nchoosek_implemented()
+    test_discrete_doe_w_constraints()
