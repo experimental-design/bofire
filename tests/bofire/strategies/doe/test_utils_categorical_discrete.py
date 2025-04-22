@@ -59,15 +59,21 @@ def test_smart_round_categorical_discrete():
             "x2": ["x2_aux_1", "x2_aux_2"],
         },
         keys_continuous_inputs=["x3", "x4"],
+        scip_params={"parallel/maxnthreads": 1},
     )
     df_true = pd.DataFrame(
         {
-            "x1": [0.3, 5],
+            "x1": [0.3, 5.0],
             "x2": [10.0, 10.0],
             "x3": [10.0, 10.0],
-            "x4": [5, 5],
+            "x4": [5.0, 5.0],
         }
     )
     pd.testing.assert_frame_equal(
         df[["x1", "x2", "x3", "x4"]], df_true[["x1", "x2", "x3", "x4"]]
     )
+
+
+if __name__ == "__main__":
+    test_smart_round_categorical_discrete()
+    print("Test passed!")

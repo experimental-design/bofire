@@ -250,6 +250,7 @@ def smart_round(
     candidates: pd.DataFrame,
     mapping_discrete_input_to_discrete_aux: Dict[str, List[str]],
     keys_continuous_inputs: List[str],
+    scip_params: Optional[Dict] = None,
 ) -> pd.DataFrame:
     def n_choosek_on_boolean(x, k):
         return cp.sum(x) == k
@@ -364,7 +365,7 @@ def smart_round(
         cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
     )
     prob = cp.Problem(objective=objective, constraints=constraints)
-    prob.solve(solver="SCIP")
+    prob.solve(solver="SCIP", scip_params=scip_params)
     return pd.DataFrame(
         data=np.concatenate([var.value for var in cp_variables], axis=0).reshape(
             candidates.shape[0], candidates.shape[1]

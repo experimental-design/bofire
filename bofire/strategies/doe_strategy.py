@@ -118,6 +118,7 @@ class DoEStrategy(Strategy):
                 keys_continuous_inputs=[
                     continuous_input.key for continuous_input in mapped_continous_inputs
                 ],
+                scip_params=self.data_model.scip_params,
             )
             design = project_df_to_orginal_domain(
                 design_projected,
