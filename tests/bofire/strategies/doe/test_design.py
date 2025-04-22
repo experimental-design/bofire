@@ -575,7 +575,7 @@ def test_find_local_max_ipopt_nonlinear_constraint():
     result = find_local_max_ipopt(
         domain,
         objective_function=get_objective_function(
-            criterion=DOptimalityCriterion(formula="fully-quadratic"),
+            criterion=DOptimalityCriterion(formula="linear"),
             domain=domain,
             n_experiments=num_exp,
         ),
