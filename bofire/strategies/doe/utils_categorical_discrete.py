@@ -207,13 +207,9 @@ def create_continuous_domain(
     )
 
 
-def filter_out_auxilliary_vars(
+def filter_out_discrete_auxilliary_vars(
     df: pd.DataFrame,
     aux_vars_for_discrete: Optional[List[ContinuousInput]] = None,
-    mapped_aux_categorical_inputs: Optional[List[ContinuousInput]] = None,
-    mappings_categorical_var_key_to_aux_var_key_state_pairs: Optional[
-        Dict[str, Dict[str, str]]
-    ] = None,
 ) -> pd.DataFrame:
     """
     Projects the dataframe to the original domain by removing the auxiliary inputs and mapping the discrete inputs
@@ -226,26 +222,13 @@ def filter_out_auxilliary_vars(
     Returns:
         pd.DataFrame: The projected dataframe.
     """
-    # set the categorical inputs according to the auxiliary inputs
-    if (mapped_aux_categorical_inputs is not None) and (
-        mappings_categorical_var_key_to_aux_var_key_state_pairs is not None
-    ):
-        for (
-            input_key,
-            mapping,
-        ) in mappings_categorical_var_key_to_aux_var_key_state_pairs.items():
-            aux_keys = mapping.keys()
-            df[input_key] = df[aux_keys].idxmax(axis=1)
-            df[input_key] = df[input_key].map(mapping)
-        # drop the auxiliary inputs
-        df = df.drop(columns=[input.key for input in mapped_aux_categorical_inputs])
     # drop the auxiliary inputs
     if aux_vars_for_discrete is not None:
         df = df.drop(columns=[input.key for input in aux_vars_for_discrete])
     return df
 
 
-def filter_out_categorical_vars(
+def filter_out_categorical_and_categorical_auxilliary_vars(
     df: pd.DataFrame,
     mapped_aux_categorical_inputs: Optional[List[ContinuousInput]] = None,
     mappings_categorical_var_key_to_aux_var_key_state_pairs: Optional[
@@ -409,6 +392,7 @@ def project_candidates_into_domain(
     prob = cp.Problem(objective=objective, constraints=constraints)
     prob.solve(solver="SCIP", scip_params=scip_params)
     return pd.DataFrame(
+        index=candidates.index,
         data=np.concatenate([var.value for var in cp_variables], axis=0).reshape(
             candidates.shape[0], candidates.shape[1]
         ),
