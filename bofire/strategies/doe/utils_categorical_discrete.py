@@ -207,7 +207,7 @@ def create_continuous_domain(
     )
 
 
-def project_df_to_orginal_domain(
+def filter_out_auxilliary_vars(
     df: pd.DataFrame,
     aux_vars_for_discrete: Optional[List[ContinuousInput]] = None,
     mapped_aux_categorical_inputs: Optional[List[ContinuousInput]] = None,
@@ -245,7 +245,7 @@ def project_df_to_orginal_domain(
     return df
 
 
-def smart_round(
+def project_candidates_into_domain(
     domain: Domain,
     candidates: pd.DataFrame,
     mapping_discrete_input_to_discrete_aux: Dict[str, List[str]],

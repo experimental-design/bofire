@@ -15,8 +15,8 @@ from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
-    project_df_to_orginal_domain,
-    smart_round,
+    filter_out_auxilliary_vars,
+    project_candidates_into_domain,
 )
 from bofire.strategies.strategy import Strategy
 
@@ -111,7 +111,7 @@ class DoEStrategy(Strategy):
             objective_function=objective_function,
         )
         if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
-            design_projected = smart_round(
+            design_projected = project_candidates_into_domain(
                 domain=self.domain,
                 candidates=design,
                 mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
@@ -120,7 +120,7 @@ class DoEStrategy(Strategy):
                 ],
                 scip_params=self.data_model.scip_params,
             )
-            design = project_df_to_orginal_domain(
+            design = filter_out_auxilliary_vars(
                 design_projected,
                 aux_vars_for_discrete=aux_vars_for_discrete,
                 mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,

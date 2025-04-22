@@ -10,10 +10,12 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.strategies.doe.utils_categorical_discrete import smart_round
+from bofire.strategies.doe.utils_categorical_discrete import (
+    project_candidates_into_domain,
+)
 
 
-def test_smart_round_categorical_discrete():
+def test_project_candidates_into_domain_categorical_discrete():
     domain = Domain(
         inputs=Inputs(
             features=[
@@ -51,7 +53,7 @@ def test_smart_round_categorical_discrete():
             "x4": [3, 8.9],
         }
     )
-    df = smart_round(
+    df = project_candidates_into_domain(
         domain,
         candidates,
         mapping_discrete_input_to_discrete_aux={
@@ -75,5 +77,5 @@ def test_smart_round_categorical_discrete():
 
 
 if __name__ == "__main__":
-    test_smart_round_categorical_discrete()
+    test_project_candidates_into_domain_categorical_discrete()
     print("Test passed!")
