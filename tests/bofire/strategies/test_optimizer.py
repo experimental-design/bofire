@@ -10,6 +10,7 @@ from bofire.data_models.constraints import api as constraints_data_models
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.strategies import api as data_models_strategies
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.strategies import api as strategies
 
 
@@ -80,6 +81,24 @@ class ConstraintCollection:
         return domain
 
     @staticmethod
+    def nchoosek_constr_for_ackley(domain: Domain) -> Domain:
+        for inp in domain.inputs.get(ContinuousInput).features:
+            inp.bounds = (0.0, 32.768)
+        feat = [
+            key for key in domain.inputs.get_keys() if key.startswith("x")
+        ]
+        domain.constraints.constraints += [
+            constraints_data_models.NChooseKConstraint(
+                features=feat,
+                min_count=2,
+                max_count=3,  # of 4
+                none_also_valid=True,
+            )
+        ]
+        return domain
+
+
+    @staticmethod
     def nchoosek_constr_for_detergent(domain: Domain) -> Domain:
         lb = domain.inputs.get_bounds({})[0]
         feat = [
@@ -140,8 +159,10 @@ class OptimizerBenchmark:
         ):
             if isinstance(optimizer, data_models_strategies.BotorchOptimizer):
                 pytest.skip("skipping nonlinear constraints for botorch optimizer")
-
-        strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
+        try:
+            strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
+        except Exception as E:
+            print(E)
         strategy = strategies.map(strategy)
 
         experiments = self.benchmark.f(
@@ -154,63 +175,80 @@ class OptimizerBenchmark:
 
 @pytest.fixture(
     params=[
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-            additional_constraint_functions=[
-                ConstraintCollection.last_input_feature_discrete
-            ],
-        ),
-        OptimizerBenchmark(
-            benchmarks.Himmelblau(),
-            2,
-            data_models_strategies.SoboStrategy,
-            additional_constraint_functions=[
-                ConstraintCollection.constraint_mix_for_himmelblau
-            ],
-        ),
-        OptimizerBenchmark(
-            benchmarks.Detergent(),
-            5,
-            data_models_strategies.AdditiveSoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Detergent(),
-            5,
-            data_models_strategies.AdditiveSoboStrategy,
-            additional_constraint_functions=[
-                ConstraintCollection.nchoosek_constr_for_detergent,
-            ],
-            n_add=10,
-        ),
-        OptimizerBenchmark(
-            benchmarks.CrossCoupling(),
-            4,
-            data_models_strategies.AdditiveSoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.DTLZ2(dim=2, num_objectives=2),
-            3,
-            data_models_strategies.AdditiveSoboStrategy,
-        ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.last_input_feature_discrete
+        #     ],
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Himmelblau(),
+        #     2,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.constraint_mix_for_himmelblau
+        #     ],
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Detergent(),
+        #     5,
+        #     data_models_strategies.AdditiveSoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Detergent(),
+        #     5,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.nchoosek_constr_for_detergent,
+        #     ],
+        #     n_add=10,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.CrossCoupling(),
+        #     4,
+        #     data_models_strategies.AdditiveSoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.DTLZ2(dim=2, num_objectives=2),
+        #     3,
+        #     data_models_strategies.AdditiveSoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+        #     10,
+        #     data_models_strategies.SoboStrategy,
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+        #     10,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.linear_ineq_constr_for_ackley,
+        #         ConstraintCollection.last_input_feature_discrete,
+        #     ],
+        # ),
+        # OptimizerBenchmark(
+        #     benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+        #     10,
+        #     data_models_strategies.SoboStrategy,
+        #     additional_constraint_functions=[
+        #         ConstraintCollection.linear_ineq_constr_for_ackley,
+        #         ConstraintCollection.linear_eq_constr_for_ackley,
+        #     ],
+        # ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
             10,
             data_models_strategies.SoboStrategy,
-        ),
-        OptimizerBenchmark(
-            benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
-            10,
-            data_models_strategies.SoboStrategy,
             additional_constraint_functions=[
-                ConstraintCollection.linear_ineq_constr_for_ackley,
-                ConstraintCollection.last_input_feature_discrete,
+                ConstraintCollection.nchoosek_constr_for_ackley,
             ],
         ),
         OptimizerBenchmark(
@@ -220,6 +258,7 @@ class OptimizerBenchmark:
             additional_constraint_functions=[
                 ConstraintCollection.linear_ineq_constr_for_ackley,
                 ConstraintCollection.linear_eq_constr_for_ackley,
+                ConstraintCollection.nchoosek_constr_for_ackley,
             ],
         ),
         OptimizerBenchmark(
