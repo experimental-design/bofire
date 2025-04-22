@@ -594,9 +594,7 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)
-        ],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
