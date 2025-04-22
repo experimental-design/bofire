@@ -12,6 +12,11 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MinimizeObjective,
 )
+from bofire.data_models.strategies.predictives.mobo import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+)
 from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
 
@@ -24,12 +29,16 @@ def get_ref_point_mask(
     in the mask is 1, in case we want to minimize it is -1.
 
     Args:
-        domain (Domain): Domain for which the mask should be generated.
-        output_feature_keys (Optional[list], optional): Name of output feature keys
-            that should be considered in the mask. Defaults to None.
+        domain: Domain for which the mask should be generated.
+        output_feature_keys: Name of output feature keys
+            that should be considered in the mask. If `None` is provided, all keys
+            belonging to output features with one of the following objectives will
+            be considered: `MaximizeObjective`, `MinimizeObjective`,
+            `CloseToTargetObjective`. Defaults to None.
 
     Returns:
-        np.ndarray: _description_
+        Array of ones for maximization and array of negative ones for
+            minimization.
 
     """
     if output_feature_keys is None:
@@ -60,6 +69,22 @@ def get_pareto_front(
     experiments: pd.DataFrame,
     output_feature_keys: Optional[list] = None,
 ) -> pd.DataFrame:
+    """Method to compute the pareto optimal experiments for a given domain and
+    experiments.
+
+    Args:
+        domain: Domain for which the pareto front should be computed.
+        experiments: Experiments for which the pareto front should be computed.
+        output_feature_keys: Key of output feature that should be considered
+            in the pareto front. If `None` is provided, all keys
+            belonging to output features with one of the following objectives will
+            be considered: `MaximizeObjective`, `MinimizeObjective`,
+            `CloseToTargetObjective`. Defaults to None.
+
+    Returns:
+        DataFrame with pareto optimal experiments.
+
+    """
     if output_feature_keys is None:
         outputs = domain.outputs.get_by_objective(
             includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
@@ -89,6 +114,18 @@ def compute_hypervolume(
     optimal_experiments: pd.DataFrame,
     ref_point: dict,
 ) -> float:
+    """Method to compute the hypervolume for a given domain and pareto optimal experiments.
+
+    Args:
+        domain: Domain for which the hypervolume should be computed.
+        optimal_experiments: Pareto optimal experiments for which the hypervolume
+            should be computed.
+        ref_point: Unmasked reference point for the hypervolume computation.
+            Masking is happening inside the method.
+
+    Returns:
+        Hypervolume for the given domain and pareto optimal experiments.
+    """
     outputs = domain.outputs.get_by_objective(
         includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
     )
@@ -134,11 +171,32 @@ def infer_ref_point(
     domain: Domain,
     experiments: pd.DataFrame,
     return_masked: bool = False,
+    reference_point: Optional[ExplicitReferencePoint] = None,
 ) -> Dict[str, float]:
+    """Method to infer the reference point for a given domain and experiments.
+
+    Args:
+        domain: Domain for which the reference point should be inferred.
+        experiments: Experiments for which the reference point should be inferred.
+        return_masked: If True, the masked reference point is returned. If False,
+            the unmasked reference point is returned. Defaults to False.
+        reference_point: Reference point to be used. If None is provided, the
+            reference value is inferred by the worst values seen so far for
+            every objective. Defaults to None.
+    """
     outputs = domain.outputs.get_by_objective(
         includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
     )
-    keys = [f.key for f in outputs]
+    keys = outputs.get_keys()
+
+    if reference_point is None:
+        reference_point = ExplicitReferencePoint(
+            values={
+                key: AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0)
+                for key in keys
+            }
+        )
+
     objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
 
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
@@ -146,14 +204,45 @@ def infer_ref_point(
         output_feature_keys=keys,
     )
 
-    ref_point_array = (
+    worst_values_array = (
         objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
         .numpy()
         .min(axis=0)
     )
 
+    best_values_array = (
+        objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
+        .numpy()
+        .max(axis=0)
+    )
+    # In the ref_point_array want masked values, which means that
+    # maximization is assumed for everything, this is because we use
+    # botorch objective for getting the best and worst values
+    # that are passed to the reference values. Botorch always assumes
+    # maximization.
+    # In case of FixedReferenceValue, the unmasked values are stored in the data model,
+    # this means the need to mask them to account for the botorch convention.
+    # In case of FixedReferenceValue, we multiply with -1 in for `MinimizeObjective`
+    # and `CloseToTargetObjective`.
+    ref_point_array = np.array(
+        [
+            -reference_point.values[key].get_reference_value(
+                best=best_values_array[i], worst=worst_values_array[i]
+            )
+            if isinstance(reference_point.values[key], FixedReferenceValue)
+            and isinstance(
+                outputs[i].objective, (MinimizeObjective, CloseToTargetObjective)
+            )
+            else reference_point.values[key].get_reference_value(
+                best=best_values_array[i], worst=worst_values_array[i]
+            )
+            for i, key in enumerate(keys)
+        ]
+    )
+
     mask = get_ref_point_mask(domain)
-    # ref_point_array = (df[keys].values * mask).min(axis=0)
+
+    # here we unmask again by dividing by the mask
     if return_masked is False:
         ref_point_array /= mask
     return {feat: ref_point_array[i] for i, feat in enumerate(keys)}

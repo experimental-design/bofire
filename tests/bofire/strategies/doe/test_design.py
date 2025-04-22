@@ -222,22 +222,6 @@ def test_find_local_max_ipopt_results():
         assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
-# def test_find_local_max_ipopt_sampling():
-#     # define problem
-#     problem = opti.Problem(
-#         inputs=[opti.Continuous(f"x{i}", [0, 1]) for i in range(3)],
-#         outputs=[opti.Continuous("y")],
-#     )
-
-
-#     # test sampling methods
-#     find_local_max_ipopt(problem, "linear", sampling=OptiSampling)
-#     find_local_max_ipopt(problem, "linear", sampling=CornerSampling)
-#     find_local_max_ipopt(problem, "linear", sampling=ProbabilitySimplexSampling)
-#     sampling = np.zeros(shape=(10, 3)).flatten()
-#     find_local_max_ipopt(problem, "linear", n_experiments=10, sampling=sampling)
-
-
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_batch_constraint():
     # define problem with batch constraints

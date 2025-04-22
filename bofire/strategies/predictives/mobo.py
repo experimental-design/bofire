@@ -16,6 +16,7 @@ from bofire.data_models.acquisition_functions.api import (
     qNEHVI,
 )
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
@@ -33,11 +34,11 @@ class MoboStrategy(BotorchStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.ref_point = data_model.ref_point
+        assert isinstance(data_model.ref_point, ExplicitReferencePoint)
+        self.ref_point: ExplicitReferencePoint = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
 
-    ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
@@ -100,17 +101,19 @@ class MoboStrategy(BotorchStrategy):
 
     def get_adjusted_refpoint(self) -> List[float]:
         assert self.experiments is not None, "No experiments available."
-        if self.ref_point is None:
-            df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments,
-            )
-            ref_point = infer_ref_point(
-                self.domain,
-                experiments=df,
-                return_masked=False,
-            )
-        else:
-            ref_point = self.ref_point
+        assert (
+            isinstance(self.ref_point, ExplicitReferencePoint) or self.ref_point is None
+        )
+        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments,
+        )
+        ref_point = infer_ref_point(
+            self.domain,
+            experiments=df,
+            return_masked=False,
+            reference_point=self.ref_point,
+        )
+
         return (
             self.ref_point_mask
             * np.array(
