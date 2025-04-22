@@ -300,7 +300,7 @@ def smart_round(
 
             # enforce that the sum of the auxiliary inputs times the allowed discrete values is equal to the discrete input
             constraints += [
-                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)
+                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)  # type: ignore
             ]
             b += [candidates_rounded[u].iloc[i]]
         y = cp.Variable(len(keys_continuous_inputs))
