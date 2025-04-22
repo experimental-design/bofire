@@ -5,7 +5,7 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import Input
+from bofire.data_models.features.api import CategoricalInput, DiscreteInput, Input
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     DoEOptimalityCriterion,
@@ -101,35 +101,30 @@ class DoEStrategy(Strategy):
             self.data_model.criterion,
             domain=relaxed_domain,
             n_experiments=_candidate_count,
-            formula=get_formula_from_string(
-                self.data_model.criterion.formula, self.domain
-            )
-            if isinstance(self.data_model.criterion, DoEOptimalityCriterion)
-            else None,
         )
         assert objective_function is not None, "Criterion type is not supported!"
-        design_relaxed = find_local_max_ipopt(
+        design = find_local_max_ipopt(
             relaxed_domain,
-            n_experiments=_candidate_count,
             fixed_experiments=None,
             partially_fixed_experiments=adapted_partially_fixed_candidates,
             ipopt_options=self.data_model.ipopt_options,
             objective_function=objective_function,
         )
-        design_partially_fixed = smart_round(
-            domain=self.domain,
-            candidates=design_relaxed,
-            mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
-            keys_continuous_inputs=[
-                continuous_input.key for continuous_input in mapped_continous_inputs
-            ],
-        )
-        design = project_df_to_orginal_domain(
-            design_partially_fixed,
-            aux_vars_for_discrete=aux_vars_for_discrete,
-            mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,
-            mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
-        )
+        if self.domain.inputs.get([DiscreteInput, CategoricalInput]) is not None:
+            design_projected = smart_round(
+                domain=self.domain,
+                candidates=design,
+                mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
+                keys_continuous_inputs=[
+                    continuous_input.key for continuous_input in mapped_continous_inputs
+                ],
+            )
+            design = project_df_to_orginal_domain(
+                design_projected,
+                aux_vars_for_discrete=aux_vars_for_discrete,
+                mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,
+                mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
+            )
         if self._return_fixed_candidates:
             fixed_experiments_count = 0
         return design.iloc[fixed_experiments_count:, :].reset_index(

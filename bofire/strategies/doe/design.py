@@ -24,7 +24,6 @@ from bofire.strategies.random import RandomStrategy
 
 def find_local_max_ipopt(
     domain: Domain,
-    n_experiments: int,
     objective_function: Objective,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
@@ -61,7 +60,7 @@ def find_local_max_ipopt(
     #
     # Checks and preparation steps
     #
-
+    n_experiments = objective_function.n_experiments
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
