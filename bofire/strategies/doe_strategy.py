@@ -16,6 +16,7 @@ from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
     filter_out_auxilliary_vars,
+    filter_out_categorical_vars,
     project_candidates_into_domain,
 )
 from bofire.strategies.strategy import Strategy
@@ -111,14 +112,24 @@ class DoEStrategy(Strategy):
             objective_function=objective_function,
         )
         if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
+            design_no_categoricals, design_categoricals = filter_out_categorical_vars(
+                design,
+                mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,
+                mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
+            )
             design_projected = project_candidates_into_domain(
                 domain=self.domain,
-                candidates=design,
+                candidates=design_no_categoricals,
                 mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
+                mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,
                 keys_continuous_inputs=[
                     continuous_input.key for continuous_input in mapped_continous_inputs
                 ],
                 scip_params=self.data_model.scip_params,
+            )
+            design_projected = design_projected.join(
+                design_categoricals,
+                how="left",
             )
             design = filter_out_auxilliary_vars(
                 design_projected,

@@ -245,6 +245,50 @@ def filter_out_auxilliary_vars(
     return df
 
 
+def filter_out_categorical_vars(
+    df: pd.DataFrame,
+    mapped_aux_categorical_inputs: Optional[List[ContinuousInput]] = None,
+    mappings_categorical_var_key_to_aux_var_key_state_pairs: Optional[
+        Dict[str, Dict[str, str]]
+    ] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Projects the dataframe to the original domain by removing the auxiliary inputs and mapping the discrete inputs
+    back to their original values.
+    Args:
+        df (pd.DataFrame): The dataframe to project.
+        mappings_categorical_var_key_to_aux_var_key_state_pairs (Dict[str, Dict[str, str]]): The mappings for categorical inputs.
+    Returns:
+       Tuple[pd.DataFrame, pd.DataFrame]: The projected dataframe.
+    The first dataframe contains the variables not associated with the categorical inputs.
+    The second dataframe contains the categorical inputs.
+    """
+    df_categorical = pd.DataFrame(index=df.index)
+    # set the categorical inputs according to the auxiliary inputs
+    # set the categorical inputs according to the auxiliary inputs
+    if (mapped_aux_categorical_inputs is not None) and (
+        mappings_categorical_var_key_to_aux_var_key_state_pairs is not None
+    ):
+        for (
+            input_key,
+            mapping,
+        ) in mappings_categorical_var_key_to_aux_var_key_state_pairs.items():
+            aux_keys = mapping.keys()
+            df[input_key] = df[aux_keys].idxmax(axis=1)
+            df[input_key] = df[input_key].map(mapping)
+        # drop the auxiliary inputs
+        df = df.drop(columns=[input.key for input in mapped_aux_categorical_inputs])
+    # drop the categorical inputs
+    if mappings_categorical_var_key_to_aux_var_key_state_pairs is not None:
+        categorical_inputs = [
+            input_key
+            for input_key, _ in mappings_categorical_var_key_to_aux_var_key_state_pairs.keys()
+        ]
+        df_categorical = df[categorical_inputs].copy()
+        df = df.drop(columns=categorical_inputs)
+    return df, df_categorical
+
+
 def project_candidates_into_domain(
     domain: Domain,
     candidates: pd.DataFrame,
