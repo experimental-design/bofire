@@ -7,12 +7,15 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
+    filter_out_categorical_and_categorical_auxilliary_vars,
+    filter_out_discrete_auxilliary_vars,
     project_candidates_into_domain,
 )
 
@@ -25,6 +28,7 @@ def test_domain_relaxation():
                 DiscreteInput(key="x2", values=[0.7, 10]),
                 ContinuousInput(key="x3", bounds=[10, 11]),
                 ContinuousInput(key="x4", bounds=[5, 11]),
+                CategoricalInput(key="x5", categories=["a", "b", "c"]),
             ]
         ),
         constraints=Constraints(
@@ -53,12 +57,12 @@ def test_domain_relaxation():
     ) = create_continuous_domain(domain=domain)
 
     assert len(relaxed_domain.inputs.get([DiscreteInput])) == 0
-    assert len(relaxed_domain.inputs.get([ContinuousInput])) == 8
+    assert len(relaxed_domain.inputs.get([ContinuousInput])) == 11
     assert len(relaxed_domain.constraints.get([LinearInequalityConstraint])) == 1
-    assert len(relaxed_domain.constraints.get([LinearEqualityConstraint])) == 5
+    assert len(relaxed_domain.constraints.get([LinearEqualityConstraint])) == 6
     assert len(relaxed_domain.constraints.get([NChooseKConstraint])) == 0
 
-    assert len(mappings_categorical_var_key_to_aux_var_key_state_pairs) == 0
+    assert len(mappings_categorical_var_key_to_aux_var_key_state_pairs) == 1
     assert len(mapping_discrete_input_to_discrete_aux) == 2
     assert len(aux_vars_for_discrete) == 4
 
@@ -93,6 +97,107 @@ def test_domain_relaxation():
         coefficients=[1.0] + [-0.7, -10.0],
         rhs=0.0,
     ) in relaxed_domain.constraints.get([LinearEqualityConstraint])
+
+    assert len(mapped_aux_categorical_inputs) == 3
+    assert len(mappings_categorical_var_key_to_aux_var_key_state_pairs["x5"]) == 3
+
+    assert LinearEqualityConstraint(
+        features=["aux_x5_a", "aux_x5_b", "aux_x5_c"],
+        coefficients=[1] * 3,
+        rhs=1,
+    ) in relaxed_domain.constraints.get([LinearEqualityConstraint])
+
+    df_sample = relaxed_domain.inputs.sample(10)
+    assert len(df_sample) == 10
+    assert len(df_sample.columns) == 11
+    print(df_sample)
+
+    df_no_categorical, df_categorical = (
+        filter_out_categorical_and_categorical_auxilliary_vars(
+            df_sample,
+            mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
+            mappings_categorical_var_key_to_aux_var_key_state_pairs=mappings_categorical_var_key_to_aux_var_key_state_pairs,
+        )
+    )
+    assert df_no_categorical.shape == (10, 8)
+    assert df_categorical.shape == (10, 1)
+    assert (
+        pd.testing.assert_frame_equal(
+            df_no_categorical[
+                [
+                    "x1",
+                    "x2",
+                    "x3",
+                    "x4",
+                    "aux_x1_0_3",
+                    "aux_x1_5_0",
+                    "aux_x2_0_7",
+                    "aux_x2_10_0",
+                ]
+            ],
+            df_sample[
+                [
+                    "x1",
+                    "x2",
+                    "x3",
+                    "x4",
+                    "aux_x1_0_3",
+                    "aux_x1_5_0",
+                    "aux_x2_0_7",
+                    "aux_x2_10_0",
+                ]
+            ],
+            check_dtype=False,
+        )
+        is None
+    )
+    assert (
+        pd.testing.assert_frame_equal(
+            df_categorical[["x5"]],
+            df_sample[
+                [
+                    "x5",
+                ]
+            ],
+            check_dtype=False,
+        )
+        is None
+    )
+
+    df_no_discrete_aux = filter_out_discrete_auxilliary_vars(
+        df_sample, aux_vars_for_discrete=aux_vars_for_discrete
+    )
+    assert df_no_discrete_aux.shape == (10, 8)
+    assert (
+        pd.testing.assert_frame_equal(
+            df_no_discrete_aux[
+                [
+                    "x1",
+                    "x2",
+                    "x3",
+                    "x4",
+                    "x5",
+                    "aux_x5_a",
+                    "aux_x5_b",
+                    "aux_x5_c",
+                ]
+            ],
+            df_sample[
+                [
+                    "x1",
+                    "x2",
+                    "x3",
+                    "x4",
+                    "x5",
+                    "aux_x5_a",
+                    "aux_x5_b",
+                    "aux_x5_c",
+                ]
+            ],
+            check_dtype=False,
+        )
+        is None
+    )
 
 
 def test_project_candidates_into_domain_categorical_discrete():
