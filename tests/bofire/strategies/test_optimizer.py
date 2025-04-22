@@ -10,7 +10,6 @@ from bofire.data_models.constraints import api as constraints_data_models
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.strategies import api as data_models_strategies
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.strategies import api as strategies
 
 
@@ -84,9 +83,7 @@ class ConstraintCollection:
     def nchoosek_constr_for_ackley(domain: Domain) -> Domain:
         for inp in domain.inputs.get(ContinuousInput).features:
             inp.bounds = (0.0, 32.768)
-        feat = [
-            key for key in domain.inputs.get_keys() if key.startswith("x")
-        ]
+        feat = [key for key in domain.inputs.get_keys() if key.startswith("x")]
         domain.constraints.constraints += [
             constraints_data_models.NChooseKConstraint(
                 features=feat,
@@ -96,7 +93,6 @@ class ConstraintCollection:
             )
         ]
         return domain
-
 
     @staticmethod
     def nchoosek_constr_for_detergent(domain: Domain) -> Domain:
