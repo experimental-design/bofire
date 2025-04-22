@@ -364,7 +364,7 @@ def smart_round(
         cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
     )
     prob = cp.Problem(objective=objective, constraints=constraints)
-    prob.solve()
+    prob.solve(solver="SCIP")
     return pd.DataFrame(
         data=np.concatenate([var.value for var in cp_variables], axis=0).reshape(
             candidates.shape[0], candidates.shape[1]
