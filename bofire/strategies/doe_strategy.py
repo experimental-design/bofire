@@ -110,7 +110,7 @@ class DoEStrategy(Strategy):
             ipopt_options=self.data_model.ipopt_options,
             objective_function=objective_function,
         )
-        if self.domain.inputs.get([DiscreteInput, CategoricalInput]) is not None:
+        if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
             design_projected = smart_round(
                 domain=self.domain,
                 candidates=design,

@@ -629,4 +629,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_discrete_doe_w_constraints()
+    test_nchoosek_implemented()
