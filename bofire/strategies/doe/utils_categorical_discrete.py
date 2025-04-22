@@ -265,7 +265,6 @@ def filter_out_categorical_vars(
     """
     df_categorical = pd.DataFrame(index=df.index)
     # set the categorical inputs according to the auxiliary inputs
-    # set the categorical inputs according to the auxiliary inputs
     if (mapped_aux_categorical_inputs is not None) and (
         mappings_categorical_var_key_to_aux_var_key_state_pairs is not None
     ):
