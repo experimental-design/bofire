@@ -105,6 +105,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
     n_raw_samples: IntPowerOfTwo = 1024
     maxiter: PositiveInt = 2000
     batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
+    sequential: bool = False
+    # for a discussion on the use of sequential, have a look here
+    # https://github.com/pytorch/botorch/discussions/2810
 
     # encoding params
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE

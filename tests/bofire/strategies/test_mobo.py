@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from botorch.acquisition.multi_objective import (  # qLogExpectedHypervolumeImprovement,; qLogNoisyExpectedHypervolumeImprovement,
+from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
+    qLogExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.acquisition.multi_objective.logei import (  # qExpectedHypervolumeImprovement,
-    qLogExpectedHypervolumeImprovement,
+from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
 )
 
@@ -24,9 +24,72 @@ from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.predictives.mobo import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+    RelativeMovingReferenceValue,
+    RelativeToMaxMovingReferenceValue,
+)
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.api import RandomStrategy
-from tests.bofire.utils.test_multiobjective import dfs, valid_domains
+from tests.bofire.utils.test_multiobjective import (
+    dfs,
+    invalid_domains,
+    valid_constrained_domains,
+    valid_domains,
+)
+
+
+@pytest.mark.parametrize(
+    "domain, ref_point",
+    [
+        (invalid_domains[0], None),
+        (invalid_domains[1], None),
+        (valid_domains[0], [0]),
+        (valid_domains[0], {}),
+        (valid_domains[0], {"of1": 0.0, "of2": 0, "of3": 0}),
+        (valid_domains[0], {"of1": 0.0}),
+        (valid_domains[0], {"of1": 0.0, "of3": 0.0}),
+    ],
+)
+def test_invalid_mobo(domain, ref_point):
+    with pytest.raises(ValueError):
+        data_models.MoboStrategy(domain=domain, ref_point=ref_point)
+
+
+@pytest.mark.parametrize("domain", valid_constrained_domains)
+def test_qlognehvi_valid_constrained_objectives(domain):
+    data_models.MoboStrategy(domain=domain)
+
+
+def dict_to_explicit_ref_point_fixed(dict):
+    return ExplicitReferencePoint(
+        values={k: FixedReferenceValue(value=v) for k, v in dict.items()}
+    )
+
+
+def dict_to_explicit_ref_point_absolutemoving(dict):
+    return ExplicitReferencePoint(
+        values={
+            k: AbsoluteMovingReferenceValue(offset=1, orient_at_best=False)
+            for k, v in dict.items()
+        }
+    )
+
+
+def dict_to_explicit_ref_point_relativemoving(dict):
+    return ExplicitReferencePoint(
+        values={k: RelativeMovingReferenceValue(scaling=-0.2) for k, v in dict.items()}
+    )
+
+
+def dict_to_explicit_ref_point_relativetomaxmoving(dict):
+    return ExplicitReferencePoint(
+        values={
+            k: RelativeToMaxMovingReferenceValue(scaling=-0.2) for k, v in dict.items()
+        }
+    )
 
 
 @pytest.mark.parametrize(
@@ -34,6 +97,54 @@ from tests.bofire.utils.test_multiobjective import dfs, valid_domains
     [
         (valid_domains[0], {"of1": 0.5, "of2": 10.0}, dfs[0], [0.5, -10.0]),
         (valid_domains[1], {"of1": 0.5, "of3": 0.5}, dfs[1], [0.5, 0.5]),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_fixed({"of1": 0.5, "of2": 10.0}),
+            dfs[0],
+            [0.5, -10.0],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_fixed({"of1": 0.5, "of3": 0.5}),
+            dfs[1],
+            [0.5, 0.5],
+        ),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_absolutemoving({"of1": None, "of2": None}),
+            dfs[0],
+            [2.0, -4.0],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_absolutemoving({"of1": None, "of3": None}),
+            dfs[1],
+            [2.0, 3.0],
+        ),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_relativemoving({"of1": None, "of2": None}),
+            dfs[0],
+            [8.2, -2.6],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_relativemoving({"of1": None, "of3": None}),
+            dfs[1],
+            [8.2, 4.4],
+        ),
+        (
+            valid_domains[0],
+            dict_to_explicit_ref_point_relativetomaxmoving({"of1": None, "of2": None}),
+            dfs[0],
+            [8.0, -1.6],
+        ),
+        (
+            valid_domains[1],
+            dict_to_explicit_ref_point_relativetomaxmoving({"of1": None, "of3": None}),
+            dfs[1],
+            [8.0, 4.0],
+        ),
         (valid_domains[0], None, dfs[0], [1.0, -5.0]),
         (valid_domains[1], None, dfs[1], [1.0, 2.0]),
     ],

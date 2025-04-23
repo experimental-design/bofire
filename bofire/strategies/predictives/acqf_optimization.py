@@ -295,6 +295,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         self.n_raw_samples = data_model.n_raw_samples
         self.maxiter = data_model.maxiter
         self.batch_limit = data_model.batch_limit
+        self.sequential = data_model.sequential
 
         # just for completeness here, we should drop the support for FREE and only go over ones that are also
         # allowed, for more speedy optimization we can user other solvers
@@ -343,6 +344,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinear_constraints=nonlinears,  # type: ignore
             fixed_features=fixed_features,
             fixed_features_list=fixed_features_list,
+            sequential=self.sequential,
         )
 
         candidates = self._candidates_tensor_to_dataframe(
@@ -364,6 +366,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 nonlinear_constraints=nonlinears,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
+                sequential=self.sequential,
             )
             if self.local_search_config.is_local_step(
                 local_acqf_val.item(),
@@ -398,6 +401,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         nonlinear_constraints: List[Callable[[Tensor], float]],
         fixed_features: Optional[Dict[int, float]],
         fixed_features_list: Optional[List[Dict[int, float]]],
+        sequential: bool,
     ) -> Tuple[Tensor, Tensor]:
         if len(acqfs) > 1:
             candidates, acqf_vals = optimize_acqf_list(
@@ -466,6 +470,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 return_best_only=True,
                 options=self._get_optimizer_options(domain),  # type: ignore
                 ic_generator=ic_generator,
+                sequential=sequential,
                 **ic_gen_kwargs,
             )
         return candidates, acqf_vals
