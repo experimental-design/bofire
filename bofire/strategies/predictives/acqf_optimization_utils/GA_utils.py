@@ -520,6 +520,8 @@ class LinearProjection(PymooRepair):
         self.bounds = bounds
 
         cvxopt.solvers.options["show_progress"] = False
+        cvxopt.solvers.options["maxiters"] = 1000
+        cvxopt.solvers.options["abstol"] = 1e-9
 
         super().__init__()
 
@@ -675,7 +677,6 @@ def get_problem_and_algorithm(
     # ==== Algorithm ====
     algorithm_args = {
         "pop_size": data_model.population_size,
-        # todo: other algorithm options, like n_offspring, crossover-functions etc.
     }
 
     # We handle linear equality constraint with a repair function

@@ -730,7 +730,58 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
 
 class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
-    """Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm."""
+    """
+    Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm.
+
+    This optimizer uses a population-based approach to optimize acquisition functions. Currently, only
+    single-objective optimization is supported. The algorithm evolves a population of
+    candidate solutions over multiple generations using genetic operators such as mutation, crossover,
+    and selection.
+
+    - `CategoricalInput` variables, which are treated as one-hot-encoded columns by the model and the acquisition functions, are turned into categorical variables for the GA optimization. In the objective function, these categorical variables are transformed to one-hot-encoded tensors. The object `BofireDomainMixedVars` handles this conversion.
+    - `CategoricalDescriptorInput` is also transformed in to a categorical pymoo variable, but transformed into the descriptor space
+    - `DiscreteInput` will be converted to an pymoo Integer.
+
+    All transformations are handled in the helper class `BofireDomainMixedVars`
+
+    **Constraints**
+    The GA cannot handle equality constraints well. Constraints are therefor handled differently:
+
+    - Constraints of the type `LinearEqualityConstraint`, `LinearInequalityConstraint`, and `NChooseKConstraint` are handled in a "repair-function". This repair function is used by the GA to map all individuals from the population $x$ to the feasible space $x'$. In this case, I implemented a repair-function for an arbitrary mixture of linear equality and inequality constraints with a quadratic programming approach:
+
+    $$
+    \min_{x'} \left( ||x-x' ||_2^2 \right)
+    $$
+
+    s.t.
+
+    $$
+    A \cdot x' = b
+    $$
+
+    $$
+    G \cdot x' <= h
+    $$
+
+    $$
+    lb <= x' <= ub
+    $$
+
+    The `NChooseKConstraint` is also handled in the reapir function: For each experiment in the population, the smallest factors are set to 0, if the *max_features* constraint is violated, and the upper bound of the largest feactors is set to an offset (defaults to $1e-3$), if the *min_features* constraint is violated.
+
+    The repair functions are handled in the class `LinearProjection`.
+
+    - Other supported constraints are: `ProductInequalityConstraint` and `NonlinearInequalityConstraint`. `ProductInequalityConstraint` are evaluated by the torch-callable, provided by the `get_nonlinear_constraints` function. `NonlinearInequalityConstraint` are evaluated from the experiments data-frame, by the constraints `__call__` method.
+
+
+    These are handled by the optimizer.
+
+    `NonlinearEqualityConstraints` are not supported.
+
+
+
+    """
+
 
     def __init__(self, data_model: GeneticAlgorithmDataModel):
         super().__init__(data_model)
@@ -744,7 +795,19 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """Main function for optimizing the acquisition function using pymoo's genetic algorithm."""
+        """
+        Main function for optimizing the acquisition function using the genetic algorithm.
+
+        Args:
+            candidate_count (int): Number of candidates to generate.
+            acqfs (List[AcquisitionFunction]): List of acquisition functions to optimize.
+            domain (Domain): The domain of the optimization problem.
+            input_preprocessing_specs (InputTransformSpecs): Preprocessing specifications for the inputs.
+            experiments (Optional[pd.DataFrame]): Existing experiments, if any.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: Optimized candidates and their corresponding objective values.
+        """
 
         # Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
         candidates, _ = self._single_shot_optimization(

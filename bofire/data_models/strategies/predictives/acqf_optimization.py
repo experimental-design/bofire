@@ -198,7 +198,26 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
 
 class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
-    """Genetic Algorithm for acquisition function optimization"""
+    """
+    Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm.
+
+    This optimizer uses a population-based approach to optimize acquisition functions. Currently, only
+    single-objective optimization is supported. The algorithm evolves a population of
+    candidate solutions over multiple generations using genetic operators such as mutation, crossover,
+    and selection.
+    Depending on the domain, the algorithm uses different encodings for the decision variables:
+    - Continuous features are encoded as continuous variables.
+    - Categorical features are encoded categories
+    - Discrete features are encoded as integers.
+
+    Attributes:
+        population_size (int): The size of the population in each generation.
+        xtol (float): Tolerance for changes in the decision variables across generations.
+        cvtol (float): Tolerance for constraint violations.
+        ftol (float): Tolerance for changes in the objective function values across generations.
+        n_max_gen (int): Maximum number of generations to run the algorithm.
+        n_max_evals (int): Maximum number of function evaluations allowed.
+    """
 
     type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
 
