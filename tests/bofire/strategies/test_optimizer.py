@@ -148,17 +148,18 @@ class OptimizerBenchmark:
         if (
             len(
                 domain.constraints.get(
-                    [constraints_data_models.NonlinearInequalityConstraint,
-                        constraints_data_models.NChooseKConstraint]
+                    [
+                        constraints_data_models.NonlinearInequalityConstraint,
+                        constraints_data_models.NChooseKConstraint,
+                    ]
                 ).constraints
             )
             > 0
         ):
             if isinstance(optimizer, data_models_strategies.BotorchOptimizer):
-                pytest.skip("skipping nonlinear constraints and n-choose-k constr. for botorch optimizer")
-
-
-
+                pytest.skip(
+                    "skipping nonlinear constraints and n-choose-k constr. for botorch optimizer"
+                )
 
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
         strategy = strategies.map(strategy)

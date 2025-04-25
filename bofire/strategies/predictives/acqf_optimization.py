@@ -750,17 +750,17 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     - Constraints of the type `LinearEqualityConstraint`, `LinearInequalityConstraint`, and `NChooseKConstraint` are handled in a "repair-function". This repair function is used by the GA to map all individuals from the population $x$ to the feasible space $x'$. In this case, I implemented a repair-function for an arbitrary mixture of linear equality and inequality constraints with a quadratic programming approach:
 
     $$
-    \min_{x'} \left( ||x-x' ||_2^2 \right)
+    \\min_{x'} \\left( ||x-x' ||_2^2 \right)
     $$
 
     s.t.
 
     $$
-    A \cdot x' = b
+    A \\cdot x' = b
     $$
 
     $$
-    G \cdot x' <= h
+    G \\cdot x' <= h
     $$
 
     $$
@@ -781,7 +781,6 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
 
 
     """
-
 
     def __init__(self, data_model: GeneticAlgorithmDataModel):
         super().__init__(data_model)
