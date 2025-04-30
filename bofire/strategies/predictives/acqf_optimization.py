@@ -838,7 +838,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             Tensor: x_opt as (d,) Tensor
             Tensor: f_opt as (n_y,) Tensor
         """
-        problem, algorithm, termination = GA_utils.get_problem_and_algorithm(
+        problem, algorithm, termination = utils.get_problem_and_algorithm(
             self.data_model,
             domain,
             input_preprocessing_specs,
