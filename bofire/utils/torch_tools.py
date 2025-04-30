@@ -256,15 +256,10 @@ def get_nonlinear_constraints(
         as input and return a float value representing the constraint evaluation.
 
     """
-    if includes is None:
-        includes = [
-            NChooseKConstraint,
-            ProductInequalityConstraint,
-        ]
-    else:
-        assert all(
-            (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
-        ), "Only NChooseK and ProductInequality constraints are supported."
+    includes = includes or [NChooseKConstraint, ProductInequalityConstraint]
+    assert all(
+        (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
+    ), "Only NChooseK and ProductInequality constraints are supported."
 
     callables = []
     if NChooseKConstraint in includes:
