@@ -135,21 +135,26 @@ class GaMixedDomainHandler:
     def column_name_mapping(self) -> Dict[str, List[str]]:
         """Mapping of original column name to ..._qi columns with q-points repeats"""
         return {
-            key: [f"{key}_q{qi}" for qi in range(self.q)] for key in self.domain.inputs.get_keys()
+            key: [f"{key}_q{qi}" for qi in range(self.q)]
+            for key in self.domain.inputs.get_keys()
         }
 
     @property
     def column_name_mapping_inverse(self) -> Dict[str, str]:
         """Mapping of ..._qi columns to original column name"""
         return {
-            f"{key}_q{qi}": key for key in self.domain.inputs.get_keys() for qi in range(self.q)
+            f"{key}_q{qi}": key
+            for key in self.domain.inputs.get_keys()
+            for qi in range(self.q)
         }
 
     @property
     def column_name_mapping_inverse_qindex(self) -> Dict[str, int]:
         """Mapping of ..._qi columns to index of q_point"""
         return {
-            f"{key}_q{qi}": qi for key in self.domain.inputs.get_keys() for qi in range(self.q)
+            f"{key}_q{qi}": qi
+            for key in self.domain.inputs.get_keys()
+            for qi in range(self.q)
         }
 
     def pymoo_vars(self) -> Dict[str, pymoo_variable.Variable]:
@@ -161,7 +166,13 @@ class GaMixedDomainHandler:
         """
         vars = {}
         for qi in range(self.q):
-            vars = {**vars, **{self.column_name_mapping[key][qi]: var for key, var in self.vars.items()}}
+            vars = {
+                **vars,
+                **{
+                    self.column_name_mapping[key][qi]: var
+                    for key, var in self.vars.items()
+                },
+            }
         return vars
 
     def _pymoo_specific_transform(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -188,13 +199,17 @@ class GaMixedDomainHandler:
     def transform_to_experiments(self, X: List[dict]) -> List[pd.DataFrame]:
         """Transform to a list of "experiments" dataframes for each q-point"""
         experiments = pd.DataFrame.from_records(X)
-        q_column = np.array([self.column_name_mapping_inverse_qindex[x] for x in list(experiments)])
+        q_column = np.array(
+            [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
+        )
 
         experiments_out = []
 
         for qi in range(self.q):
             experiments_qi = experiments.iloc[:, q_column == qi]
-            experiments_qi.columns = [self.column_name_mapping_inverse[x] for x in experiments_qi.columns]
+            experiments_qi.columns = [
+                self.column_name_mapping_inverse[x] for x in experiments_qi.columns
+            ]
             experiments_qi = self._pymoo_specific_transform(experiments_qi)
             experiments_out.append(experiments_qi)
 
@@ -258,7 +273,9 @@ class GaMixedDomainHandler:
 
         # appending "_qi" to headers
         for i, experiment in enumerate(experiments):
-            experiment.columns = [self.column_name_mapping[col][i] for col in list(experiment)]
+            experiment.columns = [
+                self.column_name_mapping[col][i] for col in list(experiment)
+            ]
 
         # concatenate
         experiments = pd.concat(experiments, axis=1)
