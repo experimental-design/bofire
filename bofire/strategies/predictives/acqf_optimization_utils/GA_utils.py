@@ -258,7 +258,7 @@ class GaMixedDomainHandler:
 
         # appending "_qi" to headers
         for i, experiment in enumerate(experiments):
-            experiment.columns = [[self.column_name_mapping[col][i]] for col in list(experiment)]
+            experiment.columns = [self.column_name_mapping[col][i] for col in list(experiment)]
 
         # concatenate
         experiments = pd.concat(experiments, axis=1)
