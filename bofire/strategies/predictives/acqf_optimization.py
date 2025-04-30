@@ -46,7 +46,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
-from bofire.strategies.predictives.acqf_optimization_utils import GA_utils
+from bofire.strategies.predictives import utils
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
