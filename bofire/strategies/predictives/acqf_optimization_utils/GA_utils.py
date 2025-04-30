@@ -167,7 +167,7 @@ class GaMixedDomainHandler:
     def _pymoo_specific_transform(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """handles the non-domain encodings (e.g. pymoo-type 'Integer' to discrete"""
         for key, conversion in self.pymoo_conversion.items():
-            experiments[key] = [conversion[i] for i in experiments[key]]
+            experiments[key] = experiments[key].replace(conversion)
         return experiments
 
     def _transform(self, X: List[dict]) -> np.ndarray:
