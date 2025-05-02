@@ -89,7 +89,7 @@ class GaMixedDomainHandler:
             if isinstance(input_ref, ContinuousInput) and spec_ is None:
                 # simple case: non-transformed continuous variable
                 bounds_org = np.array(
-                    domain.inputs.get_by_key(key).get_bounds(spec_)
+                    domain.inputs.get_by_key(key).get_bounds(spec_) # type: ignore
                 ).reshape(-1)
                 self.vars[key] = pymoo_variable.Real(
                     bounds=bounds_org
@@ -101,7 +101,7 @@ class GaMixedDomainHandler:
             ):
                 # categorical descriptor
                 self.vars[key] = pymoo_variable.Choice(
-                    options=domain.inputs.get_by_key(key).get_allowed_categories(),
+                    options=input_ref.get_allowed_categories(),
                 )
 
             elif (
@@ -110,7 +110,7 @@ class GaMixedDomainHandler:
             ):
                 # one-hot encoded categorical input
                 self.vars[key] = pymoo_variable.Choice(
-                    options=domain.inputs.get_by_key(key).get_allowed_categories(),
+                    options=input_ref.get_allowed_categories(),
                 )
 
             elif isinstance(input_ref, DiscreteInput) and spec_ is None:
@@ -307,7 +307,7 @@ class AcqfOptimizationProblem(PymooProblem):
         input_preprocessing_specs: InputTransformSpecs,
         q: int,
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
-        nonlinear_pandas_constraints: Optional[List[Constraint]] = None,
+        nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
     ):
         self.acqfs = acqfs
         assert len(acqfs) == 1, "Only one acquisition function is supported for now"
@@ -358,7 +358,7 @@ class AcqfOptimizationProblem(PymooProblem):
             G = []
             for constr in self.nonlinear_torch_constraints:
                 constr_val = -constr[0](x)  # converting to form g(x) <= 0
-                G.append(constr_val.detach().numpy())
+                G.append(constr_val.detach().numpy())  # type: ignore
 
             out["G"] = np.hstack(G)
 
@@ -546,7 +546,7 @@ class LinearProjection(PymooRepair):
             )
             if n_choose_k_constraints.constraints:
                 self.n_choose_k_constr = NChooseKBoundProjection(
-                    n_choose_k_constraints.constraints,
+                    n_choose_k_constraints.constraints,  # type: ignore
                     bounds.detach().numpy(),
                     n_choose_k_constr_min_delta,
                 )
