@@ -89,7 +89,7 @@ class GaMixedDomainHandler:
             if isinstance(input_ref, ContinuousInput) and spec_ is None:
                 # simple case: non-transformed continuous variable
                 bounds_org = np.array(
-                    domain.inputs.get_by_key(key).get_bounds(spec_) # type: ignore
+                    domain.inputs.get_by_key(key).get_bounds(spec_)  # type: ignore
                 ).reshape(-1)
                 self.vars[key] = pymoo_variable.Real(
                     bounds=bounds_org
