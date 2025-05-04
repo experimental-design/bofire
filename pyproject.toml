@@ -40,6 +40,8 @@ optimization = [
     "sympy>=1.12",
     "cvxpy[CLARABEL]",
     "scikit-learn>=1.0.0,<1.6",
+    "pymoo>=0.6.0",
+    "cvxopt",
 ]
 entmoot = ["entmoot>=2.0.6"]
 xgb = ["xgboost>=1.7.5"]
@@ -85,6 +87,8 @@ all = [
     "jupyter",
     "matplotlib",
     "seaborn",
+    "pymoo>=0.6.0",
+    "cvxopt",
 ]
 
 [tool.setuptools.packages]

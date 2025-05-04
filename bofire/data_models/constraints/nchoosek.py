@@ -39,6 +39,14 @@ class NChooseKConstraint(IntrapointConstraint):
                 raise ValueError(
                     f"Feature {f} is not a continuous input feature in the provided Inputs object.",
                 )
+            feature_ = inputs.get_by_key(f)
+            assert isinstance(
+                feature_, ContinuousInput
+            ), f"Feature {f} is not a ContinuousInput."
+            if feature_.bounds[0] < 0:
+                raise ValueError(
+                    f"Feature {f} must have a lower bound of >=0, but has {feature_.bounds[0]}",
+                )
 
     @model_validator(mode="after")
     def validate_counts(self):
