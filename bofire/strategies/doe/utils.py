@@ -65,7 +65,7 @@ def get_formula_from_string(
         inputs = copy(inputs)
         categorical_inputs = list(inputs.get([CategoricalInput]))
         _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
-            categorical_inputs=categorical_inputs
+            categorical_inputs=categorical_inputs  # type: ignore
         )
         inputs = Inputs(
             features=list(inputs.get(excludes=[CategoricalInput]))
