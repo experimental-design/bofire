@@ -45,14 +45,6 @@ class DoEStrategy(Strategy):
         )
         self._return_fixed_candidates = data_model.return_fixed_candidates
 
-    @property
-    def formula(self):
-        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
-            return get_formula_from_string(
-                self.data_model.criterion.formula, self.data_model.domain
-            )
-        return None
-
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)
         to_many_columns = []
@@ -140,9 +132,16 @@ class DoEStrategy(Strategy):
         )
 
     def get_required_number_of_experiments(self) -> Optional[int]:
-        if self.formula:
-            return get_n_experiments(self.formula) - n_zero_eigvals(
-                domain=self.data_model.domain, model_type=self.formula
+        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
+            if self.domain.inputs.get([DiscreteInput, CategoricalInput]):
+                _domain, _, _, _, _, _ = create_continuous_domain(domain=self.domain)
+            else:
+                _domain = self.domain
+            formula = get_formula_from_string(
+                self.data_model.criterion.formula, inputs=self.domain.inputs
+            )
+            return get_n_experiments(formula) - n_zero_eigvals(
+                domain=_domain, model_type=formula
             )
         else:
             ValueError(

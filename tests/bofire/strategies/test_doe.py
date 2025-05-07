@@ -499,7 +499,7 @@ def test_functional_constraint():
     assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
 
 
-def test_discrete_doe_w_constraints():
+def test_discrete_and_categorical_doe_w_constraints():
     np.random.seed(0)
     torch.manual_seed(0)
     torch.cuda.manual_seed(0)
@@ -542,8 +542,65 @@ def test_discrete_doe_w_constraints():
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=10, raise_validation_error=True)
-    assert candidates.shape == (10, 7)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 7)
+
+
+def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    continuous_var = [ContinuousInput(key="a", bounds=[0, 1]) for i in range(1)]
+    all_inputs = [
+        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        CategoricalInput(key="c", categories=["meep", "moop"]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["b", "a"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    excepted_num_candidates = {
+        "linear": 7,  # 1+a+b+c+3
+        "linear-and-quadratic": 9,  # 1+a+b+c+a**2+b**2+3
+        "linear-and-interactions": 10,  # 1+a+b+c+ab+ac+bc+3
+        "fully-quadratic": 12,  # 1+a+b+c+a**2+b**2+ab+ac+bc+3
+    }
+
+    for model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
+        data_model = data_models.DoEStrategy(
+            domain=domain,
+            criterion=DOptimalityCriterion(formula=model_type),
+            verbose=True,
+            scip_params={"parallel/maxnthreads": 1},
+        )
+        strategy = DoEStrategy(data_model=data_model)
+        n_exp = strategy.get_required_number_of_experiments()
+        assert (
+            n_exp == excepted_num_candidates[model_type]
+        ), f"Expected {excepted_num_candidates[model_type]} candidates, got {n_exp}"
+        candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+        assert candidates.shape == (
+            n_exp,
+            3,
+        ), f"Expected {n_exp} candidates, got {candidates.shape[0]}"
 
 
 def test_compare_discrete_to_continuous_mapping_with_thresholding():
@@ -632,4 +689,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_discrete_doe_w_constraints()
+    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()

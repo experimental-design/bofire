@@ -1,6 +1,7 @@
 import importlib.util
 import sys
 import warnings
+from copy import copy
 from itertools import combinations
 from typing import List, Optional, Tuple, Union
 
@@ -20,7 +21,8 @@ from bofire.data_models.constraints.api import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.data_models.domain.domain import Domain
+from bofire.data_models.domain.api import Domain, Inputs
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.doe_problem import (
@@ -28,6 +30,9 @@ from bofire.strategies.doe.doe_problem import (
     SecondOrderDoEProblem,
 )
 from bofire.strategies.doe.objective_base import Objective
+from bofire.strategies.doe.utils_categorical_discrete import (
+    map_categorical_to_continuous,
+)
 from bofire.strategies.random import RandomStrategy
 
 
@@ -36,7 +41,7 @@ CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 def get_formula_from_string(
     model_type: Union[str, Formula] = "linear",
-    domain: Optional[Domain] = None,
+    inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
@@ -55,25 +60,47 @@ def get_formula_from_string(
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(2000)
 
+    # categorical variables should not show up in formula
+    if inputs is not None and len(inputs.get([CategoricalInput])) > 0:
+        inputs = copy(inputs)
+        categorical_inputs = list(inputs.get([CategoricalInput]))
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=categorical_inputs
+        )
+        inputs = Inputs(
+            features=list(inputs.get(excludes=[CategoricalInput]))
+            + categorical_one_hot_variabes
+        )
+
     if isinstance(model_type, Formula):
         return model_type
         # build model if a keyword and a problem are given.
-    # linear model
-    if model_type == "linear":
-        formula = linear_formula(domain)
+    # linear model#
 
-    # linear and interactions model
-    elif model_type == "linear-and-quadratic":
-        formula = linear_and_quadratic_formula(domain)
+    if model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
+        if inputs is None:
+            raise ValueError(
+                "Inputs must be provided if only a model type is given.",
+            )
+        if model_type == "linear":
+            formula = linear_formula(inputs=inputs)
 
-    # linear and quadratic model
-    elif model_type == "linear-and-interactions":
-        formula = linear_and_interactions_formula(domain)
+        # linear and interactions model
+        elif model_type == "linear-and-quadratic":
+            formula = linear_and_quadratic_formula(inputs=inputs)
 
-    # fully quadratic model
-    elif model_type == "fully-quadratic":
-        formula = fully_quadratic_formula(domain)
+        # linear and quadratic model
+        elif model_type == "linear-and-interactions":
+            formula = linear_and_interactions_formula(inputs=inputs)
 
+        # fully quadratic model
+        elif model_type == "fully-quadratic":
+            formula = fully_quadratic_formula(inputs=inputs)
     else:
         formula = model_type + "   "
 
@@ -122,91 +149,71 @@ def convert_formula_to_string(
 
 
 def linear_formula(
-    domain: Optional[Domain],
+    inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-model or certain keywords as Formula objects.
         formula = model_type + "   "
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the linear model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a domain must be provided"
-    formula = "".join([input.key + " + " for input in domain.inputs])
+    formula = "".join([input.key + " + " for input in inputs])
     return formula
 
 
 def linear_and_quadratic_formula(
-    domain: Optional[Domain],
+    inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-and-quadratic model or certain keywords as Formula objects.
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the linear and quadratic model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.key + " + " for input in domain.inputs])
-    formula += "".join(["{" + input.key + "**2} + " for input in domain.inputs])
+    formula = "".join([input.key + " + " for input in inputs])
+    formula += "".join(["{" + input.key + "**2} + " for input in inputs])
     return formula
 
 
 def linear_and_interactions_formula(
-    domain: Optional[Domain],
+    inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-and-interactions model or certain keywords as Formula objects.
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the linear and interactions model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.key + " + " for input in domain.inputs])
-    for i in range(len(domain.inputs)):
+    formula = "".join([input.key + " + " for input in inputs])
+    for i in range(len(inputs)):
         for j in range(i):
-            formula += (
-                domain.inputs.get_keys()[j] + ":" + domain.inputs.get_keys()[i] + " + "
-            )
+            formula += inputs.get_keys()[j] + ":" + inputs.get_keys()[i] + " + "
     return formula
 
 
 def fully_quadratic_formula(
-    domain: Optional[Domain],
+    inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a fully-quadratic model or certain keywords as Formula objects.
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the fully quadratic model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.key + " + " for input in domain.inputs])
-    for i in range(len(domain.inputs)):
+    formula = "".join([input.key + " + " for input in inputs])
+    for i in range(len(inputs)):
         for j in range(i):
-            formula += (
-                domain.inputs.get_keys()[j] + ":" + domain.inputs.get_keys()[i] + " + "
-            )
-    formula += "".join(["{" + input.key + "**2} + " for input in domain.inputs])
+            formula += inputs.get_keys()[j] + ":" + inputs.get_keys()[i] + " + "
+    formula += "".join(["{" + input.key + "**2} + " for input in inputs])
     return formula
 
 
@@ -222,7 +229,7 @@ def n_zero_eigvals(
     model_formula = get_formula_from_string(
         model_type=model_type,
         rhs_only=True,
-        domain=domain,
+        inputs=domain.inputs,
     )
     N = len(model_formula) + 3
 
