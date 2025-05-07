@@ -101,6 +101,13 @@ def get_formula_from_string(
         # fully quadratic model
         elif model_type == "fully-quadratic":
             formula = fully_quadratic_formula(inputs=inputs)
+
+        else:
+            raise ValueError(
+                f"Model type {model_type} is not supported. Supported model types are: "
+                f"linear, linear-and-quadratic, linear-and-interactions, fully-quadratic.",
+            )
+
     else:
         formula = model_type + "   "
 
