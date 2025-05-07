@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated, Dict, List, Union
+from typing import Annotated, Dict, List, Tuple, Union
 
 from pydantic import AfterValidator, Field, PositiveInt
 
@@ -92,7 +92,7 @@ Descriptors = Annotated[
 ]
 
 Bounds = Annotated[
-    List[float],
+    Union[List[float], Tuple[float, float]],
     Field(min_length=2, max_length=2),
     AfterValidator(validate_monotonically_increasing),
 ]
