@@ -35,7 +35,7 @@ def find_local_max_ipopt(
     """Function computing an optimal design for a given domain and model.
 
     Args:
-        domain (Domain): domain containing the inputs and constraints.
+        domain: domain containing the inputs and constraints.
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
         delta (float): Regularization parameter. Default value is 1e-3.

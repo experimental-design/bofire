@@ -27,7 +27,13 @@ def map_discrete_to_continuous(
     is constrained to be 1. The constraint is added to the domain as a NChooseKConstraint. The number of discrete
     values is the number of continuous variables.
     Args:
-        domain (Domain): _description_
+        inputs: A list of discrete inputs.
+    Returns:
+        A tuple containing:
+            - A dictionary mapping the discrete input key to a list of auxiliary variable keys.
+            - A list of continuous inputs representing the discrete values.
+            - A list of auxiliary continuous inputs for the discrete values.
+            - A Constraints object containing the constraints for the discrete inputs.
     """
 
     def generate_value_key(input: DiscreteInput, d: float):
@@ -99,7 +105,13 @@ def map_categorical_to_continuous(
     is constrained to be 1. The constraint is added to the domain as a NChooseKConstraint. The number of categories
     is the number of continuous variables.
     Args:
-        domain (Domain): _description_
+        categorical_inputs: A list of categorical inputs.
+    Returns:
+        A tuple containing:
+            - A dictionary mapping the categorical input key to a dictionary of auxiliary variable keys and their
+              corresponding categories.
+            - A list of continuous inputs representing the categorical values.
+            - A Constraints object containing the constraints for the categorical inputs.
     """
 
     # Create a new list of inputs
