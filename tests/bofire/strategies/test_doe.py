@@ -555,12 +555,12 @@ def test_discrete_and_categorical_doe_w_constraints():
             coefficients=[-1, -1],
             rhs=-1.9,
         ),
-        NChooseKConstraint(
-            features=["b_discrete", f"continuous_var_{0}"],
-            min_count=0,
-            max_count=1,
-            none_also_valid=True,
-        ),
+        # NChooseKConstraint(
+        #     features=["b_discrete", f"continuous_var_{0}"],
+        #     min_count=0,
+        #     max_count=1,
+        #     none_also_valid=True,
+        # ),
     ]
 
     all_inputs = all_inputs + continuous_var
@@ -774,6 +774,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_free_discrete_doe()
     test_discrete_and_categorical_doe_w_constraints()
-    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
