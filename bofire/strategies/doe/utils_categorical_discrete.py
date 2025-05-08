@@ -351,11 +351,12 @@ def project_candidates_into_domain(
                 linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)  # type: ignore
             ]
             b += [candidates_rounded[u].iloc[i]]
-        y = cp.Variable(len(keys_continuous_inputs))
-        cp_variables += [y]
-        map_original_inputs_to_cp_variables.update(
-            {k: y[i] for i, k in enumerate(keys_continuous_inputs)}
-        )
+        if len(keys_continuous_inputs) > 0:
+            y = cp.Variable(len(keys_continuous_inputs))
+            cp_variables += [y]
+            map_original_inputs_to_cp_variables.update(
+                {k: y[i] for i, k in enumerate(keys_continuous_inputs)}
+            )
 
         # get linear inequality contraints in domain
         for constraint in domain.constraints.constraints:
@@ -395,17 +396,18 @@ def project_candidates_into_domain(
                     )
 
         # add upper and lower bounds for the continuous inputs
-        lower_bounds = [
-            domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
-            for continuous_input in keys_continuous_inputs
-        ]
-        upper_bounds = [
-            domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
-            for continuous_input in keys_continuous_inputs
-        ]
-        constraints += [lower_bound(x=y, w=lower_bounds)]
-        constraints += [upper_bound(x=y, w=upper_bounds)]
-        b += list(candidates_rounded[keys_continuous_inputs].iloc[i, :].values)
+        if len(keys_continuous_inputs) > 0:
+            lower_bounds = [
+                domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
+                for continuous_input in keys_continuous_inputs
+            ]
+            upper_bounds = [
+                domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
+                for continuous_input in keys_continuous_inputs
+            ]
+            constraints += [lower_bound(x=y, w=lower_bounds)]
+            constraints += [upper_bound(x=y, w=upper_bounds)]
+            b += list(candidates_rounded[keys_continuous_inputs].iloc[i, :].values)
 
     # Create the objective function
     objective = cp.Minimize(

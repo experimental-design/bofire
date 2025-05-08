@@ -499,6 +499,41 @@ def test_functional_constraint():
     assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
 
 
+def test_free_discrete_doe():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    all_inputs = [
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10]),
+        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10]),
+    ]
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 3)
+    # check only lb and ub are values in candidates
+    for col in all_inputs:
+        assert np.all(
+            [
+                np.any([np.isclose(v, u) for v in [col.values[0], col.values[-1]]])
+                for u in candidates[col.key]
+            ]
+        ), f"Column {col.key} contains values outside of the bounds."
+
+
 def test_discrete_and_categorical_doe_w_constraints():
     np.random.seed(0)
     torch.manual_seed(0)
@@ -739,4 +774,6 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
+    test_free_discrete_doe()
+    test_discrete_and_categorical_doe_w_constraints()
     test_discrete_and_categorical_doe_w_constraints_num_of_experiments()

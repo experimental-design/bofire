@@ -94,6 +94,7 @@ class DoEStrategy(Strategy):
             self.data_model.criterion,
             domain=relaxed_domain,
             n_experiments=_candidate_count,
+            inputs_for_formula=self.domain.inputs,
         )
         assert objective_function is not None, "Criterion type is not supported!"
         design = find_local_max_ipopt(

@@ -745,3 +745,34 @@ def test_convert_formula_to_string():
         == "torch.vstack([torch.ones_like(x0), x0, x1, x2, x0 ** 2, x1 ** 2, x2 ** 2,"
         + " x0*x1, x0*x2, x1*x2, ]).T"
     )
+
+
+def test_formula_discrete_handled_like_continuous():
+    domain_w_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    domain_wo_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for model_type in [
+        "linear",
+        "linear-and-interactions",
+        "linear-and-quadratic",
+        "fully-quadratic",
+    ]:
+        formula_w_discrete = get_formula_from_string(
+            inputs=domain_w_discrete.inputs, model_type=model_type
+        )
+        formula_wo_discrete = get_formula_from_string(
+            inputs=domain_wo_discrete.inputs, model_type=model_type
+        )
+        assert formula_w_discrete == formula_wo_discrete
+
+
+if __name__ == "__main__":
+    test_formula_discrete_handled_like_continuous()
