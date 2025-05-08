@@ -479,7 +479,7 @@ def test_functional_constraint():
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
         ipopt_options={
-            "max_iter": 500,
+            "max_iter": 5000,
             "derivative_test": "first-order",
             "print_level": 5,
         },
