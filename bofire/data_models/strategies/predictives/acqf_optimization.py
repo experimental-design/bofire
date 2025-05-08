@@ -1,8 +1,8 @@
 import warnings
 from abc import abstractmethod
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, Union
 
-from pydantic import Field, PositiveInt, field_validator
+from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints
@@ -197,4 +197,57 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         )
 
 
-AnyAcqfOptimizer = BotorchOptimizer
+class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
+    """
+    Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm.
+
+    This optimizer uses a population-based approach to optimize acquisition functions. Currently, only
+    single-objective optimization is supported. The algorithm evolves a population of
+    candidate solutions over multiple generations using genetic operators such as mutation, crossover,
+    and selection.
+    Depending on the domain, the algorithm uses different encodings for the decision variables:
+    - Continuous features are encoded as continuous variables.
+    - Categorical features are encoded categories
+    - Discrete features are encoded as integers.
+
+    Attributes:
+        population_size (int): The size of the population in each generation.
+        xtol (float): Tolerance for changes in the decision variables across generations.
+        cvtol (float): Tolerance for constraint violations.
+        ftol (float): Tolerance for changes in the objective function values across generations.
+        n_max_gen (int): Maximum number of generations to run the algorithm.
+        n_max_evals (int): Maximum number of function evaluations allowed.
+    """
+
+    type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
+
+    # algorithm options
+    population_size: PositiveInt = 1000
+
+    # termination criteria
+    xtol: PositiveFloat = 0.0005
+    cvtol: PositiveFloat = 1e-8
+    ftol: PositiveFloat = 1e-6
+    n_max_gen: PositiveInt = 500
+    n_max_evals: PositiveInt = 100000
+
+    # verbosity
+    verbose: bool = False
+
+    def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
+        return my_type in [
+            constraints.LinearEqualityConstraint,
+            constraints.LinearInequalityConstraint,
+            constraints.ProductInequalityConstraint,
+            constraints.NonlinearInequalityConstraint,
+            constraints.NChooseKConstraint,
+        ]
+
+    def validate_domain(self, domain: Domain):
+        pass
+
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
+        pass
+
+
+AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithmOptimizer]

@@ -597,16 +597,14 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(-1, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(key=f"x{i + 1}", bounds=(-np.inf, 1)) for i in range(4)
-        ],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
@@ -618,9 +616,9 @@ def test_check_nchoosek_constraints_as_bounds():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key=f"x{1}", bounds=(0, 1)),
-            ContinuousInput(key=f"x{2}", bounds=(-1, 1)),
-            ContinuousInput(key=f"x{3}", bounds=(-2, 1)),
-            ContinuousInput(key=f"x{4}", bounds=(-3, 1)),
+            ContinuousInput(key=f"x{2}", bounds=(0, 2)),
+            ContinuousInput(key=f"x{3}", bounds=(0, 3)),
+            ContinuousInput(key=f"x{4}", bounds=(0, 4)),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -665,10 +663,10 @@ def test_check_nchoosek_constraints_as_bounds():
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
     domain = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{1}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{2}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{3}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{4}", bounds=(-1, -0.1)),
+            ContinuousInput(key=f"x{1}", bounds=(0.1, 1.0)),
+            ContinuousInput(key=f"x{2}", bounds=(0.1, 1.0)),
+            ContinuousInput(key=f"x{3}", bounds=(0.1, 1.0)),
+            ContinuousInput(key=f"x{4}", bounds=(0.1, 1.0)),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -712,7 +710,7 @@ def test_nchoosek_constraints_as_bounds():
         inputs=[
             ContinuousInput(
                 key=f"x{i + 1}",
-                bounds=(-1, 1),
+                bounds=(0, 1),
             )
             for i in range(5)
         ],

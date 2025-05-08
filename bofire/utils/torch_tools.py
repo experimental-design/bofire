@@ -10,6 +10,7 @@ from torch.nn import Module
 
 from bofire.data_models.api import AnyObjective, Domain, Outputs
 from bofire.data_models.constraints.api import (
+    Constraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -47,7 +48,7 @@ def get_linear_constraints(
     constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
-    """Converts linear constraints to the form required by BoTorch.
+    """Converts linear constraints to the form required by BoTorch. For inequality constraints, this is A * x >= b (!).
 
     Args:
         domain: Optimization problem definition.
@@ -242,6 +243,7 @@ def get_product_constraints(
 
 def get_nonlinear_constraints(
     domain: Domain,
+    includes: Optional[List[Type[Constraint]]] = None,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
@@ -254,7 +256,18 @@ def get_nonlinear_constraints(
         as input and return a float value representing the constraint evaluation.
 
     """
-    return get_nchoosek_constraints(domain) + get_product_constraints(domain)
+    includes = includes or [NChooseKConstraint, ProductInequalityConstraint]
+    assert all(
+        (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
+    ), "Only NChooseK and ProductInequality constraints are supported."
+
+    callables = []
+    if NChooseKConstraint in includes:
+        callables += get_nchoosek_constraints(domain)
+    if ProductInequalityConstraint in includes:
+        callables += get_product_constraints(domain)
+
+    return callables
 
 
 def constrained_objective2botorch(
