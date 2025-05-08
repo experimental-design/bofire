@@ -357,6 +357,18 @@ def project_candidates_into_domain(
             map_original_inputs_to_cp_variables.update(
                 {k: y[i] for i, k in enumerate(keys_continuous_inputs)}
             )
+            # add upper and lower bounds for the continuous inputs
+            lower_bounds = [
+                domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
+                for continuous_input in keys_continuous_inputs
+            ]
+            upper_bounds = [
+                domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
+                for continuous_input in keys_continuous_inputs
+            ]
+            constraints += [lower_bound(x=y, w=lower_bounds)]
+            constraints += [upper_bound(x=y, w=upper_bounds)]
+            b += list(candidates_rounded[keys_continuous_inputs].iloc[i, :].values)
 
         # get linear inequality contraints in domain
         for constraint in domain.constraints.constraints:
@@ -394,20 +406,6 @@ def project_candidates_into_domain(
                     raise ValueError(
                         "The right-hand side of the linear equality constraint must be provided."
                     )
-
-        # add upper and lower bounds for the continuous inputs
-        if len(keys_continuous_inputs) > 0:
-            lower_bounds = [
-                domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
-                for continuous_input in keys_continuous_inputs
-            ]
-            upper_bounds = [
-                domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
-                for continuous_input in keys_continuous_inputs
-            ]
-            constraints += [lower_bound(x=y, w=lower_bounds)]
-            constraints += [upper_bound(x=y, w=upper_bounds)]
-            b += list(candidates_rounded[keys_continuous_inputs].iloc[i, :].values)
 
     # Create the objective function
     objective = cp.Minimize(
