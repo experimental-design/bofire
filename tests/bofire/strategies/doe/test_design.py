@@ -49,7 +49,7 @@ def test_find_local_max_ipopt_no_constraint():
     dim_input = len(domain.inputs.get_keys())
 
     num_exp = (
-        len(get_formula_from_string(model_type="linear", domain=domain))
+        len(get_formula_from_string(model_type="linear", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
@@ -91,7 +91,7 @@ def test_find_local_max_ipopt_nchoosek():
     D = len(domain.inputs)
 
     N = (
-        len(get_formula_from_string(model_type="linear", domain=domain))
+        len(get_formula_from_string(model_type="linear", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
@@ -179,7 +179,7 @@ def test_find_local_max_ipopt_mixed_results():
     )
 
     N = (
-        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        len(get_formula_from_string(model_type="fully-quadratic", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
         + 3
     )
@@ -387,7 +387,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     np.random.seed(1)
 
     num_exp = (
-        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        len(get_formula_from_string(model_type="fully-quadratic", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
         + 3
     )
@@ -551,7 +551,7 @@ def test_find_local_max_ipopt_nonlinear_constraint():
     )
 
     num_exp = (
-        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        len(get_formula_from_string(model_type="fully-quadratic", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
         + 3
     )
@@ -580,19 +580,28 @@ def test_get_n_experiments():
     )
 
     # keyword
-    assert get_n_experiments(get_formula_from_string("linear", domain)) == 7
+    assert (
+        get_n_experiments(get_formula_from_string("linear", inputs=domain.inputs)) == 7
+    )
 
     # explicit formula
     assert (
         get_n_experiments(
-            get_formula_from_string("x1 + x2 + x3 + x1:x2 + {x2**2}", domain),
+            get_formula_from_string(
+                "x1 + x2 + x3 + x1:x2 + {x2**2}", inputs=domain.inputs
+            ),
         )
         == 9
     )
 
     # user provided n_experiment
     with pytest.warns(UserWarning):
-        assert get_n_experiments(get_formula_from_string("linear", domain), 4) == 4
+        assert (
+            get_n_experiments(
+                get_formula_from_string("linear", inputs=domain.inputs), 4
+            )
+            == 4
+        )
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
