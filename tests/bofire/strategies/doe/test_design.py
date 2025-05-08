@@ -132,7 +132,7 @@ def test_find_local_max_ipopt_mixture():
 
     D = len(domain.inputs)
 
-    N = len(get_formula_from_string(domain=domain, model_type="linear")) + 3
+    N = len(get_formula_from_string(inputs=domain.inputs, model_type="linear")) + 3
     A = find_local_max_ipopt(
         domain,
         objective_function=get_objective_function(

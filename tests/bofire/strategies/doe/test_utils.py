@@ -65,14 +65,14 @@ def test_get_formula_from_string():
 
     # linear model
     terms = ["1", "x0", "x1", "x2"]
-    model_formula = get_formula_from_string(domain=domain, model_type="linear")
+    model_formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # linear and interaction
     terms = ["1", "x0", "x1", "x2", "x0:x1", "x0:x2", "x1:x2"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert all(term in terms for term in model_formula)
@@ -81,7 +81,7 @@ def test_get_formula_from_string():
     # linear and quadratic
     terms = ["1", "x0", "x1", "x2", "x0 ** 2", "x1 ** 2", "x2 ** 2"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-quadratic",
     )
     assert all(term in terms for term in model_formula)
@@ -100,7 +100,9 @@ def test_get_formula_from_string():
         "x1 ** 2",
         "x2 ** 2",
     ]
-    model_formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    model_formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
@@ -108,7 +110,7 @@ def test_get_formula_from_string():
     terms_lhs = ["y"]
     terms_rhs = ["1", "x0", "x0 ** 2", "x0:x1"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="y ~ 1 + x0 + x0:x1 + {x0**2}",
         rhs_only=False,
     )
@@ -193,19 +195,23 @@ def test_number_of_model_terms():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="linear")
+    formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert len(formula) == 6
 
-    formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="linear-and-quadratic"
+    )
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert len(formula) == 21
 
     # 3 continuous & 2 discrete inputs
@@ -220,19 +226,23 @@ def test_number_of_model_terms():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="linear")
+    formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert len(formula) == 6
 
-    formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="linear-and-quadratic"
+    )
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert len(formula) == 21
 
 
@@ -725,7 +735,9 @@ def test_convert_formula_to_string():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
 
     formula_str = convert_formula_to_string(domain=domain, formula=formula)
     assert (
