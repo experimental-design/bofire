@@ -13,8 +13,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import AnyOptimalityCriterion
-from bofire.strategies.doe.objective import get_objective_function
+from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
     _minimize,
     constraints_as_scipy_constraints,
@@ -25,8 +24,7 @@ from bofire.strategies.random import RandomStrategy
 
 def find_local_max_ipopt(
     domain: Domain,
-    n_experiments: int,
-    criterion: Optional[AnyOptimalityCriterion] = None,
+    objective_function: Objective,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
@@ -37,7 +35,7 @@ def find_local_max_ipopt(
     """Function computing an optimal design for a given domain and model.
 
     Args:
-        domain (Domain): domain containing the inputs and constraints.
+        domain: domain containing the inputs and constraints.
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
         delta (float): Regularization parameter. Default value is 1e-3.
@@ -62,12 +60,7 @@ def find_local_max_ipopt(
     #
     # Checks and preparation steps
     #
-
-    objective_function = get_objective_function(
-        criterion, domain=domain, n_experiments=n_experiments
-    )
-    assert objective_function is not None, "Criterion type is not supported!"
-
+    n_experiments = objective_function.n_experiments
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
@@ -120,7 +113,11 @@ def find_local_max_ipopt(
         x0 = sampling.values.flatten()
     elif len(domain.constraints.get(NonlinearConstraint)) == 0:
         sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
-        x0 = sampler.ask(n_experiments).to_numpy().flatten()
+        x0 = (
+            sampler.ask(n_experiments, raise_validation_error=False)
+            .to_numpy()
+            .flatten()
+        )
     else:
         warnings.warn(
             "Sampling failed. Falling back to uniform sampling on input domain.\

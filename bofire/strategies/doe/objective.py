@@ -15,7 +15,7 @@ from bofire.data_models.constraints.api import (
     ConstraintNotFulfilledError,
     EqualityConstraint,
 )
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.doe import (
     AOptimalityCriterion,
@@ -346,19 +346,21 @@ class SpaceFilling(Objective):
 
 
 def get_objective_function(
-    criterion: Optional[OptimalityCriterion], domain: Domain, n_experiments: int
+    criterion: Optional[OptimalityCriterion],
+    domain: Domain,
+    n_experiments: int,
+    inputs_for_formula: Optional[Inputs] = None,
 ) -> Objective:
-    if criterion is None:
-        return DOptimality(
-            domain,
-            formula=get_formula_from_string(domain=domain),
-            n_experiments=n_experiments,
-        )
     if isinstance(criterion, DoEOptimalityCriterion):
         if isinstance(criterion, DOptimalityCriterion):
             return DOptimality(
                 domain,
-                formula=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(
+                    criterion.formula,
+                    inputs=domain.inputs
+                    if inputs_for_formula is None
+                    else inputs_for_formula,
+                ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -366,7 +368,12 @@ def get_objective_function(
         if isinstance(criterion, AOptimalityCriterion):
             return AOptimality(
                 domain,
-                formula=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(
+                    criterion.formula,
+                    inputs=domain.inputs
+                    if inputs_for_formula is None
+                    else inputs_for_formula,
+                ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -374,7 +381,12 @@ def get_objective_function(
         if isinstance(criterion, GOptimalityCriterion):
             return GOptimality(
                 domain,
-                formula=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(
+                    criterion.formula,
+                    inputs=domain.inputs
+                    if inputs_for_formula is None
+                    else inputs_for_formula,
+                ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -382,7 +394,12 @@ def get_objective_function(
         if isinstance(criterion, EOptimalityCriterion):
             return EOptimality(
                 domain,
-                formula=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(
+                    criterion.formula,
+                    inputs=domain.inputs
+                    if inputs_for_formula is None
+                    else inputs_for_formula,
+                ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -390,7 +407,12 @@ def get_objective_function(
         if isinstance(criterion, KOptimalityCriterion):
             return KOptimality(
                 domain,
-                formula=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(
+                    criterion.formula,
+                    inputs=domain.inputs
+                    if inputs_for_formula is None
+                    else inputs_for_formula,
+                ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
@@ -398,7 +420,12 @@ def get_objective_function(
         if isinstance(criterion, IOptimalityCriterion):
             return IOptimality(
                 domain,
-                formula=get_formula_from_string(criterion.formula, domain),
+                formula=get_formula_from_string(
+                    criterion.formula,
+                    inputs=domain.inputs
+                    if inputs_for_formula is None
+                    else inputs_for_formula,
+                ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,

@@ -285,7 +285,7 @@ def test_DOptimality_evaluate():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     d_optimality = DOptimality(
         domain=domain, formula=formula, n_experiments=3, delta=1e-7
@@ -305,7 +305,7 @@ def test_AOptimality_evaluate():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     a_optimality = AOptimality(domain=domain, formula=formula, n_experiments=4)
 
@@ -318,7 +318,7 @@ def test_AOptimality_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     a_optimality = AOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
@@ -339,7 +339,7 @@ def test_EOptimality_evaluate():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     e_optimality = EOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
@@ -362,7 +362,7 @@ def test_EOptimality_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     e_optimality = EOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
@@ -387,7 +387,7 @@ def test_GOptimality_evaluate():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     g_optimality = GOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
@@ -403,7 +403,7 @@ def test_GOptimality_evaluate_jacobian():
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     g_optimality = GOptimality(domain=domain, formula=formula, n_experiments=2, delta=0)
 
@@ -535,7 +535,7 @@ def test_IOptimality_instantiation():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     i_optimality = IOptimality(
         domain=domain,
@@ -555,7 +555,7 @@ def test_IOptimality_instantiation():
         ],
     )
 
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     i_optimality = IOptimality(
         domain=domain,
@@ -577,7 +577,7 @@ def test_IOptimality_instantiation():
         ],
     )
 
-    formula = get_formula_from_string("linear", domain=domain)
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
 
     i_optimality = IOptimality(
         domain=domain,
