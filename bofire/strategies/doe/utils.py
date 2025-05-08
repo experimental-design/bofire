@@ -84,7 +84,7 @@ def get_formula_from_string(
         "fully-quadratic",
     ]:
         if inputs is None:
-            raise ValueError(
+            raise AssertionError(
                 "Inputs must be provided if only a model type is given.",
             )
         if model_type == "linear":
