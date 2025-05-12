@@ -52,6 +52,7 @@ from bofire.utils.torch_tools import (
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
+    get_number_of_feasible_solutions,
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
@@ -579,6 +580,36 @@ def test_get_output_constraints(outputs):
     constraints, etas = get_output_constraints(outputs=outputs, experiments=experiments)
     assert len(constraints) == len(etas)
     assert np.allclose(etas, [0.5, 0.25, 0.25])
+
+
+def test_get_number_of_feasible_solutions():
+    outputs = Outputs(features=[of1, of2, of3])
+    experiments = pd.DataFrame(
+        {
+            "of1": np.random.rand(10),
+            "of2": np.random.rand(10),
+            "of3": np.random.rand(10),
+            "valid_of1": [1] * 10,
+            "valid_of2": [1] * 10,
+            "valid_of3": [1] * 10,
+        },
+    )
+    constraints, etas = get_output_constraints(outputs=outputs, experiments=experiments)
+
+    predictions = torch.tensor(
+        [
+            [0.1, 10, 5],
+            [0.4, -2, 5.1],
+            [0.7, 10, 0],
+        ]
+    ).to(**tkwargs)
+    n = get_number_of_feasible_solutions(
+        predictions=predictions,
+        constraints=constraints,
+        etas=etas,
+        threshold=0.9,
+    )
+    assert n == 1
 
 
 def test_get_nchoosek_constraints():
