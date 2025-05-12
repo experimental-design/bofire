@@ -36,20 +36,17 @@ def find_local_max_ipopt(
 
     Args:
         domain: domain containing the inputs and constraints.
-        n_experiments (int): Number of experiments. By default the value corresponds to
-            the number of model terms - dimension of ker() + 3.
-        delta (float): Regularization parameter. Default value is 1e-3.
-        ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
-        sampling (pd.DataFrame): dataframe containing the initial guess.
-        fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
+        objective_function: The function defining the objective of the optimizattion.
+        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        sampling : dataframe containing the initial guess.
+        fixed_experiments : dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
-        partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+        partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        criterion (OptimalityCriterion): OptimalityCriterion object indicating which criterion function to use.
-        use_hessian (bool): If True, the hessian of the objective function is used. Default is False.
-        use_cyipopt (bool, optional): If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+        use_hessian: If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
             If None, cyipopt is used if available.
 
     Returns:
