@@ -1,6 +1,5 @@
 import importlib.util
 import sys
-import warnings
 from copy import copy
 from itertools import combinations
 from typing import List, Optional, Tuple, Union
@@ -182,7 +181,7 @@ def linear_and_quadratic_formula(
         A string describing the model that was given as string or keyword.
 
     """
-    formula = "".join([input.key + " + " for input in inputs])
+    formula = linear_formula(inputs=inputs)
     formula += "".join(["{" + input.key + "**2} + " for input in inputs])
     return formula
 
@@ -198,7 +197,7 @@ def linear_and_interactions_formula(
         A string describing the model that was given as string or keyword.
 
     """
-    formula = "".join([input.key + " + " for input in inputs])
+    formula = linear_formula(inputs=inputs)
     for i in range(len(inputs)):
         for j in range(i):
             formula += inputs.get_keys()[j] + ":" + inputs.get_keys()[i] + " + "
@@ -216,10 +215,7 @@ def fully_quadratic_formula(
         A string describing the model that was given as string or keyword.
 
     """
-    formula = "".join([input.key + " + " for input in inputs])
-    for i in range(len(inputs)):
-        for j in range(i):
-            formula += inputs.get_keys()[j] + ":" + inputs.get_keys()[i] + " + "
+    formula = linear_and_interactions_formula(inputs=inputs)
     formula += "".join(["{" + input.key + "**2} + " for input in inputs])
     return formula
 
@@ -580,22 +576,6 @@ def nchoosek_constraints_as_bounds(
 
                     # find and shuffle all combinations of elements of ind of length max_active
                     ind = np.array(list(combinations(ind, r=n_inactive)))
-                    # filter non feasible bounds
-                    if len(domain.constraints.get(NonlinearConstraint)) == 0:
-                        sampler = RandomStrategy(
-                            data_model=RandomStrategyDataModel(domain=domain)
-                        )
-                        ind = [
-                            row
-                            for row in ind
-                            if sampler.validate_nchoosek_combination(
-                                [domain.inputs.get_keys()[i] for i in row]
-                            )
-                        ]
-                    else:
-                        warnings.warn(
-                            f"{NChooseKConstraint.__name__} constraints validity can not be checked in the presence of {NonlinearConstraint.__name__}."
-                        )
                     np.random.shuffle(ind)
 
                     # set bounds to zero in each experiments for the variables that should be inactive

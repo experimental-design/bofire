@@ -775,4 +775,4 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
 
 
 if __name__ == "__main__":
-    test_functional_constraint()
+    test_discrete_and_categorical_doe_w_constraints()

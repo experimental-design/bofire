@@ -352,14 +352,15 @@ def get_objective_function(
     inputs_for_formula: Optional[Inputs] = None,
 ) -> Objective:
     if isinstance(criterion, DoEOptimalityCriterion):
+        _inputs_for_formula = (
+            domain.inputs if inputs_for_formula is None else inputs_for_formula
+        )
         if isinstance(criterion, DOptimalityCriterion):
             return DOptimality(
                 domain,
                 formula=get_formula_from_string(
                     criterion.formula,
-                    inputs=domain.inputs
-                    if inputs_for_formula is None
-                    else inputs_for_formula,
+                    inputs=_inputs_for_formula,
                 ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
@@ -370,9 +371,7 @@ def get_objective_function(
                 domain,
                 formula=get_formula_from_string(
                     criterion.formula,
-                    inputs=domain.inputs
-                    if inputs_for_formula is None
-                    else inputs_for_formula,
+                    inputs=_inputs_for_formula,
                 ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
@@ -383,9 +382,7 @@ def get_objective_function(
                 domain,
                 formula=get_formula_from_string(
                     criterion.formula,
-                    inputs=domain.inputs
-                    if inputs_for_formula is None
-                    else inputs_for_formula,
+                    inputs=_inputs_for_formula,
                 ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
@@ -396,9 +393,7 @@ def get_objective_function(
                 domain,
                 formula=get_formula_from_string(
                     criterion.formula,
-                    inputs=domain.inputs
-                    if inputs_for_formula is None
-                    else inputs_for_formula,
+                    inputs=_inputs_for_formula,
                 ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
@@ -409,9 +404,7 @@ def get_objective_function(
                 domain,
                 formula=get_formula_from_string(
                     criterion.formula,
-                    inputs=domain.inputs
-                    if inputs_for_formula is None
-                    else inputs_for_formula,
+                    inputs=_inputs_for_formula,
                 ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,
@@ -422,9 +415,7 @@ def get_objective_function(
                 domain,
                 formula=get_formula_from_string(
                     criterion.formula,
-                    inputs=domain.inputs
-                    if inputs_for_formula is None
-                    else inputs_for_formula,
+                    inputs=_inputs_for_formula,
                 ),
                 n_experiments=n_experiments,
                 delta=criterion.delta,

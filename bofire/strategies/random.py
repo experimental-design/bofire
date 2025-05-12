@@ -1,7 +1,7 @@
 import math
 import warnings
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -30,17 +30,6 @@ from bofire.utils.torch_tools import (
     get_linear_constraints,
     tkwargs,
 )
-
-
-def set_nchoosek_as_bounds(domain: Domain, u: List[str]) -> Domain:
-    domain = deepcopy(domain)
-    domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-    # fix the unused features
-    for key in u:
-        feat = domain.inputs.get_by_key(key=key)
-        assert isinstance(feat, ContinuousInput)
-        feat.bounds = [0.0, 0.0]
-    return domain
 
 
 class RandomStrategy(Strategy):
@@ -119,32 +108,6 @@ class RandomStrategy(Strategy):
             n_iters += 1
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
-    def validate_nchoosek_combination(self, nchoosek_combination: List[str]) -> bool:
-        domain = set_nchoosek_as_bounds(
-            domain=self.domain,
-            u=nchoosek_combination,
-        )
-        # setup then sampler for this situation
-        # not every combination of features has feasible points so try and except
-        try:
-            self._sample_from_polytope(
-                domain=domain,
-                fallback_sampling_method=self.fallback_sampling_method,
-                n_burnin=self.n_burnin,
-                n_thinning=self.n_thinning,
-                seed=self._get_seed(),
-                n=1,
-            )
-            return True
-        except ValueError:
-            # if the domain is infeasible, just skip this combination
-            # and continue with the next one
-            warnings.warn(
-                f"Combination {nchoosek_combination} is infeasible.",
-                UserWarning,
-            )
-            return False
-
     def _sample_with_nchooseks(
         self,
         candidate_count: int,
@@ -158,42 +121,6 @@ class RandomStrategy(Strategy):
             pd.DataFrame: A DataFrame containing the sampled data.
 
         """
-
-        def sample_combinations(
-            sampled_combinations: List[List[str]], num_samples_per_it: int
-        ):
-            samples = []
-            sampled_combinations_with_feasibility = []
-            for u in sampled_combinations:
-                # create new domain without the nchoosekconstraints
-                domain = set_nchoosek_as_bounds(domain=self.domain, u=u)
-                # setup then sampler for this situation
-                # not every combination of features has feasible points so try and except
-                try:
-                    sample = self._sample_from_polytope(
-                        domain=domain,
-                        fallback_sampling_method=self.fallback_sampling_method,
-                        n_burnin=self.n_burnin,
-                        n_thinning=self.n_thinning,
-                        seed=self._get_seed(),
-                        n=num_samples_per_it,
-                    )
-
-                    # check if samples contains NaN values
-                    if sample.isnull().values.any():
-                        raise ValueError("Sample contains NaN values.")
-                    samples.append(sample)
-                    sampled_combinations_with_feasibility.append(u)
-                except ValueError:
-                    # if the domain is infeasible, just skip this combination
-                    # and continue with the next one
-                    warnings.warn(
-                        f"Combination {u} is infeasible. Skipping...",
-                        UserWarning,
-                    )
-                    continue
-            return samples, sampled_combinations_with_feasibility
-
         if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
             _, unused = self.domain.get_nchoosek_combinations()
 
@@ -211,30 +138,35 @@ class RandomStrategy(Strategy):
                 sampled_combinations = unused
                 num_samples_per_it = math.ceil(candidate_count / len(unused))
 
-            samples, sampled_combinations_with_feasibility = sample_combinations(
-                sampled_combinations, num_samples_per_it
-            )
+            samples = []
+            for u in sampled_combinations:
+                # create new domain without the nchoosekconstraints
+                domain = deepcopy(self.domain)
+                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
+                # fix the unused features
+                for key in u:
+                    feat = domain.inputs.get_by_key(key=key)
+                    assert isinstance(feat, ContinuousInput)
+                    feat.bounds = [0.0, 0.0]
+                # setup then sampler for this situation
+                samples.append(
+                    self._sample_from_polytope(
+                        domain=domain,
+                        fallback_sampling_method=self.fallback_sampling_method,
+                        n_burnin=self.n_burnin,
+                        n_thinning=self.n_thinning,
+                        seed=self._get_seed(),
+                        n=num_samples_per_it,
+                    ),
+                )
             samples = pd.concat(samples, axis=0, ignore_index=True)
-            if len(samples) < candidate_count:
-                _samples, _ = sample_combinations(
-                    [
-                        sampled_combinations_with_feasibility[i]
-                        for i in np.random.randint(
-                            len(sampled_combinations_with_feasibility),
-                            size=candidate_count - len(samples),
-                        )
-                    ],
-                    num_samples_per_it=1,
-                )
-                samples = pd.concat(
-                    [samples, pd.concat(_samples, axis=0, ignore_index=True)]
-                )
             return samples.sample(
                 n=candidate_count,
                 replace=False,
                 ignore_index=True,
                 random_state=self._get_seed(),
             )
+
         return self._sample_from_polytope(
             domain=self.domain,
             fallback_sampling_method=self.fallback_sampling_method,
