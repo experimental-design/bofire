@@ -33,6 +33,7 @@ from bofire.utils.torch_tools import (
     get_custom_botorch_objective,
     get_multiplicative_additive_objective,
     get_multiplicative_botorch_objective,
+    get_number_of_feasible_solutions,
     get_objective_callable,
     get_output_constraints,
     tkwargs,
@@ -61,8 +62,23 @@ class SoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        acqf_name = self.acquisition_function.__class__.__name__
+        n_required_feasible_solutions = 1
+        # now we check if we have any feasible solution
+        if constraint_callables is not None:
+            preds = self.model.posterior(X=X_train, posterior_transform=None).mean
+            n_feasibles = get_number_of_feasible_solutions(
+                predictions=preds,
+                constraints=constraint_callables,
+                etas=etas,  # type: ignore
+                threshold=0.9,
+            )
+            if n_feasibles < n_required_feasible_solutions:
+                # we need to change the acquisition function to a feasibility indicator
+                acqf_name = "qLogPF"
+
         acqf = get_acquisition_function(
-            self.acquisition_function.__class__.__name__,
+            acqf_name,
             self.model,
             objective_callable,
             X_observed=X_train,

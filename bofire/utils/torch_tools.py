@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.models.transforms.input import InputTransform
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
 from torch.nn import Module
 
@@ -399,6 +400,38 @@ def get_output_constraints(
         else:
             idx += 1
     return constraints, etas
+
+
+def get_number_of_feasible_solutions(
+    predictions: Tensor,
+    constraints: List[Callable[[Tensor], Tensor]],
+    etas: List[float],
+    threshold=0.9,
+):
+    """Computes the number of feasible candidates based on the constraints and etas
+    and a feasibility threshold.
+
+    Args:
+        predictions: Tensor containing the predictions for which to compute the feasibility.
+        constraints: List of constraint callables.
+        etas: List of eta values for the constraints.
+        X: The samples for which to compute the feasibility.
+        threshold: The threshold for feasibility.
+
+    Returns:
+        Tensor: A tensor indicating the feasibility of each sample.
+
+    """
+
+    feasibilities = compute_smoothed_feasibility_indicator(
+        constraints=constraints,
+        samples=predictions,
+        eta=torch.tensor(etas).to(**tkwargs),
+        log=False,
+        fat=False,  # TODO: add this to _get_objective_and_constraints
+    )
+    count = torch.sum(feasibilities >= threshold).item()
+    return count
 
 
 def get_objective_callable(
