@@ -110,6 +110,21 @@ class DoEStrategy(Strategy):
     sampling: Optional[List[List]] = None
     return_fixed_candidates: bool = False
 
+    """ Datamodel for strategy for design of experiments. This strategy is used to generate a set of
+    experiments for a given domain.
+
+    Args:
+        criterion: object indicating which criterion function to use.
+        verbose: Should optimization be verbose?
+        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        scip_params: Parameters for SCIP solver used when generating DoEs with discrete variables.
+        use_hessian: If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+            If None, cyipopt is used if available.
+        sampling: dataframe containing the initial guess.
+        return_fixed_candidates: Should fixed candidates be also returned?
+    """
+
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
 
