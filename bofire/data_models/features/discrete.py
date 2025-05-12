@@ -74,15 +74,7 @@ class DiscreteInput(NumericalInput):
 
         """
         values = super().validate_candidental(values)
-        candidates_close_to_allowed_values = (
-            np.array(
-                [
-                    np.array([np.isclose(x, y, rtol=1e-3) for x in self.values]).any()
-                    for y in values.to_numpy()
-                ]
-            )
-        ).all()
-        if not candidates_close_to_allowed_values:
+        if not np.isin(values.to_numpy(), np.array(self.values)).all():
             raise ValueError(
                 f"Not allowed values in candidates for feature {self.key}.",
             )
