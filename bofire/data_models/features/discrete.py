@@ -22,6 +22,7 @@ class DiscreteInput(NumericalInput):
     order_id: ClassVar[int] = 3
 
     values: DiscreteVals
+    rtol: float = 1e-7
 
     @field_validator("values")
     @classmethod
@@ -74,7 +75,17 @@ class DiscreteInput(NumericalInput):
 
         """
         values = super().validate_candidental(values)
-        if not np.isin(values.to_numpy(), np.array(self.values)).all():
+        candidates_close_to_allowed_values = (
+            np.array(
+                [
+                    np.array(
+                        [np.isclose(x, y, rtol=self.rtol) for x in self.values]
+                    ).any()
+                    for y in values.to_numpy()
+                ]
+            )
+        ).all()
+        if not candidates_close_to_allowed_values:
             raise ValueError(
                 f"Not allowed values in candidates for feature {self.key}.",
             )

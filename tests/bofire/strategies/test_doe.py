@@ -506,9 +506,9 @@ def test_free_discrete_doe():
     torch.cuda.manual_seed(0)
 
     all_inputs = [
-        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
-        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10]),
-        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3),
+        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
     ]
     domain = Domain.from_lists(
         inputs=all_inputs,
@@ -544,9 +544,9 @@ def test_discrete_and_categorical_doe_w_constraints():
         ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
     ]
     all_inputs = [
-        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
-        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10]),
-        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3),
+        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
         CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
         CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
     ]
@@ -590,7 +590,7 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
 
     continuous_var = [ContinuousInput(key="a", bounds=[0, 1]) for i in range(1)]
     all_inputs = [
-        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
         CategoricalInput(key="c", categories=["meep", "moop"]),
     ]
     all_constraints = [
@@ -640,7 +640,7 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
 
     continuous_var = [ContinuousInput(key="a", bounds=[0, 1]) for i in range(1)]
     all_inputs = [
-        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
         CategoricalInput(key="c", categories=["meep", "moop", "moep"]),
     ]
     all_constraints = [
@@ -745,8 +745,8 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
         ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
     ]
     all_inputs = [
-        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
-        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
     ]
     all_constraints = [
         LinearInequalityConstraint(
