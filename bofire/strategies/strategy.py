@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
@@ -137,6 +138,8 @@ class Strategy(ABC):
 
         candidates = self._ask(candidate_count=candidate_count)
 
+        candidates = self.postprocess_candidates(candidates=candidates)
+
         self.domain.validate_candidates(
             candidates=candidates,
             only_inputs=True,
@@ -153,6 +156,39 @@ class Strategy(ABC):
         if add_pending:
             self.add_candidates(candidates)
 
+        return candidates
+
+    def postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Method to allow for postprocessing of candidates.
+
+        By default this methods applies the stepsize of continuous features if applicable.
+
+        Args:
+            candidates: DataFrame with candidates.
+        Returns:
+            DataFrame with postprocessed candidates.
+        """
+        keys_in_constraints = []
+        for c in self.domain.constraints.get():
+            keys_in_constraints.extend(c.features)  # type: ignore
+        for feature in self.domain.inputs.get(ContinuousInput):
+            assert isinstance(feature, ContinuousInput)
+            if feature.key not in keys_in_constraints:
+                candidates[feature.key] = feature.round(candidates[feature.key])
+
+        # perform strategy specific postprocessing
+        candidates = self._postprocess_candidates(candidates)
+        return candidates
+
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Method to allow for strategy specific postprocessing of candidates.
+
+        Args:
+            candidates: DataFrame with candidates.
+
+        Returns:
+           DataFrame with postprocessed candidates.
+        """
         return candidates
 
     @abstractmethod
