@@ -1,4 +1,5 @@
 import importlib.util
+import itertools
 import sys
 from copy import copy
 from itertools import combinations
@@ -38,6 +39,20 @@ from bofire.strategies.random import RandomStrategy
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
+def represent_categories_as_by_their_states(inputs: Inputs) -> Inputs:
+    if len(inputs.get([CategoricalInput])) > 0:
+        inputs = copy(inputs)
+        categorical_inputs = list(inputs.get([CategoricalInput]))
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=categorical_inputs  # type: ignore
+        )
+        inputs = Inputs(
+            features=list(inputs.get(excludes=[CategoricalInput]))
+            + categorical_one_hot_variabes
+        )
+    return inputs
+
+
 def get_formula_from_string(
     model_type: Union[str, Formula] = "linear",
     inputs: Optional[Inputs] = None,
@@ -59,18 +74,6 @@ def get_formula_from_string(
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(2000)
 
-    # categorical variables should not show up in formula
-    if inputs is not None and len(inputs.get([CategoricalInput])) > 0:
-        inputs = copy(inputs)
-        categorical_inputs = list(inputs.get([CategoricalInput]))
-        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
-            categorical_inputs=categorical_inputs  # type: ignore
-        )
-        inputs = Inputs(
-            features=list(inputs.get(excludes=[CategoricalInput]))
-            + categorical_one_hot_variabes
-        )
-
     if isinstance(model_type, Formula):
         return model_type
         # build model if a keyword and a problem are given.
@@ -86,6 +89,7 @@ def get_formula_from_string(
             raise AssertionError(
                 "Inputs must be provided if only a model type is given.",
             )
+        inputs = represent_categories_as_by_their_states(inputs=inputs)
         if model_type == "linear":
             formula = linear_formula(inputs=inputs)
 
@@ -198,9 +202,8 @@ def linear_and_interactions_formula(
 
     """
     formula = linear_formula(inputs=inputs)
-    for i in range(len(inputs)):
-        for j in range(i):
-            formula += inputs.get_keys()[j] + ":" + inputs.get_keys()[i] + " + "
+    for c in itertools.combinations(range(len(inputs)), 2):
+        formula += inputs.get_keys()[c[0]] + ":" + inputs.get_keys()[c[1]] + " + "
     return formula
 
 
