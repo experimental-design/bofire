@@ -36,14 +36,14 @@ For a more complete introduction to BoFire, please look in our [docs](https://ex
 
 ### Optimization problem
 
-You will find a notebook covering the described example below in our [tutorials](https://github.com/experimental-design/bofire/tree/main/tutorials) section to run the code yourself.
+You will find a notebook covering the described example below in our [tutorials](https://github.com/experimental-design/bofire/tree/main/tutorials/quick_start) section to run the code yourself.
 
-Let us consider a test function for single-objective optimization - the [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau%27s_function). The Himmelblau's function is a multi-modal function with four identical local minima used to test the performance of optimization algorithms. The optimization domain of the Himmelblau's function is illustrated below together with the four minima marked red.
+Let us consider a test function for single-objective optimization - the [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau%27s_function). The Himmelblau's function has four identical local minima used to test the performance of optimization algorithms. The optimization domain of the Himmelblau's function is illustrated below together with the four minima marked red.
 
-[comment]: <> (TODO: Exchange link below with https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau.png)
+[comment]: <> (For local import use: graphics/tutorials/himmelblau.png)
 
 <div style="text-align: center;">
-    <img src="graphics/tutorials/himmelblau.png" alt="Himmelblau's function" width="300"/>
+    <img src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau.png" alt="Himmelblau's function" width="300"/>
 </div>
 
 
@@ -116,7 +116,7 @@ print(candidates)
 >  3  ...       ...
 ```
 
-Let's execute the randomly drawn candidates using the `himmelblau` function to obtain `Experiments` in BoFire's terminology.
+Let's evaluate the function output for the randomly drawn candidates using the `himmelblau` function to obtain `Experiments` in BoFire's terminology.
 
 ```Python
 experimental_output = candidates.apply(
@@ -168,7 +168,7 @@ To run the optimization loop using BoFire's terminology, we first `tell` the str
 sobo_strategy.tell(experiments=experiments)
 ```
 
-Subsequently, we run the optimization loop with a budget of 30 iterations. In each iteration, we `ask` the strategy object for one new candidate (returned as a list with one item). Then, we execute the suggested candidate to obtain a new experiment. To complete one full iteration, we concatenate the new experiment to the existing experiments and `tell` the strategy about the updated experiments.
+We run the optimization loop for 30 iterations. In each iteration, we `ask` the strategy object to suggest one new candidate, which is returned as a list containing a single item. We then perform a new experiment by evaluating the Himmelblau function output of this candidate. After completing the experiment, we add the new data to our existing experiments and `tell` the strategy object about the updated dataset. This process is repeated for each of the 30 iterations.
 
 ```Python
 import pandas as pd
@@ -190,11 +190,16 @@ for _ in range(30):
 
 The optimization behavior of the strategy is shown in the animated figure below. The four minima are marked red, the experiments carried out are marked blue with blue lines connecting them. The contours are indicating the predicted mean of the current model of each iteration.
 
-[comment]: <> (TODO: Update Figure with Dorofee and exchange link below with https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau_optimization.gif)
+[comment]: <> (For local import use: graphics/tutorials/himmelblau_optimization.gif)
 
 <div style="text-align: center;">
-    <img src="graphics/tutorials/himmelblau_optimization.gif" alt="Optimization of Himmelblau's function" width="300"/>
+    <img src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau_optimization.gif" alt="Optimization of Himmelblau's function" width="300"/>
 </div>
+
+
+## Documentation
+
+Documentation including a section on how to get started can be found under https://experimental-design.github.io/bofire/.
 
 
 ## Reference
@@ -238,7 +243,6 @@ For molecular optimizations, BoFire uses the molecular kernels from the [Gauche 
         volume = {36},
         year = {2023}
     }
-
 
 
 ## Contributing
