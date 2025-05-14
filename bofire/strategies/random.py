@@ -12,6 +12,7 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
+    AnyContinuousConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -203,7 +204,8 @@ class RandomStrategy(Strategy):
         if seed is None:
             seed = np.random.default_rng().integers(1, 1000000)
 
-        if len(domain.constraints) == 0:
+        # here we have to adapt for categoricals
+        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:  # type: ignore
             return domain.inputs.sample(n, fallback_sampling_method, seed=seed)
 
         # check if we have pseudo fixed features in the linear equality constraints
@@ -326,7 +328,7 @@ class RandomStrategy(Strategy):
                 samples,
                 domain.inputs.get([CategoricalInput, DiscreteInput]).sample(
                     n,
-                    method=SamplingMethodEnum.UNIFORM,
+                    method=fallback_sampling_method,
                     seed=seed,
                 ),
             ],
