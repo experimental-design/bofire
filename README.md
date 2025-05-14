@@ -40,8 +40,6 @@ You will find a notebook covering the described example below in our [tutorials]
 
 Let us consider a test function for single-objective optimization - the [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau%27s_function). The Himmelblau's function has four identical local minima used to test the performance of optimization algorithms. The optimization domain of the Himmelblau's function is illustrated below together with the four minima marked red.
 
-[comment]: <> (For local import use: graphics/tutorials/himmelblau.png)
-
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau.png" alt="Himmelblau's function" width="300"/>
 </div>
@@ -189,8 +187,6 @@ for _ in range(30):
 ```
 
 The optimization behavior of the strategy is shown in the animated figure below. The four minima are marked red, the experiments carried out are marked blue with blue lines connecting them. The contours are indicating the predicted mean of the current model of each iteration.
-
-[comment]: <> (For local import use: graphics/tutorials/himmelblau_optimization.gif)
 
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau_optimization.gif" alt="Optimization of Himmelblau's function" width="300"/>
