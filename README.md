@@ -179,11 +179,8 @@ for _ in range(30):
     new_experiments["y"] = new_candidates.apply(
         lambda row: himmelblau(row["x1"], row["x2"]), axis=1
     )
-    experiments = pd.concat([experiments, new_experiments], join="inner").reset_index(
-        drop=True
-    )
 
-    sobo_strategy.tell(experiments=experiments)
+    sobo_strategy.tell(experiments=new_experiments)
 ```
 
 The optimization behavior of the strategy is shown in the animated figure below. The four minima are marked red, the experiments carried out are marked blue with blue lines connecting them. The contours are indicating the predicted mean of the current model of each iteration.
