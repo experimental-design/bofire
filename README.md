@@ -69,8 +69,8 @@ For the two continuous input variables of the Himmelblau's function *x1* and *x2
 from bofire.data_models.features.api import ContinuousInput
 
 
-input_feature_1 = ContinuousInput(key="x1", bounds=(-5, 5))
-input_feature_2 = ContinuousInput(key="x2", bounds=(-5, 5))
+input_feature_1 = ContinuousInput(key="x1", bounds=[-5, 5])
+input_feature_2 = ContinuousInput(key="x2", bounds=[-5, 5])
 ```
 
 For more details on `Input` features, see the respective sections in our [docs](https://experimental-design.github.io/bofire/).
@@ -169,9 +169,6 @@ sobo_strategy.tell(experiments=experiments)
 We run the optimization loop for 30 iterations. In each iteration, we `ask` the strategy object to suggest one new candidate, which is returned as a list containing a single item. We then perform a new experiment by evaluating the Himmelblau function output of this candidate. After completing the experiment, we add the new data to our existing experiments and `tell` the strategy object about the updated dataset. This process is repeated for each of the 30 iterations.
 
 ```Python
-import pandas as pd
-
-
 for _ in range(30):
     new_candidates = sobo_strategy.ask(candidate_count=1)
 
