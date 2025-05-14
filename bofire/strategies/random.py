@@ -339,3 +339,18 @@ class RandomStrategy(Strategy):
             samples[key] = value
 
         return samples[domain.inputs.get_keys()]
+
+    data_model_cls = data_models.RandomStrategy
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        fallback_sampling_method: SamplingMethodEnum | None = None,
+        n_burnin: int | None = None,
+        n_thinning: int | None = None,
+        num_base_samples: int | None = None,
+        max_iters: int | None = None,
+    ):
+        pass

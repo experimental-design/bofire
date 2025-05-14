@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Concatenate, List, Optional, ParamSpec, TypeVar, cast
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -9,26 +9,6 @@ from pydantic import PositiveInt
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
-
-
-# Paramspec and typevar used for copying signature
-P = ParamSpec("P")
-T = TypeVar("T")
-C = TypeVar("C")
-
-
-def copy_datamodel_kwargs(
-    data_model_init: Callable[Concatenate[Any, P], Any],
-) -> Callable[[Callable[Concatenate[C, ...], T]], Callable[Concatenate[C, P], T]]:
-    """Decorator to match datamodel
-
-    Casts the `Strategy.make` method to accept the same keyword arguments
-    as the corresponding `DataModel`, to enable useful type hinting."""
-
-    def return_func(func: Callable[Concatenate[C, ...], T]):
-        return cast(Callable[Concatenate[C, P], T], func)
-
-    return return_func
 
 
 class Strategy(ABC):
@@ -44,6 +24,7 @@ class Strategy(ABC):
         self,
         data_model: DataModel,
     ):
+        self.data_model = data_model
         self.domain = data_model.domain
         # if data_model.seed is None (no explicit seed provided by the user),
         # we use a randomly generated seed from the seed sequence.
@@ -298,8 +279,9 @@ class Strategy(ABC):
             return 0
         return len(self.experiments)
 
-    @classmethod
-    @abstractmethod
-    @copy_datamodel_kwargs(DataModel.__init__)
-    def make(cls, **kwargs) -> "Strategy":
-        pass
+
+def make_strategy(cls, locals: dict):
+    kwargs = {k: v for k, v in locals.items() if v is not None}
+    kwargs.pop("cls")
+
+    return cls.from_spec(cls.data_model_cls(**kwargs))

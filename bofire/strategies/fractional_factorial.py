@@ -4,13 +4,14 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.doe import (
     apply_block_generator,
     fracfact,
@@ -178,3 +179,19 @@ class FractionalFactorialStrategy(Strategy):
 
     def has_sufficient_experiments(self) -> bool:
         return True
+
+    data_model_cls = DataModel
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        n_repetitions: int | None = None,
+        n_center: int | None = None,
+        block_feature_key: str | None = None,
+        generator: str | None = None,
+        n_generators: int | None = None,
+        randomize_runorder: bool | None = None,
+    ):
+        return make_strategy(cls, locals())

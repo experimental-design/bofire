@@ -1,12 +1,14 @@
-from typing import Optional
+from typing import Any, Dict, List, Literal, Optional
 
 import pandas as pd
 from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
+from bofire.data_models.api import Domain
 from bofire.data_models.features.api import CategoricalInput, Input
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
+    AnyOptimalityCriterion,
     DoEOptimalityCriterion,
 )
 from bofire.strategies.doe.branch_and_bound import (
@@ -20,7 +22,7 @@ from bofire.strategies.doe.utils_categorical_discrete import (
     discrete_to_relaxable_domain_mapper,
     nchoosek_to_relaxable_domain_mapper,
 )
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 
 
 class DoEStrategy(Strategy):
@@ -273,3 +275,28 @@ class DoEStrategy(Strategy):
             )
             return adapted_partially_fixed_candidates
         return None
+
+    data_model_cls = data_models.DoEStrategy
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        criterion: AnyOptimalityCriterion | None = None,
+        optimization_strategy: Literal[
+            "default",
+            "exhaustive",
+            "branch-and-bound",
+            "partially-random",
+            "relaxed",
+            "iterative",
+        ]
+        | None = None,
+        verbose: bool | None = None,
+        ipopt_options: Dict[Any, Any] | None = None,
+        use_hessian: bool | None = None,
+        use_cyipopt: bool | None = None,
+        sampling: List[List[Any]] | None = None,
+    ):
+        return make_strategy(cls, locals())

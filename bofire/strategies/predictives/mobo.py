@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import torch
@@ -8,16 +8,23 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
 )
 from botorch.models.gpytorch import GPyTorchModel
+from pydantic import PositiveInt
 
 from bofire.data_models.acquisition_functions.api import (
+    AnyMultiObjectiveAcquisitionFunction,
     qEHVI,
     qLogEHVI,
     qLogNEHVI,
     qNEHVI,
 )
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.strategies.strategy import make_strategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import (
     get_multiobjective_objective,
@@ -122,3 +129,22 @@ class MoboStrategy(BotorchStrategy):
                 ],
             )
         ).tolist()
+
+    data_model_cls = DataModel
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        ref_point: Dict[str, float] | None = None,
+        acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
+    ):
+        return make_strategy(cls, locals())

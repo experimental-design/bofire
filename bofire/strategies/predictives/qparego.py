@@ -7,15 +7,27 @@ from botorch.acquisition.objective import GenericMCObjective
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
+from pydantic import PositiveInt
 
+from bofire.data_models.acquisition_functions.acquisition_function import (
+    qEI,
+    qLogEI,
+    qLogNEI,
+    qNEI,
+)
+from bofire.data_models.api import Domain
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     MaximizeObjective,
     MinimizeObjective,
     Objective,
 )
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.strategies.strategy import make_strategy
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import (
     get_multiobjective_objective,
@@ -138,3 +150,21 @@ class QparegoStrategy(BotorchStrategy):
             )
             acqfs.append(acqf)
         return acqfs
+
+    data_model_cls = DataModel
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        acquisition_function: qEI | qLogEI | qLogNEI | qNEI | None = None,
+    ):
+        return make_strategy(cls, locals())

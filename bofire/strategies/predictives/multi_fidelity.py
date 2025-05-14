@@ -1,11 +1,22 @@
+from typing import List
+
 import numpy as np
 import pandas as pd
+from pydantic import PositiveInt
 
+from bofire.data_models.acquisition_functions.api import (
+    AnySingleObjectiveAcquisitionFunction,
+)
+from bofire.data_models.api import Domain
 from bofire.data_models.features.api import TaskInput
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy as DataModel,
 )
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.sobo import SoboStrategy
+from bofire.strategies.strategy import make_strategy
 from bofire.utils.naming_conventions import get_column_names
 
 
@@ -105,3 +116,22 @@ class MultiFidelityStrategy(SoboStrategy):
         missing_fidelities = allowed_fidelities - observed_fidelities
         if missing_fidelities:
             raise ValueError(f"Some tasks have no experiments: {missing_fidelities}")
+
+    data_model_cls = DataModel
+
+    @classmethod
+    def make(  # type: ignore
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        fidelity_thresholds: List[float] | float | None = None,
+    ):
+        return make_strategy(cls, locals())

@@ -2,6 +2,14 @@ import base64
 import warnings
 from typing import Callable, List, Tuple, Union
 
+from pydantic import PositiveInt
+
+from bofire.data_models.api import Domain
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.strategies.strategy import make_strategy
+
 
 try:
     import cloudpickle
@@ -16,7 +24,14 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.models.gpytorch import GPyTorchModel
 
-from bofire.data_models.acquisition_functions.api import qLogNEI, qNEI, qPI, qSR, qUCB
+from bofire.data_models.acquisition_functions.api import (
+    AnySingleObjectiveAcquisitionFunction,
+    qLogNEI,
+    qNEI,
+    qPI,
+    qSR,
+    qUCB,
+)
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
@@ -26,10 +41,11 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
-from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
+from bofire.data_models.strategies.predictives.sobo import (
+    SoboBaseStrategy as SoboBaseDataModel,
+)
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy as SoboDataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
-from bofire.strategies.strategy import copy_datamodel_kwargs
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
@@ -42,11 +58,9 @@ from bofire.utils.torch_tools import (
 
 
 class SoboStrategy(BotorchStrategy):
-    data_model_cls = SoboDataModel
-
     def __init__(
         self,
-        data_model: DataModel,
+        data_model: SoboBaseDataModel,
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
@@ -155,10 +169,23 @@ class SoboStrategy(BotorchStrategy):
             etas,
         )
 
+    data_model_cls = SoboDataModel
+
     @classmethod
-    @copy_datamodel_kwargs(SoboDataModel.__init__)
-    def make(cls, **kwargs):
-        return cls.from_spec(cls.data_model_cls(**kwargs))
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+    ):
+        return make_strategy(cls, locals())
 
 
 class AdditiveSoboStrategy(SoboStrategy):
@@ -230,6 +257,25 @@ class AdditiveSoboStrategy(SoboStrategy):
             etas,
         )
 
+    data_model_cls = AdditiveDataModel
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        use_output_constraints: bool | None = None,
+    ):
+        return make_strategy(cls, locals())
+
 
 class MultiplicativeSoboStrategy(SoboStrategy):
     def __init__(
@@ -259,6 +305,8 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             None,
             1e-3,
         )
+
+    data_model_cls = MultiplicativeDataModel
 
 
 class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
@@ -291,6 +339,26 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             None,
             1e-3,
         )
+
+    data_model_cls = MultiplicativeAdditiveDataModel
+
+    @classmethod
+    def make(  # type: ignore
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        use_output_constraints: bool | None = None,
+        additive_features: List[str] | None = None,
+    ):
+        return make_strategy(cls, locals())
 
 
 class CustomSoboStrategy(SoboStrategy):

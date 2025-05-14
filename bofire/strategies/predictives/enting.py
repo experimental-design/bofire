@@ -1,8 +1,10 @@
 import warnings
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+
+from bofire.strategies.strategy import make_strategy
 
 
 try:
@@ -13,13 +15,13 @@ try:
     from entmoot.problem_config import ProblemConfig
 except ImportError:
     warnings.warn(
-        "entmoot not installed. Please install it to use " "BoFire's `EntingStrategy`.",
+        "entmoot not installed. Please install it to use BoFire's `EntingStrategy`.",
         ImportWarning,
     )
 
 from typing import Union
 
-from pydantic import PositiveInt
+from pydantic import PositiveFloat, PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -399,3 +401,28 @@ class EntingStrategy(PredictiveStrategy):
             )
             > 1
         )
+
+    data_model_cls = data_models.EntingStrategy
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        seed: int | None = None,
+        beta: PositiveFloat | None = None,
+        bound_coeff: PositiveFloat | None = None,
+        acq_sense: Literal["exploration", "penalty"] | None = None,
+        dist_trafo: Literal["normal", "standard"] | None = None,
+        dist_metric: Literal["euclidean_squared", "l1", "l2"] | None = None,
+        cat_metric: Literal["overlap", "of", "goodall4"] | None = None,
+        num_boost_round: PositiveInt | None = None,
+        max_depth: PositiveInt | None = None,
+        min_data_in_leaf: PositiveInt | None = None,
+        min_data_per_group: PositiveInt | None = None,
+        verbose: Literal[-1, 0, 1, 2] | None = None,
+        solver_name: str | None = None,
+        solver_verbose: bool | None = None,
+        solver_params: Dict[str, Any] | None = None,
+        kappa_fantasy: float | None = None,
+    ):
+        return make_strategy(cls, locals())
