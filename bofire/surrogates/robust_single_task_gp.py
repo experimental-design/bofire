@@ -29,11 +29,6 @@ from bofire.surrogates.utils import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 
-# TODO: Think if we should inherit SingleTaskGPSurrogate or not
-# This might be able to save us some code duplication
-# TODO: add to data_model
-
-
 class RobustSingleTaskGPSurrogate(
     SingleTaskGPSurrogate, BotorchSurrogate, TrainableSurrogate
 ):
