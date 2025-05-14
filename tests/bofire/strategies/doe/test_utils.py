@@ -65,14 +65,14 @@ def test_get_formula_from_string():
 
     # linear model
     terms = ["1", "x0", "x1", "x2"]
-    model_formula = get_formula_from_string(domain=domain, model_type="linear")
+    model_formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # linear and interaction
     terms = ["1", "x0", "x1", "x2", "x0:x1", "x0:x2", "x1:x2"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert all(term in terms for term in model_formula)
@@ -81,7 +81,7 @@ def test_get_formula_from_string():
     # linear and quadratic
     terms = ["1", "x0", "x1", "x2", "x0 ** 2", "x1 ** 2", "x2 ** 2"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-quadratic",
     )
     assert all(term in terms for term in model_formula)
@@ -100,7 +100,9 @@ def test_get_formula_from_string():
         "x1 ** 2",
         "x2 ** 2",
     ]
-    model_formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    model_formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
@@ -108,7 +110,7 @@ def test_get_formula_from_string():
     terms_lhs = ["y"]
     terms_rhs = ["1", "x0", "x0 ** 2", "x0:x1"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="y ~ 1 + x0 + x0:x1 + {x0**2}",
         rhs_only=False,
     )
@@ -144,7 +146,7 @@ def test_get_formula_from_string():
 def test_n_zero_eigvals_unconstrained():
     # 5 continuous
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 100)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
     )
 
@@ -193,19 +195,23 @@ def test_number_of_model_terms():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="linear")
+    formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert len(formula) == 6
 
-    formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="linear-and-quadratic"
+    )
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert len(formula) == 21
 
     # 3 continuous & 2 discrete inputs
@@ -220,19 +226,23 @@ def test_number_of_model_terms():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="linear")
+    formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert len(formula) == 6
 
-    formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="linear-and-quadratic"
+    )
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert len(formula) == 21
 
 
@@ -290,7 +300,7 @@ def test_constraints_as_scipy_constraints():
 
     # domain with nonlinear constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NonlinearEqualityConstraint(
@@ -379,7 +389,7 @@ def test_constraints_as_scipy_constraints():
 def test_ConstraintWrapper():
     # define domain with all types of constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
@@ -581,20 +591,20 @@ def test_minimize():
 def test_check_nchoosek_constraints_as_bounds():
     # define domain: possible to formulate as bounds, no NChooseK constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-1, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-np.inf, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
@@ -606,9 +616,9 @@ def test_check_nchoosek_constraints_as_bounds():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key=f"x{1}", bounds=(0, 1)),
-            ContinuousInput(key=f"x{2}", bounds=(-1, 1)),
-            ContinuousInput(key=f"x{3}", bounds=(-2, 1)),
-            ContinuousInput(key=f"x{4}", bounds=(-3, 1)),
+            ContinuousInput(key=f"x{2}", bounds=(0, 2)),
+            ContinuousInput(key=f"x{3}", bounds=(0, 3)),
+            ContinuousInput(key=f"x{4}", bounds=(0, 4)),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -636,7 +646,7 @@ def test_check_nchoosek_constraints_as_bounds():
 
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.1, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
@@ -653,10 +663,10 @@ def test_check_nchoosek_constraints_as_bounds():
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
     domain = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{1}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{2}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{3}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{4}", bounds=(-1, -0.1)),
+            ContinuousInput(key=f"x{1}", bounds=(0.1, 1.0)),
+            ContinuousInput(key=f"x{2}", bounds=(0.1, 1.0)),
+            ContinuousInput(key=f"x{3}", bounds=(0.1, 1.0)),
+            ContinuousInput(key=f"x{4}", bounds=(0.1, 1.0)),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -673,7 +683,7 @@ def test_check_nchoosek_constraints_as_bounds():
 
     # Not allowed: names parameters of two NChooseK overlap
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
@@ -699,8 +709,8 @@ def test_nchoosek_constraints_as_bounds():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
-                bounds=(-1, 1),
+                key=f"x{i + 1}",
+                bounds=(0, 1),
             )
             for i in range(5)
         ],
@@ -716,44 +726,6 @@ def test_nchoosek_constraints_as_bounds():
     for i in range(20):
         assert _bounds[i] == bounds[i]
 
-    # define domain: with NChooseK constraints
-    # define domain: no NChooseK constraints
-    # domain = Domain(
-    #     inputs=[
-    #         ContinuousInput(key=f"x{i+1}", bounds=(-1, 1),)
-    #         for i in range(5)
-    #     ],
-    #     outputs=[ContinuousOutput(key="y")],
-    #     constraints=[opti.NChooseK(["x1", "x2", "x3"], max_active=1)],
-    # )
-    # np.random.seed(1)
-    # bounds = nchoosek_constraints_as_bounds(domain, n_experiments=4)
-    # _bounds = [
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    # ]
-    # assert len(bounds) == 20
-    # for i in range(20):
-    #     assert _bounds[i] == bounds[i]
-
 
 def test_convert_formula_to_string():
     domain = Domain.from_lists(
@@ -761,7 +733,9 @@ def test_convert_formula_to_string():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
 
     formula_str = convert_formula_to_string(domain=domain, formula=formula)
     assert (
@@ -769,3 +743,34 @@ def test_convert_formula_to_string():
         == "torch.vstack([torch.ones_like(x0), x0, x1, x2, x0 ** 2, x1 ** 2, x2 ** 2,"
         + " x0*x1, x0*x2, x1*x2, ]).T"
     )
+
+
+def test_formula_discrete_handled_like_continuous():
+    domain_w_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    domain_wo_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for model_type in [
+        "linear",
+        "linear-and-interactions",
+        "linear-and-quadratic",
+        "fully-quadratic",
+    ]:
+        formula_w_discrete = get_formula_from_string(
+            inputs=domain_w_discrete.inputs, model_type=model_type
+        )
+        formula_wo_discrete = get_formula_from_string(
+            inputs=domain_wo_discrete.inputs, model_type=model_type
+        )
+        assert formula_w_discrete == formula_wo_discrete
+
+
+if __name__ == "__main__":
+    test_formula_discrete_handled_like_continuous()

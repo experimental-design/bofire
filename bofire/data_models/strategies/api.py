@@ -22,13 +22,21 @@ from bofire.data_models.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
     AnyAcqfOptimizer,
     BotorchOptimizer,
+    GeneticAlgorithmOptimizer,
 )
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,
 )
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
-from bofire.data_models.strategies.predictives.mobo import MoboStrategy
+from bofire.data_models.strategies.predictives.mobo import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+    MoboStrategy,
+    RelativeMovingReferenceValue,
+    RelativeToMaxMovingReferenceValue,
+)
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy,
 )

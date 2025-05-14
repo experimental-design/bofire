@@ -38,14 +38,15 @@ optimization = [
     "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL]",
+    "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
+    "pymoo>=0.6.0",
+    "cvxopt",
 ]
 entmoot = ["entmoot>=2.0.6"]
 xgb = ["xgboost>=1.7.5"]
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred>=1.2.0"]
 tests = [
-    "mopti",
     "pytest",
     "pytest-cov",
     "papermill",
@@ -67,7 +68,7 @@ all = [
     "formulaic==1.0.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL]",
+    "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0.6",
     "xgboost>=1.7.5",
@@ -86,6 +87,8 @@ all = [
     "jupyter",
     "matplotlib",
     "seaborn",
+    "pymoo>=0.6.0",
+    "cvxopt",
 ]
 
 [tool.setuptools.packages]

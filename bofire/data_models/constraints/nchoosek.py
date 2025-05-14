@@ -6,7 +6,7 @@ from pydantic import model_validator
 
 from bofire.data_models.constraints.constraint import IntrapointConstraint
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.types import FeatureKeys
 
 
@@ -33,11 +33,19 @@ class NChooseKConstraint(IntrapointConstraint):
     none_also_valid: bool
 
     def validate_inputs(self, inputs: Inputs):
-        keys = inputs.get_keys(ContinuousInput)
+        keys = inputs.get_keys([ContinuousInput, DiscreteInput])
         for f in self.features:
             if f not in keys:
                 raise ValueError(
                     f"Feature {f} is not a continuous input feature in the provided Inputs object.",
+                )
+            feature_ = inputs.get_by_key(f)
+            assert isinstance(
+                feature_, ContinuousInput
+            ), f"Feature {f} is not a ContinuousInput."
+            if feature_.bounds[0] < 0:
+                raise ValueError(
+                    f"Feature {f} must have a lower bound of >=0, but has {feature_.bounds[0]}",
                 )
 
     @model_validator(mode="after")

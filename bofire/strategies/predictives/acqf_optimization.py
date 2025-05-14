@@ -12,6 +12,7 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from pymoo.optimize import minimize as pymoo_minimize
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -36,12 +37,16 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     BotorchOptimizer as BotorchOptimizerDataModel,
 )
+from bofire.data_models.strategies.api import (
+    GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
+)
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
     ShortestPathStrategy as ShortestPathStrategyDataModel,
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
+from bofire.strategies.predictives import utils
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -295,6 +300,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         self.n_raw_samples = data_model.n_raw_samples
         self.maxiter = data_model.maxiter
         self.batch_limit = data_model.batch_limit
+        self.sequential = data_model.sequential
 
         # just for completeness here, we should drop the support for FREE and only go over ones that are also
         # allowed, for more speedy optimization we can user other solvers
@@ -343,6 +349,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinear_constraints=nonlinears,  # type: ignore
             fixed_features=fixed_features,
             fixed_features_list=fixed_features_list,
+            sequential=self.sequential,
         )
 
         candidates = self._candidates_tensor_to_dataframe(
@@ -364,6 +371,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 nonlinear_constraints=nonlinears,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
+                sequential=self.sequential,
             )
             if self.local_search_config.is_local_step(
                 local_acqf_val.item(),
@@ -398,6 +406,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         nonlinear_constraints: List[Callable[[Tensor], float]],
         fixed_features: Optional[Dict[int, float]],
         fixed_features_list: Optional[List[Dict[int, float]]],
+        sequential: bool,
     ) -> Tuple[Tensor, Tensor]:
         if len(acqfs) > 1:
             candidates, acqf_vals = optimize_acqf_list(
@@ -466,6 +475,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 return_best_only=True,
                 options=self._get_optimizer_options(domain),  # type: ignore
                 ic_generator=ic_generator,
+                sequential=sequential,
                 **ic_gen_kwargs,
             )
         return candidates, acqf_vals
@@ -719,8 +729,139 @@ class BotorchOptimizer(AcquisitionOptimizer):
         return list_of_fixed_features
 
 
+class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
+    """
+    Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm.
+
+    This optimizer uses a population-based approach to optimize acquisition functions. Currently, only
+    single-objective optimization is supported. The algorithm evolves a population of
+    candidate solutions over multiple generations using genetic operators such as mutation, crossover,
+    and selection.
+
+    - `CategoricalInput` variables, which are treated as one-hot-encoded columns by the model and the acquisition functions, are turned into categorical variables for the GA optimization. In the objective function, these categorical variables are transformed to one-hot-encoded tensors. The object `BofireDomainMixedVars` handles this conversion.
+    - `CategoricalDescriptorInput` is also transformed in to a categorical pymoo variable, but transformed into the descriptor space
+    - `DiscreteInput` will be converted to an pymoo Integer.
+
+    All transformations are handled in the helper class `BofireDomainMixedVars`
+
+    **Constraints**
+    The GA cannot handle equality constraints well. Constraints are therefor handled differently:
+
+    - Constraints of the type `LinearEqualityConstraint`, `LinearInequalityConstraint`, and `NChooseKConstraint` are handled in a "repair-function". This repair function is used by the GA to map all individuals from the population $x$ to the feasible space $x'$. In this case, I implemented a repair-function for an arbitrary mixture of linear equality and inequality constraints with a quadratic programming approach:
+
+    $$
+    \\min_{x'} \\left( ||x-x' ||_2^2 \right)
+    $$
+
+    s.t.
+
+    $$
+    A \\cdot x' = b
+    $$
+
+    $$
+    G \\cdot x' <= h
+    $$
+
+    $$
+    lb <= x' <= ub
+    $$
+
+    The `NChooseKConstraint` is also handled in the reapir function: For each experiment in the population, the smallest factors are set to 0, if the *max_features* constraint is violated, and the upper bound of the largest feactors is set to an offset (defaults to $1e-3$), if the *min_features* constraint is violated.
+
+    The repair functions are handled in the class `LinearProjection`.
+
+    - Other supported constraints are: `ProductInequalityConstraint` and `NonlinearInequalityConstraint`. `ProductInequalityConstraint` are evaluated by the torch-callable, provided by the `get_nonlinear_constraints` function. `NonlinearInequalityConstraint` are evaluated from the experiments data-frame, by the constraints `__call__` method.
+
+
+    These are handled by the optimizer.
+
+    `NonlinearEqualityConstraints` are not supported.
+
+
+
+    """
+
+    def __init__(self, data_model: GeneticAlgorithmDataModel):
+        super().__init__(data_model)
+        self.data_model = data_model
+
+    def _optimize(
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],  # this is a botorch object
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,  # this is the preprocessing specs for the inputs
+        experiments: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        """
+        Main function for optimizing the acquisition function using the genetic algorithm.
+
+        Args:
+            candidate_count (int): Number of candidates to generate.
+            acqfs (List[AcquisitionFunction]): List of acquisition functions to optimize.
+            domain (Domain): The domain of the optimization problem.
+            input_preprocessing_specs (InputTransformSpecs): Preprocessing specifications for the inputs.
+            experiments (Optional[pd.DataFrame]): Existing experiments, if any.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: Optimized candidates and their corresponding objective values.
+        """
+
+        # Note: If sequential mode is needed, could be added here, and use the single_shot_optimization function in a loop
+        candidates, _ = self._single_shot_optimization(
+            domain, input_preprocessing_specs, acqfs, candidate_count
+        )
+
+        return self._candidates_tensor_to_dataframe(
+            candidates,
+            domain,
+            input_preprocessing_specs,
+        )
+
+    def _single_shot_optimization(
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        acqfs: List[AcquisitionFunction],
+        q: int,
+    ) -> Tuple[Tensor, Tensor]:
+        """
+        Single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
+
+        Args:
+            domain (Domain)
+            input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for the models in
+                the acquisition functions
+
+        Returns
+            Tensor: x_opt as (d,) Tensor
+            Tensor: f_opt as (n_y,) Tensor
+        """
+        problem, algorithm, termination = utils.get_problem_and_algorithm(
+            self.data_model,
+            domain,
+            input_preprocessing_specs,
+            acqfs,
+            q,
+            bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
+        )
+
+        res = pymoo_minimize(
+            problem, algorithm, termination, verbose=self.data_model.verbose
+        )
+
+        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
+            [res.X]
+        ).reshape((q, -1))
+        f_opt = torch.from_numpy(res.F).to(**tkwargs)
+
+        return x_opt, f_opt
+
+
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
     BotorchOptimizerDataModel: BotorchOptimizer,
+    GeneticAlgorithmDataModel: GeneticAlgorithmOptimizer,
 }
 
 

@@ -20,6 +20,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "values": [random.random(), random.random() + 3],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "rtol": 1e-7,
     },
 )
 
@@ -29,6 +30,7 @@ specs.add_invalid(
         "key": str(uuid.uuid4()),
         "values": [1.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "rtol": 1e-7,
     },
     error=ValueError,
     message="Fixed discrete inputs are not supported. Please use a fixed continuous input.",
