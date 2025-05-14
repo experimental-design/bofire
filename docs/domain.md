@@ -1,4 +1,4 @@
-# Domains 
+# Domains
 
 The BoFire domain contains all information about the optimization problem. In general, the domain is defined by **inputs**, **outputs**, **objectives** and **constraints**. Numerous types of those elements are implemented in the BoFire framework. A brief description of the usage of domains and the individual elements is given in the following.
 
@@ -48,7 +48,7 @@ from bofire.data_models.objectives.api import MinimizeObjective
 
 outputs = [ContinuousOutput(key="y", objective=MinimizeObjective())]
 ```
-The modified domain in this case becomes  
+The modified domain in this case becomes
 ```python
 domain = Domain(
     inputs=inputs,
@@ -61,7 +61,7 @@ domain = Domain(
 BoFire allows for the following different user-facing input classes:
 
 - `ContinuousInput`
-- `DiscreteInput` 
+- `DiscreteInput`
 - `CategoricalInput`
 - `MolecularInput`
 - `CategoricalDescriptorInput`
@@ -69,13 +69,13 @@ BoFire allows for the following different user-facing input classes:
 - `TaskInput`
 <!-- - `ContinuousDescriptorInput` not used atm -->
 
-Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also 
+Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also
 # TODO: add link to strategy docu
 ).
 
 ### Input types
 
-#### Continuous inputs 
+#### Continuous inputs
 
 Continuous inputs are used to define real-values input variables with finite upper and lower bounds (see example above).
 
@@ -92,7 +92,7 @@ DiscreteInput(key="x3", values=[0, 0.1, 0.2])
 #### Categorical inputs
 This class of inputs is similar to the discrete inputs, but takes a list of strings as input. The following code defines a new categorical input variable $x_4$ with values "A", "B", "C".
 
-```python   
+```python
 from bofire.data_models.features.api import CategoricalInput
 
 CategoricalInput(key="x4", categories=["A", "B", "C"])
@@ -107,10 +107,10 @@ from bofire.data_models.features.api import MolecularInput
 MolecularInput(key="x5")
 ```
 
-<!-- #### Continuous descriptor inputs 
+<!-- #### Continuous descriptor inputs
  -->
 #### Categorical descriptor inputs
-Via the `CategoricalDescriptorInput` one can provide continuous encodings for the different categories via so called descriptors. Imagine, for example, having a categorial input with different categories, where each category corresponds to a specific material. Such descriptors could be e.g., density and hardness. Every material/category would get assigned a number for density and hardness in the hope that these two properties describe the material properly. In the context of fitting a GP, one can then use just these two dimensional vector for describing the material instead of a ten dimensional one-hot encoding, which results in a dimensionality reduction. Of course, this makes sense under the assumption that the descriptors actually correlate with the desired quantities. 
+Via the `CategoricalDescriptorInput` one can provide continuous encodings for the different categories via so called descriptors. Imagine, for example, having a categorial input with different categories, where each category corresponds to a specific material. Such descriptors could be e.g., density and hardness. Every material/category would get assigned a number for density and hardness in the hope that these two properties describe the material properly. In the context of fitting a GP, one can then use just these two dimensional vector for describing the material instead of a ten dimensional one-hot encoding, which results in a dimensionality reduction. Of course, this makes sense under the assumption that the descriptors actually correlate with the desired quantities.
 
 The `CategoricalDescriptorInput` class requires a list of permissible values as input. For example, the following code defines a new categorical descriptor input variable $x_6$ with values "A", "B", "C".
 
@@ -173,20 +173,20 @@ Different classes for the objectives are implemented in BoFire. These are used t
 - `MinimizeSigmoidObjective`: Similar to `MaximizeSigmoidObjective`, but the objective is to minimize the output variable(s).
 - `TargetObjective`: The objective is to reach a target value for the output variable(s). `TargetObjective` is of type `ConstrainedObjective` as `MaximizeSigmoidObjective` or `MinimizeSigmoidObjective`, i.e., it becomes one if the value is in the target region and falls asymptorically to zero outside that region.
 - `CloseToTargetObjective`: This objective measures the difference to a target value. Such an objective is often meaningful to minimize in a multiobjective optimization, and thus be included in the pareto front. Note that also the objectives of type `ConstrainedObjective` can be used in multiobjective optimization, but for that at least two targets of type `MaximizeSigmoidObjective`,`MinimizeSigmoidObjective` or `TargetObjective` are needed.
-- `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given. 
+- `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given.
 
 
-If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/). 
+If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/).
 
 ## Constraints
-The optimization problem in BoFire can be solved subject to a variety of different constraint types. These constraints are currently categorized as linear, non-linear, n choose k and interpoint constraints. 
+The optimization problem in BoFire can be solved subject to a variety of different constraint types. These constraints are currently categorized as linear, non-linear, n choose k and interpoint constraints.
 
 ### Linear constraints
-Linear constraints are used to define linear equalities and inequalities. 
+Linear constraints are used to define linear equalities and inequalities.
 
 Equalities can be defined using the `LinearEqualityConstraint` class. The `features` attribute is used to define the input variables, the `coefficients` attribute is used to define the coefficients of the linear equation and the `rhs` attribute is used to define the right-hand side of the equation.
 
-Inequalities can be defined using the `LinearInequalityConstraint` class. The attributes are defined in the same way as for the `LinearEqualityConstraint` class. 
+Inequalities can be defined using the `LinearInequalityConstraint` class. The attributes are defined in the same way as for the `LinearEqualityConstraint` class.
 
 The following code defines a new linear equality constraint $x_1 + x_2 = 1$ and an inequality constraint $x_1 - x_3 \leq 1$.
 
@@ -229,10 +229,8 @@ NChooseKConstraint(features=["x1", "x2", "x3", "x4"], min_count=2, max_count=3)
 ### Interpoint constraints
 The `InterpointEqualityConstraint` forces that values of a certain feature of a set/batch of candidates should have the same value. The set is defined using the `multiplicity` attribute. The following code defines a new `InterpointEqualityConstraint` that forces the values of the feature "x1" to be the same for every 3 subsequent candidates.
 
-```python   
+```python
 from bofire.data_models.constraints.api import InterpointEqualityConstraint
 
 InterpointEqualityConstraint(features="x1", multiplicity=3)
 ```
-
-
