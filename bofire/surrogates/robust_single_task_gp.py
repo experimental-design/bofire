@@ -18,17 +18,25 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
+
+# from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
+from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.surrogates.utils import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 
 # TODO: Think if we should inherit SingleTaskGPSurrogate or not
+# This might be able to save us some code duplication
 # TODO: add to data_model
-class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+
+
+class RobustSingleTaskGPSurrogate(
+    SingleTaskGPSurrogate, BotorchSurrogate, TrainableSurrogate
+):
     """
     Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
     See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/
@@ -40,10 +48,6 @@ class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         data_model: DataModel,
         **kwargs,
     ):
-        self.kernel = data_model.kernel
-        self.scaler = data_model.scaler
-        self.output_scaler = data_model.output_scaler
-        self.noise_prior = data_model.noise_prior
         self.prior_mean_of_support = data_model.prior_mean_of_support
         self.convex_parametrization = data_model.convex_parametrization
         self.cache_model_trace = data_model.cache_model_trace
