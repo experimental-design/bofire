@@ -187,7 +187,7 @@ class DoEStrategy(Strategy):
         return_fixed_candidates: bool | None = None,
     ):
         """
-        Create a new DoEStrategy instance.
+        Create a new design of experimence strategy instance.
         Args:
             domain: The domain for the strategy.
             seed: Random seed for reproducibility.
