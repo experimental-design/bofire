@@ -429,6 +429,8 @@ class EntingStrategy(PredictiveStrategy):
         """
         Create an enting strategy instance with the specified parameters.
 
+        https://github.com/cog-imperial/entmoot
+
         ENTMOOT: A Framework for Optimization over Ensemble Tree Models
         A. Thebelt, J. Kronqvist, M. Mistry, R. Lee, N. Sudermann-Merx, R. Misener
         Computers & Chemical Engineering, 2021
