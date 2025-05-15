@@ -1,8 +1,9 @@
 import base64
 import warnings
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Union, cast
 
 from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.api import Domain
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
@@ -184,7 +185,7 @@ class SoboStrategy(BotorchStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Creates a single objective Bayesian optimization strategy.
         Args:
@@ -199,7 +200,7 @@ class SoboStrategy(BotorchStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))
 
 
 class AdditiveSoboStrategy(SoboStrategy):
@@ -351,7 +352,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
         the objectives are defines in the outputs of the domain.
@@ -367,7 +368,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))
 
 
 class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
@@ -418,7 +419,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Creates a Bayesian optimization strategy that mixes additions and multiplions of multiple objectives.
         The weights of the objectives are defines in the outputs of the domain.
@@ -438,7 +439,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))
 
 
 class CustomSoboStrategy(SoboStrategy):

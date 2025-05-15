@@ -1,7 +1,7 @@
 import math
 import warnings
 from copy import deepcopy
-from typing import Dict, Optional
+from typing import Dict, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,7 @@ import torch
 from botorch.optim.initializers import sample_q_batches_from_polytope
 from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
 from pydantic.types import PositiveInt
+from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -352,7 +353,7 @@ class RandomStrategy(Strategy):
         num_base_samples: int | None = None,
         max_iters: int | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """Create a new instance of the RandomStrategy class.
         Args:
             domain: The domain we randomly sample from.
@@ -365,4 +366,4 @@ class RandomStrategy(Strategy):
         Returns:
             RandomStrategy: A new instance of the RandomStrategy class.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))

@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 import numpy as np
 import torch
@@ -9,6 +9,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 from botorch.models.gpytorch import GPyTorchModel
 from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import (
     AnyMultiObjectiveAcquisitionFunction,
@@ -172,4 +173,4 @@ class MoboStrategy(BotorchStrategy):
         Returns:
             An instance of the strategy configured with the specified parameters.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))

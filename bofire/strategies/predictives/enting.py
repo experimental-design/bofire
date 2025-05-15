@@ -1,8 +1,9 @@
 import warnings
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from bofire.strategies.strategy import make_strategy
 
@@ -424,7 +425,7 @@ class EntingStrategy(PredictiveStrategy):
         solver_verbose: bool | None = None,
         solver_params: Dict[str, Any] | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Create an enting strategy instance with the specified parameters.
 
@@ -454,4 +455,4 @@ class EntingStrategy(PredictiveStrategy):
             A strategy instance configured with the provided parameters.
         """
 
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))

@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, cast
 
 import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
@@ -133,7 +134,7 @@ class MultiFidelityStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy
         is useful if you have different measurement fidelities that measure the same thing with different cost and accuracy.
@@ -161,4 +162,4 @@ class MultiFidelityStrategy(SoboStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))

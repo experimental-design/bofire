@@ -1,7 +1,8 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 import pandas as pd
 from pydantic.types import PositiveInt
+from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.domain.api import Domain
@@ -185,7 +186,7 @@ class DoEStrategy(Strategy):
         use_cyipopt: bool | None = None,
         sampling: List[List[float]] | None = None,
         return_fixed_candidates: bool | None = None,
-    ):
+    ) -> Self:
         """
         Create a new design of experimence strategy instance.
         Args:
@@ -203,4 +204,4 @@ class DoEStrategy(Strategy):
         Returns:
             DoEStrategy: A new instance of the DoEStrategy class.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))

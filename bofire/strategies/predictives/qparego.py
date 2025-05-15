@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Union, cast
 
 import torch
 from botorch.acquisition import get_acquisition_function
@@ -8,6 +8,7 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
 from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.acquisition_function import (
     qEI,
@@ -166,7 +167,7 @@ class QparegoStrategy(BotorchStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Creates an instance of the multi-objective strategy ParEGO using the provided configuration parameters.
 
@@ -191,4 +192,4 @@ class QparegoStrategy(BotorchStrategy):
         Returns:
             An instance of the strategy configured with the provided parameters.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))

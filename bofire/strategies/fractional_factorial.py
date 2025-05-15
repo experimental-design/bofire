@@ -1,8 +1,9 @@
 import warnings
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
@@ -193,7 +194,7 @@ class FractionalFactorialStrategy(Strategy):
         n_generators: int | None = None,
         randomize_runorder: bool | None = None,
         seed: int | None = None,
-    ):
+    ) -> Self:
         """
         Create a new instance of the strategy with the given parameters. This method will create the datamodel
         under the hood and pass it to the constructor of the strategy.
@@ -207,4 +208,4 @@ class FractionalFactorialStrategy(Strategy):
             randomize_runorder: If true, the run order is randomized, else it is deterministic.
             seed: The seed for the random number generator.
         """
-        return make_strategy(cls, locals())
+        return cast(Self, make_strategy(cls, locals()))
