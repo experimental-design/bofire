@@ -1,3 +1,3 @@
 # Domain
 
-::: bofire.data_models.domain.domain
+::: bofire.data_models.domain
