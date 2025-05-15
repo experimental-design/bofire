@@ -139,7 +139,7 @@ class MoboStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        ref_point: Dict[str, float] | None = None,
+        ref_point: ExplicitReferencePoint | Dict[str, float] | None = None,
         acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,

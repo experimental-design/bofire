@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 from pydantic.types import PositiveInt
@@ -176,36 +176,31 @@ class DoEStrategy(Strategy):
     def make(
         cls,
         domain: Domain,
+        seed: int | None = None,
         criterion: AnyOptimalityCriterion | None = None,
-        optimization_strategy: Literal[
-            "default",
-            "exhaustive",
-            "branch-and-bound",
-            "partially-random",
-            "relaxed",
-            "iterative",
-        ]
-        | None = None,
         verbose: bool | None = None,
-        ipopt_options: Dict[Any, Any] | None = None,
+        ipopt_options: Dict | None = None,
+        scip_params: Dict | None = None,
         use_hessian: bool | None = None,
         use_cyipopt: bool | None = None,
         sampling: List[List[float]] | None = None,
-        seed: int | None = None,
+        return_fixed_candidates: bool | None = None,
     ):
         """
-        Creates an instance of a design of experiments strategy.
+        Create a new DoEStrategy instance.
         Args:
-            domain: Domain for the strategy.
-            criterion: Optimality criterion for the strategy. The default is d-optimality.
-            optimization_strategy: Optimization strategy to minimize the criterion.
-            verbose: Verbosity level.
-            ipopt_options: Options for IPOPT solver.
-            use_hessian: Whether to use Hessian in optimization.
-            use_cyipopt: Whether to use cyipopt solver.
-            sampling: Initial points for the optimizer.
+            domain: The domain for the strategy.
             seed: Random seed for reproducibility.
+            criterion: Optimality criterion for the strategy. Default is d-optimality.
+            verbose: Verbosity level.
+            ipopt_options: Options for IPOPT solver. IPOPT is used to minize the optimality criterion.
+            scip_params: Parameters for SCIP solver. SCIP is used to for backprojection of
+                         discrete and categorical variables.
+            use_hessian: Whether to use Hessian information.
+            use_cyipopt: Whether to use cyipopt.
+            sampling: Initial points for the strategy.
+            return_fixed_candidates: Whether to return fixed candidates.
         Returns:
-            DoEStrategy: Instance of the design of experiments strategy.
+            DoEStrategy: A new instance of the DoEStrategy class.
         """
         return make_strategy(cls, locals())
