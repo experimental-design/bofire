@@ -151,7 +151,7 @@ inputs = Inputs(
     CategoricalInput(key="x4", values=["A", "B", "C"]),
     MolecularInput(key="x5"),
     CategoricalDescriptorInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=["density", "hardness"], values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]),
-    CategoricalMolecularInput(key="x7", values=["C1CCCCC1", "O1CCOCC1"]])
+    CategoricalMolecularInput(key="x7", values=["C1CCCCC1", "O1CCOCC1"])])
 ```
 
 ## Outputs
