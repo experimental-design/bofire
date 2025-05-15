@@ -1,4 +1,5 @@
 import inspect
+import types
 import typing
 from typing import get_origin, get_type_hints
 
@@ -21,6 +22,14 @@ from bofire.strategies.api import (
 )
 from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
 from tests.bofire.strategies.test_base import domains
+
+
+def remove_optional(anno):
+    origin = get_origin(anno)
+    if origin == typing.Union or origin is types.UnionType:
+        return sorted((a for a in anno.__args__ if a is not type(None)), key=hash)
+    else:
+        return [anno]
 
 
 def test_make():
@@ -59,14 +68,6 @@ def test_make():
             else:
                 dm_anno = dm.model_fields[name].annotation
                 p_anno = p_annotation
-
-                def remove_optional(anno):
-                    if get_origin(anno) == typing.Union:
-                        return sorted(
-                            (a for a in anno.__args__ if a is not type(None)), key=hash
-                        )
-                    else:
-                        return [anno]
 
                 dm_anno = remove_optional(dm_anno)
                 p_anno = remove_optional(p_anno)
