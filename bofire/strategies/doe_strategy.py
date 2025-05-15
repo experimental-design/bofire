@@ -37,12 +37,12 @@ class DoEStrategy(Strategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.data_model = data_model
+        self._data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
         self._sampling = (
-            pd.DataFrame(self.data_model.sampling)
-            if self.data_model.sampling is not None
+            pd.DataFrame(self._data_model.sampling)
+            if self._data_model.sampling is not None
             else None
         )
         self._return_fixed_candidates = data_model.return_fixed_candidates
@@ -93,7 +93,7 @@ class DoEStrategy(Strategy):
             fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
             _candidate_count = candidate_count + fixed_experiments_count
         objective_function = get_objective_function(
-            self.data_model.criterion,
+            self._data_model.criterion,
             domain=relaxed_domain,
             n_experiments=_candidate_count,
             inputs_for_formula=self.domain.inputs,
@@ -103,7 +103,7 @@ class DoEStrategy(Strategy):
             relaxed_domain,
             fixed_experiments=None,
             partially_fixed_experiments=adapted_partially_fixed_candidates,
-            ipopt_options=self.data_model.ipopt_options,
+            ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
         )
         if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
@@ -121,7 +121,7 @@ class DoEStrategy(Strategy):
                 keys_continuous_inputs=[
                     continuous_input.key for continuous_input in mapped_continous_inputs
                 ],
-                scip_params=self.data_model.scip_params,
+                scip_params=self._data_model.scip_params,
             )
             design = filter_out_discrete_auxilliary_vars(
                 design_projected,
@@ -135,13 +135,13 @@ class DoEStrategy(Strategy):
         )
 
     def get_required_number_of_experiments(self) -> Optional[int]:
-        if isinstance(self.data_model.criterion, DoEOptimalityCriterion):
+        if isinstance(self._data_model.criterion, DoEOptimalityCriterion):
             if self.domain.inputs.get([DiscreteInput, CategoricalInput]):
                 _domain, _, _, _, _, _ = create_continuous_domain(domain=self.domain)
             else:
                 _domain = self.domain
             formula = get_formula_from_string(
-                self.data_model.criterion.formula, inputs=self.domain.inputs
+                self._data_model.criterion.formula, inputs=self.domain.inputs
             )
             return get_n_experiments(formula) - n_zero_eigvals(
                 domain=_domain, model_type=formula
