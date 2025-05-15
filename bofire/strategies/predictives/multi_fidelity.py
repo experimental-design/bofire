@@ -118,8 +118,6 @@ class MultiFidelityStrategy(SoboStrategy):
         if missing_fidelities:
             raise ValueError(f"Some tasks have no experiments: {missing_fidelities}")
 
-    data_model_cls = DataModel
-
     @classmethod
     def make(  # type: ignore
         cls,
@@ -162,4 +160,4 @@ class MultiFidelityStrategy(SoboStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, DataModel, locals()))

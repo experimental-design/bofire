@@ -171,8 +171,6 @@ class DoEStrategy(Strategy):
         ] = None
         return new_candidates
 
-    data_model_cls = data_models.DoEStrategy
-
     @classmethod
     def make(
         cls,
@@ -204,4 +202,4 @@ class DoEStrategy(Strategy):
         Returns:
             DoEStrategy: A new instance of the DoEStrategy class.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, data_models.DoEStrategy, locals()))

@@ -134,8 +134,6 @@ class MoboStrategy(BotorchStrategy):
             )
         ).tolist()
 
-    data_model_cls = DataModel
-
     @classmethod
     def make(
         cls,
@@ -173,4 +171,4 @@ class MoboStrategy(BotorchStrategy):
         Returns:
             An instance of the strategy configured with the specified parameters.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, DataModel, locals()))

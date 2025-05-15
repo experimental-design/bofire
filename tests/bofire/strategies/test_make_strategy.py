@@ -42,7 +42,7 @@ def test_make():
     mt_domain = benchmark.domain
 
     def test(strat, dm, domain):
-        data_model = strat.data_model_cls(domain=domain)
+        data_model = dm(domain=domain)
         data_model_dump = data_model.model_dump()
 
         sig = inspect.signature(strat.make)

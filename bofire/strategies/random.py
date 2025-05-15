@@ -341,8 +341,6 @@ class RandomStrategy(Strategy):
 
         return samples[domain.inputs.get_keys()]
 
-    data_model_cls = data_models.RandomStrategy
-
     @classmethod
     def make(
         cls,
@@ -366,4 +364,4 @@ class RandomStrategy(Strategy):
         Returns:
             RandomStrategy: A new instance of the RandomStrategy class.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, data_models.RandomStrategy, locals()))

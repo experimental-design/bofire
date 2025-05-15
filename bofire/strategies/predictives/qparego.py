@@ -152,8 +152,6 @@ class QparegoStrategy(BotorchStrategy):
             acqfs.append(acqf)
         return acqfs
 
-    data_model_cls = DataModel
-
     @classmethod
     def make(
         cls,
@@ -192,4 +190,4 @@ class QparegoStrategy(BotorchStrategy):
         Returns:
             An instance of the strategy configured with the provided parameters.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, DataModel, locals()))

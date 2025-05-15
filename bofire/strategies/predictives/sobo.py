@@ -170,8 +170,6 @@ class SoboStrategy(BotorchStrategy):
             etas,
         )
 
-    data_model_cls = SoboDataModel
-
     @classmethod
     def make(
         cls,
@@ -200,7 +198,7 @@ class SoboStrategy(BotorchStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, SoboDataModel, locals()))
 
 
 class AdditiveSoboStrategy(SoboStrategy):
@@ -272,8 +270,6 @@ class AdditiveSoboStrategy(SoboStrategy):
             etas,
         )
 
-    data_model_cls = AdditiveDataModel
-
     @classmethod
     def make(  # type: ignore
         cls,
@@ -305,7 +301,7 @@ class AdditiveSoboStrategy(SoboStrategy):
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
         """
-        return make_strategy(cls, locals())
+        return make_strategy(cls, AdditiveDataModel, locals())
 
 
 class MultiplicativeSoboStrategy(SoboStrategy):
@@ -337,8 +333,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             1e-3,
         )
 
-    data_model_cls = MultiplicativeDataModel
-
     @classmethod
     def make(
         cls,
@@ -368,7 +362,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, MultiplicativeDataModel, locals()))
 
 
 class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
@@ -401,8 +395,6 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             None,
             1e-3,
         )
-
-    data_model_cls = MultiplicativeAdditiveDataModel
 
     @classmethod
     def make(  # type: ignore
@@ -439,7 +431,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, MultiplicativeAdditiveDataModel, locals()))
 
 
 class CustomSoboStrategy(SoboStrategy):

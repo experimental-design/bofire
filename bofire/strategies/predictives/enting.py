@@ -403,8 +403,6 @@ class EntingStrategy(PredictiveStrategy):
             > 1
         )
 
-    data_model_cls = data_models.EntingStrategy
-
     @classmethod
     def make(
         cls,
@@ -457,4 +455,4 @@ class EntingStrategy(PredictiveStrategy):
             A strategy instance configured with the provided parameters.
         """
 
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, data_models.EntingStrategy, locals()))

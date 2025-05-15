@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
@@ -18,14 +19,11 @@ class Strategy(ABC):
 
     """
 
-    data_model_cls = DataModel
-
     def __init__(
         self,
         data_model: DataModel,
     ):
-        self.data_model = data_model
-        self.domain = data_model.domain
+        self._data_model = data_model
         # if data_model.seed is None (no explicit seed provided by the user),
         # we use a randomly generated seed from the seed sequence.
         # This is done to ensure reproducibility of the strategy:
@@ -39,6 +37,11 @@ class Strategy(ABC):
         self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
+
+    @property
+    def domain(self) -> Domain:
+        """Returns the domain of the strategy."""
+        return self._data_model.domain
 
     def _get_seed(self) -> int:
         """Returns an integer sampled from the strategies random number generator,
@@ -280,8 +283,20 @@ class Strategy(ABC):
         return len(self.experiments)
 
 
-def make_strategy(cls, locals: dict):
-    kwargs = {k: v for k, v in locals.items() if v is not None}
-    kwargs.pop("cls")
+def make_strategy(strategy_type, data_model_type, locals_of_make: dict):
+    """Factory function to create a strategy of type strategy_type from a data model of type data_model_type.
+    This function is a helper for the `make`-`@classmethod`s of the strategies. All locals that are not None are passed to the
+    strategy constructor. The ones that are None are not passed and hence their default values
+    are used.
+    Args:
+        strategy_type: The class of the strategy to be created.
+        data_model_type: The data model class.
+        locals_of_make: The local variables of the make-function that called this function.
+    Returns:
+        Strategy: The strategy object.
+    """
+    locals_of_make = {k: v for k, v in locals_of_make.items() if v is not None}
+    # since we get all locals from the `make`-`@classmethod`s we need to remove the `cls` variable.
+    locals_of_make.pop("cls")
 
-    return cls.from_spec(cls.data_model_cls(**kwargs))
+    return strategy_type.from_spec(data_model_type(**locals_of_make))

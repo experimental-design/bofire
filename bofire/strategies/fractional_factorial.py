@@ -181,8 +181,6 @@ class FractionalFactorialStrategy(Strategy):
     def has_sufficient_experiments(self) -> bool:
         return True
 
-    data_model_cls = DataModel
-
     @classmethod
     def make(
         cls,
@@ -208,4 +206,4 @@ class FractionalFactorialStrategy(Strategy):
             randomize_runorder: If true, the run order is randomized, else it is deterministic.
             seed: The seed for the random number generator.
         """
-        return cast(Self, make_strategy(cls, locals()))
+        return cast(Self, make_strategy(cls, DataModel, locals()))
