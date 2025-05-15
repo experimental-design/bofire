@@ -302,7 +302,7 @@ class AdditiveSoboStrategy(SoboStrategy):
             min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
             frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
+            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
         """
         return make_strategy(cls, locals())
@@ -365,7 +365,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
             frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
+            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
         """
         return cast(Self, make_strategy(cls, locals()))
@@ -436,7 +436,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
             frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
+            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
         """
         return cast(Self, make_strategy(cls, locals()))
