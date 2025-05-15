@@ -162,7 +162,7 @@ from bofire.data_models.features.api import ContinuousOutput, CategoricalOutput
 
 outputs = Outputs(
     features=[ContinuousOutput(key="y1", objective=MinimizeObjective()),
-    CategoricalOutput(key="y2", objective=MaximizeObjective())]
+    CategoricalOutput(key="y2", objective=MaximizeObjective())])
 ```
 ### Objectives
 Different classes for the objectives are implemented in BoFire. These are used to set the `objective` attribute of an output object. Note that each output variable can have its own objective. The following objectives are available:
