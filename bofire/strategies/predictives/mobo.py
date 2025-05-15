@@ -168,7 +168,7 @@ class MoboStrategy(BotorchStrategy):
             min_experiments_before_outlier_check: Minimum number of experiments before performing outlier detection.
             frequency_check: Frequency at which to perform outlier checks.
             frequency_hyperopt: Frequency at which to perform hyperparameter optimization.
-            folds: Number of folds for cross-validation.
+            folds: Number of folds for cross-validation for hyperparameter optimization.
             seed: Random seed for reproducibility.
         Returns:
             An instance of the strategy configured with the specified parameters.

@@ -187,7 +187,7 @@ class QparegoStrategy(BotorchStrategy):
             min_experiments_before_outlier_check: Minimum number of experiments before checking for outliers.
             frequency_check: Frequency of outlier checks.
             frequency_hyperopt: Frequency of hyperparameter optimization.
-            folds: Number of folds for cross-validation.
+            folds: Number of folds for cross-validation for hyperparameter optimization.
             seed: Random seed for reproducibility.
         Returns:
             An instance of the strategy configured with the provided parameters.
