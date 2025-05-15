@@ -408,13 +408,13 @@ class EntingStrategy(PredictiveStrategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
         beta: PositiveFloat | None = None,
         bound_coeff: PositiveFloat | None = None,
         acq_sense: Literal["exploration", "penalty"] | None = None,
         dist_trafo: Literal["normal", "standard"] | None = None,
         dist_metric: Literal["euclidean_squared", "l1", "l2"] | None = None,
         cat_metric: Literal["overlap", "of", "goodall4"] | None = None,
+        kappa_fantasy: float | None = None,
         num_boost_round: PositiveInt | None = None,
         max_depth: PositiveInt | None = None,
         min_data_in_leaf: PositiveInt | None = None,
@@ -423,6 +423,35 @@ class EntingStrategy(PredictiveStrategy):
         solver_name: str | None = None,
         solver_verbose: bool | None = None,
         solver_params: Dict[str, Any] | None = None,
-        kappa_fantasy: float | None = None,
+        seed: int | None = None,
     ):
+        """
+        Create an enting strategy instance with the specified parameters.
+
+        ENTMOOT: A Framework for Optimization over Ensemble Tree Models
+        A. Thebelt, J. Kronqvist, M. Mistry, R. Lee, N. Sudermann-Merx, R. Misener
+        Computers & Chemical Engineering, 2021
+
+        Args:
+            domain: The domain object defining the problem space.
+            beta: Parameter controlling the trade-off in acquisition.
+            bound_coeff: Coefficient for bounding constraints.
+            acq_sense: Acquisition sense, either "exploration" or "penalty".
+            dist_trafo: Transformation applied to distances, either "normal" or "standard".
+            dist_metric: Metric used for distance calculations, e.g., "euclidean_squared", "l1", or "l2".
+            cat_metric: Metric for categorical variables, e.g., "overlap", "of", or "goodall4".
+            kappa_fantasy: Kappa parameter for fantasy strategy for batch proposals.
+            num_boost_round: Number of boosting rounds for the model.
+            max_depth: Maximum depth of the model.
+            min_data_in_leaf: Minimum data points required in a leaf.
+            min_data_per_group: Minimum data points required per group.
+            verbose: Verbosity level of the process.
+            solver_name: Name of the solver to be used.
+            solver_verbose: Whether to enable verbose output for the solver.
+            solver_params: Additional parameters for the solver.
+            seed: Random seed for reproducibility.
+        Returns:
+            A strategy instance configured with the provided parameters.
+        """
+
         return make_strategy(cls, locals())

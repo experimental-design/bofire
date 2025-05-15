@@ -139,7 +139,8 @@ class MoboStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
+        ref_point: Dict[str, float] | None = None,
+        acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
@@ -147,7 +148,28 @@ class MoboStrategy(BotorchStrategy):
         frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
-        ref_point: Dict[str, float] | None = None,
-        acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
+        seed: int | None = None,
     ):
+        """
+        Creates an instance of a multi-objective strategy based on expected hypervolume improvement.
+
+        S. Daulton, M. Balandat, and E. Bakshy.
+        Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement.
+        Advances in Neural Information Processing Systems 34, 2021.
+
+        Parameters:
+            domain: The domain specifying the search space.
+            ref_point: Reference point for hypervolume computation.
+            acquisition_function: Acquisition function.
+            acquisition_optimizer: Optimizer for the acquisition function.
+            surrogate_specs: Surrogate model specifications.
+            outlier_detection_specs: Outlier detection configuration.
+            min_experiments_before_outlier_check: Minimum number of experiments before performing outlier detection.
+            frequency_check: Frequency at which to perform outlier checks.
+            frequency_hyperopt: Frequency at which to perform hyperparameter optimization.
+            folds: Number of folds for cross-validation.
+            seed: Random seed for reproducibility.
+        Returns:
+            An instance of the strategy configured with the specified parameters.
+        """
         return make_strategy(cls, locals())

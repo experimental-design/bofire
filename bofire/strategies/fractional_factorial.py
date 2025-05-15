@@ -186,12 +186,25 @@ class FractionalFactorialStrategy(Strategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
         n_repetitions: int | None = None,
         n_center: int | None = None,
         block_feature_key: str | None = None,
         generator: str | None = None,
         n_generators: int | None = None,
         randomize_runorder: bool | None = None,
+        seed: int | None = None,
     ):
+        """
+        Create a new instance of the strategy with the given parameters. This method will create the datamodel
+        under the hood and pass it to the constructor of the strategy.
+        Args:
+            domain: The domain of the strategy.
+            n_repetitions: The number of repetitions of the continuous part of the design.
+            n_center: The number of center points in the continuous part of the design per block.
+            block_feature_key: The feature key to use for blocking the design.
+            generator: The generator for the continuous part of the design.
+            n_generators: The number of reducing factors.
+            randomize_runorder: If true, the run order is randomized, else it is deterministic.
+            seed: The seed for the random number generator.
+        """
         return make_strategy(cls, locals())

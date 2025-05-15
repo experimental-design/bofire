@@ -175,7 +175,7 @@ class SoboStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
@@ -183,8 +183,22 @@ class SoboStrategy(BotorchStrategy):
         frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
-        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        seed: int | None = None,
     ):
+        """
+        Creates a single objective Bayesian optimization strategy.
+        Args:
+            domain: The optimization domain of the strategy.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The optimizer to use for the acquisition function.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of checking for outliers.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
         return make_strategy(cls, locals())
 
 
@@ -260,10 +274,11 @@ class AdditiveSoboStrategy(SoboStrategy):
     data_model_cls = AdditiveDataModel
 
     @classmethod
-    def make(
+    def make(  # type: ignore
         cls,
         domain: Domain,
-        seed: int | None = None,
+        use_output_constraints: bool | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
@@ -271,9 +286,24 @@ class AdditiveSoboStrategy(SoboStrategy):
         frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
-        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
-        use_output_constraints: bool | None = None,
+        seed: int | None = None,
     ):
+        """
+        Creates a Bayesian optimization strategy that adds multiple objectives.
+        The weights of the objectives are defines in the outputs of the domain.
+        Args:
+            domain: The optimization domain of the strategy.
+            use_output_constraints: Whether to use output constraints.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The optimizer to use for the acquisition function.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of checking for outliers.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
         return make_strategy(cls, locals())
 
 
@@ -307,6 +337,37 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         )
 
     data_model_cls = MultiplicativeDataModel
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        seed: int | None = None,
+    ):
+        """
+        Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
+        the objectives are defines in the outputs of the domain.
+        Args:
+            domain: The optimization domain of the strategy.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The optimizer to use for the acquisition function.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of checking for outliers.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
+        return make_strategy(cls, locals())
 
 
 class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
@@ -346,7 +407,9 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
     def make(  # type: ignore
         cls,
         domain: Domain,
-        seed: int | None = None,
+        use_output_constraints: bool | None = None,
+        additive_features: List[str] | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
@@ -354,10 +417,27 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
-        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
-        use_output_constraints: bool | None = None,
-        additive_features: List[str] | None = None,
+        seed: int | None = None,
     ):
+        """
+        Creates a Bayesian optimization strategy that mixes additions and multiplions of multiple objectives.
+        The weights of the objectives are defines in the outputs of the domain.
+        By default, all objectives are multiplicative. Additive features
+        (inputs or outputs) can be specified in the `additive_features` list.
+        Args:
+            domain: The optimization domain of the strategy.
+            use_output_constraints: Whether to use output constraints.
+            additive_features: The features to use for the addition.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The optimizer to use for the acquisition function.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of checking for outliers.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
         return make_strategy(cls, locals())
 
 

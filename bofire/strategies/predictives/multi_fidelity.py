@@ -123,7 +123,8 @@ class MultiFidelityStrategy(SoboStrategy):
     def make(  # type: ignore
         cls,
         domain: Domain,
-        seed: int | None = None,
+        fidelity_thresholds: List[float] | float | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
@@ -131,7 +132,33 @@ class MultiFidelityStrategy(SoboStrategy):
         frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
-        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
-        fidelity_thresholds: List[float] | float | None = None,
+        seed: int | None = None,
     ):
+        """
+        Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy
+        is useful if you have different measurement fidelities that measure the same thing with different cost and accuracy.
+        As an example, you can have a simulation that is fast but inaccurate and the real experiment that is slow and expensive,
+        but more accurate.
+
+        K. Kandasamy, G. Dasarathy, J. B. Oliva, J. Schneider, B. Póczos.
+        Gaussian Process Bandit Optimisation with Multi-fidelity Evaluations.
+        Advances in Neural Information Processing Systems, 29, 2016.
+
+        Jose Pablo Folch, Robert M Lee, Behrang Shafei, David Walz, Calvin Tsay, Mark van der Wilk, Ruth Misener.
+        Combining Multi-Fidelity Modelling and Asynchronous Batch Bayesian Optimization.
+        Computers & Chemical Engineering Volume 172, 2023.
+
+        Args:
+            domain: The optimization domain of the strategy.
+            fidelity_thresholds: The thresholds for the fidelity. If a single value is provided, it will be used for all fidelities.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The acquisition optimizer to use.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of outlier checks.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
         return make_strategy(cls, locals())

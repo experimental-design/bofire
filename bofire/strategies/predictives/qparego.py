@@ -157,7 +157,7 @@ class QparegoStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
+        acquisition_function: qEI | qLogEI | qLogNEI | qNEI | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
@@ -165,6 +165,30 @@ class QparegoStrategy(BotorchStrategy):
         frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
-        acquisition_function: qEI | qLogEI | qLogNEI | qNEI | None = None,
+        seed: int | None = None,
     ):
+        """
+        Creates an instance of the multi-objective strategy ParEGO using the provided configuration parameters.
+
+        J. Knowles. Parego: a hybrid algorithm with on-line landscape approximation for expensive multiobjective
+        optimization problems. IEEE Transactions on Evolutionary Computation, 10(1):50-66, 2006
+
+        S. Daulton, M. Balandat, and E. Bakshy.
+        Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization.
+        Advances in Neural Information Processing Systems 33, 2020.
+
+        Args:
+            domain: The optimization domain of the strategy.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The optimizer for the acquisition function.
+            surrogate_specs: Specifications for the surrogate model.
+            outlier_detection_specs: Specifications for outlier detection.
+            min_experiments_before_outlier_check: Minimum number of experiments before checking for outliers.
+            frequency_check: Frequency of outlier checks.
+            frequency_hyperopt: Frequency of hyperparameter optimization.
+            folds: Number of folds for cross-validation.
+            seed: Random seed for reproducibility.
+        Returns:
+            An instance of the strategy configured with the provided parameters.
+        """
         return make_strategy(cls, locals())

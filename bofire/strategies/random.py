@@ -24,7 +24,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     DiscreteInput,
 )
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
@@ -346,11 +346,23 @@ class RandomStrategy(Strategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
         fallback_sampling_method: SamplingMethodEnum | None = None,
         n_burnin: int | None = None,
         n_thinning: int | None = None,
         num_base_samples: int | None = None,
         max_iters: int | None = None,
+        seed: int | None = None,
     ):
-        pass
+        """Create a new instance of the RandomStrategy class.
+        Args:
+            domain: The domain we randomly sample from.
+            fallback_sampling_method: The fallback sampling method to use when the domain has no constraints.
+            n_burnin: The number of burn-in samples for the polytope sampler.
+            n_thinning: The thinning factor for the polytope sampler.
+            num_base_samples: The number of base samples for rejection sampling.
+            max_iters: The maximum number of iterations for rejection sampling.
+            seed: The seed value for random number generation.
+        Returns:
+            RandomStrategy: A new instance of the RandomStrategy class.
+        """
+        return make_strategy(cls, locals())

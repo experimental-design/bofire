@@ -176,7 +176,6 @@ class DoEStrategy(Strategy):
     def make(
         cls,
         domain: Domain,
-        seed: int | None = None,
         criterion: AnyOptimalityCriterion | None = None,
         optimization_strategy: Literal[
             "default",
@@ -191,6 +190,22 @@ class DoEStrategy(Strategy):
         ipopt_options: Dict[Any, Any] | None = None,
         use_hessian: bool | None = None,
         use_cyipopt: bool | None = None,
-        sampling: List[List[Any]] | None = None,
+        sampling: List[List[float]] | None = None,
+        seed: int | None = None,
     ):
+        """
+        Creates an instance of a design of experiments strategy.
+        Args:
+            domain: Domain for the strategy.
+            criterion: Optimality criterion for the strategy. The default is d-optimality.
+            optimization_strategy: Optimization strategy to minimize the criterion.
+            verbose: Verbosity level.
+            ipopt_options: Options for IPOPT solver.
+            use_hessian: Whether to use Hessian in optimization.
+            use_cyipopt: Whether to use cyipopt solver.
+            sampling: Initial points for the optimizer.
+            seed: Random seed for reproducibility.
+        Returns:
+            DoEStrategy: Instance of the design of experiments strategy.
+        """
         return make_strategy(cls, locals())
