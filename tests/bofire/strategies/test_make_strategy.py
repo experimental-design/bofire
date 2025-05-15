@@ -21,7 +21,7 @@ from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
 from tests.bofire.strategies.test_base import domains
 
 
-def test_make_default():
+def test_make():
     so_domain = domains[0]
     mo_domain = domains[4]
     benchmark = MultiTaskHimmelblau()
@@ -107,7 +107,3 @@ def test_make_default():
     test(DoEStrategy, dms.DoEStrategy, so_domain)
     test(FractionalFactorialStrategy, dms.FractionalFactorialStrategy, so_domain)
     test(RandomStrategy, dms.RandomStrategy, so_domain)
-
-
-if __name__ == "__main__":
-    test_make_default()
