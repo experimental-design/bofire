@@ -154,7 +154,7 @@ sobo_strategy = SoboStrategy.make(
 
 It is possible to separate BoFire into serializable parameters and a functional part. We call the serializable parameters usually data models.
 This is especially helpful when working with REST APIs.
-See the respective sections in our [docs](https://experimental-design.github.io/bofire/).
+See the respective sections in our [docs](https://experimental-design.github.io/bofire/data_models_functionals/).
 
 
 ### Run the optimization loop
