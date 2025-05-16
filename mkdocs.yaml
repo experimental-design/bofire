@@ -15,7 +15,6 @@ nav:
     - Constraints: ref-constraints.md
     - Objectives: ref-objectives.md
     - Features: ref-features.md
-    - Domain Util: ref-domain-util.md
     - Utils: ref-utils.md
 
 theme:
@@ -49,6 +48,10 @@ plugins:
   - mkdocs-jupyter
   # https://mkdocstrings.github.io/
   - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_submodules: true
   # https://github.com/jimporter/mike
   - mike:
 
