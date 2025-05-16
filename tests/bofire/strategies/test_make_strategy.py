@@ -5,23 +5,9 @@ from typing import get_origin, get_type_hints
 
 import typing_extensions
 
-import bofire.data_models.strategies.api as dms
-from bofire.benchmarks.single import MultiTaskHimmelblau
-from bofire.data_models.features.task import TaskInput
-from bofire.strategies.api import (
-    AdditiveSoboStrategy,
-    DoEStrategy,
-    EntingStrategy,
-    MoboStrategy,
-    MultiFidelityStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    QparegoStrategy,
-    RandomStrategy,
-    SoboStrategy,
-)
-from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
-from tests.bofire.strategies.test_base import domains
+import bofire.strategies.api as strats
+from bofire.strategies.factorial import FactorialStrategy
+from tests.bofire.data_models.specs.api import strategies as strat_specs
 
 
 def remove_optional(anno):
@@ -33,17 +19,9 @@ def remove_optional(anno):
 
 
 def test_make():
-    so_domain = domains[0]
-    mo_domain = domains[4]
-    benchmark = MultiTaskHimmelblau()
-    (task_input,) = benchmark.domain.inputs.get(TaskInput, exact=True)
-    assert task_input.type == "TaskInput"
-    task_input.fidelities = [0, 1]
-    mt_domain = benchmark.domain
-
-    def test(strat, dm, domain):
-        data_model = dm(domain=domain)
+    def test(strat, data_model):
         data_model_dump = data_model.model_dump()
+        data_model_dump.pop("type")
 
         sig = inspect.signature(strat.make)
         param_names_make = list(sig.parameters.keys())
@@ -66,7 +44,7 @@ def test_make():
             if name == "return":
                 assert p_annotation is typing_extensions.Self
             else:
-                dm_anno = dm.model_fields[name].annotation
+                dm_anno = type(data_model).model_fields[name].annotation
                 p_anno = p_annotation
 
                 dm_anno = remove_optional(dm_anno)
@@ -88,28 +66,28 @@ def test_make():
                         da_ == pa_
                     ), f"{strat.__name__}. Annotations do not match for {name}: {da} !=\n {pa}"
 
-        strat1 = strat(data_model=data_model)
-        strat2 = strat.make(domain=domain)
+        made_strat = strat.make(**data_model_dump)
+        made_dump = made_strat._data_model.model_dump()
+        made_dump.pop("type")
+        assert len(made_dump) == len(data_model_dump)
+        for k, made_v in made_dump.items():
+            v = data_model_dump[k]
+            assert made_v == v, f"{strat.__name__}. {k} does not match: {made_v} != {v}"
 
-        data_model = dm(domain=domain)
-
-        assert strat1._data_model == strat2._data_model
-
-    test(SoboStrategy, dms.SoboStrategy, so_domain)
-    test(AdditiveSoboStrategy, dms.AdditiveSoboStrategy, mo_domain)
-    test(MultiplicativeSoboStrategy, dms.MultiplicativeSoboStrategy, mo_domain)
-    test(
-        MultiplicativeAdditiveSoboStrategy,
-        dms.MultiplicativeAdditiveSoboStrategy,
-        mo_domain,
-    )
-    test(QparegoStrategy, dms.QparegoStrategy, mo_domain)
-    test(MultiFidelityStrategy, dms.MultiFidelityStrategy, mt_domain)
-    test(MoboStrategy, dms.MoboStrategy, mo_domain)
-    test(EntingStrategy, dms.EntingStrategy, so_domain)
-    test(DoEStrategy, dms.DoEStrategy, so_domain)
-    test(FractionalFactorialStrategy, dms.FractionalFactorialStrategy, so_domain)
-    test(RandomStrategy, dms.RandomStrategy, so_domain)
+    strats_wo_make = [
+        strats.CustomSoboStrategy,
+        strats.StepwiseStrategy,
+        strats.ShortestPathStrategy,
+        FactorialStrategy,
+    ]
+    for spec in strat_specs.valids:
+        data_model = spec.obj()
+        strat = strats.map(data_model)
+        if type(strat) not in strats_wo_make:
+            # test the make function
+            test(strat, data_model)
+        else:
+            print(f"Skipping {strat} because it does not have a make function")
 
 
 if __name__ == "__main__":
