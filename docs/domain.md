@@ -148,21 +148,33 @@ inputs = Inputs(
     features=[ContinuousInput(key="x1", bounds=(0,1)),
     ContinuousInput(key="x2", bounds=(0,1)),
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
-    CategoricalInput(key="x4", values=["A", "B", "C"]),
+    CategoricalInput(key="x4", categories=["A", "B", "C"]),
     MolecularInput(key="x5"),
     CategoricalDescriptorInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=["density", "hardness"], values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]),
-    CategoricalMolecularInput(key="x7", values=["C1CCCCC1", "O1CCOCC1"])])
+    CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])])
 ```
 
 ## Outputs
 At the moment only continuous and categorical outputs are supported. Those are similar to the continuous and categorical inputs, but they additionaly contain the `objective` attribute. The `objective` attribute is used to define the optimization objective for the output variable. Similar to the inputs the outputs can be also summarized in an `Outputs` object. An example with a continuous and a categorical output is given below.
 
 ```python
+from bofire.data_models.api import Outputs
+from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 from bofire.data_models.features.api import ContinuousOutput, CategoricalOutput
 
 outputs = Outputs(
-    features=[ContinuousOutput(key="y1", objective=MinimizeObjective()),
-    CategoricalOutput(key="y2", objective=MaximizeObjective())])
+    features=[
+        ContinuousOutput(key="y1", objective=MinimizeObjective()),
+        CategoricalOutput(
+            key="y2",
+            categories=["a", "b", "c"],  # Add the required categories
+            objective=ConstrainedCategoricalObjective(
+                categories=["a", "b", "c"], 
+                desirability=[True, False, True]
+            )
+        )
+    ]
+)
 ```
 ### Objectives
 Different classes for the objectives are implemented in BoFire. These are used to set the `objective` attribute of an output object. Note that each output variable can have its own objective. The following objectives are available:
@@ -192,7 +204,7 @@ The following code defines a new linear equality constraint $x_1 + x_2 = 1$ and 
 
 ```python
 
-from bofire.data_models.constraints.api import LinearEqualityConstraint
+from bofire.data_models.constraints.api import LinearEqualityConstraint, LinearInequalityConstraint
 
 constraints = [LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1,1], rhs=1),
                LinearInequalityConstraint(features=["x1", "x3"], coefficients=[1,-1], rhs=1)]
@@ -223,7 +235,7 @@ Given a list of N features and attributes `min_count`, `max_count`, the `NChoose
 ```python
 from bofire.data_models.constraints.api import NChooseKConstraint
 
-NChooseKConstraint(features=["x1", "x2", "x3", "x4"], min_count=2, max_count=3)
+NChooseKConstraint(features=["x1", "x2", "x3", "x4"], min_count=2, max_count=3, none_also_valid=False)
 ```
 
 ### Interpoint constraints
@@ -232,5 +244,5 @@ The `InterpointEqualityConstraint` forces that values of a certain feature of a 
 ```python
 from bofire.data_models.constraints.api import InterpointEqualityConstraint
 
-InterpointEqualityConstraint(features="x1", multiplicity=3)
+InterpointEqualityConstraint(feature="x1", multiplicity=3)
 ```
