@@ -92,10 +92,8 @@ def test_make():
         strat2 = strat.make(domain=domain)
 
         data_model = dm(domain=domain)
-        strat3 = strat(data_model=data_model)
 
-        assert strat1.data_model == strat2.data_model
-        assert strat1.data_model == strat3.data_model
+        assert strat1._data_model == strat2._data_model
 
     test(SoboStrategy, dms.SoboStrategy, so_domain)
     test(AdditiveSoboStrategy, dms.AdditiveSoboStrategy, mo_domain)
