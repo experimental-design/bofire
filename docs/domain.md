@@ -169,7 +169,7 @@ outputs = Outputs(
             key="y2",
             categories=["a", "b", "c"],  # Add the required categories
             objective=ConstrainedCategoricalObjective(
-                categories=["a", "b", "c"], 
+                categories=["a", "b", "c"],
                 desirability=[True, False, True]
             )
         )
