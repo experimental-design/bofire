@@ -140,22 +140,21 @@ For more details on candidates and experiments, see the respective sections in o
 
 ### Defining an optimization strategy
 
-Let's specify the strategy how the Bayesian optimization campaign should be conducted. Here, we define a single-objective Bayesian optimization strategy and pass the optimization domain together with a acquisition function. Here, we use logarithmic expected improvement `qLogEI` as the acquisition function. In BoFire's terminology, we create a serializable data model `SoboStrategy` which we then map to our functional model.
+Let's specify the strategy how the Bayesian optimization campaign should be conducted. Here, we define a single-objective Bayesian optimization strategy and pass the optimization domain together with a acquisition function. Here, we use logarithmic expected improvement `qLogEI` as the acquisition function.
 
 ```Python
-import bofire.strategies.api as strategies
+from bofire.strategies.api import SoboStrategy
 from bofire.data_models.acquisition_functions.api import qLogEI
-from bofire.data_models.strategies.api import SoboStrategy
 
-
-sobo_strategy_data_model = SoboStrategy(
+sobo_strategy = SoboStrategy.make(
     domain=domain, acquisition_function=qLogEI(), seed=19
 )
 
-sobo_strategy = strategies.map(sobo_strategy_data_model)
 ```
 
-For more details on strategy data models and functional models, see the respective sections in our [docs](https://experimental-design.github.io/bofire/).
+It is possible to separate BoFire into serializable parameters and a functional part. We call the serializable parameters usually data models.
+This is especially helpful when working with REST APIs.
+See the respective sections in our [docs](https://experimental-design.github.io/bofire/data_models_functionals/).
 
 
 ### Run the optimization loop
