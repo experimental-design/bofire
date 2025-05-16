@@ -692,7 +692,7 @@ These problems can arise in a number of closely related fields including experim
 <h2 id="multi-objective-optimization">Multi-objective optimization</h2>
 <p>In the context of multi-objective optimization BoFire allows to define a vector-valued optimization problem</p>
 <div class="arithmatex">\[
-\argmax_{x \in \mathbb{X}} s(y(x))
+\mathrm{argmax}_{x \in \mathbb{X}} s(y(x))
 \]</div>
 <p>where</p>
 <ul>
@@ -708,7 +708,7 @@ Instead the goal is to find the Pareto front of all optimal compromises.</p>
 This is done by using the experimental data to fit a probabilistic model <span class="arithmatex">\(p(y|x, \mathrm{data})\)</span> that estimates the distribution of possible outcomes for <span class="arithmatex">\(y\)</span>.
 An acquisition function <span class="arithmatex">\(a\)</span> then formulates the desired trade-off between exploration and exploitation</p>
 <div class="arithmatex">\[
-\argmax_{x \in \mathbb{X}} a(s(p_y(x)))
+\mathrm{argmax}_{x \in \mathbb{X}} a(s(p_y(x)))
 \]</div>
 <p>and the maximizer <span class="arithmatex">\(x_\mathrm{opt}\)</span> of this acquisition function determines the next experiment <span class="arithmatex">\(y(x)\)</span> to run.</p>
 <p>When there are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.</p>
