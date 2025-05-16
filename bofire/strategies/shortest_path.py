@@ -1,9 +1,10 @@
 import warnings
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import cvxpy as cp
 import numpy as np
 import pandas as pd
+from pydantic import PositiveFloat
 
 from bofire.data_models.constraints.api import (
     LinearConstraint,
@@ -11,9 +12,10 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Inputs
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import ShortestPathStrategy as DataModel
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 
 
 class ShortestPathStrategy(Strategy):
@@ -154,3 +156,19 @@ class ShortestPathStrategy(Strategy):
 
         """
         return True
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        start: Dict[str, float | str] | None = None,
+        end: Dict[str, float | str] | None = None,
+        atol: PositiveFloat | None = None,
+        seed: int | None = None,
+    ):
+        """Represents a strategy for finding the shortest path between two points
+        Args:
+            start: The starting point of the path.
+            end: The ending point of the path.
+            atol: The absolute tolerance used for numerical comparisons."""
+        return make_strategy(cls, DataModel, locals())

@@ -1,11 +1,23 @@
+from typing import List, cast
+
 import numpy as np
 import pandas as pd
+from pydantic import PositiveInt
+from typing_extensions import Self
 
+from bofire.data_models.acquisition_functions.api import (
+    AnySingleObjectiveAcquisitionFunction,
+)
+from bofire.data_models.api import Domain
 from bofire.data_models.features.api import TaskInput
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy as DataModel,
 )
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.sobo import SoboStrategy
+from bofire.strategies.strategy import make_strategy
 from bofire.utils.naming_conventions import get_column_names
 
 
@@ -105,3 +117,47 @@ class MultiFidelityStrategy(SoboStrategy):
         missing_fidelities = allowed_fidelities - observed_fidelities
         if missing_fidelities:
             raise ValueError(f"Some tasks have no experiments: {missing_fidelities}")
+
+    @classmethod
+    def make(  # type: ignore
+        cls,
+        domain: Domain,
+        fidelity_thresholds: List[float] | float | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        seed: int | None = None,
+    ) -> Self:
+        """
+        Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy
+        is useful if you have different measurement fidelities that measure the same thing with different cost and accuracy.
+        As an example, you can have a simulation that is fast but inaccurate and the real experiment that is slow and expensive,
+        but more accurate.
+
+        K. Kandasamy, G. Dasarathy, J. B. Oliva, J. Schneider, B. Póczos.
+        Gaussian Process Bandit Optimisation with Multi-fidelity Evaluations.
+        Advances in Neural Information Processing Systems, 29, 2016.
+
+        Jose Pablo Folch, Robert M Lee, Behrang Shafei, David Walz, Calvin Tsay, Mark van der Wilk, Ruth Misener.
+        Combining Multi-Fidelity Modelling and Asynchronous Batch Bayesian Optimization.
+        Computers & Chemical Engineering Volume 172, 2023.
+
+        Args:
+            domain: The optimization domain of the strategy.
+            fidelity_thresholds: The thresholds for the fidelity. If a single value is provided, it will be used for all fidelities.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The acquisition optimizer to use.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of outlier checks.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
+        return cast(Self, make_strategy(cls, DataModel, locals()))
