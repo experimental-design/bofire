@@ -71,7 +71,7 @@ class DiscreteInput(NumericalInput):
             ValueError: Raises error when one of the provided values is not contained in the list of allowed values.
 
         Returns:
-            pd.Series: _uggested candidates for the feature
+            pd.Series: suggested candidates for the feature
 
         """
         values = super().validate_candidental(values)
