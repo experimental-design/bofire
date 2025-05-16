@@ -73,7 +73,8 @@ class SelectionCondition(Condition):
     """Class for modelling selection conditions.
 
     It is checked if the feature value is in the selection of values. If this is the case,
-    the condition is fulfilled. It can be only applied to CategoricalInputs and ContinuousInputs.
+    the condition is fulfilled. It can be only applied to CategoricalInput and DiscreteInput
+    features.
 
     Attributes:
         selection: In case of CategoricalInput, the selection of categories to be included.
