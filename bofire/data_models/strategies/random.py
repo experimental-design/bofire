@@ -3,6 +3,7 @@ from typing import Annotated, Literal, Optional, Type
 from pydantic import Field
 
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     Constraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
@@ -33,6 +34,7 @@ class RandomStrategy(Strategy):
             InterpointEqualityConstraint,
             NonlinearInequalityConstraint,
             ProductInequalityConstraint,
+            CategoricalExcludeConstraint,
         ]
 
     @classmethod

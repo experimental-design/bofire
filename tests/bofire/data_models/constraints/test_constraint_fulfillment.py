@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -14,6 +15,8 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductEqualityConstraint,
     ProductInequalityConstraint,
+    SelectionCondition,
+    ThresholdCondition,
 )
 
 
@@ -280,6 +283,68 @@ parameters = [
             exponents=[2, 1],
             rhs=-18,
             sign=-1,
+        ),
+        False,
+    ),
+    (
+        pd.DataFrame({"catalyst": ["a", "b"], "solvent": ["c", "d"]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "catalyst"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                SelectionCondition(
+                    selection=["alpha", "beta"],
+                ),
+            ],
+        ),
+        True,
+    ),
+    (
+        pd.DataFrame({"solvent": ["Acetone", "b"], "catalyst": ["beta", "d"]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "catalyst"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                SelectionCondition(
+                    selection=["alpha", "beta"],
+                ),
+            ],
+        ),
+        False,
+    ),
+    (
+        pd.DataFrame({"solvent": ["Acetone", "THF"], "temperature": [50.0, 55.0]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "temperature"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                ThresholdCondition(
+                    operator=">",
+                    threshold=60,
+                ),
+            ],
+        ),
+        True,
+    ),
+    (
+        pd.DataFrame({"solvent": ["Acetone", "THF"], "temperature": [50.0, 55.0]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "temperature"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                ThresholdCondition(
+                    operator="<",
+                    threshold=60,
+                ),
+            ],
         ),
         False,
     ),

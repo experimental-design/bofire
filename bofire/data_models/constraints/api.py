@@ -1,5 +1,10 @@
 from typing import Union
 
+from bofire.data_models.constraints.categorical import (
+    CategoricalExcludeConstraint,
+    SelectionCondition,
+    ThresholdCondition,
+)
 from bofire.data_models.constraints.constraint import (
     Constraint,
     ConstraintError,
@@ -50,6 +55,25 @@ AnyConstraint = Union[
     InterpointEqualityConstraint,
     ProductEqualityConstraint,
     ProductInequalityConstraint,
+    CategoricalExcludeConstraint,
+]
+
+AnyContinuousConstraint = Union[
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+    NChooseKConstraint,
+    InterpointEqualityConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
+]
+
+AnyCategoricalConstraint = CategoricalExcludeConstraint
+
+AnyCondition = Union[
+    SelectionCondition,
+    ThresholdCondition,
 ]
 
 AnyConstraintError = Union[ConstraintError, ConstraintNotFulfilledError]

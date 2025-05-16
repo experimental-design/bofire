@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,7 @@ from bofire.data_models.domain.features import Inputs
 class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
-    type: str
+    type: Any
 
     @abstractmethod
     def is_fulfilled(
