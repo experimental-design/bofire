@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Literal, Type, Union
+from typing import Annotated, Dict, Literal, Type
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -46,8 +46,8 @@ class ShortestPathStrategy(Strategy):
     """
 
     type: Literal["ShortestPathStrategy"] = "ShortestPathStrategy"
-    start: Annotated[Dict[str, Union[float, str]], Field(min_length=1)]
-    end: Annotated[Dict[str, Union[float, str]], Field(min_length=1)]
+    start: Annotated[Dict[str, float | str], Field(min_length=1)]
+    end: Annotated[Dict[str, float | str], Field(min_length=1)]
     atol: Annotated[float, Field(gt=0)] = 1e-7
 
     @model_validator(mode="after")

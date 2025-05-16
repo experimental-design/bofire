@@ -107,7 +107,7 @@ class DoEStrategy(Strategy):
     scip_params: Optional[Dict] = None
     use_hessian: bool = False
     use_cyipopt: Optional[bool] = None
-    sampling: Optional[List[List]] = None
+    sampling: Optional[List[List[float]]] = None
     return_fixed_candidates: bool = False
 
     """ Datamodel for strategy for design of experiments. This strategy is used to generate a set of
