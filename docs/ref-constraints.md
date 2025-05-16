@@ -1,3 +1,3 @@
-# Domain
+# Constraints
 
-::: bofire.data_models.domain.constraints
+::: bofire.data_models.constraints
