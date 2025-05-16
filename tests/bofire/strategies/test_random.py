@@ -68,7 +68,7 @@ c6 = CategoricalExcludeConstraint(
         SelectionCondition(selection=["A"]),
         ThresholdCondition(threshold=0.5, operator=">"),
     ],
-    combiner="AND",
+    logical_op="AND",
 )
 
 supported_domains = [

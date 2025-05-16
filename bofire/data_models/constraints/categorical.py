@@ -49,6 +49,10 @@ class Condition(BaseModel):
 class ThresholdCondition(Condition):
     """Class for modelling threshold conditions.
 
+    It can only be applied to ContinuousInput and DiscreteInput features. It is
+    checked if the feature value is above or below a certain threshold depending on the
+    operator. If the expression evaluated to true, the condition is fulfilled.
+
     Attributes:
         threshold: Threshold value.
         operator: Operator to use for comparison. Can be one of "<", "<=", ">", ">=".
@@ -59,8 +63,8 @@ class ThresholdCondition(Condition):
     operator: Literal["<", "<=", ">", ">="]
 
     def __call__(self, values: pd.Series) -> pd.Series:
-        def evaluate(x: ArrayLike, /, **kwargs):
-            return _threshold_operators[self.operator](x, self.threshold, **kwargs)
+        def evaluate(x: ArrayLike):
+            return _threshold_operators[self.operator](x, self.threshold)
 
         return values.apply(evaluate)
 
@@ -68,8 +72,12 @@ class ThresholdCondition(Condition):
 class SelectionCondition(Condition):
     """Class for modelling selection conditions.
 
+    It is checked if the feature value is in the selection of values. If this is the case,
+    the condition is fulfilled. It can be only applied to CategoricalInputs and ContinuousInputs.
+
     Attributes:
-        selection: List of values to select.
+        selection: In case of CategoricalInput, the selection of categories to be included.
+            In case of DiscreteInput, the selection of values to be included.
     """
 
     type: Literal["SelectionCondition"] = "SelectionCondition"
@@ -85,11 +93,12 @@ class CategoricalExcludeConstraint(Constraint):
 
     It evaluates conditions on two features and combines them using logical operators.
     If the logical combination evaluates to true, the constraint is not fulfilled.
+    So far, this kind of constraint is only supported by the RandomStrategy.
 
     Attributes:
         features: List of feature keys to apply the conditions on.
         conditions: List of conditions to evaluate.
-        combiner: Logical operator to combine the conditions. Can be "AND", "OR", or "XOR".
+        logical_op: Logical operator to combine the conditions. Can be "AND", "OR", or "XOR".
             Default is "AND".
     """
 
@@ -99,7 +108,7 @@ class CategoricalExcludeConstraint(Constraint):
         List[Union[ThresholdCondition, SelectionCondition]],
         Field(min_length=2, max_length=2),
     ]
-    combiner: Literal["AND", "OR", "XOR"] = "AND"
+    logical_op: Literal["AND", "OR", "XOR"] = "AND"
 
     def validate_inputs(self, inputs: Inputs):
         """Validates that the features stored in Inputs are compatible with the constraint.
@@ -178,9 +187,9 @@ class CategoricalExcludeConstraint(Constraint):
             for i, condition in enumerate(self.conditions)
         ]
 
-        if self.combiner == "AND":
+        if self.logical_op == "AND":
             return ~(fulfilled_conditions[0] & fulfilled_conditions[1])
-        elif self.combiner == "OR":
+        elif self.logical_op == "OR":
             return ~(fulfilled_conditions[0] | fulfilled_conditions[1])
         else:
             return ~(fulfilled_conditions[0] ^ fulfilled_conditions[1])

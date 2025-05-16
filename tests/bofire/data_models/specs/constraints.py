@@ -91,7 +91,7 @@ specs.add_valid(
     constraints.CategoricalExcludeConstraint,
     lambda: {
         "features": ["solvent", "catalyst"],
-        "combiner": "AND",
+        "logical_op": "AND",
         "conditions": [
             constraints.SelectionCondition(
                 selection=["Acetone", "THF"],
@@ -107,7 +107,7 @@ specs.add_valid(
     constraints.CategoricalExcludeConstraint,
     lambda: {
         "features": ["solvent", "temperature"],
-        "combiner": "AND",
+        "logical_op": "AND",
         "conditions": [
             constraints.SelectionCondition(
                 selection=["Acetone", "THF"],
