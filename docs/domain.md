@@ -6,7 +6,7 @@ A basic example of a domain consists of two continuous inputs $x_1$, $x_2$ and a
 
 A continuous input can be defined using the `ContinuousInput` class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume $x_1, x_2 \in (0,1)$.
 ```python
-from bofire.data_models.features.api import ContinousInput
+from bofire.data_models.features.api import ContinuousInput
 
 inputs = [
     ContinuousInput(key="x1", bounds=(0,1)),
@@ -15,13 +15,13 @@ inputs = [
 ```
 Analogously, the continuous output is defined using the `ContinuousOutput` class.
 ```python
-from bofire.data_models.features.api import ContinousOutput
+from bofire.data_models.features.api import ContinuousOutput
 
 outputs = [ContinuousOutput(key="y")]
 ```
 In this case, the domain definition is as follows
 ```python
-from domain.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain
 
 domain = Domain(
     inputs=inputs,
