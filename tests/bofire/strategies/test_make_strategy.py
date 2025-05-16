@@ -37,7 +37,7 @@ def test_make():
         for k in data_model_field_names:
             assert (
                 k in param_names_make
-            ), f"{k} not in {strat.__name__}'s make parameters"
+            ), f"{k} not in {type(strat).__name__}'s make parameters"
 
         # do the non-optional annotation-parts match?
         for name, p_annotation in get_type_hints(strat.make).items():
@@ -51,7 +51,7 @@ def test_make():
                 p_anno = remove_optional(p_anno)
                 assert (
                     len(dm_anno) == len(p_anno)
-                ), f"{strat.__name__}. Annotations do not match for {name}: {dm_anno} !=\n {p_anno}"
+                ), f"{type(strat).__name__}. Annotations do not match for {name}: {dm_anno} !=\n {p_anno}"
                 for da, pa in zip(dm_anno, p_anno):
                     if get_origin(da) == typing.Annotated:
                         da_ = da.__origin__
@@ -64,7 +64,7 @@ def test_make():
                         pa_ = pa
                     assert (
                         da_ == pa_
-                    ), f"{strat.__name__}. Annotations do not match for {name}: {da} !=\n {pa}"
+                    ), f"{type(strat).__name__}. Annotations do not match for {name}: {da} !=\n {pa}"
 
         made_strat = strat.make(**data_model_dump)
         made_dump = made_strat._data_model.model_dump()
@@ -74,16 +74,13 @@ def test_make():
             v = data_model_dump[k]
             assert made_v == v, f"{strat.__name__}. {k} does not match: {made_v} != {v}"
 
-    strats_wo_make = [
-        strats.CustomSoboStrategy,
-        strats.StepwiseStrategy,
-        strats.ShortestPathStrategy,
-        FactorialStrategy,
+    strats_without_make = [
+        FactorialStrategy,  # this is deprecated in favor of F, hence we don't add make
     ]
     for spec in strat_specs.valids:
         data_model = spec.obj()
         strat = strats.map(data_model)
-        if type(strat) not in strats_wo_make:
+        if type(strat) not in strats_without_make:
             # test the make function
             test(strat, data_model)
         else:

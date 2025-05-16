@@ -522,3 +522,40 @@ class CustomSoboStrategy(SoboStrategy):
         """Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         f_bytes_load = base64.b64decode(data.encode())
         self.f = cloudpickle.loads(f_bytes_load)  # type: ignore
+
+    @classmethod
+    def make(  # type: ignore
+        cls,
+        domain: Domain,
+        use_output_constraints: bool | None = None,
+        dump: str | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        seed: int | None = None,
+    ):
+        """
+        The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations.
+        In this tutorial notebook, it is shown how to use it to optimize a quantity that depends on a combination of
+        an inferred quantity and one of the inputs. See tutorials/advanced_examples/custom_sobo.ipynb.
+
+        Args:
+            domain: The optimization domain of the strategy.
+            use_output_constraints: Whether to use output constraints.
+            dump: The function to use for the optimization.
+            acquisition_function: The acquisition function to use.
+            acquisition_optimizer: The optimizer to use for the acquisition function.
+            surrogate_specs: The specifications for the surrogate model.
+            outlier_detection_specs: The specifications for the outlier detection.
+            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+            frequency_check: The frequency of checking for outliers.
+            frequency_hyperopt: The frequency of hyperparameter optimization.
+            folds: The number of folds for cross-validation.
+            seed: The random seed to use.
+        """
+        return make_strategy(cls, CustomDataModel, locals())
