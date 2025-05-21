@@ -51,8 +51,12 @@ of1 = ContinuousOutput(key="of1")
 
 c1 = LinearEqualityConstraint(features=["if0", "if1"], coefficients=[1, 1], rhs=1)
 c2 = LinearInequalityConstraint(features=["if0", "if1"], coefficients=[1, 1], rhs=1)
-c3 = NonlinearEqualityConstraint(expression="if0**2 + if1**2 - 1")
-c4 = NonlinearInequalityConstraint(expression="if0**2 + if1**2 - 1")
+c3 = NonlinearEqualityConstraint(
+    expression="if0**2 + if1**2 - 1", features=["if0", "if1"]
+)
+c4 = NonlinearInequalityConstraint(
+    expression="if0**2 + if1**2 - 1", features=["if0", "if1"]
+)
 c5 = NChooseKConstraint(
     features=["if0", "if1", "if2"],
     min_count=0,
@@ -138,7 +142,7 @@ def test_rejection_sampler_not_converged():
 def test_interpoint():
     domain = Domain.from_lists(
         inputs=[if1, if2, if3],
-        constraints=[InterpointEqualityConstraint(feature="if1", multiplicity=3)],
+        constraints=[InterpointEqualityConstraint(features=["if1"], multiplicity=3)],
     )
     data_model = data_models.RandomStrategy(domain=domain)
     sampler = strategies.RandomStrategy(data_model=data_model)

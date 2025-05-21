@@ -73,7 +73,7 @@ specs.add_valid(
 specs.add_valid(
     constraints.InterpointEqualityConstraint,
     lambda: {
-        "feature": "f1",
+        "features": ["f1"],
         "multiplicity": 3,
     },
 )
@@ -81,7 +81,7 @@ specs.add_valid(
 specs.add_invalid(
     constraints.InterpointEqualityConstraint,
     lambda: {
-        "feature": "f1",
+        "features": ["f1"],
         "multiplicity": 1,
     },
     error=ValueError,

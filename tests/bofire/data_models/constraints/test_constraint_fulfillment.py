@@ -33,6 +33,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearEqualityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -4",
         ),
         True,
@@ -40,6 +41,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearEqualityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -3",
         ),
         False,
@@ -47,6 +49,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearInequalityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -5",
         ),
         True,
@@ -54,6 +57,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearInequalityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -2",
         ),
         False,
@@ -231,31 +235,31 @@ parameters = [
     ),
     (
         pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [1.0, 2.0, 3.0]}),
-        InterpointEqualityConstraint(feature="a"),
+        InterpointEqualityConstraint(features=["a"]),
         True,
     ),
     (
         pd.DataFrame({"a": [1.0, 1.0, 2.0], "b": [1.0, 2.0, 3.0]}),
-        InterpointEqualityConstraint(feature="a"),
+        InterpointEqualityConstraint(features=["a"]),
         False,
     ),
     (
         pd.DataFrame({"a": [1.0, 1.0, 2.0, 2.0], "b": [1.0, 2.0, 3.0, 4.0]}),
-        InterpointEqualityConstraint(feature="a", multiplicity=2),
+        InterpointEqualityConstraint(features=["a"], multiplicity=2),
         True,
     ),
     (
         pd.DataFrame(
             {"a": [1.0, 1.0, 2.0, 2.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]},
         ),
-        InterpointEqualityConstraint(feature="a", multiplicity=2),
+        InterpointEqualityConstraint(features=["a"], multiplicity=2),
         True,
     ),
     (
         pd.DataFrame(
             {"a": [1.0, 1.0, 2.0, 3.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]},
         ),
-        InterpointEqualityConstraint(feature="a", multiplicity=2),
+        InterpointEqualityConstraint(features=["a"], multiplicity=2),
         False,
     ),
     (
@@ -290,6 +294,7 @@ if TORCH_AVAILABLE:
         (
             get_row(F[:4], 1),
             NonlinearInequalityConstraint(
+                features=["f1", "f2", "f3", "f4"],
                 expression=lambda f1, f2, f3, f4: f1 + f2 + f3 + f4 - 2,
             ),
             False,
@@ -297,6 +302,7 @@ if TORCH_AVAILABLE:
         (
             get_row(F[:4], 1),
             NonlinearEqualityConstraint(
+                features=["f1", "f2", "f3", "f4"],
                 expression=lambda f1, f2, f3, f4: f1 + f2 + f3 + f4 - 4,
             ),
             True,

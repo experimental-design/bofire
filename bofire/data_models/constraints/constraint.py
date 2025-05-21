@@ -6,12 +6,14 @@ import pandas as pd
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.features import Inputs
+from bofire.data_models.types import FeatureKeys
 
 
 class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
     type: str
+    features: FeatureKeys
 
     @abstractmethod
     def is_fulfilled(

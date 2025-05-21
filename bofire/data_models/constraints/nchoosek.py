@@ -7,7 +7,6 @@ from pydantic import model_validator
 from bofire.data_models.constraints.constraint import IntrapointConstraint
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
-from bofire.data_models.types import FeatureKeys
 
 
 def narrow_gaussian(x, ell=1e-3):
@@ -27,7 +26,6 @@ class NChooseKConstraint(IntrapointConstraint):
     """
 
     type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
-    features: FeatureKeys
     min_count: int
     max_count: int
     none_also_valid: bool
