@@ -6,12 +6,15 @@ from pandas.testing import assert_frame_equal
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    SelectionCondition,
+    ThresholdCondition,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -63,6 +66,14 @@ c5 = NChooseKConstraint(
     max_count=2,
     none_also_valid=False,
 )
+c6 = CategoricalExcludeConstraint(
+    features=["if4", "if2"],
+    conditions=[
+        SelectionCondition(selection=["A"]),
+        ThresholdCondition(threshold=0.5, operator=">"),
+    ],
+    logical_op="AND",
+)
 
 supported_domains = [
     Domain.from_lists(
@@ -113,6 +124,7 @@ supported_domains = [
         outputs=[of1],
         constraints=[c4],
     ),
+    Domain.from_lists(inputs=[if2, if4], constraints=[c6], outputs=[of1]),
 ]
 
 
