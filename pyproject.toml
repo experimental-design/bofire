@@ -19,7 +19,7 @@ classifiers = [
     "Intended Audience :: Developers",
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 dependencies = [
     "numpy",
     "pandas",
@@ -38,7 +38,7 @@ optimization = [
     "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL]",
+    "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "pymoo>=0.6.0",
     "cvxopt",
@@ -68,7 +68,7 @@ all = [
     "formulaic==1.0.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL]",
+    "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0.6",
     "xgboost>=1.7.5",

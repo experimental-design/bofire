@@ -1,3 +1,0 @@
-# Domain
-
-::: bofire.utils

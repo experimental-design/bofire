@@ -1,16 +1,18 @@
 import warnings
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.doe import (
     apply_block_generator,
     fracfact,
@@ -178,3 +180,30 @@ class FractionalFactorialStrategy(Strategy):
 
     def has_sufficient_experiments(self) -> bool:
         return True
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        n_repetitions: int | None = None,
+        n_center: int | None = None,
+        block_feature_key: str | None = None,
+        generator: str | None = None,
+        n_generators: int | None = None,
+        randomize_runorder: bool | None = None,
+        seed: int | None = None,
+    ) -> Self:
+        """
+        Create a new instance of the strategy with the given parameters. This method will create the datamodel
+        under the hood and pass it to the constructor of the strategy.
+        Args:
+            domain: The domain of the strategy.
+            n_repetitions: The number of repetitions of the continuous part of the design.
+            n_center: The number of center points in the continuous part of the design per block.
+            block_feature_key: The feature key to use for blocking the design.
+            generator: The generator for the continuous part of the design.
+            n_generators: The number of reducing factors.
+            randomize_runorder: If true, the run order is randomized, else it is deterministic.
+            seed: The seed for the random number generator.
+        """
+        return cast(Self, make_strategy(cls, DataModel, locals()))
