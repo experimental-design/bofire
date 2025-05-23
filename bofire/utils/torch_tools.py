@@ -5,11 +5,12 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.models.transforms.input import InputTransform
+from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
 from torch.nn import Module
 
-from bofire.data_models.api import AnyObjective, Domain, Outputs
+from bofire.data_models.api import AnyObjective, Domain, Inputs, Outputs
 from bofire.data_models.constraints.api import (
     Constraint,
     InterpointEqualityConstraint,
@@ -35,6 +36,7 @@ from bofire.data_models.objectives.api import (
     PeakDesirabilityObjective,
     TargetObjective,
 )
+from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.strategy import Strategy
 
 
@@ -1040,3 +1042,38 @@ class InterpolateTransform(InputTransform, Module):
             return torch.cat([new_y, X], dim=-1)
 
         return new_y
+
+
+def create_supervised_dataset(
+    inputs: Inputs,
+    outputs: Outputs,
+    experiments: pd.DataFrame,
+    input_preprocessing_specs: InputTransformSpecs,
+    drop_duplicates: bool = True,
+) -> SupervisedDataset:
+    filtered_experiments = outputs.preprocess_experiments_all_valid_outputs(
+        experiments,
+    )
+
+    if drop_duplicates:
+        filtered_experiments = filtered_experiments.drop_duplicates(
+            subset=[var.key for var in inputs.get()],
+            keep="first",
+            inplace=False,
+        )
+
+    transformed = inputs.transform(
+        filtered_experiments,
+        input_preprocessing_specs,
+    )
+    X = torch.from_numpy(transformed.values).to(**tkwargs)
+    # Todo: catch it for categoricals
+    Y = torch.from_numpy(filtered_experiments[outputs.get_keys()]).to(**tkwargs)
+
+    return SupervisedDataset(
+        X=X,
+        Y=Y,
+        feature_names=transformed.columns.to_list(),
+        outcome_names=outputs.get_keys(),
+        validate_init=True,
+    )

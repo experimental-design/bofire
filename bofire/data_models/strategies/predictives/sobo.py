@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Type
+from typing import List, Literal, Optional, Type, Union
 
 import pydantic
 from pydantic import Field, field_validator, model_validator
@@ -6,6 +6,7 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
     qLogNEI,
+    qLogPF,
 )
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
@@ -13,10 +14,6 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class SoboBaseStrategy(BotorchStrategy):
-    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI(),
-    )
-
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         """Method to check if a specific feature type is implemented for the strategy
@@ -47,23 +44,34 @@ class SoboBaseStrategy(BotorchStrategy):
 class SoboStrategy(SoboBaseStrategy):
     type: Literal["SoboStrategy"] = "SoboStrategy"
 
-    @field_validator("domain")
-    @classmethod
-    def validate_is_singleobjective(cls, v, values):
-        if len(v.outputs) == 1:
-            return v
+    acquisition_function: Union[AnySingleObjectiveAcquisitionFunction, qLogPF] = Field(
+        default_factory=lambda: qLogNEI(),
+    )
+
+    @model_validator(mode="after")
+    def validate_is_singleobjective(self):
         if (
-            len(v.outputs.get_by_objective(excludes=ConstrainedObjective))
-            - len(v.outputs.get_by_objective(includes=None, excludes=Objective))
-        ) > 1:
+            len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
+            - len(
+                self.domain.outputs.get_by_objective(includes=None, excludes=Objective)
+            )
+        ) > 1 and not isinstance(self.acquisition_function, qLogPF):
             raise ValueError(
                 "SOBO strategy can only deal with one no-constraint objective.",
             )
-        return v
+        if isinstance(self.acquisition_function, qLogPF):
+            if len(self.domain.outputs.get_by_objective(ConstrainedObjective)) == 0:
+                raise ValueError(
+                    "At least one constrained objective is required for qLogPF.",
+                )
+        return self
 
 
 class AdditiveSoboStrategy(SoboBaseStrategy):
     type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI(),
+    )
     use_output_constraints: bool = True
 
     @field_validator("domain")
@@ -96,6 +104,10 @@ class _CheckAdaptableWeightsMixin:
 class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
 
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI(),
+    )
+
     @field_validator("domain")
     def validate_is_multiobjective(cls, v, info):
         if (len(v.outputs.get_by_objective(Objective))) < 2:
@@ -121,6 +133,9 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
     type: Literal["MultiplicativeAdditiveSoboStrategy"] = (
         "MultiplicativeAdditiveSoboStrategy"
     )
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI(),
+    )
     use_output_constraints: bool = True
     additive_features: List[str] = Field(default_factory=list)
 
@@ -137,5 +152,8 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
 
 class CustomSoboStrategy(SoboBaseStrategy):
     type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI(),
+    )
     use_output_constraints: bool = True
     dump: Optional[str] = None

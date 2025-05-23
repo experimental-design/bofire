@@ -3,6 +3,7 @@ import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
+    qLogPF,
     qNegIntPosVar,
     qPI,
 )
@@ -619,6 +620,41 @@ specs.add_invalid(
     message="LSR-BO only supported for linear constraints.",
 )
 
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="At least one constrained objective is required for qLogPF.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="SOBO strategy can only deal with one no-constraint objective.",
+)
 specs.add_invalid(
     strategies.SoboStrategy,
     lambda: {
