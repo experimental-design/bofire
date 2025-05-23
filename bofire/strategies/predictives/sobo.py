@@ -377,8 +377,8 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         data_model: MultiplicativeAdditiveDataModel,
         **kwargs,
     ):
-        self.additive_features = data_model.additive_features  # type: ignore
-        super().__init__(data_model=data_model, **kwargs)
+        self.additive_features = data_model.additive_features
+        super().__init__(data_model=data_model, **kwargs)  # type: ignore
 
     def _get_objective_and_constraints(
         self,
