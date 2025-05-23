@@ -114,6 +114,15 @@ class DoEStrategy(Strategy):
                     mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
                 )
             )
+            # if only categoricals in domain
+            if len(self.domain.inputs) == len(
+                self.domain.inputs.get([CategoricalInput])
+            ):
+                return design_categoricals.iloc[
+                    fixed_experiments_count:, :
+                ].reset_index(
+                    drop=True,
+                )
             design_projected = project_candidates_into_domain(
                 domain=self.domain,
                 candidates=design_no_categoricals,
