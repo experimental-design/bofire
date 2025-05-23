@@ -181,7 +181,9 @@ class SoboStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction
+        | qLogPF
+        | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
