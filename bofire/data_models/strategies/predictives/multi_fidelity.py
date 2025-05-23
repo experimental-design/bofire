@@ -1,7 +1,11 @@
 from typing import List, Literal, Union
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
+from bofire.data_models.acquisition_functions.api import (
+    AnySingleObjectiveAcquisitionFunction,
+    qLogNEI,
+)
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import TaskInput
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy
@@ -10,6 +14,10 @@ from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurr
 
 class MultiFidelityStrategy(SoboStrategy):
     type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
+
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI(),
+    )
 
     fidelity_thresholds: Union[List[float], float] = 0.1
 

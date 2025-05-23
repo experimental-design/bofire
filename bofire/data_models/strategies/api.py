@@ -58,6 +58,7 @@ from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     AnyCondition,
     CombiCondition,
+    FeasibleExperimentCondition,
     NumberOfExperimentsCondition,
 )
 from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
