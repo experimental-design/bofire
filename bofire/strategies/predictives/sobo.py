@@ -213,7 +213,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         data_model: AdditiveDataModel,
         **kwargs,
     ):
-        super().__init__(data_model=data_model, **kwargs)
+        super().__init__(data_model=data_model, **kwargs)  # type: ignore
         self.use_output_constraints = data_model.use_output_constraints
 
     def _get_objective_and_constraints(
@@ -313,7 +313,7 @@ class AdditiveSoboStrategy(SoboStrategy):
 class MultiplicativeSoboStrategy(SoboStrategy):
     def __init__(
         self,
-        data_model: MultiplicativeDataModel,
+        data_model: MultiplicativeDataModel,  # type: ignore
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
@@ -374,7 +374,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
 class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
     def __init__(
         self,
-        data_model: MultiplicativeAdditiveDataModel,
+        data_model: MultiplicativeAdditiveDataModel,  # type: ignore
         **kwargs,
     ):
         self.additive_features = data_model.additive_features
@@ -443,7 +443,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
 class CustomSoboStrategy(SoboStrategy):
     def __init__(
         self,
-        data_model: CustomDataModel,
+        data_model: CustomDataModel,  # type: ignore
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
