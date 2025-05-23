@@ -47,9 +47,6 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
-from bofire.data_models.strategies.predictives.sobo import (
-    SoboBaseStrategy as SoboBaseDataModel,
-)
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy as SoboDataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
@@ -66,7 +63,7 @@ from bofire.utils.torch_tools import (
 class SoboStrategy(BotorchStrategy):
     def __init__(
         self,
-        data_model: SoboBaseDataModel,
+        data_model: SoboDataModel,
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)

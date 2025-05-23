@@ -53,7 +53,7 @@ class SoboStrategy(SoboBaseStrategy):
         if (
             len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
             - len(
-                self.domain.outputs.get_by_objective(includes=None, excludes=Objective)
+                self.domain.outputs.get_by_objective(includes=None, excludes=Objective)  # type: ignore
             )
         ) > 1 and not isinstance(self.acquisition_function, qLogPF):
             raise ValueError(
