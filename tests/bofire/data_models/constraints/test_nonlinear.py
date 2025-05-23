@@ -32,9 +32,11 @@ def test_nonlinear_constraints_jacobian_expression():
 
     constraint2 = NonlinearInequalityConstraint(
         expression=lambda x1, x2, x3: x1**2 + x2**2 - x3,
+        features=["x1", "x2", "x3"],
     )
     constraint3 = NonlinearInequalityConstraint(
         expression=lambda x1, x2, x3: x1**2 + x2**2 - x3,
+        features=["x1", "x2", "x3"],
         jacobian_expression=lambda x1, x2, x3: [
             2 * x1,
             2 * x2,
@@ -47,11 +49,11 @@ def test_nonlinear_constraints_jacobian_expression():
 
     with pytest.raises(
         ValueError,
-        match="Features must be None if expression is a callable. They will be inferred from the callable.",
+        match="Provided features do not match the features used in the expression.",
     ):
         NonlinearInequalityConstraint(
             expression=lambda x1, x2, x3: x1**2 + x2**2 - x3,
-            features=["x1", "x2", "x3"],
+            features=["x1", "x2", "x5"],
             jacobian_expression=None,
         )
 
@@ -77,9 +79,11 @@ def test_nonlinear_constraints_hessian_expression():
         assert np.allclose(constraint0.hessian(data)[i], constraint1.hessian(data)[i])
 
     constraint2 = NonlinearInequalityConstraint(
+        features=["x1", "x2", "x3"],
         expression=lambda x1, x2, x3: x1**3 + x2**2 - x3,
     )
     constraint3 = NonlinearInequalityConstraint(
+        features=["x1", "x2", "x3"],
         expression=lambda x1, x2, x3: x1**3 + x2**2 - x3,
         jacobian_expression=lambda x1, x2, x3: [
             3 * x1**2,
@@ -99,10 +103,10 @@ def test_nonlinear_constraints_hessian_expression():
 
     with pytest.raises(
         ValueError,
-        match="Features must be None if expression is a callable. They will be inferred from the callable.",
+        match="Provided features do not match the features used in the expression.",
     ):
         NonlinearInequalityConstraint(
             expression=lambda x1, x2, x3: x1**2 + x2**2 - x3,
-            features=["x1", "x2", "x3"],
+            features=["x1", "x2", "x5"],
             hessian_expression=None,
         )

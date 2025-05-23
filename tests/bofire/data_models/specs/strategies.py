@@ -636,7 +636,7 @@ specs.add_invalid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
             constraints=Constraints(
-                constraints=[InterpointEqualityConstraint(feature="a")],
+                constraints=[InterpointEqualityConstraint(features=["a"])],
             ),
         ).model_dump(),
     },

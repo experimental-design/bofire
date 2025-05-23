@@ -36,6 +36,20 @@ class PredictiveStrategy(Strategy):
     def input_preprocessing_specs(self) -> InputTransformSpecs:
         pass
 
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Postprocess the candidates.
+
+        Here we append the predictions to the candidates.
+
+        Args:
+            candidates: The generated candidates.
+
+        Returns:
+            Dataframe with candidates and corresponding predictions
+        """
+        preds = self.predict(candidates)
+        return pd.concat((candidates, preds), axis=1)
+
     def ask(
         self,
         candidate_count: Optional[PositiveInt] = None,

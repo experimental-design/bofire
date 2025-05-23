@@ -464,7 +464,9 @@ def test_sobo_interpoint():
     bench = Himmelblau()
     experiments = bench.f(bench.domain.inputs.sample(4), return_complete=True)
     domain = bench._domain
-    domain.constraints.constraints.append(InterpointEqualityConstraint(feature="x_1"))  # type: ignore
+    domain.constraints.constraints.append(
+        InterpointEqualityConstraint(features=["x_1"])
+    )  # type: ignore
     strategy_data = data_models.SoboStrategy(domain=domain)
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)

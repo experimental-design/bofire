@@ -95,7 +95,7 @@ specs.add_invalid(
             ],
         ),
         "constraints": Constraints(
-            constraints=[InterpointEqualityConstraint(feature="i3")],
+            constraints=[InterpointEqualityConstraint(features=["i3"])],
         ),
     },
     error=ValueError,

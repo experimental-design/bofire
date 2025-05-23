@@ -1,5 +1,5 @@
 import math
-from typing import Annotated, Dict, Literal, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -30,8 +30,13 @@ class InterpointEqualityConstraint(InterpointConstraint):
     """
 
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
-    feature: str
+    features: Annotated[List[str], Field(min_length=1), Field(max_length=1)]
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
+
+    @property
+    def feature(self) -> str:
+        """Feature to be constrained."""
+        return self.features[0]
 
     def validate_inputs(self, inputs: Inputs):
         if self.feature not in inputs.get_keys(ContinuousInput):
