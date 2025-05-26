@@ -1,17 +1,17 @@
 # Domains
 
-The BoFire domain contains all information about the optimization problem. In general, the domain is defined by **inputs**, **outputs**, **objectives** and **constraints**. Numerous types of those elements are implemented in the BoFire framework. A brief description of the usage of domains and the individual elements is given in the following.
+The BoFire domain contains all information about the optimization problem. In general, the domain is defined by **inputs**, **outputs**, **objectives** and **constraints**. Different types for each of these elements are implemented in the BoFire framework. A brief description of the usage of domains and the individual elements is given in the following.
 
 A basic example of a domain consists of two continuous inputs $x_1$, $x_2$ and a continuous output $y$. If no objective is given, a maximization objective for the output is assumed. If no constraints are defined, an empty set of constraints is assumed.
 
-A continuous input can be defined using the `ContinuousInput` class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume $x_1, x_2 \in (0,1)$.
+A continuous input can be defined using the `ContinuousInput` class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume $x_1, x_2 \in [0,1]$.
 ```python
 from bofire.data_models.features.api import ContinuousInput
 
 inputs = [
-    ContinuousInput(key="x1", bounds=(0,1)),
-    ContinuousInput(key="x2", bounds=(0,1))
-    ]
+    ContinuousInput(key="x1", bounds=[0,1]),
+    ContinuousInput(key="x2", bounds=[0,1])
+]
 ```
 Analogously, the continuous output is defined using the `ContinuousOutput` class.
 ```python
@@ -28,6 +28,18 @@ domain = Domain(
     outputs=outputs
 )
 ```
+Domains can also be created more concisely using the `from_lists` method of the `Domain` class. This is especially useful if you want to define a domain without having to create separate lists for inputs and outputs. The following code achieves the same result as above:
+```python
+domain = Domain.from_lists(
+    inputs=[
+        ContinuousInput(key="x1", bounds=[0,1]),
+        ContinuousInput(key="x2", bounds=[0,1])
+    ],
+    outputs=[
+        ContinuousOutput(key="y")
+    ]
+)
+```
 There are applications of domains, where no optimization of an objective is involved (e.g. randomly sampling from the design space). In such cases, we do not require to provide an output definition.
 
 Let us now assume, we have an additional linear equality constraint and we want to use a custom objective, e.g. a minimization objective for $y$. The linear constraint can be defined using the `LinearEqualityConstraint` class
@@ -42,7 +54,7 @@ $$
 x_1 + x_2 = 1.
 $$
 
-In BoFire, the minimization objective can be selected in the output definition using the `MinimizeObjective` class
+In BoFire, the minimization objective can be selected by setting the objective-attribute of an output to an instance of `MinimizeObjective`
 ```python
 from bofire.data_models.objectives.api import MinimizeObjective
 
@@ -69,9 +81,15 @@ BoFire allows for the following different user-facing input classes:
 - `TaskInput`
 <!-- - `ContinuousDescriptorInput` not used atm -->
 
-Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also
-# TODO: add link to strategy docu
-).
+Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy. For example, the following code checks whether the `ContinuousInput` is supported by the `RandomSearch` strategy.
+<!-- link to strategy docu shall be added once it is there -->
+
+```python
+from bofire.data_models.strategies.api import RandomStrategy
+
+RandomStrategy.is_feature_implemented(ContinuousInput)
+```
+The result will be `True` if the input type is supported by the strategy, otherwise it will return `False`. This is useful to check whether a certain input type can be used with a specific strategy before defining the domain.
 
 ### Input types
 
@@ -135,8 +153,8 @@ from bofire.data_models.features.api import CategoricalMolecularInput
 CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])
 ```
 
-#### Task inputs
-# TODO: Remove for now
+<!--#### Task inputs
+ -->
 
 ### Inputs class
 The `Inputs` class is used to summarize multiple input variables. It is used to define the inputs of a domain. The following code defines a new input class with the above described input variables $x_1, x_2, x_3, x_4, x_5, x_6, x_7$.
@@ -145,8 +163,8 @@ The `Inputs` class is used to summarize multiple input variables. It is used to 
 from bofire.data_models.api import Inputs
 
 inputs = Inputs(
-    features=[ContinuousInput(key="x1", bounds=(0,1)),
-    ContinuousInput(key="x2", bounds=(0,1)),
+    features=[ContinuousInput(key="x1", bounds=[0,1]),
+    ContinuousInput(key="x2", bounds=[0,1]),
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", categories=["A", "B", "C"]),
     MolecularInput(key="x5"),
@@ -181,7 +199,7 @@ Different classes for the objectives are implemented in BoFire. These are used t
 
 - `MaximizeObjective`: This is the default value. The objective is to maximize the output variable(s).
 - `MinimizeObjective`: The objective is to minimize the output variable(s). Note that minimization objectives can be transformed into maximization objectives and vice versa just by multiplying the corresponding output by -1.
-- `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful for objectives that are not linear in the output variable(s).
+- `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful to implement bounds on the output variable(s).
 - `MinimizeSigmoidObjective`: Similar to `MaximizeSigmoidObjective`, but the objective is to minimize the output variable(s).
 - `TargetObjective`: The objective is to reach a target value for the output variable(s). `TargetObjective` is of type `ConstrainedObjective` as `MaximizeSigmoidObjective` or `MinimizeSigmoidObjective`, i.e., it becomes one if the value is in the target region and falls asymptorically to zero outside that region.
 - `CloseToTargetObjective`: This objective measures the difference to a target value. Such an objective is often meaningful to minimize in a multiobjective optimization, and thus be included in the pareto front. Note that also the objectives of type `ConstrainedObjective` can be used in multiobjective optimization, but for that at least two targets of type `MaximizeSigmoidObjective`,`MinimizeSigmoidObjective` or `TargetObjective` are needed.
@@ -191,7 +209,7 @@ Different classes for the objectives are implemented in BoFire. These are used t
 If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/).
 
 ## Constraints
-The optimization problem in BoFire can be solved subject to a variety of different constraint types. These constraints are currently categorized as linear, non-linear, n choose k and interpoint constraints.
+The optimization problem in BoFire can be solved subject to a variety of different constraint types in the input space. These constraints are currently categorized as linear, non-linear, n choose k and interpoint constraints.
 
 ### Linear constraints
 Linear constraints are used to define linear equalities and inequalities.
@@ -230,7 +248,7 @@ NonlinearInequalityConstraint(expression="x1**2 + x2**2 - x3", features=["x1","x
 ```
 
 ### N choose k constraints
-Given a list of N features and attributes `min_count`, `max_count`, the `NChooseKConstraint` class is used to define constraints that require a minimum and maximum number of features to be nonzero. The following code defines a new `NChooseKConstraint` that requires at least 2 and at most 3 features to be selected from the list ["x1", "x2", "x3", "x4"].
+Given a list of N features and attributes `min_count`, `max_count`, the `NChooseKConstraint` class is used to define constraints that require a minimum and maximum number of features to be nonzero. Note that one can put min_count==max_count. The following code defines a new `NChooseKConstraint` that requires at least 2 and at most 3 features to be selected from the list ["x1", "x2", "x3", "x4"].
 
 ```python
 from bofire.data_models.constraints.api import NChooseKConstraint
