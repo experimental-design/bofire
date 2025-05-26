@@ -42,7 +42,7 @@ class RobustSingleTaskGPSurrogate(
     Attributes:
         prior_mean_of_support (float): The prior mean of the support.
         convex_parametrization (bool): Whether to use convex parametrization of the sparse noise model.
-        cache_model_trace (bool): Whether to cache the model trace.
+        cache_model_trace (bool): Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.
         lengthscale_constraint (PriorConstraint): Constraint on the lengthscale of the kernel.
 
     Note:
