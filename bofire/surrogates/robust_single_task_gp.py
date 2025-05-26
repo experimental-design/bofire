@@ -62,6 +62,11 @@ class RobustSingleTaskGPSurrogate(
         self.lengthscale_constraint = data_model.lengthscale_constraint
         super().__init__(data_model=data_model, **kwargs)
 
+        if len(self.outputs) > 1:
+            raise ValueError(
+                "RobustSingleTaskGPSurrogate is only implemented for single-output models."
+            )
+
     model: Optional[RobustRelevancePursuitSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
@@ -114,6 +119,28 @@ class RobustSingleTaskGPSurrogate(
             relevance_pursuit_optimizer=backward_relevance_pursuit,  # based on the docs this is most robust but more expensive that forward
         )
 
-    # TODO:
-    def predict_outliers(experimetnts: pd.DataFrame, **kwargs):
-        return NotImplementedError
+    def predict_outliers(
+        self, experiments: pd.DataFrame, options: Optional[Dict] = None
+    ) -> pd.DataFrame:
+        """
+        Predict the outliers for the given experiments. This is done by fitting the RobustSingleTaskGPSurrogate model and then using the model to do
+        predictions and obtain the data-point specific noise level (rho).
+        """
+        options = options or {}
+
+        # (re)fit model can only predict rho values for the data the model is fitted on
+        self.fit(experiments=experiments, **options)
+
+        # get model predictions, this should do a lot of validation, so we don't need it for the rhos.
+        predictions = self.predict(experiments)
+
+        # get the datapoint specific noise level
+        rhos = self.model.likelihood.noise_covar.rho.cpu().detach().numpy()
+
+        # convert rhos to a DataFrame, this loop is not necessary because we only fit on one output, but possibly future proof.
+        rho_df = pd.DataFrame(
+            data=rhos,
+            columns=[f"{col}_rho" for col in self.outputs.get_keys()],
+        )
+
+        return pd.concat([predictions, rho_df], axis=1)
