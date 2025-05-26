@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -10,21 +10,19 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousOutput,
 )
-from bofire.data_models.kernels.api import (
-    AnyKernel,
-    MaternKernel,
-    RBFKernel,
-    ScaleKernel,
-)
+from bofire.data_models.kernels.api import MaternKernel, RBFKernel, ScaleKernel
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
+    ROBUSTGP_OUTPUTSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    AnyConstraint,
     AnyPrior,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
@@ -54,11 +52,29 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
         surrogate_data: "RobustSingleTaskGPSurrogate",
         hyperparameters: pd.Series,
     ):
-        def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
+        def matern_25(
+            ard: bool,
+            lengthscale_prior: AnyPrior,
+            lengthscale_constraint: AnyConstraint,
+        ) -> MaternKernel:
+            return MaternKernel(
+                nu=2.5,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
+                ard=ard,
+            )
 
-        def matern_15(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
+        def matern_15(
+            ard: bool,
+            lengthscale_prior: AnyPrior,
+            lengthscale_constraint: AnyConstraint,
+        ) -> MaternKernel:
+            return MaternKernel(
+                nu=1.5,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
+                ard=ard,
+            )
 
         if hyperparameters.prior == "mbo":
             noise_prior, lengthscale_prior, outputscale_prior = (
@@ -79,28 +95,33 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
                 THREESIX_SCALE_PRIOR(),
             )
         surrogate_data.noise_prior = noise_prior
-        surrogate_data.prior_mean_of_support = 16
-        surrogate_data.convex_parametrization = True
-        surrogate_data.cache_model_trace = False
 
         if hyperparameters.kernel == "rbf":
             base_kernel = RBFKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
             )
         elif hyperparameters.kernel == "matern_2.5":
             base_kernel = matern_25(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
             )
         elif hyperparameters.kernel == "matern_1.5":
             base_kernel = matern_15(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
         if hyperparameters.scalekernel:
             surrogate_data.kernel = ScaleKernel(
-                base_kernel=base_kernel, outputscale_prior=outputscale_prior
+                base_kernel=base_kernel,
+                outputscale_prior=outputscale_prior,
+                outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
             )
         else:
             surrogate_data.kernel = base_kernel
@@ -109,10 +130,10 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
 class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["RobustSingleTaskGPSurrogate"] = "RobustSingleTaskGPSurrogate"
 
-    kernel: AnyKernel = Field(
+    kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
-            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),  # not too sure if we should keep this or of this might interfere with the lengthscale constraints we set later
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
@@ -120,10 +141,12 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: RobustSingleTaskGPHyperconfig(),
     )
 
-    # TODO: not sure if this is the best way
-    prior_mean_of_support: int = Field(default=16)
+    prior_mean_of_support: Optional[int] = Field(default=None)
     convex_parametrization: bool = Field(default=True)
     cache_model_trace: bool = Field(default=False)
+    lengthscale_constraint: AnyConstraint = Field(
+        default=ROBUSTGP_LENGTHSCALE_CONSTRAINT()
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

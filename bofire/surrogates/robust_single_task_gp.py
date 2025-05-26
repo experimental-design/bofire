@@ -34,8 +34,21 @@ class RobustSingleTaskGPSurrogate(
 ):
     """
     Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
+
+    A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.
     See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/
     Paper: https://arxiv.org/pdf/2410.24222
+
+    Attributes:
+        prior_mean_of_support (float): The prior mean of the support.
+        convex_parametrization (bool): Whether to use convex parametrization of the sparse noise model.
+        cache_model_trace (bool): Whether to cache the model trace.
+        lengthscale_constraint (PriorConstraint): Constraint on the lengthscale of the kernel.
+
+    Note:
+        The definition of "outliers" depends on the model capacity, so what is an outlier
+        with respect to a simple model might not be an outlier with respect to a complex model.
+        For this reason, it is necessary to bound the lengthscale of the GP kernel from below.
     """
 
     def __init__(
@@ -46,6 +59,7 @@ class RobustSingleTaskGPSurrogate(
         self.prior_mean_of_support = data_model.prior_mean_of_support
         self.convex_parametrization = data_model.convex_parametrization
         self.cache_model_trace = data_model.cache_model_trace
+        self.lengthscale_constraint = data_model.lengthscale_constraint
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[RobustRelevancePursuitSingleTaskGP] = None
@@ -79,12 +93,15 @@ class RobustSingleTaskGPSurrogate(
                 else None
             ),
             input_transform=scaler,
-            prior_mean_of_support=self.prior_mean_of_support,
             convex_parameterization=self.convex_parametrization,
             cache_model_trace=self.cache_model_trace,
         )
-
+        if self.prior_mean_of_support is not None:
+            self.model.prior_mean_of_support = self.prior_mean_of_support
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
+        self.model.covar_module.lengthscale_constraint = priors.map(
+            self.lengthscale_constraint
+        )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
@@ -92,7 +109,11 @@ class RobustSingleTaskGPSurrogate(
             # TODO: with the Decorator to _fit_rrp in botorch robust_relevance_pursuit.py, options and max_attempts do not work
             # TODO: still find workaround for this
             # options=self.training_specs,
-            reset_parameters=False,  # question is if we want to be able to set this ourselves or not?
-            relevance_pursuit_optimizer=backward_relevance_pursuit,  # same here, do we want to be able to pass this?
             # max_attempts=10,
+            reset_parameters=False,  # question is if we want to be able to set this ourselves or not?
+            relevance_pursuit_optimizer=backward_relevance_pursuit,  # based on the docs this is most robust but more expensive that forward
         )
+
+    # TODO:
+    def predict_outliers(experimetnts: pd.DataFrame, **kwargs):
+        return NotImplementedError
