@@ -201,8 +201,8 @@ Different classes for the objectives are implemented in BoFire. These are used t
 - `MinimizeObjective`: The objective is to minimize the output variable(s). Note that minimization objectives can be transformed into maximization objectives and vice versa just by multiplying the corresponding output by -1.
 - `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful to implement bounds on the output variable(s).
 - `MinimizeSigmoidObjective`: Similar to `MaximizeSigmoidObjective`, but the objective is to minimize the output variable(s).
-- `TargetObjective`: The objective is to reach a target value for the output variable(s). `TargetObjective` is of type `ConstrainedObjective` as `MaximizeSigmoidObjective` or `MinimizeSigmoidObjective`, i.e., it becomes one if the value is in the target region and falls asymptorically to zero outside that region.
-- `CloseToTargetObjective`: This objective measures the difference to a target value. Such an objective is often meaningful to minimize in a multiobjective optimization, and thus be included in the pareto front. Note that also the objectives of type `ConstrainedObjective` can be used in multiobjective optimization, but for that at least two targets of type `MaximizeSigmoidObjective`,`MinimizeSigmoidObjective` or `TargetObjective` are needed.
+- `TargetObjective`: The objective is to reach a target value for the output variable(s). `TargetObjective` is of type `ConstrainedObjective` as `MaximizeSigmoidObjective` or `MinimizeSigmoidObjective`, i.e., it becomes one if the value is in the target region and falls asymptorically to zero outside that region. That means that once the target objective is met, e.g., objective value above target value in a `MaximizeSigmoidObjective` case, the optimization does not care about how close the objective value is compared to the target value.
+- `CloseToTargetObjective`: This objective measures the difference to a target value. Such an objective is often meaningful to minimize in a multiobjective optimization, and thus be included in the pareto front. Note that also the objectives of type `ConstrainedObjective` can be used in multiobjective optimization, but for that at least two targets of type `MaximizeSigmoidObjective`,`MinimizeSigmoidObjective` or `TargetObjective` are needed. The main difference with respect to the `TargetObjective` is that here the goal is to stay as close as possible to the target value.
 - `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given.
 
 
@@ -237,7 +237,7 @@ $$
 c(\mathbf{x}) = 0 \quad \text{and} \quad c(\mathbf{x}) \leq 0,
 $$
 
-where $c(\mathbf{x})$ can be an arbitrary function of the inputs **x** represented by a string attribute `expression` that can be evaluated via the `eval()` method of pandas dataframe. If `sympy` is installed, the derivate expressions are automatically calculated from the `expression` attribute. Otherwise, the user can provide additional expressions for the derivatives using the `jacobian_expressions` attribute. The `features` attrribute should contain the names of the input variables used in the `expression` attribute.
+where $c(\mathbf{x})$ can be an any differentiable function of the inputs **x** represented by a string attribute `expression` that can be evaluated via the `eval()` method of pandas dataframe. If `sympy` is installed, the derivate expressions are automatically calculated from the `expression` attribute. Otherwise, the user can provide additional expressions for the derivatives using the `jacobian_expressions` attribute. The `features` attrribute should contain the names of the input variables used in the `expression` attribute.
 
 The following code defines a new non-linear inequality constraint $x1^2 + x2^2 - x3 \leq 0$.
 
