@@ -3,8 +3,8 @@ from typing import List
 import pytest
 import pandas as pd
 import numpy as np
-import cvxopt
-from scipy import sparse, linalg
+from scipy import linalg
+import torch
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -14,11 +14,13 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.domain import api as data_models_domain
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.data_models.features import api as data_models_features
 from bofire.strategies.predictives.utils import LinearProjection, get_problem_and_algorithm, GaMixedDomainHandler
 from bofire.strategies.predictives.acqf_optimization import AcquisitionOptimizer
-from bofire.utils.torch_tools import get_linear_constraints
+from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+
 
 
 @pytest.fixture
@@ -86,6 +88,7 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
     )
 
     return repair
+
 
 class TestLinearProjection:
 
@@ -165,3 +168,62 @@ class TestLinearProjection:
                 for idx_, val in zip(coeffs[0], coeffs[1]):
                     assert Ai_single[idx_] == -val
                 assert b[i] == -coeffs[2]
+
+
+    def test_do(self):
+        """ actually run the optimization and check the results for toy system with known solution """
+        # create simple linear system
+        domain = data_models_domain.Domain(
+            inputs=[
+                data_models_features.ContinuousInput(key="x1", bounds=(0.0, 1.0)),
+                data_models_features.ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+            ],
+            constraints=[
+                LinearEqualityConstraint(  # x1 + x2 = 1
+                    features=["x1", "x2"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+                LinearInequalityConstraint( # -x1 + x2 <= 0 -> x1 >= x2 (lower triangle)
+                    features=["x1", "x2"],
+                    coefficients=[-1.0, 1.0],
+                    rhs=0.0,
+                ),
+            ],
+        )
+
+        repair_instance = LinearProjection(
+            domain=domain,
+            d=2,
+            bounds=torch.from_numpy(np.array([[0.0, 0.0], [1.0, 1.0]])).to(**tkwargs),
+            q=1,
+            domain_handler=GaMixedDomainHandler(
+                domain=domain, input_preprocessing_specs={}, q=1),
+        )
+
+        # create a mock generation
+        x = pd.DataFrame(np.random.uniform(-0.1, 1.1, size=(1000, 2)), columns=["x1_q0", "x2_q0"]).to_dict(orient="records")
+
+        # run the repair
+        xr = repair_instance._do(None, x)
+
+        # check the results
+        x = pd.DataFrame(x).values
+        xr = pd.DataFrame(xr).values
+
+        # equation constraint: x1 + x2 = 1
+        assert np.allclose(xr[:, 0] + xr[:, 1], 1.0, atol=1e-5)
+        # inequality constraint: x1 >= x2
+        assert np.all(xr[:, 0] + 1e-5 >= xr[:, 1])
+        # mapping of points in upper triangle to (0.5, 0.5)
+        mask = x[:, 0] < x[:, 1]
+        assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
+
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # for idx in range(xr.shape[0]):
+        #     plt.plot(xr[idx, 0], xr[idx, 1], "o", color="C0", alpha=0.1)
+        #     plt.plot((x[idx, 0], xr[idx, 0]), (x[idx, 1], xr[idx, 1]), "-o", color="C1", alpha=0.1)
+        # plt.plot([0, 1], [1, 0], "k--", label="x1 + x2 = 1")
+        # plt.plot([0, 1], [0, 1], "k:", label="x1 = x2")
+        # plt.show()

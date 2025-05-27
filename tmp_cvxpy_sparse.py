@@ -23,6 +23,7 @@ b = np.vstack([bi for _ in range(N)])
 # Solve the quadratic program using cvxpy
 import cvxpy as cp
 x_var = cp.Variable((N*d, 1))
+x_var.value = x.reshape(-1, 1)
 
 objective = cp.Minimize(0.5 * cp.quad_form(x_var, P) + q.T @ x_var)
 

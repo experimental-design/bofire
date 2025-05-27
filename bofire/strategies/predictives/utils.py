@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 import cvxopt
+import cvxpy as cp
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -414,6 +415,7 @@ class LinearProjection(PymooRepair):
         domain_handler: Optional[GaMixedDomainHandler] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
+        verbose: bool = False,
     ):
         if constraints_include is None:
             constraints_include = [
@@ -557,10 +559,7 @@ class LinearProjection(PymooRepair):
         self.q = q
         self.domain = domain
         self.bounds = bounds
-
-        cvxopt.solvers.options["show_progress"] = False
-        cvxopt.solvers.options["maxiters"] = 1000
-        cvxopt.solvers.options["abstol"] = 1e-9
+        self.verbose = verbose
 
         super().__init__()
 
@@ -684,8 +683,21 @@ class LinearProjection(PymooRepair):
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
-        sol = cvxopt.solvers.qp(**self._create_qp_problem_input(X))
-        x_corrected = np.array(sol["x"])
+        matrices = self._create_qp_problem_input(X)
+
+        x_var = cp.Variable((np.size(X), 1))
+        x_var.value = matrices["initvals"].reshape(-1, 1)
+
+        objective = cp.Minimize(0.5 * cp.quad_form(x_var, matrices["P"]) + matrices["q"].T @ x_var)
+        constraints = [
+            matrices["A"] @ x_var == matrices["b"],
+            matrices["G"] @ x_var <= matrices["h"],
+        ]
+        problem = cp.Problem(objective, constraints)
+
+        problem.solve(solver=cp.ECOS, verbose=self.verbose)
+
+        x_corrected = x_var.value
         X_corrected = x_corrected.reshape(X.shape)
 
         if self.domain_handler is not None:
@@ -701,6 +713,7 @@ def get_problem_and_algorithm(
     acqfs: List[AcquisitionFunction],
     q: int,
     bounds_botorch_space: Tensor,
+    verbose: bool = False,
 ) -> Tuple[
     AcqfOptimizationProblem,
     MixedVariableGA,
@@ -753,6 +766,7 @@ def get_problem_and_algorithm(
             bounds=bounds_botorch_space,
             q=q,
             domain_handler=problem.domain_handler,
+            verbose=verbose,
         )
 
         algorithm_args["repair"] = repair
