@@ -117,14 +117,21 @@ class TestLinearProjection:
         assert len(h_bounds) == 2 * n_gen * n_add * d
         # assert structure of G
         assert (linalg.block_diag(*[np.vstack([np.eye(d), -np.eye(d)]) for _ in range(n_gen * n_add)]) == G_bounds).all()
+
+        nck_constr = domain.constraints.get(includes=NChooseKConstraint).constraints
+
         for xi in range(n_gen * n_add):
             ub = h_bounds[(xi*2) * d : ((xi*2) + 1) * d]
             lb = -h_bounds[((xi*2) + 1) * d : ((xi*2) + 2) * d]
 
-            if domain.constraints.get(includes=NChooseKConstraint).constraints:
-                # NChooseK constraints are handled separately
-                print("to-do")
-                pass
+            if len(nck_constr) > 0:
+                # check how NChooseK constraints manipulate the bounds
+                for idx_constr in range(len(nck_constr)):
+                    idx = repair_instance.n_choose_k_constr.idx[idx_constr]
+                    lb, ub = lb[idx], ub[idx]
+                    assert int((lb>0).sum()) >= nck_constr[idx_constr].min_count
+                    assert int((ub==0).sum()) <= len(ub) - nck_constr[idx_constr].max_count
+
             else:
                 assert (ub.reshape(-1) == repair_instance.bounds[1, :].numpy().reshape(-1)).all()
                 assert (lb.reshape(-1) == repair_instance.bounds[0, :].numpy().reshape(-1)).all()
