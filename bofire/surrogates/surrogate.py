@@ -36,10 +36,8 @@ class Surrogate(ABC):
         """Return True if model is fitted, else False."""
         return self.model is not None
 
-    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
-        # check if model is fitted
-        if not self.is_fitted:
-            raise ValueError("Model is not fitted/available yet.")
+    def _prepare_data_for_predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Prepare the data for prediction."""
         # validate
         X = self.inputs.validate_experiments(X, strict=False)
         # transform
@@ -47,6 +45,14 @@ class Surrogate(ABC):
         # make sure that all is float64
         for c in Xt.columns:
             Xt[c] = pd.to_numeric(Xt[c], errors="raise")
+        return Xt
+
+    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        # check if model is fitted
+        if not self.is_fitted:
+            raise ValueError("Model is not fitted/available yet.")
+        # prepare data
+        Xt = self._prepare_data_for_predict(X)
         # predict
         preds, stds = self._predict(Xt)
         # set up column names
