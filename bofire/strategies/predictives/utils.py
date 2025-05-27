@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 import cvxopt
 import numpy as np
 import pandas as pd
+from scipy import sparse
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from pymoo.core import variable as pymoo_variable
@@ -567,87 +568,107 @@ class LinearProjection(PymooRepair):
         n_pop = X.shape[0]
         n_x_points = n_pop * self.q
 
-        def repeated_blkdiag(m: cvxopt.matrix, N: int) -> cvxopt.spmatrix:
-            """construct large matrix with block-diagolal matrix in the center of arbitrary size"""
-            m_zeros = cvxopt.spmatrix([], [], [], m.size)
-            return cvxopt.sparse(
-                [[m_zeros] * i + [m] + [m_zeros] * (N - i - 1) for i in range(N)]
-            )
-
         def _build_A_b_matrices_for_single_constr(
             index, coeffs, b
-        ) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+        ) -> Tuple[sparse.csr_array, np.ndarray]:
             """a single-line constraint matrix of the form A*x = b or A*x <= b"""
-            A = cvxopt.spmatrix(coeffs, [0] * len(index), index, (1, self.d))
-            b = cvxopt.matrix(b)
+            A = sparse.csr_array(
+                (
+                    [float(ci) for ci in coeffs],
+                    (
+                        [0]*len(index),  # row index, only one row
+                        [int(idx) for idx in index],  # column indices
+                    ),
+                ),
+                shape=(1, self.d)
+            )
+            b = np.array(b).reshape((1, 1))
+            # A = cvxopt.spmatrix(coeffs, [0] * len(index), index, (1, self.d))
+            # b = cvxopt.matrix(b)
             return A, b
 
         def _build_A_b_matrices_for_n_points(
             constr: List[tuple],
-        ) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+        ) -> Tuple[sparse.csr_array, np.ndarray]:
             """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point"""
 
             if not constr:
-                return cvxopt.spmatrix(
-                    [], [], [], (0, self.d * n_x_points)
-                ), cvxopt.matrix([], (0, 1), tc="d")
+                return sparse.csr_array((0, self.d * n_x_points)), np.zeros(shape=(0, 1))
+                # return cvxopt.spmatrix(
+                #     [], [], [], (0, self.d * n_x_points)
+                # ), cvxopt.matrix([], (0, 1), tc="d")
 
             # vertically combine all linear equality constr.
             Ab_single_eq = [
                 _build_A_b_matrices_for_single_constr(*constr_) for constr_ in constr
             ]
-            A = cvxopt.sparse([Ab[0] for Ab in Ab_single_eq])
-            b = cvxopt.matrix([Ab[1] for Ab in Ab_single_eq])
+            A = sparse.vstack([Ab[0] for Ab in Ab_single_eq])
+            b = np.vstack([Ab[1] for Ab in Ab_single_eq])
             # repeat for each x in the population
-            A = repeated_blkdiag(A, n_x_points)
-            b = cvxopt.matrix([b] * n_x_points)
+            A = sparse.block_diag([A] * n_x_points)
+            b = np.vstack([b] * n_x_points)
+            # A = repeated_blkdiag(A, n_x_points)
+            # b = cvxopt.matrix([b] * n_x_points)
             return A, b
 
-        def _build_G_h_for_box_bounds() -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+        def _build_G_h_for_box_bounds() -> Tuple[sparse.csr_array, np.ndarray]:
             """build linear inequality matrices, such that lb<=x<=ub -> G*x<=h:
 
             G = [I; -I]
             h = [ub; -lb]
 
             """
-            G_bounds_ = cvxopt.sparse(
-                [
-                    cvxopt.spmatrix(1, range(self.d), range(self.d)),  # unity matrix
-                    cvxopt.spmatrix(
-                        -1, range(self.d), range(self.d)
-                    ),  # negative unity matrix
-                ]
-            )
-            G = repeated_blkdiag(G_bounds_, n_x_points)
+            G_bounds_ = sparse.vstack([
+                sparse.identity(self.d),  # unity matrix
+                -sparse.identity(self.d),  # negative unity matrix
+            ])
+            G = sparse.block_diag([G_bounds_] * n_x_points)
+
+            # G_bounds_ = cvxopt.sparse(
+            #     [
+            #         cvxopt.spmatrix(1, range(self.d), range(self.d)),  # unity matrix
+            #         cvxopt.spmatrix(
+            #             -1, range(self.d), range(self.d)
+            #         ),  # negative unity matrix
+            #     ]
+            # )
+            # G = repeated_blkdiag(G_bounds_, n_x_points)
 
             if self.n_choose_k_constr is None:  # use the normal lb/ub
                 lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
-                h_bounds_ = cvxopt.matrix(
-                    np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
-                )
-                h = cvxopt.matrix([h_bounds_] * n_x_points)
+                h_bounds_ = np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
+                h = np.vstack([h_bounds_.reshape(-1, 1)] * n_x_points)
+                # h_bounds_ = cvxopt.matrix(
+                #     np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
+                # )
+                # h = cvxopt.matrix([h_bounds_] * n_x_points)
             else:
                 # correct bounds for NChooseK constraints
                 bounds = self.n_choose_k_constr(X)
                 # alternate upper- and (-1*lower) bound
-                bounds = np.concatenate([np.concatenate((b[1], -b[0])) for b in bounds])
-                h = cvxopt.matrix(bounds)
+                h = np.vstack([np.concatenate((b[1], -b[0])).reshape((-1, 1)) for b in bounds])
+
+                # h = cvxopt.matrix(bounds)
 
             return G, h
 
         # Prepare Matrices for solving the estimation problem
-        P = cvxopt.spmatrix(
-            1.0, range(self.d * n_x_points), range(self.d * n_x_points)
-        )  # the unit-matrix
+        P = sparse.identity(self.d * n_x_points)  # the unit-matrix
+        # P = cvxopt.spmatrix(
+        #     1.0, range(self.d * n_x_points), range(self.d * n_x_points)
+        # )  # the unit-matrix
 
         A, b = _build_A_b_matrices_for_n_points(self.eq_constr)
         G, h = _build_G_h_for_box_bounds()
         if self.ineq_constr:
             G_, h_ = _build_A_b_matrices_for_n_points(self.ineq_constr)
-            G, h = cvxopt.sparse([G, G_]), cvxopt.matrix([h, h_])
+            # G, h = cvxopt.sparse([G, G_]), cvxopt.matrix([h, h_])
+            G = sparse.vstack([G, G_])
+            h = np.vstack([h, h_])
 
         x = X.reshape(-1)
-        q = cvxopt.matrix(-x)
+        q = -x
+        # q = cvxopt.matrix(-x)
 
         return {
             "P": P,
@@ -656,7 +677,7 @@ class LinearProjection(PymooRepair):
             "h": h,
             "A": A,
             "b": b,
-            "initvals": cvxopt.matrix(x),
+            "initvals": x,
         }
 
     def _do(self, problem, X, **kwargs):

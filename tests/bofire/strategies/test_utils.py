@@ -104,13 +104,13 @@ class TestLinearProjection:
         P, q, G, h, A, b = (matrices.get(key) for key in ["P", "q", "G", "h", "A", "b"])
 
         # numpy conversion
-        P, q, G, h, A, b = (np.array(cvxopt.matrix(x)) for x in [P, q, G, h, A, b])
+        P, G, A = (x.todense() for x in [P, G, A])
 
         # check objective: x^T P x + q^T x
         assert (P == np.eye(n_gen * n_add * d)).all()
         assert (X.reshape(-1) == -q.reshape(-1)).all()
 
-        # box-bounds (G/h matrices)
+        # box-bounds (upper part of G/h matrices)
         G_bounds = G[:2* n_gen * n_add * d, :]
         assert G_bounds.shape == (2 * n_gen * n_add * d, n_gen * n_add * d)
         h_bounds = h[:2 * n_gen * n_add * d]
@@ -136,14 +136,32 @@ class TestLinearProjection:
                 assert (ub.reshape(-1) == repair_instance.bounds[1, :].numpy().reshape(-1)).all()
                 assert (lb.reshape(-1) == repair_instance.bounds[0, :].numpy().reshape(-1)).all()
 
+        # linear inequality constraints (lower part of G/h matrices)
         lin_ineq = domain.constraints.get(LinearInequalityConstraint)
+        lin_ineq_coeffs = get_linear_constraints(domain, LinearInequalityConstraint)
         n_constr = len(lin_ineq.constraints)
         if n_constr > 0:
             G_constr = G[2 * n_gen * n_add * d:, :]
             h_constr = h[2 * n_gen * n_add * d:]
             assert G_constr.shape[0] == n_constr * n_add * n_gen
+            assert G_constr.shape[1] == n_gen * n_add * d
+            assert len(h_constr) == n_constr * n_add * n_gen
+            for i, (constr, coeffs) in enumerate(zip(lin_ineq.constraints, lin_ineq_coeffs)):
+                Gi_single = G_constr[i, :d]
+                for idx_, val in zip(coeffs[0], coeffs[1]):
+                    assert Gi_single[idx_] == -val
+                assert h_constr[i] == -coeffs[2]
 
+        # linear equality constraints (A/b matrices)
         lin_eq = domain.constraints.get(LinearEqualityConstraint)
+        lin_eq_coeffs = get_linear_constraints(domain, LinearEqualityConstraint)
         n_constr = len(lin_eq.constraints)
         if n_constr > 0:
             assert A.shape[0] == n_constr * n_add * n_gen
+            assert A.shape[1] == n_gen * n_add * d
+            assert len(b) == n_constr * n_add * n_gen
+            for i, (constr, coeffs) in enumerate(zip(lin_eq.constraints, lin_eq_coeffs)):
+                Ai_single = A[i, :d]
+                for idx_, val in zip(coeffs[0], coeffs[1]):
+                    assert Ai_single[idx_] == -val
+                assert b[i] == -coeffs[2]
