@@ -660,10 +660,12 @@ class LinearProjection(PymooRepair):
         x_var.value = matrices["initvals"].reshape(-1, 1)
 
         objective = cp.Minimize(0.5 * cp.quad_form(x_var, matrices["P"]) + matrices["q"].T @ x_var)
-        constraints = [
-            matrices["A"] @ x_var == matrices["b"],
-            matrices["G"] @ x_var <= matrices["h"],
-        ]
+        constraints = []
+        if matrices["A"].shape[0] > 0:
+            constraints.append(matrices["A"] @ x_var == matrices["b"])
+        if matrices["G"].shape[0] > 0:
+            constraints.append(matrices["G"] @ x_var <= matrices["h"])
+
         problem = cp.Problem(objective, constraints)
 
         problem.solve(solver=cp.ECOS, verbose=self.verbose)

@@ -4,7 +4,6 @@ import pytest
 from bofire.data_models.strategies import api as data_models_strategies
 
 
-
 @pytest.fixture(
     params=[  # (optimizer data model, params)
         data_models_strategies.BotorchOptimizer(),
