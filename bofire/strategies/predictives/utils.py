@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 import cvxpy as cp
 import numpy as np
 import pandas as pd
-from scipy import sparse
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from pymoo.core import variable as pymoo_variable
@@ -15,6 +14,7 @@ from pymoo.core.mixed import (
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.termination import default as pymoo_default_termination
+from scipy import sparse
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -574,11 +574,11 @@ class LinearProjection(PymooRepair):
                 (
                     [float(ci) for ci in coeffs],
                     (
-                        [0]*len(index),  # row index, only one row
+                        [0] * len(index),  # row index, only one row
                         [int(idx) for idx in index],  # column indices
                     ),
                 ),
-                shape=(1, self.d)
+                shape=(1, self.d),
             )
             b = np.array(b).reshape((1, 1))
             return A, b
@@ -589,7 +589,9 @@ class LinearProjection(PymooRepair):
             """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point"""
 
             if not constr:
-                return sparse.csr_array((0, self.d * n_x_points)), np.zeros(shape=(0, 1))
+                return sparse.csr_array((0, self.d * n_x_points)), np.zeros(
+                    shape=(0, 1)
+                )
 
             # vertically combine all linear equality constr.
             Ab_single_eq = [
@@ -609,10 +611,12 @@ class LinearProjection(PymooRepair):
             h = [ub; -lb]
 
             """
-            G_bounds_ = sparse.vstack([
-                sparse.identity(self.d),  # unity matrix
-                -sparse.identity(self.d),  # negative unity matrix
-            ])
+            G_bounds_ = sparse.vstack(
+                [
+                    sparse.identity(self.d),  # unity matrix
+                    -sparse.identity(self.d),  # negative unity matrix
+                ]
+            )
             G = sparse.block_diag([G_bounds_] * n_x_points)
 
             if self.n_choose_k_constr is None:  # use the normal lb/ub
@@ -623,7 +627,9 @@ class LinearProjection(PymooRepair):
                 # correct bounds for NChooseK constraints
                 bounds = self.n_choose_k_constr(X)
                 # alternate upper- and (-1*lower) bound
-                h = np.vstack([np.concatenate((b[1], -b[0])).reshape((-1, 1)) for b in bounds])
+                h = np.vstack(
+                    [np.concatenate((b[1], -b[0])).reshape((-1, 1)) for b in bounds]
+                )
 
             return G, h
 
@@ -659,7 +665,9 @@ class LinearProjection(PymooRepair):
         x_var = cp.Variable((np.size(X), 1))
         x_var.value = matrices["initvals"].reshape(-1, 1)
 
-        objective = cp.Minimize(0.5 * cp.quad_form(x_var, matrices["P"]) + matrices["q"].T @ x_var)
+        objective = cp.Minimize(
+            0.5 * cp.quad_form(x_var, matrices["P"]) + matrices["q"].T @ x_var
+        )
         constraints = []
         if matrices["A"].shape[0] > 0:
             constraints.append(matrices["A"] @ x_var == matrices["b"])

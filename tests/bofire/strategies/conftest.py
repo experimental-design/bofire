@@ -1,4 +1,3 @@
-
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Callable, List, Type
@@ -6,12 +5,13 @@ from typing import Callable, List, Type
 import numpy as np
 import pytest
 
-from bofire.strategies import api as strategies
 from bofire.benchmarks import api as benchmarks
 from bofire.data_models.constraints import api as constraints_data_models
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 from bofire.data_models.strategies import api as data_models_strategies
+from bofire.strategies import api as strategies
+
 
 class ConstraintCollection:
     @staticmethod
@@ -115,7 +115,6 @@ class OptimizerBenchmark:
     n_add: int = 5
 
     def get_adapted_domain(self) -> Domain:
-
         domain = self.benchmark.domain
 
         if self.map_conti_inputs_to_discrete:

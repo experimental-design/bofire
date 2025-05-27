@@ -1,26 +1,22 @@
 from typing import List
 
-import pytest
-import pandas as pd
 import numpy as np
-from scipy import linalg
+import pandas as pd
+import pytest
 import torch
+from scipy import linalg
 
 from bofire.data_models.constraints.api import (
-    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
-    NonlinearInequalityConstraint,
-    ProductInequalityConstraint,
 )
 from bofire.data_models.domain import api as data_models_domain
-from bofire.data_models.strategies import api as data_models_strategies
 from bofire.data_models.features import api as data_models_features
-from bofire.strategies.predictives.utils import LinearProjection, get_problem_and_algorithm, GaMixedDomainHandler
+from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies.predictives.acqf_optimization import AcquisitionOptimizer
+from bofire.strategies.predictives.utils import GaMixedDomainHandler, LinearProjection
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
-
 
 
 @pytest.fixture
@@ -75,7 +71,9 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
     )
 
     input_preprocessing_specs = strategy.input_preprocessing_specs
-    bounds_botorch_space = AcquisitionOptimizer.get_bounds(domain, input_preprocessing_specs)
+    bounds_botorch_space = AcquisitionOptimizer.get_bounds(
+        domain, input_preprocessing_specs
+    )
     q = optimizer_benchmark.n_add
 
     # We handle linear equality constraint with a repair function
@@ -91,10 +89,9 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
 
 
 class TestLinearProjection:
-
-
-    def test_create_qp_problem(self, mock_pymoo_generation: List[dict], repair_instance: LinearProjection):
-
+    def test_create_qp_problem(
+        self, mock_pymoo_generation: List[dict], repair_instance: LinearProjection
+    ):
         n_gen = len(mock_pymoo_generation)
         n_add = repair_instance.q
         d = repair_instance.d
@@ -114,42 +111,54 @@ class TestLinearProjection:
         assert (X.reshape(-1) == -q.reshape(-1)).all()
 
         # box-bounds (upper part of G/h matrices)
-        G_bounds = G[:2* n_gen * n_add * d, :]
+        G_bounds = G[: 2 * n_gen * n_add * d, :]
         assert G_bounds.shape == (2 * n_gen * n_add * d, n_gen * n_add * d)
-        h_bounds = h[:2 * n_gen * n_add * d]
+        h_bounds = h[: 2 * n_gen * n_add * d]
         assert len(h_bounds) == 2 * n_gen * n_add * d
         # assert structure of G
-        assert (linalg.block_diag(*[np.vstack([np.eye(d), -np.eye(d)]) for _ in range(n_gen * n_add)]) == G_bounds).all()
+        assert (
+            linalg.block_diag(
+                *[np.vstack([np.eye(d), -np.eye(d)]) for _ in range(n_gen * n_add)]
+            )
+            == G_bounds
+        ).all()
 
         nck_constr = domain.constraints.get(includes=NChooseKConstraint).constraints
 
         for xi in range(n_gen * n_add):
-            ub = h_bounds[(xi*2) * d : ((xi*2) + 1) * d]
-            lb = -h_bounds[((xi*2) + 1) * d : ((xi*2) + 2) * d]
+            ub = h_bounds[(xi * 2) * d : ((xi * 2) + 1) * d]
+            lb = -h_bounds[((xi * 2) + 1) * d : ((xi * 2) + 2) * d]
 
             if len(nck_constr) > 0:
                 # check how NChooseK constraints manipulate the bounds
                 for idx_constr in range(len(nck_constr)):
                     idx = repair_instance.n_choose_k_constr.idx[idx_constr]
                     lb, ub = lb[idx], ub[idx]
-                    assert int((lb>0).sum()) >= nck_constr[idx_constr].min_count
-                    assert int((ub==0).sum()) <= len(ub) - nck_constr[idx_constr].max_count
+                    assert int((lb > 0).sum()) >= nck_constr[idx_constr].min_count
+                    assert (
+                        int((ub == 0).sum())
+                        <= len(ub) - nck_constr[idx_constr].max_count
+                    )
 
             else:
-                assert (ub.reshape(-1) == repair_instance.bounds[1, :].numpy().reshape(-1)).all()
-                assert (lb.reshape(-1) == repair_instance.bounds[0, :].numpy().reshape(-1)).all()
+                assert (
+                    ub.reshape(-1) == repair_instance.bounds[1, :].numpy().reshape(-1)
+                ).all()
+                assert (
+                    lb.reshape(-1) == repair_instance.bounds[0, :].numpy().reshape(-1)
+                ).all()
 
         # linear inequality constraints (lower part of G/h matrices)
         lin_ineq = domain.constraints.get(LinearInequalityConstraint)
         lin_ineq_coeffs = get_linear_constraints(domain, LinearInequalityConstraint)
         n_constr = len(lin_ineq.constraints)
         if n_constr > 0:
-            G_constr = G[2 * n_gen * n_add * d:, :]
-            h_constr = h[2 * n_gen * n_add * d:]
+            G_constr = G[2 * n_gen * n_add * d :, :]
+            h_constr = h[2 * n_gen * n_add * d :]
             assert G_constr.shape[0] == n_constr * n_add * n_gen
             assert G_constr.shape[1] == n_gen * n_add * d
             assert len(h_constr) == n_constr * n_add * n_gen
-            for i, (constr, coeffs) in enumerate(zip(lin_ineq.constraints, lin_ineq_coeffs)):
+            for i, coeffs in enumerate(lin_ineq_coeffs):
                 Gi_single = G_constr[i, :d]
                 for idx_, val in zip(coeffs[0], coeffs[1]):
                     assert Gi_single[idx_] == -val
@@ -163,15 +172,14 @@ class TestLinearProjection:
             assert A.shape[0] == n_constr * n_add * n_gen
             assert A.shape[1] == n_gen * n_add * d
             assert len(b) == n_constr * n_add * n_gen
-            for i, (constr, coeffs) in enumerate(zip(lin_eq.constraints, lin_eq_coeffs)):
+            for i, coeffs in enumerate(lin_eq_coeffs):
                 Ai_single = A[i, :d]
                 for idx_, val in zip(coeffs[0], coeffs[1]):
                     assert Ai_single[idx_] == -val
                 assert b[i] == -coeffs[2]
 
-
     def test_do(self):
-        """ actually run the optimization and check the results for toy system with known solution """
+        """actually run the optimization and check the results for toy system with known solution"""
         # create simple linear system
         domain = data_models_domain.Domain(
             inputs=[
@@ -184,7 +192,7 @@ class TestLinearProjection:
                     coefficients=[1.0, 1.0],
                     rhs=1.0,
                 ),
-                LinearInequalityConstraint( # -x1 + x2 <= 0 -> x1 >= x2 (lower triangle)
+                LinearInequalityConstraint(  # -x1 + x2 <= 0 -> x1 >= x2 (lower triangle)
                     features=["x1", "x2"],
                     coefficients=[-1.0, 1.0],
                     rhs=0.0,
@@ -198,11 +206,14 @@ class TestLinearProjection:
             bounds=torch.from_numpy(np.array([[0.0, 0.0], [1.0, 1.0]])).to(**tkwargs),
             q=1,
             domain_handler=GaMixedDomainHandler(
-                domain=domain, input_preprocessing_specs={}, q=1),
+                domain=domain, input_preprocessing_specs={}, q=1
+            ),
         )
 
         # create a mock generation
-        x = pd.DataFrame(np.random.uniform(-0.1, 1.1, size=(1000, 2)), columns=["x1_q0", "x2_q0"]).to_dict(orient="records")
+        x = pd.DataFrame(
+            np.random.uniform(-0.1, 1.1, size=(1000, 2)), columns=["x1_q0", "x2_q0"]
+        ).to_dict(orient="records")
 
         # run the repair
         xr = repair_instance._do(None, x)

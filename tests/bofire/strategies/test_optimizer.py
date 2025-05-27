@@ -1,4 +1,3 @@
-
 import pytest
 
 from bofire.data_models.strategies import api as data_models_strategies
