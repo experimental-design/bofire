@@ -676,7 +676,7 @@ class LinearProjection(PymooRepair):
 
         problem = cp.Problem(objective, constraints)
 
-        problem.solve(solver=cp.ECOS, verbose=self.verbose)
+        problem.solve(verbose=self.verbose)
 
         x_corrected = x_var.value
         X_corrected = x_corrected.reshape(X.shape)
