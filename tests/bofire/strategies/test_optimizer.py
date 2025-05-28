@@ -1,5 +1,5 @@
 import pytest
-
+import numpy as np
 from bofire.data_models.strategies import api as data_models_strategies
 
 
@@ -20,6 +20,7 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
 
     strategy = optimizer_benchmark.get_strategy(optimizer_data_model)
 
+    np.random.seed(42)  # for reproducibility
     proposals = strategy.ask(optimizer_benchmark.n_add)
 
     assert proposals.shape[0] == optimizer_benchmark.n_add
