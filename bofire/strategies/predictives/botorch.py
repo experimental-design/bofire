@@ -177,7 +177,7 @@ class BotorchStrategy(PredictiveStrategy):
         preds = self.predict(candidates)
         return pd.concat((candidates, preds), axis=1)
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
         """[summary]
 
         Args:
@@ -187,6 +187,7 @@ class BotorchStrategy(PredictiveStrategy):
             pd.DataFrame: [description]
 
         """
+        candidate_count = candidate_count or 1
         assert candidate_count > 0, "candidate_count has to be larger than zero."
         if self.experiments is None:
             raise ValueError("No experiments have been provided yet.")
