@@ -258,7 +258,7 @@ class EntingStrategy(PredictiveStrategy):
     def input_preprocessing_specs(self):
         return {}
 
-    def _postprocess_candidate(self, candidate: List) -> pd.DataFrame:
+    def _to_dataframe(self, candidate: List) -> pd.DataFrame:
         """Converts a single candidate to a pandas Dataframe with prediction.
 
         Args:
@@ -351,7 +351,7 @@ class EntingStrategy(PredictiveStrategy):
         for i in range(candidate_count):
             opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)  # type: ignore
             res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
-            candidate = self._postprocess_candidate(res.opt_point)
+            candidate = self._to_dataframe(res.opt_point)
             new_candidates.append(candidate)
             # only retrain with fantasy if not last candidate in batch
             if i < candidate_count - 1:
@@ -362,7 +362,13 @@ class EntingStrategy(PredictiveStrategy):
                 self._fit(experiments_plus_fantasies)
 
         self._fit(self.experiments)  # type: ignore
-        return pd.concat(new_candidates)
+        # we do not return here the predictions as they are corrupted
+        # by the fantasy observations. Instead, we return the plain candidates
+        # and the predictions are generated in
+        # `PredictiveStrategy._postprocess_candidates` after proper rounding.
+        return pd.concat(new_candidates)[
+            [feat.name for feat in self._problem_config.feat_list]
+        ].copy()
 
     def _fit(self, experiments: pd.DataFrame):
         self._init_problem_config()

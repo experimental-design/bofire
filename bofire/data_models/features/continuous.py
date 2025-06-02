@@ -3,7 +3,7 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, model_validator
+from pydantic import Field, PositiveFloat, model_validator
 
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
@@ -16,7 +16,7 @@ class ContinuousInput(NumericalInput):
 
     Attributes:
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
-        stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
+        stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
             Defaults to None.
 
@@ -29,7 +29,7 @@ class ContinuousInput(NumericalInput):
     local_relative_bounds: Optional[
         Annotated[List[Annotated[float, Field(gt=0)]], Field(min_items=2, max_items=2)]  # type: ignore
     ] = None
-    stepsize: Optional[float] = None
+    stepsize: Optional[PositiveFloat] = None
 
     @property
     def lower_bound(self) -> float:
@@ -49,13 +49,30 @@ class ContinuousInput(NumericalInput):
                 "Stepsize cannot be provided for a fixed continuous input.",
             )
         range = upper - lower
-        if np.arange(lower, upper + self.stepsize, self.stepsize)[-1] != upper:
+
+        if range / self.stepsize < 1:
             raise ValueError(
-                f"Stepsize of {self.stepsize} does not match the provided interval [{lower},{upper}].",
+                "Stepsize is too big for provided range.",
             )
-        if range // self.stepsize == 1:
-            raise ValueError("Stepsize is too big, only one value allowed.")
+
         return self
+
+    def _get_allowed_steps(self) -> List[float]:
+        """Method to get the allowed steps of the feature.
+
+        Returns:
+            List[float]: The allowed steps of the feature
+
+        """
+        if self.stepsize is None:
+            return []
+        lower, upper = self.bounds
+
+        n_steps = math.ceil((upper - lower) / self.stepsize)
+        allowed_vals = np.linspace(lower, lower + n_steps * self.stepsize, n_steps + 1)
+        # set the last value of allowed_vals to upper
+        allowed_vals[-1] = upper
+        return list(allowed_vals)
 
     def round(self, values: pd.Series) -> pd.Series:
         """Round values to the stepsize of the feature. If no stepsize is provided return the
@@ -71,18 +88,10 @@ class ContinuousInput(NumericalInput):
         if self.stepsize is None:
             return values
         self.validate_candidental(values=values)
-        allowed_values = np.arange(
-            self.lower_bound,
-            self.upper_bound + self.stepsize,
-            self.stepsize,
-        )
-        idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(  # type: ignore
-            axis=1,
-        )
-        return pd.Series(
-            data=self.lower_bound + idx * self.stepsize,
-            index=values.index,
-        )
+
+        steps = np.array(self._get_allowed_steps())
+
+        return values.apply(lambda x: steps[np.argmin(np.abs(steps - x))])
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
