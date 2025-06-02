@@ -774,5 +774,61 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
     assert candidates.shape == (5, 4)
 
 
+def test_purely_categorical_doe():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    all_inputs = [
+        CategoricalInput(key="gaseous_eel", categories=["blub", "bloop"]),
+        CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
+        CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
+    ]
+
+    domain = Domain.from_lists(
+        inputs=all_inputs, outputs=[ContinuousOutput(key="y")], constraints=[]
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 3)
+
+
+def test_continuous_categorical_doe():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    all_inputs = [
+        CategoricalInput(key="gaseous_eel", categories=["blub", "bloop"]),
+        CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
+        ContinuousInput(key="x0", bounds=(0, 1)),
+        CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
+    ]
+
+    domain = Domain.from_lists(
+        inputs=all_inputs, outputs=[ContinuousOutput(key="y")], constraints=[]
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 4)
+
+
 if __name__ == "__main__":
-    test_discrete_and_categorical_doe_w_constraints()
+    test_continuous_categorical_doe()
+    test_purely_categorical_doe()
