@@ -4,7 +4,7 @@ from typing import Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 
 try:
@@ -31,7 +31,6 @@ from bofire.data_models.constraints.constraint import (
 )
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import ContinuousInput
-from bofire.data_models.types import FeatureKeys
 
 
 class NonlinearConstraint(IntrapointConstraint):
@@ -45,7 +44,6 @@ class NonlinearConstraint(IntrapointConstraint):
     """
 
     expression: Union[str, Callable]
-    features: Optional[FeatureKeys] = Field(default=None, validate_default=True)
     jacobian_expression: Optional[Union[str, Callable]] = Field(
         default=None, validate_default=True
     )
@@ -54,27 +52,22 @@ class NonlinearConstraint(IntrapointConstraint):
     )
 
     def validate_inputs(self, inputs: Inputs):
-        if self.features is not None:
-            keys = inputs.get_keys(ContinuousInput)
-            for f in self.features:
-                if f not in keys:
-                    raise ValueError(
-                        f"Feature {f} is not a continuous input feature in the provided Inputs object.",
-                    )
+        keys = inputs.get_keys(ContinuousInput)
+        for f in self.features:
+            if f not in keys:
+                raise ValueError(
+                    f"Feature {f} is not a continuous input feature in the provided Inputs object.",
+                )
 
-    @field_validator("features")
-    @classmethod
-    def set_features(cls, features, info) -> Optional[FeatureKeys]:
-        if "expression" in info.data.keys():
-            if isinstance(info.data["expression"], Callable):
-                if features is None:
-                    return list(inspect.getfullargspec(info.data["expression"]).args)
-                else:
-                    raise ValueError(
-                        "Features must be None if expression is a callable. They will be inferred from the callable.",
-                    )
-
-        return features
+    @model_validator(mode="after")
+    def validate_features(self):
+        if isinstance(self.expression, Callable):
+            features = list(inspect.getfullargspec(self.expression).args)
+            if set(features) != set(self.features):
+                raise ValueError(
+                    "Provided features do not match the features used in the expression.",
+                )
+        return self
 
     @field_validator("jacobian_expression")
     @classmethod

@@ -11,7 +11,6 @@ from bofire.data_models.constraints.constraint import (
 )
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import ContinuousInput
-from bofire.data_models.types import FeatureKeys
 
 
 class ProductConstraint(IntrapointConstraint):
@@ -28,7 +27,6 @@ class ProductConstraint(IntrapointConstraint):
     """
 
     type: str
-    features: FeatureKeys
     exponents: Annotated[List[float], Field(min_length=2)]
     rhs: float
     sign: Literal[1, -1] = 1

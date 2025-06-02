@@ -258,7 +258,7 @@ def test_find_local_max_ipopt_batch_constraint():
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         outputs=[ContinuousOutput(key="y")],
-        constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=3)],
+        constraints=[InterpointEqualityConstraint(features=["x1"], multiplicity=3)],
     )
 
     result = find_local_max_ipopt(
