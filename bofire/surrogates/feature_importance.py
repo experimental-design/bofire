@@ -3,6 +3,7 @@ from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
+import shap
 
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.surrogates.diagnostics import metrics
@@ -67,6 +68,115 @@ def combine_lengthscale_importances(importances: Sequence[pd.Series]) -> pd.Data
 
     """
     return pd.concat(importances, axis=1).T
+
+
+def shap_importance(
+    surrogate: Surrogate,
+    experiments: pd.DataFrame,
+    bg_experiments: Optional[pd.DataFrame] = None,
+    bg_sample_size: Optional[int] = 50,
+    seed: Optional[int] = None,
+) -> shap.Explanation:
+    """Compute the SHAP importance values for a surrogate.
+
+    Args:
+        surrogate: Surrogate for which the SHAP values should be computed.
+        experiments: Experiments for which the SHAP values should be computed.
+        bg_experiments: Background experiments to use for the kernel SHAP
+            computation. Defaults to None, in which case `experiments` is used.
+        bg_sample_size: Sample size of the background experiments. If None, all
+            background experiments are used. Defaults to 50.
+        seed: Seed for the random sampler used to sample the background
+            experiments if bg_sample_size is provided. If None, no seed is set.
+            Defaults to None.
+    """
+    if not surrogate.is_fitted:
+        raise ValueError("Model is not fitted yet.")
+
+    if bg_experiments is None:
+        bg_experiments = experiments
+
+    if bg_sample_size is not None and len(bg_experiments) > bg_sample_size:
+        bg_experiments = bg_experiments.sample(
+            n=bg_sample_size, random_state=seed, replace=False
+        )
+
+    # to be able to handle categorical inputs, we run the shap analysis on the
+    # already preprocessed data and use surrogate._predict to get the predictions.
+
+    preprocessed_bg_experiments = surrogate._prepare_data_for_predict(
+        bg_experiments[surrogate.inputs.get_keys()].copy()
+    )
+
+    preproccesed_experiments = surrogate._prepare_data_for_predict(
+        experiments[surrogate.inputs.get_keys()].copy()
+    )
+    # we need to define a predict function that can be used by the shap explainer
+
+    def predict(X: np.ndarray) -> np.ndarray:
+        """Predict function for the surrogate."""
+        preds = surrogate._predict(
+            pd.DataFrame(
+                X, columns=preproccesed_experiments.columns, dtype=np.float64
+            )  # get the correct column names here
+        )[0][:, 0]
+        return preds
+
+    # print(preprocessed_bg_experiments)
+
+    explainer = shap.KernelExplainer(
+        model=predict, data=preprocessed_bg_experiments, link="identity"
+    )
+
+    return explainer(preproccesed_experiments.to_numpy(), silent=True)
+
+
+def shap_importance_hook(
+    surrogate: Surrogate,
+    X_train: pd.DataFrame,
+    y_train: pd.DataFrame,
+    X_test: pd.DataFrame,
+    y_test: pd.DataFrame,
+):
+    """Hook that can be used within `model.cross_validate` to compute a cross
+    validated SHAP feature importance.
+    """
+    return shap_importance(
+        surrogate=surrogate,
+        experiments=X_test,
+        bg_experiments=X_train,
+        bg_sample_size=50,
+        seed=42,
+    )
+
+
+def combine_shap_importances(
+    shap_values: Sequence[shap.Explanation],
+) -> shap.Explanation:
+    """Combines a list of SHAP explanations into one SHAP Explanation object.
+
+    Args:
+        shap_values: List of SHAP Explanation objects to combine.
+
+    Returns:
+        Combined SHAP Explanation object.
+    """
+    return shap.Explanation(
+        values=np.concatenate([sv.values for sv in shap_values], axis=0),
+        base_values=np.concatenate([sv.base_values for sv in shap_values], axis=0),
+        data=np.concatenate([sv.data for sv in shap_values], axis=0),
+        display_data=None,
+        instance_names=None,
+        feature_names=shap_values[0].feature_names,
+        output_names=None,
+        output_indexes=None,
+        lower_bounds=None,
+        upper_bounds=None,
+        error_std=None,
+        main_effects=None,
+        hierarchical_values=None,
+        clustering=None,
+    )
 
 
 def permutation_importance(
