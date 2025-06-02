@@ -2267,7 +2267,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
         <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
     <span class="p">],</span>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">InterpointEqualityConstraint</span><span class="p">(</span><span class="n">feature</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">multiplicity</span><span class="o">=</span><span class="mi">3</span><span class="p">)],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">InterpointEqualityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">],</span> <span class="n">multiplicity</span><span class="o">=</span><span class="mi">3</span><span class="p">)],</span>
 <span class="p">)</span>
 <span class="n">data_model</span> <span class="o">=</span> <span class="n">DoEStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
@@ -2285,7 +2285,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
         ContinuousInput(key="x3", bounds=(0, 1)),
     ],
     outputs=[ContinuousOutput(key="y")],
-    constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=3)],
+    constraints=[InterpointEqualityConstraint(features=["x1"], multiplicity=3)],
 )
 data_model = DoEStrategy(
     domain=domain,

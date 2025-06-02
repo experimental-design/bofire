@@ -1882,14 +1882,18 @@ constr2 = LinearInequalityConstraint(
 
 
 <span class="c1"># The unit circle: x1**2 + x2**2 = 1</span>
-<span class="n">const3</span> <span class="o">=</span> <span class="n">NonlinearEqualityConstraint</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="s2">"conc_A**2 + conc_B**2 - 1"</span><span class="p">)</span>
+<span class="n">const3</span> <span class="o">=</span> <span class="n">NonlinearEqualityConstraint</span><span class="p">(</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"conc_A"</span><span class="p">,</span> <span class="s2">"conc_B"</span><span class="p">],</span> <span class="n">expression</span><span class="o">=</span><span class="s2">"conc_A**2 + conc_B**2 - 1"</span>
+<span class="p">)</span>
 <span class="n">const3</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-14">from bofire.data_models.constraints.api import NonlinearEqualityConstraint
 
 
 # The unit circle: x1**2 + x2**2 = 1
-const3 = NonlinearEqualityConstraint(expression="conc_A**2 + conc_B**2 - 1")
+const3 = NonlinearEqualityConstraint(
+    features=["conc_A", "conc_B"], expression="conc_A**2 + conc_B**2 - 1"
+)
 const3</div>
 </div>
 </div>
