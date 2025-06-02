@@ -229,12 +229,3 @@ class TestLinearProjection:
         # mapping of points in upper triangle to (0.5, 0.5)
         mask = x[:, 0] < x[:, 1]
         assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
-
-        # import matplotlib.pyplot as plt
-        # plt.figure()
-        # for idx in range(xr.shape[0]):
-        #     plt.plot(xr[idx, 0], xr[idx, 1], "o", color="C0", alpha=0.1)
-        #     plt.plot((x[idx, 0], xr[idx, 0]), (x[idx, 1], xr[idx, 1]), "-o", color="C1", alpha=0.1)
-        # plt.plot([0, 1], [1, 0], "k--", label="x1 + x2 = 1")
-        # plt.plot([0, 1], [0, 1], "k:", label="x1 = x2")
-        # plt.show()

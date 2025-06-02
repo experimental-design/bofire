@@ -584,9 +584,20 @@ class LinearProjection(PymooRepair):
             return A, b
 
         def _build_A_b_matrices_for_n_points(
-            constr: List[tuple],
+            constr: List[Tuple[List[int], List[float], float]],
         ) -> Tuple[sparse.csr_array, np.ndarray]:
-            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point"""
+            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point)
+
+            will build a large constraint matrix A, with block-diagonal structure, such that each block represents
+            the constraint A*x =/<= b for one x in the population and q-points.
+
+            Args:
+                constr (List[Tuple[List[int], List[float], float]]): list of constraints, each as tuple of
+                    (index, coefficients, b) as returned by get_linear_constraints
+
+
+
+            """
 
             if not constr:
                 return sparse.csr_array((0, self.d * n_x_points)), np.zeros(
