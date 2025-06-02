@@ -2,13 +2,25 @@ import itertools
 import re
 import string
 import warnings
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
+import scipy
+import statsmodels.formula.api as smf
+from formulaic import Formula
+from formulaic.errors import FormulaSyntaxError
 
-from bofire.data_models.domain.api import Inputs
-from bofire.data_models.features.api import CategoricalInput, ContinuousInput
+from bofire.data_models.base import BaseModel
+from bofire.data_models.domain.api import Domain, Inputs
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+    DiscreteInput,
+)
+from bofire.data_models.strategies.api import DoEStrategy, FractionalFactorialStrategy
+from bofire.strategies.doe.utils import linear_and_interactions_formula
 from bofire.utils.default_fracfac_generators import (
     default_blocking_generators,
     default_fracfac_generators,
@@ -453,3 +465,160 @@ def apply_block_generator(design: np.ndarray, gen: str) -> List[int]:
         blocks.append(block)
 
     return blocks
+
+
+class Term(BaseModel):
+    name: str
+    effect: float
+    coefficient: float
+    uncoded_coefficient: float
+    error: float
+    t_value: float
+    p_value: float
+    vif_value: Optional[float] = None
+
+
+class DoEAnalysisResult(BaseModel):
+    terms: List[Term]
+    critical_t_value: float
+    r_squared: float
+    adjusted_r_squared: float
+    f_value: float
+    aic: float
+    bic: float
+    fitted_values: List[float]
+    residues: List[float]
+
+
+class DoEAnalysis:
+    def __init__(
+        self,
+        experiments: pd.DataFrame,
+        strategy_data: Union[DoEStrategy, FractionalFactorialStrategy],
+        formula: Optional[str] = None,
+    ):
+        self._strategy_data = strategy_data
+
+        if len(self.domain.outputs.get(ContinuousOutput)) != 1:
+            raise ValueError("Domain has to have exactly one continuous output.")
+
+        if len(self.domain.inputs.get([ContinuousInput, DiscreteInput])) != len(
+            self.domain.inputs
+        ):
+            raise ValueError("All inputs have to be continuous or discrete.")
+
+        if formula is not None:
+            try:
+                Formula(formula)
+            except FormulaSyntaxError:
+                raise ValueError(f"Invalid formula: {formula}")
+            self._formula = formula
+        else:
+            if isinstance(strategy_data, DoEStrategy):
+                self._formula = strategy_data.optimality_criterion.formula
+            else:
+                self._formula = linear_and_interactions_formula(self.domain.inputs)
+
+        # filter the experiments
+        self._experiments = (
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
+        )
+        if isinstance(self._strategy_data, FractionalFactorialStrategy):
+            if FractionalFactorialStrategy.n_center >= 1:
+                self._experiments["centerpoint"] = 0
+                is_center = np.all(
+                    np.isclose(
+                        self.coded_experiments[self.domain.inputs.get_keys()],
+                        0,
+                        atol=1e-6,
+                    ),
+                    axis=1,
+                )
+                self._experiments.loc[is_center, "centerpoint"] = 1
+
+        # check that there are more experiments than terms in the formula
+        n_terms = len(Formula(self._formula).terms + 1)
+        if len(self._experiments) <= n_terms:
+            raise ValueError(
+                f"Number of experiments ({len(experiments)}) has to be larger than the number of terms in the formula ({n_terms}).",
+            )
+
+    @property
+    def include_centerpoint(self) -> bool:
+        """Check if the centerpoint is included in the experiments."""
+        return "centerpoint" in self.experiments.columns
+
+    @property
+    def domain(self) -> Domain:
+        return self._strategy_data.domain
+
+    @property
+    def formula(self) -> str:
+        return self._formula
+
+    @property
+    def experiments(self) -> pd.DataFrame:
+        return self._experiments
+
+    @property
+    def coded_experiments(self) -> pd.DataFrame:
+        from sklearn.preprocessing import MinMaxScaler
+
+        coded_experiments = self.experiments.copy()
+        coded_experiments[self.domain.inputs.get_keys()] = MinMaxScaler(
+            feature_range=(-1, 1)
+        ).fit_transform(coded_experiments[self.domain.inputs.get_keys()])
+        return coded_experiments
+
+    def _get_formula_for_ols(self) -> str:
+        if self.include_centerpoint:
+            return f"{self.domain.outputs.get_keys()[0]} ~ {self.formula} + centerpoint"
+        return f"{self.domain.outputs.get_keys()[0]} ~ {self.formula}"
+
+    def _ols(self):
+        model = smf.ols(
+            formula=self._get_formula_for_ols(),
+            data=self.experiments,
+        ).fit()
+        return model.fit()
+
+    def _coded_ols(self):
+        model = smf.ols(
+            formula=self._get_formula_for_ols(),
+            data=self.coded_experiments,
+        ).fit()
+        return model.fit()
+
+    def __call__(self) -> DoEAnalysisResult:
+        results = self._ols()
+        coded_results = self._coded_ols()
+
+        # extract the terms
+        terms = []
+        for term in coded_results.model.exog_names:
+            terms.append(
+                Term(
+                    name=term,
+                    effect=coded_results.params[term] * 2,
+                    coefficient=coded_results.params[term],
+                    uncoded_coefficient=results.params[term],
+                    error=coded_results.bse[term],
+                    t_value=coded_results.tvalues[term],
+                    p_value=coded_results.pvalues[term],
+                    vif_value=None,
+                )
+            )
+
+        # doe analysis
+        doe_analysis_result = DoEAnalysisResult(
+            terms=terms,
+            critical_t_value=abs(scipy.stats.t.ppf(0.975, coded_results.df_resid)),
+            r_squared=coded_results.rsquared,
+            adjusted_r_squared=coded_results.rsquared_adj,
+            f_value=coded_results.fvalue,
+            aic=coded_results.aic,
+            bic=coded_results.bic,
+            fitted_values=coded_results.fittedvalues.tolist(),
+            residues=coded_results.resid.tolist(),
+        )
+        return doe_analysis_result
