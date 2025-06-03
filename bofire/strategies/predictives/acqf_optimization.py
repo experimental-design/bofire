@@ -46,7 +46,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
-from bofire.strategies.predictives import utils
+from bofire.strategies import utils
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -838,7 +838,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             Tensor: x_opt as (d,) Tensor
             Tensor: f_opt as (n_y,) Tensor
         """
-        problem, algorithm, termination = utils.get_problem_and_algorithm(
+        problem, algorithm, termination = utils.get_ga_problem_and_algorithm(
             self.data_model,
             domain,
             input_preprocessing_specs,

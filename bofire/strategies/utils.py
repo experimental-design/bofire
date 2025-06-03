@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union, Callable
 
 import cvxpy as cp
 import numpy as np
@@ -285,34 +285,48 @@ class GaMixedDomainHandler:
         return experiments.to_dict("records")
 
 
-class AcqfOptimizationProblem(PymooProblem):
-    """Transfers the acquisition function optimization problem on the bofire domain, into a pymoo-
+class DomainOptimizationProblem(PymooProblem):
+    """Transfers the optimization problem on the bofire domain, into a pymoo-
     problem, which can be solved with e.g. the pymoo GA.
 
     The optimizer will handle encoded input features as different pymoo-types (Choice), as the model. The problem
     contains the function for evaluating the objective functions, including constraints.
         - Transformation from the mixed-variable type domain, into the numeric torch domain
-        - Evaluation of acquisition functions
+        - Evaluation of objective functions, such as acquisition functions
         - Evaluation of constraints:
             Nonlinear inequality constraints are evaluated in the mixed-domain (using pandas 'eval')
             Other constraints are evaluated in the numeric torch-domain
 
-    Some constraints are not evaluated in the objective function: They are handled in the 'repair' function
+    Some constraints are not evaluated in the objective function: They are handled in the 'repair' function. See
+    "LinearProjection" class for details.
+
+    Args:
+        objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
+            optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,)
+        domain (Domain): The bofire domain, which contains the input and output features.
+        input_preprocessing_specs (InputTransformSpecs): The input preprocessing specifications, which are used to
+            transform the inputs to the correct format for the models. This is needed for the variable transformation
+            from the mixed-variable type domain to the numeric torch domain.
+        q (int): Number of experiments in each batch.
+        nonlinear_torch_constraints (Optional[List[Type[Constraint]]]): List of types of nonlinear torch constraints, which are
+            evaluated in the numeric torch domain. Must be transformable by the "get_nonlinear_constraints" function.
+        nonlinear_pandas_constraints (Optional[List[Type[Constraint]]]): List of types nonlinear pandas constraints, which are
+            evaluated in the original domain.
 
     """
 
     def __init__(
         self,
-        acqfs,
+        objective_callables: List[Callable[[Tensor], Tensor]],
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
         q: int,
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
     ):
-        self.acqfs = acqfs
-        assert len(acqfs) == 1, "Only one acquisition function is supported for now"
 
+        self.objective_callables = objective_callables
         self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
 
         # torch constraints: evaluated in encoded space
@@ -339,7 +353,7 @@ class AcqfOptimizationProblem(PymooProblem):
         )
 
         super().__init__(
-            n_obj=len(acqfs),
+            n_obj=len(self.objective_callables),
             n_ieq_constr=(
                 len(self.nonlinear_torch_constraints)
                 + len(self.nonlinear_pandas_constraints)
@@ -353,7 +367,7 @@ class AcqfOptimizationProblem(PymooProblem):
     def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
         x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
 
-        out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.acqfs]
+        out["F"] = [-ofnc(x).detach().numpy().reshape(-1) for ofnc in self.objective_callables]
 
         if self.nonlinear_torch_constraints:
             G = []
@@ -698,7 +712,7 @@ class LinearProjection(PymooRepair):
         return X_corrected
 
 
-def get_problem_and_algorithm(
+def get_ga_problem_and_algorithm(
     data_model: GeneticAlgorithmDataModel,
     domain: Domain,
     input_preprocessing_specs: InputTransformSpecs,
@@ -707,7 +721,7 @@ def get_problem_and_algorithm(
     bounds_botorch_space: Tensor,
     verbose: bool = False,
 ) -> Tuple[
-    AcqfOptimizationProblem,
+    DomainOptimizationProblem,
     MixedVariableGA,
     Union[
         pymoo_default_termination.DefaultMultiObjectiveTermination,
@@ -731,7 +745,7 @@ def get_problem_and_algorithm(
     """
 
     # ===== Problem ====
-    problem = AcqfOptimizationProblem(
+    problem = DomainOptimizationProblem(
         acqfs,
         domain,
         input_preprocessing_specs,
