@@ -712,13 +712,23 @@ class LinearProjection(PymooRepair):
         return X_corrected
 
 
+def get_torch_bounds_from_domain(
+    domain: Domain, input_preprocessing_specs: InputTransformSpecs
+) -> torch.Tensor:
+    """Get the bounds for the optimization problem in the format required by BoTorch."""
+    lower, upper = domain.inputs.get_bounds(
+        specs=input_preprocessing_specs,
+    )
+    return torch.tensor([lower, upper]).to(**tkwargs)
+
+
+
 def get_ga_problem_and_algorithm(
     data_model: GeneticAlgorithmDataModel,
     domain: Domain,
     input_preprocessing_specs: InputTransformSpecs,
-    acqfs: List[AcquisitionFunction],
+    objective_callables: List[Callable[[Tensor], Tensor]],
     q: int,
-    bounds_botorch_space: Tensor,
     verbose: bool = False,
 ) -> Tuple[
     DomainOptimizationProblem,
@@ -734,9 +744,11 @@ def get_ga_problem_and_algorithm(
         data_model (GeneticAlgorithmDataModel): specifications for the algorithm
         domain (Domain): optimization domain
         input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
-        acqfs (List[AcquisitionFunction]): list of acquision function(s) to optimize (assumes MAXIMIZATION)
+        objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
+            optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,)
         q (int): number of experiments
-        bounds_botorch_space (Tensor): The tensor of numerical bounds for the optimization
+        verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
 
     Returns
         problem
@@ -744,9 +756,13 @@ def get_ga_problem_and_algorithm(
         termination
     """
 
+    bounds_botorch_space = get_torch_bounds_from_domain(
+        domain, input_preprocessing_specs
+    )
+
     # ===== Problem ====
     problem = DomainOptimizationProblem(
-        acqfs,
+        objective_callables,
         domain,
         input_preprocessing_specs,
         q,
@@ -784,7 +800,7 @@ def get_ga_problem_and_algorithm(
 
     termination_class = (
         pymoo_default_termination.DefaultSingleObjectiveTermination
-        if len(acqfs) == 1
+        if len(objective_callables) == 1
         else pymoo_default_termination.DefaultMultiObjectiveTermination
     )
 

@@ -29,3 +29,5 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
     constraints = strategy.domain.constraints.get()
     for constr in constraints.constraints:
         assert constr.is_fulfilled(proposals).all()
+
+

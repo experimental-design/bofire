@@ -195,15 +195,6 @@ class AcquisitionOptimizer(ABC):
         return df_candidates
 
     @staticmethod
-    def get_bounds(
-        domain: Domain, input_preprocessing_specs: InputTransformSpecs
-    ) -> torch.Tensor:
-        lower, upper = domain.inputs.get_bounds(
-            specs=input_preprocessing_specs,
-        )
-        return torch.tensor([lower, upper]).to(**tkwargs)
-
-    @staticmethod
     def get_fixed_features(
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
@@ -516,7 +507,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         num_categorical_combinations = len(
             domain.inputs.get_categorical_combinations(),
         )
-        bounds = self.get_bounds(domain, input_preprocessing_specs)
+        bounds = utils.get_torch_bounds_from_domain(domain, input_preprocessing_specs)
 
         # setup local bounds
         assert experiments is not None
@@ -844,7 +835,6 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             input_preprocessing_specs,
             acqfs,
             q,
-            bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
             verbose=self.data_model.verbose,
         )
 
