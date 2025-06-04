@@ -886,4 +886,6 @@ def one_cont_3_cat():
 
 
 if __name__ == "__main__":
-    test_partially_fixed_experiments()
+    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
+    test_purely_categorical_doe()
+    one_cont_3_cat()
