@@ -24,7 +24,7 @@ def test_domain_relaxation():
     domain = Domain(
         inputs=Inputs(
             features=[
-                DiscreteInput(key="x1", values=[0.3, 5]),
+                DiscreteInput(key="x1", values=[-0.3, 5]),
                 DiscreteInput(key="x2", values=[0.7, 10]),
                 ContinuousInput(key="x3", bounds=[10, 11]),
                 ContinuousInput(key="x4", bounds=[5, 11]),
@@ -71,29 +71,29 @@ def test_domain_relaxation():
 
     assert len(mapped_continous_inputs) == 2
 
-    assert "aux_x1_0_3" in mapping_discrete_input_to_discrete_aux["x1"]
-    assert "aux_x1_5_0" in mapping_discrete_input_to_discrete_aux["x1"]
+    assert "aux_x1___neg__0__decpt__3" in mapping_discrete_input_to_discrete_aux["x1"]
+    assert "aux_x1_5__decpt__0" in mapping_discrete_input_to_discrete_aux["x1"]
 
-    assert "aux_x2_0_7" in mapping_discrete_input_to_discrete_aux["x2"]
-    assert "aux_x2_10_0" in mapping_discrete_input_to_discrete_aux["x2"]
+    assert "aux_x2_0__decpt__7" in mapping_discrete_input_to_discrete_aux["x2"]
+    assert "aux_x2_10__decpt__0" in mapping_discrete_input_to_discrete_aux["x2"]
 
     assert LinearEqualityConstraint(
-        features=["aux_x1_0_3", "aux_x1_5_0"],
+        features=["aux_x1___neg__0__decpt__3", "aux_x1_5__decpt__0"],
         coefficients=[1] * 2,
         rhs=1,
     ) in relaxed_domain.constraints.get([LinearEqualityConstraint])
     assert LinearEqualityConstraint(
-        features=["aux_x2_0_7", "aux_x2_10_0"],
+        features=["aux_x2_0__decpt__7", "aux_x2_10__decpt__0"],
         coefficients=[1] * 2,
         rhs=1,
     ) in relaxed_domain.constraints.get([LinearEqualityConstraint])
     assert LinearEqualityConstraint(
-        features=["x1", "aux_x1_0_3", "aux_x1_5_0"],
-        coefficients=[1.0] + [-0.3, -5.0],
+        features=["x1", "aux_x1___neg__0__decpt__3", "aux_x1_5__decpt__0"],
+        coefficients=[1.0] + [0.3, -5.0],
         rhs=0.0,
     ) in relaxed_domain.constraints.get([LinearEqualityConstraint])
     assert LinearEqualityConstraint(
-        features=["x2", "aux_x2_0_7", "aux_x2_10_0"],
+        features=["x2", "aux_x2_0__decpt__7", "aux_x2_10__decpt__0"],
         coefficients=[1.0] + [-0.7, -10.0],
         rhs=0.0,
     ) in relaxed_domain.constraints.get([LinearEqualityConstraint])
@@ -128,10 +128,10 @@ def test_domain_relaxation():
                     "x2",
                     "x3",
                     "x4",
-                    "aux_x1_0_3",
-                    "aux_x1_5_0",
-                    "aux_x2_0_7",
-                    "aux_x2_10_0",
+                    "aux_x1___neg__0__decpt__3",
+                    "aux_x1_5__decpt__0",
+                    "aux_x2_0__decpt__7",
+                    "aux_x2_10__decpt__0",
                 ]
             ],
             df_sample[
@@ -140,10 +140,10 @@ def test_domain_relaxation():
                     "x2",
                     "x3",
                     "x4",
-                    "aux_x1_0_3",
-                    "aux_x1_5_0",
-                    "aux_x2_0_7",
-                    "aux_x2_10_0",
+                    "aux_x1___neg__0__decpt__3",
+                    "aux_x1_5__decpt__0",
+                    "aux_x2_0__decpt__7",
+                    "aux_x2_10__decpt__0",
                 ]
             ],
             check_dtype=False,
