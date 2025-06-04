@@ -303,7 +303,11 @@ class DomainOptimizationProblem(PymooProblem):
     Args:
         objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
             optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
-            number of features, and q is the number of experiments. It should return a tensor of shape (n,)
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+
         domain (Domain): The bofire domain, which contains the input and output features.
         input_preprocessing_specs (InputTransformSpecs): The input preprocessing specifications, which are used to
             transform the inputs to the correct format for the models. This is needed for the variable transformation
@@ -313,6 +317,9 @@ class DomainOptimizationProblem(PymooProblem):
             evaluated in the numeric torch domain. Must be transformable by the "get_nonlinear_constraints" function.
         nonlinear_pandas_constraints (Optional[List[Type[Constraint]]]): List of types nonlinear pandas constraints, which are
             evaluated in the original domain.
+        n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
+            Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
+            must be set to the sum of the number of outputs of each callable.
 
     """
 
@@ -324,6 +331,7 @@ class DomainOptimizationProblem(PymooProblem):
         q: int,
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
+        n_obj: Optional[int] = None,
     ):
 
         self.objective_callables = objective_callables
@@ -353,7 +361,7 @@ class DomainOptimizationProblem(PymooProblem):
         )
 
         super().__init__(
-            n_obj=len(self.objective_callables),
+            n_obj=n_obj or len(self.objective_callables),
             n_ieq_constr=(
                 len(self.nonlinear_torch_constraints)
                 + len(self.nonlinear_pandas_constraints)
@@ -367,7 +375,18 @@ class DomainOptimizationProblem(PymooProblem):
     def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
         x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
 
-        out["F"] = [-ofnc(x).detach().numpy().reshape(-1) for ofnc in self.objective_callables]
+        # evaluate objectives
+        obj = []
+        for ofnc in self.objective_callables:
+            ofnc_val = ofnc(x).detach().numpy()
+            if ofnc_val.ndim == 1:
+                obj.append(ofnc_val.reshape(-1))
+            elif ofnc_val.ndim == 2:
+                obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
+            else:
+                raise ValueError(
+                    f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
+                )
 
         if self.nonlinear_torch_constraints:
             G = []
@@ -729,6 +748,7 @@ def get_ga_problem_and_algorithm(
     input_preprocessing_specs: InputTransformSpecs,
     objective_callables: List[Callable[[Tensor], Tensor]],
     q: int,
+    n_obj: Optional[int] = None,
     verbose: bool = False,
 ) -> Tuple[
     DomainOptimizationProblem,
@@ -744,10 +764,15 @@ def get_ga_problem_and_algorithm(
         data_model (GeneticAlgorithmDataModel): specifications for the algorithm
         domain (Domain): optimization domain
         input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
-        objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
+                objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
             optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
-            number of features, and q is the number of experiments. It should return a tensor of shape (n,)
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
         q (int): number of experiments
+        n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
+            Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
+            must be set to the sum of the number of outputs of each callable.
         verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
 
     Returns
@@ -760,12 +785,15 @@ def get_ga_problem_and_algorithm(
         domain, input_preprocessing_specs
     )
 
+    n_obj = n_obj or len(objective_callables)
+
     # ===== Problem ====
     problem = DomainOptimizationProblem(
         objective_callables,
         domain,
         input_preprocessing_specs,
         q,
+        n_obj=n_obj,
     )
 
     # ==== Algorithm ====
@@ -800,7 +828,7 @@ def get_ga_problem_and_algorithm(
 
     termination_class = (
         pymoo_default_termination.DefaultSingleObjectiveTermination
-        if len(objective_callables) == 1
+        if n_obj == 1
         else pymoo_default_termination.DefaultMultiObjectiveTermination
     )
 

@@ -1,8 +1,13 @@
 import numpy as np
 import pytest
+import torch
+import pandas as pd
+from pymoo.optimize import minimize as pymoo_minimize
 
 from bofire.data_models.strategies import api as data_models_strategies
-
+from bofire.surrogates import api as bofire_surrogates
+from bofire.utils import torch_tools
+from bofire.strategies.utils import get_ga_problem_and_algorithm
 
 @pytest.fixture(
     params=[  # (optimizer data model, params)
@@ -31,3 +36,30 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
         assert constr.is_fulfilled(proposals).all()
 
 
+def test_mo_optimization(optimizer_benchmark, optimizer_data_model):
+
+    # sort out cases where the optimizer does not support nonlinear constraints
+    if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
+        return
+        # pytest.skip("skipping multi-objective optimization for botorch optimizer")
+
+    # we get the strategy object  for the input-preprocessing specs, and the surrogates
+    strategy = optimizer_benchmark.get_strategy(optimizer_data_model)
+
+    input_preprocessing_specs = strategy.input_preprocessing_specs
+    surrogates: bofire_surrogates.BotorchSurrogates = strategy.surrogates
+
+    q = 1
+
+    def objective_function(x: torch.Tensor) -> torch.Tensor:
+
+        y = torch.hstack([sg.model.posterior(x).mean.reshape((-1, q)) for sg in surrogates.surrogates])
+        return y
+
+    problem, algorithm, termination = get_ga_problem_and_algorithm(
+        optimizer_data_model, strategy.domain, input_preprocessing_specs, [objective_function],
+        q=q, n_obj= len(surrogates.surrogates)*q, verbose=True)
+
+    result = pymoo_minimize(problem, algorithm, termination, verbose=True)
+
+    print(result.X)
