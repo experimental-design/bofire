@@ -41,6 +41,7 @@ CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 def represent_categories_as_by_their_states(
     inputs: Inputs,
 ) -> Tuple[List[ContinuousInput], List[CategoricalInput]]:
+    all_but_one_categoricals = []
     if len(inputs.get([CategoricalInput])) > 0:
         inputs = copy(inputs)
         categorical_inputs = list(inputs.get([CategoricalInput]))
@@ -49,7 +50,7 @@ def represent_categories_as_by_their_states(
         )
 
         # enforce categoricals excluding each other
-        all_but_one_categoricals = categorical_one_hot_variabes[:-1]
+        all_but_one_categoricals = categorical_one_hot_variabes
 
     return list(inputs.get(excludes=[CategoricalInput])), all_but_one_categoricals  # type: ignore
 
