@@ -60,7 +60,7 @@ def test_domain_relaxation():
     assert len(relaxed_domain.inputs.get([ContinuousInput])) == 11
     assert len(relaxed_domain.constraints.get([LinearInequalityConstraint])) == 1
     assert len(relaxed_domain.constraints.get([LinearEqualityConstraint])) == 6
-    assert len(relaxed_domain.constraints.get([NChooseKConstraint])) == 1
+    assert len(relaxed_domain.constraints.get([NChooseKConstraint])) == 0
 
     assert len(mappings_categorical_var_key_to_aux_var_key_state_pairs) == 1
     assert len(mapping_discrete_input_to_discrete_aux) == 2

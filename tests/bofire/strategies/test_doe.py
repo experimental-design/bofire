@@ -20,7 +20,10 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.data_models.strategies.doe import DOptimalityCriterion
+from bofire.data_models.strategies.doe import (
+    DOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.strategies.api import DoEStrategy
 
 
@@ -829,6 +832,34 @@ def test_continuous_categorical_doe():
     assert candidates.shape == (n_exp, 4)
 
 
+def one_cont_3_cat():
+    np.random.seed(42)
+    torch.manual_seed(42)
+    # Test case: extra experiments
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="cat1", categories=["miau", "meow"]),
+            CategoricalInput(key="cat2", categories=["oink", "oinki", "grunt"]),
+            CategoricalInput(key="cat3", categories=["wuff", "wuffwuff", "ruff"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=SpaceFillingCriterion(),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_successfull_runs = 0
+    for i in range(10):
+        candidates = strategy.ask(candidate_count=20, raise_validation_error=True)
+        assert np.shape(candidates.to_numpy()) == (20, 4)
+        n_successfull_runs = i
+    assert n_successfull_runs == 9
+
+
 if __name__ == "__main__":
-    test_continuous_categorical_doe()
-    test_purely_categorical_doe()
+    one_cont_3_cat()

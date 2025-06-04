@@ -7,7 +7,6 @@ import pandas as pd
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs
 from bofire.data_models.features.api import (
@@ -144,14 +143,6 @@ def map_categorical_to_continuous(
                 features=[i.key for i in new_auxiliary_inputs_for_input],
                 coefficients=[1] * len(new_auxiliary_inputs_for_input),
                 rhs=1,
-            )
-        )
-        new_constraints.append(
-            NChooseKConstraint(
-                features=[i.key for i in new_auxiliary_inputs_for_input],
-                min_count=0,
-                max_count=1,
-                none_also_valid=True,
             )
         )
 
