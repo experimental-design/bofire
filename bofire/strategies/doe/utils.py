@@ -50,7 +50,7 @@ def represent_categories_as_by_their_states(
         )
 
         # enforce categoricals excluding each other
-        all_but_one_categoricals = categorical_one_hot_variabes
+        all_but_one_categoricals = categorical_one_hot_variabes[:-1]
 
     return list(inputs.get(excludes=[CategoricalInput])), all_but_one_categoricals  # type: ignore
 
