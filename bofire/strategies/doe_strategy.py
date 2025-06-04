@@ -114,29 +114,31 @@ class DoEStrategy(Strategy):
                     mapped_aux_categorical_inputs=mapped_aux_categorical_inputs,
                 )
             )
-            # if only categoricals in domain
-            if len(self.domain.inputs) == len(
-                self.domain.inputs.get([CategoricalInput])
-            ):
-                return design_categoricals.iloc[
-                    fixed_experiments_count:, :
-                ].reset_index(
-                    drop=True,
+            # if no discrete in domain
+            if len(self.domain.inputs.get([DiscreteInput])) == 0:
+                return (
+                    design_categoricals.join(design_no_categoricals)
+                    .iloc[fixed_experiments_count:, :]
+                    .reset_index(
+                        drop=True,
+                    )
                 )
-            design_projected = project_candidates_into_domain(
-                domain=self.domain,
-                candidates=design_no_categoricals,
-                mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
-                keys_continuous_inputs=[
-                    continuous_input.key for continuous_input in mapped_continous_inputs
-                ],
-                scip_params=self._data_model.scip_params,
-            )
-            design = filter_out_discrete_auxilliary_vars(
-                design_projected,
-                aux_vars_for_discrete=aux_vars_for_discrete,
-            )
-            design = pd.concat([design, design_categoricals], axis=1)
+            else:
+                design_projected = project_candidates_into_domain(
+                    domain=self.domain,
+                    candidates=design_no_categoricals,
+                    mapping_discrete_input_to_discrete_aux=mapping_discrete_input_to_discrete_aux,
+                    keys_continuous_inputs=[
+                        continuous_input.key
+                        for continuous_input in mapped_continous_inputs
+                    ],
+                    scip_params=self._data_model.scip_params,
+                )
+                design = filter_out_discrete_auxilliary_vars(
+                    design_projected,
+                    aux_vars_for_discrete=aux_vars_for_discrete,
+                )
+                design = pd.concat([design, design_categoricals], axis=1)
         if self._return_fixed_candidates:
             fixed_experiments_count = 0
         return design.iloc[fixed_experiments_count:, :].reset_index(
