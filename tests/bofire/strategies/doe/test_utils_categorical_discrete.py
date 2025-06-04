@@ -110,7 +110,6 @@ def test_domain_relaxation():
     df_sample = relaxed_domain.inputs.sample(10)
     assert len(df_sample) == 10
     assert len(df_sample.columns) == 11
-    print(df_sample)
 
     df_no_categorical, df_categorical = (
         filter_out_categorical_and_categorical_auxilliary_vars(

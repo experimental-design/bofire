@@ -509,8 +509,8 @@ def test_free_discrete_doe():
     torch.cuda.manual_seed(0)
 
     all_inputs = [
-        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
-        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3),
+        DiscreteInput(key="a_discrete", values=[-0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[-0.1, 0.0, 0.2, 0.3, 1.6], rtol=1e-3),
         DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
     ]
     domain = Domain.from_lists(
@@ -527,6 +527,7 @@ def test_free_discrete_doe():
     strategy = DoEStrategy(data_model=data_model)
     n_exp = strategy.get_required_number_of_experiments()
     candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    print(candidates)
     assert candidates.shape == (n_exp, 3)
     # check only lb and ub are values in candidates
     for col in all_inputs:
@@ -548,7 +549,9 @@ def test_discrete_and_categorical_doe_w_constraints():
     ]
     all_inputs = [
         DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
-        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3),
+        DiscreteInput(
+            key="b_discrete", values=[-1.0, 0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3
+        ),
         DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
         CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
         CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
@@ -583,6 +586,7 @@ def test_discrete_and_categorical_doe_w_constraints():
     strategy = DoEStrategy(data_model=data_model)
     n_exp = strategy.get_required_number_of_experiments()
     candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    print(candidates)
     assert candidates.shape == (n_exp, 7)
 
 
@@ -862,4 +866,4 @@ def one_cont_3_cat():
 
 
 if __name__ == "__main__":
-    one_cont_3_cat()
+    test_free_discrete_doe()
