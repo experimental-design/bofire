@@ -25,6 +25,7 @@ from bofire.data_models.strategies.doe import (
     SpaceFillingCriterion,
 )
 from bofire.strategies.api import DoEStrategy
+from bofire.strategies.doe.utils import get_formula_from_string
 
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -616,8 +617,15 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
     excepted_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
         "linear-and-quadratic": 9,  # 1+a+b+(c==meep)+(1-(c==meep))+a**2+b**2+3
-        "linear-and-interactions": 10,  # 1+a+b+c+ab+ac+bc+3
+        "linear-and-interactions": 10,  # 1+a+b+c==meep+ab+a(c==meep)+b(c==meep)+3
         "fully-quadratic": 12,  # 1+a+b+c+a**2+b**2+ab+ac+bc+3
+    }
+
+    excepted_model_string = {
+        "linear": "1 + a + b + aux_c_meep",
+        "linear-and-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + b:a + aux_c_meep:a + aux_c_meep:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2 + b:a + aux_c_meep:a + aux_c_meep:b",
     }
 
     for model_type in [
@@ -632,11 +640,15 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
             verbose=True,
             scip_params={"parallel/maxnthreads": 1},
         )
+
+        formula = get_formula_from_string(model_type=model_type, inputs=domain.inputs)
+        assert str(formula) == excepted_model_string[model_type]
+
         strategy = DoEStrategy(data_model=data_model)
         n_exp = strategy.get_required_number_of_experiments()
         assert (
             n_exp == excepted_num_candidates[model_type]
-        ), f"Expected {excepted_num_candidates[model_type]} candidates, got {n_exp}"
+        ), f"Expected {excepted_num_candidates[model_type]} candidates for {model_type}, got {n_exp}"
         candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
         assert candidates.shape == (
             n_exp,
@@ -669,6 +681,12 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
         "linear-and-interactions": 13,  # 1+a+b+(c==meep)+(c==moop)+ab+a(c==meep)+a(c==moop)+b(c==meep)+b(c==moop)+3
         "fully-quadratic": 15,  # 1+a+b+(c==meep)+(c==moop)+ab+a(c==meep)+a(c==moop)+b(c==meep)+b(c==moop)+a**2+b**2+3
     }
+    excepted_model_string = {
+        "linear": "1 + a + b + aux_c_meep + aux_c_moop",
+        "linear-and-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + aux_c_moop + b:a + aux_c_meep:a + aux_c_meep:b + aux_c_moop:a + aux_c_moop:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2 + b:a + aux_c_meep:a + aux_c_meep:b + aux_c_moop:a + aux_c_moop:b",
+    }
 
     for model_type in [
         "linear",
@@ -682,6 +700,10 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
             verbose=True,
             scip_params={"parallel/maxnthreads": 1},
         )
+
+        formula = get_formula_from_string(model_type=model_type, inputs=domain.inputs)
+        assert str(formula) == excepted_model_string[model_type]
+
         strategy = DoEStrategy(data_model=data_model)
         n_exp = strategy.get_required_number_of_experiments()
         assert (
@@ -864,4 +886,4 @@ def one_cont_3_cat():
 
 
 if __name__ == "__main__":
-    test_free_discrete_doe()
+    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
