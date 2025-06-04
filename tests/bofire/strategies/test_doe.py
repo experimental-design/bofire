@@ -527,7 +527,6 @@ def test_free_discrete_doe():
     strategy = DoEStrategy(data_model=data_model)
     n_exp = strategy.get_required_number_of_experiments()
     candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
-    print(candidates)
     assert candidates.shape == (n_exp, 3)
     # check only lb and ub are values in candidates
     for col in all_inputs:
@@ -586,7 +585,6 @@ def test_discrete_and_categorical_doe_w_constraints():
     strategy = DoEStrategy(data_model=data_model)
     n_exp = strategy.get_required_number_of_experiments()
     candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
-    print(candidates)
     assert candidates.shape == (n_exp, 7)
 
 
