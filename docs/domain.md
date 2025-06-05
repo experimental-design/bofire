@@ -62,7 +62,7 @@ outputs = [ContinuousOutput(key="y", objective=MinimizeObjective())]
 ```
 The modified domain in this case becomes
 ```python
-domain = Domain(
+domain = Domain.from_lists(
     inputs=inputs,
     outputs=outputs,
     constraints=constraints
@@ -95,7 +95,7 @@ The result will be `True` if the input type is supported by the strategy, otherw
 
 #### Continuous inputs
 
-Continuous inputs are used to define real-values input variables with finite upper and lower bounds (see example above).
+Continuous inputs are used to define real-valued input variables with finite upper and lower bounds (see example above).
 
 #### Discrete inputs
 
@@ -108,7 +108,7 @@ DiscreteInput(key="x3", values=[0, 0.1, 0.2])
 ```
 
 #### Categorical inputs
-This class of inputs is similar to the discrete inputs, but takes a list of strings as input. The following code defines a new categorical input variable $x_4$ with values "A", "B", "C".
+This class of inputs is similar to the discrete inputs, but takes a list of strings as input. The following code defines a new categorical input variable $x_4$ with categories "A", "B", "C".
 
 ```python
 from bofire.data_models.features.api import CategoricalInput
@@ -157,7 +157,7 @@ CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])
  -->
 
 ### Inputs class
-The `Inputs` class is used to summarize multiple input variables. It is used to define the inputs of a domain. The following code defines a new input class with the above described input variables $x_1, x_2, x_3, x_4, x_5, x_6, x_7$.
+The `Inputs` class is used to collect multiple input variables. It is used to define the inputs of a domain. The following code defines a new input class with the above described input variables $x_1, x_2, x_3, x_4, x_5, x_6, x_7$.
 
 ```python
 from bofire.data_models.api import Inputs
@@ -173,7 +173,7 @@ inputs = Inputs(
 ```
 
 ## Outputs
-At the moment only continuous and categorical outputs are supported. Those are similar to the continuous and categorical inputs, but they additionaly contain the `objective` attribute. The `objective` attribute is used to define the optimization objective for the output variable. Similar to the inputs the outputs can be also summarized in an `Outputs` object. An example with a continuous and a categorical output is given below.
+At the moment only continuous and categorical outputs are supported. Those are similar to the continuous and categorical inputs, but they additionaly contain the `objective` attribute. The `objective` attribute is used to define the optimization objective for the output variable. Similar to the inputs the outputs can be also collected in an `Outputs` object. An example with a continuous and a categorical output is given below.
 
 ```python
 from bofire.data_models.api import Outputs
@@ -197,7 +197,7 @@ outputs = Outputs(
 ### Objectives
 Different classes for the objectives are implemented in BoFire. These are used to set the `objective` attribute of an output object. Note that each output variable can have its own objective. The following objectives are available:
 
-- `MaximizeObjective`: This is the default value. The objective is to maximize the output variable(s).
+- `MaximizeObjective`: This is the class of the default value. The objective is to maximize the output variable(s).
 - `MinimizeObjective`: The objective is to minimize the output variable(s). Note that minimization objectives can be transformed into maximization objectives and vice versa just by multiplying the corresponding output by -1.
 - `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful to implement bounds on the output variable(s).
 - `MinimizeSigmoidObjective`: Similar to `MaximizeSigmoidObjective`, but the objective is to minimize the output variable(s).
