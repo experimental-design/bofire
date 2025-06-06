@@ -268,5 +268,5 @@ The `InterpointEqualityConstraint` forces that values of a certain feature of a 
 ```python
 from bofire.data_models.constraints.api import InterpointEqualityConstraint
 
-InterpointEqualityConstraint(feature="x1", multiplicity=3)
+InterpointEqualityConstraint(features=["x1"], multiplicity=3)
 ```
