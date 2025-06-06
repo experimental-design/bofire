@@ -22,7 +22,10 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
-from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+)
 from bofire.data_models.strategies.api import (
     AbsoluteMovingReferenceValue,
     ExplicitReferencePoint,
@@ -635,6 +638,28 @@ specs.add_invalid(
     },
     error=ValueError,
     message="At least one constrained objective is required for qLogPF.",
+)
+
+specs.add_invalid(
+    strategies.AdditiveSoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(
+                    key="alpha", objective=MaximizeSigmoidObjective(tp=1, steepness=100)
+                ),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
 )
 
 specs.add_invalid(
