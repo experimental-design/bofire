@@ -22,12 +22,17 @@ except ModuleNotFoundError:
 import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
+    GenericMCObjective,
+    IdentityMCObjective,
+)
 from botorch.models.gpytorch import GPyTorchModel
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
     qLogNEI,
+    qLogPF,
     qNEI,
     qPI,
     qSR,
@@ -111,7 +116,7 @@ class SoboStrategy(BotorchStrategy):
     def _get_objective_and_constraints(
         self,
     ) -> Tuple[
-        Union[GenericMCObjective, ConstrainedMCObjective],
+        Union[GenericMCObjective, ConstrainedMCObjective, IdentityMCObjective],
         Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
@@ -165,7 +170,9 @@ class SoboStrategy(BotorchStrategy):
 
         # return regular objective
         return (
-            GenericMCObjective(objective=objective_callable),
+            GenericMCObjective(objective=objective_callable)
+            if not isinstance(self.acquisition_function, qLogPF)
+            else IdentityMCObjective(),
             constraint_callables,
             etas,
         )
@@ -174,7 +181,9 @@ class SoboStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        acquisition_function: AnySingleObjectiveAcquisitionFunction
+        | qLogPF
+        | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,
