@@ -30,7 +30,7 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
     For this purpose, the condition checks if there are any kind of ConstrainedObjective's
     in the domain. If, yes it checks if there is a certain number of feasible experiments.
     The condition is fulfilled if the number of feasible experiments is smaller than
-    the number of required feasible experiments it is not fulfilled when there are no
+    the number of required feasible experiments. It is not fulfilled when there are no
     ConstrainedObjective's in the domain.
     This condition can be used in scenarios where there is a large amount of output constraints
     and one wants to make sure that they are fulfilled before optimizing the actual objective(s).
