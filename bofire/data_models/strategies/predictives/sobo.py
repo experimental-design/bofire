@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Type, Union
+from typing import List, Literal, Optional, Type
 
 import pydantic
 from pydantic import Field, field_validator, model_validator
@@ -14,6 +14,10 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class SoboBaseStrategy(BotorchStrategy):
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI(),
+    )
+
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         """Method to check if a specific feature type is implemented for the strategy
@@ -44,10 +48,6 @@ class SoboBaseStrategy(BotorchStrategy):
 class SoboStrategy(SoboBaseStrategy):
     type: Literal["SoboStrategy"] = "SoboStrategy"
 
-    acquisition_function: Union[AnySingleObjectiveAcquisitionFunction, qLogPF] = Field(
-        default_factory=lambda: qLogNEI(),
-    )
-
     @model_validator(mode="after")
     def validate_is_singleobjective(self):
         if (
@@ -67,11 +67,24 @@ class SoboStrategy(SoboBaseStrategy):
         return self
 
 
-class AdditiveSoboStrategy(SoboBaseStrategy):
+class _ForbidPFMixin:
+    """
+    Mixin to forbid the use of qLogPF acquisition function in strategies that are not
+    SoboStrategy.
+    """
+
+    @field_validator("acquisition_function")
+    def validate_acquisition_function(cls, acquisition_function):
+        if isinstance(acquisition_function, qLogPF):
+            raise ValueError(
+                "qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
+            )
+        return acquisition_function
+
+
+class AdditiveSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
     type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
-    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI(),
-    )
+
     use_output_constraints: bool = True
 
     @field_validator("domain")
@@ -101,12 +114,10 @@ class _CheckAdaptableWeightsMixin:
         return self
 
 
-class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
+class MultiplicativeSoboStrategy(
+    SoboBaseStrategy, _CheckAdaptableWeightsMixin, _ForbidPFMixin
+):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
-
-    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI(),
-    )
 
     @field_validator("domain")
     def validate_is_multiobjective(cls, v, info):
@@ -117,7 +128,9 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
         return v
 
 
-class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
+class MultiplicativeAdditiveSoboStrategy(
+    SoboBaseStrategy, _CheckAdaptableWeightsMixin, _ForbidPFMixin
+):
     """
     Mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
 
@@ -133,9 +146,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
     type: Literal["MultiplicativeAdditiveSoboStrategy"] = (
         "MultiplicativeAdditiveSoboStrategy"
     )
-    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI(),
-    )
+
     use_output_constraints: bool = True
     additive_features: List[str] = Field(default_factory=list)
 
@@ -150,10 +161,8 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
         return v
 
 
-class CustomSoboStrategy(SoboBaseStrategy):
+class CustomSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
     type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
-    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI(),
-    )
+
     use_output_constraints: bool = True
     dump: Optional[str] = None

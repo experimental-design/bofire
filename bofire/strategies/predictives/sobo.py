@@ -47,7 +47,9 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
-from bofire.data_models.strategies.predictives.sobo import SoboStrategy as SoboDataModel
+from bofire.data_models.strategies.predictives.sobo import (
+    SoboBaseStrategy as SoboBaseDataModel,
+)
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
@@ -63,7 +65,7 @@ from bofire.utils.torch_tools import (
 class SoboStrategy(BotorchStrategy):
     def __init__(
         self,
-        data_model: SoboDataModel,
+        data_model: SoboBaseDataModel,
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
@@ -204,7 +206,7 @@ class SoboStrategy(BotorchStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return cast(Self, make_strategy(cls, SoboDataModel, locals()))
+        return cast(Self, make_strategy(cls, SoboBaseDataModel, locals()))
 
 
 class AdditiveSoboStrategy(SoboStrategy):
@@ -213,7 +215,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         data_model: AdditiveDataModel,
         **kwargs,
     ):
-        super().__init__(data_model=data_model, **kwargs)  # type: ignore
+        super().__init__(data_model=data_model, **kwargs)
         self.use_output_constraints = data_model.use_output_constraints
 
     def _get_objective_and_constraints(
@@ -316,7 +318,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         data_model: MultiplicativeDataModel,
         **kwargs,
     ):
-        super().__init__(data_model=data_model, **kwargs)  # type: ignore
+        super().__init__(data_model=data_model, **kwargs)
 
     def _get_objective_and_constraints(
         self,
@@ -378,7 +380,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         **kwargs,
     ):
         self.additive_features = data_model.additive_features
-        super().__init__(data_model=data_model, **kwargs)  # type: ignore
+        super().__init__(data_model=data_model, **kwargs)
 
     def _get_objective_and_constraints(
         self,
@@ -446,7 +448,7 @@ class CustomSoboStrategy(SoboStrategy):
         data_model: CustomDataModel,
         **kwargs,
     ):
-        super().__init__(data_model=data_model, **kwargs)  # type: ignore
+        super().__init__(data_model=data_model, **kwargs)
         self.use_output_constraints = data_model.use_output_constraints
         if data_model.dump is not None:
             self.loads(data_model.dump)
