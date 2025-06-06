@@ -50,6 +50,7 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.predictives.sobo import (
     SoboBaseStrategy as SoboBaseDataModel,
 )
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy as SoboDataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
@@ -206,7 +207,7 @@ class SoboStrategy(BotorchStrategy):
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
         """
-        return cast(Self, make_strategy(cls, SoboBaseDataModel, locals()))
+        return cast(Self, make_strategy(cls, SoboDataModel, locals()))
 
 
 class AdditiveSoboStrategy(SoboStrategy):
