@@ -1017,7 +1017,7 @@ c(\mathbf{x}) = 0 \quad \text{and} \quad c(\mathbf{x}) \leq 0,
 <p>The <code>InterpointEqualityConstraint</code> forces that values of a certain feature of a set/batch of candidates should have the same value. The set is defined using the <code>multiplicity</code> attribute. The following code defines a new <code>InterpointEqualityConstraint</code> that forces the values of the feature "x1" to be the same for every 3 subsequent candidates.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.constraints.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">InterpointEqualityConstraint</span>
 
-<span class="n">InterpointEqualityConstraint</span><span class="p">(</span><span class="n">feature</span><span class="o">=</span><span class="s2">&quot;x1&quot;</span><span class="p">,</span> <span class="n">multiplicity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">InterpointEqualityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">],</span> <span class="n">multiplicity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 
 
