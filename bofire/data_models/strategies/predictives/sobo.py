@@ -69,8 +69,8 @@ class SoboStrategy(SoboBaseStrategy):
 
 class _ForbidPFMixin:
     """
-    Mixin to forbid the use of qLogPF acquisition function in strategies that are not
-    SoboStrategy.
+    Mixin to forbid the use of qLogPF acquisition function in single-objective strategies
+    that are not the SoboStrategy.
     """
 
     @field_validator("acquisition_function")
