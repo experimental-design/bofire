@@ -226,15 +226,12 @@ def interactions_terms(
     """
     inputs = continuous_inputs + categorical_inputs
     formula = ""
-    for i in range(len(inputs)):
-        for j in range(i):
-            a = inputs[i]
-            b = inputs[j]
-            if a != b and not (
-                (a.key in categorical_inputs.get_keys())
-                and (b.key in categorical_inputs.get_keys())
-            ):
-                formula += a.key + ":" + b.key + " + "
+    for c in combinations(range(len(inputs)), 2):
+        if not (
+            (inputs.get_keys()[c[0]] in categorical_inputs.get_keys())
+            and (inputs.get_keys()[c[1]] in categorical_inputs.get_keys())
+        ):
+            formula += inputs.get_keys()[c[0]] + ":" + inputs.get_keys()[c[1]] + " + "
     return formula
 
 

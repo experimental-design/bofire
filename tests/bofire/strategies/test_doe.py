@@ -624,8 +624,8 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
     excepted_model_string = {
         "linear": "1 + a + b + aux_c_meep",
         "linear-and-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2",
-        "linear-and-interactions": "1 + a + b + aux_c_meep + b:a + aux_c_meep:a + aux_c_meep:b",
-        "fully-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2 + b:a + aux_c_meep:a + aux_c_meep:b",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + a:aux_c_meep + a:b + aux_c_meep:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2 + a:aux_c_meep + a:b + aux_c_meep:b",
     }
 
     for model_type in [
@@ -684,8 +684,8 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
     excepted_model_string = {
         "linear": "1 + a + b + aux_c_meep + aux_c_moop",
         "linear-and-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2",
-        "linear-and-interactions": "1 + a + b + aux_c_meep + aux_c_moop + b:a + aux_c_meep:a + aux_c_meep:b + aux_c_moop:a + aux_c_moop:b",
-        "fully-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2 + b:a + aux_c_meep:a + aux_c_meep:b + aux_c_moop:a + aux_c_moop:b",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + aux_c_moop + a:aux_c_meep + a:aux_c_moop + a:b + aux_c_meep:b + aux_c_moop:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2 + a:aux_c_meep + a:aux_c_moop + a:b + aux_c_meep:b + aux_c_moop:b",
     }
 
     for model_type in [
