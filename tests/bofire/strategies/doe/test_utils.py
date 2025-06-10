@@ -47,7 +47,7 @@ def get_formula_from_string_recursion_limit():
     model = model[:-3]
     model = get_formula_from_string(model_type=model)
 
-    terms = ["1"] + [f"x{i}" for i in range(350)]
+    terms = [f"x{i}" for i in range(350)]
     terms.append("1")
 
     for i in range(351):
