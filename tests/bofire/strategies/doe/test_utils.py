@@ -773,4 +773,4 @@ def test_formula_discrete_handled_like_continuous():
 
 
 if __name__ == "__main__":
-    test_formula_discrete_handled_like_continuous()
+    get_formula_from_string_recursion_limit()
