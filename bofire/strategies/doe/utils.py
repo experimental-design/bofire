@@ -2,7 +2,7 @@ import importlib.util
 import sys
 from copy import copy
 from itertools import combinations
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.features.api import CategoricalInput
+from bofire.data_models.features.api import CategoricalInput, NumericalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.doe_problem import (
@@ -40,19 +40,23 @@ CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 def represent_categories_as_by_their_states(
     inputs: Inputs,
-) -> Tuple[List[ContinuousInput], List[CategoricalInput]]:
+) -> Tuple[List[NumericalInput], List[ContinuousInput]]:
     all_but_one_categoricals = []
     if len(inputs.get([CategoricalInput])) > 0:
         inputs = copy(inputs)
-        categorical_inputs = list(inputs.get([CategoricalInput]))
+        categorical_inputs = cast(
+            list[CategoricalInput], inputs.get([CategoricalInput])
+        )
         _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
-            categorical_inputs=categorical_inputs  # type: ignore
+            categorical_inputs=categorical_inputs
         )
 
         # enforce categoricals excluding each other
         all_but_one_categoricals = categorical_one_hot_variabes[:-1]
-
-    return list(inputs.get(excludes=[CategoricalInput])), all_but_one_categoricals  # type: ignore
+    numerical_inputs = cast(
+        list[NumericalInput], list(inputs.get(excludes=[CategoricalInput]))
+    )
+    return numerical_inputs, all_but_one_categoricals
 
 
 def get_formula_from_string(
