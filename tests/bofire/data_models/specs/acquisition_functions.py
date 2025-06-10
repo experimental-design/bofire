@@ -7,6 +7,11 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
+    acquisition_functions.qLogPF,
+    lambda: {"n_mc_samples": 512},
+)
+
+specs.add_valid(
     acquisition_functions.qEI,
     lambda: {"n_mc_samples": 512},
 )

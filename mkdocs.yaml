@@ -9,6 +9,7 @@ nav:
   - Notebook page: getting_started.ipynb
   - Advanced Domain Configuration: domain.md
   - Examples: examples.md
+  - Strategies: strategies.md
   - Data Models vs Functional Components: data_models_functionals.md
   - Surrogate Models: userguide_surrogates.md
   - API Reference:
