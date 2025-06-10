@@ -8,9 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://experimental-design.github.io/bofire/CONTRIBUTING/">
+        <link rel="canonical" href="https://experimental-design.github.io/bofire/strategies/">
       
       
+        <link rel="prev" href="../examples/">
+      
+      
+        <link rel="next" href="../data_models_functionals/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -18,7 +22,7 @@
     
     
       
-        <title>Contributing - BoFire</title>
+        <title>Strategies - BoFire</title>
       
     
     
@@ -72,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing" class="md-skip">
+        <a href="#strategies" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Contributing
+              Strategies
             
           </span>
         </div>
@@ -377,10 +381,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../strategies/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Strategies
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -391,6 +417,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#non-predictive-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Non-predictive Strategies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#predictive-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Predictive Strategies
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#combining-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Combining Strategies
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -618,43 +691,113 @@
   
 
 
-<h1 id="contributing">Contributing</h1>
-<p>Contributions to BoFire are highly welcome!</p>
-<h2 id="pull-requests">Pull Requests</h2>
-<p>Pull requests are highly welcome:</p>
-<ol>
-<li>Create a fork from main.</li>
-<li>Add or adapt unit tests according to your change.</li>
-<li>Add doc-strings and update the documentation. You might consider contributing to the tutorials section.</li>
-<li>Make sure that the GitHub pipelines passes.</li>
-</ol>
-<h2 id="development-environment">Development Environment</h2>
-<p>We recommend an editable installation. After cloning the repository via
-<div class="highlight"><pre><span></span><code>git clone https://github.com/experimental-design/bofire.git
+<h1 id="strategies">Strategies</h1>
+<p>Strategies are the key ingredient of BoFire that explore the search space defined in the <code>Domain</code> and provide candidates for the next experiment or batch of experiments. Available strategies can be clustered in the following subclasses.</p>
+<h2 id="non-predictive-strategies">Non-predictive Strategies</h2>
+<p>BoFire offers the following strategies for sampling from the search space (no output features need to be provided in the <code>Domain</code>):</p>
+<ul>
+<li>
+<p><code>RandomStrategy</code>: This strategy proposes candidates by (quasi-)random sampling from the search space. It is applicable to almost all combinations of input features and constraints.</p>
+</li>
+<li>
+<p><code>DoEStrategy</code>: This strategy offers model-based DoE approaches for proposing candidates.</p>
+</li>
+<li>
+<p><code>FractionalFactorialStrategy</code>: This strategy should be used to generate (fractional-)factorial designs.</p>
+</li>
+</ul>
+<h2 id="predictive-strategies">Predictive Strategies</h2>
+<p>Predictive strategies are making use of (Bayesian) surrogate models to provide candidates with the intention to achieve certain goals depending on the provided objectives of the output features.</p>
+<p>The following predictive strategies are available:</p>
+<ul>
+<li><code>SoboStrategy</code>: Bayesian optimization strategy that optimizes a single-objective acquisition function. For multi-objective domains, different scalarizations are possible as implemented in the <code>AdditiveSoboStrategy</code>, <code>MultiplicativeSoboStrategy</code>, <code>AdditiveMultiplicativeSoboStrategy</code> and <code>CustomSoboStrategy</code>.</li>
+<li><code>MoboStrategy</code>: Bayesian optimization strategy that optimizes a hypervolume based acquisition function for pareto-based multi-objective optimization.</li>
+<li><code>QparegoStrategy</code>: Parallel ParEGO strategy for multiobjective optimization.</li>
+<li><code>MultifidelityStrategy:</code> Single objective multi-fidelity BO as described <a href="https://www.sciencedirect.com/science/article/pii/S0098135423000637">here</a></li>
+<li><code>EntingStrategy</code>: Strategy based on the <code>Entmoot</code> <a href="https://github.com/cog-imperial/entmoot">package</a> that uses tree-based surrogate models to perform both single-objective and multiobjective optimization.</li>
+</ul>
+<h2 id="combining-strategies">Combining Strategies</h2>
+<p>In BoFire, the <code>StepwiseStrategy</code> operates on a sequence of strategies and determines when to switch between them based on customizable logical operators.</p>
+<p>The <code>StepwiseStrategy</code> is comprised of a sequence of <code>Step</code>s, where each <code>Step</code> consists of the following three attributes:</p>
+<ul>
+<li><code>strategy_data</code>: data model of the strategy which should be executed in this step.</li>
+<li><code>condition</code>: A logical expression that determines when this <code>step</code>'s strategy should be executed. The <code>StepwiseStrategy</code> evaluates each step in order and selects the first strategy whose condition evaluates to <code>True</code>.</li>
+<li><code>transform</code>: An object that can be used to transform experiments and/or candidates before they enter/leave the strategy assigned in the step.</li>
+</ul>
+<p>The following example demonstrates how to combine a <code>RandomStrategy</code> with a <code>SoboStrategy</code> using the <code>StepwiseStrategy</code>. In this setup, the <code>RandomStrategy</code> is applied initially to propose candidates until 10 experiments have been completed. Once this threshold is reached, the strategy automatically switches to the <code>SoboStrategy</code> for subsequent candidate generation.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">bofire.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">strategies</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.benchmarks.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Himmelblau</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AlwaysTrueCondition</span><span class="p">,</span>
+    <span class="n">NumberOfExperimentsCondition</span><span class="p">,</span>
+    <span class="n">RandomStrategy</span><span class="p">,</span>
+    <span class="n">SoboStrategy</span><span class="p">,</span>
+    <span class="n">Step</span><span class="p">,</span>
+    <span class="n">StepwiseStrategy</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">domain</span> <span class="o">=</span> <span class="n">Himmelblau</span><span class="p">()</span><span class="o">.</span><span class="n">domain</span>
+
+<span class="n">strategy_data</span> <span class="o">=</span> <span class="n">StepwiseStrategy</span><span class="p">(</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">strategy_data</span><span class="o">=</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">),</span>
+            <span class="n">condition</span><span class="o">=</span><span class="n">NumberOfExperimentsCondition</span><span class="p">(</span><span class="n">n_experiments</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">strategy_data</span><span class="o">=</span><span class="n">SoboStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">AlwaysTrueCondition</span><span class="p">()</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+<span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">strategy_data</span><span class="p">)</span>
 </code></pre></div>
-and cd <code>bofire</code>, you can proceed with
-<div class="highlight"><pre><span></span><code>pip install -e &quot;.[all]&quot;
+<p>When dealing with output constraints, it is often beneficial to ensure that a certain number of experiments satisfy these constraints before proceeding with the main optimization. If no feasible experiments have been found, the strategy should prioritize generating candidates likely to fulfill the output constraints. This can be accomplished by using the <code>qLogPF</code> (Probability of Feasibility) acquisition function together with the <code>FeasibleExperimentCondition</code>. This approach allows the optimization process to focus first on feasibility, and only switch to the main objective once enough feasible experiments are available.</p>
+<p>In the following example, a <code>RandomStrategy</code> is applied for the initial 10 experiments to broadly explore the search space. Afterward, the <code>SoboStrategy</code> with the <code>qLogPF</code> acquisition function is used to prioritize finding at least one feasible experiment that satisfies the output constraints. Once this feasibility criterion is met, the strategy transitions to the standard <code>SoboStrategy</code> to focus on optimizing the main objective.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">bofire.strategies.api</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">strategies</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.benchmarks.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTLZ2</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.acquisition_functions.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">qLogPF</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.objectives.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaximizeSigmoidObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bofire.data_models.strategies.api</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AlwaysTrueCondition</span><span class="p">,</span>
+    <span class="n">FeasibleExperimentCondition</span><span class="p">,</span>
+    <span class="n">NumberOfExperimentsCondition</span><span class="p">,</span>
+    <span class="n">RandomStrategy</span><span class="p">,</span>
+    <span class="n">SoboStrategy</span><span class="p">,</span>
+    <span class="n">Step</span><span class="p">,</span>
+    <span class="n">StepwiseStrategy</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="c1"># create a domain with one output constraint by assigning a MaximizeSigmoidObjective</span>
+<span class="c1"># to the output with key &quot;f_1&quot;</span>
+<span class="n">domain</span> <span class="o">=</span> <span class="n">DTLZ2</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span><span class="o">.</span><span class="n">domain</span>
+<span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="s2">&quot;f_1&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">objective</span> <span class="o">=</span> <span class="n">MaximizeSigmoidObjective</span><span class="p">(</span>
+    <span class="n">tp</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">steepness</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span>
+
+
+<span class="n">strategy_data</span> <span class="o">=</span> <span class="n">StepwiseStrategy</span><span class="p">(</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
+    <span class="n">steps</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">strategy_data</span><span class="o">=</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">),</span>
+            <span class="n">condition</span><span class="o">=</span><span class="n">NumberOfExperimentsCondition</span><span class="p">(</span><span class="n">n_experiments</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">strategy_data</span><span class="o">=</span><span class="n">SoboStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">acquisition_function</span><span class="o">=</span><span class="n">qLogPF</span><span class="p">()),</span>
+            <span class="n">condition</span><span class="o">=</span><span class="n">FeasibleExperimentCondition</span><span class="p">(</span><span class="n">n_required_feasible_experiments</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">Step</span><span class="p">(</span>
+            <span class="n">strategy_data</span><span class="o">=</span><span class="n">SoboStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">),</span> <span class="n">condition</span><span class="o">=</span><span class="n">AlwaysTrueCondition</span><span class="p">()</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+<span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">strategy_data</span><span class="p">)</span>
 </code></pre></div>
-Afterwards, you can check that the tests are successful via
-<div class="highlight"><pre><span></span><code>pytest tests/
-</code></pre></div></p>
-<h2 id="coding-style">Coding Style</h2>
-<p>We use <a href="https://docs.astral.sh/ruff/">Ruff</a> for linting, sorting and formatting of our code.
-Our doc-strings are in <a href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html">Google-style</a>.</p>
-<p>In our CI/CD pipeline we check if contributions are compliant to Ruff.
-To make contributors' lives easier, we have pre-commit hooks for Ruff configured in the versions corresponding to the pipeline. They can be installed via</p>
-<p><div class="highlight"><pre><span></span><code>pip install pre-commit
-pre-commit install
-</code></pre></div>
-in you local project root folder, if you want to use <code>pre-commit</code>.</p>
-<h2 id="type-checks">Type checks</h2>
-<p>We make heavy use of <a href="https://docs.pydantic.dev/">Pydantic</a> to enforce type checks during runtime. Further, we use <a href="https://github.com/microsoft/pyright">Pyright</a> for static type checking. We enforce Pyright type checks in our CI/CD pipeline.</p>
-<h2 id="tests">Tests</h2>
-<p>If you add new functionality, make sure that it is tested properly and that it does not break existing code. Our tests run in our CI/CD pipeline. The test coverage is hidden from our Readme because it is not a very robust metric. However, you can find it in the outputs of our test-CI/CD-pipeline. See <a href="https://github.com/experimental-design/bofire/actions/runs/13699899620/job/38310818934#step:5:795.">example</a>.</p>
-<h2 id="documentation">Documentation</h2>
-<p>We use <a href="https://www.mkdocs.org/">MkDocs</a> with <a href="https://squidfunk.github.io/mkdocs-material/">material theme</a> and deploy our documentation to https://experimental-design.github.io/bofire/. Thereby, an API description is extracted from the doc-strings. Additionally, we have tutorials and getting-started-sections.</p>
-<h2 id="license">License</h2>
-<p>By contributing you agree that your contributions will be licensed under the same <a href="./LICENSE">BSD 3-Clause License</a> as BoFire.</p>
 
 
 
