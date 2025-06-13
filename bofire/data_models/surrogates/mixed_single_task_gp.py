@@ -108,11 +108,14 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     @classmethod
     def validate_categoricals(cls, v, values):
         """Checks that at least one one-hot encoded categorical feature is present."""
-        return v
-        # TODO: do we need to validate categoricals?
-        if CategoricalEncodingEnum.ONE_HOT not in v.values():
+        supported_encodings = {
+            CategoricalEncodingEnum.ONE_HOT,
+            CategoricalEncodingEnum.ORDINAL,
+        }
+        if not supported_encodings.intersection(v.values()):
             raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present.",
+                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot "
+                "or ordinal encoded categorical feature is present.",
             )
         return v
 
