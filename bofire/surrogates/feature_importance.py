@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from functools import partial
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import shap
 
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousOutput
-from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.protocols import Predictor
 from bofire.surrogates.diagnostics import metrics
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
@@ -74,7 +74,7 @@ def combine_lengthscale_importances(importances: Sequence[pd.Series]) -> pd.Data
 
 
 def shap_importance(
-    predictor: Union[Surrogate, PredictiveStrategy],
+    predictor: Predictor,
     experiments: pd.DataFrame,
     bg_experiments: Optional[pd.DataFrame] = None,
     bg_sample_size: Optional[int] = 50,

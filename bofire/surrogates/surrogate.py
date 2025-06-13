@@ -47,12 +47,12 @@ class Surrogate(ABC):
             Xt[c] = pd.to_numeric(Xt[c], errors="raise")
         return Xt
 
-    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
         # check if model is fitted
         if not self.is_fitted:
             raise ValueError("Model is not fitted/available yet.")
         # prepare data
-        Xt = self._prepare_data_for_predict(X)
+        Xt = self._prepare_data_for_predict(experiments)
         # predict
         preds, stds = self._predict(Xt)
         # set up column names
