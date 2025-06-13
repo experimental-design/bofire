@@ -527,7 +527,9 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
         ).all()
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:
-        assert isinstance(model.model.input_transform, OneHotToNumeric)
+        assert isinstance(model.model.input_transform, ChainedInputTransform)
+        assert "tf1" not in model.model.input_transform
+        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedSingleTaskGPSurrogate(
