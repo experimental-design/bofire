@@ -14,7 +14,8 @@ from botorch.acquisition import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.logei import qLogProbabilityOfFeasibility
+from botorch.acquisition.objective import GenericMCObjective, IdentityMCObjective
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
@@ -26,6 +27,7 @@ from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogEI,
     qLogNEI,
+    qLogPF,
     qNEI,
     qPI,
     qSR,
@@ -68,6 +70,7 @@ def test_SOBO_not_fitted():
         (qSR(), qSimpleRegret),
         (qLogEI(), qLogExpectedImprovement),
         (qLogNEI(), qLogNoisyExpectedImprovement),
+        (qLogPF(), qLogProbabilityOfFeasibility),
     ],
 )
 def test_SOBO_get_acqf(acqf, expected):
@@ -79,6 +82,12 @@ def test_SOBO_get_acqf(acqf, expected):
     )
 
     experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
+
+    if isinstance(acqf, qLogPF):
+        benchmark.domain.outputs.features[0].objective = MaximizeSigmoidObjective(
+            tp=1.5,
+            steepness=2.0,
+        )
 
     data_model = data_models.SoboStrategy(
         domain=benchmark.domain,
@@ -293,12 +302,13 @@ def test_sobo_fully_combinatorial(candidate_count):
 
 
 @pytest.mark.parametrize(
-    "outputs, expected_objective",
+    "outputs, acqf, expected_objective,",
     [
         (
             Outputs(
                 features=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
             ),
+            qEI(),
             GenericMCObjective,
         ),
         (
@@ -310,37 +320,36 @@ def test_sobo_fully_combinatorial(candidate_count):
                     ),
                 ],
             ),
+            qEI(),
             GenericMCObjective,
+        ),
+        (
+            Outputs(
+                features=[
+                    ContinuousOutput(
+                        key="alpha",
+                        objective=MaximizeSigmoidObjective(steepness=1, tp=1),
+                    ),
+                ],
+            ),
+            qLogPF(),
+            IdentityMCObjective,
         ),
     ],
 )
-def test_sobo_get_objective(outputs, expected_objective):
+def test_sobo_get_objective(outputs, acqf, expected_objective):
     strategy_data = data_models.SoboStrategy(
         domain=Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=outputs,
         ),
+        acquisition_function=acqf,
     )
     experiments = pd.DataFrame({"a": [0.5], "alpha": [0.5], "valid_alpha": [1]})
     strategy = SoboStrategy(data_model=strategy_data)
     strategy._experiments = experiments
     obj, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(obj, expected_objective)
-
-
-def test_sobo_get_constrained_objective():
-    benchmark = DTLZ2(dim=6)
-    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
-    domain = benchmark.domain
-    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(  # type: ignore
-        tp=1.5,
-        steepness=2.0,
-    )
-    strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qUCB())
-    strategy = SoboStrategy(data_model=strategy_data)
-    strategy.tell(experiments=experiments)
-    obj, _, _ = strategy._get_objective_and_constraints()
-    assert isinstance(obj, ConstrainedMCObjective)
 
 
 def test_sobo_get_constrained_objective2():
@@ -464,7 +473,9 @@ def test_sobo_interpoint():
     bench = Himmelblau()
     experiments = bench.f(bench.domain.inputs.sample(4), return_complete=True)
     domain = bench._domain
-    domain.constraints.constraints.append(InterpointEqualityConstraint(feature="x_1"))  # type: ignore
+    domain.constraints.constraints.append(
+        InterpointEqualityConstraint(features=["x_1"])
+    )  # type: ignore
     strategy_data = data_models.SoboStrategy(domain=domain)
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)

@@ -1,9 +1,8 @@
 import importlib.util
-import itertools
 import sys
 from copy import copy
 from itertools import combinations
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -22,7 +21,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.features.api import CategoricalInput
+from bofire.data_models.features.api import CategoricalInput, NumericalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.doe_problem import (
@@ -39,18 +38,25 @@ from bofire.strategies.random import RandomStrategy
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
-def represent_categories_as_by_their_states(inputs: Inputs) -> Inputs:
+def represent_categories_as_by_their_states(
+    inputs: Inputs,
+) -> Tuple[List[NumericalInput], List[ContinuousInput]]:
+    all_but_one_categoricals = []
     if len(inputs.get([CategoricalInput])) > 0:
         inputs = copy(inputs)
-        categorical_inputs = list(inputs.get([CategoricalInput]))
+        categorical_inputs = cast(
+            list[CategoricalInput], inputs.get([CategoricalInput])
+        )
         _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
-            categorical_inputs=categorical_inputs  # type: ignore
+            categorical_inputs=categorical_inputs
         )
-        inputs = Inputs(
-            features=list(inputs.get(excludes=[CategoricalInput]))
-            + categorical_one_hot_variabes
-        )
-    return inputs
+
+        # enforce categoricals excluding each other
+        all_but_one_categoricals = categorical_one_hot_variabes[:-1]
+    numerical_inputs = cast(
+        list[NumericalInput], list(inputs.get(excludes=[CategoricalInput]))
+    )
+    return numerical_inputs, all_but_one_categoricals
 
 
 def get_formula_from_string(
@@ -89,21 +95,41 @@ def get_formula_from_string(
             raise AssertionError(
                 "Inputs must be provided if only a model type is given.",
             )
-        inputs = represent_categories_as_by_their_states(inputs=inputs)
+        continuous_inputs, categorical_inputs = represent_categories_as_by_their_states(
+            inputs=inputs
+        )
         if model_type == "linear":
-            formula = linear_formula(inputs=inputs)
+            formula = linear_terms(
+                inputs=Inputs(features=continuous_inputs + categorical_inputs)
+            )
 
         # linear and interactions model
         elif model_type == "linear-and-quadratic":
-            formula = linear_and_quadratic_formula(inputs=inputs)
+            formula = linear_terms(
+                inputs=Inputs(features=continuous_inputs + categorical_inputs)
+            ) + quadratic_terms(inputs=Inputs(features=continuous_inputs))
 
         # linear and quadratic model
         elif model_type == "linear-and-interactions":
-            formula = linear_and_interactions_formula(inputs=inputs)
+            formula = linear_terms(
+                inputs=Inputs(features=continuous_inputs + categorical_inputs)
+            ) + interactions_terms(
+                continuous_inputs=Inputs(features=continuous_inputs),
+                categorical_inputs=Inputs(features=categorical_inputs),
+            )
 
         # fully quadratic model
         elif model_type == "fully-quadratic":
-            formula = fully_quadratic_formula(inputs=inputs)
+            formula = (
+                linear_terms(
+                    inputs=Inputs(features=continuous_inputs + categorical_inputs)
+                )
+                + interactions_terms(
+                    continuous_inputs=Inputs(features=continuous_inputs),
+                    categorical_inputs=Inputs(features=categorical_inputs),
+                )
+                + quadratic_terms(inputs=Inputs(features=continuous_inputs))
+            )
 
         else:
             raise ValueError(
@@ -158,7 +184,7 @@ def convert_formula_to_string(
     return term_list_string
 
 
-def linear_formula(
+def linear_terms(
     inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-model or certain keywords as Formula objects.
@@ -174,7 +200,7 @@ def linear_formula(
     return formula
 
 
-def linear_and_quadratic_formula(
+def quadratic_terms(
     inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-and-quadratic model or certain keywords as Formula objects.
@@ -185,13 +211,14 @@ def linear_and_quadratic_formula(
         A string describing the model that was given as string or keyword.
 
     """
-    formula = linear_formula(inputs=inputs)
-    formula += "".join(["{" + input.key + "**2} + " for input in inputs])
+
+    formula = "".join(["{" + input.key + "**2} + " for input in inputs])
     return formula
 
 
-def linear_and_interactions_formula(
-    inputs: Inputs,
+def interactions_terms(
+    continuous_inputs: Inputs,
+    categorical_inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-and-interactions model or certain keywords as Formula objects.
 
@@ -201,25 +228,14 @@ def linear_and_interactions_formula(
         A string describing the model that was given as string or keyword.
 
     """
-    formula = linear_formula(inputs=inputs)
-    for c in itertools.combinations(range(len(inputs)), 2):
-        formula += inputs.get_keys()[c[0]] + ":" + inputs.get_keys()[c[1]] + " + "
-    return formula
-
-
-def fully_quadratic_formula(
-    inputs: Inputs,
-) -> str:
-    """Reformulates a string describing a fully-quadratic model or certain keywords as Formula objects.
-
-    Args: inputs (Inputs): The inputs that should be used to build the fully quadratic model.
-
-    Returns:
-        A string describing the model that was given as string or keyword.
-
-    """
-    formula = linear_and_interactions_formula(inputs=inputs)
-    formula += "".join(["{" + input.key + "**2} + " for input in inputs])
+    inputs = continuous_inputs + categorical_inputs
+    formula = ""
+    for c in combinations(range(len(inputs)), 2):
+        if not (
+            (inputs.get_keys()[c[0]] in categorical_inputs.get_keys())
+            and (inputs.get_keys()[c[1]] in categorical_inputs.get_keys())
+        ):
+            formula += inputs.get_keys()[c[0]] + ":" + inputs.get_keys()[c[1]] + " + "
     return formula
 
 

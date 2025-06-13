@@ -164,19 +164,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         return vals
 
-    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        """Converts a tensor of candidates to a pandas Dataframe.
-
-        Args:
-            candidates (Tensor): Tensor of candidates returned from `optimize_acqf`.
-
-        Returns:
-            pd.DataFrame: Dataframe with candidates.
-
-        """
-        preds = self.predict(candidates)
-        return pd.concat((candidates, preds), axis=1)
-
     def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """[summary]
 
@@ -201,7 +188,7 @@ class BotorchStrategy(PredictiveStrategy):
             self.experiments,
         )
 
-        return self._postprocess_candidates(candidates=candidates)
+        return candidates
 
     def _tell(self) -> None:
         pass

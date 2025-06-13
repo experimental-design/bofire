@@ -365,7 +365,7 @@ def test_constraints_as_scipy_constraints():
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
-            InterpointEqualityConstraint(feature="x0", multiplicity=3),
+            InterpointEqualityConstraint(features=["x0"], multiplicity=3),
         ],
     )
     n_experiments = 5
@@ -597,7 +597,7 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
@@ -773,4 +773,4 @@ def test_formula_discrete_handled_like_continuous():
 
 
 if __name__ == "__main__":
-    test_formula_discrete_handled_like_continuous()
+    get_formula_from_string_recursion_limit()

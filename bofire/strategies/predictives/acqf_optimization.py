@@ -845,6 +845,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             acqfs,
             q,
             bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
+            verbose=self.data_model.verbose,
         )
 
         res = pymoo_minimize(

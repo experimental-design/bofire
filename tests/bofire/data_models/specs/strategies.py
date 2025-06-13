@@ -3,6 +3,7 @@ import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
+    qLogPF,
     qNegIntPosVar,
     qPI,
 )
@@ -21,7 +22,10 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
-from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+)
 from bofire.data_models.strategies.api import (
     AbsoluteMovingReferenceValue,
     ExplicitReferencePoint,
@@ -625,6 +629,63 @@ specs.add_invalid(
         "domain": Domain(
             inputs=Inputs(
                 features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="At least one constrained objective is required for qLogPF.",
+)
+
+specs.add_invalid(
+    strategies.AdditiveSoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(
+                    key="alpha", objective=MaximizeSigmoidObjective(tp=1, steepness=100)
+                ),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="SOBO strategy can only deal with one no-constraint objective.",
+)
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
                     ContinuousInput(
                         key=k,
                         bounds=(0, 1),
@@ -636,7 +697,7 @@ specs.add_invalid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
             constraints=Constraints(
-                constraints=[InterpointEqualityConstraint(feature="a")],
+                constraints=[InterpointEqualityConstraint(features=["a"])],
             ),
         ).model_dump(),
     },

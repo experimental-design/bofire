@@ -31,7 +31,7 @@ dependencies = [
 
 [project.optional-dependencies]
 optimization = [
-    "botorch>=0.13.0",
+    "botorch>=0.14.0",
     "numpy",
     "multiprocess",
     "plotly",
@@ -41,7 +41,6 @@ optimization = [
     "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "pymoo>=0.6.0",
-    "cvxopt",
     "shap",
 ]
 entmoot = ["entmoot>=2.0.6"]
@@ -62,7 +61,7 @@ docs = [
 ]
 tutorials = ["jupyter", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.13.0",
+    "botorch>=0.14.0",
     "numpy",
     "multiprocess",
     "plotly",
@@ -89,7 +88,6 @@ all = [
     "matplotlib",
     "seaborn",
     "pymoo>=0.6.0",
-    "cvxopt",
     "shap",
 ]
 
