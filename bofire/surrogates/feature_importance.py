@@ -1,11 +1,14 @@
 from collections.abc import Sequence
-from typing import Dict, Optional
+from functools import partial
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
 import shap
 
 from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.features.api import ContinuousOutput
+from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.surrogates.diagnostics import metrics
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
@@ -71,13 +74,15 @@ def combine_lengthscale_importances(importances: Sequence[pd.Series]) -> pd.Data
 
 
 def shap_importance(
-    surrogate: Surrogate,
+    predictor: Union[Surrogate, PredictiveStrategy],
     experiments: pd.DataFrame,
     bg_experiments: Optional[pd.DataFrame] = None,
     bg_sample_size: Optional[int] = 50,
     seed: Optional[int] = None,
-) -> shap.Explanation:
-    """Compute the SHAP importance values for a surrogate.
+) -> Dict[str, shap.Explanation]:
+    """Compute the SHAP importance values for a surrogate or a strategy
+    and returns a dictionary with the SHAP explanations for each continuous
+    output key.
 
     Args:
         surrogate: Surrogate for which the SHAP values should be computed.
@@ -90,7 +95,7 @@ def shap_importance(
             experiments if bg_sample_size is provided. If None, no seed is set.
             Defaults to None.
     """
-    if not surrogate.is_fitted:
+    if not predictor.is_fitted:
         raise ValueError("Model is not fitted yet.")
 
     if bg_experiments is None:
@@ -101,34 +106,29 @@ def shap_importance(
             n=bg_sample_size, random_state=seed, replace=False
         )
 
-    # to be able to handle categorical inputs, we run the shap analysis on the
-    # already preprocessed data and use surrogate._predict to get the predictions.
-
-    preprocessed_bg_experiments = surrogate._prepare_data_for_predict(
-        bg_experiments[surrogate.inputs.get_keys()].copy()
-    )
-
-    preproccesed_experiments = surrogate._prepare_data_for_predict(
-        experiments[surrogate.inputs.get_keys()].copy()
-    )
     # we need to define a predict function that can be used by the shap explainer
-
-    def predict(X: np.ndarray) -> np.ndarray:
+    def predict(X: np.ndarray, output_key: str) -> np.ndarray:
         """Predict function for the surrogate."""
-        preds = surrogate._predict(
+        preds = predictor.predict(
             pd.DataFrame(
-                X, columns=preproccesed_experiments.columns, dtype=np.float64
+                X, columns=predictor.inputs.get_keys(), dtype=np.float64
             )  # get the correct column names here
-        )[0][:, 0]
+        )[output_key + "_pred"].to_numpy()
         return preds
 
-    # print(preprocessed_bg_experiments)
+    explanations = {}
 
-    explainer = shap.KernelExplainer(
-        model=predict, data=preprocessed_bg_experiments, link="identity"
-    )
+    for output_key in predictor.outputs.get_keys(ContinuousOutput):
+        explainer = shap.KernelExplainer(
+            model=partial(predict, output_key=output_key),
+            data=bg_experiments[predictor.inputs.get_keys()],
+            link="identity",
+        )
+        explanations[output_key] = explainer(
+            experiments[predictor.inputs.get_keys()].to_numpy(), silent=True
+        )
 
-    return explainer(preproccesed_experiments.to_numpy(), silent=True)
+    return explanations
 
 
 def shap_importance_hook(
@@ -142,7 +142,7 @@ def shap_importance_hook(
     validated SHAP feature importance.
     """
     return shap_importance(
-        surrogate=surrogate,
+        predictor=surrogate,
         experiments=X_test,
         bg_experiments=X_train,
         bg_sample_size=50,
@@ -151,9 +151,10 @@ def shap_importance_hook(
 
 
 def combine_shap_importances(
-    shap_values: Sequence[shap.Explanation],
-) -> shap.Explanation:
-    """Combines a list of SHAP explanations into one SHAP Explanation object.
+    shap_values: Sequence[Dict[str, shap.Explanation]],
+) -> Dict[str, shap.Explanation]:
+    """Combines a sequence of  dictionaries of SHAP explanations into one dictionary of
+    SHAP explanations.
 
     Args:
         shap_values: List of SHAP Explanation objects to combine.
@@ -161,22 +162,49 @@ def combine_shap_importances(
     Returns:
         Combined SHAP Explanation object.
     """
-    return shap.Explanation(
-        values=np.concatenate([sv.values for sv in shap_values], axis=0),
-        base_values=np.concatenate([sv.base_values for sv in shap_values], axis=0),
-        data=np.concatenate([sv.data for sv in shap_values], axis=0),
-        display_data=None,
-        instance_names=None,
-        feature_names=shap_values[0].feature_names,
-        output_names=None,
-        output_indexes=None,
-        lower_bounds=None,
-        upper_bounds=None,
-        error_std=None,
-        main_effects=None,
-        hierarchical_values=None,
-        clustering=None,
-    )
+
+    def _combine_shap_explanations(
+        explanations: Sequence[shap.Explanation],
+    ) -> shap.Explanation:
+        """Combines a sequence of SHAP explanations into one SHAP explanation."""
+
+        # Check if all explanations have the same feature names
+        feature_names = explanations[0].feature_names
+        for expl in explanations[1:]:
+            if expl.feature_names != feature_names:
+                raise ValueError(
+                    "All SHAP explanations must have the same feature names."
+                )
+
+        return shap.Explanation(
+            values=np.concatenate([expl.values for expl in explanations], axis=0),
+            base_values=np.concatenate(
+                [expl.base_values for expl in explanations], axis=0
+            ),
+            data=np.concatenate([expl.data for expl in explanations], axis=0),
+            display_data=None,
+            instance_names=None,
+            feature_names=explanations[0].feature_names,
+            output_names=None,
+            output_indexes=None,
+            lower_bounds=None,
+            upper_bounds=None,
+            error_std=None,
+            main_effects=None,
+            hierarchical_values=None,
+            clustering=None,
+        )
+
+    keys = shap_values[0].keys()
+    if not all(key in sv for sv in shap_values for key in keys):
+        raise ValueError("All SHAP values must contain the same keys.")
+
+    combined_shap_values = {}
+    for key in keys:
+        combined_shap_values[key] = _combine_shap_explanations(
+            [sv[key] for sv in shap_values]
+        )
+    return combined_shap_values
 
 
 def permutation_importance(

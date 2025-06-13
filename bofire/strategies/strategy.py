@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
-from bofire.data_models.domain.domain import Domain
+from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
@@ -42,6 +42,16 @@ class Strategy(ABC):
     def domain(self) -> Domain:
         """Returns the domain of the strategy."""
         return self._data_model.domain
+
+    @property
+    def inputs(self) -> Inputs:
+        """Shortcut to access the inputs of the strategy's domain."""
+        return self.domain.inputs
+
+    @property
+    def outputs(self) -> Outputs:
+        """Shortcut to access the outputs of the strategy's domain."""
+        return self.domain.outputs
 
     def _get_seed(self) -> int:
         """Returns an integer sampled from the strategies random number generator,
