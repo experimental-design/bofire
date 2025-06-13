@@ -5,13 +5,14 @@ from typing import Callable, Dict, List, Optional, Tuple, Type
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.optim.initializers import gen_batch_initial_conditions
-from botorch.optim.optimize import (
+from botorch.optim import (
     optimize_acqf,
     optimize_acqf_discrete,
-    optimize_acqf_list,
     optimize_acqf_mixed,
+    optimize_acqf_mixed_alternating,
 )
+from botorch.optim.initializers import gen_batch_initial_conditions
+from botorch.optim.optimize import optimize_acqf_list
 from pymoo.optimize import minimize as pymoo_minimize
 from torch import Tensor
 
@@ -336,6 +337,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinears,
             fixed_features,
             fixed_features_list,
+            discrete_dims,
+            cat_dims,
         ) = self._setup_ask(domain, input_preprocessing_specs, experiments)
 
         # do the global opt
@@ -349,6 +352,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinear_constraints=nonlinears,  # type: ignore
             fixed_features=fixed_features,
             fixed_features_list=fixed_features_list,
+            discrete_dims=discrete_dims,
+            cat_dims=cat_dims,
             sequential=self.sequential,
         )
 
@@ -406,6 +411,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
         nonlinear_constraints: List[Callable[[Tensor], float]],
         fixed_features: Optional[Dict[int, float]],
         fixed_features_list: Optional[List[Dict[int, float]]],
+        discrete_dims: Optional[List[int]],
+        cat_dims: Optional[List[int]],
         sequential: bool,
     ) -> Tuple[Tensor, Tensor]:
         if len(acqfs) > 1:
@@ -428,6 +435,31 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
                 options=self._get_optimizer_options(domain),  # type: ignore
+            )
+        elif True:
+            options = self._get_optimizer_options(domain)
+            options["maxiter_alternating"] = options.pop("maxiter")
+            candidates, acqf_vals = optimize_acqf_mixed_alternating(
+                acq_function=acqfs[0],
+                bounds=bounds,
+                discrete_dims=discrete_dims,
+                cat_dims=cat_dims,
+                q=candidate_count,
+                num_restarts=self.n_restarts,
+                raw_samples=self.n_raw_samples,
+                # equality_constraints=get_linear_constraints(
+                #     domain=domain,
+                #     constraint=LinearEqualityConstraint,
+                # ),
+                inequality_constraints=get_linear_constraints(
+                    domain=domain,
+                    constraint=LinearInequalityConstraint,
+                ),
+                # nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
+                fixed_features=fixed_features,
+                # ic_generator=ic_generator,
+                # ic_gen_kwargs=ic_gen_kwargs,
+                options=options,  # type: ignore
             )
         elif fixed_features_list:
             candidates, acqf_vals = optimize_acqf_mixed(
@@ -513,6 +545,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
         num_categorical_features = len(
             domain.inputs.get([CategoricalInput, DiscreteInput]),
         )
+        # TODO: this should not explicitly enumerate all combinations for settings
+        # where the number of combinations is very large, which leads to OOM errors.
         num_categorical_combinations = len(
             domain.inputs.get_categorical_combinations(),
         )
@@ -568,6 +602,17 @@ class BotorchOptimizer(AcquisitionOptimizer):
             fixed_features_list = self.get_categorical_combinations(
                 domain, input_preprocessing_specs
             )
+
+        # get categorical and discrete dimensions for the alternating optimizer
+        discrete_dims = domain.inputs.get_feature_indices(
+            specs=input_preprocessing_specs,
+            feature_keys=domain.inputs.get_keys(includes=DiscreteInput),
+        )
+        cat_dims = domain.inputs.get_feature_indices(
+            specs=input_preprocessing_specs,
+            feature_keys=domain.inputs.get_keys(includes=DiscreteInput),
+        )
+
         return (
             bounds,
             local_bounds,
@@ -576,6 +621,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinear_constraints,
             fixed_features,
             fixed_features_list,
+            discrete_dims,
+            cat_dims,
         )
 
     def get_fixed_features(
