@@ -25,14 +25,14 @@ class BotorchSurrogate(Surrogate):
         descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)
         molecular_keys = inputs.get_keys(MolecularInput, exact=True)
         for key in categorical_keys:
-            if (
-                v.get(key, CategoricalEncodingEnum.ONE_HOT)
-                != CategoricalEncodingEnum.ONE_HOT
-            ):
-                raise ValueError(
-                    "Botorch based models have to use one hot encodings for categoricals",
-                )
-            v[key] = CategoricalEncodingEnum.ONE_HOT
+            # if (
+            #     v.get(key, CategoricalEncodingEnum.ONE_HOT)
+            #     != CategoricalEncodingEnum.ONE_HOT
+            # ):
+            #     raise ValueError(
+            #         "Botorch based models have to use one hot encodings for categoricals",
+            #     )
+            v.setdefault(key, CategoricalEncodingEnum.ONE_HOT)
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in descriptor_keys:
             if v.get(key, CategoricalEncodingEnum.DESCRIPTOR) not in [
@@ -42,8 +42,7 @@ class BotorchSurrogate(Surrogate):
                 raise ValueError(
                     "Botorch based models have to use one hot encodings or descriptor encodings for categoricals.",
                 )
-            if v.get(key) is None:
-                v[key] = CategoricalEncodingEnum.DESCRIPTOR
+            v.setdefault(key, CategoricalEncodingEnum.DESCRIPTOR)
         for key in inputs.get_keys(NumericalInput):
             if v.get(key) is not None:
                 raise ValueError(
