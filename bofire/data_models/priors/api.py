@@ -49,3 +49,38 @@ LKJ_PRIOR = partial(
 # Hvarfner priors
 HVARFNER_NOISE_PRIOR = partial(LogNormalPrior, loc=-4, scale=1)
 HVARFNER_LENGTHSCALE_PRIOR = DimensionalityScaledLogNormalPrior
+
+# EDBO priors:
+# adapted from the EDBO paper https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
+# and code https://doi.org/10.1038/s41586-021-03213-y
+# EDBO also define starting values for the hyperparameters, which are currently not supported
+# in BoFire. We provide it here as a comment behind the prior for reference.
+EDBO_MORDRED_LENGTHSCALE_PRIOR = partial(
+    GammaPrior, concentration=2.0, rate=0.1
+)  # starting value 10.0
+EDBO_MORDRED_OUTPUT_SCALE_PRIOR = partial(
+    GammaPrior, concentration=2.0, rate=0.1
+)  # starting value 10.0
+EDBO_MORDRED_NOISE_PRIOR = partial(
+    GammaPrior, concentration=1.5, rate=0.1
+)  # starting value 5.0
+
+EDBO_DFT_LENGTHSCALE_PRIOR = partial(
+    GammaPrior, concentration=2.0, rate=0.2
+)  # starting value 5.0
+EDBO_DFT_OUTPUT_SCALE_PRIOR = partial(
+    GammaPrior, concentration=5.0, rate=0.5
+)  # starting value 8.0
+EDBO_DFT_NOISE_PRIOR = partial(
+    GammaPrior, concentration=1.5, rate=0.1
+)  # starting value 5.0
+
+EDBO_OHE_LENGTHSCALE_PRIOR = partial(
+    GammaPrior, concentration=3.0, rate=1.0
+)  # starting value 2.0
+EDBO_OHE_OUTPUT_SCALE_PRIOR = partial(
+    GammaPrior, concentration=5.0, rate=0.2
+)  # starting value 20.0
+EDBO_OHE_NOISE_PRIOR = partial(
+    GammaPrior, concentration=1.5, rate=0.1
+)  # starting value 5.0
