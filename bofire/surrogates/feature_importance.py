@@ -101,6 +101,7 @@ def shap_importance(
     if bg_experiments is None:
         bg_experiments = experiments
 
+    assert isinstance(bg_experiments, pd.DataFrame)  # only for the type checker
     if bg_sample_size is not None and len(bg_experiments) > bg_sample_size:
         bg_experiments = bg_experiments.sample(
             n=bg_sample_size, random_state=seed, replace=False
