@@ -93,9 +93,9 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
         tfs = {}
         if scaler is not None:
-            tfs["tf1"] = scaler
+            tfs["scaler"] = scaler
         if o2n is not None:
-            tfs["tf2"] = o2n
+            tfs["o2n"] = o2n
 
         tf = ChainedInputTransform(**tfs) if tfs else None
 

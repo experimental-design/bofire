@@ -460,6 +460,9 @@ def test_MixedSingleTaskGPModel_invalid_preprocessing():
 
 
 @pytest.mark.parametrize(
+    "encoding", [CategoricalEncodingEnum.ONE_HOT, CategoricalEncodingEnum.ORDINAL]
+)
+@pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
     [
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
@@ -467,7 +470,7 @@ def test_MixedSingleTaskGPModel_invalid_preprocessing():
         (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
     ],
 )
-def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
+def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler, encoding):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -488,7 +491,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     model = MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        input_preprocessing_specs={"x_cat": encoding},
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,
@@ -510,31 +513,49 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
-    if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, Normalize)
-        assert torch.eq(
-            model.model.input_transform.tf1.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
-        ).all()
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
-    elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, InputStandardize)
-        assert torch.eq(
-            model.model.input_transform.tf1.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
-        ).all()
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+
+    input_enum_to_transform = {
+        ScalerEnum.NORMALIZE: Normalize,
+        ScalerEnum.STANDARDIZE: Standardize,
+        CategoricalEncodingEnum.ONE_HOT: OneHotToNumeric,
+    }
+
+    expected_input_transform = {
+        "scaler": input_enum_to_transform.get(scaler),
+        "o2n": input_enum_to_transform.get(encoding),
+    }
+
+    # check the structure of the input transform
+    if scaler == ScalerEnum.IDENTITY and encoding == CategoricalEncodingEnum.ORDINAL:
+        assert not hasattr(model.model, "input_transform")
+        input_transform = {}
     else:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert "tf1" not in model.model.input_transform
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+        input_transform = model.model.input_transform
+        assert isinstance(input_transform, ChainedInputTransform)
+
+    if expected_input_transform["scaler"] is None:
+        assert "scaler" not in input_transform
+    else:
+        assert isinstance(
+            input_transform.get("scaler"), expected_input_transform["scaler"]
+        )
+        assert torch.eq(
+            input_transform.scaler.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+
+    if encoding == CategoricalEncodingEnum.ORDINAL:
+        assert "o2n" not in input_transform
+    else:
+        assert isinstance(input_transform.get("o2n"), expected_input_transform["o2n"])
+        assert input_transform.o2n.categorical_features == {2: 2}
+
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
+        input_preprocessing_specs={"x_cat": encoding},
         continuous_kernel=kernel,
         scaler=scaler,
         output_scaler=output_scaler,
@@ -593,24 +614,23 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
+
+    assert isinstance(model.model.input_transform, ChainedInputTransform)
+    assert isinstance(model.model.input_transform.o2n, OneHotToNumeric)
     if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, Normalize)
+        assert isinstance(model.model.input_transform.scaler, Normalize)
         assert torch.eq(
-            model.model.input_transform.tf1.indices,
+            model.model.input_transform.scaler.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, InputStandardize)
+        assert isinstance(model.model.input_transform.scaler, InputStandardize)
         assert torch.eq(
-            model.model.input_transform.tf1.indices,
+            model.model.input_transform.scaler.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:
-        assert isinstance(model.model.input_transform, OneHotToNumeric)
+        assert "scaler" not in model.model.input_transform.o2n
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedSingleTaskGPSurrogate(
@@ -628,3 +648,71 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     model2.loads(dump)
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
+
+
+def test_MixedSingleTaskGPModel_compare_encoding():
+    torch.random.manual_seed(0)
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [
+            CategoricalInput(key="x_color", categories=["blue", "red", "green"]),
+            CategoricalInput(key="x_shape", categories=["square", "circle", "tri"]),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.loc[experiments.x_color == "red", "y"] *= 5.0
+    experiments.loc[experiments.x_color == "green", "y"] /= 2.0
+    experiments.loc[experiments.x_shape == "square", "y"] += 3.0
+    experiments.loc[experiments.x_shape == "circle", "y"] -= 4.0
+    experiments["valid_y"] = 1
+
+    model = MixedSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        input_preprocessing_specs={
+            "x_color": CategoricalEncodingEnum.ONE_HOT,
+            "x_shape": CategoricalEncodingEnum.ORDINAL,
+        },
+        scaler=ScalerEnum.NORMALIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
+        continuous_kernel=RBFKernel(ard=False),
+        categorical_kernel=HammingDistanceKernel(),
+    )
+    model = surrogates.map(model)
+    with pytest.raises(ValueError):
+        model.dumps()
+    model.fit(experiments)
+    # make predictions
+    samples = inputs.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)
+    assert isinstance(model.model.input_transform.o2n, OneHotToNumeric)
+    assert model.model.input_transform.o2n.categorical_features == {2: 3}
+
+    # create another model that has swapped different encodings
+    model_swapped = MixedSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        input_preprocessing_specs={
+            "x_color": CategoricalEncodingEnum.ORDINAL,
+            "x_shape": CategoricalEncodingEnum.ONE_HOT,
+        },
+        scaler=ScalerEnum.NORMALIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
+        continuous_kernel=RBFKernel(ard=False),
+    )
+    model_swapped = surrogates.map(model_swapped)
+    model_swapped.fit(experiments)
+    preds_swapped = model_swapped.predict(samples)
+    assert isinstance(model_swapped.model.input_transform.o2n, OneHotToNumeric)
+    assert model_swapped.model.input_transform.o2n.categorical_features == {3: 3}
+    print(preds, preds_swapped)
+    assert_frame_equal(preds, preds_swapped, rtol=1e-2)
