@@ -111,7 +111,7 @@ def shap_importance(
         """Predict function for the surrogate."""
         preds = predictor.predict(
             pd.DataFrame(
-                X, columns=predictor.inputs.get_keys(), dtype=np.float64
+                X, columns=predictor.inputs.get_keys()
             )  # get the correct column names here
         )[output_key + "_pred"].to_numpy()
         return preds
