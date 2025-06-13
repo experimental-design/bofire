@@ -102,10 +102,11 @@ def shap_importance(
         bg_experiments = experiments
 
     assert isinstance(bg_experiments, pd.DataFrame)  # only for the type checker
-    if bg_sample_size is not None and len(bg_experiments) > bg_sample_size:
-        bg_experiments = bg_experiments.sample(
-            n=bg_sample_size, random_state=seed, replace=False
-        )
+    if bg_sample_size is not None:
+        if len(bg_experiments) > bg_sample_size:
+            bg_experiments = bg_experiments.sample(
+                n=bg_sample_size, random_state=seed, replace=False
+            )
 
     # we need to define a predict function that can be used by the shap explainer
     def predict(X: np.ndarray, output_key: str) -> np.ndarray:
