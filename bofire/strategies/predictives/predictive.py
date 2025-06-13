@@ -1,8 +1,9 @@
 from abc import abstractmethod
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import shap
 from pydantic import PositiveInt
 
 from bofire.data_models.features.task import TaskInput
@@ -11,6 +12,7 @@ from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy
+from bofire.surrogates.feature_importance import shap_importance
 from bofire.utils.naming_conventions import (
     get_column_names,
     postprocess_categorical_predictions,
@@ -29,7 +31,12 @@ class PredictiveStrategy(Strategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.is_fitted = False
+        self._is_fitted = False
+
+    @property
+    def is_fitted(self) -> bool:
+        """Check if the strategy is fitted."""
+        return self._is_fitted
 
     @property
     @abstractmethod
@@ -134,6 +141,30 @@ class PredictiveStrategy(Strategy):
             # initializing the ACQF.
             self._tell()
 
+    def calc_shap(self, candidates: pd.DataFrame) -> Dict[str, shap.Explanation]:
+        """Calculate SHAP values for the provided candidates.
+
+        Args:
+            candidates (pd.DataFrame): Candidates for which SHAP values should
+                be calculated.
+
+        Returns:
+            Dict[str, shap.Explanation]: Dictionary with SHAP values for each
+                output feature.
+
+        """
+        if not self.is_fitted:
+            raise ValueError("Model not yet fitted.")
+        if self.experiments is None:
+            raise ValueError(
+                "No experiments available. Strategy needs experiments to perform "
+                "SHAP calculations. Use `tell` to provide experimental data.",
+            )
+
+        return shap_importance(
+            predictor=self, bg_experiments=self.experiments, experiments=candidates
+        )
+
     def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Run predictions for the provided experiments. Only input features
         have to be provided.
@@ -196,7 +227,7 @@ class PredictiveStrategy(Strategy):
         self.domain.validate_experiments(self.experiments, strict=True)
         # transformed = self.transformer.fit_transform(self.experiments)
         self._fit(self.experiments)
-        self.is_fitted = True
+        self._is_fitted = True
 
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):

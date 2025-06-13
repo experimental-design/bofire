@@ -103,6 +103,19 @@ def test_SOBO_get_acqf(acqf, expected):
     assert isinstance(acqfs[0], expected)
 
 
+def test_SOBO_calc_shap():
+    benchmark = Himmelblau()
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
+    samples = benchmark.domain.inputs.sample(2)
+    data_model = data_models.SoboStrategy(
+        domain=benchmark.domain,
+        acquisition_function=qLogEI(),
+    )
+    strategy = SoboStrategy(data_model=data_model)
+    strategy.tell(experiments=experiments)
+    strategy.calc_shap(samples)
+
+
 def test_SOBO_calc_acquisition():
     benchmark = Himmelblau()
     experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
