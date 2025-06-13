@@ -103,8 +103,8 @@ def shap_importance(
 
     assert isinstance(bg_experiments, pd.DataFrame)  # only for the type checker
     if bg_sample_size is not None:
-        if len(bg_experiments) > bg_sample_size:
-            bg_experiments = bg_experiments.sample(
+        if len(bg_experiments) > bg_sample_size:  # type: ignore
+            bg_experiments = bg_experiments.sample(  # type: ignore
                 n=bg_sample_size, random_state=seed, replace=False
             )
 
@@ -123,7 +123,7 @@ def shap_importance(
     for output_key in predictor.outputs.get_keys(ContinuousOutput):
         explainer = shap.KernelExplainer(
             model=partial(predict, output_key=output_key),
-            data=bg_experiments[predictor.inputs.get_keys()],
+            data=bg_experiments[predictor.inputs.get_keys()],  # type: ignore
             link="identity",
         )
         explanations[output_key] = explainer(
