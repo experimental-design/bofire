@@ -5,7 +5,7 @@ import botorch
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.transforms.input import ChainedInputTransform, OneHotToNumeric
+from botorch.models.transforms.input import ChainedInputTransform
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -64,31 +64,39 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         categorical_feature_keys = get_categorical_feature_keys(
             self.input_preprocessing_specs,
         )
-        # these are the categorical dimensions after applying the OneHotToNumeric transform
+        o2n = None
+        # TODO: apply OneHotToNumeric to approriate dimensions
+        # # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys)),
         )
 
-        features2idx, _ = self.inputs._get_transform_info(
-            self.input_preprocessing_specs,
-        )
+        # features2idx, _ = self.inputs._get_transform_info(
+        #     self.input_preprocessing_specs,
+        # )
 
-        # these are the categorical features within the the OneHotToNumeric transform
-        categorical_features = {
-            features2idx[feat][0]: len(features2idx[feat])
-            for feat in categorical_feature_keys
-        }
+        # # these are the categorical features within the the OneHotToNumeric transform
+        # categorical_features = {
+        #     features2idx[feat][0]: len(features2idx[feat])
+        #     for feat in categorical_feature_keys
+        # }
 
-        o2n = OneHotToNumeric(
-            dim=tX.shape[1],
-            categorical_features=categorical_features,
-            transform_on_train=False,
-        )
-        tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
+        # o2n = OneHotToNumeric(
+        #     dim=tX.shape[1],
+        #     categorical_features=categorical_features,
+        #     transform_on_train=False,
+        # )
+        tfs = {}
+        if scaler is not None:
+            tfs["tf1"] = scaler
+        if o2n is not None:
+            tfs["tf2"] = o2n
+
+        tf = ChainedInputTransform(**tfs) if tfs else None
 
         # fit the model
         self.model = botorch.models.MixedSingleTaskGP(
-            train_X=o2n.transform(tX),
+            train_X=o2n.transform(tX) if o2n is not None else tX,
             train_Y=tY,
             cat_dims=cat_dims,
             # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
