@@ -139,6 +139,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if my_type in [
             constraints.NonlinearInequalityConstraint,
             constraints.NonlinearEqualityConstraint,
+            constraints.CategoricalExcludeConstraint,
         ]:
             return False
         return True
