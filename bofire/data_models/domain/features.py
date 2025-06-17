@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import functools
 import itertools
+import operator
 import re
 import warnings
 from collections.abc import Iterator, Sequence
@@ -435,6 +437,45 @@ class Inputs(_BaseFeatures[AnyInput]):
         list_of_lists = list_of_lists + list_of_lists_2
 
         return list(itertools.product(*list_of_lists))
+
+    def get_num_categorical_combinations(
+        self,
+        include: Union[Type, List[Type]] = Input,
+        exclude: Union[Type, List[Type]] = None,  # type: ignore
+    ) -> int:
+        """Get the total number of unique categorical combinations.
+
+        This is used before generating all of the categorical combinations, which may
+        cause memory issues if there are too many.
+
+        Args:
+            include (Feature, optional): Features to be included. Defaults to Input.
+            exclude (Feature, optional): Features to be excluded, e.g. subclasses
+                of the included features. Defaults to None.
+
+        Returns:
+            int: Returns the number of unique combinations of discrete and categorical
+                features.
+
+        """
+        features = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, CategoricalInput) and not f.is_fixed())
+        ]
+        num_cats = [len(f.get_allowed_categories()) for f in features]
+
+        discretes = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, DiscreteInput) and not f.is_fixed())
+        ]
+
+        num_discretes = [len(d.values) for d in discretes]
+
+        num_values = num_cats + num_discretes
+
+        return functools.reduce(operator.mul, num_values)
 
     # transformation related methods
     def _get_transform_info(

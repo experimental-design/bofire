@@ -59,6 +59,11 @@ from bofire.utils.torch_tools import (
 )
 
 
+# the greatest number of unique categorical combinations for which enumeration of the
+# domain is feasible
+MAX_CATEGORICAL_COMBINATIONS = 2**4
+
+
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
         self.prefer_exhaustive_search_for_purely_categorical_domains = (
@@ -436,7 +441,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 ic_generator=ic_generator,
                 options=self._get_optimizer_options(domain),  # type: ignore
             )
-        elif True:
+        elif (cat_dims or discrete_dims) and not fixed_features_list:
+            # enter this branch if the space is mixed, and we are not using enumeration
             options = self._get_optimizer_options(domain)
             options["maxiter_alternating"] = options.pop("maxiter")
             candidates, acqf_vals = optimize_acqf_mixed_alternating(
@@ -545,11 +551,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         num_categorical_features = len(
             domain.inputs.get([CategoricalInput, DiscreteInput]),
         )
-        # TODO: this should not explicitly enumerate all combinations for settings
-        # where the number of combinations is very large, which leads to OOM errors.
-        num_categorical_combinations = len(
-            domain.inputs.get_categorical_combinations(),
-        )
+        num_categorical_combinations = domain.inputs.get_num_categorical_combinations()
         bounds = self.get_bounds(domain, input_preprocessing_specs)
 
         # setup local bounds
@@ -581,6 +583,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         if (
             (num_categorical_features == 0)
             or (num_categorical_combinations == 1)
+            or (num_categorical_combinations > MAX_CATEGORICAL_COMBINATIONS)
             or (
                 all(
                     enc == CategoricalMethodEnum.FREE
