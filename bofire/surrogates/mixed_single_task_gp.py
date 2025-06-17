@@ -11,7 +11,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
-from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -64,6 +64,8 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         categorical_feature_keys = get_categorical_feature_keys(
             self.input_preprocessing_specs,
         )
+        o2n = None
+
         # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys)),
@@ -77,18 +79,29 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         categorical_features = {
             features2idx[feat][0]: len(features2idx[feat])
             for feat in categorical_feature_keys
+            if self.input_preprocessing_specs[feat] == CategoricalEncodingEnum.ONE_HOT
         }
 
-        o2n = OneHotToNumeric(
-            dim=tX.shape[1],
-            categorical_features=categorical_features,
-            transform_on_train=False,
+        o2n = (
+            OneHotToNumeric(
+                dim=tX.shape[1],
+                categorical_features=categorical_features,
+                transform_on_train=False,
+            )
+            if categorical_features
+            else None
         )
-        tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
+        tfs = {}
+        if scaler is not None:
+            tfs["scaler"] = scaler
+        if o2n is not None:
+            tfs["o2n"] = o2n
+
+        tf = ChainedInputTransform(**tfs) if tfs else None
 
         # fit the model
         self.model = botorch.models.MixedSingleTaskGP(
-            train_X=o2n.transform(tX),
+            train_X=o2n.transform(tX) if o2n is not None else tX,
             train_Y=tY,
             cat_dims=cat_dims,
             # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
