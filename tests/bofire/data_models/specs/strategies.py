@@ -8,10 +8,12 @@ from bofire.data_models.acquisition_functions.api import (
     qPI,
 )
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    SelectionCondition,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
@@ -621,6 +623,66 @@ specs.add_invalid(
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
+)
+
+for optimizer in [strategies.BotorchOptimizer, strategies.GeneticAlgorithmOptimizer]:
+    specs.add_invalid(
+        strategies.SoboStrategy,
+        lambda optimizer=optimizer: {
+            "domain": Domain(
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(key="a", categories=["a", "b", "c"]),
+                        CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                    ]
+                ),
+                outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+                constraints=[
+                    CategoricalExcludeConstraint(
+                        features=["a", "b"],
+                        conditions=[
+                            SelectionCondition(selection=["a"]),
+                            SelectionCondition(selection=["ba"]),
+                        ],
+                    )
+                ],
+            ),
+            "acquisition_optimizer": optimizer(
+                prefer_exhaustive_search_for_purely_categorical_domains=True,
+            ),
+        },
+        error=ValueError,
+        message="CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
+    )
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="a", categories=["a", "b", "c"]),
+                    CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+            constraints=[
+                CategoricalExcludeConstraint(
+                    features=["a", "b"],
+                    conditions=[
+                        SelectionCondition(selection=["a"]),
+                        SelectionCondition(selection=["ba"]),
+                    ],
+                )
+            ],
+        ),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            prefer_exhaustive_search_for_purely_categorical_domains=False,
+        ),
+    },
+    error=ValueError,
+    message="CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
 )
 
 specs.add_invalid(

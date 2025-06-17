@@ -9,7 +9,12 @@ from bofire.data_models.constraints import api as constraints
 from bofire.data_models.constraints.api import InterpointConstraint
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalDescriptorInput, ContinuousInput
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -165,8 +170,28 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     "Interpoint constraints can only be used for pure continuous search spaces.",
                 )
 
+        def validate_exclude_constraints(domain: Domain):
+            if (
+                len(domain.constraints.get(constraints.CategoricalExcludeConstraint))
+                > 0
+            ):
+                if len(
+                    domain.inputs.get([CategoricalInput, DiscreteInput]),
+                ) != len(domain.inputs):
+                    raise ValueError(
+                        "CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
+                    )
+                if (
+                    self.prefer_exhaustive_search_for_purely_categorical_domains
+                    is False
+                ):
+                    raise ValueError(
+                        "CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
+                    )
+
         validate_local_search_config(domain)
         validate_interpoint_constraints(domain)
+        validate_exclude_constraints(domain)
 
     def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
         # we also have to check here that the categorical method is compatible with the chosen models
@@ -241,9 +266,30 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             constraints.ProductInequalityConstraint,
             constraints.NonlinearInequalityConstraint,
             constraints.NChooseKConstraint,
+            constraints.CategoricalExcludeConstraint,
         ]
 
     def validate_domain(self, domain: Domain):
+        def validate_exclude_constraints(domain: Domain):
+            if (
+                len(domain.constraints.get(constraints.CategoricalExcludeConstraint))
+                > 0
+            ):
+                if len(
+                    domain.inputs.get([CategoricalInput, DiscreteInput]),
+                ) != len(domain.inputs):
+                    raise ValueError(
+                        "CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
+                    )
+                if (
+                    self.prefer_exhaustive_search_for_purely_categorical_domains
+                    is False
+                ):
+                    raise ValueError(
+                        "CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
+                    )
+
+        validate_exclude_constraints(domain)
         pass
 
     def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
