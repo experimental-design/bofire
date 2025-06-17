@@ -23,7 +23,7 @@ from bofire.data_models.constraints.api import (
     ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -308,13 +308,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         self.batch_limit = data_model.batch_limit
         self.sequential = data_model.sequential
 
-        # just for completeness here, we should drop the support for FREE and only go over ones that are also
-        # allowed, for more speedy optimization we can user other solvers
-        # so this can be remomved
-        self.categorical_method = data_model.categorical_method
-        self.discrete_method = data_model.discrete_method
-        self.descriptor_method = data_model.descriptor_method
-
         self.local_search_config = data_model.local_search_config
 
         super().__init__(data_model)
@@ -584,16 +577,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             (num_categorical_features == 0)
             or (num_categorical_combinations == 1)
             or (num_categorical_combinations > MAX_CATEGORICAL_COMBINATIONS)
-            or (
-                all(
-                    enc == CategoricalMethodEnum.FREE
-                    for enc in [
-                        self.categorical_method,
-                        self.descriptor_method,
-                        self.discrete_method,
-                    ]
-                )
-            )
         ):
             fixed_features = self.get_fixed_features(
                 domain,
@@ -613,7 +596,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         )
         cat_dims = domain.inputs.get_feature_indices(
             specs=input_preprocessing_specs,
-            feature_keys=domain.inputs.get_keys(includes=DiscreteInput),
+            feature_keys=domain.inputs.get_keys(includes=CategoricalInput),
         )
 
         return (
@@ -642,50 +625,50 @@ class BotorchOptimizer(AcquisitionOptimizer):
         # in the bounds but helps to make it safer
 
         # this could be removed if we drop support for FREE
-        if self.categorical_method is not None:
-            if (
-                self.categorical_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.ONE_HOT
-                in list(input_preprocessing_specs.values())
-            ):
-                # for feat in self.get_true_categorical_features():
-                for feat in [
-                    domain.inputs.get_by_key(featkey)
-                    for featkey in domain.inputs.get_keys(CategoricalInput)
-                    if input_preprocessing_specs[featkey]
-                    == CategoricalEncodingEnum.ONE_HOT
-                ]:
-                    assert isinstance(feat, CategoricalInput)
-                    if feat.is_fixed() is False:
-                        for cat in feat.get_forbidden_categories():
-                            transformed = feat.to_onehot_encoding(pd.Series([cat]))
-                            # we fix those indices to zero where one has a 1 as response from the transformer
-                            for j, idx in enumerate(features2idx[feat.key]):
-                                if transformed.values[0, j] == 1.0:
-                                    fixed_features[idx] = 0
+        # FIXME: this needs to be treated carefully. `optimize_mixed_alternating` expects
+        # ordinal encoding, but here the fixing is applied in the one-hot space. How
+        # can we support not-allowed categorical values with an ordinal encoding? We can
+        # do linear equalities, but this would become expensive.
+        # if self.categorical_method is not None:
+        if (
+            # self.categorical_method == CategoricalMethodEnum.FREE
+            CategoricalEncodingEnum.ONE_HOT in list(input_preprocessing_specs.values())
+        ):
+            # for feat in self.get_true_categorical_features():
+            for feat in [
+                domain.inputs.get_by_key(featkey)
+                for featkey in domain.inputs.get_keys(CategoricalInput)
+                if input_preprocessing_specs[featkey] == CategoricalEncodingEnum.ONE_HOT
+            ]:
+                assert isinstance(feat, CategoricalInput)
+                if feat.is_fixed() is False:
+                    for cat in feat.get_forbidden_categories():
+                        transformed = feat.to_onehot_encoding(pd.Series([cat]))
+                        # we fix those indices to zero where one has a 1 as response from the transformer
+                        for j, idx in enumerate(features2idx[feat.key]):
+                            if transformed.values[0, j] == 1.0:
+                                fixed_features[idx] = 0
 
         # for the descriptor ones
-        if self.descriptor_method is not None:
-            if (
-                self.descriptor_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.DESCRIPTOR
-                in list(input_preprocessing_specs.values())
-            ):
-                # for feat in self.get_true_categorical_features():
-                for feat in [
-                    domain.inputs.get_by_key(featkey)
-                    for featkey in domain.inputs.get_keys(CategoricalDescriptorInput)
-                    if input_preprocessing_specs[featkey]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ]:
-                    assert isinstance(feat, CategoricalDescriptorInput)
-                    if feat.is_fixed() is False:
-                        lower, upper = feat.get_bounds(
-                            CategoricalEncodingEnum.DESCRIPTOR
-                        )
-                        for j, idx in enumerate(features2idx[feat.key]):
-                            if lower[j] == upper[j]:
-                                fixed_features[idx] = lower[j]
+        # if self.descriptor_method is not None:
+        if (
+            # self.descriptor_method == CategoricalMethodEnum.FREE
+            CategoricalEncodingEnum.DESCRIPTOR
+            in list(input_preprocessing_specs.values())
+        ):
+            # for feat in self.get_true_categorical_features():
+            for feat in [
+                domain.inputs.get_by_key(featkey)
+                for featkey in domain.inputs.get_keys(CategoricalDescriptorInput)
+                if input_preprocessing_specs[featkey]
+                == CategoricalEncodingEnum.DESCRIPTOR
+            ]:
+                assert isinstance(feat, CategoricalDescriptorInput)
+                if feat.is_fixed() is False:
+                    lower, upper = feat.get_bounds(CategoricalEncodingEnum.DESCRIPTOR)
+                    for j, idx in enumerate(features2idx[feat.key]):
+                        if lower[j] == upper[j]:
+                            fixed_features[idx] = lower[j]
         return fixed_features
 
     def get_categorical_combinations(
@@ -698,40 +681,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
         Returns:
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
         """
-        methods = [
-            self.descriptor_method,
-            self.discrete_method,
-            self.categorical_method,
-        ]
-
-        if all(m == CategoricalMethodEnum.FREE for m in methods):
-            return [{}]
 
         fixed_basis = self.get_fixed_features(
             domain,
             input_preprocessing_specs,
         )
 
-        include = []
-        exclude = None
-
-        if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(DiscreteInput)
-
-        if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalInput)
-            exclude = CategoricalDescriptorInput
-
-        if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalDescriptorInput)
-            exclude = None
-
-        if not include:
-            include = None
-
         combos = domain.inputs.get_categorical_combinations(
-            include=include if include else Input,
-            exclude=exclude,  # type: ignore
+            include=[DiscreteInput, CategoricalInput],
         )
         # now build up the fixed feature list
         if len(combos) == 1:

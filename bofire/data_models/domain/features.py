@@ -475,7 +475,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         num_values = num_cats + num_discretes
 
-        return functools.reduce(operator.mul, num_values)
+        return functools.reduce(operator.mul, num_values, 1)
 
     # transformation related methods
     def _get_transform_info(
