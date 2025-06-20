@@ -14,6 +14,7 @@ from pymoo.core.mixed import (
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.termination import default as pymoo_default_termination
+from pymoo.algorithms.moo.nsga2 import RankAndCrowdingSurvival
 from scipy import sparse
 from torch import Tensor
 
@@ -823,6 +824,9 @@ def get_ga_problem_and_algorithm(
         algorithm_args["mating"] = MixedVariableMating(
             eliminate_duplicates=MixedVariableDuplicateElimination(), repair=repair
         )  # see https://github.com/anyoptimization/pymoo/issues/575
+
+    if n_obj > 1:
+        algorithm_args["survival"] = RankAndCrowdingSurvival()
 
     algorithm = MixedVariableGA(**algorithm_args)
 
