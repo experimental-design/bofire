@@ -89,7 +89,7 @@ class GaMixedDomainHandler:
     def __init__(
         self,
         domain: Domain,
-        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+        input_preprocessing_specs: InputTransformSpecs,
         q: int = 1,
     ):
         self.domain = domain
@@ -381,7 +381,7 @@ class DomainOptimizationProblem(PymooProblem):
             ]
         ],
         domain: Domain,
-        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+        input_preprocessing_specs: InputTransformSpecs,
         q: int = 1,
         callable_format: Literal["torch", "pandas"] = "torch",
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
