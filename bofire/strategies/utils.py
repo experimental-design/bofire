@@ -204,7 +204,7 @@ class GaMixedDomainHandler:
         d is the (numerical, encoded) dimension
         """
 
-        experiments = self.transform_to_experiments(X)
+        experiments = self.transform_to_experiments_per_q_point(X)
         x_numeric = [
             self.domain.inputs.transform(
                 ex_, self.input_preprocessing_specs
@@ -214,7 +214,7 @@ class GaMixedDomainHandler:
         x_numeric = np.concatenate([np.expand_dims(x, 1) for x in x_numeric], axis=1)
         return x_numeric
 
-    def transform_to_experiments(self, X: List[dict]) -> List[pd.DataFrame]:
+    def transform_to_experiments_per_q_point(self, X: List[dict]) -> List[pd.DataFrame]:
         """Transform to a list of "experiments" dataframes for each q-point"""
         experiments = pd.DataFrame.from_records(X)
         q_column = np.array(
@@ -232,6 +232,23 @@ class GaMixedDomainHandler:
             experiments_out.append(experiments_qi)
 
         return experiments_out
+
+    def transform_to_experiments_per_individual(self, X: List[dict]) -> List[pd.DataFrame]:
+        """Transform to a list of dataframes. Will return a dataframe with q-rows for each individual."""
+        experiments = pd.DataFrame.from_records(X)
+        q_column = np.array(
+            [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
+        )
+        columns = [self.column_name_mapping_inverse[key] for key in list(experiments)]
+
+        def format_experiment(row: pd.Series) -> pd.DataFrame:
+            """Format a single row of the experiment to a DataFrame with q-points as rows"""
+            # Create a DataFrame with the values and the corresponding q-point
+            exp = pd.DataFrame({"value": row, "q": q_column,
+                                "column": columns})
+            return exp.pivot(index="q", columns="column", values="value").reset_index(drop=True)
+
+        return [format_experiment(row) for _, row in experiments.iterrows()]
 
     def transform_mixed_to_botorch_domain(self, X: List[dict]) -> Tensor:
         """Transform the variables from the pymoo format to the format required by botorch, including one-hot encoding
@@ -407,25 +424,30 @@ class DomainOptimizationProblem(PymooProblem):
 
     def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
 
+        obj = []
         if self.callable_format == "torch":
             x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
+        elif self.callable_format == "pandas":
+            x = self.domain_handler.transform_to_experiments_per_individual(x_ga_encoded)
 
-            # evaluate objectives
-            obj = []
-            for ofnc in self.objective_callables:
+        # evaluate objectives
+        for ofnc in self.objective_callables:
+            if self.callable_format == "torch":
                 ofnc_val = ofnc(x).detach().numpy()
-                if ofnc_val.ndim == 1:
-                    obj.append(ofnc_val.reshape(-1))
-                elif ofnc_val.ndim == 2:
-                    obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
-                else:
-                    raise ValueError(
-                        f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
-                    )
-            out["F"] = obj
+            elif self.callable_format == "pandas":
+                ofnc_val = ofnc(x)
 
-        else:
-            raise NotImplementedError("todo")
+            if ofnc_val.ndim == 1:
+                obj.append(ofnc_val.reshape(-1))
+            elif ofnc_val.ndim == 2:
+                obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
+            else:
+                raise ValueError(
+                    f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
+                )
+
+
+        out["F"] = obj
 
         if self.nonlinear_torch_constraints:
             G = []
@@ -436,7 +458,7 @@ class DomainOptimizationProblem(PymooProblem):
             out["G"] = np.hstack(G)
 
         if self.nonlinear_pandas_constraints:
-            experiments = self.domain_handler.transform_to_experiments(x_ga_encoded)
+            experiments = self.domain_handler.transform_to_experiments_per_q_point(x_ga_encoded)
             for constr in self.nonlinear_pandas_constraints:
                 G = np.hstack(
                     [constr(exp).values.reshape((-1, 1)) for exp in experiments]

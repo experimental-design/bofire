@@ -1,3 +1,5 @@
+from typing import List, Union
+
 import numpy as np
 import pytest
 import torch
@@ -36,12 +38,11 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
         assert constr.is_fulfilled(proposals).all()
 
 
-def test_mo_optimization(optimizer_benchmark, optimizer_data_model):
+def test_torch_objective_function(optimizer_benchmark, optimizer_data_model):
 
     # sort out cases where the optimizer does not support nonlinear constraints
     if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
-        return
-        # pytest.skip("skipping multi-objective optimization for botorch optimizer")
+        pytest.skip("skipping multi-objective optimization for botorch optimizer")
 
     # we get the strategy object  for the input-preprocessing specs, and the surrogates
     strategy = optimizer_benchmark.get_strategy(optimizer_data_model)
@@ -51,14 +52,42 @@ def test_mo_optimization(optimizer_benchmark, optimizer_data_model):
     q = 1
 
     def objective_function(x: torch.Tensor) -> torch.Tensor:
-
+        """ Objective function that evaluates the mean valuew of the surrogates at the given input x."""
         y = torch.hstack([sg.model.posterior(x).mean.reshape((-1, q)) for sg in surrogates.surrogates])
         return y
 
     problem, algorithm, termination = get_ga_problem_and_algorithm(optimizer_data_model, strategy.domain,
                                                                    [objective_function], q=q,
+                                                                   callable_format="torch",
                                                                    n_obj=len(surrogates.surrogates) * q, verbose=True)
 
     result = pymoo_minimize(problem, algorithm, termination, verbose=True)
 
     print(result.X)
+
+
+def test_pandas_objective_function(optimizer_benchmark, optimizer_data_model):
+    # sort out cases where the optimizer does not support nonlinear constraints
+    if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
+        return
+        # pytest.skip("skipping multi-objective optimization for botorch optimizer")
+
+    domain = optimizer_benchmark.benchmark.domain
+
+    def objective_function(x: List[pd.DataFrame]) -> np.ndarray:
+        """ assume we want to maximaze the mean variance of the experiments dataframe"""
+
+        vars = [xi.var(numeric_only=True).mean() for xi in x]
+        return np.array(vars)
+
+
+    problem, algorithm, termination = get_ga_problem_and_algorithm(optimizer_data_model, domain,
+                                                                   [objective_function],
+                                                                   q=optimizer_benchmark.n_add,
+                                                                   callable_format="pandas",
+                                                                   n_obj=1, verbose=True)
+
+    result = pymoo_minimize(problem, algorithm, termination, verbose=True)
+
+    print(result.X)
+
