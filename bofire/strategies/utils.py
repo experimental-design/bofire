@@ -49,16 +49,12 @@ def _default_input_preprocessing_specs(
     domain: Domain,
 ) -> InputTransformSpecs:
     """Default input preprocessing specs for the GA optimizer: If none given, will use OneHot encoding for all categorical inputs"""
-    input_preprocessing_specs = InputTransformSpecs()
+    input_preprocessing_specs = {}
     for input_ in domain.inputs.get():
         if isinstance(input_, CategoricalDescriptorInput):
-            input_preprocessing_specs.set(
-                input_.key, CategoricalEncodingEnum.DESCRIPTOR
-            )
+            input_preprocessing_specs[input_.key] = CategoricalEncodingEnum.DESCRIPTOR
         elif isinstance(input_, CategoricalInput):
-            input_preprocessing_specs.set(input_.key, CategoricalEncodingEnum.ONE_HOT)
-        else:
-            input_preprocessing_specs.set(input_.key, None)
+            input_preprocessing_specs[input_.key] = CategoricalEncodingEnum.ONE_HOT
     return input_preprocessing_specs
 
 

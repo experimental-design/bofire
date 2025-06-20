@@ -46,7 +46,6 @@ def test_mo_optimization(optimizer_benchmark, optimizer_data_model):
     # we get the strategy object  for the input-preprocessing specs, and the surrogates
     strategy = optimizer_benchmark.get_strategy(optimizer_data_model)
 
-    input_preprocessing_specs = strategy.input_preprocessing_specs
     surrogates: bofire_surrogates.BotorchSurrogates = strategy.surrogates
 
     q = 1
@@ -58,7 +57,6 @@ def test_mo_optimization(optimizer_benchmark, optimizer_data_model):
 
     problem, algorithm, termination = get_ga_problem_and_algorithm(optimizer_data_model, strategy.domain,
                                                                    [objective_function], q=q,
-                                                                   input_preprocessing_specs=input_preprocessing_specs,
                                                                    n_obj=len(surrogates.surrogates) * q, verbose=True)
 
     result = pymoo_minimize(problem, algorithm, termination, verbose=True)
