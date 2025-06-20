@@ -13,8 +13,8 @@ from pymoo.core.mixed import (
 )
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
-from pymoo.termination import default as pymoo_default_termination
 from pymoo.optimize import minimize as pymoo_minimize
+from pymoo.termination import default as pymoo_default_termination
 from scipy import sparse
 from torch import Tensor
 
@@ -939,7 +939,8 @@ def get_ga_problem_and_algorithm(
     return problem, algorithm, termination
 
 
-def run_ga(data_model: GeneticAlgorithmDataModel,
+def run_ga(
+    data_model: GeneticAlgorithmDataModel,
     domain: Domain,
     objective_callables: List[
         Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]
@@ -949,9 +950,7 @@ def run_ga(data_model: GeneticAlgorithmDataModel,
     input_preprocessing_specs: InputTransformSpecs = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
-) -> Tuple[
-    Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]
-]:
+) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
     """Convenience function to generate all pymoo- classes, needed for the optimization of the acquisition function(s)
 
     Args:
@@ -1001,9 +1000,7 @@ def run_ga(data_model: GeneticAlgorithmDataModel,
         verbose=verbose,
     )
 
-    res = pymoo_minimize(
-        problem, algorithm, termination, verbose=verbose
-    )
+    res = pymoo_minimize(problem, algorithm, termination, verbose=verbose)
 
     if callable_format == "torch":
         # transform the result to the numeric domain
@@ -1014,8 +1011,8 @@ def run_ga(data_model: GeneticAlgorithmDataModel,
     elif callable_format == "pandas":
         # transform the result to the original domain
         x_opt = problem.domain_handler.transform_to_experiments_per_individual(
-            [res.X] if isinstance(res.X, dict) else res.X)
+            [res.X] if isinstance(res.X, dict) else res.X
+        )
         f_opt = res.F
-
 
     return x_opt, f_opt

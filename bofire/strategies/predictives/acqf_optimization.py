@@ -12,7 +12,6 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
-from pymoo.optimize import minimize as pymoo_minimize
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
