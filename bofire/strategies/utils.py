@@ -14,6 +14,7 @@ from pymoo.core.mixed import (
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.termination import default as pymoo_default_termination
+from pymoo.optimize import minimize as pymoo_minimize
 from scipy import sparse
 from torch import Tensor
 
@@ -936,3 +937,86 @@ def get_ga_problem_and_algorithm(
     )
 
     return problem, algorithm, termination
+
+
+def run_ga(data_model: GeneticAlgorithmDataModel,
+    domain: Domain,
+    objective_callables: List[
+        Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]
+    ],
+    q: int = 1,
+    callable_format: Literal["torch", "pandas"] = "torch",
+    input_preprocessing_specs: InputTransformSpecs = None,
+    n_obj: Optional[int] = None,
+    verbose: bool = False,
+) -> Tuple[
+    Union[Tensor, pd.DataFrame], Union[Tensor, np.ndarray]
+]:
+    """Convenience function to generate all pymoo- classes, needed for the optimization of the acquisition function(s)
+
+    Args:
+        data_model (GeneticAlgorithmDataModel): specifications for the algorithm
+        domain (Domain): optimization domain
+        objective_callables (List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]]):
+            List of objective functions, which are evaluated in the
+            optimization problem. It should return a tensor or numpy-array of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+            The callable_format defines, if the callables are evaluated in the numeric torch domain, or in the "original"
+            pandas domain.
+            If "torch", the callables should accept a torch tensor of shape (n, q, d), where n is the
+            number of individuals, q is the number of experiments in each batch, and d is the number of the (numeric
+            encoded) input features.
+            If "pandas", the callables should accept a list of pandas DataFrames, where each DataFrame contains "q"
+            rows and "d" columns, where "d" is the number of (notencoded) input features.
+            Each DataFrame corresponds to one individual of the GA.
+        q (int): number of experiments
+        callable_format (Literal["torch", "pandas"]): Format of the objective callables. see `objective_callables`
+        input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
+                objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
+            optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+        n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
+            Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
+            must be set to the sum of the number of outputs of each callable.
+        verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
+
+    Returns
+        x_opt (Union[Tensor, pd.DataFrame]): optimized experiments
+        f_opt (np.ndarray): objective function value
+    """
+
+    problem, algorithm, termination = get_ga_problem_and_algorithm(
+        data_model=data_model,
+        domain=domain,
+        objective_callables=objective_callables,
+        q=q,
+        callable_format=callable_format,
+        input_preprocessing_specs=input_preprocessing_specs,
+        n_obj=n_obj,
+        verbose=verbose,
+    )
+
+    res = pymoo_minimize(
+        problem, algorithm, termination, verbose=verbose
+    )
+
+    if callable_format == "torch":
+        # transform the result to the numeric domain
+        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
+            [res.X]
+        ).reshape((q, -1))
+        f_opt = torch.from_numpy(res.F).to(**tkwargs)
+    elif callable_format == "pandas":
+        # transform the result to the original domain
+        x_opt = problem.domain_handler.transform_to_experiments_per_individual(
+            res.X.reshape((q, -1))
+        )
+        f_opt = res.F
+
+
+    return x_opt, f_opt

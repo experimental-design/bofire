@@ -78,13 +78,12 @@ def test_torch_objective_function(optimizer_benchmark, optimizer_data_model):
 def test_pandas_objective_function(optimizer_benchmark, optimizer_data_model):
     # sort out cases where the optimizer does not support nonlinear constraints
     if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
-        return
-        # pytest.skip("skipping multi-objective optimization for botorch optimizer")
+        pytest.skip("skipping multi-objective optimization for botorch optimizer")
 
     domain = optimizer_benchmark.benchmark.domain
 
     def objective_function(x: List[pd.DataFrame]) -> np.ndarray:
-        """assume we want to maximaze the mean variance of the experiments dataframe"""
+        """assume we want to maximize the mean variance of the experiments dataframe"""
 
         vars = [xi.var(numeric_only=True).mean() for xi in x]
         return np.array(vars)

@@ -829,23 +829,15 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             Tensor: x_opt as (d,) Tensor
             Tensor: f_opt as (n_y,) Tensor
         """
-        problem, algorithm, termination = utils.get_ga_problem_and_algorithm(
+        x_opt, f_opt = utils.run_ga(
             self.data_model,
             domain,
             acqfs,
             q,
-            input_preprocessing_specs,
+            callable_format="torch",
+            input_preprocessing_specs=input_preprocessing_specs,
             verbose=self.data_model.verbose,
         )
-
-        res = pymoo_minimize(
-            problem, algorithm, termination, verbose=self.data_model.verbose
-        )
-
-        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
-            [res.X]
-        ).reshape((q, -1))
-        f_opt = torch.from_numpy(res.F).to(**tkwargs)
 
         return x_opt, f_opt
 
