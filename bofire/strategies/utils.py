@@ -89,7 +89,7 @@ class GaMixedDomainHandler:
     def __init__(
         self,
         domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs = None,
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         q: int = 1,
     ):
         self.domain = domain
@@ -381,7 +381,7 @@ class DomainOptimizationProblem(PymooProblem):
             ]
         ],
         domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs = None,
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         q: int = 1,
         callable_format: Literal["torch", "pandas"] = "torch",
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
@@ -439,15 +439,18 @@ class DomainOptimizationProblem(PymooProblem):
             x = self.domain_handler.transform_to_experiments_per_individual(
                 x_ga_encoded
             )
+        else:
+            raise NotImplementedError(f"unknown callable_format {self.callable_format}")
 
         # evaluate objectives
         for ofnc in self.objective_callables:
+            ofnc_val = np.array([])
             if self.callable_format == "torch":
-                ofnc_val = ofnc(x).detach().numpy()
+                ofnc_val = ofnc(x).detach().numpy()  # type: ignore
             elif self.callable_format == "pandas":
-                ofnc_val = ofnc(x)
+                ofnc_val = ofnc(x)  # type: ignore
 
-            if ofnc_val.ndim == 1:
+            if ofnc_val.ndim == 1:  # type: ignore
                 obj.append(ofnc_val.reshape(-1))
             elif ofnc_val.ndim == 2:
                 obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
@@ -820,7 +823,7 @@ def get_ga_problem_and_algorithm(
     ],
     q: int = 1,
     callable_format: Literal["torch", "pandas"] = "torch",
-    input_preprocessing_specs: InputTransformSpecs = None,
+    input_preprocessing_specs: Optional[InputTransformSpecs] = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
 ) -> Tuple[
@@ -947,7 +950,7 @@ def run_ga(
     ],
     q: int = 1,
     callable_format: Literal["torch", "pandas"] = "torch",
-    input_preprocessing_specs: InputTransformSpecs = None,
+    input_preprocessing_specs: Optional[InputTransformSpecs] = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
 ) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
