@@ -388,6 +388,7 @@ class DomainOptimizationProblem(PymooProblem):
                 raise ValueError(
                     f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
                 )
+        out["F"] = obj
 
         if self.nonlinear_torch_constraints:
             G = []
