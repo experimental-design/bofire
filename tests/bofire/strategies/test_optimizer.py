@@ -56,9 +56,10 @@ def test_mo_optimization(optimizer_benchmark, optimizer_data_model):
         y = torch.hstack([sg.model.posterior(x).mean.reshape((-1, q)) for sg in surrogates.surrogates])
         return y
 
-    problem, algorithm, termination = get_ga_problem_and_algorithm(
-        optimizer_data_model, strategy.domain, input_preprocessing_specs, [objective_function],
-        q=q, n_obj= len(surrogates.surrogates)*q, verbose=True)
+    problem, algorithm, termination = get_ga_problem_and_algorithm(optimizer_data_model, strategy.domain,
+                                                                   [objective_function], q=q,
+                                                                   input_preprocessing_specs=input_preprocessing_specs,
+                                                                   n_obj=len(surrogates.surrogates) * q, verbose=True)
 
     result = pymoo_minimize(problem, algorithm, termination, verbose=True)
 

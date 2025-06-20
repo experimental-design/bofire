@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Type, Union, Callable
+from typing import Dict, List, Optional, Tuple, Type, Union, Callable, Literal
 
 import cvxpy as cp
 import numpy as np
@@ -45,6 +45,23 @@ from bofire.utils.torch_tools import (
 )
 
 
+def _default_input_preprocessing_specs(
+    domain: Domain,
+) -> InputTransformSpecs:
+    """Default input preprocessing specs for the GA optimizer: If none given, will use OneHot encoding for all categorical inputs"""
+    input_preprocessing_specs = InputTransformSpecs()
+    for input_ in domain.inputs.get():
+        if isinstance(input_, CategoricalDescriptorInput):
+            input_preprocessing_specs.set(
+                input_.key, CategoricalEncodingEnum.DESCRIPTOR
+            )
+        elif isinstance(input_, CategoricalInput):
+            input_preprocessing_specs.set(input_.key, CategoricalEncodingEnum.ONE_HOT)
+        else:
+            input_preprocessing_specs.set(input_.key, None)
+    return input_preprocessing_specs
+
+
 class GaMixedDomainHandler:
     """Helper class for transferring bounds, and data from different (encoded) input
     features, to mixed-variable encoded features, as they are used for the GA
@@ -67,14 +84,14 @@ class GaMixedDomainHandler:
 
     Args:
         domain (Domain): problem domain
-         input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for the models in
-                the acquisition functions
+            input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for transforming the inputs
+            from the domain to the numeric (torch) domain
         q (int): Number of experiments.
 
     """
 
     def __init__(
-        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs, q: int
+        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs = None, q: int = 1,
     ):
         self.domain = domain
         self.vars = {}
@@ -83,6 +100,9 @@ class GaMixedDomainHandler:
         ] = {}  # conversions, which are not handled by the "domain"
         self.input_preprocessing_specs = input_preprocessing_specs
         self.q = q
+
+        if input_preprocessing_specs is None:
+            input_preprocessing_specs = _default_input_preprocessing_specs(domain)
 
         for key in domain.inputs.get_keys():
             spec_ = input_preprocessing_specs.get(key)
@@ -302,20 +322,30 @@ class DomainOptimizationProblem(PymooProblem):
     "LinearProjection" class for details.
 
     Args:
-        objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
-            optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
-            number of features, and q is the number of experiments. It should return a tensor of shape (n,).
+        objective_callables: List of objective functions, which are evaluated in the
+            optimization problem. It should return a tensor or numpy-array of shape (n,).
             Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
             this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
 
+            The callable_format defines, if the callables are evaluated in the numeric torch domain, or in the "original"
+            pandas domain.
+            If "torch", the callables should accept a torch tensor of shape (n, q, d), where n is the
+            number of individuals, q is the number of experiments in each batch, and d is the number of the (numeric
+            encoded) input features.
+            If "pandas", the callables should accept a list of pandas DataFrames, where each DataFrame contains "q"
+            rows and "d" columns, where "d" is the number of (notencoded) input features.
+            Each DataFrame corresponds to one individual of the GA.
 
         domain (Domain): The bofire domain, which contains the input and output features.
         input_preprocessing_specs (InputTransformSpecs): The input preprocessing specifications, which are used to
             transform the inputs to the correct format for the models. This is needed for the variable transformation
             from the mixed-variable type domain to the numeric torch domain.
         q (int): Number of experiments in each batch.
+        callable_format (Literal["torch", "pandas"]): Format of the objective callables. see `objective_callables`
+            for details.
         nonlinear_torch_constraints (Optional[List[Type[Constraint]]]): List of types of nonlinear torch constraints, which are
             evaluated in the numeric torch domain. Must be transformable by the "get_nonlinear_constraints" function.
+            Cannot be used, if `callable_format` is "pandas".
         nonlinear_pandas_constraints (Optional[List[Type[Constraint]]]): List of types nonlinear pandas constraints, which are
             evaluated in the original domain.
         n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
@@ -326,10 +356,11 @@ class DomainOptimizationProblem(PymooProblem):
 
     def __init__(
         self,
-        objective_callables: List[Callable[[Tensor], Tensor]],
+        objective_callables: List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]],
         domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
-        q: int,
+        input_preprocessing_specs: InputTransformSpecs = None,
+        q: int = 1,
+        callable_format: Literal["torch", "pandas"] = "torch",
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
         n_obj: Optional[int] = None,
@@ -337,6 +368,7 @@ class DomainOptimizationProblem(PymooProblem):
 
         self.objective_callables = objective_callables
         self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
+        self.callable_format = callable_format
 
         # torch constraints: evaluated in encoded space
         if nonlinear_torch_constraints is None:
@@ -348,6 +380,10 @@ class DomainOptimizationProblem(PymooProblem):
         self.nonlinear_torch_constraints = get_nonlinear_constraints(
             domain, includes=nonlinear_torch_constraints
         )
+        if self.nonlinear_torch_constraints and callable_format == "pandas":
+            raise ValueError(
+                "Nonlinear torch constraints cannot be used with callable_format='pandas'."
+            )
 
         # pandas constraints: evaluated in original space
         if nonlinear_pandas_constraints is None:
@@ -374,21 +410,26 @@ class DomainOptimizationProblem(PymooProblem):
         )
 
     def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
-        x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
 
-        # evaluate objectives
-        obj = []
-        for ofnc in self.objective_callables:
-            ofnc_val = ofnc(x).detach().numpy()
-            if ofnc_val.ndim == 1:
-                obj.append(ofnc_val.reshape(-1))
-            elif ofnc_val.ndim == 2:
-                obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
-            else:
-                raise ValueError(
-                    f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
-                )
-        out["F"] = obj
+        if self.callable_format == "torch":
+            x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
+
+            # evaluate objectives
+            obj = []
+            for ofnc in self.objective_callables:
+                ofnc_val = ofnc(x).detach().numpy()
+                if ofnc_val.ndim == 1:
+                    obj.append(ofnc_val.reshape(-1))
+                elif ofnc_val.ndim == 2:
+                    obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
+                else:
+                    raise ValueError(
+                        f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
+                    )
+            out["F"] = obj
+
+        else:
+            raise NotImplementedError("todo")
 
         if self.nonlinear_torch_constraints:
             G = []
@@ -426,8 +467,7 @@ class LinearProjection(PymooRepair):
             ...
 
 
-    in order to solve this with the performant cvxopt.qp solver
-    (https://cvxopt.org/userguide/coneprog.html#quadratic-programming)
+    in order to solve this with the performant cvxpy solver. (https://www.cvxpy.org/examples/basic/quadratic_program.html)
 
     For performance, the problem is solved for the complete generation X = [x1 ; x2; ...]
     where x1, x2, ... are the vectors of each individual in the population and q-opt. points
@@ -745,14 +785,12 @@ def get_torch_bounds_from_domain(
 
 
 def get_ga_problem_and_algorithm(
-    data_model: GeneticAlgorithmDataModel,
-    domain: Domain,
-    input_preprocessing_specs: InputTransformSpecs,
-    objective_callables: List[Callable[[Tensor], Tensor]],
-    q: int,
-    n_obj: Optional[int] = None,
-    verbose: bool = False,
-) -> Tuple[
+        data_model: GeneticAlgorithmDataModel, domain: Domain,
+        objective_callables: List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]],
+        q: int = 1,
+        callable_format: Literal["torch", "pandas"] = "torch",
+        input_preprocessing_specs: InputTransformSpecs = None, n_obj: Optional[int] = None,
+        verbose: bool = False) -> Tuple[
     DomainOptimizationProblem,
     MixedVariableGA,
     Union[
@@ -765,13 +803,29 @@ def get_ga_problem_and_algorithm(
     Args:
         data_model (GeneticAlgorithmDataModel): specifications for the algorithm
         domain (Domain): optimization domain
+        objective_callables (List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]]):
+            List of objective functions, which are evaluated in the
+            optimization problem. It should return a tensor or numpy-array of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+            The callable_format defines, if the callables are evaluated in the numeric torch domain, or in the "original"
+            pandas domain.
+            If "torch", the callables should accept a torch tensor of shape (n, q, d), where n is the
+            number of individuals, q is the number of experiments in each batch, and d is the number of the (numeric
+            encoded) input features.
+            If "pandas", the callables should accept a list of pandas DataFrames, where each DataFrame contains "q"
+            rows and "d" columns, where "d" is the number of (notencoded) input features.
+            Each DataFrame corresponds to one individual of the GA.
+        q (int): number of experiments
+        callable_format (Literal["torch", "pandas"]): Format of the objective callables. see `objective_callables`
         input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
                 objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
             optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
             number of features, and q is the number of experiments. It should return a tensor of shape (n,).
             Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
             this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
-        q (int): number of experiments
+
         n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
             Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
             must be set to the sum of the number of outputs of each callable.
@@ -782,6 +836,9 @@ def get_ga_problem_and_algorithm(
         algorithm
         termination
     """
+
+    if input_preprocessing_specs is None:
+        input_preprocessing_specs = _default_input_preprocessing_specs(domain)
 
     bounds_botorch_space = get_torch_bounds_from_domain(
         domain, input_preprocessing_specs
@@ -795,6 +852,7 @@ def get_ga_problem_and_algorithm(
         domain,
         input_preprocessing_specs,
         q,
+        callable_format=callable_format,
         n_obj=n_obj,
     )
 

@@ -828,14 +828,9 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             Tensor: x_opt as (d,) Tensor
             Tensor: f_opt as (n_y,) Tensor
         """
-        problem, algorithm, termination = utils.get_ga_problem_and_algorithm(
-            self.data_model,
-            domain,
-            input_preprocessing_specs,
-            acqfs,
-            q,
-            verbose=self.data_model.verbose,
-        )
+        problem, algorithm, termination = utils.get_ga_problem_and_algorithm(self.data_model, domain, acqfs, q,
+                                                                             input_preprocessing_specs,
+                                                                             verbose=self.data_model.verbose)
 
         res = pymoo_minimize(
             problem, algorithm, termination, verbose=self.data_model.verbose
