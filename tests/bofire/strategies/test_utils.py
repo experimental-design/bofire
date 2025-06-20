@@ -14,7 +14,11 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain import api as data_models_domain
 from bofire.data_models.features import api as data_models_features
 from bofire.data_models.strategies import api as data_models_strategies
-from bofire.strategies.utils import GaMixedDomainHandler, LinearProjection, get_torch_bounds_from_domain
+from bofire.strategies.utils import (
+    GaMixedDomainHandler,
+    LinearProjection,
+    get_torch_bounds_from_domain,
+)
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
@@ -70,7 +74,9 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
     )
 
     input_preprocessing_specs = strategy.input_preprocessing_specs
-    bounds_botorch_space = get_torch_bounds_from_domain(domain, input_preprocessing_specs)
+    bounds_botorch_space = get_torch_bounds_from_domain(
+        domain, input_preprocessing_specs
+    )
     q = optimizer_benchmark.n_add
 
     # We handle linear equality constraint with a repair function
