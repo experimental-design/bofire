@@ -1,10 +1,10 @@
-from typing import Dict, List, Optional, Tuple, Type, Union, Callable, Literal
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import cvxpy as cp
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from pymoo.algorithms.moo.nsga2 import RankAndCrowdingSurvival
 from pymoo.core import variable as pymoo_variable
 from pymoo.core.mixed import (
     MixedVariableDuplicateElimination,
@@ -14,7 +14,6 @@ from pymoo.core.mixed import (
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.termination import default as pymoo_default_termination
-from pymoo.algorithms.moo.nsga2 import RankAndCrowdingSurvival
 from scipy import sparse
 from torch import Tensor
 
@@ -87,7 +86,10 @@ class GaMixedDomainHandler:
     """
 
     def __init__(
-        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs = None, q: int = 1,
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs = None,
+        q: int = 1,
     ):
         self.domain = domain
         self.vars = {}
@@ -233,7 +235,9 @@ class GaMixedDomainHandler:
 
         return experiments_out
 
-    def transform_to_experiments_per_individual(self, X: List[dict]) -> List[pd.DataFrame]:
+    def transform_to_experiments_per_individual(
+        self, X: List[dict]
+    ) -> List[pd.DataFrame]:
         """Transform to a list of dataframes. Will return a dataframe with q-rows for each individual."""
         experiments = pd.DataFrame.from_records(X)
         q_column = np.array(
@@ -244,9 +248,10 @@ class GaMixedDomainHandler:
         def format_experiment(row: pd.Series) -> pd.DataFrame:
             """Format a single row of the experiment to a DataFrame with q-points as rows"""
             # Create a DataFrame with the values and the corresponding q-point
-            exp = pd.DataFrame({"value": row, "q": q_column,
-                                "column": columns})
-            return exp.pivot(index="q", columns="column", values="value").reset_index(drop=True)
+            exp = pd.DataFrame({"value": row, "q": q_column, "column": columns})
+            return exp.pivot(index="q", columns="column", values="value").reset_index(
+                drop=True
+            )
 
         return [format_experiment(row) for _, row in experiments.iterrows()]
 
@@ -369,7 +374,11 @@ class DomainOptimizationProblem(PymooProblem):
 
     def __init__(
         self,
-        objective_callables: List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]],
+        objective_callables: List[
+            Union[
+                Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]
+            ]
+        ],
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs = None,
         q: int = 1,
@@ -378,7 +387,6 @@ class DomainOptimizationProblem(PymooProblem):
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
         n_obj: Optional[int] = None,
     ):
-
         self.objective_callables = objective_callables
         self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
         self.callable_format = callable_format
@@ -423,12 +431,13 @@ class DomainOptimizationProblem(PymooProblem):
         )
 
     def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
-
         obj = []
         if self.callable_format == "torch":
             x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
         elif self.callable_format == "pandas":
-            x = self.domain_handler.transform_to_experiments_per_individual(x_ga_encoded)
+            x = self.domain_handler.transform_to_experiments_per_individual(
+                x_ga_encoded
+            )
 
         # evaluate objectives
         for ofnc in self.objective_callables:
@@ -446,7 +455,6 @@ class DomainOptimizationProblem(PymooProblem):
                     f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
                 )
 
-
         out["F"] = obj
 
         if self.nonlinear_torch_constraints:
@@ -458,7 +466,9 @@ class DomainOptimizationProblem(PymooProblem):
             out["G"] = np.hstack(G)
 
         if self.nonlinear_pandas_constraints:
-            experiments = self.domain_handler.transform_to_experiments_per_q_point(x_ga_encoded)
+            experiments = self.domain_handler.transform_to_experiments_per_q_point(
+                x_ga_encoded
+            )
             for constr in self.nonlinear_pandas_constraints:
                 G = np.hstack(
                     [constr(exp).values.reshape((-1, 1)) for exp in experiments]
@@ -801,14 +811,18 @@ def get_torch_bounds_from_domain(
     return torch.tensor([lower, upper]).to(**tkwargs)
 
 
-
 def get_ga_problem_and_algorithm(
-        data_model: GeneticAlgorithmDataModel, domain: Domain,
-        objective_callables: List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]],
-        q: int = 1,
-        callable_format: Literal["torch", "pandas"] = "torch",
-        input_preprocessing_specs: InputTransformSpecs = None, n_obj: Optional[int] = None,
-        verbose: bool = False) -> Tuple[
+    data_model: GeneticAlgorithmDataModel,
+    domain: Domain,
+    objective_callables: List[
+        Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]
+    ],
+    q: int = 1,
+    callable_format: Literal["torch", "pandas"] = "torch",
+    input_preprocessing_specs: InputTransformSpecs = None,
+    n_obj: Optional[int] = None,
+    verbose: bool = False,
+) -> Tuple[
     DomainOptimizationProblem,
     MixedVariableGA,
     Union[
