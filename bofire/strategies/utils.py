@@ -464,7 +464,8 @@ class DomainOptimizationProblem(PymooProblem):
         if self.nonlinear_torch_constraints:
             G = []
             for constr in self.nonlinear_torch_constraints:
-                constr_val = -constr[0](x)  # converting to form g(x) <= 0
+                # converting to form g(x) <= 0
+                constr_val = -constr[0](x)  # type: ignore
                 G.append(constr_val.detach().numpy())  # type: ignore
 
             out["G"] = np.hstack(G)

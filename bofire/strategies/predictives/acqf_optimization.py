@@ -838,7 +838,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             verbose=self.data_model.verbose,
         )
 
-        return x_opt, f_opt
+        return x_opt, f_opt  # type: ignore
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {
