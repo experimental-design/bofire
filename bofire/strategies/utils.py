@@ -950,7 +950,7 @@ def run_ga(data_model: GeneticAlgorithmDataModel,
     n_obj: Optional[int] = None,
     verbose: bool = False,
 ) -> Tuple[
-    Union[Tensor, pd.DataFrame], Union[Tensor, np.ndarray]
+    Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]
 ]:
     """Convenience function to generate all pymoo- classes, needed for the optimization of the acquisition function(s)
 
@@ -1014,8 +1014,7 @@ def run_ga(data_model: GeneticAlgorithmDataModel,
     elif callable_format == "pandas":
         # transform the result to the original domain
         x_opt = problem.domain_handler.transform_to_experiments_per_individual(
-            res.X.reshape((q, -1))
-        )
+            [res.X] if isinstance(res.X, dict) else res.X)
         f_opt = res.F
 
 
