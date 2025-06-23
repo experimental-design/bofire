@@ -137,6 +137,17 @@ class CategoricalInput(Input):
                 )
         return values
 
+    def is_fulfilled(self, values: pd.Series) -> pd.Series:
+        """Method to check if the values are all allowed categories.
+
+        Args:
+            values: A series with values for the input feature.
+
+        Returns:
+            A series with boolean values indicating if the input feature is fulfilled.
+        """
+        return values.isin(self.get_allowed_categories())
+
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
 

@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
@@ -79,6 +79,21 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 def test_inputs_get_categorical_combinations(inputs, data):
     expected = list(itertools.product(*data))
     assert inputs.get_categorical_combinations() == expected
+
+
+def test_inputs_is_fulfilled():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="f1", categories=["a", "b", "c"], allowed=[True, True, False]
+            ),
+            ContinuousInput(key="f2", bounds=(0, 1)),
+        ]
+    )
+    experiments = pd.DataFrame({"f1": ["a", "a", "b", "c"], "f2": [2.0, 0.1, 0.5, 3.0]})
+    assert_series_equal(
+        inputs.is_fulfilled(experiments), pd.Series([False, True, True, False])
+    )
 
 
 @pytest.mark.parametrize(

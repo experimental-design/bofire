@@ -93,6 +93,21 @@ class ContinuousInput(NumericalInput):
 
         return values.apply(lambda x: steps[np.argmin(np.abs(steps - x))])
 
+    def is_fulfilled(self, values: pd.Series) -> pd.Series:
+        """Method to check if the values are within the bounds of the feature.
+
+        Args:
+            values: A series with values for the input feature.
+
+        Returns:
+            A series with boolean values indicating if the input feature is fulfilled.
+        """
+
+        noise = 10e-6
+        return (values >= self.lower_bound - noise) & (
+            values <= self.upper_bound + noise
+        )
+
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
 

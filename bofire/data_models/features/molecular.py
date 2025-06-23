@@ -39,6 +39,12 @@ class MolecularInput(Input):
 
         return values
 
+    def is_fulfilled(self, values: pd.Series) -> pd.Series:
+        raise NotImplementedError(
+            "`is_fulfilled` is not implemented for `MolecularInput`. "
+            "Please use `CategoricalMolecularInput` instead of `MolecularInput`.",
+        )
+
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)
         for smi in values:

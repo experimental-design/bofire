@@ -61,6 +61,27 @@ class DiscreteInput(NumericalInput):
         """Upper bound of the set of allowed values"""
         return max(self.values)
 
+    def is_fulfilled(self, values: pd.Series) -> pd.Series:
+        """Method to check if the values are close to the discrete values.
+
+        Args:
+            values: A series with values for the input feature.
+
+        Returns:
+            A series with boolean values indicating if the input feature is fulfilled.
+        """
+        return pd.Series(
+            np.array(
+                [
+                    np.array(
+                        [np.isclose(x, y, rtol=self.rtol) for x in self.values]
+                    ).any()
+                    for y in values.to_numpy()
+                ]
+            ),
+            index=values.index,
+        )
+
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the provided candidates.
 
