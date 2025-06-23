@@ -718,6 +718,29 @@ class Inputs(_BaseFeatures[AnyInput]):
             ),
         )
 
+    # def is_fullfilled(self, experiments: pd.DataFrame) -> pd.Series:
+    #     """Check if the experiments fulfill the bounds on the input features.
+
+    #     Args:
+    #         experiments (pd.DataFrame): Dataframe with input features.
+
+    #     Returns:
+    #         pd.Series: Series with boolean values indicating if the experiments fulfill the input features.
+
+    #     """
+    #     pass
+
+    #     return (
+    #         pd.concat(
+    #             [
+    #                 feat.is_fulfilled(experiments, tol) for feat in self.get()
+    #             ],  # check overlap with validate_candidantel
+    #             axis=1,
+    #         )
+    #         .fillna(True)
+    #         .all(axis=1)
+    #     )
+
 
 class Outputs(_BaseFeatures[AnyOutput]):
     """Container of output features, only output features are allowed.
