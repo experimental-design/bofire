@@ -35,7 +35,7 @@ def test_optimizer(optimizer_benchmark, optimizer_data_model):
 
     constraints = strategy.domain.constraints.get()
     for constr in constraints.constraints:
-        assert constr.is_fulfilled(proposals).all(tol=1e-4)
+        assert constr.is_fulfilled(proposals, tol=1e-4).all()
 
 
 def test_torch_objective_function(optimizer_benchmark, optimizer_data_model):
