@@ -1,20 +1,26 @@
 import numpy as np
 import pandas as pd
 import pytest
+import shap
 
 import bofire.surrogates.api as surrogates
+from bofire.benchmarks.api import DTLZ2
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import RBFKernel, ScaleKernel
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.strategies.api import MoboStrategy
 from bofire.surrogates.diagnostics import metrics
 from bofire.surrogates.feature_importance import (
     combine_lengthscale_importances,
     combine_permutation_importances,
+    combine_shap_importances,
     lengthscale_importance,
     lengthscale_importance_hook,
     permutation_importance,
     permutation_importance_hook,
+    shap_importance,
+    shap_importance_hook,
 )
 
 
@@ -38,6 +44,74 @@ def get_model_and_data():
     )
     model = surrogates.map(model)
     return model, experiments
+
+
+def test_shap_importance_for_surrogate():
+    model, experiments = get_model_and_data()
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=model.inputs,
+        outputs=model.outputs,
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    importance = shap_importance(
+        predictor=surrogate, experiments=experiments, bg_experiments=experiments
+    )
+    assert sorted(importance.keys()) == sorted(surrogate.outputs.get_keys())
+    assert isinstance(importance["y"], shap.Explanation)
+    # now we test the hook
+    X = experiments[model.inputs.get_keys()]
+    y = experiments[["y"]]
+    importance = shap_importance_hook(
+        surrogate=surrogate, X_train=X, y_train=y, X_test=X, y_test=y
+    )
+    assert sorted(importance.keys()) == sorted(surrogate.outputs.get_keys())
+    assert isinstance(importance["y"], shap.Explanation)
+
+
+def test_shap_importance_for_predictive_strategy():
+    # we use here a MO benchmark to check that it works also over multiple outputs
+    bench = DTLZ2(dim=6)
+    experiments = bench.f(bench.domain.inputs.sample(n=10), return_complete=True)
+    candidates = bench.domain.inputs.sample(n=4)
+    strategy = MoboStrategy.make(domain=bench.domain)
+    strategy.tell(experiments=experiments)
+    importance = shap_importance(
+        predictor=strategy, bg_experiments=strategy.experiments, experiments=candidates
+    )
+    assert sorted(importance.keys()) == sorted(strategy.domain.outputs.get_keys())
+    for key in importance.keys():
+        assert isinstance(importance[key], shap.Explanation)
+        assert len(importance[key].values) == len(candidates)
+        assert len(importance[key].data) == len(candidates)
+        assert len(importance[key].feature_names) == len(
+            strategy.domain.inputs.get_keys()
+        )
+
+
+def test_combine_shap_importances():
+    model, experiments = get_model_and_data()
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=model.inputs,
+        outputs=model.outputs,
+    )
+    surrogate = surrogates.map(surrogate_data)
+    _, _, pi = surrogate.cross_validate(
+        experiments=experiments,
+        folds=3,
+        hooks={"shap_importance": shap_importance_hook},
+    )
+
+    assert isinstance(pi["shap_importance"], list)
+    assert len(pi["shap_importance"]) == 3
+    combined = combine_shap_importances(
+        shap_values=pi["shap_importance"],
+    )
+    assert isinstance(combined, dict)
+    assert isinstance(combined["y"], shap.Explanation)
+    assert len(combined["y"].values) == len(experiments)
+    assert len(combined["y"].data) == len(experiments)
+    assert len(combined["y"].feature_names) == len(surrogate.inputs.get_keys())
 
 
 def test_lengthscale_importance_invalid():
