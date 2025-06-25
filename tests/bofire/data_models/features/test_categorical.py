@@ -183,6 +183,18 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
         input_feature.validate_candidental(values)
 
 
+def test_cateogorical_input_is_fulfilled():
+    feature = CategoricalInput(
+        key="a", categories=["B", "A", "C"], allowed=[True, True, False]
+    )
+    values = pd.Series(["A", "B", "C", "D"], index=[0, 1, 2, 5])
+    fulfilled = feature.is_fulfilled(values)
+    assert_series_equal(
+        fulfilled,
+        pd.Series([True, True, False, False], index=[0, 1, 2, 5]),
+    )
+
+
 @pytest.mark.parametrize(
     "key, categories, samples",
     [

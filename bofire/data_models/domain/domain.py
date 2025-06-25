@@ -12,6 +12,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
     ConstraintNotFulfilledError,
+    InterpointConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
@@ -457,6 +458,32 @@ class Domain(BaseModel):
             assert isinstance(self.outputs, Outputs)
             candidates = self.outputs.validate_candidates(candidates=candidates)
         return candidates
+
+    def is_fulfilled(
+        self,
+        experiments: pd.DataFrame,
+        tol: float = 1e-6,
+        exlude_interpoint: bool = True,
+    ) -> pd.Series:
+        """Check if all constraints are fulfilled on all rows of the provided dataframe
+        both constraints and inputs are checked.
+
+        Args:
+            experiments: Dataframe with data, the constraint validity should be tested on
+            tol: Tolerance for checking the constraints. Defaults to 1e-6.
+            exlude_interpoint: If True, InterpointConstraints are excluded from the check. Defaults to True.
+
+        Returns:
+            Boolean series indicating if all constraints are fulfilled for all rows.
+        """
+        constraints = (
+            self.constraints.get(excludes=[InterpointConstraint])
+            if exlude_interpoint
+            else self.constraints.get()
+        )
+        return constraints.is_fulfilled(experiments, tol) & self.inputs.is_fulfilled(
+            experiments
+        )
 
     @property
     def experiment_column_names(self):

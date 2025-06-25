@@ -193,6 +193,15 @@ def test_continuous_input_feature_validate_candidental_invalid(input_feature, va
         input_feature.validate_candidental(values)
 
 
+def test_continuous_input_is_fulfilled():
+    feature = ContinuousInput(key="a", bounds=(0, 2))
+    values = pd.Series([-1.0, 1.0, 2.0, 3.0], index=["a1", "a2", "a3", "a4"])
+    fulfilled = feature.is_fulfilled(values)
+    assert_series_equal(
+        fulfilled, pd.Series([False, True, True, False], index=["a1", "a2", "a3", "a4"])
+    )
+
+
 @pytest.mark.parametrize(
     "feature, xt, expected",
     [

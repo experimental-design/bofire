@@ -157,8 +157,9 @@ class OptimizerBenchmark:
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
         strategy = strategies.map(strategy)
 
+        random_strategy = strategies.RandomStrategy.make(domain=domain)
         experiments = self.benchmark.f(
-            domain.inputs.sample(self.n_experiments), return_complete=True
+            random_strategy.ask(self.n_experiments), return_complete=True
         )
         strategy.tell(experiments=experiments)
 

@@ -3,13 +3,14 @@ from math import nan
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 from pydantic.error_wrappers import ValidationError
 from pytest import fixture
 
 from bofire.data_models.api import Outputs
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
+    LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
@@ -458,3 +459,30 @@ def test_get_subdomain_invalid(domain, output_feature_keys):
 )
 def test_is_numeric(df, expected):
     assert is_numeric(df) == expected
+
+
+def test_is_fulfilled():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 0.8)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+        ],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=[1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+    experiments = pd.DataFrame(
+        {
+            "x1": [0.5, 0.9, 0.6],
+            "x2": [0.4, 0.05, 0.6],
+        },
+        index=[0, 2, 5],
+    )
+    assert_series_equal(
+        domain.is_fulfilled(experiments),
+        pd.Series([True, False, False], index=experiments.index),
+    )

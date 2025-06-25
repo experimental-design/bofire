@@ -718,6 +718,27 @@ class Inputs(_BaseFeatures[AnyInput]):
             ),
         )
 
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        """Check if the provided experiments fulfill all constraints defined on the
+        input features itself like the bounds or the allowed categories.
+
+        Args:
+            experiments: Dataframe with input features.
+
+        Returns:
+            Series with boolean values indicating if the experiments fulfill the
+                constraints on the input features.
+
+        """
+        return (
+            pd.concat(
+                [feat.is_fulfilled(experiments[feat.key]) for feat in self.get()],
+                axis=1,
+            )
+            .fillna(True)
+            .all(axis=1)
+        )
+
 
 class Outputs(_BaseFeatures[AnyOutput]):
     """Container of output features, only output features are allowed.
