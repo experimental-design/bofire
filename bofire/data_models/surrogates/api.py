@@ -11,8 +11,11 @@ from bofire.data_models.surrogates.deterministic import (
     LinearDeterministicSurrogate,
 )
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
-from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
+from bofire.data_models.surrogates.fully_bayesian import (
+    FullyBayesianSingleTaskGPSurrogate,
+)
 from bofire.data_models.surrogates.linear import LinearSurrogate
+from bofire.data_models.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPHyperconfig,
     MixedSingleTaskGPSurrogate,
@@ -52,7 +55,7 @@ AnySurrogate = Union[
     MixedTanimotoGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
-    SaasSingleTaskGPSurrogate,
+    FullyBayesianSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
@@ -62,6 +65,7 @@ AnySurrogate = Union[
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
+    AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -71,13 +75,14 @@ AnyTrainableSurrogate = Union[
     MixedTanimotoGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
-    SaasSingleTaskGPSurrogate,
+    FullyBayesianSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
     PiecewiseLinearGPSurrogate,
+    AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyRegressionSurrogate = Union[
@@ -87,7 +92,7 @@ AnyRegressionSurrogate = Union[
     MixedSingleTaskGPSurrogate,
     MixedTanimotoGPSurrogate,
     RegressionMLPEnsemble,
-    SaasSingleTaskGPSurrogate,
+    FullyBayesianSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
@@ -96,6 +101,7 @@ AnyRegressionSurrogate = Union[
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
+    AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble
