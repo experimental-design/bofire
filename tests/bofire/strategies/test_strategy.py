@@ -556,6 +556,6 @@ def test_predictive_strategy_predict_not_ready(domain):
     candidates = generate_candidates(domain=domain)
     with pytest.raises(ValueError, match="Model not yet fitted."):
         strategy.predict(candidates)
-    strategy.is_fitted = True
+    strategy._is_fitted = True
     with pytest.raises(ValueError, match="No experiments available."):
         strategy.predict(candidates)

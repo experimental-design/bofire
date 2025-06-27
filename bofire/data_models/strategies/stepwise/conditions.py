@@ -5,7 +5,6 @@ import pandas as pd
 from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.constraints.api import IntrapointConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
 
@@ -57,13 +56,9 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
         valid_experiments = (
             constrained_outputs.preprocess_experiments_all_valid_outputs(experiments)
         )
-        relevant_constraints = domain.constraints.get(IntrapointConstraint)
-        if len(relevant_constraints) > 0:
-            valid_experiments = valid_experiments[
-                relevant_constraints.is_fulfilled(valid_experiments)
-            ]
 
-        # TODO: have a is fulfilled for input features --> work for future PR
+        valid_experiments = valid_experiments[domain.is_fulfilled(valid_experiments)]
+
         feasibilities = pd.concat(
             [
                 feat(

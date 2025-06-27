@@ -32,7 +32,7 @@ def test_FeasibleExperimentCondition():
     experiments = pd.DataFrame(
         {
             "x1": [0.1, 0.4, 0.7],
-            "x2": [10, -2, 10],
+            "x2": [0.5, -2, 10],
             "of1": [0.1, 0.4, 0.7],
             "of2": [6, -2, 10],
             "of3": [11, 5.1, 0],
