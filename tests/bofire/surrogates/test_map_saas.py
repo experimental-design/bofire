@@ -6,7 +6,7 @@ from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.surrogates.api import AdditiveMapSaasSingleTaskGPSurrogate
 
 
-def test_SAdditiveMapSaasSingleTaskGPSurrogate():
+def test_AdditiveMapSaasSingleTaskGPSurrogate():
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)

@@ -14,7 +14,7 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     """Additive MAP SAAS single-task GP
 
     Maximum-a-posteriori (MAP) version of the sparse axis-aligned subspace
-    `SaasSingleTaskGPSurrogate`.
+    `FullyBayesianSingleTaskGPSurrogate` with `model_type` equals to "saas".
 
     Attributes:
         n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
