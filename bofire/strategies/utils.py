@@ -218,7 +218,9 @@ class GaMixedDomainHandler:
         return x_numeric
 
     def transform_to_experiments_per_q_point(self, X: List[dict]) -> List[pd.DataFrame]:
-        """Transform to a list of "experiments" dataframes for each q-point"""
+        """Transform to a list of "experiments" into dataframes for each q-point. Each of the q dataframes contains
+        as many rows as individuals in the population, and as many columns as input features.
+        """
         experiments = pd.DataFrame.from_records(X)
         q_column = np.array(
             [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
@@ -239,7 +241,8 @@ class GaMixedDomainHandler:
     def transform_to_experiments_per_individual(
         self, X: List[dict]
     ) -> List[pd.DataFrame]:
-        """Transform to a list of dataframes. Will return a dataframe with q-rows for each individual."""
+        """Transform to a list of dataframes. Will return a dataframe for each individual. Each of the n_pop dataframes
+         contains as many rows as q-points, and as many columns as input features."""
         experiments = pd.DataFrame.from_records(X)
         q_column = np.array(
             [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
@@ -431,7 +434,7 @@ class DomainOptimizationProblem(PymooProblem):
             vars=self.domain_handler.pymoo_vars(),
         )
 
-    def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
+    def _evaluate(self, x_ga_encoded: List[dict], out: dict, *args, **kwargs):
         obj = []
         if self.callable_format == "torch":
             x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
