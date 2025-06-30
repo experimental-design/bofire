@@ -72,9 +72,6 @@ def test_torch_objective_function(optimizer_benchmark, optimizer_data_model):
 
     result = pymoo_minimize(problem, algorithm, termination, verbose=True)
 
-    print(result.X)
-
-
 def test_pandas_objective_function(optimizer_benchmark, optimizer_data_model):
     # sort out cases where the optimizer does not support nonlinear constraints
     if isinstance(optimizer_data_model, data_models_strategies.BotorchOptimizer):
@@ -99,5 +96,3 @@ def test_pandas_objective_function(optimizer_benchmark, optimizer_data_model):
     )
 
     result = pymoo_minimize(problem, algorithm, termination, verbose=True)
-
-    print(result.X)
