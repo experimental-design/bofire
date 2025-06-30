@@ -242,7 +242,7 @@ class GaMixedDomainHandler:
         self, X: List[dict]
     ) -> List[pd.DataFrame]:
         """Transform to a list of dataframes. Will return a dataframe for each individual. Each of the n_pop dataframes
-         contains as many rows as q-points, and as many columns as input features."""
+        contains as many rows as q-points, and as many columns as input features."""
         experiments = pd.DataFrame.from_records(X)
         q_column = np.array(
             [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
