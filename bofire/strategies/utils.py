@@ -958,7 +958,7 @@ def run_ga(
     n_obj: Optional[int] = None,
     verbose: bool = False,
 ) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
-    """Convenience function to generate all pymoo- classes, needed for the optimization of the acquisition function(s)
+    """Convenience function to minimize one or multiple objective functions using a genetic algorithm.
 
     Args:
         data_model (GeneticAlgorithmDataModel): specifications for the algorithm
