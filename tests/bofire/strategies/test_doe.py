@@ -20,8 +20,12 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.data_models.strategies.doe import DOptimalityCriterion
+from bofire.data_models.strategies.doe import (
+    DOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.strategies.api import DoEStrategy
+from bofire.strategies.doe.utils import get_formula_from_string
 
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -506,8 +510,8 @@ def test_free_discrete_doe():
     torch.cuda.manual_seed(0)
 
     all_inputs = [
-        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
-        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3),
+        DiscreteInput(key="a_discrete", values=[-0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[-0.1, 0.0, 0.2, 0.3, 1.6], rtol=1e-3),
         DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
     ]
     domain = Domain.from_lists(
@@ -545,7 +549,9 @@ def test_discrete_and_categorical_doe_w_constraints():
     ]
     all_inputs = [
         DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
-        DiscreteInput(key="b_discrete", values=[0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3),
+        DiscreteInput(
+            key="b_discrete", values=[-1.0, 0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3
+        ),
         DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
         CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
         CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
@@ -611,8 +617,15 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
     excepted_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
         "linear-and-quadratic": 9,  # 1+a+b+(c==meep)+(1-(c==meep))+a**2+b**2+3
-        "linear-and-interactions": 10,  # 1+a+b+c+ab+ac+bc+3
+        "linear-and-interactions": 10,  # 1+a+b+c==meep+ab+a(c==meep)+b(c==meep)+3
         "fully-quadratic": 12,  # 1+a+b+c+a**2+b**2+ab+ac+bc+3
+    }
+
+    excepted_model_string = {
+        "linear": "1 + a + b + aux_c_meep",
+        "linear-and-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + a:aux_c_meep + a:b + aux_c_meep:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2 + a:aux_c_meep + a:b + aux_c_meep:b",
     }
 
     for model_type in [
@@ -627,11 +640,15 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
             verbose=True,
             scip_params={"parallel/maxnthreads": 1},
         )
+
+        formula = get_formula_from_string(model_type=model_type, inputs=domain.inputs)
+        assert str(formula) == excepted_model_string[model_type]
+
         strategy = DoEStrategy(data_model=data_model)
         n_exp = strategy.get_required_number_of_experiments()
         assert (
             n_exp == excepted_num_candidates[model_type]
-        ), f"Expected {excepted_num_candidates[model_type]} candidates, got {n_exp}"
+        ), f"Expected {excepted_num_candidates[model_type]} candidates for {model_type}, got {n_exp}"
         candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
         assert candidates.shape == (
             n_exp,
@@ -664,6 +681,12 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
         "linear-and-interactions": 13,  # 1+a+b+(c==meep)+(c==moop)+ab+a(c==meep)+a(c==moop)+b(c==meep)+b(c==moop)+3
         "fully-quadratic": 15,  # 1+a+b+(c==meep)+(c==moop)+ab+a(c==meep)+a(c==moop)+b(c==meep)+b(c==moop)+a**2+b**2+3
     }
+    excepted_model_string = {
+        "linear": "1 + a + b + aux_c_meep + aux_c_moop",
+        "linear-and-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + aux_c_moop + a:aux_c_meep + a:aux_c_moop + a:b + aux_c_meep:b + aux_c_moop:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2 + a:aux_c_meep + a:aux_c_moop + a:b + aux_c_meep:b + aux_c_moop:b",
+    }
 
     for model_type in [
         "linear",
@@ -677,6 +700,10 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
             verbose=True,
             scip_params={"parallel/maxnthreads": 1},
         )
+
+        formula = get_formula_from_string(model_type=model_type, inputs=domain.inputs)
+        assert str(formula) == excepted_model_string[model_type]
+
         strategy = DoEStrategy(data_model=data_model)
         n_exp = strategy.get_required_number_of_experiments()
         assert (
@@ -829,6 +856,36 @@ def test_continuous_categorical_doe():
     assert candidates.shape == (n_exp, 4)
 
 
+def one_cont_3_cat():
+    np.random.seed(42)
+    torch.manual_seed(42)
+    # Test case: extra experiments
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="cat1", categories=["miau", "meow"]),
+            CategoricalInput(key="cat2", categories=["oink", "oinki", "grunt"]),
+            CategoricalInput(key="cat3", categories=["wuff", "wuffwuff", "ruff"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=SpaceFillingCriterion(),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_successfull_runs = 0
+    for i in range(10):
+        candidates = strategy.ask(candidate_count=20, raise_validation_error=True)
+        assert np.shape(candidates.to_numpy()) == (20, 4)
+        n_successfull_runs = i
+    assert n_successfull_runs == 9
+
+
 if __name__ == "__main__":
-    test_continuous_categorical_doe()
+    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
     test_purely_categorical_doe()
+    one_cont_3_cat()

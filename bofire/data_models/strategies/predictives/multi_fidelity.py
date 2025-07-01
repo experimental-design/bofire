@@ -4,11 +4,11 @@ from pydantic import model_validator
 
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import TaskInput
-from bofire.data_models.strategies.predictives.sobo import SoboStrategy
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _ForbidPFMixin
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 
 
-class MultiFidelityStrategy(SoboStrategy):
+class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
 
     fidelity_thresholds: Union[List[float], float] = 0.1
