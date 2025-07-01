@@ -55,6 +55,19 @@ class Input(Feature):
         """
 
     @abstractmethod
+    def is_fulfilled(self, values: pd.Series) -> pd.Series:
+        """Method to check if the input feature is fulfilled by the values.
+
+        Args:
+            values: A series with values for the input feature.
+
+        Returns:
+            A series with boolean values indicating if the input feature is fulfilled.
+
+        """
+        pass
+
+    @abstractmethod
     def fixed_value(
         self,
         transform_type: Optional[TTransform] = None,

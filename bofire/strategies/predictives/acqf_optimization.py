@@ -264,6 +264,11 @@ class AcquisitionOptimizer(ABC):
         filtered_choices = merged[merged["_merge"] == "left_only"].copy()
         filtered_choices.drop(columns=["_merge"], inplace=True)
 
+        # remove here everything that falls under a CategoricalExcludeConstraint
+        filtered_choices = filtered_choices[
+            domain.constraints.is_fulfilled(filtered_choices)
+        ].copy()
+
         # translate the filtered choice to torch
         t_choices = torch.from_numpy(
             domain.inputs.transform(
