@@ -70,7 +70,7 @@ def test_torch_objective_function(optimizer_benchmark, optimizer_data_model):
         verbose=True,
     )
 
-    result = pymoo_minimize(problem, algorithm, termination, verbose=True)
+    _ = pymoo_minimize(problem, algorithm, termination, verbose=True)
 
 
 def test_pandas_objective_function(optimizer_benchmark, optimizer_data_model):
@@ -96,4 +96,4 @@ def test_pandas_objective_function(optimizer_benchmark, optimizer_data_model):
         verbose=True,
     )
 
-    result = pymoo_minimize(problem, algorithm, termination, verbose=True)
+    _ = pymoo_minimize(problem, algorithm, termination, verbose=True)
