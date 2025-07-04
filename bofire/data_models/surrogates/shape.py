@@ -126,6 +126,9 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     append_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
+    normalize_y: Annotated[
+        List[float], AfterValidator(validate_monotonically_increasing)
+    ]
     hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(  # type: ignore
         default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig(),
     )
@@ -149,7 +152,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     @model_validator(mode="after")
     def validate_keys(self):
         if (
-            sorted(self.x_keys + self.y_keys + self.continuous_keys)
+            sorted(set(self.x_keys + self.y_keys + self.continuous_keys))
             != self.inputs.get_keys()
         ):
             raise ValueError("Feature keys do not match input keys.")

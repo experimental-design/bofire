@@ -938,6 +938,8 @@ class InterpolateTransform(InputTransform, Module):
         prepend_y: Tensor,
         append_x: Tensor,
         append_y: Tensor,
+        normalize_y: Tensor,
+        normalize_x: bool = False,
         keep_original: bool = False,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
@@ -959,13 +961,18 @@ class InterpolateTransform(InputTransform, Module):
         self.prepend_y = prepend_y
         self.append_x = append_x
         self.append_y = append_y
+        self.normalize_y = normalize_y
 
         self.keep_original = keep_original
+        self.normalize_x = normalize_x
 
         if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
             self.idx_y,
         ) + len(self.prepend_y) + len(self.append_y):
             raise ValueError("The number of x and y indices must be equal.")
+
+        if len(self.normalize_y) > 1:
+            raise ValueError('length of "normalize_y" must be 0 or 1.')
 
     def _to(self, X: Tensor) -> None:
         self.new_x = self.coefficient.to(X)
@@ -986,12 +993,21 @@ class InterpolateTransform(InputTransform, Module):
         shapeX = X.shape
 
         x = X[..., self.idx_x]
+
         x = self.prepend(x, self.prepend_x)
         x = self.append(x, self.append_x)
 
+        if self.normalize_x:
+            x_max = x.max(dim=-1, keepdim=True).values
+            x = x / torch.clamp(x_max, min=1e-8)
+
         y = X[..., self.idx_y]
+
         y = self.prepend(y, self.prepend_y)
         y = self.append(y, self.append_y)
+
+        if len(self.normalize_y) > 0:
+            y = y / self.normalize_y
 
         if X.dim() == 3:
             x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
