@@ -129,6 +129,8 @@ class RobustSingleTaskGPSurrogate(
         # get model predictions, this should do a lot of validation, so we don't need it for the rhos.
         predictions = self.predict(experiments)
 
+        assert isinstance(self.model, RobustRelevancePursuitSingleTaskGP)
+
         # get the datapoint specific noise level
         rhos = self.model.likelihood.noise_covar.rho.cpu().detach().numpy()
 
