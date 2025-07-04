@@ -715,6 +715,7 @@ specs.add_invalid(
         "append_x": [1.0],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": [100.0],
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
@@ -752,6 +753,7 @@ specs.add_invalid(
         "append_x": [1.0],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": [100.0],
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
@@ -790,6 +792,7 @@ specs.add_invalid(
         "append_x": [],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": [],
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
@@ -827,6 +830,7 @@ specs.add_invalid(
         "append_x": [60],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": [],
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
