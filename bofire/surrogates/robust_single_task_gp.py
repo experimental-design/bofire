@@ -62,11 +62,6 @@ class RobustSingleTaskGPSurrogate(
         self.lengthscale_constraint = data_model.lengthscale_constraint
         super().__init__(data_model=data_model, **kwargs)
 
-        if len(self.outputs) > 1:
-            raise ValueError(
-                "RobustSingleTaskGPSurrogate is only implemented for single-output models."
-            )
-
     model: Optional[RobustRelevancePursuitSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}

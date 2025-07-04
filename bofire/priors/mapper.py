@@ -1,4 +1,5 @@
 import math
+from typing import Union
 
 import gpytorch
 from botorch.utils.constraints import NonTransformedInterval
@@ -71,5 +72,7 @@ PRIOR_MAP = {
 }
 
 
-def map(data_model: data_models.AnyPrior, **kwargs) -> gpytorch.priors.Prior:
+def map(
+    data_model: data_models.AnyPrior, **kwargs
+) -> Union[gpytorch.priors.Prior, gpytorch.constraints.Interval]:
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)

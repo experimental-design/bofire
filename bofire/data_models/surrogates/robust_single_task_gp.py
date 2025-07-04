@@ -1,7 +1,7 @@
 from typing import Literal, Optional, Type, Union
 
 import pandas as pd
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -128,6 +128,25 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
 
 
 class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+    """
+    Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
+
+    A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.
+    See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/
+    Paper: https://arxiv.org/pdf/2410.24222
+
+    Attributes:
+        prior_mean_of_support (float): The prior mean of the support.
+        convex_parametrization (bool): Whether to use convex parametrization of the sparse noise model.
+        cache_model_trace (bool): Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.
+        lengthscale_constraint (PriorConstraint): Constraint on the lengthscale of the kernel.
+
+    Note:
+        The definition of "outliers" depends on the model capacity, so what is an outlier
+        with respect to a simple model might not be an outlier with respect to a complex model.
+        For this reason, it is necessary to bound the lengthscale of the GP kernel from below.
+    """
+
     type: Literal["RobustSingleTaskGPSurrogate"] = "RobustSingleTaskGPSurrogate"
 
     kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = Field(
@@ -157,3 +176,10 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
+
+    # check that there is only one output
+    @field_validator("num outputs", check_fields=False)
+    @classmethod
+    def validate_outputs(cls, outputs):
+        if len(outputs) > 1:
+            raise ValueError("RobustGP only supports one output.")
