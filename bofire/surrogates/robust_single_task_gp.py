@@ -23,15 +23,12 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.surrogates.utils import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 
-class RobustSingleTaskGPSurrogate(
-    SingleTaskGPSurrogate, BotorchSurrogate, TrainableSurrogate
-):
+class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     """
     Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
 
@@ -56,6 +53,10 @@ class RobustSingleTaskGPSurrogate(
         data_model: DataModel,
         **kwargs,
     ):
+        self.kernel = data_model.kernel
+        self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
+        self.noise_prior = data_model.noise_prior
         self.prior_mean_of_support = data_model.prior_mean_of_support
         self.convex_parametrization = data_model.convex_parametrization
         self.cache_model_trace = data_model.cache_model_trace
@@ -106,12 +107,8 @@ class RobustSingleTaskGPSurrogate(
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
             mll,
-            # TODO: with the Decorator to _fit_rrp in botorch robust_relevance_pursuit.py, options and max_attempts do not work
-            # TODO: still find workaround for this
-            # options=self.training_specs,
-            # max_attempts=10,
-            reset_parameters=False,  # question is if we want to be able to set this ourselves or not?
-            relevance_pursuit_optimizer=backward_relevance_pursuit,  # based on the docs this is most robust but more expensive that forward
+            reset_parameters=False,
+            relevance_pursuit_optimizer=backward_relevance_pursuit,
         )
 
     def predict_outliers(
@@ -128,8 +125,6 @@ class RobustSingleTaskGPSurrogate(
 
         # get model predictions, this should do a lot of validation, so we don't need it for the rhos.
         predictions = self.predict(experiments)
-
-        assert isinstance(self.model, RobustRelevancePursuitSingleTaskGP)
 
         # get the datapoint specific noise level
         rhos = self.model.likelihood.noise_covar.rho.cpu().detach().numpy()
