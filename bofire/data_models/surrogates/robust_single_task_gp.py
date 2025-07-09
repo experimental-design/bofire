@@ -117,7 +117,7 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
-        if hyperparameters.scalekernel:
+        if hyperparameters.scalekernel == "True":
             surrogate_data.kernel = ScaleKernel(
                 base_kernel=base_kernel,
                 outputscale_prior=outputscale_prior,
