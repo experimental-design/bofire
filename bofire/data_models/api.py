@@ -21,7 +21,7 @@ from bofire.data_models.outlier_detection.api import (
     AnyOutlierDetection,
     OutlierDetection,
 )
-from bofire.data_models.priors.api import AnyPrior, Prior
+from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint, Prior
 from bofire.data_models.strategies.api import (
     AnyCondition,
     AnyLocalSearchConfig,
@@ -48,6 +48,7 @@ data_model_list = [
     AnyOutlierDetection,
     AnyObjective,
     AnyPrior,
+    AnyPriorConstraint,
     AnyStrategy,
     AnyMolFeatures,
     Domain,

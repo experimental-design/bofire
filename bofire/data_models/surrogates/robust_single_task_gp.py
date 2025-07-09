@@ -22,8 +22,8 @@ from bofire.data_models.priors.api import (
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
-    AnyConstraint,
     AnyPrior,
+    AnyPriorConstraint,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -55,7 +55,7 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
         def matern_25(
             ard: bool,
             lengthscale_prior: AnyPrior,
-            lengthscale_constraint: AnyConstraint,
+            lengthscale_constraint: AnyPriorConstraint,
         ) -> MaternKernel:
             return MaternKernel(
                 nu=2.5,
@@ -67,7 +67,7 @@ class RobustSingleTaskGPHyperconfig(Hyperconfig):
         def matern_15(
             ard: bool,
             lengthscale_prior: AnyPrior,
-            lengthscale_constraint: AnyConstraint,
+            lengthscale_constraint: AnyPriorConstraint,
         ) -> MaternKernel:
             return MaternKernel(
                 nu=1.5,
@@ -136,9 +136,9 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     Paper: https://arxiv.org/pdf/2410.24222
 
     Attributes:
-        prior_mean_of_support (float): The prior mean of the support.
-        convex_parametrization (bool): Whether to use convex parametrization of the sparse noise model.
-        cache_model_trace (bool): Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.
+        prior_mean_of_support: The prior mean of the support.
+        convex_parametrization: Whether to use convex parametrization of the sparse noise model.
+        cache_model_trace: Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.
 
     Note:
         The definition of "outliers" depends on the model capacity, so what is an outlier

@@ -712,6 +712,15 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
     preds2 = model2.predict(samples)
     assert_frame_equal(preds, preds2)
 
+    # test predict outliers
+    preds_outliers = model.predict_outliers(samples)
+
+    # assert that preds_outliers dataframe had the same length as samples
+    assert len(preds_outliers) == len(samples)
+
+    # check for the correct columns
+    assert set(preds_outliers.columns) == {"y_pred", "y_sd", "y_rho"}
+
 
 def test_RobustSingleTaskGPHyperconfig():
     # we test here also the basic trainable

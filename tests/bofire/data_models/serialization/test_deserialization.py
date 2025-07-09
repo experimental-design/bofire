@@ -12,6 +12,7 @@ from bofire.data_models.api import (
     AnyObjective,
     AnyOutlierDetection,
     AnyPrior,
+    AnyPriorConstraint,
     AnyStrategy,
     AnySurrogate,
     Constraints,
@@ -31,6 +32,12 @@ def test_dataframe_should_be_deserializable(dataframe_spec: Spec):
 def test_prior_should_be_deserializable(prior_spec: Spec):
     obj = prior_spec.obj()
     deserialized = TypeAdapter(AnyPrior).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_prior_constraint_should_be_deserializable(prior_constraint_spec: Spec):
+    obj = prior_constraint_spec.obj()
+    deserialized = TypeAdapter(AnyPriorConstraint).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

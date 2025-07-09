@@ -24,7 +24,7 @@ AnyPrior = Union[
     DimensionalityScaledLogNormalPrior,
 ]
 
-AnyConstraint = NonTransformedInterval
+AnyPriorConstraint = NonTransformedInterval
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters

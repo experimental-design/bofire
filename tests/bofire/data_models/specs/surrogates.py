@@ -21,6 +21,8 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
+    ROBUSTGP_OUTPUTSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
@@ -32,6 +34,9 @@ from bofire.data_models.surrogates.api import (
     SumAggregation,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
+from bofire.data_models.surrogates.robust_single_task_gp import (
+    RobustSingleTaskGPHyperconfig,
+)
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
@@ -74,6 +79,50 @@ specs.add_valid(
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+)
+
+specs.add_valid(
+    models.RobustSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True,
+                nu=2.5,
+                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+            outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "aggregations": [
+            random.choice(
+                [
+                    SumAggregation(features=["a", "b"]).model_dump(),
+                    MeanAggregation(features=["a", "b"]).model_dump(),
+                ],
+            ),
+        ],
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "cache_model_trace": False,
+        "convex_parametrization": True,
+        "prior_mean_of_support": None,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": RobustSingleTaskGPHyperconfig().model_dump(),
     },
 )
 

@@ -24,6 +24,11 @@ def invalid_prior_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
+@fixture(params=specs.prior_constraints.invalids)
+def invalid_prior_constraint_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.kernels.invalids)
 def invalid_kernel_spec(request) -> specs.InvalidSpec:
     return request.param
@@ -152,6 +157,11 @@ def surrogate_spec(request) -> specs.Spec:
 
 @fixture(params=specs.priors.valids)
 def prior_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.prior_constraints.valids)
+def prior_constraint_spec(request) -> specs.Spec:
     return request.param
 
 

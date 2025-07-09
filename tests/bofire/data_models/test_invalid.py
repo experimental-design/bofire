@@ -20,7 +20,11 @@ def test_prior_should_be_invalid(invalid_prior_spec: InvalidSpec):
     _invalidate(invalid_prior_spec)
 
 
-def test_kernel_shoud_be_invalid(invalid_kernel_spec: InvalidSpec):
+def test_prior_constraint_should_be_invalid(invalid_prior_constraint_spec: InvalidSpec):
+    _invalidate(invalid_prior_constraint_spec)
+
+
+def test_kernel_should_be_invalid(invalid_kernel_spec: InvalidSpec):
     _invalidate(invalid_kernel_spec)
 
 
