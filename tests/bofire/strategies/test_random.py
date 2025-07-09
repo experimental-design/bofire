@@ -6,12 +6,15 @@ from pandas.testing import assert_frame_equal
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    SelectionCondition,
+    ThresholdCondition,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -51,13 +54,25 @@ of1 = ContinuousOutput(key="of1")
 
 c1 = LinearEqualityConstraint(features=["if0", "if1"], coefficients=[1, 1], rhs=1)
 c2 = LinearInequalityConstraint(features=["if0", "if1"], coefficients=[1, 1], rhs=1)
-c3 = NonlinearEqualityConstraint(expression="if0**2 + if1**2 - 1")
-c4 = NonlinearInequalityConstraint(expression="if0**2 + if1**2 - 1")
+c3 = NonlinearEqualityConstraint(
+    expression="if0**2 + if1**2 - 1", features=["if0", "if1"]
+)
+c4 = NonlinearInequalityConstraint(
+    expression="if0**2 + if1**2 - 1", features=["if0", "if1"]
+)
 c5 = NChooseKConstraint(
     features=["if0", "if1", "if2"],
     min_count=0,
     max_count=2,
     none_also_valid=False,
+)
+c6 = CategoricalExcludeConstraint(
+    features=["if4", "if2"],
+    conditions=[
+        SelectionCondition(selection=["A"]),
+        ThresholdCondition(threshold=0.5, operator=">"),
+    ],
+    logical_op="AND",
 )
 
 supported_domains = [
@@ -109,6 +124,7 @@ supported_domains = [
         outputs=[of1],
         constraints=[c4],
     ),
+    Domain.from_lists(inputs=[if2, if4], constraints=[c6], outputs=[of1]),
 ]
 
 
@@ -138,7 +154,7 @@ def test_rejection_sampler_not_converged():
 def test_interpoint():
     domain = Domain.from_lists(
         inputs=[if1, if2, if3],
-        constraints=[InterpointEqualityConstraint(feature="if1", multiplicity=3)],
+        constraints=[InterpointEqualityConstraint(features=["if1"], multiplicity=3)],
     )
     data_model = data_models.RandomStrategy(domain=domain)
     sampler = strategies.RandomStrategy(data_model=data_model)

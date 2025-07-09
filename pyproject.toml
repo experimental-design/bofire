@@ -19,7 +19,7 @@ classifiers = [
     "Intended Audience :: Developers",
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 dependencies = [
     "numpy",
     "pandas",
@@ -31,17 +31,17 @@ dependencies = [
 
 [project.optional-dependencies]
 optimization = [
-    "botorch>=0.13.0",
+    "botorch>=0.14.0",
     "numpy",
     "multiprocess",
     "plotly",
     "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL]",
+    "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "pymoo>=0.6.0",
-    "cvxopt",
+    "shap>=0.48.0",
 ]
 entmoot = ["entmoot>=2.0.6"]
 xgb = ["xgboost>=1.7.5"]
@@ -61,14 +61,14 @@ docs = [
 ]
 tutorials = ["jupyter", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.13.0",
+    "botorch>=0.14.0",
     "numpy",
     "multiprocess",
     "plotly",
     "formulaic==1.0.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL]",
+    "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0.6",
     "xgboost>=1.7.5",
@@ -88,7 +88,7 @@ all = [
     "matplotlib",
     "seaborn",
     "pymoo>=0.6.0",
-    "cvxopt",
+    "shap>=0.48.0",
 ]
 
 [tool.setuptools.packages]

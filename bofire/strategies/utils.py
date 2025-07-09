@@ -1,10 +1,10 @@
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
-import cvxopt
+import cvxpy as cp
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from pymoo.algorithms.moo.nsga2 import RankAndCrowdingSurvival
 from pymoo.core import variable as pymoo_variable
 from pymoo.core.mixed import (
     MixedVariableDuplicateElimination,
@@ -13,7 +13,9 @@ from pymoo.core.mixed import (
 )
 from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
+from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
+from scipy import sparse
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -43,6 +45,19 @@ from bofire.utils.torch_tools import (
 )
 
 
+def _default_input_preprocessing_specs(
+    domain: Domain,
+) -> InputTransformSpecs:
+    """Default input preprocessing specs for the GA optimizer: If none given, will use OneHot encoding for all categorical inputs"""
+    input_preprocessing_specs = {}
+    for input_ in domain.inputs.get():
+        if isinstance(input_, CategoricalDescriptorInput):
+            input_preprocessing_specs[input_.key] = CategoricalEncodingEnum.DESCRIPTOR
+        elif isinstance(input_, CategoricalInput):
+            input_preprocessing_specs[input_.key] = CategoricalEncodingEnum.ONE_HOT
+    return input_preprocessing_specs
+
+
 class GaMixedDomainHandler:
     """Helper class for transferring bounds, and data from different (encoded) input
     features, to mixed-variable encoded features, as they are used for the GA
@@ -65,14 +80,17 @@ class GaMixedDomainHandler:
 
     Args:
         domain (Domain): problem domain
-         input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for the models in
-                the acquisition functions
+            input_preprocessing_specs (InputTransformSpecs): transformation specs, as they are needed for transforming the inputs
+            from the domain to the numeric (torch) domain
         q (int): Number of experiments.
 
     """
 
     def __init__(
-        self, domain: Domain, input_preprocessing_specs: InputTransformSpecs, q: int
+        self,
+        domain: Domain,
+        input_preprocessing_specs: InputTransformSpecs,
+        q: int = 1,
     ):
         self.domain = domain
         self.vars = {}
@@ -81,6 +99,9 @@ class GaMixedDomainHandler:
         ] = {}  # conversions, which are not handled by the "domain"
         self.input_preprocessing_specs = input_preprocessing_specs
         self.q = q
+
+        if input_preprocessing_specs is None:
+            input_preprocessing_specs = _default_input_preprocessing_specs(domain)
 
         for key in domain.inputs.get_keys():
             spec_ = input_preprocessing_specs.get(key)
@@ -186,7 +207,7 @@ class GaMixedDomainHandler:
         d is the (numerical, encoded) dimension
         """
 
-        experiments = self.transform_to_experiments(X)
+        experiments = self.transform_to_experiments_per_q_point(X)
         x_numeric = [
             self.domain.inputs.transform(
                 ex_, self.input_preprocessing_specs
@@ -196,8 +217,10 @@ class GaMixedDomainHandler:
         x_numeric = np.concatenate([np.expand_dims(x, 1) for x in x_numeric], axis=1)
         return x_numeric
 
-    def transform_to_experiments(self, X: List[dict]) -> List[pd.DataFrame]:
-        """Transform to a list of "experiments" dataframes for each q-point"""
+    def transform_to_experiments_per_q_point(self, X: List[dict]) -> List[pd.DataFrame]:
+        """Transform to a list of "experiments" into dataframes for each q-point. Each of the q dataframes contains
+        as many rows as individuals in the population, and as many columns as input features.
+        """
         experiments = pd.DataFrame.from_records(X)
         q_column = np.array(
             [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
@@ -214,6 +237,27 @@ class GaMixedDomainHandler:
             experiments_out.append(experiments_qi)
 
         return experiments_out
+
+    def transform_to_experiments_per_individual(
+        self, X: List[dict]
+    ) -> List[pd.DataFrame]:
+        """Transform to a list of dataframes. Will return a dataframe for each individual. Each of the n_pop dataframes
+        contains as many rows as q-points, and as many columns as input features."""
+        experiments = pd.DataFrame.from_records(X)
+        q_column = np.array(
+            [self.column_name_mapping_inverse_qindex[x] for x in list(experiments)]
+        )
+        columns = [self.column_name_mapping_inverse[key] for key in list(experiments)]
+
+        def format_experiment(row: pd.Series) -> pd.DataFrame:
+            """Format a single row of the experiment to a DataFrame with q-points as rows"""
+            # Create a DataFrame with the values and the corresponding q-point
+            exp = pd.DataFrame({"value": row, "q": q_column, "column": columns})
+            return exp.pivot(index="q", columns="column", values="value").reset_index(
+                drop=True
+            )
+
+        return [format_experiment(row) for _, row in experiments.iterrows()]
 
     def transform_mixed_to_botorch_domain(self, X: List[dict]) -> Tensor:
         """Transform the variables from the pymoo format to the format required by botorch, including one-hot encoding
@@ -284,35 +328,72 @@ class GaMixedDomainHandler:
         return experiments.to_dict("records")
 
 
-class AcqfOptimizationProblem(PymooProblem):
-    """Transfers the acquisition function optimization problem on the bofire domain, into a pymoo-
+class DomainOptimizationProblem(PymooProblem):
+    """Transfers the optimization problem on the bofire domain, into a pymoo-
     problem, which can be solved with e.g. the pymoo GA.
 
     The optimizer will handle encoded input features as different pymoo-types (Choice), as the model. The problem
     contains the function for evaluating the objective functions, including constraints.
         - Transformation from the mixed-variable type domain, into the numeric torch domain
-        - Evaluation of acquisition functions
+        - Evaluation of objective functions, such as acquisition functions
         - Evaluation of constraints:
             Nonlinear inequality constraints are evaluated in the mixed-domain (using pandas 'eval')
             Other constraints are evaluated in the numeric torch-domain
 
-    Some constraints are not evaluated in the objective function: They are handled in the 'repair' function
+    Some constraints are not evaluated in the objective function: They are handled in the 'repair' function. See
+    "LinearProjection" class for details.
+
+    Args:
+        objective_callables: List of objective functions, which are evaluated in the
+            optimization problem. It should return a tensor or numpy-array of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+            The callable_format defines, if the callables are evaluated in the numeric torch domain, or in the "original"
+            pandas domain.
+            If "torch", the callables should accept a torch tensor of shape (n, q, d), where n is the
+            number of individuals, q is the number of experiments in each batch, and d is the number of the (numeric
+            encoded) input features.
+            If "pandas", the callables should accept a list of pandas DataFrames, where each DataFrame contains "q"
+            rows and "d" columns, where "d" is the number of (notencoded) input features.
+            Each DataFrame corresponds to one individual of the GA.
+
+        domain (Domain): The bofire domain, which contains the input and output features.
+        input_preprocessing_specs (InputTransformSpecs): The input preprocessing specifications, which are used to
+            transform the inputs to the correct format for the models. This is needed for the variable transformation
+            from the mixed-variable type domain to the numeric torch domain.
+        q (int): Number of experiments in each batch.
+        callable_format (Literal["torch", "pandas"]): Format of the objective callables. see `objective_callables`
+            for details.
+        nonlinear_torch_constraints (Optional[List[Type[Constraint]]]): List of types of nonlinear torch constraints, which are
+            evaluated in the numeric torch domain. Must be transformable by the "get_nonlinear_constraints" function.
+            Cannot be used, if `callable_format` is "pandas".
+        nonlinear_pandas_constraints (Optional[List[Type[Constraint]]]): List of types nonlinear pandas constraints, which are
+            evaluated in the original domain.
+        n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
+            Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
+            must be set to the sum of the number of outputs of each callable.
 
     """
 
     def __init__(
         self,
-        acqfs,
+        objective_callables: List[
+            Union[
+                Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]
+            ]
+        ],
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
-        q: int,
+        q: int = 1,
+        callable_format: Literal["torch", "pandas"] = "torch",
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
+        n_obj: Optional[int] = None,
     ):
-        self.acqfs = acqfs
-        assert len(acqfs) == 1, "Only one acquisition function is supported for now"
-
+        self.objective_callables = objective_callables
         self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
+        self.callable_format = callable_format
 
         # torch constraints: evaluated in encoded space
         if nonlinear_torch_constraints is None:
@@ -324,6 +405,10 @@ class AcqfOptimizationProblem(PymooProblem):
         self.nonlinear_torch_constraints = get_nonlinear_constraints(
             domain, includes=nonlinear_torch_constraints
         )
+        if self.nonlinear_torch_constraints and callable_format == "pandas":
+            raise ValueError(
+                "Nonlinear torch constraints cannot be used with callable_format='pandas'."
+            )
 
         # pandas constraints: evaluated in original space
         if nonlinear_pandas_constraints is None:
@@ -338,7 +423,7 @@ class AcqfOptimizationProblem(PymooProblem):
         )
 
         super().__init__(
-            n_obj=len(acqfs),
+            n_obj=n_obj or len(self.objective_callables),
             n_ieq_constr=(
                 len(self.nonlinear_torch_constraints)
                 + len(self.nonlinear_pandas_constraints)
@@ -349,21 +434,49 @@ class AcqfOptimizationProblem(PymooProblem):
             vars=self.domain_handler.pymoo_vars(),
         )
 
-    def _evaluate(self, x_ga_encoded, out, *args, **kwargs):
-        x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
+    def _evaluate(self, x_ga_encoded: List[dict], out: dict, *args, **kwargs):
+        obj = []
+        if self.callable_format == "torch":
+            x = self.domain_handler.transform_mixed_to_botorch_domain(x_ga_encoded)
+        elif self.callable_format == "pandas":
+            x = self.domain_handler.transform_to_experiments_per_individual(
+                x_ga_encoded
+            )
+        else:
+            raise NotImplementedError(f"unknown callable_format {self.callable_format}")
 
-        out["F"] = [-acqf(x).detach().numpy().reshape(-1) for acqf in self.acqfs]
+        # evaluate objectives
+        for ofnc in self.objective_callables:
+            ofnc_val = np.array([])
+            if self.callable_format == "torch":
+                ofnc_val = ofnc(x).detach().numpy()  # type: ignore
+            elif self.callable_format == "pandas":
+                ofnc_val = ofnc(x)  # type: ignore
+
+            if ofnc_val.ndim == 1:  # type: ignore
+                obj.append(ofnc_val.reshape(-1))
+            elif ofnc_val.ndim == 2:
+                obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
+            else:
+                raise ValueError(
+                    f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
+                )
+
+        out["F"] = obj
 
         if self.nonlinear_torch_constraints:
             G = []
             for constr in self.nonlinear_torch_constraints:
-                constr_val = -constr[0](x)  # converting to form g(x) <= 0
+                # converting to form g(x) <= 0
+                constr_val = -constr[0](x)  # type: ignore
                 G.append(constr_val.detach().numpy())  # type: ignore
 
             out["G"] = np.hstack(G)
 
         if self.nonlinear_pandas_constraints:
-            experiments = self.domain_handler.transform_to_experiments(x_ga_encoded)
+            experiments = self.domain_handler.transform_to_experiments_per_q_point(
+                x_ga_encoded
+            )
             for constr in self.nonlinear_pandas_constraints:
                 G = np.hstack(
                     [constr(exp).values.reshape((-1, 1)) for exp in experiments]
@@ -390,8 +503,7 @@ class LinearProjection(PymooRepair):
             ...
 
 
-    in order to solve this with the performant cvxopt.qp solver
-    (https://cvxopt.org/userguide/coneprog.html#quadratic-programming)
+    in order to solve this with the performant cvxpy solver. (https://www.cvxpy.org/examples/basic/quadratic_program.html)
 
     For performance, the problem is solved for the complete generation X = [x1 ; x2; ...]
     where x1, x2, ... are the vectors of each individual in the population and q-opt. points
@@ -413,6 +525,7 @@ class LinearProjection(PymooRepair):
         domain_handler: Optional[GaMixedDomainHandler] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
+        verbose: bool = False,
     ):
         if constraints_include is None:
             constraints_include = [
@@ -556,10 +669,7 @@ class LinearProjection(PymooRepair):
         self.q = q
         self.domain = domain
         self.bounds = bounds
-
-        cvxopt.solvers.options["show_progress"] = False
-        cvxopt.solvers.options["maxiters"] = 1000
-        cvxopt.solvers.options["abstol"] = 1e-9
+        self.verbose = verbose
 
         super().__init__()
 
@@ -567,87 +677,96 @@ class LinearProjection(PymooRepair):
         n_pop = X.shape[0]
         n_x_points = n_pop * self.q
 
-        def repeated_blkdiag(m: cvxopt.matrix, N: int) -> cvxopt.spmatrix:
-            """construct large matrix with block-diagolal matrix in the center of arbitrary size"""
-            m_zeros = cvxopt.spmatrix([], [], [], m.size)
-            return cvxopt.sparse(
-                [[m_zeros] * i + [m] + [m_zeros] * (N - i - 1) for i in range(N)]
-            )
-
         def _build_A_b_matrices_for_single_constr(
             index, coeffs, b
-        ) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+        ) -> Tuple[sparse.csr_array, np.ndarray]:
             """a single-line constraint matrix of the form A*x = b or A*x <= b"""
-            A = cvxopt.spmatrix(coeffs, [0] * len(index), index, (1, self.d))
-            b = cvxopt.matrix(b)
+            A = sparse.csr_array(
+                (
+                    [float(ci) for ci in coeffs],
+                    (
+                        [0] * len(index),  # row index, only one row
+                        [int(idx) for idx in index],  # column indices
+                    ),
+                ),
+                shape=(1, self.d),
+            )
+            b = np.array(b).reshape((1, 1))
             return A, b
 
         def _build_A_b_matrices_for_n_points(
-            constr: List[tuple],
-        ) -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
-            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point"""
+            constr: List[Tuple[List[int], List[float], float]],
+        ) -> Tuple[sparse.csr_array, np.ndarray]:
+            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point)
+
+            will build a large constraint matrix A, with block-diagonal structure, such that each block represents
+            the constraint A*x =/<= b for one x in the population and q-points.
+
+            Args:
+                constr (List[Tuple[List[int], List[float], float]]): list of constraints, each as tuple of
+                    (index, coefficients, b) as returned by get_linear_constraints
+
+
+
+            """
 
             if not constr:
-                return cvxopt.spmatrix(
-                    [], [], [], (0, self.d * n_x_points)
-                ), cvxopt.matrix([], (0, 1), tc="d")
+                return sparse.csr_array((0, self.d * n_x_points)), np.zeros(
+                    shape=(0, 1)
+                )
 
             # vertically combine all linear equality constr.
             Ab_single_eq = [
                 _build_A_b_matrices_for_single_constr(*constr_) for constr_ in constr
             ]
-            A = cvxopt.sparse([Ab[0] for Ab in Ab_single_eq])
-            b = cvxopt.matrix([Ab[1] for Ab in Ab_single_eq])
+            A = sparse.vstack([Ab[0] for Ab in Ab_single_eq])
+            b = np.vstack([Ab[1] for Ab in Ab_single_eq])
             # repeat for each x in the population
-            A = repeated_blkdiag(A, n_x_points)
-            b = cvxopt.matrix([b] * n_x_points)
+            A = sparse.block_diag([A] * n_x_points)
+            b = np.vstack([b] * n_x_points)
             return A, b
 
-        def _build_G_h_for_box_bounds() -> Tuple[cvxopt.spmatrix, cvxopt.matrix]:
+        def _build_G_h_for_box_bounds() -> Tuple[sparse.csr_array, np.ndarray]:
             """build linear inequality matrices, such that lb<=x<=ub -> G*x<=h:
 
             G = [I; -I]
             h = [ub; -lb]
 
             """
-            G_bounds_ = cvxopt.sparse(
+            G_bounds_ = sparse.vstack(
                 [
-                    cvxopt.spmatrix(1, range(self.d), range(self.d)),  # unity matrix
-                    cvxopt.spmatrix(
-                        -1, range(self.d), range(self.d)
-                    ),  # negative unity matrix
+                    sparse.identity(self.d),  # unity matrix
+                    -sparse.identity(self.d),  # negative unity matrix
                 ]
             )
-            G = repeated_blkdiag(G_bounds_, n_x_points)
+            G = sparse.block_diag([G_bounds_] * n_x_points)
 
             if self.n_choose_k_constr is None:  # use the normal lb/ub
                 lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
-                h_bounds_ = cvxopt.matrix(
-                    np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
-                )
-                h = cvxopt.matrix([h_bounds_] * n_x_points)
+                h_bounds_ = np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
+                h = np.vstack([h_bounds_.reshape(-1, 1)] * n_x_points)
             else:
                 # correct bounds for NChooseK constraints
                 bounds = self.n_choose_k_constr(X)
                 # alternate upper- and (-1*lower) bound
-                bounds = np.concatenate([np.concatenate((b[1], -b[0])) for b in bounds])
-                h = cvxopt.matrix(bounds)
+                h = np.vstack(
+                    [np.concatenate((b[1], -b[0])).reshape((-1, 1)) for b in bounds]
+                )
 
             return G, h
 
         # Prepare Matrices for solving the estimation problem
-        P = cvxopt.spmatrix(
-            1.0, range(self.d * n_x_points), range(self.d * n_x_points)
-        )  # the unit-matrix
+        P = sparse.identity(self.d * n_x_points)  # the unit-matrix
 
         A, b = _build_A_b_matrices_for_n_points(self.eq_constr)
         G, h = _build_G_h_for_box_bounds()
         if self.ineq_constr:
             G_, h_ = _build_A_b_matrices_for_n_points(self.ineq_constr)
-            G, h = cvxopt.sparse([G, G_]), cvxopt.matrix([h, h_])
+            G = sparse.vstack([G, G_])
+            h = np.vstack([h, h_])
 
         x = X.reshape(-1)
-        q = cvxopt.matrix(-x)
+        q = -x
 
         return {
             "P": P,
@@ -656,15 +775,32 @@ class LinearProjection(PymooRepair):
             "h": h,
             "A": A,
             "b": b,
-            "initvals": cvxopt.matrix(x),
+            "initvals": x,
         }
 
     def _do(self, problem, X, **kwargs):
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
-        sol = cvxopt.solvers.qp(**self._create_qp_problem_input(X))
-        x_corrected = np.array(sol["x"])
+        matrices = self._create_qp_problem_input(X)
+
+        x_var = cp.Variable((np.size(X), 1))
+        x_var.value = matrices["initvals"].reshape(-1, 1)
+
+        objective = cp.Minimize(
+            0.5 * cp.quad_form(x_var, matrices["P"]) + matrices["q"].T @ x_var
+        )
+        constraints = []
+        if matrices["A"].shape[0] > 0:
+            constraints.append(matrices["A"] @ x_var == matrices["b"])
+        if matrices["G"].shape[0] > 0:
+            constraints.append(matrices["G"] @ x_var <= matrices["h"])
+
+        problem = cp.Problem(objective, constraints)
+
+        problem.solve(verbose=self.verbose)
+
+        x_corrected = x_var.value
         X_corrected = x_corrected.reshape(X.shape)
 
         if self.domain_handler is not None:
@@ -673,15 +809,29 @@ class LinearProjection(PymooRepair):
         return X_corrected
 
 
-def get_problem_and_algorithm(
+def get_torch_bounds_from_domain(
+    domain: Domain, input_preprocessing_specs: InputTransformSpecs
+) -> torch.Tensor:
+    """Get the bounds for the optimization problem in the format required by BoTorch."""
+    lower, upper = domain.inputs.get_bounds(
+        specs=input_preprocessing_specs,
+    )
+    return torch.tensor([lower, upper]).to(**tkwargs)
+
+
+def get_ga_problem_and_algorithm(
     data_model: GeneticAlgorithmDataModel,
     domain: Domain,
-    input_preprocessing_specs: InputTransformSpecs,
-    acqfs: List[AcquisitionFunction],
-    q: int,
-    bounds_botorch_space: Tensor,
+    objective_callables: List[
+        Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]
+    ],
+    q: int = 1,
+    callable_format: Literal["torch", "pandas"] = "torch",
+    input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+    n_obj: Optional[int] = None,
+    verbose: bool = False,
 ) -> Tuple[
-    AcqfOptimizationProblem,
+    DomainOptimizationProblem,
     MixedVariableGA,
     Union[
         pymoo_default_termination.DefaultMultiObjectiveTermination,
@@ -693,10 +843,33 @@ def get_problem_and_algorithm(
     Args:
         data_model (GeneticAlgorithmDataModel): specifications for the algorithm
         domain (Domain): optimization domain
-        input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
-        acqfs (List[AcquisitionFunction]): list of acquision function(s) to optimize (assumes MAXIMIZATION)
+        objective_callables (List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]]):
+            List of objective functions, which are evaluated in the
+            optimization problem. It should return a tensor or numpy-array of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+            The callable_format defines, if the callables are evaluated in the numeric torch domain, or in the "original"
+            pandas domain.
+            If "torch", the callables should accept a torch tensor of shape (n, q, d), where n is the
+            number of individuals, q is the number of experiments in each batch, and d is the number of the (numeric
+            encoded) input features.
+            If "pandas", the callables should accept a list of pandas DataFrames, where each DataFrame contains "q"
+            rows and "d" columns, where "d" is the number of (notencoded) input features.
+            Each DataFrame corresponds to one individual of the GA.
         q (int): number of experiments
-        bounds_botorch_space (Tensor): The tensor of numerical bounds for the optimization
+        callable_format (Literal["torch", "pandas"]): Format of the objective callables. see `objective_callables`
+        input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
+                objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
+            optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+        n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
+            Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
+            must be set to the sum of the number of outputs of each callable.
+        verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
 
     Returns
         problem
@@ -704,12 +877,23 @@ def get_problem_and_algorithm(
         termination
     """
 
+    if input_preprocessing_specs is None:
+        input_preprocessing_specs = _default_input_preprocessing_specs(domain)
+
+    bounds_botorch_space = get_torch_bounds_from_domain(
+        domain, input_preprocessing_specs
+    )
+
+    n_obj = n_obj or len(objective_callables)
+
     # ===== Problem ====
-    problem = AcqfOptimizationProblem(
-        acqfs,
+    problem = DomainOptimizationProblem(
+        objective_callables,
         domain,
         input_preprocessing_specs,
         q,
+        callable_format=callable_format,
+        n_obj=n_obj,
     )
 
     # ==== Algorithm ====
@@ -732,6 +916,7 @@ def get_problem_and_algorithm(
             bounds=bounds_botorch_space,
             q=q,
             domain_handler=problem.domain_handler,
+            verbose=verbose,
         )
 
         algorithm_args["repair"] = repair
@@ -739,11 +924,14 @@ def get_problem_and_algorithm(
             eliminate_duplicates=MixedVariableDuplicateElimination(), repair=repair
         )  # see https://github.com/anyoptimization/pymoo/issues/575
 
+    if n_obj > 1:
+        algorithm_args["survival"] = RankAndCrowdingSurvival()
+
     algorithm = MixedVariableGA(**algorithm_args)
 
     termination_class = (
         pymoo_default_termination.DefaultSingleObjectiveTermination
-        if len(acqfs) == 1
+        if n_obj == 1
         else pymoo_default_termination.DefaultMultiObjectiveTermination
     )
 
@@ -756,3 +944,82 @@ def get_problem_and_algorithm(
     )
 
     return problem, algorithm, termination
+
+
+def run_ga(
+    data_model: GeneticAlgorithmDataModel,
+    domain: Domain,
+    objective_callables: List[
+        Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]
+    ],
+    q: int = 1,
+    callable_format: Literal["torch", "pandas"] = "torch",
+    input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+    n_obj: Optional[int] = None,
+    verbose: bool = False,
+) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
+    """Convenience function to minimize one or multiple objective functions using a genetic algorithm.
+
+    Args:
+        data_model (GeneticAlgorithmDataModel): specifications for the algorithm
+        domain (Domain): optimization domain
+        objective_callables (List[Union[Callable[[Tensor], Tensor], Callable[[List[pd.DataFrame]], np.ndarray]]]):
+            List of objective functions, which are evaluated in the
+            optimization problem. It should return a tensor or numpy-array of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+            The callable_format defines, if the callables are evaluated in the numeric torch domain, or in the "original"
+            pandas domain.
+            If "torch", the callables should accept a torch tensor of shape (n, q, d), where n is the
+            number of individuals, q is the number of experiments in each batch, and d is the number of the (numeric
+            encoded) input features.
+            If "pandas", the callables should accept a list of pandas DataFrames, where each DataFrame contains "q"
+            rows and "d" columns, where "d" is the number of (notencoded) input features.
+            Each DataFrame corresponds to one individual of the GA.
+        q (int): number of experiments
+        callable_format (Literal["torch", "pandas"]): Format of the objective callables. see `objective_callables`
+        input_preprocessing_specs (InputTransformSpecs): specification of the encoding types, used in the acqfs
+                objective_callables (List[Callable[[Tensor], Tensor]]): List of objective functions, which are evaluated in the
+            optimization problem. The functions should be callable with a tensor of shape (n, q, d), where d is the
+            number of features, and q is the number of experiments. It should return a tensor of shape (n,).
+            Alternatively, the functions can return a matrix of shape (n, ny_i), where ny_i is the number of outputs. In
+            this case, the total number of outputs (sum(ny_i)) must be specified in the `n_obj` parameter.
+
+        n_obj (Optional[int]): Number of objectives. If not specified, it will be inferred from the length of `objective_callables`.
+            Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
+            must be set to the sum of the number of outputs of each callable.
+        verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
+
+    Returns
+        x_opt (Union[Tensor, pd.DataFrame]): optimized experiments
+        f_opt (np.ndarray): objective function value
+    """
+
+    problem, algorithm, termination = get_ga_problem_and_algorithm(
+        data_model=data_model,
+        domain=domain,
+        objective_callables=objective_callables,
+        q=q,
+        callable_format=callable_format,
+        input_preprocessing_specs=input_preprocessing_specs,
+        n_obj=n_obj,
+        verbose=verbose,
+    )
+
+    res = pymoo_minimize(problem, algorithm, termination, verbose=verbose)
+
+    if callable_format == "torch":
+        # transform the result to the numeric domain
+        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
+            [res.X]
+        ).reshape((q, -1))
+        f_opt = torch.from_numpy(res.F).to(**tkwargs)
+    elif callable_format == "pandas":
+        # transform the result to the original domain
+        x_opt = problem.domain_handler.transform_to_experiments_per_individual(
+            [res.X] if isinstance(res.X, dict) else res.X
+        )
+        f_opt = res.F
+
+    return x_opt, f_opt

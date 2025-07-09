@@ -1,7 +1,8 @@
 import importlib.util
 import sys
+from copy import copy
 from itertools import combinations
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,8 @@ from bofire.data_models.constraints.api import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.data_models.domain.domain import Domain
+from bofire.data_models.domain.api import Domain, Inputs
+from bofire.data_models.features.api import CategoricalInput, NumericalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.doe_problem import (
@@ -27,15 +29,39 @@ from bofire.strategies.doe.doe_problem import (
     SecondOrderDoEProblem,
 )
 from bofire.strategies.doe.objective_base import Objective
+from bofire.strategies.doe.utils_categorical_discrete import (
+    map_categorical_to_continuous,
+)
 from bofire.strategies.random import RandomStrategy
 
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
+def represent_categories_as_by_their_states(
+    inputs: Inputs,
+) -> Tuple[List[NumericalInput], List[ContinuousInput]]:
+    all_but_one_categoricals = []
+    if len(inputs.get([CategoricalInput])) > 0:
+        inputs = copy(inputs)
+        categorical_inputs = cast(
+            list[CategoricalInput], inputs.get([CategoricalInput])
+        )
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=categorical_inputs
+        )
+
+        # enforce categoricals excluding each other
+        all_but_one_categoricals = categorical_one_hot_variabes[:-1]
+    numerical_inputs = cast(
+        list[NumericalInput], list(inputs.get(excludes=[CategoricalInput]))
+    )
+    return numerical_inputs, all_but_one_categoricals
+
+
 def get_formula_from_string(
     model_type: Union[str, Formula] = "linear",
-    domain: Optional[Domain] = None,
+    inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
@@ -57,21 +83,59 @@ def get_formula_from_string(
     if isinstance(model_type, Formula):
         return model_type
         # build model if a keyword and a problem are given.
-    # linear model
-    if model_type == "linear":
-        formula = linear_formula(domain)
+    # linear model#
 
-    # linear and interactions model
-    elif model_type == "linear-and-quadratic":
-        formula = linear_and_quadratic_formula(domain)
+    if model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
+        if inputs is None:
+            raise AssertionError(
+                "Inputs must be provided if only a model type is given.",
+            )
+        continuous_inputs, categorical_inputs = represent_categories_as_by_their_states(
+            inputs=inputs
+        )
+        if model_type == "linear":
+            formula = linear_terms(
+                inputs=Inputs(features=continuous_inputs + categorical_inputs)
+            )
 
-    # linear and quadratic model
-    elif model_type == "linear-and-interactions":
-        formula = linear_and_interactions_formula(domain)
+        # linear and interactions model
+        elif model_type == "linear-and-quadratic":
+            formula = linear_terms(
+                inputs=Inputs(features=continuous_inputs + categorical_inputs)
+            ) + quadratic_terms(inputs=Inputs(features=continuous_inputs))
 
-    # fully quadratic model
-    elif model_type == "fully-quadratic":
-        formula = fully_quadratic_formula(domain)
+        # linear and quadratic model
+        elif model_type == "linear-and-interactions":
+            formula = linear_terms(
+                inputs=Inputs(features=continuous_inputs + categorical_inputs)
+            ) + interactions_terms(
+                continuous_inputs=Inputs(features=continuous_inputs),
+                categorical_inputs=Inputs(features=categorical_inputs),
+            )
+
+        # fully quadratic model
+        elif model_type == "fully-quadratic":
+            formula = (
+                linear_terms(
+                    inputs=Inputs(features=continuous_inputs + categorical_inputs)
+                )
+                + interactions_terms(
+                    continuous_inputs=Inputs(features=continuous_inputs),
+                    categorical_inputs=Inputs(features=categorical_inputs),
+                )
+                + quadratic_terms(inputs=Inputs(features=continuous_inputs))
+            )
+
+        else:
+            raise ValueError(
+                f"Model type {model_type} is not supported. Supported model types are: "
+                f"linear, linear-and-quadratic, linear-and-interactions, fully-quadratic.",
+            )
 
     else:
         formula = model_type + "   "
@@ -120,92 +184,58 @@ def convert_formula_to_string(
     return term_list_string
 
 
-def linear_formula(
-    domain: Optional[Domain],
+def linear_terms(
+    inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-model or certain keywords as Formula objects.
         formula = model_type + "   "
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the linear model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a domain must be provided"
-    formula = "".join([input.key + " + " for input in domain.inputs])
+    formula = "".join([input.key + " + " for input in inputs])
     return formula
 
 
-def linear_and_quadratic_formula(
-    domain: Optional[Domain],
+def quadratic_terms(
+    inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-and-quadratic model or certain keywords as Formula objects.
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the linear and quadratic model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.key + " + " for input in domain.inputs])
-    formula += "".join(["{" + input.key + "**2} + " for input in domain.inputs])
+
+    formula = "".join(["{" + input.key + "**2} + " for input in inputs])
     return formula
 
 
-def linear_and_interactions_formula(
-    domain: Optional[Domain],
+def interactions_terms(
+    continuous_inputs: Inputs,
+    categorical_inputs: Inputs,
 ) -> str:
     """Reformulates a string describing a linear-and-interactions model or certain keywords as Formula objects.
 
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+    Args: inputs (Inputs): The inputs that should be used to build the linear and interactions model.
 
     Returns:
         A string describing the model that was given as string or keyword.
 
     """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.key + " + " for input in domain.inputs])
-    for i in range(len(domain.inputs)):
-        for j in range(i):
-            formula += (
-                domain.inputs.get_keys()[j] + ":" + domain.inputs.get_keys()[i] + " + "
-            )
-    return formula
-
-
-def fully_quadratic_formula(
-    domain: Optional[Domain],
-) -> str:
-    """Reformulates a string describing a fully-quadratic model or certain keywords as Formula objects.
-
-    Args: domain (Domain): A problem context that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
-
-    Returns:
-        A string describing the model that was given as string or keyword.
-
-    """
-    assert (
-        domain is not None
-    ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.key + " + " for input in domain.inputs])
-    for i in range(len(domain.inputs)):
-        for j in range(i):
-            formula += (
-                domain.inputs.get_keys()[j] + ":" + domain.inputs.get_keys()[i] + " + "
-            )
-    formula += "".join(["{" + input.key + "**2} + " for input in domain.inputs])
+    inputs = continuous_inputs + categorical_inputs
+    formula = ""
+    for c in combinations(range(len(inputs)), 2):
+        if not (
+            (inputs.get_keys()[c[0]] in categorical_inputs.get_keys())
+            and (inputs.get_keys()[c[1]] in categorical_inputs.get_keys())
+        ):
+            formula += inputs.get_keys()[c[0]] + ":" + inputs.get_keys()[c[1]] + " + "
     return formula
 
 
@@ -221,7 +251,7 @@ def n_zero_eigvals(
     model_formula = get_formula_from_string(
         model_type=model_type,
         rhs_only=True,
-        domain=domain,
+        inputs=domain.inputs,
     )
     N = len(model_formula) + 3
 

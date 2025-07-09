@@ -415,26 +415,6 @@ def test_strategy_tell_outliers(
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
-def test_strategy_ask_invalid_candidates(
-    domain: Domain,
-    experiments: pd.DataFrame,
-):
-    strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain),
-    )
-    strategy.tell(experiments)
-
-    def test_ask(self: Strategy, candidate_count: int):
-        candidates = generate_candidates(self.domain, candidate_count)
-        candidates = candidates.drop(candidates.columns[0], axis=1)
-        return candidates
-
-    with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
-        with pytest.raises(ValueError):
-            strategy.ask(candidate_count=1)
-
-
-@pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
 def test_strategy_ask_invalid_candidate_count(
     domain: Domain,
     experiments: pd.DataFrame,
@@ -506,7 +486,7 @@ def test_predictive_strategy_ask_valid(
 
     def test_ask(self: Strategy, candidate_count: int):
         candidates = generate_candidates(self.domain, candidate_count)
-        return candidates
+        return candidates[domain.inputs.get_keys()]
 
     with mock.patch.object(dummy.DummyPredictiveStrategy, "_ask", new=test_ask):
         strategy.ask(candidate_count=1)
@@ -523,28 +503,6 @@ def test_predictivestrategy_to_candidates():
     )
     candidates = generate_candidates(domain, 5)
     strategy.to_candidates(candidates=candidates)
-
-
-def test_predictive_strategy_ask_invalid():
-    """Test that PretictiveStrategy also checks if candidates contain output columns."""
-    strategy = dummy.DummyPredictiveStrategy(
-        data_model=dummy.DummyPredictiveStrategyDataModel(
-            domain=Domain.from_lists(
-                inputs=[if1, if2],
-                outputs=[of1, of2],
-                constraints=[],
-            ),
-        ),
-    )
-    strategy.tell(e3)
-
-    def test_ask(self: Strategy, candidate_count: int):
-        candidates = generate_candidates(self.domain, candidate_count)
-        return candidates.drop(columns=["of1_pred"])
-
-    with mock.patch.object(dummy.DummyPredictiveStrategy, "_ask", new=test_ask):
-        with pytest.raises(ValueError):
-            strategy.ask(candidate_count=2)
 
 
 @pytest.mark.parametrize(
@@ -598,6 +556,6 @@ def test_predictive_strategy_predict_not_ready(domain):
     candidates = generate_candidates(domain=domain)
     with pytest.raises(ValueError, match="Model not yet fitted."):
         strategy.predict(candidates)
-    strategy.is_fitted = True
+    strategy._is_fitted = True
     with pytest.raises(ValueError, match="No experiments available."):
         strategy.predict(candidates)

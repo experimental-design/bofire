@@ -13,8 +13,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import AnyOptimalityCriterion
-from bofire.strategies.doe.objective import get_objective_function
+from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
     _minimize,
     constraints_as_scipy_constraints,
@@ -25,8 +24,7 @@ from bofire.strategies.random import RandomStrategy
 
 def find_local_max_ipopt(
     domain: Domain,
-    n_experiments: int,
-    criterion: Optional[AnyOptimalityCriterion] = None,
+    objective_function: Objective,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
@@ -37,21 +35,18 @@ def find_local_max_ipopt(
     """Function computing an optimal design for a given domain and model.
 
     Args:
-        domain (Domain): domain containing the inputs and constraints.
-        n_experiments (int): Number of experiments. By default the value corresponds to
-            the number of model terms - dimension of ker() + 3.
-        delta (float): Regularization parameter. Default value is 1e-3.
-        ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
-        sampling (pd.DataFrame): dataframe containing the initial guess.
-        fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
+        domain: domain containing the inputs and constraints.
+        objective_function: The function defining the objective of the optimizattion.
+        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        sampling : dataframe containing the initial guess.
+        fixed_experiments : dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
-        partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+        partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        criterion (OptimalityCriterion): OptimalityCriterion object indicating which criterion function to use.
-        use_hessian (bool): If True, the hessian of the objective function is used. Default is False.
-        use_cyipopt (bool, optional): If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+        use_hessian: If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
             If None, cyipopt is used if available.
 
     Returns:
@@ -62,12 +57,7 @@ def find_local_max_ipopt(
     #
     # Checks and preparation steps
     #
-
-    objective_function = get_objective_function(
-        criterion, domain=domain, n_experiments=n_experiments
-    )
-    assert objective_function is not None, "Criterion type is not supported!"
-
+    n_experiments = objective_function.n_experiments
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
@@ -118,10 +108,15 @@ def find_local_max_ipopt(
     if sampling is not None:
         sampling.sort_index(axis=1, inplace=True)
         x0 = sampling.values.flatten()
-    elif len(domain.constraints.get(NonlinearConstraint)) == 0:
+    try:
         sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
-        x0 = sampler.ask(n_experiments).to_numpy().flatten()
-    else:
+        x0 = (
+            sampler.ask(n_experiments, raise_validation_error=False)
+            .to_numpy()
+            .flatten()
+        )
+    except Exception as e:
+        warnings.warn(str(e))
         warnings.warn(
             "Sampling failed. Falling back to uniform sampling on input domain.\
                       Providing a custom sampling strategy compatible with the problem can \

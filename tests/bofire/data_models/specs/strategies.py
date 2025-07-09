@@ -3,14 +3,17 @@ import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
+    qLogPF,
     qNegIntPosVar,
     qPI,
 )
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    SelectionCondition,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
@@ -21,7 +24,10 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
-from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+)
 from bofire.data_models.strategies.api import (
     AbsoluteMovingReferenceValue,
     ExplicitReferencePoint,
@@ -289,39 +295,27 @@ for criterion in [
         "quadratic",
         "fully-quadratic",
     ]:
-        for optimization_strategy in [
-            "default",
-            "exhaustive",
-            "branch-and-bound",
-            "partially-random",
-            "relaxed",
-            "iterative",
-        ]:
-            for use_cyipopt in [True, False, None]:
-                specs.add_valid(
-                    strategies.DoEStrategy,
-                    lambda criterion=criterion,
-                    formula=formula,
-                    optimization_strategy=optimization_strategy,
-                    use_cyipopt=use_cyipopt: {
-                        "domain": domain.valid().obj().model_dump(),
-                        "optimization_strategy": optimization_strategy,
-                        "verbose": False,
-                        "seed": 42,
-                        "criterion": criterion(
-                            formula=formula, transform_range=None
-                        ).model_dump(),
-                        "use_hessian": False,
-                        "use_cyipopt": use_cyipopt,
-                    },
-                )
+        for use_cyipopt in [True, False, None]:
+            specs.add_valid(
+                strategies.DoEStrategy,
+                lambda criterion=criterion, formula=formula, use_cyipopt=use_cyipopt: {
+                    "domain": domain.valid().obj().model_dump(),
+                    "verbose": False,
+                    "seed": 42,
+                    "criterion": criterion(
+                        formula=formula, transform_range=None
+                    ).model_dump(),
+                    "use_hessian": False,
+                    "use_cyipopt": use_cyipopt,
+                    "return_fixed_candidates": False,
+                },
+            )
 
 for use_cyipopt in [True, False, None]:
     specs.add_valid(
         strategies.DoEStrategy,
         lambda use_cyipopt=use_cyipopt: {
             "domain": domain.valid().obj().dict(),
-            "optimization_strategy": "default",
             "verbose": False,
             "ipopt_options": {"max_iter": 200, "print_level": 0},
             "criterion": strategies.SpaceFillingCriterion(
@@ -330,6 +324,7 @@ for use_cyipopt in [True, False, None]:
             "seed": 42,
             "use_hessian": False,
             "use_cyipopt": use_cyipopt,
+            "return_fixed_candidates": False,
         },
     )
 
@@ -630,6 +625,123 @@ specs.add_invalid(
     message="LSR-BO only supported for linear constraints.",
 )
 
+for optimizer in [strategies.BotorchOptimizer, strategies.GeneticAlgorithmOptimizer]:
+    specs.add_invalid(
+        strategies.SoboStrategy,
+        lambda optimizer=optimizer: {
+            "domain": Domain(
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(key="a", categories=["a", "b", "c"]),
+                        CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                    ]
+                ),
+                outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+                constraints=[
+                    CategoricalExcludeConstraint(
+                        features=["a", "b"],
+                        conditions=[
+                            SelectionCondition(selection=["a"]),
+                            SelectionCondition(selection=["ba"]),
+                        ],
+                    )
+                ],
+            ),
+            "acquisition_optimizer": optimizer(
+                prefer_exhaustive_search_for_purely_categorical_domains=True,
+            ),
+        },
+        error=ValueError,
+        message="CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
+    )
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="a", categories=["a", "b", "c"]),
+                    CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+            constraints=[
+                CategoricalExcludeConstraint(
+                    features=["a", "b"],
+                    conditions=[
+                        SelectionCondition(selection=["a"]),
+                        SelectionCondition(selection=["ba"]),
+                    ],
+                )
+            ],
+        ),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            prefer_exhaustive_search_for_purely_categorical_domains=False,
+        ),
+    },
+    error=ValueError,
+    message="CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="At least one constrained objective is required for qLogPF.",
+)
+
+specs.add_invalid(
+    strategies.AdditiveSoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(
+                    key="alpha", objective=MaximizeSigmoidObjective(tp=1, steepness=100)
+                ),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="SOBO strategy can only deal with one no-constraint objective.",
+)
 specs.add_invalid(
     strategies.SoboStrategy,
     lambda: {
@@ -647,7 +759,7 @@ specs.add_invalid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
             constraints=Constraints(
-                constraints=[InterpointEqualityConstraint(feature="a")],
+                constraints=[InterpointEqualityConstraint(features=["a"])],
             ),
         ).model_dump(),
     },

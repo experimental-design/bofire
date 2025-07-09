@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -14,6 +15,8 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductEqualityConstraint,
     ProductInequalityConstraint,
+    SelectionCondition,
+    ThresholdCondition,
 )
 
 
@@ -33,6 +36,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearEqualityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -4",
         ),
         True,
@@ -40,6 +44,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearEqualityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -3",
         ),
         False,
@@ -47,6 +52,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearInequalityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -5",
         ),
         True,
@@ -54,6 +60,7 @@ parameters = [
     (
         get_row(F[:4], 1),
         NonlinearInequalityConstraint(
+            features=["f1", "f2", "f3", "f4"],
             expression="f1 + f2 + f3 + f4 -2",
         ),
         False,
@@ -231,31 +238,31 @@ parameters = [
     ),
     (
         pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [1.0, 2.0, 3.0]}),
-        InterpointEqualityConstraint(feature="a"),
+        InterpointEqualityConstraint(features=["a"]),
         True,
     ),
     (
         pd.DataFrame({"a": [1.0, 1.0, 2.0], "b": [1.0, 2.0, 3.0]}),
-        InterpointEqualityConstraint(feature="a"),
+        InterpointEqualityConstraint(features=["a"]),
         False,
     ),
     (
         pd.DataFrame({"a": [1.0, 1.0, 2.0, 2.0], "b": [1.0, 2.0, 3.0, 4.0]}),
-        InterpointEqualityConstraint(feature="a", multiplicity=2),
+        InterpointEqualityConstraint(features=["a"], multiplicity=2),
         True,
     ),
     (
         pd.DataFrame(
             {"a": [1.0, 1.0, 2.0, 2.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]},
         ),
-        InterpointEqualityConstraint(feature="a", multiplicity=2),
+        InterpointEqualityConstraint(features=["a"], multiplicity=2),
         True,
     ),
     (
         pd.DataFrame(
             {"a": [1.0, 1.0, 2.0, 3.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]},
         ),
-        InterpointEqualityConstraint(feature="a", multiplicity=2),
+        InterpointEqualityConstraint(features=["a"], multiplicity=2),
         False,
     ),
     (
@@ -283,6 +290,68 @@ parameters = [
         ),
         False,
     ),
+    (
+        pd.DataFrame({"catalyst": ["a", "b"], "solvent": ["c", "d"]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "catalyst"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                SelectionCondition(
+                    selection=["alpha", "beta"],
+                ),
+            ],
+        ),
+        True,
+    ),
+    (
+        pd.DataFrame({"solvent": ["Acetone", "b"], "catalyst": ["beta", "d"]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "catalyst"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                SelectionCondition(
+                    selection=["alpha", "beta"],
+                ),
+            ],
+        ),
+        False,
+    ),
+    (
+        pd.DataFrame({"solvent": ["Acetone", "THF"], "temperature": [50.0, 55.0]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "temperature"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                ThresholdCondition(
+                    operator=">",
+                    threshold=60,
+                ),
+            ],
+        ),
+        True,
+    ),
+    (
+        pd.DataFrame({"solvent": ["Acetone", "THF"], "temperature": [50.0, 55.0]}),
+        CategoricalExcludeConstraint(
+            features=["solvent", "temperature"],
+            conditions=[
+                SelectionCondition(
+                    selection=["Acetone", "THF"],
+                ),
+                ThresholdCondition(
+                    operator="<",
+                    threshold=60,
+                ),
+            ],
+        ),
+        False,
+    ),
 ]
 
 if TORCH_AVAILABLE:
@@ -290,6 +359,7 @@ if TORCH_AVAILABLE:
         (
             get_row(F[:4], 1),
             NonlinearInequalityConstraint(
+                features=["f1", "f2", "f3", "f4"],
                 expression=lambda f1, f2, f3, f4: f1 + f2 + f3 + f4 - 2,
             ),
             False,
@@ -297,6 +367,7 @@ if TORCH_AVAILABLE:
         (
             get_row(F[:4], 1),
             NonlinearEqualityConstraint(
+                features=["f1", "f2", "f3", "f4"],
                 expression=lambda f1, f2, f3, f4: f1 + f2 + f3 + f4 - 4,
             ),
             True,

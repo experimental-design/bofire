@@ -1,598 +1,417 @@
-import math
-from itertools import combinations
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
+import cvxpy as cp
 import numpy as np
 import pandas as pd
 
-from bofire.data_models.constraints.linear import (
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.data_models.constraints.nchoosek import NChooseKConstraint
-from bofire.data_models.constraints.nonlinear import NonlinearInequalityConstraint
-from bofire.data_models.domain.domain import Domain
-from bofire.data_models.features.categorical import CategoricalInput
-from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Feature, Output
-from bofire.data_models.types import DiscreteVals
+from bofire.data_models.domain.api import Constraints, Domain, Inputs
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 
 
-def discrete_to_relaxable_domain_mapper(
+def map_discrete_to_continuous(
+    inputs: List[DiscreteInput],
+) -> Tuple[
+    Dict[str, List[str]], List[ContinuousInput], List[ContinuousInput], Constraints
+]:
+    """
+    Maps a discrete input to a constrained set of continuous inputs. Each discrete value is represented by a
+    continuous variable between 0 and 1. As only one can be active at a time, the sum of all continuous variables
+    is constrained to be 1. The constraint is added to the domain as a NChooseKConstraint. The number of discrete
+    values is the number of continuous variables.
+    Args:
+        inputs: A list of discrete inputs.
+    Returns:
+        A tuple containing:
+            - A dictionary mapping the discrete input key to a list of auxiliary variable keys.
+            - A list of continuous inputs representing the discrete values.
+            - A list of auxiliary continuous inputs for the discrete values.
+            - A Constraints object containing the constraints for the discrete inputs.
+    """
+
+    def generate_value_key(input: DiscreteInput, d: float):
+        return (
+            f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-','__neg__')}"
+        )
+
+    # Create a new list of inputs
+    new_inputs = []
+    new_auxiliary_inputs = []
+    new_constraints = []
+    mappings_discrete_var_key_to_aux_var_keys = {}
+    # Iterate over the inputs of the original domain
+    for input in inputs:
+        # If the input is a DiscreteInput, replace it with a ContinuousInput
+        mapping_aux_to_discrete_value = []
+        assert isinstance(
+            input, DiscreteInput
+        ), f"Expected {DiscreteInput.__name__}, got {type(input)}"
+
+        # Create a new ContinuousInput for each value
+        new_inputs_for_input = []
+        new_aux_inputs_for_input = []
+        new_inputs_for_input.append(
+            ContinuousInput(key=input.key, bounds=[0, input.values[-1]])
+        )
+        new_inputs += new_inputs_for_input
+        for d in input.values:
+            new_aux_inputs_for_input.append(
+                ContinuousInput(
+                    key=generate_value_key(input, d),
+                    bounds=[0, 1],
+                )
+            )
+            mapping_aux_to_discrete_value += [generate_value_key(input, d)]
+        new_auxiliary_inputs += new_aux_inputs_for_input
+        mappings_discrete_var_key_to_aux_var_keys[input.key] = (
+            mapping_aux_to_discrete_value
+        )
+        # Create a new list of constraints
+        new_constraints.append(
+            LinearEqualityConstraint(
+                features=[i.key for i in new_aux_inputs_for_input],
+                coefficients=[1] * len(new_aux_inputs_for_input),
+                rhs=1,
+            )
+        )
+        new_constraints.append(
+            LinearEqualityConstraint(
+                features=[
+                    i.key for i in new_inputs_for_input + new_aux_inputs_for_input
+                ],
+                coefficients=[1.0] + [-value for value in input.values],
+                rhs=0.0,
+            )
+        )
+    return (
+        mappings_discrete_var_key_to_aux_var_keys,
+        new_inputs,
+        new_auxiliary_inputs,
+        Constraints(constraints=new_constraints),
+    )
+
+
+def map_categorical_to_continuous(
+    categorical_inputs: List[CategoricalInput],
+) -> Tuple[Dict[str, Dict[str, str]], List[ContinuousInput], Constraints]:
+    """
+    Maps a categorical input to a constrained set of continuous inputs. Each category is represented by a
+    continuous variable between 0 and 1. As only one can be active at a time, the sum of all continuous variables
+    is constrained to be 1. The constraint is added to the domain as a NChooseKConstraint. The number of categories
+    is the number of continuous variables.
+    Args:
+        categorical_inputs: A list of categorical inputs.
+    Returns:
+        A tuple containing:
+            - A dictionary mapping the categorical input key to a dictionary of auxiliary variable keys and their
+              corresponding categories.
+            - A list of continuous inputs representing the categorical values.
+            - A Constraints object containing the constraints for the categorical inputs.
+    """
+
+    # Create a new list of inputs
+    def generate_value_key(input: CategoricalInput, c: str):
+        return f"aux_{input.key}_{c}"
+
+    new_constraints = []
+    new_auxiliary_inputs = []
+    mappings_aux_to_category = {}
+    # Iterate over the inputs of the original domain
+    for input in categorical_inputs:
+        # If the input is a CategoricalInput, replace it with a ContinuousInput
+        assert isinstance(
+            input, CategoricalInput
+        ), f"Expected {CategoricalInput.__name__}, got {type(input)}"
+        # Create a new ContinuousInput for each category
+        new_auxiliary_inputs_for_input = []
+        mapping_aux_to_category = {}
+        for c in input.categories:
+            new_auxiliary_inputs_for_input.append(
+                ContinuousInput(key=generate_value_key(input=input, c=c), bounds=[0, 1])
+            )
+            mapping_aux_to_category[generate_value_key(input, c)] = c
+        new_auxiliary_inputs += new_auxiliary_inputs_for_input
+        mappings_aux_to_category[input.key] = mapping_aux_to_category
+        # Create a new list of constraints
+        new_constraints.append(
+            LinearEqualityConstraint(
+                features=[i.key for i in new_auxiliary_inputs_for_input],
+                coefficients=[1] * len(new_auxiliary_inputs_for_input),
+                rhs=1,
+            )
+        )
+
+    return (
+        mappings_aux_to_category,
+        new_auxiliary_inputs,
+        Constraints(constraints=new_constraints),
+    )
+
+
+def create_continuous_domain(
     domain: Domain,
 ) -> Tuple[
     Domain,
-    List[List[ContinuousInput]],
-    Dict[str, Tuple[ContinuousInput, DiscreteVals]],
+    Dict[str, Dict[str, str]],
+    Dict[str, List[str]],
+    List[ContinuousInput],
+    List[ContinuousInput],
+    List[ContinuousInput],
 ]:
-    """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
-
-    Args:
-        domain (Domain): Domain with discrete and categorical inputs.
-
     """
-    # get all discrete and categorical inputs
-    kept_inputs = domain.inputs.get(
-        includes=None,
-        excludes=[CategoricalInput, DiscreteInput],
-    ).features
-    discrete_inputs = domain.inputs.get(DiscreteInput)
-    categorical_inputs = domain.inputs.get(CategoricalInput)
-
-    # convert discrete inputs to continuous inputs
-    relaxable_discrete_inputs = {
-        d_input.key: (
-            ContinuousInput(
-                key=d_input.key,
-                bounds=(min(d_input.values), max(d_input.values)),  # type: ignore
-            ),
-            d_input.values,  # type: ignore
-        )
-        for d_input in discrete_inputs
-    }
-
-    # convert categorical inputs to continuous inputs
-    relaxable_categorical_inputs = []
-    new_constraints = []
-    categorical_groups: List[List[ContinuousInput]] = []
-    for c_input in categorical_inputs:
-        current_group_keys = list(c_input.categories)  # type: ignore
-        pick_1_constraint, group_vars = generate_mixture_constraints(current_group_keys)
-        categorical_groups.append(group_vars)
-        relaxable_categorical_inputs.extend(group_vars)
-        new_constraints.append(pick_1_constraint)
-
-    # create new domain with continuous inputs
-    new_domain = Domain(
-        inputs=kept_inputs  # type: ignore
-        + [var for key, (var, values) in relaxable_discrete_inputs.items()]
-        + relaxable_categorical_inputs,
-        outputs=domain.outputs.features,  # type: ignore
-        constraints=domain.constraints + new_constraints,
+    Creates a domain from the inputs, constraints and outputs.
+    Args:
+        inputs (Inputs): The inputs of the domain.
+        constraints (Constraints): The constraints of the domain.
+        outputs (Outputs): The outputs of the domain.
+    Returns:
+        Domain: The created domain.
+    """
+    # Create a new domain
+    (
+        mappings_discrete_var_key_to_aux_var_keys,
+        relaxed_discrete_inputs,
+        aux_vars_for_discrete,
+        aux_constraints_for_discrete_var_relaxation,
+    ) = map_discrete_to_continuous(
+        [input for input in domain.inputs if isinstance(input, DiscreteInput)]
     )
-
-    return new_domain, categorical_groups, relaxable_discrete_inputs  # type: ignore
-
-
-def nchoosek_to_relaxable_domain_mapper(
-    domain: Domain,
-) -> Tuple[Domain, List[List[ContinuousInput]]]:
-    var_occuring_in_nchoosek = []
-    new_categories = []
-    new_constraints = []
-    n_choose_k_constraints = domain.constraints.get(includes=NChooseKConstraint)
-
-    for constr in n_choose_k_constraints:
-        var_occuring_in_nchoosek.extend(constr.features)
-
-        current_features: List[Feature] = [
-            domain.inputs.get_by_key(k) for k in constr.features
-        ]
-        new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
-            current_features,
-            constr.min_count,
-            constr.max_count,
-            constr.none_also_valid,
-        )
-        new_categories.append(new_relaxable_categorical_vars)
-        new_constraints.extend(new_nchoosek_constraints)
-
-        # allow vars to be set to 0
-        for var in var_occuring_in_nchoosek:
-            current_var = domain.inputs.get_by_key(var)
-            if current_var.lower_bound > 0:  # type: ignore
-                current_var.bounds = (0, current_var.upper_bound)  # type: ignore
-            elif current_var.upper_bound < 0:  # type: ignore
-                current_var.bounds = (current_var.lower_bound, 0)  # type: ignore
-
-    new_domain = Domain(
-        inputs=domain.inputs.features  # type: ignore
-        + [var for group in new_categories for var in group],
+    (
+        mappings_categorical_var_key_to_aux_var_key_state_pairs,
+        mapped_aux_categorical_inputs,
+        aux_constraints_for_categorical_var_relaxation,
+    ) = map_categorical_to_continuous(
+        [input for input in domain.inputs if isinstance(input, CategoricalInput)]
+    )
+    mapped_continous_inputs = [
+        input for input in domain.inputs if isinstance(input, ContinuousInput)
+    ]
+    # Combine the inputs and constraints
+    all_inputs = (
+        relaxed_discrete_inputs
+        + mapped_aux_categorical_inputs
+        + mapped_continous_inputs
+        + aux_vars_for_discrete
+    )
+    all_constraints = (
+        aux_constraints_for_discrete_var_relaxation
+        + aux_constraints_for_categorical_var_relaxation
+        + domain.constraints
+    )
+    # Create the domain
+    domain = Domain(
+        inputs=Inputs(features=all_inputs),
+        constraints=all_constraints,
         outputs=domain.outputs,
-        constraints=domain.constraints.get(excludes=NChooseKConstraint)
-        + new_constraints,
     )
-    return new_domain, new_categories
-
-
-def NChooseKGroup_with_quantity(
-    unique_group_identifier: str,
-    keys: List[str],
-    pick_at_least: int,
-    pick_at_most: int,
-    quantity_if_picked: Optional[
-        Union[Tuple[float, float], List[Tuple[float, float]]]
-    ] = None,
-    combined_quantity_limit: Optional[float] = None,
-    combined_quantity_is_equal_or_less_than: bool = False,
-    use_non_relaxable_category_and_non_linear_constraint: bool = False,
-) -> tuple[
-    Union[List[CategoricalInput], List[ContinuousInput]],
-    List[ContinuousInput],
-    List[
-        Union[
-            LinearEqualityConstraint,
-            LinearInequalityConstraint,
-            NonlinearInequalityConstraint,
-        ]
-    ],
-]:
-    """Helper function to generate an N choose K problem with categorical variables, with an option to connect each
-    element of a category to a corresponding quantity of how much that category should be used.
-
-    Args:
-        unique_group_identifier (str): unique ID for the category/group which will be used to mark all variables
-            containing to this group
-        keys (List[str]): defines the names and the amount of the elements within the category
-        pick_at_least (int): minimum number of elements to be picked from the category. >=0
-        pick_at_most (int): maximum number of elements to be picked from the category. >=pick_at_least
-        quantity_if_picked (Optional[Union[Tuple[float, float], List[Tuple[float, float]]]): If provided, specifies
-            the lower and upper bound of the quantity, for each element in the category. List of bounds to specify the
-            allowed quantity for each element separately or one single bound to set the same bounds for all elements.
-        combined_quantity_limit (Optional[float]): If provided, sets an upper bound on what the sum of all the
-            quantities of all elements should be
-        combined_quantity_is_equal_or_less_than (bool): If True, the combined_quantity_limit describes the exact amount
-            of the sum of all quantities. If False, it is a upper bound, i.e. the sum of the quantities can be lower.
-            Default is False
-        use_non_relaxable_category_and_non_linear_constraint (bool): Default is False.
-            If False, ContinuousInput is used in combination with LinearConstraints as a relaxation.
-            If True, CategoricalInput used in combination with NonlinearConstraints, as CategoricalInput can not be
-            used within LinearConstraints
-    Returns:
-        Either one CategoricalInput wrapped in a List or List of ContinuousInput describing the group,
-        If quantities are provided, List of ContinuousInput describing the quantity of each element of the group
-        otherwise empty List,
-        List of either LinearConstraints or mix of Linear- and NonlinearConstraints, which enforce the quantities
-        and group restrictions.
-
-    """
-    if quantity_if_picked is not None:
-        if isinstance(quantity_if_picked, list) and len(keys) != len(
-            quantity_if_picked,
-        ):
-            raise ValueError(
-                f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
-                f"and {len(quantity_if_picked)} quantities",
-            )
-
-        if isinstance(quantity_if_picked, list) and True in [
-            0 in q for q in quantity_if_picked
-        ]:
-            raise ValueError(
-                "If an element out of the group is chosen, the quantity with which it is used must be "
-                "larger than 0",
-            )
-
-    if pick_at_least > pick_at_most:
-        raise ValueError(
-            f"your upper bound to pick an element should be larger your lower bound. "
-            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}",
-        )
-
-    if pick_at_least < 0:
-        raise ValueError(
-            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}",
-        )
-
-    if pick_at_most > len(keys):
-        raise ValueError(
-            f"you can not pick more elements than are available. "
-            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}",
-        )
-
-    if "pick_none" in keys:
-        raise ValueError("pick_none is not allowed as a key")
-
-    if True in ["_" in k for k in keys]:
-        raise ValueError('"_" is not allowed as an character in the keys')
-
-    if quantity_if_picked is not None and not isinstance(quantity_if_picked, list):
-        quantity_if_picked = [quantity_if_picked for k in keys]
-
-    quantity_var, all_new_constraints = [], []
-    quantity_constraints_lb, quantity_constraints_ub = [], []
-    max_quantity_constraint = None
-
-    # creating possible combination of n choose k
-    combined_keys_as_tuple = []
-    if pick_at_most > 1:
-        for i in range(max(2, pick_at_least), pick_at_most + 1):
-            combined_keys_as_tuple.extend(list(combinations(keys, i)))
-    if pick_at_least <= 1:
-        combined_keys_as_tuple.extend([[k] for k in keys])
-
-    combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
-
-    # generating the quantity variables and corresponding constraints
-    if quantity_if_picked:
-        (
-            quantity_var,
-            quantity_constraints_lb,
-            quantity_constraints_ub,
-            max_quantity_constraint,
-        ) = _generate_quantity_var_constr(
-            unique_group_identifier,
-            keys,
-            quantity_if_picked,
-            combined_keys,
-            combined_keys_as_tuple,
-            use_non_relaxable_category_and_non_linear_constraint,
-            combined_quantity_limit,
-            combined_quantity_is_equal_or_less_than,
-        )
-
-    # allowing to pick none
-    if pick_at_least == 0:
-        combined_keys.append(unique_group_identifier + "_pick_none")
-
-    # adding the new possible combinations to the list of keys
-    keys = [unique_group_identifier + "_" + k for k in combined_keys]
-
-    # choosing between CategoricalInput and ContinuousInput
-    if use_non_relaxable_category_and_non_linear_constraint:
-        category = [CategoricalInput(key=unique_group_identifier, categories=keys)]
-        # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
-        pick_exactly_one_of_group_const = []
-    else:
-        category = [ContinuousInput(key=k, bounds=[0, 1]) for k in keys]
-        pick_exactly_one_of_group_const = [
-            LinearEqualityConstraint(
-                features=list(keys),
-                coefficients=[1 for k in keys],
-                rhs=1,
-            ),
-        ]
-
-    all_new_constraints = (
-        pick_exactly_one_of_group_const
-        + quantity_constraints_lb
-        + quantity_constraints_ub
-    )
-    if max_quantity_constraint is not None:
-        all_new_constraints.append(max_quantity_constraint)  # type: ignore
-    return category, quantity_var, all_new_constraints  # type: ignore
-
-
-def _generate_quantity_var_constr(
-    unique_group_identifier,
-    keys,
-    quantity_if_picked,
-    combined_keys,
-    combined_keys_as_tuple,
-    use_non_relaxable_category_and_non_linear_constraint,
-    combined_quantity_limit,
-    combined_quantity_is_equal_or_less_than,
-) -> Tuple[
-    List[ContinuousInput],
-    Union[List[NonlinearInequalityConstraint], List[LinearInequalityConstraint]],
-    Union[List[NonlinearInequalityConstraint], List[LinearInequalityConstraint]],
-    Optional[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
-]:
-    """Internal helper function just to create the quantity variables and the corresponding constraints."""
-    quantity_var = [
-        ContinuousInput(
-            key=unique_group_identifier + "_" + k + "_quantity",
-            bounds=[0, q[1]],
-        )
-        for k, q in zip(keys, quantity_if_picked)
-    ]
-
-    all_quantity_features = []
-    for k in keys:
-        all_quantity_features.append(
-            [
-                unique_group_identifier + "_" + state_key
-                for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
-                if k in state_tuple
-            ],
-        )
-
-    if use_non_relaxable_category_and_non_linear_constraint:
-        quantity_constraints_lb = [
-            NonlinearInequalityConstraint(
-                expression="".join(
-                    ["-" + unique_group_identifier + "_" + k + "_quantity"]
-                    + [f" + {q[0]} * {key_c}" for key_c in combi],
-                ),
-                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-            )
-            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
-            if len(combi) >= 1
-        ]
-
-        quantity_constraints_ub = [
-            NonlinearInequalityConstraint(
-                expression="".join(
-                    [unique_group_identifier + "_" + k + "_quantity"]
-                    + [f" - {q[1]} * {key_c}" for key_c in combi],
-                ),
-                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-            )
-            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
-            if len(combi) >= 1
-        ]
-    else:
-        quantity_constraints_lb = [
-            LinearInequalityConstraint(
-                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-                coefficients=[-1.0] + [q[0] for i in range(len(combi))],
-                rhs=0,
-            )
-            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
-            if len(combi) >= 1
-        ]
-
-        quantity_constraints_ub = [
-            LinearInequalityConstraint(
-                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-                coefficients=[1.0] + [-q[1] for i in range(len(combi))],
-                rhs=0,
-            )
-            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
-            if len(combi) >= 1
-        ]
-
-    max_quantity_constraint = None
-    if combined_quantity_limit is not None:
-        if combined_quantity_is_equal_or_less_than:
-            max_quantity_constraint = LinearEqualityConstraint(
-                features=[q.key for q in quantity_var],
-                coefficients=[1 for q in quantity_var],
-                rhs=combined_quantity_limit,
-            )
-        else:
-            max_quantity_constraint = LinearInequalityConstraint(
-                features=[q.key for q in quantity_var],
-                coefficients=[1 for q in quantity_var],
-                rhs=combined_quantity_limit,
-            )
-
+    # Return the domain
     return (
-        quantity_var,
-        quantity_constraints_lb,
-        quantity_constraints_ub,
-        max_quantity_constraint,
+        domain,
+        mappings_categorical_var_key_to_aux_var_key_state_pairs,
+        mappings_discrete_var_key_to_aux_var_keys,
+        aux_vars_for_discrete,
+        mapped_aux_categorical_inputs,
+        mapped_continous_inputs,
     )
 
 
-def NChooseKGroup(
-    variables: List[Feature],
-    pick_at_least: int,
-    pick_at_most: int,
-    none_also_valid: bool,
-) -> Tuple[
-    List[ContinuousInput],
-    List[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
-]:
-    """Helper function to generate an N choose K problem with categorical variables, with an option to connect each
-    element of a category to a corresponding quantity of how much that category should be used.
-
+def filter_out_discrete_auxilliary_vars(
+    df: pd.DataFrame,
+    aux_vars_for_discrete: Optional[List[ContinuousInput]] = None,
+) -> pd.DataFrame:
+    """
+    Projects the dataframe to the original domain by removing the auxiliary inputs and mapping the discrete inputs
+    back to their original values.
     Args:
-        variables (List[ContinuousInput]): variables to pick from
-        pick_at_least (int): minimum number of elements to be picked from the category. >=0
-        pick_at_most (int): maximum number of elements to be picked from the category. >=pick_at_least
-        none_also_valid (bool): defines if also none of the elements can be picked
+        df (pd.DataFrame): The dataframe to project.
+        aux_vars_for_discrete (Inputs): The auxiliary inputs for discrete inputs.
+        mapped_aux_categorical_inputs (Inputs): The auxiliary inputs for categorical inputs.
+         mappings_categorical_var_key_to_aux_var_key_state_pairs (Dict[str, Dict[str, str]]): The mappings for categorical inputs.
     Returns:
-        List of ContinuousInput describing the group,
-        List of either LinearConstraints, which enforce the quantities
-        and group restrictions.
-
+        pd.DataFrame: The projected dataframe.
     """
-    keys = [var.key for var in variables]
-    if pick_at_least > pick_at_most:
-        raise ValueError(
-            f"your upper bound to pick an element should be larger your lower bound. "
-            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}",
-        )
-
-    if pick_at_least < 0:
-        raise ValueError(
-            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}",
-        )
-
-    if pick_at_most > len(keys):
-        raise ValueError(
-            f"you can not pick more elements than are available. "
-            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}",
-        )
-
-    if "pick_none" in keys:
-        raise ValueError("pick_none is not allowed as a key")
-
-    # creating possible combination of n choose k
-    combined_keys_as_tuple = []
-    if pick_at_most > 1:
-        for i in range(max(2, pick_at_least), pick_at_most + 1):
-            combined_keys_as_tuple.extend(list(combinations(keys, i)))
-    if pick_at_least <= 1:
-        combined_keys_as_tuple.extend([[k] for k in keys])
-
-    combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
-    combined_keys = ["categorical_helper" + "_" + k for k in combined_keys]
-
-    # generating the corresponding constraints
-    valid_states = []
-    for k in keys:
-        valid_states.append(
-            [
-                state_key
-                for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
-                if k in state_tuple
-            ],
-        )
-
-    quantity_constraints_lb = [
-        LinearInequalityConstraint(
-            features=[var.key] + combi,
-            coefficients=[-1.0] + [var.lower_bound for i in range(len(combi))],  # type: ignore
-            rhs=0,
-        )
-        for combi, var in zip(valid_states, variables)
-        if len(combi) >= 1
-    ]
-
-    quantity_constraints_ub = [
-        LinearInequalityConstraint(
-            features=[var.key] + combi,
-            coefficients=[1.0] + [-var.upper_bound for i in range(len(combi))],  # type: ignore
-            rhs=0,
-        )
-        for combi, var in zip(valid_states, variables)
-        if len(combi) >= 1
-    ]
-
-    # allowing to pick none
-    if pick_at_least == 0 or none_also_valid:
-        combined_keys.append("categorical_helper_pick_none_of_" + "".join(keys))
-
-    # adding the new possible combinations to the list of keys
-    keys = combined_keys
-
-    category = [ContinuousInput(key=k, bounds=[0, 1]) for k in keys]
-    pick_exactly_one_of_group_const = [
-        LinearEqualityConstraint(
-            features=list(keys),
-            coefficients=[1 for k in keys],
-            rhs=1,
-        ),
-    ]
-
-    all_new_constraints = []
-    all_new_constraints.extend(pick_exactly_one_of_group_const)
-    all_new_constraints.extend(quantity_constraints_lb)
-    all_new_constraints.extend(quantity_constraints_ub)
-
-    return category, all_new_constraints
+    # drop the auxiliary inputs
+    if aux_vars_for_discrete is not None:
+        df = df.drop(columns=[input.key for input in aux_vars_for_discrete])
+    return df
 
 
-def generate_mixture_constraints(
-    keys: List[str],
-) -> Tuple[LinearEqualityConstraint, List[ContinuousInput]]:
-    binary_vars = (ContinuousInput(key=x, bounds=[0, 1]) for x in keys)
-
-    mixture_constraint = LinearEqualityConstraint(
-        features=keys,
-        coefficients=[1 for x in range(len(keys))],
-        rhs=1,
-    )
-
-    return mixture_constraint, list(binary_vars)
-
-
-def design_from_original_to_new_domain(
-    original_domain: Domain,
-    new_domain: Domain,
-    design: pd.DataFrame,
-) -> pd.DataFrame:
-    raise NotImplementedError(
-        "mapping a design to a new domain is not implemented yet.",
-    )
-
-
-def design_from_new_to_original_domain(
-    original_domain: Domain,
-    design: pd.DataFrame,
-) -> pd.DataFrame:
-    # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random for multiple solutions
-    transformed_design = design[
-        original_domain.inputs.get_keys(
-            includes=None,
-            excludes=[CategoricalInput, Output],
-        )
-    ]
-
-    for group in original_domain.inputs.get(includes=CategoricalInput):
-        categorical_columns = design[group.categories]  # type: ignore
-        mask = ~np.isclose(categorical_columns.to_numpy(), 0)
-
-        for i, row in enumerate(mask):
-            non_zero_indices = np.argwhere(row)
-            if non_zero_indices.size != 0:
-                index_to_keep = np.random.choice(np.argwhere(row).flatten())
-            else:
-                index_to_keep = list(range(len(row)))
-            mask[i] = np.zeros_like(row, dtype=bool)
-            mask[i][index_to_keep] = True
-
-        categorical_columns = categorical_columns.where(
-            np.invert(mask),
-            pd.DataFrame(
-                np.full(
-                    (len(categorical_columns), len(group.categories)),  # type: ignore
-                    group.categories,  # type: ignore
-                ),
-                columns=categorical_columns.columns,
-                index=categorical_columns.index,
-            ),
-        )
-        categorical_columns = categorical_columns.where(
-            mask,
-            pd.DataFrame(
-                np.full((len(categorical_columns), len(group.categories)), ""),  # type: ignore
-                columns=categorical_columns.columns,
-                index=categorical_columns.index,
-            ),
-        )
-        transformed_design[group.key] = categorical_columns.apply("".join, axis=1)
-
-    # map the ContinuousInput describing the discrete to the closest valid value
-    for var in original_domain.inputs.get(includes=DiscreteInput):
-        closest_solution = var.from_continuous(transformed_design)  # type: ignore
-        transformed_design[var.key] = closest_solution
-
-    return transformed_design
-
-
-def equal_count_split(
-    values: List[float],
-    lower_bound: float,
-    upper_bound: float,
-) -> Tuple[float, float]:
-    """Determines the two elements x and y such that the intervals (lower_bound, x) and (y, upper_bound)
-    have the same number of elements regarding the values of the discrete variable
+def filter_out_categorical_and_categorical_auxilliary_vars(
+    df: pd.DataFrame,
+    mapped_aux_categorical_inputs: Optional[List[ContinuousInput]] = None,
+    mappings_categorical_var_key_to_aux_var_key_state_pairs: Optional[
+        Dict[str, Dict[str, str]]
+    ] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Projects the dataframe to the original domain by removing the auxiliary inputs and mapping the discrete inputs
+    back to their original values.
     Args:
-        values: the values to split into a range
-        lower_bound: inclusive lower bound
-        upper_bound: inclusive upper bound
-
-    Returns: tuple of floats which split the interval in half
-
+        df (pd.DataFrame): The dataframe to project.
+        mappings_categorical_var_key_to_aux_var_key_state_pairs (Dict[str, Dict[str, str]]): The mappings for categorical inputs.
+    Returns:
+       Tuple[pd.DataFrame, pd.DataFrame]: The projected dataframe.
+    The first dataframe contains the variables not associated with the categorical inputs.
+    The second dataframe contains the categorical inputs.
     """
-    values.sort()
-    sub_list = [elem for elem in values if lower_bound <= elem <= upper_bound]
+    df_categorical = pd.DataFrame(index=df.index)
+    # set the categorical inputs according to the auxiliary inputs
+    if (mapped_aux_categorical_inputs is not None) and (
+        mappings_categorical_var_key_to_aux_var_key_state_pairs is not None
+    ):
+        for (
+            input_key,
+            mapping,
+        ) in mappings_categorical_var_key_to_aux_var_key_state_pairs.items():
+            aux_keys = mapping.keys()
+            df[input_key] = df[aux_keys].idxmax(axis=1)
+            df[input_key] = df[input_key].map(mapping)
+        # drop the auxiliary inputs
+        df = df.drop(columns=[input.key for input in mapped_aux_categorical_inputs])
+    # drop the categorical inputs
+    if mappings_categorical_var_key_to_aux_var_key_state_pairs is not None:
+        categorical_inputs = list(
+            mappings_categorical_var_key_to_aux_var_key_state_pairs.keys()
+        )
+        df_categorical = df[categorical_inputs].copy()
+        df = df.drop(columns=categorical_inputs)
+    return df, df_categorical
 
-    size = len(sub_list)
-    if size % 2 == 0:
-        lower_index = size / 2 - 1
-        upper_index = size / 2
-    elif size == 1:
-        return sub_list[0], sub_list[0]
-    else:
-        lower_index = math.floor(size / 2)
-        upper_index = math.ceil(size / 2)
 
-    lower_index = int(lower_index)
-    upper_index = int(upper_index)
+def project_candidates_into_domain(
+    domain: Domain,
+    candidates: pd.DataFrame,
+    mapping_discrete_input_to_discrete_aux: Dict[str, List[str]],
+    keys_continuous_inputs: List[str],
+    scip_params: Optional[Dict] = None,
+) -> pd.DataFrame:
+    def n_choosek_on_boolean(x, k):
+        return cp.sum(x) == k
 
-    return sub_list[lower_index], sub_list[upper_index]
+    def linear_equality_constraint(w, x, y):
+        return cp.sum(w @ x) == y
+
+    def linear_inequality_constraint(w, x, y):
+        return cp.sum(w @ x) <= y
+
+    def lower_bound(w, x):
+        return x >= w
+
+    def upper_bound(w, x):
+        return x <= w
+
+    candidates_rounded = candidates.copy()
+    n_experiments, _ = candidates_rounded.shape
+    # sort all columns to the following order:
+    # 1. auxiliary inputs for discrete input 1
+    # 2. auxiliary inputs for discrete input 2
+    # 3. ...
+    # 4. original inputs
+    cp_variables = []
+    columns = []
+    for u, k in mapping_discrete_input_to_discrete_aux.items():
+        for i in range(len(k)):
+            columns.append(k[i])
+        columns.append(u)
+    columns += keys_continuous_inputs
+    constraints = []
+    b = []
+
+    for i in range(n_experiments):
+        map_original_inputs_to_cp_variables = {}
+        for u, k in mapping_discrete_input_to_discrete_aux.items():
+            x = cp.Variable(len(k), boolean=True)
+
+            # add the nchoosek constraint for the discrete input
+            # this constraint ensures that only one of the auxiliary inputs is selected
+            constraints += [n_choosek_on_boolean(x, 1)]
+
+            cp_variables += [x]
+            b += list(candidates_rounded[k].iloc[i, :].values)
+            x_u = cp.Variable(1)
+            cp_variables += [x_u]
+            map_original_inputs_to_cp_variables[u] = x_u
+
+            # enforce that the sum of the auxiliary inputs times the allowed discrete values is equal to the discrete input
+            constraints += [
+                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)  # type: ignore
+            ]
+            b += [candidates_rounded[u].iloc[i]]
+        if len(keys_continuous_inputs) > 0:
+            y = cp.Variable(len(keys_continuous_inputs))
+            cp_variables += [y]
+            map_original_inputs_to_cp_variables.update(
+                {k: y[i] for i, k in enumerate(keys_continuous_inputs)}
+            )
+            # add upper and lower bounds for the continuous inputs
+            lower_bounds = [
+                domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
+                for continuous_input in keys_continuous_inputs
+            ]
+            upper_bounds = [
+                domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
+                for continuous_input in keys_continuous_inputs
+            ]
+            constraints += [lower_bound(x=y, w=lower_bounds)]
+            constraints += [upper_bound(x=y, w=upper_bounds)]
+            b += list(candidates_rounded[keys_continuous_inputs].iloc[i, :].values)
+
+        # get linear inequality contraints in domain
+        for constraint in domain.constraints.constraints:
+            if isinstance(constraint, LinearInequalityConstraint):
+                variables = [
+                    map_original_inputs_to_cp_variables[feature]
+                    for feature in constraint.features
+                ]
+                if constraint.rhs is not None:
+                    constraints += [
+                        linear_inequality_constraint(
+                            constraint.coefficients,
+                            cp.hstack(variables),
+                            constraint.rhs,
+                        )
+                    ]
+                else:
+                    raise ValueError(
+                        "The right-hand side of the linear inequality constraint must be provided."
+                    )
+            elif isinstance(constraint, LinearEqualityConstraint):
+                variables = [
+                    map_original_inputs_to_cp_variables[feature]
+                    for feature in constraint.features
+                ]
+                if constraint.rhs is not None:
+                    constraints += [
+                        linear_equality_constraint(
+                            constraint.coefficients,
+                            cp.hstack(variables),
+                            constraint.rhs,
+                        )
+                    ]
+                else:
+                    raise ValueError(
+                        "The right-hand side of the linear equality constraint must be provided."
+                    )
+
+    # Create the objective function
+    objective = cp.Minimize(
+        cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
+    )
+    prob = cp.Problem(objective=objective, constraints=constraints)
+    if scip_params is None:
+        scip_params = {"numerics/feastol": 1e-8}
+    prob.solve(solver="SCIP", scip_params=scip_params)
+    return pd.DataFrame(
+        index=candidates.index,
+        data=np.concatenate([var.value for var in cp_variables], axis=0).reshape(
+            candidates.shape[0], candidates.shape[1]
+        ),
+        columns=columns,
+    )

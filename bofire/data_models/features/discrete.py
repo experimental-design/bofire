@@ -22,6 +22,7 @@ class DiscreteInput(NumericalInput):
     order_id: ClassVar[int] = 3
 
     values: DiscreteVals
+    rtol: float = 1e-7
 
     @field_validator("values")
     @classmethod
@@ -60,6 +61,27 @@ class DiscreteInput(NumericalInput):
         """Upper bound of the set of allowed values"""
         return max(self.values)
 
+    def is_fulfilled(self, values: pd.Series) -> pd.Series:
+        """Method to check if the values are close to the discrete values.
+
+        Args:
+            values: A series with values for the input feature.
+
+        Returns:
+            A series with boolean values indicating if the input feature is fulfilled.
+        """
+        return pd.Series(
+            np.array(
+                [
+                    np.array(
+                        [np.isclose(x, y, rtol=self.rtol) for x in self.values]
+                    ).any()
+                    for y in values.to_numpy()
+                ]
+            ),
+            index=values.index,
+        )
+
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the provided candidates.
 
@@ -70,11 +92,21 @@ class DiscreteInput(NumericalInput):
             ValueError: Raises error when one of the provided values is not contained in the list of allowed values.
 
         Returns:
-            pd.Series: _uggested candidates for the feature
+            pd.Series: suggested candidates for the feature
 
         """
         values = super().validate_candidental(values)
-        if not np.isin(values.to_numpy(), np.array(self.values)).all():
+        candidates_close_to_allowed_values = (
+            np.array(
+                [
+                    np.array(
+                        [np.isclose(x, y, rtol=self.rtol) for x in self.values]
+                    ).any()
+                    for y in values.to_numpy()
+                ]
+            )
+        ).all()
+        if not candidates_close_to_allowed_values:
             raise ValueError(
                 f"Not allowed values in candidates for feature {self.key}.",
             )

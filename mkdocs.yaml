@@ -7,7 +7,9 @@ nav:
   - index.md
   - Install: install.md
   - Notebook page: getting_started.ipynb
+  - Advanced Domain Configuration: domain.md
   - Examples: examples.md
+  - Strategies: strategies.md
   - Data Models vs Functional Components: data_models_functionals.md
   - Surrogate Models: userguide_surrogates.md
   - API Reference:
@@ -15,7 +17,6 @@ nav:
     - Constraints: ref-constraints.md
     - Objectives: ref-objectives.md
     - Features: ref-features.md
-    - Domain Util: ref-domain-util.md
     - Utils: ref-utils.md
 
 theme:
@@ -49,6 +50,10 @@ plugins:
   - mkdocs-jupyter
   # https://mkdocstrings.github.io/
   - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_submodules: true
   # https://github.com/jimporter/mike
   - mike:
 

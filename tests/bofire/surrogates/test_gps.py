@@ -267,37 +267,39 @@ def test_SingleTaskGPHyperconfig():
     )
     candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
     surrogate_data.update_hyperparameters(candidate)
-    if hasattr(surrogate_data.kernel, "base_kernel"):
-        assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
-        if candidate.kernel == "matern_1.5":
-            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-            assert surrogate_data.kernel.base_kernel.nu == 1.5
-        elif candidate.kernel == "matern_2.5":
-            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-            assert surrogate_data.kernel.base_kernel.nu == 2.5
-        else:
-            assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
-        if candidate.prior == "mbo":
-            assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+    # if hasattr(surrogate_data.kernel, "base_kernel"):
+    base_kernel = (
+        surrogate_data.kernel.base_kernel
+        if hasattr(surrogate_data.kernel, "base_kernel")
+        else surrogate_data.kernel
+    )
+    if candidate.scalekernel == "True":
+        assert hasattr(surrogate_data.kernel, "base_kernel")
+    else:
+        assert not hasattr(surrogate_data.kernel, "base_kernel")
+    if candidate.kernel == "matern_1.5":
+        assert isinstance(base_kernel, MaternKernel)
+        assert base_kernel.nu == 1.5
+    elif candidate.kernel == "matern_2.5":
+        assert isinstance(base_kernel, MaternKernel)
+        assert base_kernel.nu == 2.5
+    else:
+        assert isinstance(base_kernel, RBFKernel)
+    if candidate.prior == "mbo":
+        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == MBO_LENGTHCALE_PRIOR()
-            )
-        elif candidate.prior == "threesix":
-            assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert base_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
+    elif candidate.prior == "threesix":
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == THREESIX_LENGTHSCALE_PRIOR()
-            )
-        else:
-            assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert base_kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
+    else:
+        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == HVARFNER_LENGTHSCALE_PRIOR()
-            )
+        assert base_kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
 
 
 def test_SingleTaskGPModel_feature_subsets():

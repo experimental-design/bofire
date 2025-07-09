@@ -9,104 +9,187 @@
 [![Docs](https://github.com/experimental-design/bofire/workflows/Docs/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ADocs)
 [![PyPI](https://img.shields.io/pypi/v/bofire.svg)](https://pypi.org/project/bofire)
 
-BoFire is a **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**eal **E**xperiments.
+## **BoFire** — **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**eal **E**xperiments
 
-Why BoFire?
+BoFire is a powerful Python package that serves as a comprehensive framework for experimental design. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
 
-BoFire ...
+Why BoFire? BoFire ...
 
 - supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,
 - separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,
 - supports different specific and generic constraints as well as black-box output constraints,
 - can provide flexible DoEs that fulfill constraints,
 - provides sampling methods for constrained mixed variable spaces,
-- serializes problems for use in RESTful APIs and json/bson DBs,
-- allows easy out of the box usage of strategies for single and multi-objective Bayesian optimization, and
-- provides a high flexibility on the modelling side if needed.
+- serializes problems for use in RESTful APIs and json/bson DBs, and
+- allows easy out of the box usage of strategies for single and multi-objective Bayesian optimization.
 
-## Installation
+## Getting started
 
-In our [docs](https://experimental-design.github.io/bofire/install/),
-you can find all different options for the BoFire installation.
-To install all BoFire-features you need to run
+In our [docs](https://experimental-design.github.io/bofire/), you can find all different options for the [BoFire installation](https://experimental-design.github.io/bofire/install/). For basic BoFire Bayesian optimization features using [BoTorch](https://botorch.org/) which depends on
+[PyTorch](https://pytorch.org/), you need to run
+
 ```
-pip install bofire[optimization,cheminfo]
-```
-This will also install [BoTorch](https://botorch.org/) that depends on
-[PyTorch](https://pytorch.org/). To use the DoE package, you need to install
-[Cyipopt](https://cyipopt.readthedocs.io/en/stable/)
-additionally, e.g., via
-```
-conda install -c conda-forge cyipopt
+pip install bofire[optimization]
 ```
 
-## Getting Started
-For a more complete introduction to BoFire, please look at the [Getting Started documentation](https://experimental-design.github.io/bofire/getting_started/).
+For a more complete introduction to BoFire, please look in our [docs](https://experimental-design.github.io/bofire/).
 
-We first must define the domain of the optimization problem.
+### Optimization problem
 
-```python
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.objectives.api import MaximizeObjective
-from bofire.data_models.constraints.api import NChooseKConstraint
-from bofire.data_models.domain.api import Domain, Inputs, Outputs, Constraints
+You will find a notebook covering the described example below in our [tutorials](https://github.com/experimental-design/bofire/tree/main/tutorials/quick_start) section to run the code yourself.
 
-input_features = Inputs(features=[
-    ContinuousInput(key="x1", bounds=(0,1)),
-    ContinuousInput(key="x2", bounds=(0,1)),
-    ContinuousInput(key="x3", bounds=(0,1)),
-])
+Let us consider a test function for single-objective optimization - the [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau%27s_function). The Himmelblau's function has four identical local minima used to test the performance of optimization algorithms. The optimization domain of the Himmelblau's function is illustrated below together with the four minima marked red.
 
-output_features = Outputs(features=[
-    ContinuousOutput(key="y", objective=MaximizeObjective())
-])
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau.png" alt="Himmelblau's function" width="300"/>
+</div>
 
-constraints = Constraints(constraints=[
-    NChooseKConstraint(
-        features=["x1", "x2", "x3"],
-        min_count=1, max_count=2, none_also_valid=False)
-])
+
+### Defining the optimization output
+
+Let's consider the single continuous output variable *y* of the Himmelblau's function with the objective to minimize it. In BoFire's terminology, we create a `MinimizeObjective` object to define the optimization objective of a `Continuous Output` feature.
+
+```Python
+from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.objectives.api import MinimizeObjective
+
+
+objective = MinimizeObjective()
+output_feature = ContinuousOutput(key="y", objective=objective)
+```
+
+For more details on `Output` features and `Objective` objects, see the respective sections in our [docs](https://experimental-design.github.io/bofire/).
+
+
+### Defining the optimization inputs
+
+For the two continuous input variables of the Himmelblau's function *x1* and *x2*, we create two `ContinuousInput` features including boundaries following BoFire's terminology.
+
+```Python
+from bofire.data_models.features.api import ContinuousInput
+
+
+input_feature_1 = ContinuousInput(key="x1", bounds=[-5, 5])
+input_feature_2 = ContinuousInput(key="x2", bounds=[-5, 5])
+```
+
+For more details on `Input` features, see the respective sections in our [docs](https://experimental-design.github.io/bofire/).
+
+
+### Defining the optimization domain
+
+In BoFire's terminology, `Domain` objects fully describe the search space of the optimization problem. `Input` and `Output` features are optionally bound with `Constraint` objects to specify allowed relationships between the parameters. Here, we will run an unconstrained optimization. For more details, see the respective sections in our [docs](https://experimental-design.github.io/bofire/).
+
+```Python
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+
 
 domain = Domain(
-    inputs=input_features,
-    outputs=output_features,
-    constraints=constraints
+    inputs=Inputs(features=[input_feature_1, input_feature_2]),
+    outputs=Outputs(features=[output_feature]),
 )
 ```
 
-You can also use one of the many benchmarks available in BoFire.
-Here, we use the Detergent benchmark to demonstrate the ask/tell interface for
-proposing new experiments with multi-objective Bayesian optimization.
+### Draw candidates and execute experiments
 
-```python
-import bofire.strategies.api as strategies
-from bofire.benchmarks.api import DTLZ2
-from bofire.data_models.strategies.api import MoboStrategy, RandomStrategy
+Let's define the Himmelblau's function to evaluate points in the domain space.
 
-# create benchmark
-detergent = DTLZ2(3)
-domain = detergent.domain
-
-# create initial data with the random strategy while satisfying constraints
-sampler = strategies.map(RandomStrategy(domain=domain))
-initial_samples = sampler.ask(2)
-experiments = detergent.f(initial_samples, return_complete=True)
-
-# Bayesian optimization
-mobo_strategy = strategies.map(MoboStrategy(domain=domain))
-n_experiments = 2
-for _ in range(n_experiments):
-    mobo_strategy.tell(experiments=experiments)
-    candidates = mobo_strategy.ask(candidate_count=1)
-    experiments = detergent.f(candidates, return_complete=True)
-
-# Print all told experiments
-print(mobo_strategy.experiments)
+```Python
+def himmelblau(x1, x2):
+    return (x1**2 + x2 - 11) ** 2 + (x1 + x2**2 - 7) ** 2
 ```
+
+To initialize an iterative Bayesian optimization loop, let's first randomly draw 10 samples from the domain. In BoFire's terminology, those suggested samples are called `Candidates`.
+
+```Python
+candidates = domain.inputs.sample(10, seed=13)
+
+print(candidates)
+```
+```plaintext
+>           x1        x2
+>  0  1.271053  1.649396
+>  1 -5.012360 -1.907210
+>  2 -4.541719  5.609014
+>  3  ...       ...
+```
+
+Let's evaluate the function output for the randomly drawn candidates using the `himmelblau` function to obtain `Experiments` in BoFire's terminology.
+
+```Python
+experimental_output = candidates.apply(
+    lambda row: himmelblau(row["x1"], row["x2"]), axis=1
+)
+
+experiments = candidates.copy()
+experiments["y"] = experimental_output
+
+print(experiments)
+```
+
+```plaintext
+>           x1        x2           y
+>  0  1.271053  1.649396   68.881387
+>  1 -5.012360 -1.907210  219.383137
+>  2 -4.541719  5.609014  628.921615
+>  3 ...        ...       ...
+```
+
+For more details on candidates and experiments, see the respective sections in our [docs](https://experimental-design.github.io/bofire/).
+
+
+### Defining an optimization strategy
+
+Let's specify the strategy how the Bayesian optimization campaign should be conducted. Here, we define a single-objective Bayesian optimization strategy and pass the optimization domain together with a acquisition function. Here, we use logarithmic expected improvement `qLogEI` as the acquisition function.
+
+```Python
+from bofire.strategies.api import SoboStrategy
+from bofire.data_models.acquisition_functions.api import qLogEI
+
+sobo_strategy = SoboStrategy.make(
+    domain=domain, acquisition_function=qLogEI(), seed=19
+)
+
+```
+
+It is possible to separate BoFire into serializable parameters and a functional part. We call the serializable parameters usually data models.
+This is especially helpful when working with REST APIs.
+See the respective sections in our [docs](https://experimental-design.github.io/bofire/data_models_functionals/).
+
+
+### Run the optimization loop
+
+To run the optimization loop using BoFire's terminology, we first `tell` the strategy object about the experiments we have already executed.
+
+```Python
+sobo_strategy.tell(experiments=experiments)
+```
+
+We run the optimization loop for 30 iterations. In each iteration, we `ask` the strategy object to suggest one new candidate, which is returned as a list containing a single item. We then perform a new experiment by evaluating the Himmelblau function output of this candidate. After completing the experiment, we add the new data to our existing experiments and `tell` the strategy object about the updated dataset. This process is repeated for each of the 30 iterations.
+
+```Python
+for _ in range(30):
+    new_candidates = sobo_strategy.ask(candidate_count=1)
+
+    new_experiments = new_candidates.copy()
+    new_experiments["y"] = new_candidates.apply(
+        lambda row: himmelblau(row["x1"], row["x2"]), axis=1
+    )
+
+    sobo_strategy.tell(experiments=new_experiments)
+```
+
+The optimization behavior of the strategy is shown in the animated figure below. The four minima are marked red, the experiments carried out are marked blue with blue lines connecting them. The contours are indicating the predicted mean of the current model of each iteration.
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/tutorials/himmelblau_optimization.gif" alt="Optimization of Himmelblau's function" width="300"/>
+</div>
+
 
 ## Documentation
 
 Documentation including a section on how to get started can be found under https://experimental-design.github.io/bofire/.
+
 
 ## Reference
 
@@ -149,7 +232,6 @@ For molecular optimizations, BoFire uses the molecular kernels from the [Gauche 
         volume = {36},
         year = {2023}
     }
-
 
 
 ## Contributing

@@ -73,7 +73,7 @@ specs.add_valid(
 specs.add_valid(
     constraints.InterpointEqualityConstraint,
     lambda: {
-        "feature": "f1",
+        "features": ["f1"],
         "multiplicity": 3,
     },
 )
@@ -81,8 +81,41 @@ specs.add_valid(
 specs.add_invalid(
     constraints.InterpointEqualityConstraint,
     lambda: {
-        "feature": "f1",
+        "features": ["f1"],
         "multiplicity": 1,
     },
     error=ValueError,
+)
+
+specs.add_valid(
+    constraints.CategoricalExcludeConstraint,
+    lambda: {
+        "features": ["solvent", "catalyst"],
+        "logical_op": "AND",
+        "conditions": [
+            constraints.SelectionCondition(
+                selection=["Acetone", "THF"],
+            ).model_dump(),
+            constraints.SelectionCondition(
+                selection=["alpha", "beta"],
+            ).model_dump(),
+        ],
+    },
+)
+
+specs.add_valid(
+    constraints.CategoricalExcludeConstraint,
+    lambda: {
+        "features": ["solvent", "temperature"],
+        "logical_op": "AND",
+        "conditions": [
+            constraints.SelectionCondition(
+                selection=["Acetone", "THF"],
+            ).model_dump(),
+            constraints.ThresholdCondition(
+                threshold=50,
+                operator=">",
+            ).model_dump(),
+        ],
+    },
 )

@@ -21,6 +21,7 @@ from bofire.strategies.doe.design import (
     find_local_max_ipopt,
     get_n_experiments,
 )
+from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 
 
@@ -48,12 +49,19 @@ def test_find_local_max_ipopt_no_constraint():
     dim_input = len(domain.inputs.get_keys())
 
     num_exp = (
-        len(get_formula_from_string(model_type="linear", domain=domain))
+        len(get_formula_from_string(model_type="linear", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
 
-    design = find_local_max_ipopt(domain, n_experiments=num_exp)
+    design = find_local_max_ipopt(
+        domain,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=num_exp,
+        ),
+    )
     assert design.shape == (num_exp, dim_input)
 
 
@@ -83,14 +91,19 @@ def test_find_local_max_ipopt_nchoosek():
     D = len(domain.inputs)
 
     N = (
-        len(get_formula_from_string(model_type="linear", domain=domain))
+        len(get_formula_from_string(model_type="linear", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
     print(N)
 
     A = find_local_max_ipopt(
-        domain, n_experiments=N, criterion=DOptimalityCriterion(formula="linear")
+        domain,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=N,
+        ),
     )
     assert A.shape == (N, D)
 
@@ -119,9 +132,14 @@ def test_find_local_max_ipopt_mixture():
 
     D = len(domain.inputs)
 
-    N = len(get_formula_from_string(domain=domain, model_type="linear")) + 3
+    N = len(get_formula_from_string(inputs=domain.inputs, model_type="linear")) + 3
     A = find_local_max_ipopt(
-        domain, n_experiments=N, criterion=DOptimalityCriterion(formula="linear")
+        domain,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=N,
+        ),
     )
     assert A.shape == (N, D)
 
@@ -161,15 +179,18 @@ def test_find_local_max_ipopt_mixed_results():
     )
 
     N = (
-        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        len(get_formula_from_string(model_type="fully-quadratic", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
         + 3
     )
     # with pytest.warns(ValueError):
     A = find_local_max_ipopt(
         domain,
-        n_experiments=N,
-        criterion=DOptimalityCriterion(formula="fully-quadratic"),
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=N,
+        ),
         ipopt_options={"max_iter": 100},
     )
     opt = np.eye(3)
@@ -213,7 +234,12 @@ def test_find_local_max_ipopt_results():
     )
     np.random.seed(1)
     A = find_local_max_ipopt(
-        domain, criterion=DOptimalityCriterion(formula="linear"), n_experiments=12
+        domain,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=12,
+        ),
     )
     opt = np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]])
     for row in A.to_numpy():
@@ -232,14 +258,17 @@ def test_find_local_max_ipopt_batch_constraint():
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         outputs=[ContinuousOutput(key="y")],
-        constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=3)],
+        constraints=[InterpointEqualityConstraint(features=["x1"], multiplicity=3)],
     )
 
     result = find_local_max_ipopt(
         domain,
-        criterion=DOptimalityCriterion(formula="linear"),
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=30,
+        ),
         ipopt_options={"max_iter": 100},
-        n_experiments=30,
     )
 
     x1 = np.round(np.array(result["x1"].values), 6)
@@ -310,8 +339,11 @@ def test_find_local_max_ipopt_fixed_experiments():
     with pytest.raises(ValueError):
         find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=12,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=12,
+            ),
             fixed_experiments=pd.DataFrame(
                 np.ones(shape=(12, 3)),
                 columns=["x1", "x2", "x3"],
@@ -355,15 +387,18 @@ def test_find_local_max_ipopt_fixed_experiments():
     np.random.seed(1)
 
     num_exp = (
-        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        len(get_formula_from_string(model_type="fully-quadratic", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
         + 3
     )
 
     A = find_local_max_ipopt(
         domain,
-        n_experiments=num_exp,
-        criterion=DOptimalityCriterion(formula="fully-quadratic"),
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="fully-quadratic"),
+            domain=domain,
+            n_experiments=num_exp,
+        ),
         ipopt_options={"max_iter": 100},
         fixed_experiments=pd.DataFrame(
             [[1, 0, 0], [0, 1, 0]],
@@ -516,15 +551,18 @@ def test_find_local_max_ipopt_nonlinear_constraint():
     )
 
     num_exp = (
-        len(get_formula_from_string(model_type="fully-quadratic", domain=domain))
+        len(get_formula_from_string(model_type="fully-quadratic", inputs=domain.inputs))
         - n_zero_eigvals(domain=domain, model_type="fully-quadratic")
         + 3
     )
 
     result = find_local_max_ipopt(
         domain,
-        num_exp,
-        DOptimalityCriterion(formula="linear"),
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=num_exp,
+        ),
         ipopt_options={"max_iter": 100},
     )
 
@@ -542,19 +580,28 @@ def test_get_n_experiments():
     )
 
     # keyword
-    assert get_n_experiments(get_formula_from_string("linear", domain)) == 7
+    assert (
+        get_n_experiments(get_formula_from_string("linear", inputs=domain.inputs)) == 7
+    )
 
     # explicit formula
     assert (
         get_n_experiments(
-            get_formula_from_string("x1 + x2 + x3 + x1:x2 + {x2**2}", domain),
+            get_formula_from_string(
+                "x1 + x2 + x3 + x1:x2 + {x2**2}", inputs=domain.inputs
+            ),
         )
         == 9
     )
 
     # user provided n_experiment
     with pytest.warns(UserWarning):
-        assert get_n_experiments(get_formula_from_string("linear", domain), 4) == 4
+        assert (
+            get_n_experiments(
+                get_formula_from_string("linear", inputs=domain.inputs), 4
+            )
+            == 4
+        )
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
@@ -755,8 +802,11 @@ def test_partially_fixed_experiments():
 
     doe = find_local_max_ipopt(
         domain,
-        criterion=DOptimalityCriterion(formula="linear"),
-        n_experiments=3,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=3,
+        ),
         fixed_experiments=fixed_experiments,
     ).reset_index(drop=True)
 
@@ -774,8 +824,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=2,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=2,
+            ),
             fixed_experiments=fixed_experiments,
         )
         assert e == get_domain_error("a2")
@@ -788,8 +841,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=2,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=2,
+            ),
             partially_fixed_experiments=partially_fixed_experiments,
         )
         assert e == get_domain_error("a2")
@@ -801,8 +857,11 @@ def test_partially_fixed_experiments():
 
     doe = find_local_max_ipopt(
         domain,
-        criterion=DOptimalityCriterion(formula="linear"),
-        n_experiments=3,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=3,
+        ),
         fixed_experiments=fixed_experiments,
     ).reset_index(drop=True)
 
@@ -818,8 +877,11 @@ def test_partially_fixed_experiments():
     )
     doe = find_local_max_ipopt(
         domain,
-        criterion=DOptimalityCriterion(formula="linear"),
-        n_experiments=3,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=3,
+        ),
         partially_fixed_experiments=partially_fixed_experiments,
     ).reset_index(drop=True)
 
@@ -831,8 +893,11 @@ def test_partially_fixed_experiments():
 
     doe = find_local_max_ipopt(
         domain,
-        criterion=DOptimalityCriterion(formula="linear"),
-        n_experiments=4,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=4,
+        ),
         fixed_experiments=fixed_experiments,
         partially_fixed_experiments=partially_fixed_experiments,
     ).reset_index(drop=True)
@@ -853,8 +918,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=1,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=1,
+            ),
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
@@ -862,8 +930,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=2,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=2,
+            ),
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
@@ -873,8 +944,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=3,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=3,
+            ),
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
@@ -884,8 +958,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=3,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=3,
+            ),
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
@@ -896,8 +973,11 @@ def test_partially_fixed_experiments():
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
-            criterion=DOptimalityCriterion(formula="linear"),
-            n_experiments=3,
+            objective_function=get_objective_function(
+                criterion=DOptimalityCriterion(formula="linear"),
+                domain=domain,
+                n_experiments=3,
+            ),
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )

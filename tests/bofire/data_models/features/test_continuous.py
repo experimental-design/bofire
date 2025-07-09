@@ -11,22 +11,26 @@ from bofire.data_models.features.api import ContinuousDescriptorInput, Continuou
 
 
 def test_continuous_input_invalid_stepsize():
-    with pytest.raises(ValueError):
-        ContinuousInput(key="a", bounds=(1, 1), stepsize=0)
-    with pytest.raises(ValueError):
-        ContinuousInput(key="a", bounds=(0, 5), stepsize=0.3)
-    with pytest.raises(ValueError):
-        ContinuousInput(key="a", bounds=(0, 1), stepsize=1)
+    with pytest.raises(
+        ValueError, match="Stepsize cannot be provided for a fixed continuous input."
+    ):
+        ContinuousInput(key="a", bounds=(0, 0), stepsize=0.3)
+    with pytest.raises(ValueError, match="Stepsize is too big for provided range."):
+        ContinuousInput(key="a", bounds=(0, 1), stepsize=1.2)
 
 
 def test_continuous_input_round():
     feature = ContinuousInput(key="a", bounds=(0, 5))
-    values = pd.Series([1.0, 1.3, 0.55])
+    values = pd.Series([1.0, 1.3, 0.55, 4.9])
     assert_series_equal(values, feature.round(values))
     feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.25)
-    assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
+    assert_series_equal(pd.Series([1.0, 1.25, 0.5, 5]), feature.round(values))
     feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.1)
-    assert_series_equal(pd.Series([1.0, 1.3, 0.5]), feature.round(values))
+    assert_series_equal(pd.Series([1.0, 1.3, 0.5, 4.9]), feature.round(values))
+    # for not matching interval
+    values = pd.Series([0.4, 2.06])
+    feature = ContinuousInput(key="a", bounds=(0, 2.1), stepsize=0.5)
+    assert_series_equal(pd.Series([0.5, 2.1]), feature.round(values))
 
 
 @pytest.mark.parametrize(
@@ -187,6 +191,15 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
 def test_continuous_input_feature_validate_candidental_invalid(input_feature, values):
     with pytest.raises(ValueError):
         input_feature.validate_candidental(values)
+
+
+def test_continuous_input_is_fulfilled():
+    feature = ContinuousInput(key="a", bounds=(0, 2))
+    values = pd.Series([-1.0, 1.0, 2.0, 3.0], index=["a1", "a2", "a3", "a4"])
+    fulfilled = feature.is_fulfilled(values)
+    assert_series_equal(
+        fulfilled, pd.Series([False, True, True, False], index=["a1", "a2", "a3", "a4"])
+    )
 
 
 @pytest.mark.parametrize(

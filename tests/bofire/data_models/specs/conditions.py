@@ -1,6 +1,7 @@
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     CombiCondition,
+    FeasibleExperimentCondition,
     NumberOfExperimentsCondition,
 )
 from tests.bofire.data_models.specs.specs import Specs
@@ -27,4 +28,9 @@ specs.add_valid(
         ],
         "n_required_conditions": 2,
     },
+)
+
+specs.add_valid(
+    FeasibleExperimentCondition,
+    lambda: {"n_required_feasible_experiments": 3, "threshold": 0.95},
 )

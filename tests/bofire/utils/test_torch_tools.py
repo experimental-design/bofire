@@ -388,7 +388,7 @@ def test_get_interpoint_equality_constraints():
         ),
         constraints=Constraints(
             constraints=[
-                InterpointEqualityConstraint(feature="b", multiplicity=3),
+                InterpointEqualityConstraint(features=["b"], multiplicity=3),
             ],
         ),
     )

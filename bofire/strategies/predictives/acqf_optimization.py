@@ -12,7 +12,6 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
-from pymoo.optimize import minimize as pymoo_minimize
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -46,7 +45,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
-from bofire.strategies.predictives import utils
+from bofire.strategies import utils
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -195,15 +194,6 @@ class AcquisitionOptimizer(ABC):
         return df_candidates
 
     @staticmethod
-    def get_bounds(
-        domain: Domain, input_preprocessing_specs: InputTransformSpecs
-    ) -> torch.Tensor:
-        lower, upper = domain.inputs.get_bounds(
-            specs=input_preprocessing_specs,
-        )
-        return torch.tensor([lower, upper]).to(**tkwargs)
-
-    @staticmethod
     def get_fixed_features(
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
@@ -273,6 +263,11 @@ class AcquisitionOptimizer(ABC):
         )
         filtered_choices = merged[merged["_merge"] == "left_only"].copy()
         filtered_choices.drop(columns=["_merge"], inplace=True)
+
+        # remove here everything that falls under a CategoricalExcludeConstraint
+        filtered_choices = filtered_choices[
+            domain.constraints.is_fulfilled(filtered_choices)
+        ].copy()
 
         # translate the filtered choice to torch
         t_choices = torch.from_numpy(
@@ -516,7 +511,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         num_categorical_combinations = len(
             domain.inputs.get_categorical_combinations(),
         )
-        bounds = self.get_bounds(domain, input_preprocessing_specs)
+        bounds = utils.get_torch_bounds_from_domain(domain, input_preprocessing_specs)
 
         # setup local bounds
         assert experiments is not None
@@ -838,25 +833,17 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             Tensor: x_opt as (d,) Tensor
             Tensor: f_opt as (n_y,) Tensor
         """
-        problem, algorithm, termination = utils.get_problem_and_algorithm(
+        x_opt, f_opt = utils.run_ga(
             self.data_model,
             domain,
-            input_preprocessing_specs,
             acqfs,
             q,
-            bounds_botorch_space=self.get_bounds(domain, input_preprocessing_specs),
+            callable_format="torch",
+            input_preprocessing_specs=input_preprocessing_specs,
+            verbose=self.data_model.verbose,
         )
 
-        res = pymoo_minimize(
-            problem, algorithm, termination, verbose=self.data_model.verbose
-        )
-
-        x_opt = problem.domain_handler.transform_mixed_to_botorch_domain(
-            [res.X]
-        ).reshape((q, -1))
-        f_opt = torch.from_numpy(res.F).to(**tkwargs)
-
-        return x_opt, f_opt
+        return x_opt, f_opt  # type: ignore
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {

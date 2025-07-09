@@ -1,8 +1,11 @@
 import warnings
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
+
+from bofire.strategies.strategy import make_strategy
 
 
 try:
@@ -13,13 +16,13 @@ try:
     from entmoot.problem_config import ProblemConfig
 except ImportError:
     warnings.warn(
-        "entmoot not installed. Please install it to use " "BoFire's `EntingStrategy`.",
+        "entmoot not installed. Please install it to use BoFire's `EntingStrategy`.",
         ImportWarning,
     )
 
 from typing import Union
 
-from pydantic import PositiveInt
+from pydantic import PositiveFloat, PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -255,7 +258,7 @@ class EntingStrategy(PredictiveStrategy):
     def input_preprocessing_specs(self):
         return {}
 
-    def _postprocess_candidate(self, candidate: List) -> pd.DataFrame:
+    def _to_dataframe(self, candidate: List) -> pd.DataFrame:
         """Converts a single candidate to a pandas Dataframe with prediction.
 
         Args:
@@ -348,7 +351,7 @@ class EntingStrategy(PredictiveStrategy):
         for i in range(candidate_count):
             opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)  # type: ignore
             res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
-            candidate = self._postprocess_candidate(res.opt_point)
+            candidate = self._to_dataframe(res.opt_point)
             new_candidates.append(candidate)
             # only retrain with fantasy if not last candidate in batch
             if i < candidate_count - 1:
@@ -359,7 +362,13 @@ class EntingStrategy(PredictiveStrategy):
                 self._fit(experiments_plus_fantasies)
 
         self._fit(self.experiments)  # type: ignore
-        return pd.concat(new_candidates)
+        # we do not return here the predictions as they are corrupted
+        # by the fantasy observations. Instead, we return the plain candidates
+        # and the predictions are generated in
+        # `PredictiveStrategy._postprocess_candidates` after proper rounding.
+        return pd.concat(new_candidates)[
+            [feat.name for feat in self._problem_config.feat_list]
+        ].copy()
 
     def _fit(self, experiments: pd.DataFrame):
         self._init_problem_config()
@@ -399,3 +408,57 @@ class EntingStrategy(PredictiveStrategy):
             )
             > 1
         )
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        beta: PositiveFloat | None = None,
+        bound_coeff: PositiveFloat | None = None,
+        acq_sense: Literal["exploration", "penalty"] | None = None,
+        dist_trafo: Literal["normal", "standard"] | None = None,
+        dist_metric: Literal["euclidean_squared", "l1", "l2"] | None = None,
+        cat_metric: Literal["overlap", "of", "goodall4"] | None = None,
+        kappa_fantasy: float | None = None,
+        num_boost_round: PositiveInt | None = None,
+        max_depth: PositiveInt | None = None,
+        min_data_in_leaf: PositiveInt | None = None,
+        min_data_per_group: PositiveInt | None = None,
+        verbose: Literal[-1, 0, 1, 2] | None = None,
+        solver_name: str | None = None,
+        solver_verbose: bool | None = None,
+        solver_params: Dict[str, Any] | None = None,
+        seed: int | None = None,
+    ) -> Self:
+        """
+        Create an enting strategy instance with the specified parameters.
+
+        https://github.com/cog-imperial/entmoot
+
+        ENTMOOT: A Framework for Optimization over Ensemble Tree Models
+        A. Thebelt, J. Kronqvist, M. Mistry, R. Lee, N. Sudermann-Merx, R. Misener
+        Computers & Chemical Engineering, 2021
+
+        Args:
+            domain: The domain object defining the problem space.
+            beta: Parameter controlling the trade-off in acquisition.
+            bound_coeff: Coefficient for bounding constraints.
+            acq_sense: Acquisition sense, either "exploration" or "penalty".
+            dist_trafo: Transformation applied to distances, either "normal" or "standard".
+            dist_metric: Metric used for distance calculations, e.g., "euclidean_squared", "l1", or "l2".
+            cat_metric: Metric for categorical variables, e.g., "overlap", "of", or "goodall4".
+            kappa_fantasy: Kappa parameter for fantasy strategy for batch proposals.
+            num_boost_round: Number of boosting rounds for the model.
+            max_depth: Maximum depth of the model.
+            min_data_in_leaf: Minimum data points required in a leaf.
+            min_data_per_group: Minimum data points required per group.
+            verbose: Verbosity level of the process.
+            solver_name: Name of the solver to be used.
+            solver_verbose: Whether to enable verbose output for the solver.
+            solver_params: Additional parameters for the solver.
+            seed: Random seed for reproducibility.
+        Returns:
+            A strategy instance configured with the provided parameters.
+        """
+
+        return cast(Self, make_strategy(cls, data_models.EntingStrategy, locals()))

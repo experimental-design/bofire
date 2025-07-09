@@ -1,7 +1,7 @@
 import math
 import warnings
 from copy import deepcopy
-from typing import Dict, Optional
+from typing import Dict, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -9,9 +9,11 @@ import torch
 from botorch.optim.initializers import sample_q_batches_from_polytope
 from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
 from pydantic.types import PositiveInt
+from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
+    AnyContinuousConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -24,7 +26,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     DiscreteInput,
 )
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
@@ -203,7 +205,8 @@ class RandomStrategy(Strategy):
         if seed is None:
             seed = np.random.default_rng().integers(1, 1000000)
 
-        if len(domain.constraints) == 0:
+        # here we have to adapt for categoricals
+        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:  # type: ignore
             return domain.inputs.sample(n, fallback_sampling_method, seed=seed)
 
         # check if we have pseudo fixed features in the linear equality constraints
@@ -326,7 +329,7 @@ class RandomStrategy(Strategy):
                 samples,
                 domain.inputs.get([CategoricalInput, DiscreteInput]).sample(
                     n,
-                    method=SamplingMethodEnum.UNIFORM,
+                    method=fallback_sampling_method,
                     seed=seed,
                 ),
             ],
@@ -339,3 +342,28 @@ class RandomStrategy(Strategy):
             samples[key] = value
 
         return samples[domain.inputs.get_keys()]
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        fallback_sampling_method: SamplingMethodEnum | None = None,
+        n_burnin: int | None = None,
+        n_thinning: int | None = None,
+        num_base_samples: int | None = None,
+        max_iters: int | None = None,
+        seed: int | None = None,
+    ) -> Self:
+        """Create a new instance of the RandomStrategy class.
+        Args:
+            domain: The domain we randomly sample from.
+            fallback_sampling_method: The fallback sampling method to use when the domain has no constraints.
+            n_burnin: The number of burn-in samples for the polytope sampler.
+            n_thinning: The thinning factor for the polytope sampler.
+            num_base_samples: The number of base samples for rejection sampling.
+            max_iters: The maximum number of iterations for rejection sampling.
+            seed: The seed value for random number generation.
+        Returns:
+            RandomStrategy: A new instance of the RandomStrategy class.
+        """
+        return cast(Self, make_strategy(cls, data_models.RandomStrategy, locals()))

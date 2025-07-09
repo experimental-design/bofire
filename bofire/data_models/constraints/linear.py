@@ -10,8 +10,7 @@ from bofire.data_models.constraints.constraint import (
     IntrapointConstraint,
 )
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.features.api import ContinuousInput
-from bofire.data_models.types import FeatureKeys
+from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 
 
 class LinearConstraint(IntrapointConstraint):
@@ -26,7 +25,6 @@ class LinearConstraint(IntrapointConstraint):
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    features: FeatureKeys
     coefficients: Annotated[List[float], Field(min_length=2)]
     rhs: float
 
@@ -40,7 +38,7 @@ class LinearConstraint(IntrapointConstraint):
         return self
 
     def validate_inputs(self, inputs: Inputs):
-        keys = inputs.get_keys(ContinuousInput)
+        keys = inputs.get_keys([ContinuousInput, DiscreteInput])
         for f in self.features:
             if f not in keys:
                 raise ValueError(
@@ -65,7 +63,7 @@ class LinearConstraint(IntrapointConstraint):
         )
 
     def hessian(self, experiments: pd.DataFrame) -> Dict[Union[int, str], float]:
-        return {idx: 0.0 for idx in range(experiments.shape[0])}
+        return dict.fromkeys(range(experiments.shape[0]), 0.0)
 
 
 class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):

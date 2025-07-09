@@ -164,19 +164,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         return vals
 
-    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        """Converts a tensor of candidates to a pandas Dataframe.
-
-        Args:
-            candidates (Tensor): Tensor of candidates returned from `optimize_acqf`.
-
-        Returns:
-            pd.DataFrame: Dataframe with candidates.
-
-        """
-        preds = self.predict(candidates)
-        return pd.concat((candidates, preds), axis=1)
-
     def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """[summary]
 
@@ -201,7 +188,7 @@ class BotorchStrategy(PredictiveStrategy):
             self.experiments,
         )
 
-        return self._postprocess_candidates(candidates=candidates)
+        return candidates
 
     def _tell(self) -> None:
         pass
@@ -232,12 +219,21 @@ class BotorchStrategy(PredictiveStrategy):
             self.experiments,
         )
 
-        # TODO: should this be selectable?
         clean_experiments = experiments.drop_duplicates(
             subset=[var.key for var in self.domain.inputs.get(Input)],
             keep="first",
             inplace=False,
         )
+        # we should only provide those experiments to the acqf builder in which all
+        # input constraints are fulfilled, output constraints are handled directly
+        # in botorch
+        clean_experiments = clean_experiments[
+            self.domain.is_fulfilled(clean_experiments)
+        ].copy()
+        if len(clean_experiments) == 0:
+            raise ValueError(
+                "No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
+            )
 
         transformed = self.domain.inputs.transform(
             clean_experiments,
