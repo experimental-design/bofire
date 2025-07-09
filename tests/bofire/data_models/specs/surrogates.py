@@ -34,9 +34,6 @@ from bofire.data_models.surrogates.api import (
     SumAggregation,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
-from bofire.data_models.surrogates.robust_single_task_gp import (
-    RobustSingleTaskGPHyperconfig,
-)
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
@@ -122,7 +119,7 @@ specs.add_valid(
         "prior_mean_of_support": None,
         "input_preprocessing_specs": {},
         "dump": None,
-        "hyperconfig": RobustSingleTaskGPHyperconfig().model_dump(),
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 

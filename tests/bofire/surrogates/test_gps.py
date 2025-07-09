@@ -42,6 +42,7 @@ from bofire.data_models.priors.api import (
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
@@ -712,13 +713,22 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
     model2 = surrogates.map(model2)
     model2.loads(dump)
     preds2 = model2.predict(samples)
+
     assert_frame_equal(preds, preds2)
 
-    # test predict outliers
-    preds_outliers = model.predict_outliers(samples)
+    model3 = RobustSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        scaler=scaler,
+    )
 
-    # assert that preds_outliers dataframe had the same length as samples
-    assert len(preds_outliers) == len(samples)
+    model3 = surrogates.map(model3)
+    # test predict outliers
+    preds_outliers = model3.predict_outliers(experiments)
+
+    # assert that preds_outliers dataframe had the same length as experiments
+    assert len(preds_outliers) == len(experiments)
 
     # check for the correct columns
     assert set(preds_outliers.columns) == {"y_pred", "y_sd", "y_rho"}
@@ -741,10 +751,20 @@ def test_RobustSingleTaskGPHyperconfig():
         inputs=benchmark.domain.inputs,
         outputs=benchmark.domain.outputs,
     )
+
+    assert (
+        surrogate_data.kernel.lengthscale_constraint
+        == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
+    )
+
     candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
+    # surrogate_data.update_hyperparameters(candidate, lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(), outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT())
     surrogate_data.update_hyperparameters(candidate)
     if hasattr(surrogate_data.kernel, "base_kernel"):
+        # if surrogate_data.kernel == ScaleKernel():
+        #     assert surrogate_data.kernel.outputscale_constraint == ROBUSTGP_OUTPUTSCALE_CONSTRAINT()
         assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
+        # assert surrogate_data.kernel.base_kernel.lengthscale_constraint == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
         if candidate.kernel == "matern_1.5":
             assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
             assert surrogate_data.kernel.base_kernel.nu == 1.5
