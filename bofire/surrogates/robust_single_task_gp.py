@@ -60,7 +60,6 @@ class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.prior_mean_of_support = data_model.prior_mean_of_support
         self.convex_parametrization = data_model.convex_parametrization
         self.cache_model_trace = data_model.cache_model_trace
-        self.lengthscale_constraint = data_model.lengthscale_constraint
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[RobustRelevancePursuitSingleTaskGP] = None
@@ -100,9 +99,6 @@ class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         if self.prior_mean_of_support is not None:
             self.model.prior_mean_of_support = self.prior_mean_of_support
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
-        self.model.covar_module.lengthscale_constraint = priors.map(
-            self.lengthscale_constraint
-        )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(

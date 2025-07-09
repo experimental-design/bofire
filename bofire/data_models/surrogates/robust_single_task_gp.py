@@ -139,7 +139,6 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         prior_mean_of_support (float): The prior mean of the support.
         convex_parametrization (bool): Whether to use convex parametrization of the sparse noise model.
         cache_model_trace (bool): Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.
-        lengthscale_constraint (PriorConstraint): Constraint on the lengthscale of the kernel.
 
     Note:
         The definition of "outliers" depends on the model capacity, so what is an outlier
@@ -152,7 +151,8 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
-            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),  # not too sure if we should keep this or of this might interfere with the lengthscale constraints we set later
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
@@ -163,9 +163,6 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     prior_mean_of_support: Optional[int] = Field(default=None)
     convex_parametrization: bool = Field(default=True)
     cache_model_trace: bool = Field(default=False)
-    lengthscale_constraint: AnyConstraint = Field(
-        default=ROBUSTGP_LENGTHSCALE_CONSTRAINT()
-    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

@@ -12,9 +12,9 @@ class NonTransformedInterval(PriorConstraint):
     See: https://botorch.readthedocs.io/en/stable/_modules/botorch/utils/constraints.html#NonTransformedInterval
 
     Attributes:
-        lower_bound(PositiveFloat): The lower bound of the interval.
-        upper_bound(PositiveFloat): The upper bound of the interval.
-        initial_value(PositiveFloat): The initial value within the interval.
+        lower_bound: The lower bound of the interval.
+        upper_bound: The upper bound of the interval.
+        initial_value: The initial value within the interval.
 
     """
 
