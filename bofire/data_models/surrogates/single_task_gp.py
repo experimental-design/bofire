@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -62,7 +62,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         def matern_25(
             ard: bool,
             lengthscale_prior: AnyPrior,
-            lengthscale_constraint: AnyPriorConstraint,
+            lengthscale_constraint: Union[AnyPriorConstraint, None],
         ) -> MaternKernel:
             return MaternKernel(
                 nu=2.5,
@@ -74,7 +74,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         def matern_15(
             ard: bool,
             lengthscale_prior: AnyPrior,
-            lengthscale_constraint: AnyPriorConstraint,
+            lengthscale_constraint: Union[AnyPriorConstraint, None],
         ) -> MaternKernel:
             return MaternKernel(
                 nu=1.5,
