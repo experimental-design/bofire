@@ -54,7 +54,7 @@ def map_DimensionalityScaledLogNormalPrior(
 
 def map_NonTransformedInterval(
     data_model: data_models.NonTransformedInterval,
-) -> gpytorch.constraints.Interval:
+) -> NonTransformedInterval:
     return NonTransformedInterval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
