@@ -432,11 +432,17 @@ def test_MixedSingleTaskGPHyperconfig():
         assert (
             surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
         )
-    else:
+    if candidate.prior == "threesix":
         assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         assert (
             surrogate_data.continuous_kernel.lengthscale_prior
             == THREESIX_LENGTHSCALE_PRIOR()
+        )
+    if candidate.prior == "hvarfner":
+        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert (
+            surrogate_data.continuous_kernel.lengthscale_prior
+            == HVARFNER_LENGTHSCALE_PRIOR()
         )
 
 
