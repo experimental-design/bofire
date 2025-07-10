@@ -123,6 +123,45 @@ specs.add_valid(
     },
 )
 
+specs.add_invalid(
+    models.RobustSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="a"),
+                ContinuousOutput(key="b"),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True,
+                nu=2.5,
+                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+            outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "cache_model_trace": False,
+        "convex_parametrization": True,
+        "prior_mean_of_support": None,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
+)
+
+
 specs.add_valid(
     models.SingleTaskIBNNSurrogate,
     lambda: {

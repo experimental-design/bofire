@@ -1,6 +1,6 @@
 from typing import Literal, Optional, Type, Union
 
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel, ScaleKernel
@@ -66,8 +66,7 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         return isinstance(my_type, type(ContinuousOutput))
 
     # check that there is only one output
-    @field_validator("num outputs", check_fields=False)
-    @classmethod
+    @model_validator(mode="after")
     def validate_outputs(cls, outputs):
         if len(outputs) > 1:
             raise ValueError("RobustGP only supports one output.")
