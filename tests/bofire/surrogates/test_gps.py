@@ -427,7 +427,7 @@ def test_MixedSingleTaskGPHyperconfig():
         assert surrogate_data.continuous_kernel.nu == 2.5
     else:
         assert isinstance(surrogate_data.continuous_kernel, RBFKernel)
-    if candidate.prior == "mobo":
+    if candidate.prior == "mbo":
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         assert (
             surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
