@@ -1006,8 +1006,8 @@ class InterpolateTransform(InputTransform, Module):
         ) + len(self.prepend_y) + len(self.append_y):
             raise ValueError("The number of x and y indices must be equal.")
 
-        if len(self.normalize_y) > 1:
-            raise ValueError('length of "normalize_y" must be 0 or 1.')
+        if self.normalize_y.numel() != 1:
+            raise ValueError("normalize_y must be a single value.")
 
     def _to(self, X: Tensor) -> None:
         self.new_x = self.coefficient.to(X)
@@ -1041,7 +1041,7 @@ class InterpolateTransform(InputTransform, Module):
         y = self.prepend(y, self.prepend_y)
         y = self.append(y, self.append_y)
 
-        if len(self.normalize_y) > 0:
+        if self.normalize_y.numel() == 1:
             y = y / self.normalize_y
 
         if X.dim() == 3:

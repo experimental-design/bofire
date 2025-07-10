@@ -1,7 +1,7 @@
 from typing import Annotated, List, Literal, Optional, Type, Union
 
 import pandas as pd
-from pydantic import AfterValidator, Field, PositiveInt, model_validator
+from pydantic import AfterValidator, Field, PositiveFloat, PositiveInt, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -126,9 +126,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     append_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
-    normalize_y: Annotated[
-        List[float], AfterValidator(validate_monotonically_increasing)
-    ]
+    normalize_y: PositiveFloat = 1.0
     hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(  # type: ignore
         default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig(),
     )
