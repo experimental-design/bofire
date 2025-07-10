@@ -918,7 +918,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
     def validate_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         for feat in self.get():
             if feat.key not in experiments:
-                raise ValueError(f"no col for input feature `{feat.key}`")
+                raise ValueError(f"no col for output feature `{feat.key}`")
             experiments[feat.key] = feat.validate_experimental(experiments[feat.key])
         experiments = self.add_valid_columns(experiments=experiments)
         return experiments
