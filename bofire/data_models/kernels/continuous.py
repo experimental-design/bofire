@@ -3,7 +3,7 @@ from typing import List, Literal, Optional
 from pydantic import PositiveInt, field_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior
+from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior, AnyPriorConstraint
 
 
 class ContinuousKernel(FeatureSpecificKernel):
@@ -14,6 +14,7 @@ class RBFKernel(ContinuousKernel):
     type: Literal["RBFKernel"] = "RBFKernel"
     ard: bool = True
     lengthscale_prior: Optional[AnyPrior] = None
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
 
 class MaternKernel(ContinuousKernel):
@@ -21,6 +22,7 @@ class MaternKernel(ContinuousKernel):
     ard: bool = True
     nu: float = 2.5
     lengthscale_prior: Optional[AnyPrior] = None
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
     @field_validator("nu")
     def validate_nu(cls, nu):

@@ -21,6 +21,8 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
+    ROBUSTGP_OUTPUTSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
@@ -76,6 +78,90 @@ specs.add_valid(
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
+
+specs.add_valid(
+    models.RobustSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True,
+                nu=2.5,
+                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+            outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "aggregations": [
+            random.choice(
+                [
+                    SumAggregation(features=["a", "b"]).model_dump(),
+                    MeanAggregation(features=["a", "b"]).model_dump(),
+                ],
+            ),
+        ],
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "cache_model_trace": False,
+        "convex_parametrization": True,
+        "prior_mean_of_support": None,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+)
+
+specs.add_invalid(
+    models.RobustSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="a"),
+                ContinuousOutput(key="b"),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True,
+                nu=2.5,
+                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+            outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "cache_model_trace": False,
+        "convex_parametrization": True,
+        "prior_mean_of_support": None,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
+    message="RobustGP only supports one output.",
+)
+
 
 specs.add_valid(
     models.SingleTaskIBNNSurrogate,
@@ -679,6 +765,7 @@ specs.add_valid(
         "append_x": [1.0],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": 100.0,
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
@@ -714,6 +801,7 @@ specs.add_invalid(
         "append_x": [1.0],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": 100.0,
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
@@ -751,6 +839,7 @@ specs.add_invalid(
         "append_x": [1.0],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": 100.0,
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
@@ -789,6 +878,7 @@ specs.add_invalid(
         "append_x": [],
         "prepend_y": [],
         "append_y": [],
+        "normalize_y": 100,
         "shape_kernel": WassersteinKernel(
             squared=False,
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),

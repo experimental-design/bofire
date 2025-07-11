@@ -18,6 +18,7 @@ from tests.bofire.data_models.specs.molfeatures import specs as molfeatures
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.outlier_detection import specs as outlier_detection
 from tests.bofire.data_models.specs.outputs import specs as outputs
+from tests.bofire.data_models.specs.prior_constraints import specs as prior_constraints
 from tests.bofire.data_models.specs.priors import specs as priors
 from tests.bofire.data_models.specs.specs import InvalidSpec, Spec, Specs
 from tests.bofire.data_models.specs.strategies import specs as strategies

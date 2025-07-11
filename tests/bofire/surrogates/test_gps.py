@@ -4,6 +4,9 @@ import pandas as pd
 import pytest
 import torch
 from botorch.models import MixedSingleTaskGP, SingleTaskGP
+from botorch.models.robust_relevance_pursuit_model import (
+    RobustRelevancePursuitSingleTaskGP,
+)
 from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
@@ -39,12 +42,14 @@ from bofire.data_models.priors.api import (
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
 )
 from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
+    RobustSingleTaskGPSurrogate,
     ScalerEnum,
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
@@ -634,3 +639,164 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     model2.loads(dump)
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
+
+
+@pytest.mark.parametrize(
+    "kernel, scaler, output_scaler",
+    [
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            ScalerEnum.NORMALIZE,
+            ScalerEnum.STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.IDENTITY,
+        ),
+    ],
+)
+def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    model = RobustSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        scaler=scaler,
+        output_scaler=output_scaler,
+    )
+    model = surrogates.map(model)
+    samples = inputs.sample(5)
+    # test error on non fitted model
+    with pytest.raises(ValueError):
+        model.predict(samples)
+    model.fit(experiments)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    samples2 = samples.copy()
+    samples2 = samples2.astype({"x_1": "object"})
+    preds = model.predict(samples2)
+    assert preds.shape == (5, 2)
+    # check that model is composed correctly
+    assert isinstance(model.model, RobustRelevancePursuitSingleTaskGP)
+    if output_scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.IDENTITY:
+        assert not hasattr(model.model, "outcome_transform")
+    if scaler == ScalerEnum.NORMALIZE:
+        assert isinstance(model.model.input_transform, Normalize)
+    elif scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.input_transform, InputStandardize)
+    else:
+        with pytest.raises(AttributeError):
+            assert model.model.input_transform is None
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = RobustSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        scaler=scaler,
+    )
+    model2 = surrogates.map(model2)
+    model2.loads(dump)
+    preds2 = model2.predict(samples)
+
+    assert_frame_equal(preds, preds2)
+
+    model3 = RobustSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        scaler=scaler,
+    )
+
+    model3 = surrogates.map(model3)
+    # test predict outliers
+    preds_outliers = model3.predict_outliers(experiments)
+
+    # assert that preds_outliers dataframe had the same length as experiments
+    assert len(preds_outliers) == len(experiments)
+
+    # check for the correct columns
+    assert set(preds_outliers.columns) == {"y_pred", "y_sd", "y_rho"}
+
+
+def test_RobustSingleTaskGPHyperconfig():
+    # we test here also the basic trainable
+    benchmark = Himmelblau()
+    surrogate_data_no_hy = RobustSingleTaskGPSurrogate(
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
+        hyperconfig=None,
+    )
+    with pytest.raises(ValueError, match="No hyperconfig available."):
+        surrogate_data_no_hy.update_hyperparameters(
+            benchmark.domain.inputs.sample(1).loc[0],
+        )
+    # test that correct stuff is written
+    surrogate_data = RobustSingleTaskGPSurrogate(
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
+    )
+
+    assert (
+        surrogate_data.kernel.lengthscale_constraint
+        == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
+    )
+
+    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
+    # surrogate_data.update_hyperparameters(candidate, lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(), outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT())
+    surrogate_data.update_hyperparameters(candidate)
+    if hasattr(surrogate_data.kernel, "base_kernel"):
+        # if surrogate_data.kernel == ScaleKernel():
+        #     assert surrogate_data.kernel.outputscale_constraint == ROBUSTGP_OUTPUTSCALE_CONSTRAINT()
+        assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
+        # assert surrogate_data.kernel.base_kernel.lengthscale_constraint == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
+        if candidate.kernel == "matern_1.5":
+            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+            assert surrogate_data.kernel.base_kernel.nu == 1.5
+        elif candidate.kernel == "matern_2.5":
+            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+            assert surrogate_data.kernel.base_kernel.nu == 2.5
+        else:
+            assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
+        if candidate.prior == "mbo":
+            assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == MBO_LENGTHCALE_PRIOR()
+            )
+        elif candidate.prior == "threesix":
+            assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == THREESIX_LENGTHSCALE_PRIOR()
+            )
+        else:
+            assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == HVARFNER_LENGTHSCALE_PRIOR()
+            )

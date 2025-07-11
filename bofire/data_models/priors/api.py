@@ -1,8 +1,10 @@
 from functools import partial
 from typing import Union
 
+from bofire.data_models.priors.constraint import PriorConstraint
 from bofire.data_models.priors.gamma import GammaPrior
 from bofire.data_models.priors.lkj import LKJPrior
+from bofire.data_models.priors.nontransformedinterval import NonTransformedInterval
 from bofire.data_models.priors.normal import (
     DimensionalityScaledLogNormalPrior,
     LogNormalPrior,
@@ -12,6 +14,7 @@ from bofire.data_models.priors.prior import Prior
 
 
 AbstractPrior = Prior
+AbstractPriorConstraint = PriorConstraint
 
 AnyPrior = Union[
     GammaPrior,
@@ -20,6 +23,8 @@ AnyPrior = Union[
     LogNormalPrior,
     DimensionalityScaledLogNormalPrior,
 ]
+
+AnyPriorConstraint = NonTransformedInterval
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters
@@ -44,6 +49,21 @@ LKJ_PRIOR = partial(
     LKJPrior,
     shape=2.0,
     sd_prior=GammaPrior(concentration=2.0, rate=0.15),
+)
+
+# prior for RobustSingleTaskGPSurrogate
+ROBUSTGP_LENGTHSCALE_CONSTRAINT = partial(
+    NonTransformedInterval,
+    lower_bound=0.05,
+    upper_bound=float("inf"),
+    initial_value=0.2,
+)
+
+ROBUSTGP_OUTPUTSCALE_CONSTRAINT = partial(
+    NonTransformedInterval,
+    lower_bound=0.01,
+    upper_bound=10.0,
+    initial_value=0.1,
 )
 
 # Hvarfner priors

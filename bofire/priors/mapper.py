@@ -1,6 +1,8 @@
 import math
+from typing import Union
 
 import gpytorch
+from botorch.utils.constraints import NonTransformedInterval
 
 import bofire.data_models.priors.api as data_models
 
@@ -50,14 +52,27 @@ def map_DimensionalityScaledLogNormalPrior(
     )
 
 
+def map_NonTransformedInterval(
+    data_model: data_models.NonTransformedInterval,
+) -> NonTransformedInterval:
+    return NonTransformedInterval(
+        lower_bound=data_model.lower_bound,
+        upper_bound=data_model.upper_bound,
+        initial_value=data_model.initial_value,
+    )
+
+
 PRIOR_MAP = {
     data_models.NormalPrior: map_NormalPrior,
     data_models.GammaPrior: map_GammaPrior,
     data_models.LKJPrior: map_LKJPrior,
     data_models.LogNormalPrior: map_LogNormalPrior,
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
+    data_models.NonTransformedInterval: map_NonTransformedInterval,
 }
 
 
-def map(data_model: data_models.AnyPrior, **kwargs) -> gpytorch.priors.Prior:
+def map(
+    data_model: Union[data_models.AnyPrior, data_models.AnyPriorConstraint], **kwargs
+) -> Union[gpytorch.priors.Prior, gpytorch.constraints.Interval]:
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)

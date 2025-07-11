@@ -1,5 +1,10 @@
 import bofire.data_models.kernels.api as kernels
-from bofire.data_models.priors.api import GammaPrior, LogNormalPrior
+from bofire.data_models.priors.api import (
+    GammaPrior,
+    LogNormalPrior,
+    NonTransformedInterval,
+)
+from tests.bofire.data_models.specs.prior_constraints import specs as prior_constraints
 from tests.bofire.data_models.specs.priors import specs as priors
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -41,6 +46,9 @@ specs.add_valid(
         "nu": 2.5,
         "features": None,
         "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
     },
 )
 specs.add_invalid(
@@ -49,6 +57,9 @@ specs.add_invalid(
         "ard": True,
         "nu": 5,
         "lengthscale_prior": priors.valid().obj(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
         "features": None,
     },
     error=ValueError,
@@ -67,6 +78,9 @@ specs.add_valid(
     lambda: {
         "ard": True,
         "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
         "features": None,
     },
 )
@@ -75,6 +89,9 @@ specs.add_valid(
     lambda: {
         "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
         "outputscale_prior": priors.valid(LogNormalPrior).obj().model_dump(),
+        "outputscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
     },
 )
 specs.add_valid(

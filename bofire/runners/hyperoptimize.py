@@ -2,6 +2,7 @@ import warnings
 from typing import Optional, Tuple
 
 import pandas as pd
+from botorch.exceptions.warnings import InputDataWarning
 
 import bofire.strategies.api as strategies
 import bofire.strategies.mapper as strategy_mapper
@@ -16,6 +17,10 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.runners.run import run
+
+
+# ignore warning related to evaluating test data using RobustSingleTaskGPSurrogate
+warnings.filterwarnings("ignore", category=InputDataWarning)
 
 
 def hyperoptimize(

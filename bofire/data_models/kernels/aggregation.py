@@ -12,7 +12,7 @@ from bofire.data_models.kernels.continuous import (
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import WassersteinKernel
-from bofire.data_models.priors.api import AnyGeneralPrior
+from bofire.data_models.priors.api import AnyGeneralPrior, AnyPriorConstraint
 
 
 class AdditiveKernel(AggregationKernel):
@@ -62,6 +62,7 @@ class ScaleKernel(AggregationKernel):
         WassersteinKernel,
     ]
     outputscale_prior: Optional[AnyGeneralPrior] = None
+    outputscale_constraint: Optional[AnyPriorConstraint] = None
 
 
 class PolynomialFeatureInteractionKernel(AggregationKernel):

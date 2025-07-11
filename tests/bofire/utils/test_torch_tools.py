@@ -1162,6 +1162,7 @@ def test_InterpolateTransform():
             append_x=torch.tensor([60]),
             prepend_y=torch.tensor([0]),
             append_y=torch.tensor([1]),
+            normalize_y=1,
             new_x=new_x,
         )
     t = InterpolateTransform(
@@ -1171,6 +1172,7 @@ def test_InterpolateTransform():
         append_x=torch.tensor([60]),
         prepend_y=torch.tensor([0]),
         append_y=torch.tensor([1]),
+        normalize_y=torch.tensor(1),
         new_x=new_x,
     )
 
@@ -1301,6 +1303,7 @@ def test_InterpolateTransform():
             append_x=torch.tensor([60]),
             prepend_y=torch.tensor([0]),
             append_y=torch.tensor([1]),
+            normalize_y=torch.tensor(1),
             new_x=new_x,
         )
 
@@ -1312,6 +1315,7 @@ def test_InterpolateTransform():
         append_x=torch.tensor([]),
         prepend_y=torch.tensor([]),
         append_y=torch.tensor([]),
+        normalize_y=torch.tensor([1]),
         new_x=new_x,
     )
 
@@ -1332,6 +1336,7 @@ def test_InterpolateTransform():
         append_x=torch.tensor([]),
         prepend_y=torch.tensor([]),
         append_y=torch.tensor([1.0]),
+        normalize_y=torch.tensor([1.0]),
         new_x=new_x,
     )
 
@@ -1354,35 +1359,57 @@ def test_InterpolateTransform():
     np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
 
     # test keep original
+    new_x = torch.from_numpy(np.linspace(0, 1, 6)).to(**tkwargs)
+
     t = InterpolateTransform(
-        idx_x=[0, 1, 2, 3],
-        idx_y=[4, 5, 6, 7],
-        prepend_x=torch.tensor([0.0]),
+        idx_x=[0, 1, 2, 3, 4],
+        idx_y=[5, 6, 7, 8, 9],
+        prepend_x=torch.tensor([]),
         append_x=torch.tensor([]),
         prepend_y=torch.tensor([]),
-        append_y=torch.tensor([1.0]),
+        append_y=torch.tensor([]),
+        normalize_y=torch.tensor(100.0),
+        normalize_x=True,
         new_x=new_x,
         keep_original=True,
     )
 
     tX = torch.tensor(
         [
-            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
-            [
-                10,
-                20,
-                55,
-                60,
-                0,
-                0.2,
-                0.5,
-                0.7,
-            ],
+            [0, 10, 40, 55, 60, 0, 25, 50, 75, 100],
+            [0, 10, 20, 55, 60, 0, 25, 50, 75, 100],
         ],
     ).to(**tkwargs)
+
     ty_new = t(tX).numpy()
+    num_points = len(new_x)  # added because of ruff not liking len(new_x) directly
     np.testing.assert_allclose(
-        np.concatenate([y_new, tX.numpy()], axis=-1),
-        ty_new,
+        tX.numpy(),
+        ty_new[:, num_points:],
         rtol=1e-6,
     )
+
+
+# testing normalize y and normalize_x
+new_x = torch.from_numpy(np.linspace(0, 1, 6)).to(**tkwargs)
+
+t = InterpolateTransform(
+    idx_x=[0, 1, 2, 3],
+    idx_y=[4, 5, 6, 7],
+    prepend_x=torch.tensor([0]),
+    append_x=torch.tensor([100]),
+    prepend_y=torch.tensor([0]),
+    append_y=torch.tensor([100]),
+    normalize_y=torch.tensor(100),
+    normalize_x=True,
+    new_x=new_x,
+)
+
+X = torch.tensor(
+    [[20, 40, 60, 80, 20, 40, 60, 80], [20, 40, 60, 80, 20, 40, 60, 80]]
+).to(**tkwargs)
+new_y = t.transform(X)
+assert torch.allclose(
+    new_y,
+    new_x,
+)

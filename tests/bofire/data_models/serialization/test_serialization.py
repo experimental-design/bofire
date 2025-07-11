@@ -13,6 +13,12 @@ def test_prior_should_be_serializable(prior_spec: Spec):
     assert obj.model_dump() == spec
 
 
+def test_prior_constraint_should_be_serializable(prior_constraint_spec: Spec):
+    spec = prior_constraint_spec.typed_spec()
+    obj = prior_constraint_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
 def test_kernel_should_be_serializable(kernel_spec: Spec):
     spec = kernel_spec.typed_spec()
     obj = kernel_spec.cls(**spec)

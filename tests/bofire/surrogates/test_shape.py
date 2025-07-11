@@ -121,6 +121,7 @@ def test_PiecewiseLinearGPSurrogate_no_continuous():
         append_x=[1.0],
         prepend_y=[],
         append_y=[],
+        normalize_y=100.0,
     )
     surrogate = surrogates.map(surrogate_data)
     experiments = pd.DataFrame.from_dict(
