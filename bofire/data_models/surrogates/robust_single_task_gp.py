@@ -65,8 +65,8 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-    # check that there is only one output
     @model_validator(mode="after")
     def validate_number_of_outputs(self):
         if len(self.outputs.features) > 1:
             raise ValueError("RobustGP only supports one output.")
+        return self

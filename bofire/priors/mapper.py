@@ -74,5 +74,5 @@ PRIOR_MAP = {
 
 def map(
     data_model: Union[data_models.AnyPrior, data_models.AnyPriorConstraint], **kwargs
-) -> Union[gpytorch.priors.Prior, gpytorch.constraints.constraints]:
+) -> Union[gpytorch.priors.Prior, gpytorch.constraints.Interval]:
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)
