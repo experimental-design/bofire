@@ -159,6 +159,7 @@ specs.add_invalid(
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
     error=ValueError,
+    message="RobustGP only supports one output.",
 )
 
 
