@@ -73,7 +73,7 @@ class FullyBayesianSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 if len(self.features_to_warp) > 0
                 else None,  # type: ignore
             )
-        except AttributeError:
+        except (AttributeError, TypeError):
             # For the current release versions of BoTorch,
             # the `use_input_warping` argument is not available
             # we have to wait for the next release
