@@ -189,6 +189,98 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    models.AdditiveMapSaasSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "aggregations": None,
+        "n_taus": 4,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "hyperconfig": None,
+        "dump": None,
+    },
+)
+
+specs.add_valid(
+    models.FullyBayesianSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "warmup_steps": 256,
+        "num_samples": 128,
+        "thinning": 16,
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "hyperconfig": None,
+        "dump": None,
+        "model_type": "saas",
+        "features_to_warp": [],
+    },
+)
+
+
+specs.add_invalid(
+    models.FullyBayesianSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "warmup_steps": 256,
+        "num_samples": 128,
+        "thinning": 256,
+    },
+    error=ValueError,
+    message="`num_samples` has to be larger than `thinning`.",
+)
+
+specs.add_invalid(
+    models.FullyBayesianSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "features_to_warp": ["warped_feature"],
+    },
+    error=ValueError,
+    message="Feature 'warped_feature' in features_to_warp is not a valid input key.",
+)
+
+
+specs.add_valid(
     models.MixedSingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
