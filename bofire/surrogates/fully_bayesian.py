@@ -56,25 +56,40 @@ class FullyBayesianSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             torch.from_numpy(transformed_X.values).to(**tkwargs),
             torch.from_numpy(Y.values).to(**tkwargs),
         )
-
-        self.model = _model_mapper[self.model_type](
-            train_X=tX,
-            train_Y=tY,
-            outcome_transform=(
-                Standardize(m=1)
-                if self.output_scaler == ScalerEnum.STANDARDIZE
-                else None
-            ),
-            input_transform=scaler,
-            use_input_warping=True if len(self.features_to_warp) > 0 else False,
-            indices_to_warp=self.inputs.get_feature_indices(
-                self.input_preprocessing_specs, self.features_to_warp
+        try:
+            self.model = _model_mapper[self.model_type](
+                train_X=tX,
+                train_Y=tY,
+                outcome_transform=(
+                    Standardize(m=1)
+                    if self.output_scaler == ScalerEnum.STANDARDIZE
+                    else None
+                ),
+                input_transform=scaler,
+                use_input_warping=True if len(self.features_to_warp) > 0 else False,
+                indices_to_warp=self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, self.features_to_warp
+                )
+                if len(self.features_to_warp) > 0
+                else None,  # type: ignore
             )
-            if len(self.features_to_warp) > 0
-            else None,  # type: ignore
-        )
+        except TypeError:
+            # For the current release versions of BoTorch,
+            # the `use_input_warping` argument is not available
+            # we have to wait for the next release
+            self.model = _model_mapper[self.model_type](
+                train_X=tX,
+                train_Y=tY,
+                outcome_transform=(
+                    Standardize(m=1)
+                    if self.output_scaler == ScalerEnum.STANDARDIZE
+                    else None
+                ),
+                input_transform=scaler,
+            )
+
         fit_fully_bayesian_model_nuts(
-            self.model,
+            self.model,  # type: ignore
             warmup_steps=self.warmup_steps,
             num_samples=self.num_samples,
             thinning=self.thinning,
