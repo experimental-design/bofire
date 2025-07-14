@@ -13,7 +13,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
-    MBO_LENGTHCALE_PRIOR,
+    MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
@@ -53,7 +53,10 @@ class MultiTaskGPHyperconfig(Hyperconfig):
             return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
 
         if hyperparameters.prior == "mbo":
-            noise_prior, lengthscale_prior = (MBO_NOISE_PRIOR(), MBO_LENGTHCALE_PRIOR())
+            noise_prior, lengthscale_prior = (
+                MBO_NOISE_PRIOR(),
+                MBO_LENGTHSCALE_PRIOR(),
+            )
         else:
             noise_prior, lengthscale_prior = (
                 THREESIX_NOISE_PRIOR(),

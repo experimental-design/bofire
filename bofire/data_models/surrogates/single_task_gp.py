@@ -19,7 +19,7 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
-    MBO_LENGTHCALE_PRIOR,
+    MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
@@ -86,7 +86,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         if hyperparameters.prior == "mbo":
             noise_prior, lengthscale_prior, outputscale_prior = (
                 MBO_NOISE_PRIOR(),
-                MBO_LENGTHCALE_PRIOR(),
+                MBO_LENGTHSCALE_PRIOR(),
                 MBO_OUTPUTSCALE_PRIOR(),
             )
         elif hyperparameters.prior == "threesix":

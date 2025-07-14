@@ -39,7 +39,7 @@ from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
-    MBO_LENGTHCALE_PRIOR,
+    MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
     ROBUSTGP_LENGTHSCALE_CONSTRAINT,
@@ -290,7 +290,7 @@ def test_SingleTaskGPHyperconfig():
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
+        assert base_kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
     elif candidate.prior == "threesix":
         assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         if candidate.scalekernel == "True":
@@ -435,7 +435,8 @@ def test_MixedSingleTaskGPHyperconfig():
     if candidate.prior == "mbo":
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         assert (
-            surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
+            surrogate_data.continuous_kernel.lengthscale_prior
+            == MBO_LENGTHSCALE_PRIOR()
         )
     if candidate.prior == "threesix":
         assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
@@ -784,7 +785,7 @@ def test_RobustSingleTaskGPHyperconfig():
             assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
             assert (
                 surrogate_data.kernel.base_kernel.lengthscale_prior
-                == MBO_LENGTHCALE_PRIOR()
+                == MBO_LENGTHSCALE_PRIOR()
             )
         elif candidate.prior == "threesix":
             assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
