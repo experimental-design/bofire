@@ -40,7 +40,7 @@ THREESIX_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
 # By default BoTorch places a highly informative prior on the kernel lengthscales,
 # which easily leads to overfitting. Here we set a broader prior distribution for the
 # lengthscale. The priors for the noise and signal variance are set more tightly.
-MBO_LENGTHCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.2)
+MBO_LENGTHSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.2)
 MBO_NOISE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 MBO_OUTPUTSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 
