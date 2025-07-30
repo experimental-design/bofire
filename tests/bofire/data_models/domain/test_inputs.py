@@ -58,6 +58,24 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
                         key="f1",
                         categories=["c11", "c12"],
                     ),
+                    DiscreteInput(
+                        key="f2",
+                        values=[1, 2],
+                    ),
+                ],
+            ),
+            [
+                [("f1", "c11"), ("f1", "c12")],
+                [("f2", 1), ("f2", 2)],
+            ],
+        ),
+        (
+            Inputs(
+                features=[
+                    CategoricalInput(
+                        key="f1",
+                        categories=["c11", "c12"],
+                    ),
                     CategoricalInput(
                         key="f2",
                         categories=["c21", "c22", "c23"],
@@ -79,6 +97,7 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 def test_inputs_get_categorical_combinations(inputs, data):
     expected = list(itertools.product(*data))
     assert inputs.get_categorical_combinations() == expected
+    assert inputs.get_number_of_categorical_combinations() == len(expected)
 
 
 def test_inputs_is_fulfilled():
@@ -190,6 +209,9 @@ def test_categorical_combinations_of_domain_filtered(inputs, data, include, excl
         inputs.get_categorical_combinations(include=include, exclude=exclude)
         == expected
     )
+    assert inputs.get_number_of_categorical_combinations(
+        include=include, exclude=exclude
+    ) == len(expected)
 
 
 # test features container
