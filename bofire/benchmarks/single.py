@@ -43,7 +43,7 @@ class Ackley(Benchmark):
 
     """
 
-    # @validator("validate_categoricals")
+    # @field_validator("validate_categoricals")
     # def validate_categoricals(cls, v, num_categoricals):
     #     if v and num_categoricals ==1:
     #         raise ValueError("num_categories  must be specified if categorical=True")

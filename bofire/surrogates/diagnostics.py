@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator, validator
+from pydantic import Field, field_validator, model_validator
 from scipy.integrate import simpson
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
@@ -625,7 +625,7 @@ class CvResults(BaseModel):
 
     # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("results")
+    @field_validator("results")
     def validate_results(cls, v, values):
         if len(v) <= 1:
             raise ValueError("`results` sequence has to contain at least two elements.")

@@ -3,7 +3,7 @@ from typing import Literal, Type
 import numpy as np
 import pandas as pd
 import pytest
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import AnyOutput, ContinuousInput, ContinuousOutput
