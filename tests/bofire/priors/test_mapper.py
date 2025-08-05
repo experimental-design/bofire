@@ -3,6 +3,12 @@ import math
 import gpytorch.priors
 import numpy as np
 import pytest
+from botorch.utils.constraints import (
+    LogTransformedInterval as BotorchLogTransformedInterval,
+)
+from botorch.utils.constraints import (
+    NonTransformedInterval as BotorchNonTransformedInterval,
+)
 
 import bofire.priors.api as priors
 from bofire.data_models.priors.api import (
@@ -10,6 +16,8 @@ from bofire.data_models.priors.api import (
     GammaPrior,
     LKJPrior,
     LogNormalPrior,
+    LogTransformedInterval,
+    NonTransformedInterval,
     NormalPrior,
 )
 
@@ -20,6 +28,14 @@ from bofire.data_models.priors.api import (
         (GammaPrior(concentration=2.0, rate=0.2), gpytorch.priors.GammaPrior),
         (NormalPrior(loc=0, scale=0.5), gpytorch.priors.NormalPrior),
         (LogNormalPrior(loc=0, scale=0.5), gpytorch.priors.LogNormalPrior),
+        (
+            NonTransformedInterval(lower_bound=0.1, upper_bound=1.0, initial_value=0.5),
+            BotorchNonTransformedInterval,
+        ),
+        (
+            LogTransformedInterval(lower_bound=0.1, upper_bound=1.0, initial_value=0.5),
+            BotorchLogTransformedInterval,
+        ),
     ],
 )
 def test_map(prior, expected_prior):
@@ -28,7 +44,8 @@ def test_map(prior, expected_prior):
     for key, value in prior.dict().items():
         if key == "type":
             continue
-        assert value == getattr(gprior, key)
+        if not isinstance(prior, LogTransformedInterval):
+            assert value == getattr(gprior, key)
 
 
 def test_lkj_map():

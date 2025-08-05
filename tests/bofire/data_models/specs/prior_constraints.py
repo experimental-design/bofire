@@ -21,3 +21,34 @@ specs.add_valid(
         "initial_value": 0.1,
     },
 )
+
+specs.add_valid(
+    priors.LogTransformedInterval,
+    lambda: {
+        "lower_bound": 0.05,
+        "upper_bound": 1,
+        "initial_value": 0.2,
+    },
+)
+
+specs.add_invalid(
+    priors.NonTransformedInterval,
+    lambda: {
+        "lower_bound": 2,
+        "upper_bound": 1,
+        "initial_value": 1.5,
+    },
+    error=ValueError,
+    message="The lower bound must be less than the upper bound for an interval.",
+)
+
+specs.add_invalid(
+    priors.NonTransformedInterval,
+    lambda: {
+        "lower_bound": 1,
+        "upper_bound": 10,
+        "initial_value": 11,
+    },
+    error=ValueError,
+    message="The initial value must be within the bounds of the interval.",
+)

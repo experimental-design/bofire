@@ -196,6 +196,11 @@ def map_ScaleKernel(
             if data_model.outputscale_prior is not None
             else None
         ),
+        outputscale_constraint=(
+            priors.map(data_model.outputscale_constraint)
+            if data_model.outputscale_constraint is not None
+            else None
+        ),
     )
 
 
