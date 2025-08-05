@@ -28,7 +28,7 @@ class ContinuousInput(NumericalInput):
     bounds: Bounds
     local_relative_bounds: Optional[
         Annotated[
-            List[Annotated[float, Field(gt=0)]], Field(min_length=2, max_length=2)
+            List[PositiveFloat, Field(min_length=2, max_length=2)
         ]  # type: ignore
     ] = None
     stepsize: Optional[PositiveFloat] = None
