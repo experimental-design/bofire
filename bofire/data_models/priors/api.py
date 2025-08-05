@@ -3,8 +3,12 @@ from typing import Union
 
 from bofire.data_models.priors.constraint import PriorConstraint
 from bofire.data_models.priors.gamma import GammaPrior
+from bofire.data_models.priors.interval import (
+    Interval,
+    LogTransformedInterval,
+    NonTransformedInterval,
+)
 from bofire.data_models.priors.lkj import LKJPrior
-from bofire.data_models.priors.nontransformedinterval import NonTransformedInterval
 from bofire.data_models.priors.normal import (
     DimensionalityScaledLogNormalPrior,
     LogNormalPrior,
@@ -14,7 +18,7 @@ from bofire.data_models.priors.prior import Prior
 
 
 AbstractPrior = Prior
-AbstractPriorConstraint = PriorConstraint
+AbstractPriorConstraint = Union[PriorConstraint, Interval]
 
 AnyPrior = Union[
     GammaPrior,
@@ -24,7 +28,7 @@ AnyPrior = Union[
     DimensionalityScaledLogNormalPrior,
 ]
 
-AnyPriorConstraint = NonTransformedInterval
+AnyPriorConstraint = Union[NonTransformedInterval, LogTransformedInterval]
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters

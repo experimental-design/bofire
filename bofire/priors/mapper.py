@@ -2,7 +2,7 @@ import math
 from typing import Union
 
 import gpytorch
-from botorch.utils.constraints import NonTransformedInterval
+from botorch.utils.constraints import LogTransformedInterval, NonTransformedInterval
 
 import bofire.data_models.priors.api as data_models
 
@@ -62,6 +62,16 @@ def map_NonTransformedInterval(
     )
 
 
+def map_LogTransformedInterval(
+    data_model: data_models.LogTransformedInterval,
+) -> LogTransformedInterval:
+    return LogTransformedInterval(
+        lower_bound=data_model.lower_bound,
+        upper_bound=data_model.upper_bound,
+        initial_value=data_model.initial_value,
+    )
+
+
 PRIOR_MAP = {
     data_models.NormalPrior: map_NormalPrior,
     data_models.GammaPrior: map_GammaPrior,
@@ -69,6 +79,7 @@ PRIOR_MAP = {
     data_models.LogNormalPrior: map_LogNormalPrior,
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
+    data_models.LogTransformedInterval: map_LogTransformedInterval,
 }
 
 
