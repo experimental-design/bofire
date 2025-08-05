@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_serializer, field_validator, model_validator
 from scipy.integrate import simpson
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
@@ -574,6 +574,18 @@ class CvResult(BaseModel):
             raise ValueError(f"Not all values of {info.field_name} are numerical")
         return v
 
+    @field_serializer("observed", "predicted", "standard_deviation", "labcodes")
+    def serialize_series(self, v):
+        if v is None:
+            return None
+        return v.to_list()
+
+    @field_serializer("X")
+    def serialize_dataframe(self, v):
+        if v is None:
+            return None
+        return v.to_dict(orient="list")
+
     @property
     def n_samples(self) -> int:
         """Returns the number of samples in the fold.
@@ -623,8 +635,6 @@ class CvResults(BaseModel):
 
     results: Sequence[CvResult]
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @field_validator("results")
     def validate_results(cls, v, values):
         if len(v) <= 1:
