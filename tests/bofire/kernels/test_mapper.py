@@ -4,6 +4,9 @@ import pytest
 import torch
 from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
 from botorch.models.kernels.categorical import CategoricalKernel
+from botorch.utils.constraints import (
+    LogTransformedInterval as BotorchLogTransformedInterval,
+)
 
 import bofire
 import bofire.kernels.aggregation as aggregationKernels
@@ -24,7 +27,11 @@ from bofire.data_models.kernels.api import (
     TanimotoKernel,
     WassersteinKernel,
 )
-from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR, GammaPrior
+from bofire.data_models.priors.api import (
+    THREESIX_SCALE_PRIOR,
+    GammaPrior,
+    LogTransformedInterval,
+)
 from bofire.kernels.categorical import HammingKernelWithOneHots
 from bofire.kernels.mapper import _compute_active_dims
 from tests.bofire.data_models.specs.api import Spec
@@ -61,7 +68,11 @@ def test_map(kernel_spec: Spec):
 
 def test_map_scale_kernel():
     kernel = ScaleKernel(
-        base_kernel=RBFKernel(), outputscale_prior=THREESIX_SCALE_PRIOR()
+        base_kernel=RBFKernel(),
+        outputscale_prior=THREESIX_SCALE_PRIOR(),
+        outputscale_constraint=LogTransformedInterval(
+            lower_bound=0.01, upper_bound=10.0, initial_value=0.1
+        ),
     )
     k = kernels.map(
         kernel,
@@ -72,6 +83,7 @@ def test_map_scale_kernel():
     )
     assert hasattr(k, "outputscale_prior")
     assert isinstance(k.outputscale_prior, gpytorch.priors.GammaPrior)
+    assert isinstance(k.raw_outputscale_constraint, BotorchLogTransformedInterval)
     kernel = ScaleKernel(base_kernel=RBFKernel())
     k = kernels.map(
         kernel,
