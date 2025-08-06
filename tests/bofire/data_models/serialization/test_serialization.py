@@ -40,7 +40,7 @@ def test_objective_should_be_serializable(objective_spec: Spec):
 def test_feature_should_be_serializable(feature_spec: Spec):
     spec = feature_spec.typed_spec()
     obj = feature_spec.cls(**spec)
-    assert obj.dict() == spec
+    assert obj.model_dump() == spec
 
 
 def test_domain_should_be_serializable(domain_spec: Spec):

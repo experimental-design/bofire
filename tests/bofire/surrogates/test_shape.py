@@ -3,7 +3,7 @@ import torch
 from gpytorch.kernels import MaternKernel, ProductKernel, ScaleKernel
 from gpytorch.priors import GammaPrior, LogNormalPrior
 from pandas.testing import assert_frame_equal
-from torch.testing import assert_allclose
+from torch.testing import assert_close
 
 import bofire.surrogates.api as surrogates
 import tests.bofire.data_models.specs.api as specs
@@ -27,11 +27,11 @@ def test_PiecewiseLinearGPSurrogate():
     surrogate_data = specs.surrogates.valid(PiecewiseLinearGPSurrogate).obj()
     surrogate = surrogates.map(surrogate_data)
     assert isinstance(surrogate, surrogates.PiecewiseLinearGPSurrogate)
-    assert_allclose(
+    assert_close(
         surrogate.transform.tf1.idx_x,
         torch.tensor([4, 5], dtype=torch.int64),
     )
-    assert_allclose(
+    assert_close(
         surrogate.transform.tf1.idx_y,
         torch.tensor([0, 1, 2, 3], dtype=torch.int64),
     )

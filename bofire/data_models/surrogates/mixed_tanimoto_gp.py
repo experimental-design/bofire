@@ -1,6 +1,6 @@
 from typing import Literal, Type
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 # from bofire.data_models.enum import MolecularEncodingEnum
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
@@ -56,7 +56,7 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-    @validator("input_preprocessing_specs")
+    @field_validator("input_preprocessing_specs")
     def validate_moleculars(cls, v, values):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
         if not any(

@@ -41,7 +41,7 @@ from bofire.data_models.priors.api import (
 def test_map(prior, expected_prior):
     gprior = priors.map(prior)
     assert isinstance(gprior, expected_prior)
-    for key, value in prior.dict().items():
+    for key, value in prior.model_dump().items():
         if key == "type":
             continue
         if not isinstance(prior, LogTransformedInterval):

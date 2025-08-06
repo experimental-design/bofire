@@ -315,7 +315,7 @@ for use_cyipopt in [True, False, None]:
     specs.add_valid(
         strategies.DoEStrategy,
         lambda use_cyipopt=use_cyipopt: {
-            "domain": domain.valid().obj().dict(),
+            "domain": domain.valid().obj().model_dump(),
             "verbose": False,
             "ipopt_options": {"max_iter": 200, "print_level": 0},
             "criterion": strategies.SpaceFillingCriterion(

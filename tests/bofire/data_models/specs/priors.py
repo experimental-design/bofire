@@ -1,6 +1,6 @@
 import random
 
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 import bofire.data_models.priors.api as priors
 from tests.bofire.data_models.specs.specs import Specs

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from _pytest.fixtures import fixture
 from pandas.testing import assert_frame_equal
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -254,7 +254,7 @@ def test_strategy_no_variance():
     with pytest.raises(ValueError):
         strategy.tell(experiments)
     # introduce variance but in an invalid experiment
-    experiments.loc[0, "valid_of1"] = 0
+    experiments.loc[0, "valid_of1"] = False
     experiments.loc[0, "b"] = 0.7
     with pytest.raises(ValueError):
         strategy.tell(experiments)
