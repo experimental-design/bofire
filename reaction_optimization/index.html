@@ -1061,26 +1061,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h1 id="getting-started-by-example-optimization-of-reaction-conditions">Getting started by Example: Optimization of Reaction Conditions<a class="anchor-link" href="#getting-started-by-example-optimization-of-reaction-conditions">¶</a></h1><p>In this example we take on a reaction condition optimization problem:
-Suppose you have some simple reaction where two ingredients $A$ and $B$ react to $C$ as</p>
-<p>$$
-A + B  \rightarrow C
-$$</p>
+Suppose you have some simple reaction where two ingredients <strong>A</strong> and <strong>B</strong> react to <strong>C</strong>.</p>
 <p>Our reactors can be temperature controlled, and we can use different solvents. Furthermore, we can dilute our reaction mixture by using a different solvent volume.
-parameters like the <strong>temperature</strong> or the <strong>solvent volume</strong> are <strong>continuous parameters</strong>, where we have to set our ranges
-$$
-0^{\, \circ} \text{C}  \, \le T \le \,  60^{\, \circ} \text{C} 
-$$</p>
-<p>$$
-20 \, \text{ml} \le V_{solvent} \le 90 \,\text{ml} 
-$$</p>
-<p>Parameters like the use of <strong>which solvent</strong>, where there's a choice of either this or that, are <strong>categorical parameters</strong>
-$$
-\text{Solvent} \, S \,  \in  \, \{ \text{MeOH, THF, Dioxane} \}
-$$</p>
+parameters like the <strong>temperature</strong> or the <strong>solvent volume</strong> are <strong>continuous parameters</strong>, where we have to set lower and upper bounds for. The <strong>temperature</strong> can be controlled between 0 and 60°C and the <strong>solvent volume</strong> between 20 and 90 ml.</p>
+<p>Parameters like the use of <strong>which solvent</strong>, where there's a choice of either this or that, are <strong>categorical parameters</strong>. Here we can choose between MeOH, THF and Dioxane.</p>
 <p>For now we only wish top optimize the Reaction yield, making this a <strong>single objective optimization problem</strong>.</p>
-<p>$$
-\max _{T,V,S} \text{ReactionYield}(T,V,S)
-$$</p>
 <p>Below we'll see how to perform such an optimization using bofire, Utilizing a <strong>Single Objective Bayesian Optimization (SOBO)</strong> Strategy</p>
 </div>
 </div>
@@ -2501,24 +2486,6 @@ sobo_strategy.experiments</div>
 sobo_strategy.experiments["Yield"].plot()</div>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=46">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="exercises">Exercises:<a class="anchor-link" href="#exercises">¶</a></h3><ul>
-<li>further analyze of the experiments.<ul>
-<li>plot of Iteration vs. Y and best observed Y</li>
-<li>evaluation of final model w.r.t. Optimal conditions</li>
-<li>plot of final models' mean and variance as a function of the input parameters, perhaps different plots for each solvent, or in 3d as slices</li>
-</ul>
-</li>
-</ul>
 </div>
 </div>
 </div>
