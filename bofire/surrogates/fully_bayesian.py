@@ -56,37 +56,22 @@ class FullyBayesianSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             torch.from_numpy(transformed_X.values).to(**tkwargs),
             torch.from_numpy(Y.values).to(**tkwargs),
         )
-        try:
-            self.model = _model_mapper[self.model_type](
-                train_X=tX,
-                train_Y=tY,
-                outcome_transform=(
-                    Standardize(m=1)
-                    if self.output_scaler == ScalerEnum.STANDARDIZE
-                    else None
-                ),
-                input_transform=scaler,
-                use_input_warping=True if len(self.features_to_warp) > 0 else False,
-                indices_to_warp=self.inputs.get_feature_indices(
-                    self.input_preprocessing_specs, self.features_to_warp
-                )
-                if len(self.features_to_warp) > 0
-                else None,  # type: ignore
+        self.model = _model_mapper[self.model_type](
+            train_X=tX,
+            train_Y=tY,
+            outcome_transform=(
+                Standardize(m=1)
+                if self.output_scaler == ScalerEnum.STANDARDIZE
+                else None
+            ),
+            input_transform=scaler,
+            use_input_warping=True if len(self.features_to_warp) > 0 else False,
+            indices_to_warp=self.inputs.get_feature_indices(
+                self.input_preprocessing_specs, self.features_to_warp
             )
-        except TypeError:
-            # For the current release versions of BoTorch,
-            # the `use_input_warping` argument is not available
-            # we have to wait for the next release
-            self.model = _model_mapper[self.model_type](
-                train_X=tX,
-                train_Y=tY,
-                outcome_transform=(
-                    Standardize(m=1)
-                    if self.output_scaler == ScalerEnum.STANDARDIZE
-                    else None
-                ),
-                input_transform=scaler,
-            )
+            if len(self.features_to_warp) > 0
+            else None,  # type: ignore
+        )
 
         fit_fully_bayesian_model_nuts(
             self.model,  # type: ignore
