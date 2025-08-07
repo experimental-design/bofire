@@ -83,9 +83,7 @@ class ModelBasedObjective(Objective):
             **tkwargs,
         )
 
-        return (
-            torch.tensor(jacobian(self._evaluate_tensor, D)).detach().numpy().flatten()
-        )
+        return jacobian(self._evaluate_tensor, D).detach().numpy().flatten()
 
     # FIXME: currently not returning the hessian in a way that is compatible with ipopt
     # also, the hessians of the constraints are missing
