@@ -11,7 +11,7 @@
 
 ## **BoFire** — **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**eal **E**xperiments
 
-BoFire is a powerful Python package that serves as a comprehensive framework for experimental design. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques. BoFire was developed by BO practitioners from the chemical and pharmaceutical industry and academic partners, with a focus on solving real-world experimental design and optimization challenges like reaction, formulation, digital twin and closed loop optimization.  It is actively used by hundreds of users across leading organizations such as Agilent, BASF, Bayer, Böhringer Ingelheim and Evonik.
+BoFire is a powerful Python package that serves as a comprehensive framework for experimental design. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques. BoFire was developed by BO practitioners from the chemical and pharmaceutical industry and academic partners, with a focus on solving real-world experimental design and optimization challenges like reaction, formulation, digital twin and closed loop optimization.  It is actively used by hundreds of users across leading organizations such as Agilent, BASF, Bayer, Boehringer Ingelheim and Evonik.
 
 Why BoFire? BoFire ...
 
