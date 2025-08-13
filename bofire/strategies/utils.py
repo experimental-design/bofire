@@ -390,10 +390,12 @@ class DomainOptimizationProblem(PymooProblem):
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
         n_obj: Optional[int] = None,
+        optimization_direction: Literal["min", "max"] = "max",
     ):
         self.objective_callables = objective_callables
         self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
         self.callable_format = callable_format
+        self.optimization_direction = optimization_direction
 
         # torch constraints: evaluated in encoded space
         if nonlinear_torch_constraints is None:
@@ -461,6 +463,9 @@ class DomainOptimizationProblem(PymooProblem):
                 raise ValueError(
                     f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
                 )
+
+        if self.optimization_direction == "max":
+            obj = [-o for o in obj]
 
         out["F"] = obj
 
@@ -830,6 +835,7 @@ def get_ga_problem_and_algorithm(
     input_preprocessing_specs: Optional[InputTransformSpecs] = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
+    optimization_direction: Literal["min", "max"] = "max",
 ) -> Tuple[
     DomainOptimizationProblem,
     MixedVariableGA,
@@ -894,6 +900,7 @@ def get_ga_problem_and_algorithm(
         q,
         callable_format=callable_format,
         n_obj=n_obj,
+        optimization_direction=optimization_direction,
     )
 
     # ==== Algorithm ====
@@ -957,6 +964,7 @@ def run_ga(
     input_preprocessing_specs: Optional[InputTransformSpecs] = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
+    optimization_direction: Literal["min", "max"] = "max",
 ) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
     """Convenience function to minimize one or multiple objective functions using a genetic algorithm.
 
@@ -1005,6 +1013,7 @@ def run_ga(
         input_preprocessing_specs=input_preprocessing_specs,
         n_obj=n_obj,
         verbose=verbose,
+        optimization_direction=optimization_direction,
     )
 
     res = pymoo_minimize(problem, algorithm, termination, verbose=verbose)
