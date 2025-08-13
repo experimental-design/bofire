@@ -4,10 +4,18 @@
 
 # Introduction
 
-BoFire is a framework to define and solve black-box optimization problems.
-These problems can arise in a number of closely related fields including experimental design, multi-objective optimization and active learning.
+BoFire is a powerful Python package that serves as a comprehensive framework for experimental design and black-box optimization. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques. BoFire is developed by BO practitioners from the chemical and pharmaceutical industry and academic partners, with a focus on solving real-world experimental design and optimization challenges like reaction, formulation, digital twin and closed-loop optimization.  It is actively used by hundreds of users across leading organizations such as Agilent, BASF, Bayer, Boehringer Ingelheim and Evonik.
 
-BoFire problem specifications are json serializable for use in RESTful APIs and are to a large extent agnostic to the specific methods and frameworks in which the problems are solved.
+Why BoFire? BoFire ...
+
+- supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,
+- separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,
+- supports different specific and generic constraints as well as black-box output constraints,
+- supports single and multi-objective Bayesian optimization,
+- supports built-in chemical encodings and kernels to boost surrogate performance for optimization problems including molecules,
+- can provide flexible DoEs that fulfill constraints,
+- provides sampling methods for constrained mixed variable spaces,
+- provides seamless integration into RESTful APIs, by builtin serialization capabilities for problems, optimization strategies and surrogates.
 
 You can find code-examples in the Getting Started section of this document, as well as full worked-out examples of code-usage in the /tutorials section of this repository!
 
