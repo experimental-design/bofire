@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 import pandas as pd
 import torch
@@ -12,6 +12,7 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from botorch.optim.optimize_mixed import optimize_acqf_mixed_alternating
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -21,15 +22,7 @@ from bofire.data_models.constraints.api import (
     ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalMolecularInput,
-    DiscreteInput,
-    Input,
-)
-from bofire.data_models.molfeatures.api import MolFeatures
+from bofire.data_models.features.api import CategoricalInput, DiscreteInput, Input
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
 )
@@ -55,6 +48,11 @@ from bofire.utils.torch_tools import (
     get_nonlinear_constraints,
     tkwargs,
 )
+
+
+# Threshold for switching between optimizers optimize_acqf_mixed
+# and optimize_acqf_mixed_alternating. Threshold copied from Ax.
+ALTERNATING_OPTIMIZER_THRESHOLD = 10
 
 
 class AcquisitionOptimizer(ABC):
@@ -297,13 +295,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         self.batch_limit = data_model.batch_limit
         self.sequential = data_model.sequential
 
-        # just for completeness here, we should drop the support for FREE and only go over ones that are also
-        # allowed, for more speedy optimization we can user other solvers
-        # so this can be remomved
-        self.categorical_method = data_model.categorical_method
-        self.discrete_method = data_model.discrete_method
-        self.descriptor_method = data_model.descriptor_method
-
         self.local_search_config = data_model.local_search_config
 
         super().__init__(data_model)
@@ -319,19 +310,15 @@ class BotorchOptimizer(AcquisitionOptimizer):
         input_preprocessing_specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        # this is the implementation of the optimizer, here goes _optimize_acqf_continuous
+        bounds = utils.get_torch_bounds_from_domain(domain, input_preprocessing_specs)
 
-        # for continuous and mixed search spaces, here different optimizers could
-        # be used, so we have to abstract the stuff below
-        (
-            bounds,
-            local_bounds,
-            ic_generator,
-            ic_gen_kwargs,
-            nonlinears,
-            fixed_features,
-            fixed_features_list,
-        ) = self._setup_ask(domain, input_preprocessing_specs, experiments)
+        # setup local bounds
+        assert experiments is not None
+        local_lower, local_upper = domain.inputs.get_bounds(
+            specs=input_preprocessing_specs,
+            reference_experiment=experiments.iloc[-1],
+        )
+        local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
         # do the global opt
         candidates, global_acqf_val = self._optimize_acqf_continuous(
@@ -339,12 +326,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
-            ic_generator=ic_generator,  # type: ignore
-            ic_gen_kwargs=ic_gen_kwargs,
-            nonlinear_constraints=nonlinears,  # type: ignore
-            fixed_features=fixed_features,
-            fixed_features_list=fixed_features_list,
-            sequential=self.sequential,
+            input_preprocessing_specs=input_preprocessing_specs,
         )
 
         candidates = self._candidates_tensor_to_dataframe(
@@ -361,12 +343,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
-                ic_generator=ic_generator,  # type: ignore
-                ic_gen_kwargs=ic_gen_kwargs,
-                nonlinear_constraints=nonlinears,  # type: ignore
-                fixed_features=fixed_features,
-                fixed_features_list=fixed_features_list,
-                sequential=self.sequential,
+                input_preprocessing_specs=input_preprocessing_specs,
             )
             if self.local_search_config.is_local_step(
                 local_acqf_val.item(),
@@ -393,85 +370,39 @@ class BotorchOptimizer(AcquisitionOptimizer):
     def _optimize_acqf_continuous(
         self,
         domain: Domain,
-        candidate_count: int,
-        acqfs: List[AcquisitionFunction],
         bounds: Tensor,
-        ic_generator: Callable,
-        ic_gen_kwargs: Dict,
-        nonlinear_constraints: List[Callable[[Tensor], float]],
-        fixed_features: Optional[Dict[int, float]],
-        fixed_features_list: Optional[List[Dict[int, float]]],
-        sequential: bool,
+        candidate_count: int,
+        input_preprocessing_specs: InputTransformSpecs,
+        acqfs: List[AcquisitionFunction],
     ) -> Tuple[Tensor, Tensor]:
-        if len(acqfs) > 1:
+        optimizer = self._determine_optimizer(domain=domain, n_acqfs=len(acqfs))
+        optimizer_args = self._get_arguments_for_optimizer(
+            optimizer, domain, input_preprocessing_specs, candidate_count
+        )
+        if optimizer == "optimize_acqf_list":
             candidates, acqf_vals = optimize_acqf_list(
-                acq_function_list=acqfs,
-                bounds=bounds,
-                num_restarts=self.n_restarts,
-                raw_samples=self.n_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                fixed_features=fixed_features,
-                fixed_features_list=fixed_features_list,
-                ic_gen_kwargs=ic_gen_kwargs,
-                ic_generator=ic_generator,
-                options=self._get_optimizer_options(domain),  # type: ignore
+                acq_function_list=acqfs, bounds=bounds, **optimizer_args
             )
-        elif fixed_features_list:
+        elif optimizer == "optimize_acqf_mixed":
             candidates, acqf_vals = optimize_acqf_mixed(
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
-                num_restarts=self.n_restarts,
-                raw_samples=self.n_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearEqualityConstraint,
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                fixed_features_list=fixed_features_list,
-                ic_generator=ic_generator,
-                ic_gen_kwargs=ic_gen_kwargs,
-                options=self._get_optimizer_options(domain),  # type: ignore
+                **optimizer_args,
+            )
+        elif optimizer == "optimize_acqf_mixed_alternating":
+            candidates, acqf_vals = optimize_acqf_mixed_alternating(
+                acq_function=acqfs[0],
+                bounds=bounds,
+                q=candidate_count,
+                **optimizer_args,
             )
         else:
-            interpoints = get_interpoint_constraints(
-                domain=domain,
-                n_candidates=candidate_count,
-            )
             candidates, acqf_vals = optimize_acqf(
                 acq_function=acqfs[0],
                 bounds=bounds,
                 q=candidate_count,
-                num_restarts=self.n_restarts,
-                raw_samples=self.n_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearEqualityConstraint,
-                )
-                + interpoints,
-                inequality_constraints=get_linear_constraints(
-                    domain=domain,
-                    constraint=LinearInequalityConstraint,
-                ),
-                fixed_features=fixed_features,
-                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
-                return_best_only=True,
-                options=self._get_optimizer_options(domain),  # type: ignore
-                ic_generator=ic_generator,
-                sequential=sequential,
-                **ic_gen_kwargs,
+                **optimizer_args,
             )
         return candidates, acqf_vals
 
@@ -495,37 +426,37 @@ class BotorchOptimizer(AcquisitionOptimizer):
             "maxiter": self.maxiter,
         }
 
-    def _setup_ask(
+    def _determine_optimizer(self, domain: Domain, n_acqfs) -> str:
+        if n_acqfs > 1:
+            return "optimize_acqf_list"
+        # TODO: check this behavior
+        n_categorical_combinations = (
+            domain.inputs.get_number_of_categorical_combinations()
+        )
+        if n_categorical_combinations <= 1:
+            return "optimize_acqf"
+        if (
+            n_categorical_combinations <= ALTERNATING_OPTIMIZER_THRESHOLD
+            or len(get_nonlinear_constraints(domain)) > 0
+        ):
+            return "optimize_acqf_mixed"
+        return "optimize_acqf_mixed_alternating"
+
+    def _get_arguments_for_optimizer(
         self,
+        optimizer: str,
         domain: Domain,
         input_preprocessing_specs: InputTransformSpecs,
-        experiments: Optional[pd.DataFrame] = None,
-    ):
-        """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
-        # this is botorch optimizer dependent code and should be moved to the optimizer
-        # the bounds should be removed and we get in _ask
-
-        num_categorical_features = len(
-            domain.inputs.get([CategoricalInput, DiscreteInput]),
+        candidate_count: int,
+    ) -> Dict[str, Any]:
+        """Returns a dictionary of arguments that can be passed to the optimizer."""
+        n_categorical_combinations = (
+            domain.inputs.get_number_of_categorical_combinations()
         )
-        num_categorical_combinations = len(
-            domain.inputs.get_categorical_combinations(),
-        )
-        bounds = utils.get_torch_bounds_from_domain(domain, input_preprocessing_specs)
-
-        # setup local bounds
-        assert experiments is not None
-        local_lower, local_upper = domain.inputs.get_bounds(
-            specs=input_preprocessing_specs,
-            reference_experiment=experiments.iloc[-1],
-        )
-        local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
-
         # setup nonlinears
-        if len(domain.constraints.get([NChooseKConstraint, ProductConstraint])) == 0:
+        if len(nonlinear_constraints := get_nonlinear_constraints(domain)) == 0:
             ic_generator = None
             ic_gen_kwargs = {}
-            nonlinear_constraints = None
         else:
             # TODO: implement LSR-BO also for constraints --> use local bounds
             ic_generator = gen_batch_initial_conditions
@@ -537,101 +468,72 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     transform_specs=input_preprocessing_specs,
                 ),
             }
-            nonlinear_constraints = get_nonlinear_constraints(domain)
-        # setup fixed features
-        if (
-            (num_categorical_features == 0)
-            or (num_categorical_combinations == 1)
-            or (
-                all(
-                    enc == CategoricalMethodEnum.FREE
-                    for enc in [
-                        self.categorical_method,
-                        self.descriptor_method,
-                        self.discrete_method,
-                    ]
+        args = {
+            "num_restarts": self.n_restarts,
+            "raw_samples": self.n_raw_samples,
+            "equality_constraints": get_linear_constraints(
+                domain=domain,
+                constraint=LinearEqualityConstraint,
+            ),
+            "inequality_constraints": get_linear_constraints(
+                domain=domain,
+                constraint=LinearInequalityConstraint,
+            ),
+        }
+        if optimizer in ["optimize_acqf_list", "optimize_acqf_mixed"]:
+            args["nonlinear_inequality_constraints"] = (
+                nonlinear_constraints if len(nonlinear_constraints) > 0 else None
+            )
+            if n_categorical_combinations > 1:
+                if optimizer == "optimize_acqf_list":
+                    args["fixed_features"] = None
+                args["fixed_features_list"] = self.get_categorical_combinations(
+                    domain, input_preprocessing_specs
                 )
+            else:
+                # in this else it could only be `optimize_acqf_list`
+                args["fixed_features"] = self.get_fixed_features(
+                    domain, input_preprocessing_specs
+                )
+                args["fixed_features_list"] = None
+            args["ic_gen_kwargs"] = ic_gen_kwargs
+            args["ic_generator"] = ic_generator
+            args["options"] = self._get_optimizer_options(domain)
+        elif optimizer == "optimize_acqf_mixed_alternating":
+            args["fixed_features"] = self.get_fixed_features(
+                domain=domain, input_preprocessing_specs=input_preprocessing_specs
             )
-        ):
-            fixed_features = self.get_fixed_features(
-                domain,
-                input_preprocessing_specs,
-            )
-            fixed_features_list = None
+            features2idx = self._features2idx(domain, input_preprocessing_specs)
+            args["discrete_dims"] = {
+                features2idx[feat.key]: feat.values  # type: ignore
+                for feat in domain.inputs.get(DiscreteInput)
+            }
+
+            args["cat_dims"] = {
+                features2idx[feat.key]: feat.to_ordinal_encoding(  # type: ignore
+                    pd.Series(feat.get_allowed_categories())  # type: ignore
+                ).tolist()
+                for feat in domain.inputs.get(CategoricalInput)
+            }
+            # args["options"] = self._get_optimizer_options(domain) #TODO
         else:
-            fixed_features = None
-            fixed_features_list = self.get_categorical_combinations(
-                domain, input_preprocessing_specs
+            interpoints = get_interpoint_constraints(
+                domain=domain,
+                n_candidates=candidate_count,
             )
-        return (
-            bounds,
-            local_bounds,
-            ic_generator,
-            ic_gen_kwargs,
-            nonlinear_constraints,
-            fixed_features,
-            fixed_features_list,
-        )
-
-    def get_fixed_features(
-        self,
-        domain: Domain,
-        input_preprocessing_specs: InputTransformSpecs,
-    ) -> Dict[int, float]:
-        fixed_features = super().get_fixed_features(domain, input_preprocessing_specs)
-
-        features2idx = self._features2idx(domain, input_preprocessing_specs)
-
-        # in case the optimization method is free and not allowed categories are present
-        # one has to fix also them, this is abit of double work as it should be also reflected
-        # in the bounds but helps to make it safer
-
-        # this could be removed if we drop support for FREE
-        if self.categorical_method is not None:
-            if (
-                self.categorical_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.ONE_HOT
-                in list(input_preprocessing_specs.values())
-            ):
-                # for feat in self.get_true_categorical_features():
-                for feat in [
-                    domain.inputs.get_by_key(featkey)
-                    for featkey in domain.inputs.get_keys(CategoricalInput)
-                    if input_preprocessing_specs[featkey]
-                    == CategoricalEncodingEnum.ONE_HOT
-                ]:
-                    assert isinstance(feat, CategoricalInput)
-                    if feat.is_fixed() is False:
-                        for cat in feat.get_forbidden_categories():
-                            transformed = feat.to_onehot_encoding(pd.Series([cat]))
-                            # we fix those indices to zero where one has a 1 as response from the transformer
-                            for j, idx in enumerate(features2idx[feat.key]):
-                                if transformed.values[0, j] == 1.0:
-                                    fixed_features[idx] = 0
-
-        # for the descriptor ones
-        if self.descriptor_method is not None:
-            if (
-                self.descriptor_method == CategoricalMethodEnum.FREE
-                and CategoricalEncodingEnum.DESCRIPTOR
-                in list(input_preprocessing_specs.values())
-            ):
-                # for feat in self.get_true_categorical_features():
-                for feat in [
-                    domain.inputs.get_by_key(featkey)
-                    for featkey in domain.inputs.get_keys(CategoricalDescriptorInput)
-                    if input_preprocessing_specs[featkey]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ]:
-                    assert isinstance(feat, CategoricalDescriptorInput)
-                    if feat.is_fixed() is False:
-                        lower, upper = feat.get_bounds(
-                            CategoricalEncodingEnum.DESCRIPTOR
-                        )
-                        for j, idx in enumerate(features2idx[feat.key]):
-                            if lower[j] == upper[j]:
-                                fixed_features[idx] = lower[j]
-        return fixed_features
+            args["fixed_features"] = self.get_fixed_features(
+                domain=domain, input_preprocessing_specs=input_preprocessing_specs
+            )
+            args["return_best_only"] = True
+            args["ic_generator"] = ic_generator
+            args["sequential"] = self.sequential
+            args["options"] = self._get_optimizer_options(domain)
+            args["linear_equality_constraints"] += interpoints
+            args["nonlinear_constraints"] = (
+                nonlinear_constraints if len(nonlinear_constraints) > 0 else None
+            )
+            args.update(**ic_gen_kwargs)
+        return args
 
     def get_categorical_combinations(
         self,
@@ -643,40 +545,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
         Returns:
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
         """
-        methods = [
-            self.descriptor_method,
-            self.discrete_method,
-            self.categorical_method,
-        ]
-
-        if all(m == CategoricalMethodEnum.FREE for m in methods):
-            return [{}]
-
         fixed_basis = self.get_fixed_features(
             domain,
             input_preprocessing_specs,
         )
 
-        include = []
-        exclude = None
-
-        if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(DiscreteInput)
-
-        if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalInput)
-            exclude = CategoricalDescriptorInput
-
-        if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
-            include.append(CategoricalDescriptorInput)
-            exclude = None
-
-        if not include:
-            include = None
-
         combos = domain.inputs.get_categorical_combinations(
-            include=include if include else Input,
-            exclude=exclude,  # type: ignore
+            include=[CategoricalInput, DiscreteInput],
         )
         # now build up the fixed feature list
         if len(combos) == 1:
@@ -689,36 +564,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
             for pair in combo:
                 feat, val = pair
-                feature = domain.inputs.get_by_key(feat)
-                if (
-                    isinstance(feature, CategoricalDescriptorInput)
-                    and input_preprocessing_specs[feat]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ):
-                    index = feature.categories.index(val)
-
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = feature.values[index][j]
-
-                elif isinstance(feature, CategoricalMolecularInput):
-                    preproc = input_preprocessing_specs[feat]
-                    if not isinstance(preproc, MolFeatures):
-                        raise ValueError(
-                            f"preprocessing for {feat} must be of type AnyMolFeatures"
-                        )
-                    transformed = feature.to_descriptor_encoding(
-                        preproc, pd.Series([val])
-                    )
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
-                elif isinstance(feature, CategoricalInput):
-                    # it has to be onehot in this case
-                    transformed = feature.to_onehot_encoding(pd.Series([val]))
-                    for j, idx in enumerate(features2idx[feat]):
-                        fixed_features[idx] = transformed.values[0, j]
-
-                elif isinstance(feature, DiscreteInput):
-                    fixed_features[features2idx[feat][0]] = val  # type: ignore
+                fixed_features[features2idx[feat][0]] = val  # type: ignore
 
             list_of_fixed_features.append(fixed_features)
         return list_of_fixed_features
