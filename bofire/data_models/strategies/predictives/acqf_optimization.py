@@ -8,18 +8,13 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints
 from bofire.data_models.constraints.api import InterpointConstraint
 from bofire.data_models.domain.domain import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    MixedSingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import BotorchSurrogates
 from bofire.data_models.types import IntPowerOfTwo
 
 
@@ -114,11 +109,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
     # for a discussion on the use of sequential, have a look here
     # https://github.com/pytorch/botorch/discussions/2810
 
-    # encoding params
-    descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
 
@@ -192,34 +182,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         validate_local_search_config(domain)
         validate_interpoint_constraints(domain)
         validate_exclude_constraints(domain)
-
-    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
-        # we also have to check here that the categorical method is compatible with the chosen models
-        # categorical_method = (
-        #   values["categorical_method"] if "categorical_method" in values else None
-        # )
-
-        if self.categorical_method == CategoricalMethodEnum.FREE:
-            for m in surrogate_specs.surrogates:
-                if isinstance(m, MixedSingleTaskGPSurrogate):
-                    raise ValueError(
-                        "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
-                    )
-        # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
-        # used for the descriptor as for the categoricals
-        for m in surrogate_specs.surrogates:
-            keys = m.inputs.get_keys(CategoricalDescriptorInput)
-            for k in keys:
-                input_proc_specs = (
-                    m.input_preprocessing_specs[k]
-                    if k in m.input_preprocessing_specs
-                    else None
-                )
-                if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
-                    if self.categorical_method != self.descriptor_method:
-                        raise ValueError(
-                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
-                        )
 
 
 class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
