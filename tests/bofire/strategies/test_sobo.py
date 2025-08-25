@@ -164,7 +164,7 @@ def test_get_acqf_input_tensors_infeasible(include_infeasible):
     for feat in benchmark.domain.inputs.get():
         feat.bounds = (100, 200)
 
-    strategy = SoboStrategy.make(domain=benchmark.domain)
+    strategy = SoboStrategy.make(domain=benchmark.domain, include_infeasible_exps_in_acqf_calc=include_infeasible)
     strategy._experiments = experiments
     if not include_infeasible:
         with pytest.raises(
@@ -173,7 +173,7 @@ def test_get_acqf_input_tensors_infeasible(include_infeasible):
         ):
             strategy.get_acqf_input_tensors()  # not include_infeasible should be default behavior
     else:
-        X_train, X_pending = strategy.get_acqf_input_tensors(include_infeasible=True)
+        X_train, X_pending = strategy.get_acqf_input_tensors()
         assert X_train.shape[0] == len(experiments)
 
 

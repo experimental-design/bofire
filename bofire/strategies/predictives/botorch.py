@@ -51,6 +51,9 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
         self.surrogates = None
+        self.include_infeasible_exps_in_acqf_calc = (
+            data_model.include_infeasible_exps_in_acqf_calc
+        )
 
         torch.manual_seed(self.seed)
 
@@ -213,12 +216,8 @@ class BotorchStrategy(PredictiveStrategy):
             return True
         return False
 
-    def get_acqf_input_tensors(self, include_infeasible: bool = False):
+    def get_acqf_input_tensors(self):
         """
-
-        Args:
-            include_infeasible (bool, optional): If True, infeasible experiments (violation of bounds and constraints)
-            are also included in the data for the acquisition function. Defaults to False.
 
         Returns:
             X_train (Tensor): Tensor of shape (n, d) with n training points and d input dimensions.
@@ -235,7 +234,7 @@ class BotorchStrategy(PredictiveStrategy):
             keep="first",
             inplace=False,
         )
-        if not include_infeasible:
+        if not self.include_infeasible_exps_in_acqf_calc:
             # we should only provide those experiments to the acqf builder in which all
             # input constraints are fulfilled, output constraints are handled directly
             # in botorch
