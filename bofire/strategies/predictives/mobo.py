@@ -148,6 +148,7 @@ class MoboStrategy(BotorchStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ):
         """
         Creates an instance of a multi-objective strategy based on expected hypervolume improvement.
@@ -168,6 +169,8 @@ class MoboStrategy(BotorchStrategy):
             frequency_hyperopt: Frequency at which to perform hyperparameter optimization.
             folds: Number of folds for cross-validation for hyperparameter optimization.
             seed: Random seed for reproducibility.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
         Returns:
             An instance of the strategy configured with the specified parameters.
         """

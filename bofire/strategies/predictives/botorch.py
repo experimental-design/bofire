@@ -51,6 +51,9 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
         self.surrogates = None
+        self.include_infeasible_exps_in_acqf_calc = (
+            data_model.include_infeasible_exps_in_acqf_calc
+        )
 
         torch.manual_seed(self.seed)
 
@@ -214,6 +217,13 @@ class BotorchStrategy(PredictiveStrategy):
         return False
 
     def get_acqf_input_tensors(self):
+        """
+
+        Returns:
+            X_train (Tensor): Tensor of shape (n, d) with n training points and d input dimensions.
+            X_pending (Tensor | None): Tensor of shape (m, d) with m pending points
+
+        """
         assert self.experiments is not None
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments,
@@ -224,16 +234,19 @@ class BotorchStrategy(PredictiveStrategy):
             keep="first",
             inplace=False,
         )
-        # we should only provide those experiments to the acqf builder in which all
-        # input constraints are fulfilled, output constraints are handled directly
-        # in botorch
-        clean_experiments = clean_experiments[
-            self.domain.is_fulfilled(clean_experiments)
-        ].copy()
-        if len(clean_experiments) == 0:
-            raise ValueError(
-                "No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
-            )
+        if not self.include_infeasible_exps_in_acqf_calc:
+            # we should only provide those experiments to the acqf builder in which all
+            # input constraints are fulfilled, output constraints are handled directly
+            # in botorch
+            clean_experiments = clean_experiments[
+                self.domain.is_fulfilled(clean_experiments)
+            ].copy()
+            if len(clean_experiments) == 0:
+                raise ValueError(
+                    "No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
+                )
+        else:
+            clean_experiments = clean_experiments.copy()
 
         transformed = self.domain.inputs.transform(
             clean_experiments,
