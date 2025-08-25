@@ -296,6 +296,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ):
         """
         Creates a Bayesian optimization strategy that adds multiple objectives.
@@ -312,6 +313,8 @@ class AdditiveSoboStrategy(SoboStrategy):
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
         """
         return make_strategy(cls, AdditiveDataModel, locals())
 
@@ -358,6 +361,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ) -> Self:
         """
         Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
@@ -373,6 +377,8 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
         """
         return cast(Self, make_strategy(cls, MultiplicativeDataModel, locals()))
 
@@ -423,6 +429,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ) -> Self:
         """
         Creates a Bayesian optimization strategy that mixes additions and multiplions of multiple objectives.
@@ -442,6 +449,8 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
         """
         return cast(Self, make_strategy(cls, MultiplicativeAdditiveDataModel, locals()))
 
@@ -550,6 +559,7 @@ class CustomSoboStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ):
         """
         The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations.
@@ -569,5 +579,7 @@ class CustomSoboStrategy(SoboStrategy):
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
         """
         return make_strategy(cls, CustomDataModel, locals())

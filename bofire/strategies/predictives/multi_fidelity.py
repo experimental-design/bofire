@@ -132,6 +132,7 @@ class MultiFidelityStrategy(SoboStrategy):
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ) -> Self:
         """
         Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy
@@ -159,5 +160,7 @@ class MultiFidelityStrategy(SoboStrategy):
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
         """
         return cast(Self, make_strategy(cls, DataModel, locals()))
