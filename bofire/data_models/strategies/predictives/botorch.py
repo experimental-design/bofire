@@ -39,7 +39,7 @@ class BotorchStrategy(PredictiveStrategy):
     include_infeasible_exps_in_acqf_calc: bool = Field(
         default=False,
         description="Whether infeasible experiments should be included in the set "
-                    "of experiments used to compute the acquisition function.",
+        "of experiments used to compute the acquisition function.",
     )
 
     @model_validator(mode="after")
