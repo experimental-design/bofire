@@ -154,7 +154,8 @@ def test_SOBO_init_qUCB():
     assert acqf.beta_prime == math.sqrt(beta * math.pi / 2)
 
 
-def test_get_acqf_input_tensors_infeasible():
+@pytest.mark.parametrize("include_infeasible", (True, False))
+def test_get_acqf_input_tensors_infeasible(include_infeasible):
     benchmark = Himmelblau()
     experiments = benchmark.f(
         benchmark.domain.inputs.sample(10),
@@ -165,11 +166,15 @@ def test_get_acqf_input_tensors_infeasible():
 
     strategy = SoboStrategy.make(domain=benchmark.domain)
     strategy._experiments = experiments
-    with pytest.raises(
-        ValueError,
-        match="No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
-    ):
-        strategy.get_acqf_input_tensors()
+    if not include_infeasible:
+        with pytest.raises(
+            ValueError,
+            match="No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
+        ):
+            strategy.get_acqf_input_tensors()  # not include_infeasible should be default behavior
+    else:
+        X_train, X_pending = strategy.get_acqf_input_tensors(include_infeasible=True)
+        assert X_train.shape[0] == len(experiments)
 
 
 @pytest.mark.parametrize(
