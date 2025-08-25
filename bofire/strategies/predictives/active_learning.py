@@ -88,6 +88,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         folds: int | None = None,
         acquisition_function: AnyActiveLearningAcquisitionFunction | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ):
         """
         Creates an ActiveLearningStrategy instance. ActiveLearningStrategy that uses an acquisition function which focuses on
@@ -103,6 +104,8 @@ class ActiveLearningStrategy(BotorchStrategy):
                 folds: Number of folds for cross-validation in hyperparameter optimization.
                 acquisition_function: Acquisition function to use.
                 seed: Seed for the random number generator.
+                include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                    of experiments used to compute the acquisition function.
             Returns:
                 ActiveLearningStrategy: An instance of the ActiveLearningStrategy class.
         """

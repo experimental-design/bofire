@@ -36,6 +36,11 @@ class BotorchStrategy(PredictiveStrategy):
     # hyperopt params
     frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
+    include_infeasible_exps_in_acqf_calc: bool = Field(
+        default=False,
+        description="Whether infeasible experiments should be included in the set "
+        "of experiments used to compute the acquisition function.",
+    )
 
     @model_validator(mode="after")
     def validate_domain_for_optimizer(self):
