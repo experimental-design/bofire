@@ -19,6 +19,7 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     MolecularInput,
@@ -62,7 +63,7 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
         TanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            input_preprocessing_specs={
+            categorical_encodings={
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
         )
@@ -87,7 +88,19 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
     ],
 )
 def test_TanimotoGP(kernel, specs):
-    inputs = Inputs(features=[MolecularInput(key="x_1")])
+    inputs = Inputs(
+        features=[
+            CategoricalMolecularInput(
+                key="x_1",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            )
+        ]
+    )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
         ["CC(=O)Oc1ccccc1C(=O)O", 88.0],
@@ -101,7 +114,7 @@ def test_TanimotoGP(kernel, specs):
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
-        input_preprocessing_specs=specs,
+        categorical_encodings=specs,
     )
     model = surrogates.map(model)
     model.fit(experiments)
@@ -119,7 +132,7 @@ def test_TanimotoGP(kernel, specs):
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
-        input_preprocessing_specs=specs,
+        categorical_encodings=specs,
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)

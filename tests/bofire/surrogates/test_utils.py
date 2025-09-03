@@ -72,9 +72,9 @@ def test_get_scaler_none():
                 "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
             },
             Normalize,
-            torch.tensor([0, 1, 2], dtype=torch.int64),
-            torch.tensor([-4.0, -4.0, 1.0]).to(**tkwargs),
-            torch.tensor([8.0, 8.0, 5.0]).to(**tkwargs),
+            torch.tensor([0, 1, 2, 3], dtype=torch.int64),
+            torch.tensor([-4.0, -4.0, 1.0, 3.0]).to(**tkwargs),
+            torch.tensor([8.0, 8.0, 5.0, 5.0]).to(**tkwargs),
         ),
         (
             ScalerEnum.STANDARDIZE,
@@ -94,7 +94,7 @@ def test_get_scaler_none():
                 "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
             },
             InputStandardize,
-            torch.tensor([0, 1, 2], dtype=torch.int64),
+            torch.tensor([0, 1, 2, 3], dtype=torch.int64),
             None,
             None,
         ),
@@ -143,8 +143,8 @@ def test_get_scaler(
             CategoricalDescriptorInput(
                 key="x_desc",
                 categories=["alpha", "beta"],
-                descriptors=["oskar"],
-                values=[[1], [6]],
+                descriptors=["oskar", "wilde"],
+                values=[[1, 3], [6, 8]],
             ),
         ],
     )

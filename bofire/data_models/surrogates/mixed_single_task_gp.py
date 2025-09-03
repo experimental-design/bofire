@@ -1,14 +1,17 @@
 from typing import Literal, Optional, Type
 
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
+    CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousOutput,
+    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernel,
@@ -17,6 +20,7 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
 )
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -112,15 +116,37 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: MixedSingleTaskGPHyperconfig(),
     )
 
-    @field_validator("input_preprocessing_specs")
     @classmethod
-    def validate_categoricals(cls, v, values):
-        """Checks that at least one one-hot encoded categorical feature is present."""
-        if CategoricalEncodingEnum.ONE_HOT not in v.values():
+    def _default_categorical_encodings(
+        cls,
+    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+        return {
+            CategoricalInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalMolecularInput: Fingerprints(),
+            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
+            TaskInput: CategoricalEncodingEnum.ORDINAL,
+        }
+
+    @model_validator(mode="after")
+    def validate_categoricals(self):
+        # check that at least one categorical is present
+        if (
+            len(categoricals := self.inputs.get_keys(CategoricalInput, exact=False))
+            == 0
+        ):
             raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present.",
+                "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
             )
-        return v
+        # check that a least one of the categorical features is ordinal or not encoded
+        if not any(
+            self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
+            == CategoricalEncodingEnum.ORDINAL
+            for cat in categoricals
+        ):
+            raise ValueError(
+                "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
+            )
+        return self
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

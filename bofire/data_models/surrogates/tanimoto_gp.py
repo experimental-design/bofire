@@ -1,6 +1,6 @@
 from typing import Literal, Type
 
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
@@ -44,16 +44,16 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         return isinstance(my_type, type(ContinuousOutput))
 
     # TanimotoGP will be used when at least one of fingerprints, fragments, or fingerprintsfragments are present
-    @field_validator("input_preprocessing_specs")
-    def validate_moleculars(cls, v, values):
+    @model_validator(mode="after")
+    def validate_moleculars(self):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
         if not any(
             isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
             or isinstance(value, FingerprintsFragments)
-            for value in v.values()
+            for value in self.categorical_encodings.values()
         ):
             raise ValueError(
                 "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
             )
-        return v
+        return self

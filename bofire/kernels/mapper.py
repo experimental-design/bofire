@@ -4,13 +4,11 @@ import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
-from gpytorch.constraints import GreaterThan
 from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
-from bofire.kernels.categorical import HammingKernelWithOneHots
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
 
@@ -226,47 +224,12 @@ def map_HammingDistanceKernel(
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> GpytorchKernel:
-    if data_model.features is not None:
-        if features_to_idx_mapper is None:
-            raise RuntimeError(
-                "features_to_idx_mapper must be defined when using only a subset of features"
-            )
-
-        active_dims = []
-        categorical_features = {}
-        for k in data_model.features:
-            idx = features_to_idx_mapper([k])
-            categorical_features[len(active_dims)] = len(idx)
-
-            already_used = [i for i in idx if i in active_dims]
-            if already_used:
-                raise RuntimeError(
-                    f"indices {already_used} are used in more than one categorical feature"
-                )
-
-            active_dims.extend(idx)
-
-            if len(idx) == 1:
-                raise RuntimeError(
-                    f"feature {k} is supposed to be one-hot encoded but is mapped to a single dimension"
-                )
-
-        return HammingKernelWithOneHots(
-            categorical_features=categorical_features,
-            # botorch will check that the lengthscale for ARD has the same number of elements as the one-hotted inputs,
-            # so we have to specify the ard_num_dims accordingly. The kernel will make sure to only use one length scale
-            # for each categorical feature.
-            ard_num_dims=len(active_dims) if data_model.ard else None,
-            batch_shape=batch_shape,
-            active_dims=active_dims,  # type: ignore
-            lengthscale_constraint=GreaterThan(1e-06),
-        )
-    else:
-        return CategoricalKernel(
-            batch_shape=batch_shape,
-            ard_num_dims=len(active_dims) if data_model.ard else None,
-            active_dims=active_dims,  # type: ignore
-        )
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return CategoricalKernel(
+        batch_shape=batch_shape,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
+        active_dims=active_dims,  # type: ignore
+    )
 
 
 def map_WassersteinKernel(

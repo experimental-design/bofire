@@ -45,4 +45,4 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
 
 def map(data_model: data_models.Surrogate) -> Surrogate:
     cls = SURROGATE_MAP[data_model.__class__]
-    return cls.from_spec(data_model=data_model)
+    return cls(data_model=data_model)

@@ -12,7 +12,8 @@ from botorch.models.relevance_pursuit import (
 from botorch.models.robust_relevance_pursuit_model import (
     RobustRelevancePursuitSingleTaskGP,
 )
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -21,14 +22,10 @@ from bofire.data_models.enum import OutputFilteringEnum
 
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.surrogates.utils import get_scaler
-from bofire.utils.torch_tools import tkwargs
+from bofire.surrogates.botorch import TrainableBotorchSurrogate
 
 
-class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     """
     Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
 
@@ -66,15 +63,14 @@ class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
-        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
-        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-
-        tX, tY = (
-            torch.from_numpy(transformed_X.values).to(**tkwargs),
-            torch.from_numpy(Y.values).to(**tkwargs),
-        )
-
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs,
+    ):
         self.model = RobustRelevancePursuitSingleTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -87,12 +83,8 @@ class RobustSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                     self.input_preprocessing_specs, feats
                 ),
             ),
-            outcome_transform=(
-                Standardize(m=tY.shape[-1])
-                if self.output_scaler == ScalerEnum.STANDARDIZE
-                else None
-            ),
-            input_transform=scaler,
+            outcome_transform=outcome_transform,
+            input_transform=input_transform,
             convex_parameterization=self.convex_parametrization,
             cache_model_trace=self.cache_model_trace,
         )

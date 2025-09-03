@@ -1,17 +1,20 @@
 from typing import Literal, Optional, Type
 
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
+    CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousOutput,
     TaskInput,
 )
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
@@ -99,6 +102,17 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     )
 
     @classmethod
+    def _default_categorical_encodings(
+        cls,
+    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+        return {
+            CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
+            CategoricalMolecularInput: Fingerprints(),
+            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
+            TaskInput: CategoricalEncodingEnum.ORDINAL,
+        }
+
+    @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
         """Abstract method to check output type for surrogate models
         Args:
@@ -108,12 +122,19 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-    @field_validator("inputs")
-    @classmethod
-    def validate_task_inputs(cls, inputs: Inputs):
-        if len(inputs.get_keys(TaskInput)) != 1:
+    @model_validator(mode="after")
+    def validate_task_inputs(self):
+        if len(self.inputs.get_keys(TaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
-        return inputs
+        task_feature = self.inputs.get(TaskInput)[0]
+        if (
+            not self.categorical_encodings[task_feature.key]
+            == CategoricalEncodingEnum.ORDINAL
+        ):
+            raise ValueError(
+                f"The task feature {task_feature.key} has to be encoded as ordinal."
+            )
+        return self
 
     @field_validator("input_preprocessing_specs")
     @classmethod

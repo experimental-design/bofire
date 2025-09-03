@@ -1,14 +1,28 @@
 import base64
 import io
+from abc import abstractmethod
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import ChainedInputTransform, FilterFeatures
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    FilterFeatures,
+    InputTransform,
+)
+from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
+from bofire.data_models.surrogates.api import (
+    TrainableBotorchSurrogate as TrainableDataModel,
+)
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.surrogate import Surrogate
-from bofire.utils.torch_tools import tkwargs
+from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.surrogates.utils import get_scaler
+from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
 class BotorchSurrogate(Surrogate):
@@ -17,6 +31,9 @@ class BotorchSurrogate(Surrogate):
         data_model: DataModel,
         **kwargs,
     ):
+        self.categorical_encodings: InputTransformSpecs = (
+            data_model.categorical_encodings
+        )
         super().__init__(data_model=data_model, **kwargs)
 
     def _predict(self, transformed_X: pd.DataFrame):
@@ -75,3 +92,56 @@ class BotorchSurrogate(Surrogate):
         """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         buffer = io.BytesIO(base64.b64decode(data.encode()))
         self.model = torch.load(buffer, weights_only=False)
+
+
+class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+    def __init__(
+        self,
+        data_model: TrainableDataModel,
+        **kwargs,
+    ):
+        self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
+        super().__init__(data_model=data_model, **kwargs)
+
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+        scaler = get_scaler(self.inputs, self.categorical_encodings, self.scaler, X)
+        input_transform: Optional[InputTransform] = None
+        if len(self.categorical_encodings) > 0:
+            categorical_transform = get_NumericToCategorical_input_transform(
+                self.inputs, self.categorical_encodings
+            )
+            if scaler is not None and categorical_transform is not None:
+                input_transform = ChainedInputTransform(
+                    tf1=categorical_transform, tf2=scaler
+                )
+            elif categorical_transform is not None:
+                input_transform = categorical_transform
+            elif scaler is not None:
+                input_transform = scaler
+        else:
+            input_transform = scaler
+
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
+        # todo, we should implement log transforms also here
+        outcome_transform = (
+            Standardize(m=tY.shape[-1])
+            if self.output_scaler == ScalerEnum.STANDARDIZE
+            else None
+        )
+        self._fit_botorch(tX, tY, input_transform, outcome_transform, **kwargs)
+
+    @abstractmethod
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs,
+    ):
+        pass

@@ -121,6 +121,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
         )
         return batch_limit
 
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
+        pass
+
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         """Checks if a constraint is implemented. Currently only linear constraints are supported.
 

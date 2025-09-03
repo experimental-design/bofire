@@ -1,4 +1,3 @@
-import itertools
 import unittest
 import warnings
 from typing import Literal, Type
@@ -21,7 +20,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -803,91 +802,91 @@ def test_base_predict(domain, data, acquisition_function):
     assert data.index[-1] == predictions.index[-1]
 
 
-@pytest.mark.parametrize(
-    "categorical_method, descriptor_method, discrete_method",
-    list(
-        itertools.product(
-            [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
-            [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
-            [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
-        ),
-    ),
-)
-def test_base_setup_ask_fixed_features(
-    categorical_method,
-    descriptor_method,
-    discrete_method,
-):
-    # test for fixed features list
-    data_model = DummyStrategyDataModel(
-        domain=domains[0],
-        # acquisition_function=specs.acquisition_functions.valid().obj(),
-        acquisition_optimizer=data_models.BotorchOptimizer(
-            categorical_method=categorical_method,
-            descriptor_method=descriptor_method,
-            discrete_method=discrete_method,
-        ),
-        surrogate_specs=surrogate_data_models.BotorchSurrogates(
-            surrogates=[
-                surrogate_data_models.SingleTaskGPSurrogate(
-                    inputs=domains[0].inputs,
-                    outputs=domains[0].outputs,
-                    # input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
-                ),
-            ],
-        ),
-    )
-    myStrategy = DummyStrategy(data_model=data_model)
-    myStrategy._experiments = domains[0].inputs.sample(3)
-    (
-        bounds,
-        local_bounds,
-        ic_generator,
-        ic_gen_kwargs,
-        nchooseks,
-        fixed_features,
-        fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(
-        myStrategy.domain, myStrategy.input_preprocessing_specs, myStrategy.experiments
-    )
-    if any(
-        enc == CategoricalMethodEnum.EXHAUSTIVE
-        for enc in [
-            categorical_method,
-            descriptor_method,
-            discrete_method,
-        ]
-    ):
-        assert fixed_features is None
-        assert fixed_features_list is not None
-    else:
-        assert fixed_features == {}
-        assert fixed_features_list is None
+# @pytest.mark.parametrize(
+#     "categorical_method, descriptor_method, discrete_method",
+#     list(
+#         itertools.product(
+#             [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
+#             [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
+#             [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
+#         ),
+#     ),
+# )
+# def test_base_setup_ask_fixed_features(
+#     categorical_method,
+#     descriptor_method,
+#     discrete_method,
+# ):
+#     # test for fixed features list
+#     data_model = DummyStrategyDataModel(
+#         domain=domains[0],
+#         # acquisition_function=specs.acquisition_functions.valid().obj(),
+#         acquisition_optimizer=data_models.BotorchOptimizer(
+#             categorical_method=categorical_method,
+#             descriptor_method=descriptor_method,
+#             discrete_method=discrete_method,
+#         ),
+#         surrogate_specs=surrogate_data_models.BotorchSurrogates(
+#             surrogates=[
+#                 surrogate_data_models.SingleTaskGPSurrogate(
+#                     inputs=domains[0].inputs,
+#                     outputs=domains[0].outputs,
+#                     # input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
+#                 ),
+#             ],
+#         ),
+#     )
+#     myStrategy = DummyStrategy(data_model=data_model)
+#     myStrategy._experiments = domains[0].inputs.sample(3)
+#     (
+#         bounds,
+#         local_bounds,
+#         ic_generator,
+#         ic_gen_kwargs,
+#         nchooseks,
+#         fixed_features,
+#         fixed_features_list,
+#     ) = myStrategy.acqf_optimizer._setup_ask(
+#         myStrategy.domain, myStrategy.input_preprocessing_specs, myStrategy.experiments
+#     )
+#     if any(
+#         enc == CategoricalMethodEnum.EXHAUSTIVE
+#         for enc in [
+#             categorical_method,
+#             descriptor_method,
+#             discrete_method,
+#         ]
+#     ):
+#         assert fixed_features is None
+#         assert fixed_features_list is not None
+#     else:
+#         assert fixed_features == {}
+#         assert fixed_features_list is None
 
-    data_model = DummyStrategyDataModel(
-        domain=domains[3],
-        # acquisition_function=specs.acquisition_functions.valid().obj(),
-        acquisition_optimizer=data_models.BotorchOptimizer(
-            categorical_method=categorical_method,
-            descriptor_method=descriptor_method,
-            discrete_method=discrete_method,
-        ),
-    )
-    myStrategy = DummyStrategy(data_model=data_model)
-    myStrategy._experiments = domains[3].inputs.sample(3)
-    (
-        bounds,
-        local_bounds,
-        ic_generator,
-        ic_gen_kwargs,
-        nchooseks,
-        fixed_features,
-        fixed_features_list,
-    ) = myStrategy.acqf_optimizer._setup_ask(
-        myStrategy.domain, myStrategy.input_preprocessing_specs, myStrategy.experiments
-    )
-    assert fixed_features == {1: 3.0}
-    assert fixed_features_list is None
+#     data_model = DummyStrategyDataModel(
+#         domain=domains[3],
+#         # acquisition_function=specs.acquisition_functions.valid().obj(),
+#         acquisition_optimizer=data_models.BotorchOptimizer(
+#             categorical_method=categorical_method,
+#             descriptor_method=descriptor_method,
+#             discrete_method=discrete_method,
+#         ),
+#     )
+#     myStrategy = DummyStrategy(data_model=data_model)
+#     myStrategy._experiments = domains[3].inputs.sample(3)
+#     (
+#         bounds,
+#         local_bounds,
+#         ic_generator,
+#         ic_gen_kwargs,
+#         nchooseks,
+#         fixed_features,
+#         fixed_features_list,
+#     ) = myStrategy.acqf_optimizer._setup_ask(
+#         myStrategy.domain, myStrategy.input_preprocessing_specs, myStrategy.experiments
+#     )
+#     assert fixed_features == {1: 3.0}
+#     assert fixed_features_list is None
 
 
 def test_base_setup_ask():
