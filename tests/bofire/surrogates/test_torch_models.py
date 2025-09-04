@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from botorch.models import MixedSingleTaskGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.transforms.input import (
     ChainedInputTransform,
@@ -628,7 +628,7 @@ def test_botorch_models_fit_and_compatibilize():
     assert botorch_surrogates.surrogates[1].is_compatibilized is False
     # check combined
     assert isinstance(combined.models[0], SingleTaskGP)
-    assert isinstance(combined.models[1], MixedSingleTaskGP)
+    assert isinstance(combined.models[1], SingleTaskGP)
     assert isinstance(combined.models[0].input_transform, ChainedInputTransform)
     assert isinstance(combined.models[0].input_transform.tcompatibilize, FilterFeatures)
     assert torch.eq(
@@ -862,7 +862,7 @@ def test_empirical_model():
     combined = botorch_surrogates.compatibilize(inputs=inputs, outputs=outputs)
     # check combined
     assert isinstance(combined.models[0], DeterministicModel)
-    assert isinstance(combined.models[1], MixedSingleTaskGP)
+    assert isinstance(combined.models[1], SingleTaskGP)
     assert isinstance(combined.models[0].input_transform, FilterFeatures)
     assert torch.eq(
         combined.models[0].input_transform.feature_indices,

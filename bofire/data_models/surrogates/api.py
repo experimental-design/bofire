@@ -20,7 +20,6 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPHyperconfig,
     MixedSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     MLPEnsemble,
@@ -63,7 +62,6 @@ AnySurrogate = Union[
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
@@ -84,7 +82,6 @@ AnyTrainableSurrogate = Union[
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
@@ -103,7 +100,6 @@ AnyRegressionSurrogate = Union[
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
     XGBoostSurrogate,

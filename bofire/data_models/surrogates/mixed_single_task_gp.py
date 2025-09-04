@@ -31,6 +31,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     AnyPrior,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -104,12 +105,16 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
-        default_factory=lambda: MaternKernel(
-            ard=True, nu=2.5, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR()
+        default_factory=lambda: RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=GreaterThan(lower_bound=2.500e-02),
         )
     )
     categorical_kernel: AnyCategoricalKernel = Field(
-        default_factory=lambda: HammingDistanceKernel(ard=True),
+        default_factory=lambda: HammingDistanceKernel(
+            ard=True, lengthscale_constraint=GreaterThan(lower_bound=1.000e-06)
+        ),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
@@ -146,6 +151,36 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             raise ValueError(
                 "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
             )
+        # now we validate the kernels and the features being present there
+        categorical_feature_keys = [
+            cat
+            for cat in categoricals
+            if self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
+            == CategoricalEncodingEnum.ORDINAL
+        ]
+        ordinal_feature_keys = list(
+            set(self.inputs.get_keys()) - set(categorical_feature_keys)
+        )
+        if len(ordinal_feature_keys) == 0:
+            raise ValueError(
+                "MixedSingleTaskGPSurrogate can only be used if at least one ordinal (encoded) feature "
+                "is present. For purely categorical spaces consider using CategoricalSingleTaskGPSurrogate.",
+            )
+        # check that feature keys are set correctly in kernels
+        if self.continuous_kernel.features is None:
+            self.continuous_kernel.features = ordinal_feature_keys
+        else:
+            if set(self.continuous_kernel.features) != set(ordinal_feature_keys):
+                raise ValueError(
+                    "The features defined in the continuous kernel do not match the ordinal (encoded) features in the inputs.",
+                )
+        if self.categorical_kernel.features is None:
+            self.categorical_kernel.features = categorical_feature_keys
+        else:
+            if set(self.categorical_kernel.features) != set(categorical_feature_keys):
+                raise ValueError(
+                    "The features defined in the categorical kernel do not match the categorical features in the inputs.",
+                )
         return self
 
     @classmethod

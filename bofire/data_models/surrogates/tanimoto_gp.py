@@ -43,7 +43,6 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-    # TanimotoGP will be used when at least one of fingerprints, fragments, or fingerprintsfragments are present
     @model_validator(mode="after")
     def validate_moleculars(self):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
