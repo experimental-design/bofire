@@ -432,6 +432,39 @@ def test_SingleTaskGPModel_mixed_features():
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
 
+def test_MixedSingleTaskGP_only_categorical():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
+            CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
+        ]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    surrogate_data = MixedSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    experiments = [
+        ["mama", "cat", 1.0],
+        ["papa", "dog", 2.0],
+        ["mama", "dog", 3.0],
+        ["papa", "cat", 4.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_cat_1", "x_cat_2", "y"])
+    experiments["valid_y"] = 1
+
+    assert surrogate_data.categorical_kernel.features == ["x_cat_1", "x_cat_2"]
+    assert surrogate_data.continuous_kernel.features == []
+    surrogate = surrogates.map(surrogate_data)
+    assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
+    assert isinstance(surrogate.kernel, ScaleKernel)
+    assert isinstance(surrogate.kernel.base_kernel, HammingDistanceKernel)
+
+    surrogate.fit(experiments)
+    assert surrogate.model.covar_module.base_kernel.active_dims.tolist() == [0, 1]
+    assert surrogate.model.covar_module.base_kernel.ard_num_dims == 2
+
+
 def test_MixedSingleTaskGPHyperconfig():
     inputs = Inputs(
         features=[

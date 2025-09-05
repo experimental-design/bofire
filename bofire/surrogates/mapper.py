@@ -26,22 +26,35 @@ from bofire.surrogates.xgb import XGBoostSurrogate
 def map_MixedSingleTaskGPSurrogate(
     data_model: data_models.MixedSingleTaskGPSurrogate,
 ) -> data_models.SingleTaskGPSurrogate:
-    sum_kernel = ScaleKernel(
-        base_kernel=AdditiveKernel(
+    if (
+        data_model.continuous_kernel.features is None
+        or len(data_model.continuous_kernel.features) == 0
+    ):
+        # model is purely categorical
+        kernel = ScaleKernel(base_kernel=data_model.categorical_kernel)
+    else:
+        sum_kernel = ScaleKernel(
+            base_kernel=AdditiveKernel(
+                kernels=[
+                    data_model.continuous_kernel,  # type: ignore
+                    ScaleKernel(base_kernel=data_model.categorical_kernel),
+                ]
+            )
+        )
+        product_kernel = ScaleKernel(
+            base_kernel=MultiplicativeKernel(
+                kernels=[
+                    data_model.continuous_kernel,  # type: ignore
+                    data_model.categorical_kernel,
+                ]
+            )
+        )
+        kernel = AdditiveKernel(
             kernels=[
-                data_model.continuous_kernel,  # type: ignore
-                ScaleKernel(base_kernel=data_model.categorical_kernel),
+                sum_kernel,
+                product_kernel,
             ]
         )
-    )
-    product_kernel = ScaleKernel(
-        base_kernel=MultiplicativeKernel(
-            kernels=[
-                data_model.continuous_kernel,  # type: ignore
-                data_model.categorical_kernel,
-            ]
-        )
-    )
     return data_models.SingleTaskGPSurrogate(
         inputs=data_model.inputs,
         outputs=data_model.outputs,
@@ -52,12 +65,7 @@ def map_MixedSingleTaskGPSurrogate(
         output_scaler=data_model.output_scaler,
         noise_prior=data_model.noise_prior,
         hyperconfig=None,
-        kernel=AdditiveKernel(
-            kernels=[
-                sum_kernel,
-                product_kernel,
-            ]
-        ),
+        kernel=kernel,
     )
 
 

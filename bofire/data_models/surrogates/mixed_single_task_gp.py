@@ -161,19 +161,17 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         ordinal_feature_keys = list(
             set(self.inputs.get_keys()) - set(categorical_feature_keys)
         )
-        if len(ordinal_feature_keys) == 0:
-            raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one ordinal (encoded) feature "
-                "is present. For purely categorical spaces consider using CategoricalSingleTaskGPSurrogate.",
-            )
-        # check that feature keys are set correctly in kernels
-        if self.continuous_kernel.features is None:
-            self.continuous_kernel.features = ordinal_feature_keys
+        if len(ordinal_feature_keys) > 0:
+            # check that feature keys are set correctly in kernels
+            if self.continuous_kernel.features is None:
+                self.continuous_kernel.features = ordinal_feature_keys
+            else:
+                if set(self.continuous_kernel.features) != set(ordinal_feature_keys):
+                    raise ValueError(
+                        "The features defined in the continuous kernel do not match the ordinal (encoded) features in the inputs.",
+                    )
         else:
-            if set(self.continuous_kernel.features) != set(ordinal_feature_keys):
-                raise ValueError(
-                    "The features defined in the continuous kernel do not match the ordinal (encoded) features in the inputs.",
-                )
+            self.continuous_kernel.features = []
         if self.categorical_kernel.features is None:
             self.categorical_kernel.features = categorical_feature_keys
         else:
