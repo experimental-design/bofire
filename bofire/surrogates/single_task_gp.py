@@ -45,7 +45,6 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(range(tX.shape[1])),
-                ard_num_dims=1,  # this keyword is ignored
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.categorical_encodings, feats
                 ),
