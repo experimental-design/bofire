@@ -7,16 +7,6 @@ class SamplingMethodEnum(str, Enum):
     LHS = "LHS"
 
 
-class CategoricalMethodEnum(str, Enum):
-    """Enumeration class of supported methods how to handle categorical features
-    Currently, exhaustive search and free relaxation are implemented.
-    """
-
-    EXHAUSTIVE = "EXHAUSTIVE"
-    FREE = "FREE"
-    # PR = "PR" available soon
-
-
 class CategoricalEncodingEnum(str, Enum):
     """Enumeration class of implemented categorical encodings
     Currently, one-hot and ordinal encoding are implemented.

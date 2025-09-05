@@ -16,13 +16,18 @@ specs.add_valid(
     lambda: {
         "ard": True,
         "features": None,
+        "lengthscale_prior": None,
+        "lengthscale_constraint": None,
     },
 )
+
 specs.add_valid(
     kernels.HammingDistanceKernel,
     lambda: {
         "ard": True,
         "features": ["x_cat_1", "x_cat_2"],
+        "lengthscale_prior": None,
+        "lengthscale_constraint": None,
     },
 )
 specs.add_valid(

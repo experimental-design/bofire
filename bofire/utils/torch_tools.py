@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.input import InputTransform, NumericToCategoricalEncoding
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
@@ -19,7 +19,15 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.features.api import ContinuousInput, Input
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    CategoricalMolecularInput,
+    ContinuousInput,
+    Input,
+)
+from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -1093,3 +1101,69 @@ def create_supervised_dataset(
         outcome_names=outputs.get_keys(),
         validate_init=True,
     )
+
+
+class Encoder:
+    def __init__(self, encoding: torch.Tensor):
+        self.encoding = encoding
+
+    def __call__(self, x: int):
+        return self.encoding[x]
+
+    @property
+    def dim(self) -> int:
+        return self.encoding.shape[1]
+
+
+def get_categorical_encoder(
+    feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
+) -> Encoder:
+    # we need a cached and uncached version
+    """Get the categorical transformer for a given feature."""
+    if isinstance(transform, AnyMolFeatures):
+        assert isinstance(feature, CategoricalMolecularInput)
+        encodings = torch.from_numpy(
+            feature.to_descriptor_encoding(
+                transform, pd.Series(feature.categories)
+            ).values
+        ).to(**tkwargs)
+    elif transform == CategoricalEncodingEnum.ONE_HOT:
+        encodings = torch.from_numpy(
+            feature.to_onehot_encoding(pd.Series(feature.categories)).values
+        ).to(**tkwargs)
+    elif transform == CategoricalEncodingEnum.DESCRIPTOR:
+        assert isinstance(feature, CategoricalDescriptorInput)
+        encodings = torch.from_numpy(
+            feature.to_descriptor_encoding(pd.Series(feature.categories)).values
+        ).to(**tkwargs)
+    else:
+        raise ValueError(
+            f"No categorical transformer found for feature with key: {feature.key} "
+            f"and transform: {transform}"
+        )
+    return Encoder(encodings)
+    # return lambda x: encodings[x]
+
+
+def get_NumericToCategorical_input_transform(
+    inputs: Inputs, transform_specs: InputTransformSpecs
+) -> Optional[NumericToCategoricalEncoding]:
+    encoders = {
+        inputs.get_keys().index(feat.key): get_categorical_encoder(
+            feat,  # type: ignore
+            transform_specs[feat.key],
+        )
+        for feat in inputs.get(CategoricalInput)
+        if transform_specs.get(feat.key, CategoricalEncodingEnum.ORDINAL)
+        is not CategoricalEncodingEnum.ORDINAL
+    }
+    if len(encoders) > 0:
+        return NumericToCategoricalEncoding(
+            dim=len(inputs.get()),
+            categorical_features={i: enc.dim for i, enc in encoders.items()},
+            encoders={
+                i: enc.__call__  # type: ignore
+                for i, enc in encoders.items()
+            },
+        )
+    return None
