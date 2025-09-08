@@ -21,8 +21,8 @@ from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.surrogates.utils import get_scaler
-from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
+from bofire.surrogates.utils import get_input_transform, get_scaler
+from bofire.utils.torch_tools import tkwargs
 
 
 class BotorchSurrogate(Surrogate):
@@ -106,22 +106,9 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         scaler = get_scaler(self.inputs, self.categorical_encodings, self.scaler, X)
-        input_transform: Optional[InputTransform] = None
-        if len(self.categorical_encodings) > 0:
-            categorical_transform = get_NumericToCategorical_input_transform(
-                self.inputs, self.categorical_encodings
-            )
-            if scaler is not None and categorical_transform is not None:
-                input_transform = ChainedInputTransform(
-                    tf1=categorical_transform, tf2=scaler
-                )
-            elif categorical_transform is not None:
-                input_transform = categorical_transform
-            elif scaler is not None:
-                input_transform = scaler
-        else:
-            input_transform = scaler
-
+        input_transform = get_input_transform(
+            self.inputs, scaler, self.categorical_encodings
+        )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         tX, tY = (
             torch.from_numpy(transformed_X.values).to(**tkwargs),
