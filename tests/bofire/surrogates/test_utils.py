@@ -3,7 +3,12 @@ import importlib
 import pandas as pd
 import pytest
 import torch
-from botorch.models.transforms.input import InputStandardize, Normalize
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    InputStandardize,
+    Normalize,
+    NumericToCategoricalEncoding,
+)
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -23,6 +28,7 @@ from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.utils import (
     get_categorical_feature_keys,
     get_continuous_feature_keys,
+    get_input_transform,
     get_molecular_feature_keys,
     get_scaler,
 )
@@ -357,3 +363,49 @@ def test_get_feature_keys(
     assert molecular_feature_keys == expected_molecular_keys
     assert continuous_feature_keys == expected_continuous_keys
     assert categorical_feature_keys == expected_categorical_keys
+
+
+def test_get_input_transform():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
+        ]
+    )
+
+    # case 1 scaler not none, categorical transform not none
+    input_transform = get_input_transform(
+        inputs=inputs,
+        scaler=Normalize(d=1),
+        categorical_encodings={
+            "x2": CategoricalEncodingEnum.ONE_HOT,
+        },
+    )
+    assert isinstance(input_transform, ChainedInputTransform)
+    # case 2 scaler is none, categorical transform is not none
+    input_transform = get_input_transform(
+        inputs=inputs,
+        scaler=None,
+        categorical_encodings={
+            "x2": CategoricalEncodingEnum.ONE_HOT,
+        },
+    )
+    assert isinstance(input_transform, NumericToCategoricalEncoding)
+    # case 3 scaler is not none, categorical transform is none
+    input_transform = get_input_transform(
+        inputs=inputs,
+        scaler=Normalize(d=1),
+        categorical_encodings={
+            "x2": CategoricalEncodingEnum.ORDINAL,
+        },
+    )
+    assert isinstance(input_transform, Normalize)
+    # case 4 both is none
+    input_transform = get_input_transform(
+        inputs=inputs,
+        scaler=None,
+        categorical_encodings={
+            "x2": CategoricalEncodingEnum.ORDINAL,
+        },
+    )
+    assert input_transform is None
