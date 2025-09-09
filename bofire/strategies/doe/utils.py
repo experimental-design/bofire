@@ -65,7 +65,8 @@ def get_formula_from_string(
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
-
+    These are Wilkerson formulas, see e.g. https://matthewwardrop.github.io/formulaic/latest/guides/grammar/
+    
     Args:
         model_type (str or Formula): A formula containing all model terms.
         domain (Domain): A domain that nests necessary information on
