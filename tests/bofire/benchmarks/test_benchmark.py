@@ -1,11 +1,13 @@
 import numpy as np
+from botorch.test_functions.synthetic import Ackley
 from pandas.testing import assert_frame_equal
 
 import bofire.strategies.api as strategies
 from bofire.benchmarks import benchmark
-from bofire.benchmarks.api import GenericBenchmark
+from bofire.benchmarks.api import GenericBenchmark, SyntheticBoTorch
 from bofire.benchmarks.multi import ZDT1
 from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.objectives.api import MinimizeObjective
 from bofire.data_models.strategies.api import RandomStrategy
 
 
@@ -36,3 +38,16 @@ def test_benchmark_generate_outliers():
     sampled_xy1 = Benchmark.f(sampled, return_complete=True)
     assert np.sum(sampled_xy["y"] != sampled_xy1["y"]) != 0
     assert isinstance(Benchmark.outlier_prior, benchmark.UniformOutlierPrior)
+
+
+def test_SyntheticBoTorch():
+    test_func = Ackley(dim=4)
+    bench = SyntheticBoTorch(test_function=test_func)
+    assert len(bench.domain.inputs) == 4
+    assert bench.domain.inputs.get_by_key("x_1").bounds == (-32.768, 32.768)
+    assert len(bench.domain.outputs) == 1
+    assert isinstance(bench.domain.outputs[0].objective, MinimizeObjective)
+    experiments = bench.f(bench.domain.inputs.sample(10), return_complete=True)
+    assert len(experiments) == 10
+    optima = bench.get_optima()
+    assert optima.y.to_list()[0] <= 1e-14
