@@ -232,3 +232,67 @@ class TestLinearProjection:
         # mapping of points in upper triangle to (0.5, 0.5)
         mask = x[:, 0] < x[:, 1]
         assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
+
+    def test_do_nchoose_k(self):
+        """actually run the optimization and check the results for toy system with known solution"""
+        # create simple linear system
+        domain = data_models_domain.Domain(
+            inputs=[
+                data_models_features.ContinuousInput(key="x1", bounds=(0.0, 1.0)),
+                data_models_features.ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+                data_models_features.ContinuousInput(key="x3", bounds=(0.0, 1.0)),
+                data_models_features.ContinuousInput(key="x4", bounds=(0.0, 1.0)),
+                data_models_features.ContinuousInput(key="x5", bounds=(0.0, 1.0)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4", "x5"],
+                    min_count=2,
+                    max_count=3,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+
+        repair_instance = LinearProjection(
+            domain=domain,
+            d=5,
+            bounds=torch.from_numpy(np.array([[0.0] * 5, [1.0] * 5])).to(**tkwargs),
+            q=1,
+            domain_handler=GaMixedDomainHandler(
+                domain=domain, input_preprocessing_specs={}, q=1
+            ),
+        )
+
+        # create a mock generation
+        x = pd.DataFrame(
+            np.random.uniform(-0.1, 1.1, size=(2, 5)),
+            columns=["x1_q0", "x2_q0", "x3_q0", "x4_q0", "x5_q0"],
+        ).to_dict(orient="records")
+
+        # run the repair
+        xr = repair_instance._do(None, x)
+
+        # check the results
+        x = pd.DataFrame(x).values
+        xr = pd.DataFrame(xr).values
+
+        min_count = 2
+        max_count = 3
+        for i in range(x.shape[0]):
+            # check that the min_count biggest values in each row of x are still in xr
+            top_indices = np.argsort(x[i, :])[-min_count:]
+            for idx in top_indices:
+                assert xr[i, idx] > 1e-5  # should be greater than zero
+
+            bottom_indices = np.argsort(x[i, :])[: (x.shape[1] - max_count)]
+            for idx in bottom_indices:
+                assert xr[i, idx] < 1e-5  # should be zero
+
+            # check that the max_count is not exceeded
+            n_non_zero = (xr[i, :] > 1e-5).sum()
+            assert n_non_zero <= max_count
+
+            # check that the min_count is met
+            n_non_zero = (xr[i, :] > 1e-5).sum()
+            assert n_non_zero >= min_count
