@@ -613,21 +613,31 @@ class LinearProjection(PymooRepair):
                 if n_zero == 0:
                     return ub
 
-                # sort each row, and set the smallest n_zero elements to zero
-                ub[np.argsort(x) < n_zero] = 0
+                # Get indices of the lowest n_zero values per row
+                low_indices = np.argsort(x, axis=1)[:, :n_zero]
+
+                # set the lowest indices of each row to zero
+                rows = np.arange(x.shape[0])[:, None]
+                ub[rows, low_indices] = 0
+
                 return ub
 
             @staticmethod
             def _lb_correction(
                 lb: np.ndarray, x: np.ndarray, n_non_zero: int, min_delta: float
             ) -> np.ndarray:
-                """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
+                """correct lower bounds: set the lower bound of the largest n_non_zero elements in each row to min_delta"""
                 if n_non_zero == 0:
                     return lb
 
-                # sort each row, and set the largest n_non_zero elements to min_delta
-                d = x.shape[1]
-                lb[np.argsort(x) >= d - n_non_zero] = min_delta
+                # Get indices of largest n_non_zero values for each row
+                top_indices = np.argsort(x, axis=1)[:, -n_non_zero:]
+
+                # Set all values in lb to 0 initially
+                lb.fill(0)
+                rows = np.arange(x.shape[0])[:, None]
+                lb[rows, top_indices] = min_delta
+
                 return lb
 
             def __call__(self, x: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
