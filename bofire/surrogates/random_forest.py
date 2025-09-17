@@ -3,20 +3,17 @@ import io
 from typing import Optional
 
 import numpy as np
-import pandas as pd
 import torch
 from botorch.models.ensemble import EnsembleModel
-from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils.validation import check_is_fitted
 from torch import Tensor
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.surrogates.utils import get_scaler
+from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -83,7 +80,7 @@ class _RandomForest(EnsembleModel):
         return 1
 
 
-class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
+class RandomForestSurrogate(TrainableBotorchSurrogate):
     """BoFire Random Forest model.
 
     The same hyperparameters are available as for the wrapped sklearn RandomForestRegreesor.
@@ -115,30 +112,32 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     model: Optional[_RandomForest] = None
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        """Fit the Random Forest model.
-
-        Args:
-            X (pd.DataFrame): Dataframe with X values.
-            Y (pd.DataFrame): Dataframe with Y values.
-
-        """
-        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-
-        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
-        tX = (
-            scaler.transform(torch.from_numpy(transformed_X.values)).numpy()
-            if scaler is not None
-            else transformed_X.values
-        )
-
-        if self.output_scaler == ScalerEnum.STANDARDIZE:
-            output_scaler = Standardize(m=Y.shape[-1])
-            ty = torch.from_numpy(Y.values).to(**tkwargs)
-            ty = output_scaler(ty)[0].numpy()
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs,
+    ) -> None:
+        # we have to apply the botorch transforms before fitting
+        if input_transform is not None:
+            ntX = input_transform(tX).numpy()
         else:
-            output_scaler = None
-            ty = Y.values
+            ntX = tX.numpy()
+
+        if outcome_transform is not None:
+            ntY = outcome_transform(tY)[0].numpy()
+        else:
+            ntY = tY.numpy()
+
+        # if self.output_scaler == ScalerEnum.STANDARDIZE:
+        #     output_scaler = Standardize(m=Y.shape[-1])
+        #     ty = torch.from_numpy(Y.values).to(**tkwargs)
+        #     ty = output_scaler(ty)[0].numpy()
+        # else:
+        #     output_scaler = None
+        #     ty = Y.values
 
         rf = RandomForestRegressor(
             n_estimators=self.n_estimators,
@@ -156,11 +155,11 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
             ccp_alpha=self.ccp_alpha,
             max_samples=self.max_samples,
         )
-        rf.fit(X=tX, y=ty.ravel())
+        rf.fit(X=ntX, y=ntY.ravel())
 
-        self.model = _RandomForest(rf=rf, output_scaler=output_scaler)
-        if scaler is not None:
-            self.model.input_transform = scaler
+        self.model = _RandomForest(rf=rf, output_scaler=outcome_transform)
+        if input_transform is not None:
+            self.model.input_transform = input_transform
 
     def _dumps(self) -> str:
         """Dumps the random forest to a string via pickle as this is not directly json serializable."""

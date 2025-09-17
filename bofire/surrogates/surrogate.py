@@ -27,10 +27,6 @@ class Surrogate(ABC):
         else:
             self.model = None
 
-    @classmethod
-    def from_spec(cls, data_model: DataModel) -> "Surrogate":
-        return cls(data_model=data_model)
-
     @property
     def is_fitted(self) -> bool:
         """Return True if model is fitted, else False."""

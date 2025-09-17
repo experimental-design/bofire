@@ -5,7 +5,6 @@ import pytest
 import bofire.data_models.outlier_detection.api as data_models
 import bofire.outlier_detection.api as mapper
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -282,7 +281,6 @@ def test_outlier_detectors_check_compatibility():
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
             scaler=ScalerEnum.NORMALIZE,
-            input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
         ),
     )
     data_model2 = data_models.IterativeTrimming(
@@ -306,7 +304,6 @@ def test_outlier_detectors_check_compatibility():
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y2")]),
             scaler=ScalerEnum.NORMALIZE,
-            input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
         ),
     )
     data_model = data_models.OutlierDetections(detectors=[data_model1, data_model2])

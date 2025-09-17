@@ -87,7 +87,7 @@ CategoryVals = Annotated[
 
 Descriptors = Annotated[
     List[str],
-    Field(min_length=1),
+    Field(min_length=2),
     AfterValidator(make_unique_validator("Descriptors")),
 ]
 

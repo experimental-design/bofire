@@ -1,14 +1,17 @@
 from typing import Literal, Optional, Type
 
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
+    CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousOutput,
+    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernel,
@@ -17,6 +20,7 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
 )
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -27,6 +31,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     AnyPrior,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -100,27 +105,81 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
-        default_factory=lambda: MaternKernel(
-            ard=True, nu=2.5, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR()
+        default_factory=lambda: RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=GreaterThan(lower_bound=2.500e-02),
         )
     )
     categorical_kernel: AnyCategoricalKernel = Field(
-        default_factory=lambda: HammingDistanceKernel(ard=True),
+        default_factory=lambda: HammingDistanceKernel(
+            ard=True, lengthscale_constraint=GreaterThan(lower_bound=1.000e-06)
+        ),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
         default_factory=lambda: MixedSingleTaskGPHyperconfig(),
     )
 
-    @field_validator("input_preprocessing_specs")
     @classmethod
-    def validate_categoricals(cls, v, values):
-        """Checks that at least one one-hot encoded categorical feature is present."""
-        if CategoricalEncodingEnum.ONE_HOT not in v.values():
+    def _default_categorical_encodings(
+        cls,
+    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+        return {
+            CategoricalInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalMolecularInput: Fingerprints(),
+            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
+            TaskInput: CategoricalEncodingEnum.ORDINAL,
+        }
+
+    @model_validator(mode="after")
+    def validate_categoricals(self):
+        # check that at least one categorical is present
+        if (
+            len(categoricals := self.inputs.get_keys(CategoricalInput, exact=False))
+            == 0
+        ):
             raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present.",
+                "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
             )
-        return v
+        # check that a least one of the categorical features is ordinal or not encoded
+        if not any(
+            self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
+            == CategoricalEncodingEnum.ORDINAL
+            for cat in categoricals
+        ):
+            raise ValueError(
+                "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
+            )
+        # now we validate the kernels and the features being present there
+        categorical_feature_keys = [
+            cat
+            for cat in categoricals
+            if self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
+            == CategoricalEncodingEnum.ORDINAL
+        ]
+        ordinal_feature_keys = list(
+            set(self.inputs.get_keys()) - set(categorical_feature_keys)
+        )
+        if len(ordinal_feature_keys) > 0:
+            # check that feature keys are set correctly in kernels
+            if self.continuous_kernel.features is None:
+                self.continuous_kernel.features = ordinal_feature_keys
+            else:
+                if set(self.continuous_kernel.features) != set(ordinal_feature_keys):
+                    raise ValueError(
+                        "The features defined in the continuous kernel do not match the ordinal (encoded) features in the inputs.",
+                    )
+        else:
+            self.continuous_kernel.features = []
+        if self.categorical_kernel.features is None:
+            self.categorical_kernel.features = categorical_feature_keys
+        else:
+            if set(self.categorical_kernel.features) != set(categorical_feature_keys):
+                raise ValueError(
+                    "The features defined in the categorical kernel do not match the categorical features in the inputs.",
+                )
+        return self
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
