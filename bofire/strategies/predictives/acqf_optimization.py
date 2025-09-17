@@ -531,7 +531,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 q=candidate_count,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),
+                options=self._get_optimizer_options(domain),  # type: ignore
                 sequential=self.sequential,
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints + interpoints,
@@ -549,7 +549,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 q=candidate_count,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),
+                options=self._get_optimizer_options(domain),  # type: ignore
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
@@ -564,7 +564,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 bounds=bounds,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),
+                options=self._get_optimizer_options(domain),  # type: ignore
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,

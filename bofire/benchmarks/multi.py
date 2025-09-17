@@ -553,11 +553,6 @@ class CrossCoupling(Benchmark):
             ContinuousInput(key="t_res", bounds=[60, 1800]),
         ]
 
-        categorical_encodings = {
-            "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
-            "base": CategoricalEncodingEnum.DESCRIPTOR,
-        }
-
         # Objectives: yield and cost
         outputs = [
             ContinuousOutput(
@@ -584,7 +579,10 @@ class CrossCoupling(Benchmark):
         data_model = SingleTaskGPSurrogate(
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
-            categorical_encodings=categorical_encodings,
+            categorical_encodings={
+                "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
+                "base": CategoricalEncodingEnum.DESCRIPTOR,
+            },
         )
         ground_truth_yield = surrogates.map(data_model)
 
