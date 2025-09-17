@@ -27,6 +27,7 @@ from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.sort import SortingGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
 
@@ -47,6 +48,7 @@ AnyBotorchSurrogate = Union[
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
     PiecewiseLinearGPSurrogate,
+    SortingGPSurrogate,
 ]
 
 

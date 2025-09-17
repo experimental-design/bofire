@@ -41,6 +41,7 @@ from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.sort import SortingGPSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable import MeanAggregation, SumAggregation
@@ -69,6 +70,7 @@ AnySurrogate = Union[
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
+    SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 
@@ -87,6 +89,7 @@ AnyTrainableSurrogate = Union[
     SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
     PiecewiseLinearGPSurrogate,
+    SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 
@@ -107,6 +110,7 @@ AnyRegressionSurrogate = Union[
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
+    SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 

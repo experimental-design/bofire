@@ -961,6 +961,67 @@ def interp1d(
     return itp
 
 
+class SortTransform(InputTransform, Module):
+    """Botorch input transform that sorts x and y values seperately in ascending order."""
+
+    def __init__(
+        self,
+        idx_x: List[int],
+        idx_y: List[int],
+        keep_original: bool = False,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ):
+        super().__init__()
+        if len(set(idx_x + idx_y)) != len(idx_x) + len(idx_y):
+            raise ValueError("Indices are not unique.")
+
+        self.idx_x = torch.as_tensor(idx_x, dtype=torch.long)
+        self.idx_y = torch.as_tensor(idx_y, dtype=torch.long)
+
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+
+        self.keep_original = keep_original
+
+    def transform(self, X: Tensor):
+        shapeX = X.shape
+
+        x = X[..., self.idx_x]
+        y = X[..., self.idx_y]
+
+        # print('X before sorting', x)
+        # print('Y before sorting', y)
+
+        if X.dim() == 3:
+            x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
+            y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
+
+        x, _ = torch.sort(x, dim=-1)
+        y, _ = torch.sort(y, dim=-1)
+
+        y = y / 100.0
+        # print('X after sorting before norm', x)
+
+        # divide x by the max of each row
+        x_max = x.max(dim=-1, keepdim=True).values
+        x = x / torch.clamp(x_max, min=1e-8)
+
+        # print('X after sorting after norm', x)
+        # print('Y after sorting', y)
+
+        if X.dim() == 3:
+            x = x.reshape((shapeX[0], shapeX[1], x.shape[-1]))
+            y = y.reshape((shapeX[0], shapeX[1], y.shape[-1]))
+
+        if self.keep_original:
+            return torch.cat([x, y, X], dim=-1)
+
+        return torch.cat([x, y], dim=-1)
+
+
 class InterpolateTransform(InputTransform, Module):
     """Botorch input transform that interpolates values between given x and y values."""
 

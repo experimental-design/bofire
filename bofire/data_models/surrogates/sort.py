@@ -1,7 +1,7 @@
-from typing import Annotated, List, Literal, Optional, Type, Union
+from typing import Literal, Optional, Type, Union
 
 import pandas as pd
-from pydantic import AfterValidator, Field, PositiveFloat, PositiveInt, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -23,12 +23,11 @@ from bofire.data_models.priors.api import (
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
-from bofire.data_models.types import Bounds, validate_monotonically_increasing
 
 
-class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
-    type: Literal["PiecewiseLinearGPSurrogateHyperconfig"] = (
-        "PiecewiseLinearGPSurrogateHyperconfig"
+class SortingGPSurrogateHyperconfig(Hyperconfig):
+    type: Literal["SortingLinearGPSurrogateHyperconfig"] = (
+        "SortingeLinearGPSurrogateHyperconfig"
     )
     inputs: Inputs = Inputs(
         features=[
@@ -47,7 +46,7 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
 
     @staticmethod
     def _update_hyperparameters(
-        surrogate_data: "PiecewiseLinearGPSurrogate",
+        surrogate_data: "SortingGPSurrogate",
         hyperparameters: pd.Series,
     ):
         if hyperparameters.prior == "mbo":
@@ -89,7 +88,7 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
+class SortingGPSurrogate(TrainableBotorchSurrogate):
     """GP surrogate that is based on a `WassersteinKernel` for modeling functions
     that take a monotonically increasing piecewise linear function as input. The
     computation of the covariance between the piecewise linears is done by the
@@ -98,17 +97,10 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     by a product kernel.
 
     Attributes:
-        interpolation_range: The range of the interpolation for the piecewise linear
-            functions.
-        n_interpolation_points: Number of interpolation points in the interpolation range.
         x_keys: The keys of the features that are used as x values for the interpolation.
         y_keys: The keys of the features that are used as y values for the interpolation.
         continuous_keys: The keys of the features that are used for the continuous kernel.
-        prepend_x: The x values that are prepended to the values of the `x_keys`.
-        append_x: The x values that are appended to the values of the `x_keys`.
-        prepend_y: The y values that are prepended to the values of the `y_keys`.
-        append_y: The y values that are appended to the values of the `y_keys`.
-        shape_kernel: The Wasserstein distance kernel to be used.
+        shape_kernel: The kernel to be used on the sorted features.
         continuous_kernel: The kernel that is used for the continuous features.
         outputscale_prior: Prior for the outputscale of the GP.
         noise_prior: Prior for the noise of the GP.
@@ -116,19 +108,12 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
 
     """
 
-    type: Literal["PiecewiseLinearGPSurrogate"] = "PiecewiseLinearGPSurrogate"  # type: ignore
-    interpolation_range: Bounds
-    n_interpolation_points: PositiveInt = 1000
+    type: Literal["SortingGPSurrogate"] = "SortingGPSurrogate"  # type: ignore
     x_keys: list[str]
     y_keys: list[str]
     continuous_keys: list[str]
-    prepend_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
-    append_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
-    prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
-    append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
-    normalize_y: PositiveFloat = 1.0
-    hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(  # type: ignore
-        default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig(),
+    hyperconfig: Optional[SortingGPSurrogateHyperconfig] = Field(  # type: ignore
+        default_factory=lambda: SortingGPSurrogateHyperconfig(),
     )
 
     shape_kernel: Union[WassersteinKernel, RBFKernel] = Field(
@@ -146,6 +131,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
 
     outputscale_prior: AnyPrior = Field(default_factory=lambda: THREESIX_SCALE_PRIOR())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    ard: bool = False
 
     @model_validator(mode="after")
     def validate_keys(self):
@@ -156,12 +142,8 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
             raise ValueError("Feature keys do not match input keys.")
         if len(self.x_keys) == 0 or len(self.y_keys) == 0:
             raise ValueError(
-                "No features for interpolation. Please provide `x_keys` and `y_keys`.",
+                "No features for sorting. Please provide `x_keys` and `y_keys`.",
             )
-        if len(self.x_keys) + len(self.append_x) + len(self.prepend_x) != len(
-            self.y_keys,
-        ) + len(self.append_y) + len(self.prepend_y):
-            raise ValueError("Different number of x and y values for interpolation.")
         return self
 
     @model_validator(mode="after")
