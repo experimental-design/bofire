@@ -265,6 +265,8 @@ def test_get_acqf_input(num_candidates):
     # , ref_point=ref_pointw
 
     strategy.tell(experiments)
+    preds = strategy.predict(experiments)
+    assert len(preds) == len(experiments)
     strategy.ask(candidate_count=num_candidates, add_pending=True)
 
     X_train, X_pending = strategy.get_acqf_input_tensors()

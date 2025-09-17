@@ -491,14 +491,10 @@ class CrossCoupling(Benchmark):
     Virtual experiments representing the Aniline Cross-Coupling reaction
     similar to Baumgartner et al. (2019) <https://`doi.org/10.1021/acs.oprd.9b00236>.
     Experimental outcomes are based on a SingleTaskGP fitted on the experimental data published by Baumgartner et al.
-    This is a five dimensional optimisation of temperature, residence time, base equivalents,
+    This is a five dimensional optimization of temperature, residence time, base equivalents,
     catalyst and base.
     The categorical variables (catalyst and base) contain descriptors
     calculated using COSMO-RS. Specifically, the descriptors are the first two sigma moments.
-
-    Args:
-        Benchmark (Benchmark): Benchmark base class
-
     """
 
     def __init__(
@@ -557,7 +553,7 @@ class CrossCoupling(Benchmark):
             ContinuousInput(key="t_res", bounds=[60, 1800]),
         ]
 
-        input_preprocessing_specs = {
+        categorical_encodings = {
             "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
             "base": CategoricalEncodingEnum.DESCRIPTOR,
         }
@@ -588,7 +584,7 @@ class CrossCoupling(Benchmark):
         data_model = SingleTaskGPSurrogate(
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
-            input_preprocessing_specs=input_preprocessing_specs,  # type: ignore
+            categorical_encodings=categorical_encodings,
         )
         ground_truth_yield = surrogates.map(data_model)
 

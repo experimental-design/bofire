@@ -29,7 +29,6 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
@@ -49,13 +48,10 @@ def _default_input_preprocessing_specs(
     domain: Domain,
 ) -> InputTransformSpecs:
     """Default input preprocessing specs for the GA optimizer: If none given, will use OneHot encoding for all categorical inputs"""
-    input_preprocessing_specs = {}
-    for input_ in domain.inputs.get():
-        if isinstance(input_, CategoricalDescriptorInput):
-            input_preprocessing_specs[input_.key] = CategoricalEncodingEnum.DESCRIPTOR
-        elif isinstance(input_, CategoricalInput):
-            input_preprocessing_specs[input_.key] = CategoricalEncodingEnum.ONE_HOT
-    return input_preprocessing_specs
+    return {
+        key: CategoricalEncodingEnum.ORDINAL
+        for key in domain.inputs.get_keys(CategoricalInput)
+    }
 
 
 class GaMixedDomainHandler:
@@ -116,20 +112,8 @@ class GaMixedDomainHandler:
                     bounds=bounds_org
                 )  # default variable
 
-            elif (
-                isinstance(input_ref, CategoricalDescriptorInput)
-                and spec_ == CategoricalEncodingEnum.DESCRIPTOR
-            ):
+            elif isinstance(input_ref, CategoricalInput):
                 # categorical descriptor
-                self.vars[key] = pymoo_variable.Choice(
-                    options=input_ref.get_allowed_categories(),
-                )
-
-            elif (
-                isinstance(input_ref, CategoricalInput)
-                and spec_ == CategoricalEncodingEnum.ONE_HOT
-            ):
-                # one-hot encoded categorical input
                 self.vars[key] = pymoo_variable.Choice(
                     options=input_ref.get_allowed_categories(),
                 )
@@ -816,7 +800,7 @@ def get_torch_bounds_from_domain(
     lower, upper = domain.inputs.get_bounds(
         specs=input_preprocessing_specs,
     )
-    return torch.tensor([lower, upper]).to(**tkwargs)
+    return torch.tensor([lower, upper], **tkwargs)
 
 
 def get_ga_problem_and_algorithm(

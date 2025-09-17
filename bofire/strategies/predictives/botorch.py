@@ -184,7 +184,7 @@ class BotorchStrategy(PredictiveStrategy):
             candidate_count,
             acqfs,
             self.domain,
-            self.input_preprocessing_specs,
+            # self.input_preprocessing_specs,
             self.experiments,
         )
 
