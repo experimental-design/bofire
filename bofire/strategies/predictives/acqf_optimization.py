@@ -579,8 +579,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             )
         elif optimizer == "optimize_acqf_mixed_alternating":
             fixed_keys = domain.inputs.get_fixed().get_keys()
-            print(bounds)
-            print(domain.inputs.get(DiscreteInput))
             return _OptimizeAcqfMixedAlternatingInput(
                 acq_function=acqfs[0],
                 bounds=bounds,
