@@ -43,7 +43,11 @@ class ActiveLearningStrategy(BotorchStrategy):
         random_model = RandomStrategy(domain=self.domain)
         sampler = strategies.map(random_model)
         mc_samples = sampler.ask(candidate_count=self.acquisition_function.n_mc_samples)
-        mc_samples = torch.tensor(mc_samples.values).to(**tkwargs)
+        # Transform categorical inputs to numerical representation before tensor conversion
+        transformed_mc_samples = self.domain.inputs.transform(
+            mc_samples, self.input_preprocessing_specs
+        )
+        mc_samples = torch.tensor(transformed_mc_samples.values).to(**tkwargs)
 
         _, X_pending = self.get_acqf_input_tensors()
 
