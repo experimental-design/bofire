@@ -316,10 +316,6 @@ def test_active_learning_check_preds_have_high_uncertainties():
     """
     import numpy as np
 
-    print("\n" + "=" * 80)
-    print("Testing that Active Learning predictions have high uncertainties")
-    print("=" * 80)
-
     # Create a realistic domain with mixed inputs
     domain = Domain(
         inputs=Inputs(
@@ -435,13 +431,7 @@ def test_active_learning_check_preds_have_high_uncertainties():
 
     # Active Learning should select points with high uncertainty
     # Check that the recommended points are in the upper percentile of standard deviations
-    percentile_75 = np.percentile(std_devs, 75)
     percentile_50 = np.percentile(std_devs, 50)
-
-    print("\nUncertainty Analysis:")
-    print(f"  Median uncertainty in test set: {percentile_50:.3f}")
-    print(f"  75th percentile uncertainty: {percentile_75:.3f}")
-    print(f"  Recommendation uncertainties: {rec_stds}")
 
     # At least one recommendation should have high uncertainty (above median)
     assert any(std >= percentile_50 for std in rec_stds), (
@@ -476,7 +466,3 @@ def test_active_learning_check_preds_have_high_uncertainties():
         assert (
             min_distance > 0.001
         ), "Recommendations should explore new regions, not repeat existing experiments"
-
-    print(f"\n{'='*80}")
-    print("TEST COMPLETED SUCCESSFULLY")
-    print(f"{'='*80}\n")
