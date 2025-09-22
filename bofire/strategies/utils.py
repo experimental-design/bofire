@@ -47,7 +47,7 @@ from bofire.utils.torch_tools import (
 def _default_input_preprocessing_specs(
     domain: Domain,
 ) -> InputTransformSpecs:
-    """Default input preprocessing specs for the GA optimizer: If none given, will use OneHot encoding for all categorical inputs"""
+    """Default input preprocessing specs for the GA optimizer: If none given, will use Ordinal encoding for all categorical inputs"""
     return {
         key: CategoricalEncodingEnum.ORDINAL
         for key in domain.inputs.get_keys(CategoricalInput)
