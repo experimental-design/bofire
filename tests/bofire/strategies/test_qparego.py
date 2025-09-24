@@ -60,6 +60,8 @@ def test_qparego(num_test_candidates):
     )
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
+    preds = my_strategy.predict(experiments)
+    assert len(preds) == len(experiments)
     # test get objective
     objective, _, _ = my_strategy._get_objective_and_constraints()
     assert isinstance(objective, GenericMCObjective)

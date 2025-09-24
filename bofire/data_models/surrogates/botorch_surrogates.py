@@ -17,7 +17,6 @@ from bofire.data_models.surrogates.linear import LinearSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
@@ -36,7 +35,6 @@ AnyBotorchSurrogate = Union[
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     RegressionMLPEnsemble,
     ClassificationMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
@@ -140,11 +138,5 @@ class BotorchSurrogates(BaseModel):
             if all(i == preprocessing[0] for i in preprocessing) is False:
                 raise ValueError(
                     f"Preprocessing steps for features with {key} are incompatible.",
-                )
-        # check that if any surrogate is a MultiTaskGPSurrogate, all have to be
-        if any(isinstance(model, MultiTaskGPSurrogate) for model in v):
-            if not all(isinstance(model, MultiTaskGPSurrogate) for model in v):
-                raise ValueError(
-                    "If a MultiTaskGPSurrogate is used, all surrogates need to be MultiTask.",
                 )
         return v

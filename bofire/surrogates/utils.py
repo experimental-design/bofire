@@ -1,8 +1,13 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputStandardize, Normalize
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    InputStandardize,
+    InputTransform,
+    Normalize,
+)
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -14,7 +19,7 @@ from bofire.data_models.molfeatures.api import (
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
 def get_molecular_feature_keys(
@@ -162,3 +167,26 @@ def get_scaler(
             raise ValueError("Scaler enum not known.")
         return scaler_transform
     return None
+
+
+def get_input_transform(
+    inputs: Inputs,
+    scaler: Union[InputStandardize, Normalize, None],
+    categorical_encodings,
+) -> Union[InputTransform, None]:
+    input_transform: Optional[InputTransform] = None
+    if len(categorical_encodings) > 0:
+        categorical_transform = get_NumericToCategorical_input_transform(
+            inputs, categorical_encodings
+        )
+        if scaler is not None and categorical_transform is not None:
+            input_transform = ChainedInputTransform(
+                tf1=categorical_transform, tf2=scaler
+            )
+        elif categorical_transform is not None:
+            input_transform = categorical_transform
+        elif scaler is not None:
+            input_transform = scaler
+    else:
+        input_transform = scaler
+    return input_transform

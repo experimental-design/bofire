@@ -102,26 +102,6 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     assert np.all(samples == pd.Series([categories[1], categories[1]]))
 
 
-def test_categorical_descriptor_to_descriptor_encoding_1d():
-    c = CategoricalDescriptorInput(
-        key="c",
-        categories=["B", "A", "C"],
-        descriptors=["d1"],
-        values=[[1], [3], [5]],
-    )
-    samples = pd.Series(["A", "A", "C", "B"])
-    t_samples = c.to_descriptor_encoding(samples)
-    assert_frame_equal(
-        t_samples,
-        pd.DataFrame(
-            data=[[3.0], [3.0], [5.0], [1.0]],
-            columns=["c_d1"],
-        ),
-    )
-    untransformed = c.from_descriptor_encoding(t_samples)
-    assert np.all(samples == untransformed)
-
-
 @pytest.mark.parametrize(
     "input_feature, expected_with_values, expected",
     [

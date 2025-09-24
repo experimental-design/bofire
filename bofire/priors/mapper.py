@@ -3,8 +3,14 @@ from typing import Union
 
 import gpytorch
 from botorch.utils.constraints import LogTransformedInterval, NonTransformedInterval
+from gpytorch.constraints import GreaterThan, LessThan, Positive
 
 import bofire.data_models.priors.api as data_models
+
+
+Constraint = Union[
+    Positive, GreaterThan, LessThan, LogTransformedInterval, NonTransformedInterval
+]
 
 
 def map_NormalPrior(
@@ -72,6 +78,24 @@ def map_LogTransformedInterval(
     )
 
 
+def map_Positive(
+    data_model: data_models.Positive,
+) -> Positive:
+    return Positive()
+
+
+def map_GreaterThan(
+    data_model: data_models.GreaterThan,
+) -> GreaterThan:
+    return GreaterThan(lower_bound=data_model.lower_bound, transform=None)
+
+
+def map_LessThan(
+    data_model: data_models.LessThan,
+) -> LessThan:
+    return LessThan(upper_bound=data_model.upper_bound, transform=None)
+
+
 PRIOR_MAP = {
     data_models.NormalPrior: map_NormalPrior,
     data_models.GammaPrior: map_GammaPrior,
@@ -80,10 +104,13 @@ PRIOR_MAP = {
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
     data_models.LogTransformedInterval: map_LogTransformedInterval,
+    data_models.Positive: map_Positive,
+    data_models.GreaterThan: map_GreaterThan,
+    data_models.LessThan: map_LessThan,
 }
 
 
 def map(
     data_model: Union[data_models.AnyPrior, data_models.AnyPriorConstraint], **kwargs
-) -> Union[gpytorch.priors.Prior, gpytorch.constraints.Interval]:
+) -> Union[gpytorch.priors.Prior, Constraint]:
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)

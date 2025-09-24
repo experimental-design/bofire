@@ -1,6 +1,11 @@
 import pytest
 import torch
-from botorch.models.transforms.input import InputStandardize, Normalize
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    InputStandardize,
+    Normalize,
+    NumericToCategoricalEncoding,
+)
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
 from torch import nn
@@ -246,21 +251,12 @@ def test_mlp_ensemble_fit_categorical(scaler):
     )
     surrogate = surrogates.map(ens)
     surrogate.fit(experiments=experiments)
-    if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(surrogate.model.input_transform, Normalize)
-        assert torch.eq(
-            surrogate.model.input_transform.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
-        ).all()
-    elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(surrogate.model.input_transform, InputStandardize)
-        assert torch.eq(
-            surrogate.model.input_transform.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
-        ).all()
+
+    if scaler == ScalerEnum.IDENTITY:
+        assert isinstance(surrogate.model.input_transform, NumericToCategoricalEncoding)
     else:
-        with pytest.raises(AttributeError):
-            assert surrogate.model.input_transform is None
+        assert isinstance(surrogate.model.input_transform, ChainedInputTransform)
+
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)
