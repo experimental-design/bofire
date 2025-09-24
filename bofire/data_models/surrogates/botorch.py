@@ -17,6 +17,23 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class BotorchSurrogate(Surrogate):
+    """Base class for all botorch based surrogates, that can be used in botorch
+    based strategies.
+
+    Attributes:
+        input_preprocessing_specs: A dictionary specifying how categorical features are to be
+            preprocessed **before** being passed to the surrogate. For all botorch based surrogates, an
+            ordinal encoding (`CategoricalEncodingEnum.ORDINAL`) has to be used for all
+            categorical features, which is also set as default if nothing is provided.
+        categorical_encodings: A dictionary specifying how
+            categorical features are to be encoded **within** the botorch based surrogate.
+            Keys are the feature keys and values are the encoding types. If no surrogate specific
+            default is defined, by default categorical features are one-hot encoded, categorical
+            descriptor features are descriptor encoded and categorical molecular features
+            are fingerprint encoded. If a feature is not specified in the dictionary, the default
+            encoding for the feature type is used.
+    """
+
     categorical_encodings: InputTransformSpecs = Field(
         default_factory=dict, validate_default=True
     )
