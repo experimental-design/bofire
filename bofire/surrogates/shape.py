@@ -114,17 +114,26 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 outputscale_prior=priors.map(self.outputscale_prior),
             )
         else:
-            covar_module = ScaleKernel(
-                base_kernel=kernels.map(
-                    self.shape_kernel,
-                    active_dims=self.idx_shape,
-                    ard_num_dims=1,
-                    batch_shape=torch.Size(),
-                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                        self.input_preprocessing_specs, feats
-                    ),
+            # covar_module = ScaleKernel(
+            #     base_kernel=kernels.map(
+            #         self.shape_kernel,
+            #         active_dims=self.idx_shape,
+            #         ard_num_dims=1,
+            #         batch_shape=torch.Size(),
+            #         features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+            #             self.input_preprocessing_specs, feats
+            #         ),
+            #     ),
+            #     outputscale_prior=priors.map(self.outputscale_prior),
+            # )
+            covar_module = kernels.map(
+                self.shape_kernel,
+                active_dims=self.idx_shape,
+                ard_num_dims=1,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
                 ),
-                outputscale_prior=priors.map(self.outputscale_prior),
             )
 
         self.model = botorch.models.SingleTaskGP(  # type: ignore
