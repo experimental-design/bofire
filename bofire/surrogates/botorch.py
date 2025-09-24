@@ -13,6 +13,7 @@ from botorch.models.transforms.input import (
 )
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 
+from bofire.data_models.features.categorical import CategoricalOutput
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
 from bofire.data_models.surrogates.api import (
     TrainableBotorchSurrogate as TrainableDataModel,
@@ -110,6 +111,12 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             self.inputs, scaler, self.categorical_encodings
         )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+        # in case of classification we need to convert y from str to int
+        if isinstance(self.outputs[0], CategoricalOutput):
+            label_mapping = self.outputs[0].objective.to_dict_label()
+            Y = pd.DataFrame.from_dict(
+                {col: Y[col].map(label_mapping) for col in Y.columns},
+            )
         tX, tY = (
             torch.from_numpy(transformed_X.values).to(**tkwargs),
             torch.from_numpy(Y.values).to(**tkwargs),
