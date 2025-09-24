@@ -1107,7 +1107,7 @@ class Encoder:
     def __init__(self, encoding: torch.Tensor):
         self.encoding = encoding
 
-    def __call__(self, x: int):
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
         return self.encoding[x]
 
     @property
@@ -1161,9 +1161,6 @@ def get_NumericToCategorical_input_transform(
         return NumericToCategoricalEncoding(
             dim=len(inputs.get()),
             categorical_features={i: enc.dim for i, enc in encoders.items()},
-            encoders={
-                i: enc.__call__  # type: ignore
-                for i, enc in encoders.items()
-            },
+            encoders=encoders,
         )
     return None
