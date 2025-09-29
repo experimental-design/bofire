@@ -103,6 +103,14 @@ class GenericBenchmark(Benchmark):
 
 
 class FormulationWrapper(Benchmark):
+    """Wrapper that turns a benchmark into a formulation benchmark by adding
+    spurious features that are not used in the evaluation of the benchmark and
+    introducing a sum constraint on all features. The original features get new bounds
+    [0, 1/n_original_features] while the spurious features get bounds [0, 1]. On
+    evaluation the original features are rescaled back to their original bounds and
+    the original benchmark is evaluated.
+    """
+
     def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
         super().__init__(**kwargs)
         self._benchmark = benchmark
@@ -161,6 +169,8 @@ class FormulationWrapper(Benchmark):
 
 
 class SpuriousFeaturesWrapper(Benchmark):
+    """Wrapper that adds spurious features to a benchmark, that are ignored on evaluation."""
+
     def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
         super().__init__(**kwargs)
         assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
