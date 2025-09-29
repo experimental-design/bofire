@@ -205,7 +205,7 @@ class SpuriousFeaturesWrapper(Benchmark):
         )
 
     def get_optima(self) -> pd.DataFrame:
-        return self._benchmark.get_optima()
+        raise NotImplementedError("Optima not available for SpuriousFeaturesWrapper.")
 
 
 class SyntheticBoTorch(Benchmark):
