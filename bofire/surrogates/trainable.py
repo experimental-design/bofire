@@ -156,6 +156,26 @@ class TrainableSurrogate(ABC):
                     "The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput",
                 )
 
+        # Auto-detect timeseries and use appropriate group split
+        if group_split_column is None:
+            # Check if any input feature is marked as timeseries
+            timeseries_features = [
+                feat
+                for feat in self.inputs.get()  # type: ignore
+                if hasattr(feat, "is_timeseries") and feat.is_timeseries
+            ]
+            if len(timeseries_features) > 0:
+                # When timeseries feature is present, require _trajectory_id column
+                trajectory_col = "_trajectory_id"
+                if trajectory_col in experiments.columns:
+                    group_split_column = trajectory_col
+                else:
+                    raise ValueError(
+                        f"Timeseries feature '{timeseries_features[0].key}' detected, but required column '{trajectory_col}' "
+                        f"is not present in the experiments. When using timeseries features, you must include a "
+                        f"'{trajectory_col}' column that identifies which trajectory/experiment each row belongs to."
+                    )
+
         if group_split_column is not None:
             # check if the group split column is present in the experiments
             if group_split_column not in experiments.columns:

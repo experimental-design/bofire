@@ -138,6 +138,31 @@ class Domain(BaseModel):
             c.validate_inputs(self.inputs)
         return self
 
+    @model_validator(mode="after")
+    def validate_timeseries_config(self):
+        """Validate the timeseries configuration of the domain.
+
+        Raises:
+            ValueError: If multiple features are marked as timeseries.
+
+        Returns:
+            self: The validated domain instance.
+        """
+        # Get all numerical inputs that have the is_timeseries attribute
+        from bofire.data_models.features.numerical import NumericalInput
+
+        timeseries_features = [
+            f.key
+            for f in self.inputs
+            if isinstance(f, NumericalInput) and getattr(f, "is_timeseries", False)
+        ]
+
+        if len(timeseries_features) > 1:
+            raise ValueError(
+                f"Multiple features ({', '.join(timeseries_features)}) are marked as timeseries. Only one is allowed."
+            )
+        return self
+
     # TODO: tidy this up
     def get_nchoosek_combinations(self, exhaustive: bool = False):
         """Get all possible NChooseK combinations

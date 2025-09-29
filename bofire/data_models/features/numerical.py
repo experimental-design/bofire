@@ -11,6 +11,9 @@ class NumericalInput(Input):
     """Abstract base class for all numerical (ordinal) input features."""
 
     unit: Optional[str] = None
+    is_timeseries: bool = (
+        False  # Field to mark if this feature represents time in a timeseries
+    )
 
     @staticmethod
     def valid_transform_types() -> List:

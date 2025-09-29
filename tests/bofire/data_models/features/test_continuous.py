@@ -7,7 +7,11 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
+from bofire.data_models.features.api import (
+    ContinuousDescriptorInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 
 
 def test_continuous_input_invalid_stepsize():
@@ -310,3 +314,20 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
+
+def test_continuous_input_is_timeseries():
+    """Test that the is_timeseries flag works correctly for ContinuousInput."""
+    # Default value should be False
+    feature = ContinuousInput(key="x", bounds=(0, 10))
+    assert feature.is_timeseries == False
+
+    # Should be able to set to True
+    time_feature = ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True)
+    assert time_feature.is_timeseries == True
+
+    # DiscreteInput should also support is_timeseries
+    discrete_time_feature = DiscreteInput(
+        key="timestep", values=[0, 1, 2, 3, 4], is_timeseries=True
+    )
+    assert discrete_time_feature.is_timeseries == True
