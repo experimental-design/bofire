@@ -62,7 +62,7 @@ def test_SyntheticBoTorch():
 
 def test_FormulationWrapper():
     benchmark = Himmelblau()
-    wrapped = FormulationWrapper(benchmark=benchmark, n_spurious_features=2)
+    wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2)
     assert len(wrapped.domain.inputs) == len(benchmark.domain.inputs) + 2
     assert_array_equal(
         wrapped._mins, np.array([benchmark.domain.inputs[0].bounds[0]] * 2)
@@ -72,6 +72,13 @@ def test_FormulationWrapper():
     )
     assert_array_equal(wrapped._scales_new, np.array([0.5, 0.5]))
     # now we test the transform method
+
+    assert len(wrapped.domain.constraints) == 1
+    constraint = wrapped.domain.constraints[0]
+    assert set(constraint.features) == set(wrapped.domain.inputs.get_keys())
+    assert constraint.rhs == 1.0
+    assert constraint.coefficients == [1.0] * len(wrapped.domain.inputs)
+
     candidates = pd.DataFrame(
         {
             "x_1": [0.0, 0.5, 0.25],

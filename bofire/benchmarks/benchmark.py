@@ -9,7 +9,8 @@ from pydantic import Field, PositiveFloat
 from scipy.stats import norm, uniform
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.constraints.api import LinearEqualityConstraint
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -111,15 +112,15 @@ class FormulationWrapper(Benchmark):
     the original benchmark is evaluated.
     """
 
-    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+    def __init__(self, benchmark: Benchmark, n_filler_features: int = 1, **kwargs):
         super().__init__(**kwargs)
         self._benchmark = benchmark
-        assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
+        assert n_filler_features >= 1, "n_filler_features must be >= 1."
         assert len(benchmark.domain.constraints) == 0, "Constraints not supported yet."
         assert len(benchmark.domain.inputs.get(ContinuousInput)) == len(
             benchmark.domain.inputs
         ), "Only continuous inputs supported yet."
-        self.n_spurious_features = n_spurious_features
+        self.n_filler_features = n_filler_features
 
         self._domain = Domain(
             inputs=Inputs(
@@ -130,9 +131,20 @@ class FormulationWrapper(Benchmark):
                     for feat in self._benchmark.domain.inputs.get()
                 ]
                 + [
-                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
-                    for i in range(self.n_spurious_features)
+                    ContinuousInput(key=f"x_filler_{i}", bounds=(0, 1))
+                    for i in range(self.n_filler_features)
                 ],
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=self._benchmark.domain.inputs.get_keys()
+                        + [f"x_filler_{i}" for i in range(self.n_filler_features)],
+                        coefficients=[1.0]
+                        * (len(self._benchmark.domain.inputs) + self.n_filler_features),
+                        rhs=1.0,
+                    )
+                ]
             ),
             outputs=self._benchmark.domain.outputs,
         )
