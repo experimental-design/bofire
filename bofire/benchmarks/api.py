@@ -1,7 +1,13 @@
 from typing import Union
 
 from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
-from bofire.benchmarks.benchmark import Benchmark, GenericBenchmark, SyntheticBoTorch
+from bofire.benchmarks.benchmark import (
+    Benchmark,
+    FormulationWrapper,
+    GenericBenchmark,
+    SpuriousFeaturesWrapper,
+    SyntheticBoTorch,
+)
 from bofire.benchmarks.detergent import Detergent
 from bofire.benchmarks.hyperopt import Hyperopt
 from bofire.benchmarks.multi import (
