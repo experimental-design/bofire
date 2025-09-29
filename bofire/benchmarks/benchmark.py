@@ -102,6 +102,90 @@ class GenericBenchmark(Benchmark):
         return self.func(candidates)
 
 
+class FormulationWrapper(Benchmark):
+    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+        super().__init__(**kwargs)
+        self._benchmark = benchmark
+        assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
+        assert len(benchmark.domain.constraints) == 0, "Constraints not supported yet."
+        assert len(benchmark.domain.inputs.get(ContinuousInput)) == len(
+            benchmark.domain.inputs
+        ), "Only continuous inputs supported yet."
+        self.n_spurious_features = n_spurious_features
+
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=feat.key, bounds=(0, 1 / len(self._benchmark.domain.inputs))
+                    )
+                    for feat in self._benchmark.domain.inputs.get()
+                ]
+                + [
+                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
+                    for i in range(self.n_spurious_features)
+                ],
+            ),
+            outputs=self._benchmark.domain.outputs,
+        )
+        self._mins = np.array(
+            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]  # type: ignore
+        )
+        self._scales = np.array(
+            [
+                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                for feat in self._benchmark.domain.inputs.get()
+            ]
+        )
+        self._scales_new = np.array(
+            [
+                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                for feat in self.domain.inputs.get_by_keys(
+                    self._benchmark.domain.inputs.get_keys()
+                )
+            ]
+        )
+
+    def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        Xt = X[self._benchmark.domain.inputs.get_keys()].values
+        Xs = Xt / self._scales_new
+        Xs = self._mins + self._scales * Xs
+        return pd.DataFrame(data=Xs, columns=self._benchmark.domain.inputs.get_keys())
+
+    def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        X_transformed = self._transform(candidates)
+        return self._benchmark._f(X_transformed, **kwargs)
+
+    def get_optima(self) -> pd.DataFrame:
+        raise NotImplementedError("Optima not available for FormulationWrapper.")
+
+
+class SpuriousFeaturesWrapper(Benchmark):
+    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+        super().__init__(**kwargs)
+        assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
+        self._benchmark = benchmark
+        self._domain = Domain(
+            inputs=Inputs(
+                features=benchmark.domain.inputs.features
+                + [
+                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
+                    for i in range(n_spurious_features)
+                ]  # type: ignore
+            ),
+            outputs=self._benchmark.domain.outputs,
+            constraints=self._benchmark.domain.constraints,
+        )
+
+    def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        return self._benchmark._f(
+            candidates[self._benchmark.domain.inputs.get_keys()], **kwargs
+        )
+
+    def get_optima(self) -> pd.DataFrame:
+        return self._benchmark.get_optima()
+
+
 class SyntheticBoTorch(Benchmark):
     """Wrapper around botorch's synthetic test functions.
 
@@ -151,8 +235,10 @@ class SyntheticBoTorch(Benchmark):
             ),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
-        Xt = torch.from_numpy(X[self.domain.inputs.get_keys()].values).to(**tkwargs)
+    def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        Xt = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+            **tkwargs
+        )
         result = pd.DataFrame(
             self.test_function(Xt).numpy(), columns=self.domain.outputs.get_keys()
         )
