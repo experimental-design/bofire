@@ -1,3 +1,4 @@
+import importlib
 import random
 
 import numpy as np
@@ -64,6 +65,9 @@ from bofire.utils.torch_tools import (
     interp1d,
     tkwargs,
 )
+
+
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
 if1 = ContinuousInput(
@@ -1468,6 +1472,7 @@ def test_get_categorical_encoder(feature, transform, expected_encoding):
     assert torch.allclose(encoder.encoding, expected_encoding)
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_categorical_encoder_molecular():
     feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
     transform = Fingerprints()
