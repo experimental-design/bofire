@@ -4,7 +4,6 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
     Normalize,
-    NumericToCategoricalEncoding,
 )
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
@@ -26,7 +25,7 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
 )
 from bofire.surrogates.mlp import MLP, MLPDataset, _MLPEnsemble, fit_mlp
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import NumericToCategoricalEncoding, tkwargs
 
 
 @pytest.mark.parametrize(

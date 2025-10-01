@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
-from botorch.models.transforms.input import NumericToCategoricalEncoding
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 
 import bofire.strategies.api as strategies
@@ -44,6 +43,7 @@ from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
     Encoder,
     InterpolateTransform,
+    NumericToCategoricalEncoding,
     _callables_and_weights,
     constrained_objective2botorch,
     get_additive_botorch_objective,

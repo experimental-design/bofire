@@ -5,7 +5,6 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
     Normalize,
-    NumericToCategoricalEncoding,
 )
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
@@ -23,6 +22,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.surrogates.api import RandomForestSurrogate, ScalerEnum
 from bofire.surrogates.random_forest import _RandomForest
+from bofire.utils.torch_tools import NumericToCategoricalEncoding
 
 
 def test_random_forest_no_random_forest_regressor():
