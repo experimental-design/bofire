@@ -761,6 +761,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             callable_format="torch",
             input_preprocessing_specs=input_preprocessing_specs,
             verbose=self.data_model.verbose,
+            optimization_direction="max",
         )
 
         return x_opt, f_opt  # type: ignore

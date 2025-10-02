@@ -11,17 +11,18 @@
 
 ## **BoFire** — **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**eal **E**xperiments
 
-BoFire is a powerful Python package that serves as a comprehensive framework for experimental design. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
+BoFire is a powerful Python package that serves as a comprehensive framework for experimental design. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques. BoFire is developed by BO practitioners from the chemical and pharmaceutical industry and academic partners, with a focus on solving real-world experimental design and optimization challenges like reaction, formulation, digital twin and closed-loop optimization.  It is actively used by hundreds of users across leading organizations such as Agilent, BASF, Bayer, Boehringer Ingelheim and Evonik.
 
 Why BoFire? BoFire ...
 
 - supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,
 - separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,
 - supports different specific and generic constraints as well as black-box output constraints,
+- supports single and multi-objective Bayesian optimization,
+- supports built-in chemical encodings and kernels to boost surrogate performance for optimization problems including molecules,
 - can provide flexible DoEs that fulfill constraints,
 - provides sampling methods for constrained mixed variable spaces,
-- serializes problems for use in RESTful APIs and json/bson DBs, and
-- allows easy out of the box usage of strategies for single and multi-objective Bayesian optimization.
+- provides seamless integration into RESTful APIs, by builtin serialization capabilities for problems, optimization strategies and surrogates.
 
 ## Getting started
 
@@ -219,7 +220,7 @@ Bayesian optimization in BoFire is based on META's [BoTorch library](https://bot
         year = {2020}
     }
 
-For molecular optimizations, BoFire uses the molecular kernels from the [Gauche library](https://github.com/leojklarner/gauche). If you use the molecular kernels in BoFire please cite also the [gauche paper](https://proceedings.neurips.cc/paper_files/paper/2023/hash/f2b1b2e974fa5ea622dd87f22815f423-Abstract-Conference.html):
+For optimization over molecular species, the molecular kernels introduced in the [GAUCHE library](https://github.com/leojklarner/gauche) are implemented in BoFire. If you use the molecular kernels in BoFire please cite also the [GAUCHE paper](https://proceedings.neurips.cc/paper_files/paper/2023/hash/f2b1b2e974fa5ea622dd87f22815f423-Abstract-Conference.html):
 
     @inproceedings{NEURIPS2023_f2b1b2e9,
         author = {Griffiths, Ryan-Rhys and Klarner, Leo and Moss, Henry and Ravuri, Aditya and Truong, Sang and Du, Yuanqi and Stanton, Samuel and Tom, Gary and Rankovic, Bojana and Jamasb, Arian and Deshwal, Aryan and Schwartz, Julius and Tripp, Austin and Kell, Gregory and Frieder, Simon and Bourached, Anthony and Chan, Alex and Moss, Jacob and Guo, Chengzhi and D\"{u}rholt, Johannes Peter and Chaurasia, Saudamini and Park, Ji Won and Strieth-Kalthoff, Felix and Lee, Alpha and Cheng, Bingqing and Aspuru-Guzik, Alan and Schwaller, Philippe and Tang, Jian},

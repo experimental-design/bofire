@@ -374,10 +374,12 @@ class DomainOptimizationProblem(PymooProblem):
         nonlinear_torch_constraints: Optional[List[Type[Constraint]]] = None,
         nonlinear_pandas_constraints: Optional[List[Type[Constraint]]] = None,
         n_obj: Optional[int] = None,
+        optimization_direction: Literal["min", "max"] = "max",
     ):
         self.objective_callables = objective_callables
         self.domain_handler = GaMixedDomainHandler(domain, input_preprocessing_specs, q)
         self.callable_format = callable_format
+        self.optimization_direction = optimization_direction
 
         # torch constraints: evaluated in encoded space
         if nonlinear_torch_constraints is None:
@@ -445,6 +447,9 @@ class DomainOptimizationProblem(PymooProblem):
                 raise ValueError(
                     f"Objective function {ofnc} returned an invalid shape: {ofnc_val.shape}"
                 )
+
+        if self.optimization_direction == "max":
+            obj = [-o for o in obj]
 
         out["F"] = obj
 
@@ -592,21 +597,31 @@ class LinearProjection(PymooRepair):
                 if n_zero == 0:
                     return ub
 
-                # sort each row, and set the smallest n_zero elements to zero
-                ub[np.argsort(x) < n_zero] = 0
+                # Get indices of the lowest n_zero values per row
+                low_indices = np.argsort(x, axis=1)[:, :n_zero]
+
+                # set the lowest indices of each row to zero
+                rows = np.arange(x.shape[0])[:, None]
+                ub[rows, low_indices] = 0
+
                 return ub
 
             @staticmethod
             def _lb_correction(
                 lb: np.ndarray, x: np.ndarray, n_non_zero: int, min_delta: float
             ) -> np.ndarray:
-                """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
+                """correct lower bounds: set the lower bound of the largest n_non_zero elements in each row to min_delta"""
                 if n_non_zero == 0:
                     return lb
 
-                # sort each row, and set the largest n_non_zero elements to min_delta
-                d = x.shape[1]
-                lb[np.argsort(x) >= d - n_non_zero] = min_delta
+                # Get indices of largest n_non_zero values for each row
+                top_indices = np.argsort(x, axis=1)[:, -n_non_zero:]
+
+                # Set all values in lb to 0 initially
+                lb.fill(0)
+                rows = np.arange(x.shape[0])[:, None]
+                lb[rows, top_indices] = min_delta
+
                 return lb
 
             def __call__(self, x: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
@@ -814,6 +829,7 @@ def get_ga_problem_and_algorithm(
     input_preprocessing_specs: Optional[InputTransformSpecs] = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
+    optimization_direction: Literal["min", "max"] = "max",
 ) -> Tuple[
     DomainOptimizationProblem,
     MixedVariableGA,
@@ -878,6 +894,7 @@ def get_ga_problem_and_algorithm(
         q,
         callable_format=callable_format,
         n_obj=n_obj,
+        optimization_direction=optimization_direction,
     )
 
     # ==== Algorithm ====
@@ -941,6 +958,7 @@ def run_ga(
     input_preprocessing_specs: Optional[InputTransformSpecs] = None,
     n_obj: Optional[int] = None,
     verbose: bool = False,
+    optimization_direction: Literal["min", "max"] = "max",
 ) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
     """Convenience function to minimize one or multiple objective functions using a genetic algorithm.
 
@@ -989,6 +1007,7 @@ def run_ga(
         input_preprocessing_specs=input_preprocessing_specs,
         n_obj=n_obj,
         verbose=verbose,
+        optimization_direction=optimization_direction,
     )
 
     res = pymoo_minimize(problem, algorithm, termination, verbose=verbose)

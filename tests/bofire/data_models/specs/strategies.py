@@ -57,6 +57,7 @@ strategy_commons = {
     "frequency_check": 1,
     "frequency_hyperopt": 0,
     "folds": 5,
+    "include_infeasible_exps_in_acqf_calc": False,
 }
 
 

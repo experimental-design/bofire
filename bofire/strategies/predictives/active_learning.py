@@ -43,7 +43,11 @@ class ActiveLearningStrategy(BotorchStrategy):
         random_model = RandomStrategy(domain=self.domain)
         sampler = strategies.map(random_model)
         mc_samples = sampler.ask(candidate_count=self.acquisition_function.n_mc_samples)
-        mc_samples = torch.tensor(mc_samples.values).to(**tkwargs)
+        # Transform categorical inputs to numerical representation before tensor conversion
+        transformed_mc_samples = self.domain.inputs.transform(
+            mc_samples, self.input_preprocessing_specs
+        )
+        mc_samples = torch.tensor(transformed_mc_samples.values).to(**tkwargs)
 
         _, X_pending = self.get_acqf_input_tensors()
 
@@ -88,6 +92,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         folds: int | None = None,
         acquisition_function: AnyActiveLearningAcquisitionFunction | None = None,
         seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
     ):
         """
         Creates an ActiveLearningStrategy instance. ActiveLearningStrategy that uses an acquisition function which focuses on
@@ -103,6 +108,8 @@ class ActiveLearningStrategy(BotorchStrategy):
                 folds: Number of folds for cross-validation in hyperparameter optimization.
                 acquisition_function: Acquisition function to use.
                 seed: Seed for the random number generator.
+                include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                    of experiments used to compute the acquisition function.
             Returns:
                 ActiveLearningStrategy: An instance of the ActiveLearningStrategy class.
         """

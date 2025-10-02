@@ -696,7 +696,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
                 If provided the real feature bounds are returned based on both the opt.
                 feature bounds and the extreme points in the dataframe. Defaults to None,
-            reference_experiment (Optional[pd.Serues], optional): If a reference experiment provided,
+            reference_experiment (Optional[pd.Series], optional): If a reference experiment provided,
             then the local bounds based on a local search region are provided as reference to the
                 reference experiment. Currently only supported for continuous inputs.
                 For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
