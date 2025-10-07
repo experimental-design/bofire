@@ -71,13 +71,18 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ):
+        if input_transform is not None:
+            n_dim = input_transform(tX).shape[-1]
+        else:
+            n_dim = tX.shape[-1]
+
         self.model = RobustRelevancePursuitSingleTaskGP(
             train_X=tX,
             train_Y=tY,
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
-                active_dims=list(range(tX.shape[1])),
+                active_dims=list(range(n_dim)),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
                 ),

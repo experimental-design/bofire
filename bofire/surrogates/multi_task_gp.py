@@ -54,6 +54,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ) -> None:  # type: ignore
+        if input_transform is not None:
+            n_dim = input_transform(tX).shape[-1]
+        else:
+            n_dim = tX.shape[-1]
+
         self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -64,7 +69,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(
-                    range(tX.shape[1] - 1),
+                    range(n_dim - 1),
                 ),  # kernel is for input space so we subtract one for the fidelity index
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.categorical_encodings, feats
