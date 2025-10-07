@@ -20,6 +20,7 @@ from bofire.data_models.strategies.predictives.acqf_optimization import (
 )
 from bofire.strategies.predictives.acqf_optimization import (
     BotorchOptimizer,
+    OptimizerEnum,
     _OptimizeAcqfInput,
     _OptimizeAcqfListInput,
     _OptimizeAcqfMixedAlternatingInput,
@@ -37,8 +38,13 @@ def test_determine_optimizer():
         outputs=[ContinuousOutput(key="y1")],
     )
     optimizer = BotorchOptimizer(optimizer_data)
-    assert optimizer._determine_optimizer(domain, n_acqfs=2) == "optimize_acqf_list"
-    assert optimizer._determine_optimizer(domain, n_acqfs=1) == "optimize_acqf"
+    assert (
+        optimizer._determine_optimizer(domain, n_acqfs=2)
+        == OptimizerEnum.OPTIMIZE_ACQF_LIST
+    )
+    assert (
+        optimizer._determine_optimizer(domain, n_acqfs=1) == OptimizerEnum.OPTIMIZE_ACQF
+    )
     domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
@@ -46,7 +52,10 @@ def test_determine_optimizer():
         ],
         outputs=[ContinuousOutput(key="y1")],
     )
-    assert optimizer._determine_optimizer(domain, n_acqfs=1) == "optimize_acqf_mixed"
+    assert (
+        optimizer._determine_optimizer(domain, n_acqfs=1)
+        == OptimizerEnum.OPTIMIZE_ACQF_MIXED
+    )
     domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
@@ -56,7 +65,7 @@ def test_determine_optimizer():
     )
     assert (
         optimizer._determine_optimizer(domain, n_acqfs=1)
-        == "optimize_acqf_mixed_alternating"
+        == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
     )
     domain = Domain(
         inputs=[
@@ -71,7 +80,10 @@ def test_determine_optimizer():
         ],
         outputs=[ContinuousOutput(key="y1")],
     )
-    assert optimizer._determine_optimizer(domain, n_acqfs=1) == "optimize_acqf_mixed"
+    assert (
+        optimizer._determine_optimizer(domain, n_acqfs=1)
+        == OptimizerEnum.OPTIMIZE_ACQF_MIXED
+    )
 
 
 def test_get_arguments_for_optimizer():
@@ -92,7 +104,7 @@ def test_get_arguments_for_optimizer():
         return torch.tensor([lower, upper]).to(**tkwargs)
 
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF,
         domain=domain,
         candidate_count=1,
         acqfs=[simple_acqf],
@@ -116,7 +128,7 @@ def test_get_arguments_for_optimizer():
     optimizer = BotorchOptimizer(optimizer_data)
 
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF,
         domain=domain,
         candidate_count=1,
         acqfs=[simple_acqf],
@@ -132,7 +144,7 @@ def test_get_arguments_for_optimizer():
         LinearInequalityConstraint(features=["x_1", "x_2"], coefficients=[1, 1], rhs=2)
     )
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF,
         domain=domain,
         candidate_count=1,
         acqfs=[simple_acqf],
@@ -150,7 +162,7 @@ def test_get_arguments_for_optimizer():
     optimizer_data = BotorchOptimizerModel()
     optimizer = BotorchOptimizer(optimizer_data)
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf_mixed",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_MIXED,
         domain=domain,
         candidate_count=1,
         bounds=get_bounds(domain),
@@ -173,7 +185,7 @@ def test_get_arguments_for_optimizer():
     )
 
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf_mixed_alternating",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING,
         domain=domain,
         candidate_count=1,
         acqfs=[simple_acqf],
@@ -184,7 +196,7 @@ def test_get_arguments_for_optimizer():
     assert optimizer_args.cat_dims == {6: [0, 1, 2, 3], 7: [0, 2]}
     domain.inputs.features.append(DiscreteInput(key="x_discrete", values=[0, 1, 2, 3]))
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf_mixed_alternating",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING,
         domain=domain,
         candidate_count=1,
         acqfs=[simple_acqf],
@@ -197,7 +209,7 @@ def test_get_arguments_for_optimizer():
         CategoricalInput(key="x_cat3", categories=["a", "b"], allowed=[True, False])
     )
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf_mixed_alternating",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING,
         domain=domain,
         candidate_count=1,
         acqfs=[simple_acqf],
@@ -210,7 +222,7 @@ def test_get_arguments_for_optimizer():
     domain = Hartmann().domain
     domain.inputs.get_by_key("x_1").bounds = (0.5, 0.5)
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf_mixed_alternating",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING,
         domain=domain,
         candidate_count=2,
         acqfs=[simple_acqf, simple_acqf],
@@ -221,7 +233,7 @@ def test_get_arguments_for_optimizer():
         CategoricalInput(key="x_cat", categories=[f"cat_{i}" for i in range(2)])
     )
     optimizer_args = optimizer._get_arguments_for_optimizer(
-        optimizer="optimize_acqf_list",
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_LIST,
         domain=domain,
         candidate_count=2,
         acqfs=[simple_acqf, simple_acqf],

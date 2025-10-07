@@ -427,15 +427,6 @@ specs.add_invalid(
     ),
 )
 
-
-# "continuous_kernel": MaternKernel(
-#             ard=True, nu=2.5, features=["num1"]
-#         ).model_dump(),
-#         "categorical_kernel": HammingDistanceKernel(
-#             ard=True, features=["cat1"]
-#         ).model_dump(),
-
-
 specs.add_valid(
     models.RandomForestSurrogate,
     lambda: {

@@ -1,5 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 import pandas as pd
@@ -50,6 +51,13 @@ from bofire.utils.torch_tools import (
     get_nonlinear_constraints,
     tkwargs,
 )
+
+
+class OptimizerEnum(str, Enum):
+    OPTIMIZE_ACQF_LIST = "OPTIMIZE_ACQF_LIST"
+    OPTIMIZE_ACQF = "OPTIMIZE_ACQF"
+    OPTIMIZE_ACQF_MIXED = "OPTIMIZE_ACQF_MIXED"
+    OPTIMIZE_ACQF_MIXED_ALTERNATING = "OPTIMIZE_ACQF_MIXED_ALTERNATING"
 
 
 # Threshold for switching between optimizers optimize_acqf_mixed
@@ -436,10 +444,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
             candidate_count=candidate_count,
         )
         optimizer_mapping = {
-            "optimize_acqf_list": optimize_acqf_list,
-            "optimize_acqf": optimize_acqf,
-            "optimize_acqf_mixed": optimize_acqf_mixed,
-            "optimize_acqf_mixed_alternating": optimize_acqf_mixed_alternating,
+            OptimizerEnum.OPTIMIZE_ACQF_LIST: optimize_acqf_list,
+            OptimizerEnum.OPTIMIZE_ACQF: optimize_acqf,
+            OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
+            OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
         }
         candidates, acqf_vals = optimizer_mapping[optimizer](
             **optimizer_input.model_dump()
@@ -466,24 +474,24 @@ class BotorchOptimizer(AcquisitionOptimizer):
             "maxiter": self.maxiter,
         }
 
-    def _determine_optimizer(self, domain: Domain, n_acqfs) -> str:
+    def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
         if n_acqfs > 1:
-            return "optimize_acqf_list"
+            return OptimizerEnum.OPTIMIZE_ACQF_LIST
         n_categorical_combinations = (
             domain.inputs.get_number_of_categorical_combinations()
         )
         if n_categorical_combinations == 1:
-            return "optimize_acqf"
+            return OptimizerEnum.OPTIMIZE_ACQF
         if (
             n_categorical_combinations <= ALTERNATING_OPTIMIZER_THRESHOLD
             or len(get_nonlinear_constraints(domain)) > 0
         ):
-            return "optimize_acqf_mixed"
-        return "optimize_acqf_mixed_alternating"
+            return OptimizerEnum.OPTIMIZE_ACQF_MIXED
+        return OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
 
     def _get_arguments_for_optimizer(
         self,
-        optimizer: str,
+        optimizer: OptimizerEnum,
         acqfs: List[AcquisitionFunction],
         bounds: Tensor,
         candidate_count: int,
@@ -520,7 +528,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             nonlinear_constraints if len(nonlinear_constraints) > 0 else None
         )
         # now do it for optimize_acqf
-        if optimizer == "optimize_acqf":
+        if optimizer == OptimizerEnum.OPTIMIZE_ACQF:
             interpoints = get_interpoint_constraints(
                 domain=domain,
                 n_candidates=candidate_count,
@@ -542,7 +550,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 else None,
                 fixed_features=self.get_fixed_features(domain=domain),
             )
-        elif optimizer == "optimize_acqf_mixed":
+        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED:
             return _OptimizeAcqfMixedInput(
                 acq_function=acqfs[0],
                 bounds=bounds,
@@ -557,7 +565,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 ic_gen_kwargs=ic_gen_kwargs,
                 fixed_features_list=self.get_categorical_combinations(domain),
             )
-        elif optimizer == "optimize_acqf_list":
+        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_LIST:
             n_combos = domain.inputs.get_number_of_categorical_combinations()
             return _OptimizeAcqfListInput(
                 acq_function_list=acqfs,
@@ -577,7 +585,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 if n_combos == 1
                 else None,
             )
-        elif optimizer == "optimize_acqf_mixed_alternating":
+        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING:
             fixed_keys = domain.inputs.get_fixed().get_keys()
             return _OptimizeAcqfMixedAlternatingInput(
                 acq_function=acqfs[0],
