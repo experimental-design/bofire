@@ -630,7 +630,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             for pair in combo:
                 feat, val = pair
                 feature = domain.inputs.get_by_key(feat)
-                # assert isinstance(feature, CategoricalInput)
                 if isinstance(feature, DiscreteInput):
                     fixed_features[features2idx[feat][0]] = val  # type: ignore
                 if isinstance(feature, CategoricalInput):

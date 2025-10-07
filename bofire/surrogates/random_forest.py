@@ -131,14 +131,6 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         else:
             ntY = tY.numpy()
 
-        # if self.output_scaler == ScalerEnum.STANDARDIZE:
-        #     output_scaler = Standardize(m=Y.shape[-1])
-        #     ty = torch.from_numpy(Y.values).to(**tkwargs)
-        #     ty = output_scaler(ty)[0].numpy()
-        # else:
-        #     output_scaler = None
-        #     ty = Y.values
-
         rf = RandomForestRegressor(
             n_estimators=self.n_estimators,
             criterion=self.criterion,

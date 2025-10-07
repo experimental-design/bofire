@@ -1270,7 +1270,6 @@ class Encoder:
 def get_categorical_encoder(
     feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
 ) -> Encoder:
-    # we need a cached and uncached version
     """Get the categorical transformer for a given feature."""
     if isinstance(transform, AnyMolFeatures):
         assert isinstance(feature, CategoricalMolecularInput)
@@ -1294,7 +1293,6 @@ def get_categorical_encoder(
             f"and transform: {transform}"
         )
     return Encoder(encodings)
-    # return lambda x: encodings[x]
 
 
 def get_NumericToCategorical_input_transform(
