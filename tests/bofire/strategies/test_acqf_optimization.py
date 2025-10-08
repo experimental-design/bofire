@@ -194,7 +194,7 @@ def test_get_arguments_for_optimizer():
     assert isinstance(optimizer_args, _OptimizeAcqfMixedAlternatingInput)
     assert optimizer_args.discrete_dims == {}
     assert optimizer_args.cat_dims == {6: [0, 1, 2, 3], 7: [0, 2]}
-    domain.inputs.features.append(DiscreteInput(key="x_discrete", values=[0, 1, 2, 3]))
+    domain.inputs.features.append(DiscreteInput(key="x_discrete", values=[0, 1, 2, 7]))
     optimizer_args = optimizer._get_arguments_for_optimizer(
         optimizer=OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING,
         domain=domain,
@@ -203,7 +203,7 @@ def test_get_arguments_for_optimizer():
         bounds=get_bounds(domain),
     )
     assert isinstance(optimizer_args, _OptimizeAcqfMixedAlternatingInput)
-    assert optimizer_args.discrete_dims == {6: [0, 1, 2, 3]}
+    assert optimizer_args.discrete_dims == {6: [0.0, 1.0, 2.0, 7.0]}
     assert optimizer_args.cat_dims == {7: [0, 1, 2, 3], 8: [0, 2]}
     domain.inputs.features.append(
         CategoricalInput(key="x_cat3", categories=["a", "b"], allowed=[True, False])
@@ -215,7 +215,7 @@ def test_get_arguments_for_optimizer():
         acqfs=[simple_acqf],
         bounds=get_bounds(domain),
     )
-    assert optimizer_args.discrete_dims == {6: [0, 1, 2, 3]}
+    assert optimizer_args.discrete_dims == {6: [0, 1, 2, 7]}
     assert optimizer_args.cat_dims == {7: [0, 1, 2, 3], 8: [0, 2]}
     assert optimizer_args.fixed_features == {9: 0}
     # test for acqf list
