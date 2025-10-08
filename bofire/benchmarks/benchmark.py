@@ -9,7 +9,10 @@ from pydantic import Field, PositiveFloat
 from scipy.stats import norm, uniform
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.constraints.api import LinearEqualityConstraint
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    NChooseKConstraint,
+)
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
@@ -110,9 +113,18 @@ class FormulationWrapper(Benchmark):
     [0, 1/n_original_features] while the spurious features get bounds [0, 1]. On
     evaluation the original features are rescaled back to their original bounds and
     the original benchmark is evaluated.
+
+    Via the `max_count` parameter an additional NChooseK constraint can be added to
+    the formulation, that limits the number of non-zero features to `max_count`.
     """
 
-    def __init__(self, benchmark: Benchmark, n_filler_features: int = 1, **kwargs):
+    def __init__(
+        self,
+        benchmark: Benchmark,
+        n_filler_features: int = 1,
+        max_count: Optional[int] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self._benchmark = benchmark
         assert n_filler_features >= 1, "n_filler_features must be >= 1."
@@ -122,30 +134,43 @@ class FormulationWrapper(Benchmark):
         ), "Only continuous inputs supported yet."
         self.n_filler_features = n_filler_features
 
+        inputs = Inputs(
+            features=[
+                ContinuousInput(
+                    key=feat.key, bounds=(0, 1 / len(self._benchmark.domain.inputs))
+                )
+                for feat in self._benchmark.domain.inputs.get()
+            ]
+            + [
+                ContinuousInput(key=f"x_filler_{i}", bounds=(0, 1))
+                for i in range(self.n_filler_features)
+            ],
+        )
+        constraints = Constraints(
+            constraints=[
+                LinearEqualityConstraint(
+                    features=inputs.get_keys(),
+                    coefficients=[1.0] * len(inputs),
+                    rhs=1.0,
+                )
+            ]
+        )
+        if max_count is not None:
+            assert max_count < len(
+                inputs
+            ), "`max_count` must be smaller than total number of features."
+            constraints.constraints.append(  # type: ignore
+                NChooseKConstraint(
+                    features=inputs.get_keys(),
+                    max_count=max_count,
+                    min_count=0,
+                    none_also_valid=True,
+                )
+            )
+
         self._domain = Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(
-                        key=feat.key, bounds=(0, 1 / len(self._benchmark.domain.inputs))
-                    )
-                    for feat in self._benchmark.domain.inputs.get()
-                ]
-                + [
-                    ContinuousInput(key=f"x_filler_{i}", bounds=(0, 1))
-                    for i in range(self.n_filler_features)
-                ],
-            ),
-            constraints=Constraints(
-                constraints=[
-                    LinearEqualityConstraint(
-                        features=self._benchmark.domain.inputs.get_keys()
-                        + [f"x_filler_{i}" for i in range(self.n_filler_features)],
-                        coefficients=[1.0]
-                        * (len(self._benchmark.domain.inputs) + self.n_filler_features),
-                        rhs=1.0,
-                    )
-                ]
-            ),
+            inputs=inputs,
+            constraints=constraints,
             outputs=self._benchmark.domain.outputs,
         )
         self._mins = np.array(
