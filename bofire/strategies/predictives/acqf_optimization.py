@@ -615,11 +615,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
     def get_categorical_combinations(
         self,
         domain: Domain,
-    ) -> List[Dict[int, float]]:
+    ) -> list[dict[int, float]]:
         """Provides all possible combinations of fixed values
 
         Returns:
-            list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
+            list_of_fixed_features: Each dict contains a combination of fixed values
         """
         fixed_basis = self.get_fixed_features(domain=domain)
 

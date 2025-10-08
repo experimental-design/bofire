@@ -1251,7 +1251,7 @@ class NumericToCategoricalEncoding(InputTransform):
             and (self.transform_on_train == other.transform_on_train)
             and (self.transform_on_eval == other.transform_on_eval)
             and (self.transform_on_fantasize == other.transform_on_fantasize)
-            and self.categorical_features == other.categorical_features
+            and (self.categorical_features == other.categorical_features)
         )
 
 
