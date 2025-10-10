@@ -4,7 +4,9 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputTransform
+from botorch.acquisition.penalized import L0Approximation
+from botorch.models.deterministic import GenericDeterministicModel
+from botorch.models.transforms.input import FilterFeatures, InputTransform
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
@@ -173,6 +175,7 @@ def get_nchoosek_constraints(
 
     """
 
+    # replace by torch import
     def narrow_gaussian(x, ell=1e-3):
         return torch.exp(-0.5 * (x / ell) ** 2)
 
@@ -217,6 +220,41 @@ def get_nchoosek_constraints(
                 )
             )
     return constraints
+
+
+def nchoosek_to_deterministic_model(
+    inputs: Inputs,
+    input_preprocessing_specs: InputTransformSpecs,
+    constraint: NChooseKConstraint,
+    a: float = 1.0,
+) -> GenericDeterministicModel:
+    """Transforms a NChooseK constraint into a deterministic model that can be used
+    for SEBO optimization.
+
+    Args:
+        inputs: Inputs object containing the features.
+        input_preprocessing_specs: Preprocessing specs that define
+            how the inputs are transformed.
+        constraint: The NChooseK constraint to be transformed.
+            `min_count > 0` is not supported yet.
+        a (float, optional): A scaling factor for the continuous relaxation of the L0 norm.
+            Defaults to 1.0.
+
+    Returns:
+        A generic deterministic model that can be used to compute the number of zeros.
+    """
+    if constraint.min_count > 0:
+        raise NotImplementedError("min_count > 0 is not supported yet.")
+    features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
+    indices = torch.tensor(
+        [features2idx[key][0] for key in constraint.features], dtype=torch.int64
+    )
+    L0 = L0Approximation(
+        target_point=torch.zeros(len(constraint.features), **tkwargs), a=a
+    )
+    model = GenericDeterministicModel(f=L0)
+    model.input_transform = FilterFeatures(feature_indices=indices)
+    return model
 
 
 def get_product_constraints(
