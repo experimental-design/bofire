@@ -14,11 +14,14 @@ import bofire.priors.api as priors
 from bofire.data_models.priors.api import (
     DimensionalityScaledLogNormalPrior,
     GammaPrior,
+    GreaterThan,
+    LessThan,
     LKJPrior,
     LogNormalPrior,
     LogTransformedInterval,
     NonTransformedInterval,
     NormalPrior,
+    Positive,
 )
 
 
@@ -36,6 +39,9 @@ from bofire.data_models.priors.api import (
             LogTransformedInterval(lower_bound=0.1, upper_bound=1.0, initial_value=0.5),
             BotorchLogTransformedInterval,
         ),
+        (Positive(), gpytorch.constraints.Positive),
+        (GreaterThan(lower_bound=0), gpytorch.constraints.GreaterThan),
+        (LessThan(upper_bound=0), gpytorch.constraints.LessThan),
     ],
 )
 def test_map(prior, expected_prior):
