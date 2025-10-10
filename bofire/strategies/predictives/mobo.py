@@ -18,6 +18,7 @@ from bofire.data_models.acquisition_functions.api import (
     qLogNEHVI,
     qNEHVI,
 )
+from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
@@ -46,6 +47,7 @@ class MoboStrategy(BotorchStrategy):
         self.ref_point: ExplicitReferencePoint = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
+        self.nchoosek_as_sebo = data_model.nchoosek_as_sebo
 
     objective: Optional[MCMultiOutputObjective] = None
 
@@ -122,7 +124,7 @@ class MoboStrategy(BotorchStrategy):
             reference_point=self.ref_point,
         )
 
-        return (
+        ref_point_list = (
             self.ref_point_mask
             * np.array(
                 [
@@ -133,6 +135,12 @@ class MoboStrategy(BotorchStrategy):
                 ],
             )
         ).tolist()
+
+        if self.nchoosek_as_sebo:
+            constraints = self.domain.constraints.get(NChooseKConstraint)
+            if len(constraints) > 0:
+                ref_point_list.append(constraints[0].max_count * -1.0)
+        return ref_point_list
 
     @classmethod
     def make(

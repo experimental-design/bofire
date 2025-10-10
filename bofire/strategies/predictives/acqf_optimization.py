@@ -6,6 +6,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.optim.homotopy import (
+    Homotopy,
+    HomotopyParameter,
+    LogLinearHomotopySchedule,
+)
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
     optimize_acqf,
@@ -13,8 +18,10 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from botorch.optim.optimize_homotopy import optimize_acqf_homotopy
 from botorch.optim.optimize_mixed import optimize_acqf_mixed_alternating
 from pydantic import BaseModel, model_validator
+from pyre_extensions import assert_is_instance
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -58,6 +65,7 @@ class OptimizerEnum(str, Enum):
     OPTIMIZE_ACQF = "OPTIMIZE_ACQF"
     OPTIMIZE_ACQF_MIXED = "OPTIMIZE_ACQF_MIXED"
     OPTIMIZE_ACQF_MIXED_ALTERNATING = "OPTIMIZE_ACQF_MIXED_ALTERNATING"
+    OPTIMIZE_ACQF_HOMOTOPY = "OPTIMIZE_ACQF_HOMOTOPY"
 
 
 # Threshold for switching between optimizers optimize_acqf_mixed
@@ -351,6 +359,32 @@ class _OptimizeAcqfMixedAlternatingInput(_OptimizeAcqfInputBase):
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
 
 
+class _OptimizeAcqfHomotopyInput(_OptimizeAcqfInputBase):
+    acq_function: Callable
+    bounds: Tensor
+    q: int
+    num_restarts: int
+    raw_samples: int
+    homotopy: Homotopy
+    prune_tolerance: float
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
+    fixed_features: dict[int, float] | None
+    fixed_features_list: List[Dict[int, float]] | None
+    batch_initial_conditions: Tensor
+    # ic_generator: Callable | None
+    # ic_gen_kwargs: Dict
+
+    @model_validator(mode="after")
+    def validate_fixed_features(self):
+        if self.fixed_features and self.fixed_features_list:
+            raise ValueError(
+                "Only one of fixed_features and fixed_features_list can be provided.",
+            )
+        return self
+
+
 class BotorchOptimizer(AcquisitionOptimizer):
     def __init__(self, data_model: BotorchOptimizerDataModel):
         self.n_restarts = data_model.n_restarts
@@ -448,6 +482,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF: optimize_acqf,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
+            OptimizerEnum.OPTIMIZE_ACQF_HOMOTOPY: optimize_acqf_homotopy,
         }
         candidates, acqf_vals = optimizer_mapping[optimizer](
             **optimizer_input.model_dump()
@@ -585,6 +620,87 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 if n_combos == 1
                 else None,
             )
+        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_HOMOTOPY:
+            n_combos = domain.inputs.get_number_of_categorical_combinations()
+            # setup homotopy
+            # TODO: make this configurable
+            homotopy_schedule = LogLinearHomotopySchedule(
+                start=0.2,
+                end=1e-3,
+                num_steps=30,
+            )
+            homotopy = Homotopy(
+                homotopy_parameters=[
+                    HomotopyParameter(
+                        parameter=acqfs[0].model.models[-1]._f.a,
+                        schedule=homotopy_schedule,
+                    )
+                ],
+            )
+
+            # TODO: this needs to be properly implemented and updated to equality constraints
+            # ideally we package it in an own subroutine
+            # setup initial conditions
+            X_pareto = assert_is_instance(acqfs[0].X_baseline, Tensor)
+            num_rand = self.n_restarts if len(X_pareto) == 0 else self.n_restarts // 2
+            num_local = self.n_restarts - num_rand
+            # setup initial conditions
+            X_cand_rand = gen_batch_initial_conditions(
+                acq_function=acqfs[0],
+                bounds=bounds,
+                q=1,
+                raw_samples=self.n_raw_samples,
+                num_restarts=num_rand,
+                options={"topn": True},
+                fixed_features=self.get_fixed_features(domain=domain),
+                inequality_constraints=inequality_constraints,
+            ).to(**tkwargs)
+
+            if num_local == 0:
+                initial_conditions = X_cand_rand
+
+            else:
+                target_point = acqfs[0].model.models[-1]._f.target_point
+                # (2) Perturbations of points on the Pareto frontier (done by TuRBO/Spearmint)
+                X_cand_local = X_pareto.clone()[
+                    torch.randint(high=len(X_pareto), size=(self.n_raw_samples,))
+                ]
+                mask = X_cand_local != target_point
+                X_cand_local[mask] += (
+                    0.2
+                    * ((bounds[1] - bounds[0]) * torch.randn_like(X_cand_local))[mask]
+                )
+                X_cand_local = torch.clamp(
+                    X_cand_local.unsqueeze(1), min=bounds[0], max=bounds[1]
+                )
+                X_cand_local = X_cand_local[
+                    acqfs[0](X_cand_local).topk(num_local).indices
+                ]
+                initial_conditions = torch.cat((X_cand_rand, X_cand_local), dim=0)
+
+            return _OptimizeAcqfHomotopyInput(
+                acq_function=acqfs[0],
+                bounds=bounds,
+                q=candidate_count,
+                num_restarts=self.n_restarts,
+                raw_samples=self.n_raw_samples,
+                homotopy=homotopy,
+                prune_tolerance=1e-4,
+                # options=self._get_optimizer_options(domain),  # type: ignore
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                nonlinear_inequality_constraints=nonlinear_constraints,
+                # ic_generator=ic_generator, # add later
+                # ic_gen_kwargs=ic_gen_kwargs, # add later
+                fixed_features_list=self.get_categorical_combinations(domain)
+                if n_combos > 1
+                else None,
+                fixed_features=self.get_fixed_features(domain=domain)
+                if n_combos == 1
+                else None,
+                batch_initial_conditions=initial_conditions,
+            )
+
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING:
             fixed_keys = domain.inputs.get_fixed().get_keys()
             return _OptimizeAcqfMixedAlternatingInput(
