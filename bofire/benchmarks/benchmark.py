@@ -9,7 +9,11 @@ from pydantic import Field, PositiveFloat
 from scipy.stats import norm, uniform
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    NChooseKConstraint,
+)
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -102,6 +106,133 @@ class GenericBenchmark(Benchmark):
         return self.func(candidates)
 
 
+class FormulationWrapper(Benchmark):
+    """Wrapper that turns a benchmark into a formulation benchmark by adding
+    spurious features that are not used in the evaluation of the benchmark and
+    introducing a sum constraint on all features. The original features get new bounds
+    [0, 1/n_original_features] while the spurious features get bounds [0, 1]. On
+    evaluation the original features are rescaled back to their original bounds and
+    the original benchmark is evaluated.
+
+    Via the `max_count` parameter an additional NChooseK constraint can be added to
+    the formulation, that limits the number of non-zero features to `max_count`.
+    """
+
+    def __init__(
+        self,
+        benchmark: Benchmark,
+        n_filler_features: int = 1,
+        max_count: Optional[int] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._benchmark = benchmark
+        assert n_filler_features >= 1, "n_filler_features must be >= 1."
+        assert len(benchmark.domain.constraints) == 0, "Constraints not supported yet."
+        assert len(benchmark.domain.inputs.get(ContinuousInput)) == len(
+            benchmark.domain.inputs
+        ), "Only continuous inputs supported yet."
+        self.n_filler_features = n_filler_features
+
+        inputs = Inputs(
+            features=[
+                ContinuousInput(
+                    key=feat.key, bounds=(0, 1 / len(self._benchmark.domain.inputs))
+                )
+                for feat in self._benchmark.domain.inputs.get()
+            ]
+            + [
+                ContinuousInput(key=f"x_filler_{i}", bounds=(0, 1))
+                for i in range(self.n_filler_features)
+            ],
+        )
+        constraints = Constraints(
+            constraints=[
+                LinearEqualityConstraint(
+                    features=inputs.get_keys(),
+                    coefficients=[1.0] * len(inputs),
+                    rhs=1.0,
+                )
+            ]
+        )
+        if max_count is not None:
+            assert max_count < len(
+                inputs
+            ), "`max_count` must be smaller than total number of features."
+            constraints.constraints.append(  # type: ignore
+                NChooseKConstraint(
+                    features=inputs.get_keys(),
+                    max_count=max_count,
+                    min_count=0,
+                    none_also_valid=True,
+                )
+            )
+
+        self._domain = Domain(
+            inputs=inputs,
+            constraints=constraints,
+            outputs=self._benchmark.domain.outputs,
+        )
+        self._mins = np.array(
+            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]  # type: ignore
+        )
+        self._scales = np.array(
+            [
+                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                for feat in self._benchmark.domain.inputs.get()
+            ]
+        )
+        self._scales_new = np.array(
+            [
+                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                for feat in self.domain.inputs.get_by_keys(
+                    self._benchmark.domain.inputs.get_keys()
+                )
+            ]
+        )
+
+    def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        Xt = X[self._benchmark.domain.inputs.get_keys()].values
+        Xs = Xt / self._scales_new
+        Xs = self._mins + self._scales * Xs
+        return pd.DataFrame(data=Xs, columns=self._benchmark.domain.inputs.get_keys())
+
+    def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        X_transformed = self._transform(candidates)
+        return self._benchmark._f(X_transformed, **kwargs)
+
+    def get_optima(self) -> pd.DataFrame:
+        raise NotImplementedError("Optima not available for FormulationWrapper.")
+
+
+class SpuriousFeaturesWrapper(Benchmark):
+    """Wrapper that adds spurious features to a benchmark, that are ignored on evaluation."""
+
+    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+        super().__init__(**kwargs)
+        assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
+        self._benchmark = benchmark
+        self._domain = Domain(
+            inputs=Inputs(
+                features=benchmark.domain.inputs.features
+                + [
+                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
+                    for i in range(n_spurious_features)
+                ]  # type: ignore
+            ),
+            outputs=self._benchmark.domain.outputs,
+            constraints=self._benchmark.domain.constraints,
+        )
+
+    def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        return self._benchmark._f(
+            candidates[self._benchmark.domain.inputs.get_keys()], **kwargs
+        )
+
+    def get_optima(self) -> pd.DataFrame:
+        raise NotImplementedError("Optima not available for SpuriousFeaturesWrapper.")
+
+
 class SyntheticBoTorch(Benchmark):
     """Wrapper around botorch's synthetic test functions.
 
@@ -151,8 +282,10 @@ class SyntheticBoTorch(Benchmark):
             ),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
-        Xt = torch.from_numpy(X[self.domain.inputs.get_keys()].values).to(**tkwargs)
+    def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        Xt = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+            **tkwargs
+        )
         result = pd.DataFrame(
             self.test_function(Xt).numpy(), columns=self.domain.outputs.get_keys()
         )
