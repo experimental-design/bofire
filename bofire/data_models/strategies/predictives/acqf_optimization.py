@@ -106,8 +106,8 @@ AnyLocalSearchConfig = LSRBO
 
 class BotorchOptimizer(AcquisitionOptimizer):
     type: Literal["BotorchOptimizer"] = "BotorchOptimizer"  # type: ignore
-    n_restarts: PositiveInt = 8
-    n_raw_samples: IntPowerOfTwo = 1024
+    n_restarts: PositiveInt = 20  # same default as in Ax
+    n_raw_samples: IntPowerOfTwo = 1024  # same default as in Ax
     maxiter: PositiveInt = 2000
     batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
     sequential: bool = False
