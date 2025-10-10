@@ -50,7 +50,7 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             append_y=torch.tensor(data_model.append_y).to(**tkwargs),
             normalize_y=torch.tensor(data_model.normalize_y).to(**tkwargs),
             normalize_x=True,
-            keep_original=True,
+            keep_original=False,
         )
 
         self.idx_shape = list(range(new_ts.shape[0]))
@@ -114,27 +114,27 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 outputscale_prior=priors.map(self.outputscale_prior),
             )
         else:
-            # covar_module = ScaleKernel(
-            #     base_kernel=kernels.map(
-            #         self.shape_kernel,
-            #         active_dims=self.idx_shape,
-            #         ard_num_dims=1,
-            #         batch_shape=torch.Size(),
-            #         features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-            #             self.input_preprocessing_specs, feats
-            #         ),
-            #     ),
-            #     outputscale_prior=priors.map(self.outputscale_prior),
-            # )
-            covar_module = kernels.map(
-                self.shape_kernel,
-                active_dims=self.idx_shape,
-                ard_num_dims=1,
-                batch_shape=torch.Size(),
-                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                    self.input_preprocessing_specs, feats
+            covar_module = ScaleKernel(
+                base_kernel=kernels.map(
+                    self.shape_kernel,
+                    active_dims=self.idx_shape,
+                    ard_num_dims=1,
+                    batch_shape=torch.Size(),
+                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                        self.input_preprocessing_specs, feats
+                    ),
                 ),
+                outputscale_prior=priors.map(self.outputscale_prior),
             )
+            # covar_module = kernels.map(
+            #     self.shape_kernel,
+            #     active_dims=self.idx_shape,
+            #     ard_num_dims=1,
+            #     batch_shape=torch.Size(),
+            #     features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+            #         self.input_preprocessing_specs, feats
+            #     ),
+            # )
 
         self.model = botorch.models.SingleTaskGP(  # type: ignore
             train_X=tX,
@@ -144,7 +144,17 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=self.transform,
         )
 
+        # self.model = botorch.models.fully_bayesian.FullyBayesianSingleTaskGP(
+        #     train_X=tX,
+        #     train_Y=tY,
+        #     outcome_transform=(Standardize(m=tY.shape[-1])),
+        #     input_transform=self.transform,
+        #     )  # type: ignore
+
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
+        # botorch.fit_fully_bayesian_model_nuts(
+        #     self.model,  # type: ignore
+        # )
