@@ -286,6 +286,20 @@ class SyntheticBoTorch(Benchmark):
         Xt = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
             **tkwargs
         )
+        # botorch is very picky regarding the candidates being exactly within the bounds
+        # and does not tolerate any numerical noise here. For this reason we clamp the
+        # values here.
+        Xt = torch.clamp(
+            Xt,
+            min=torch.tensor(
+                [b[0] for b in self.test_function._bounds],
+                **tkwargs,
+            ),
+            max=torch.tensor(
+                [b[1] for b in self.test_function._bounds],
+                **tkwargs,
+            ),
+        )
         result = pd.DataFrame(
             self.test_function(Xt).numpy(), columns=self.domain.outputs.get_keys()
         )
