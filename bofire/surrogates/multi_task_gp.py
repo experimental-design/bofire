@@ -91,7 +91,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
 
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor

@@ -60,4 +60,4 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
