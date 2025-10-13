@@ -50,7 +50,7 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             append_y=torch.tensor(data_model.append_y).to(**tkwargs),
             normalize_y=torch.tensor(data_model.normalize_y).to(**tkwargs),
             normalize_x=True,
-            keep_original=False,
+            keep_original=True,
         )
 
         self.idx_shape = list(range(new_ts.shape[0]))
