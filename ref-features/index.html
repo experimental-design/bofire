@@ -2047,7 +2047,7 @@
             <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ordinal_encoding</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">val</span><span class="p">]))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Unkwon transform type </span><span class="si">{</span><span class="n">transform_type</span><span class="si">}</span><span class="s2"> for categorical input </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown transform type </span><span class="si">{</span><span class="n">transform_type</span><span class="si">}</span><span class="s2"> for categorical input </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="kc">None</span>
 
@@ -2479,7 +2479,7 @@
         <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_ordinal_encoding</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">val</span><span class="p">]))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Unkwon transform type </span><span class="si">{</span><span class="n">transform_type</span><span class="si">}</span><span class="s2"> for categorical input </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Unknown transform type </span><span class="si">{</span><span class="n">transform_type</span><span class="si">}</span><span class="s2"> for categorical input </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
