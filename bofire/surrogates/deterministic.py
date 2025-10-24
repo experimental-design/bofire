@@ -49,7 +49,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         )
         # as bofire always assumes ordinal encoding for categoricals, we have to map them here explicitly
         # to one hot with a specific input transform
-        self.model.input_transform = get_NumericToCategorical_input_transform(
+        self.model.input_transform = get_NumericToCategorical_input_transform(  # type: ignore
             inputs=self.inputs,
             transform_specs={self.inputs[0].key: CategoricalEncodingEnum.ONE_HOT},
         )

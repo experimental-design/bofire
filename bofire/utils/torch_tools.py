@@ -1056,7 +1056,7 @@ class InterpolateTransform(InputTransform, Module):
             x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
             y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
 
-        new_x = self.new_x.expand(x.shape[0], -1)
+        new_x = self.new_x.expand(x.shape[0], -1)  # type: ignore
         new_y = torch.vmap(interp1d)(x, y, new_x)
 
         if X.dim() == 3:
