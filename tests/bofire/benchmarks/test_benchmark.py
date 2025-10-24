@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 from botorch.test_functions.synthetic import Ackley
 from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
@@ -89,7 +90,6 @@ def test_FormulationWrapper():
     )
     transformed = wrapped._transform(candidates)
     assert transformed.shape == (3, 2)
-    print(transformed)
     assert_frame_equal(
         transformed,
         pd.DataFrame({"x_1": [-6.0, 6.0, 0], "x_2": [-6.0, 6.0, 6.0]}),
@@ -97,6 +97,21 @@ def test_FormulationWrapper():
     # now we test the full evaluation
     evaled = wrapped.f(candidates, return_complete=False)
     assert_frame_equal(evaled, benchmark.f(transformed, return_complete=False))
+    # test adding of NChooseK constraint
+    with pytest.raises(
+        AssertionError,
+        match="`max_count` must be smaller than total number of features.",
+    ):
+        wrapped = FormulationWrapper(
+            benchmark=benchmark, n_filler_features=2, max_count=6
+        )
+    wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2, max_count=3)
+    assert len(wrapped.domain.constraints) == 2
+    nkc = wrapped.domain.constraints[1]
+    assert nkc.features == wrapped.domain.inputs.get_keys()
+    assert nkc.max_count == 3
+    assert nkc.min_count == 0
+    assert nkc.none_also_valid is True
 
 
 def test_SpuriousFeaturesWrapper():
