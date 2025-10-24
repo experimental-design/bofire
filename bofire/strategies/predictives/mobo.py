@@ -7,6 +7,7 @@ from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
+from botorch.models import ModelList
 from botorch.models.gpytorch import GPyTorchModel
 from pydantic import PositiveInt
 from typing_extensions import Self
@@ -32,6 +33,7 @@ from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import (
     get_multiobjective_objective,
     get_output_constraints,
+    nchoosek_to_deterministic_model,
     tkwargs,
 )
 
@@ -80,9 +82,22 @@ class MoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        # in case of sebo, we have to update the model with auxiliary sebo model
+        # this has to be properly tidied up later
+        if self.nchoosek_as_sebo:
+            constraints = self.domain.constraints.get(NChooseKConstraint)
+            sebo_model = nchoosek_to_deterministic_model(
+                inputs=self.domain.inputs,
+                input_preprocessing_specs=self.input_preprocessing_specs,
+                constraint=constraints[0],
+            )
+            model = ModelList(self.model, sebo_model)
+        else:
+            model = self.model
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
-            self.model,
+            model,
             ref_point=self.get_adjusted_refpoint(),
             objective=objective,
             X_observed=X_train,
@@ -106,6 +121,7 @@ class MoboStrategy(BotorchStrategy):
         objective = get_multiobjective_objective(
             outputs=self.domain.outputs,
             experiments=self.experiments,
+            sebo=self.nchoosek_as_sebo,
         )
         return GenericMCMultiOutputObjective(objective=objective)
 

@@ -45,8 +45,9 @@ def get_ref_point_mask(
         output_feature_keys = domain.outputs.get_keys_by_objective(
             includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
         )
-    if len(output_feature_keys) < 2:
-        raise ValueError("At least two output features have to be provided.")
+    # we comment this out for SEBO compatibility
+    # if len(output_feature_keys) < 2:
+    #    raise ValueError("At least two output features have to be provided.")
     mask = []
     for key in output_feature_keys:
         feat = domain.outputs.get_by_key(key)

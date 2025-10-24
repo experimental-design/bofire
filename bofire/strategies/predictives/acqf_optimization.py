@@ -658,7 +658,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
             if num_local == 0:
                 initial_conditions = X_cand_rand
-
             else:
                 target_point = acqfs[0].model.models[-1]._f.target_point
                 # (2) Perturbations of points on the Pareto frontier (done by TuRBO/Spearmint)
