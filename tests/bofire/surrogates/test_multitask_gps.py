@@ -92,7 +92,7 @@ def test_MultiTask_input_preprocessing():
         outputs=outputs,
     )
     assert data_model.input_preprocessing_specs == {
-        "categories": CategoricalEncodingEnum.ONE_HOT,
+        "categories": CategoricalEncodingEnum.ORDINAL,
         "task_id": CategoricalEncodingEnum.ORDINAL,
     }
 

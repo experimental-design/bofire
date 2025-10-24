@@ -16,7 +16,7 @@ from bofire.data_models.constraints.api import (
     SelectionCondition,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -46,9 +46,6 @@ strategy_commons = {
         **{
             "n_raw_samples": 1024,
             "n_restarts": 8,
-            "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
-            "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
-            "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
             "maxiter": 2000,
             "batch_limit": 6,
         }
