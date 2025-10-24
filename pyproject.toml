@@ -71,7 +71,7 @@ all = [
     "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0,<1.6",
     "entmoot>=2.0.6",
-    "pyomo<=6.9.4"
+    "pyomo<=6.9.4",
     "xgboost>=1.7.5",
     "rdkit>=2023.3.2",
     "mordred>=1.2.0",
