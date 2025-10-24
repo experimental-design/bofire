@@ -119,7 +119,7 @@ def test_get_arguments_for_optimizer():
     assert optimizer_args.nonlinear_inequality_constraints is None
     assert optimizer_args.sequential is False
     assert optimizer_args.fixed_features == {}
-    assert optimizer_args.options == {"batch_limit": 8, "maxiter": 2000}
+    assert optimizer_args.options == {"batch_limit": 20, "maxiter": 2000}
 
     # test with nchooseks
     benchmark = Hartmann(dim=6, allowed_k=3)
