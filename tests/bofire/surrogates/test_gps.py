@@ -12,6 +12,7 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
     Normalize,
+    NumericToCategoricalEncoding,
 )
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.constraints import GreaterThan
@@ -56,7 +57,7 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.trainable import metrics2objectives
-from bofire.utils.torch_tools import NumericToCategoricalEncoding, tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None

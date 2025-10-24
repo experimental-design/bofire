@@ -31,7 +31,7 @@ dependencies = [
 
 [project.optional-dependencies]
 optimization = [
-    "botorch>=0.15.0",
+    "botorch>=0.16.0",
     "numpy",
     "multiprocess",
     "plotly",
@@ -61,7 +61,7 @@ docs = [
 ]
 tutorials = ["jupyter", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.14.0",
+    "botorch>=0.16.0",
     "numpy",
     "multiprocess",
     "plotly",
