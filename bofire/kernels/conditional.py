@@ -1,11 +1,94 @@
 import math
+import operator as ops
 from typing import Callable
 
+import pandas as pd
 import torch
 from gpytorch.constraints import Interval, Positive
 from gpytorch.kernels import Kernel
 from gpytorch.priors import Prior
 from torch import Tensor
+
+from bofire.data_models.constraints.categorical import (
+    SelectionCondition,
+    ThresholdCondition,
+)
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import CategoricalInput, DiscreteInput
+from bofire.data_models.features.conditional import ConditionalContinuousInput
+from bofire.data_models.types import InputTransformSpecs
+
+
+type IndicatorFunction = Callable[[Tensor], Tensor]
+
+_threshold_operators: dict[str, Callable] = {
+    "<": ops.lt,
+    "<=": ops.le,
+    ">": ops.gt,
+    ">=": ops.ge,
+}
+
+
+def _conditional_feature_to_indicator(
+    inputs: Inputs, feat: ConditionalContinuousInput
+) -> tuple[int, IndicatorFunction]:
+    """Get the indicator function from the conditional feature.
+
+    Returns a tuple of (`idx`, `indicator_function`), where `idx` is the feature index
+    of the conditional feature.
+    """
+    condition = feat.indicator_condition
+    indicator_feat = inputs.get_by_key(feat.indicator_feature)
+
+    feat_idx, indicator_feat_idx = inputs.get_feature_indices(
+        {}, [feat.key, indicator_feat.key]
+    )
+
+    if isinstance(condition, SelectionCondition):
+        values_t = torch.tensor([])
+        if isinstance(indicator_feat, CategoricalInput):
+            values = indicator_feat.to_ordinal_encoding(
+                pd.Series(indicator_feat.categories)
+            )
+            values_t = torch.from_numpy(values.to_numpy())
+        elif isinstance(indicator_feat, DiscreteInput):
+            values_t = torch.as_tensor(indicator_feat.values)
+        return feat_idx, lambda X: torch.isin(X[..., indicator_feat_idx], values_t)
+
+    if isinstance(condition, ThresholdCondition):
+        op = _threshold_operators[condition.operator]
+        return feat_idx, lambda X: op(X[..., indicator_feat_idx], condition.threshold)
+
+    raise ValueError(f"Unrecognised condition {condition.__class__.__name__}.")
+
+
+def build_indicator_func(
+    inputs: Inputs, specs: InputTransformSpecs
+) -> IndicatorFunction:
+    if (
+        CategoricalEncodingEnum.ONE_HOT in specs.values()
+        or CategoricalEncodingEnum.DESCRIPTOR in specs.values()
+    ):
+        # TODO: provide support for one hot and descriptor
+        # requires careful thought about how indexing changes
+        raise NotImplementedError(
+            "Conditional features currently only support ordinal encoding."
+        )
+
+    thresholds = [
+        _conditional_feature_to_indicator(inputs, feat)
+        for feat in inputs.get(includes=ConditionalContinuousInput)
+    ]  # type: ignore
+
+    def indicator_func(X: Tensor) -> Tensor:
+        mask = torch.ones_like(X, dtype=torch.bool)
+        # evaluate threshold constraints
+        for idx, indicator in thresholds:
+            mask[..., idx] *= indicator(X)
+        return mask
+
+    return indicator_func
 
 
 class WedgeKernel(Kernel):
