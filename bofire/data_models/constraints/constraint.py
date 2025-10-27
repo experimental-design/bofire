@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,7 @@ from bofire.data_models.types import FeatureKeys
 class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
-    type: Any
+    type: str
     features: FeatureKeys
 
     @abstractmethod

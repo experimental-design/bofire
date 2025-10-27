@@ -10,9 +10,11 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.constraint import Constraint
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import (
+    AnyInput,
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
+    MolecularInput,
 )
 from bofire.data_models.types import FeatureKeys
 
@@ -45,6 +47,10 @@ class Condition(BaseModel):
             A Boolean series indicating which elements satisfy the condition.
         """
 
+    @abstractmethod
+    def validate_feature(self, feature: AnyInput) -> None:
+        """Validate that a feature is compatible with this condition."""
+
 
 class ThresholdCondition(Condition):
     """Class for modelling threshold conditions.
@@ -68,6 +74,13 @@ class ThresholdCondition(Condition):
 
         return values.apply(evaluate)
 
+    def validate_feature(self, feature: AnyInput) -> None:
+        if isinstance(feature, (CategoricalInput, MolecularInput)):
+            raise TypeError(
+                f"Feature {feature.key} is a {feature.__class__.__name__}, and cannot be used "
+                f"with a {self.__class__.__name__}."
+            )
+
 
 class SelectionCondition(Condition):
     """Class for modelling selection conditions.
@@ -87,6 +100,21 @@ class SelectionCondition(Condition):
 
     def __call__(self, values: pd.Series) -> pd.Series:
         return values.isin(self.selection)
+
+    def validate_feature(self, feature: AnyInput) -> None:
+        if isinstance(feature, (ContinuousInput, MolecularInput)):
+            raise TypeError(
+                f"Feature {feature.key} is a {feature.__class__.__name__}, and cannot be used "
+                f"with a {self.__class__.__name__}."
+            )
+
+        values = (
+            feature.values if isinstance(feature, DiscreteInput) else feature.categories
+        )
+        if not all(val in values for val in self.selection):
+            raise ValueError(
+                f"Some categories in {self.__class__.__name__} are not in {feature.key}."
+            )
 
 
 class CategoricalExcludeConstraint(Constraint):

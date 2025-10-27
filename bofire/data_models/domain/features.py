@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, field_validator, model_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
@@ -36,6 +36,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    ConditionalContinuousInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -263,6 +264,17 @@ class Inputs(_BaseFeatures[AnyInput]):
         if len(filtered) > 1:
             raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
         return features
+
+    @model_validator(mode="after")
+    def validate_conditional_inputs(self):
+        for feat in self.get(includes=ConditionalContinuousInput):
+            assert isinstance(feat, ConditionalContinuousInput)
+            # raise a KeyError if the feature does not exist
+            indicator_feat = self.get_by_key(feat.indicator_feature)
+            # raise an error if the feature is incompatible with the condition.
+            feat.indicator_condition.validate_feature(indicator_feat)
+
+        return self
 
     def get_fixed(self) -> Inputs:
         """Gets all features in `self` that are fixed and returns them as new
