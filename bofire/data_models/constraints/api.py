@@ -1,7 +1,7 @@
 from typing import Union
 
-from bofire.data_models.constraints.categorical import (
-    CategoricalExcludeConstraint,
+from bofire.data_models.constraints.categorical import CategoricalExcludeConstraint
+from bofire.data_models.constraints.condition import (
     SelectionCondition,
     ThresholdCondition,
 )

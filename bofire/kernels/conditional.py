@@ -8,7 +8,7 @@ from gpytorch.kernels import Kernel
 from gpytorch.priors import Prior
 from torch import Tensor
 
-from bofire.data_models.constraints.categorical import (
+from bofire.data_models.constraints.condition import (
     Condition,
     SelectionCondition,
     ThresholdCondition,

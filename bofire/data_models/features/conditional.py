@@ -1,6 +1,6 @@
 from typing import Literal
 
-from bofire.data_models.constraints.categorical import Condition
+from bofire.data_models.constraints.condition import Condition
 from bofire.data_models.features.continuous import ContinuousInput
 
 

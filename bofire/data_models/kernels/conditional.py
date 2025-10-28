@@ -2,7 +2,7 @@ from typing import Literal, Optional, Union
 
 from pydantic import field_validator, model_validator
 
-from bofire.data_models.constraints.categorical import Condition
+from bofire.data_models.constraints.condition import Condition
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
