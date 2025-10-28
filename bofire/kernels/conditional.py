@@ -13,7 +13,9 @@ from bofire.data_models.constraints.condition import (
     SelectionCondition,
     ThresholdCondition,
 )
-from bofire.data_models.kernels.conditional import WedgeKernel as WedgeKernelDataModel
+from bofire.data_models.kernels.conditional import (
+    ConditionalEmbeddingKernel as ConditionalEmbeddingKernelDataModel,
+)
 
 
 type IndicatorFunction = Callable[[Tensor], Tensor]
@@ -82,7 +84,7 @@ def build_indicator_func(
 
 
 def compute_base_kernel_active_dims(
-    data_model: WedgeKernelDataModel,
+    data_model: ConditionalEmbeddingKernelDataModel,
     active_dims: list[int],
     features_to_idx_mapper: Callable[[list[str]], list[int]] | None,
 ) -> list[int]:
