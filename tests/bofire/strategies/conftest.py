@@ -88,7 +88,9 @@ class ConstraintCollection:
             constraints_data_models.CategoricalExcludeConstraint(
                 features=["x_1", "category"],
                 conditions=[
-                    constraints_data_models.ThresholdCondition(threshold=0.0, operator=">="),
+                    constraints_data_models.ThresholdCondition(
+                        threshold=0.0, operator=">="
+                    ),
                     constraints_data_models.SelectionCondition(selection=["0"]),
                 ],
                 logical_op="AND",
@@ -281,7 +283,7 @@ class OptimizerBenchmark:
             additional_constraint_functions=[
                 ConstraintCollection.categorical_exclude_constraint_for_ackley,
             ],
-        )
+        ),
     ]
 )
 def optimizer_benchmark(request) -> OptimizerBenchmark:
