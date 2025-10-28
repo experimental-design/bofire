@@ -43,6 +43,7 @@ class WedgeKernel(FeatureSpecificKernel):
                     f"When using a {cls.__name__}, the base_kernel must not have "
                     f"a {attr} provided, since this will be ignored."
                 )
+        return base_kernel
 
     @model_validator(mode="after")
     def validate_dropped_features(self):

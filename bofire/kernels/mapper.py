@@ -335,6 +335,7 @@ KERNEL_MAP = {
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
+    data_models.WedgeKernel: map_WedgeKernel,
 }
 
 

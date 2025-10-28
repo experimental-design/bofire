@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator, validate_call
+from pydantic import Field, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
@@ -265,9 +265,15 @@ class Inputs(_BaseFeatures[AnyInput]):
             raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
         return features
 
-    @model_validator(mode="after")
     def validate_conditional_inputs(self):
-        for feat in self.get(includes=ConditionalContinuousInput):
+        # TODO: where should this be run? It can't be run as an @model_validator,
+        # because `self.get` returns a subset of the features that may not include the
+        # depdendent features.
+        conditional_features = filter_by_class(
+            self.features,
+            includes=ConditionalContinuousInput,
+        )
+        for feat in conditional_features:
             assert isinstance(feat, ConditionalContinuousInput)
             # raise a KeyError if the feature does not exist
             indicator_feat = self.get_by_key(feat.indicator_feature)
