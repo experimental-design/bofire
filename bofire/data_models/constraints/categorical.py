@@ -166,7 +166,7 @@ class CategoricalExcludeConstraint(Constraint):
             pd.Series: Distance to reach constraint fulfillment.
 
         """
-        return self.is_fulfilled(experiments).astype(float)
+        return 1 - self.is_fulfilled(experiments).astype(float)
 
     def is_fulfilled(
         self,
