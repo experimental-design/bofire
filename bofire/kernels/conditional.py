@@ -2,7 +2,6 @@ import math
 import operator as ops
 from typing import Callable
 
-import pandas as pd
 import torch
 from gpytorch.constraints import Interval, Positive
 from gpytorch.kernels import Kernel
@@ -10,14 +9,11 @@ from gpytorch.priors import Prior
 from torch import Tensor
 
 from bofire.data_models.constraints.categorical import (
+    Condition,
     SelectionCondition,
     ThresholdCondition,
 )
-from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import CategoricalInput, DiscreteInput
-from bofire.data_models.features.conditional import ConditionalContinuousInput
-from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.kernels.conditional import WedgeKernel as WedgeKernelDataModel
 
 
 type IndicatorFunction = Callable[[Tensor], Tensor]
@@ -31,29 +27,27 @@ _threshold_operators: dict[str, Callable] = {
 
 
 def _conditional_feature_to_indicator(
-    inputs: Inputs, feat: ConditionalContinuousInput
+    cond_tuple: tuple[str, str, Condition],
+    features_to_idx_mapper: Callable[[list[str]], list[int]],
 ) -> tuple[int, IndicatorFunction]:
     """Get the indicator function from the conditional feature.
 
     Returns a tuple of (`idx`, `indicator_function`), where `idx` is the feature index
     of the conditional feature.
     """
-    condition = feat.indicator_condition
-    indicator_feat = inputs.get_by_key(feat.indicator_feature)
+    feat_key, indicator_feat_key, condition = cond_tuple
 
-    feat_idx, indicator_feat_idx = inputs.get_feature_indices(
-        {}, [feat.key, indicator_feat.key]
+    feat_idx, indicator_feat_idx = features_to_idx_mapper(
+        [feat_key, indicator_feat_key]
     )
 
     if isinstance(condition, SelectionCondition):
-        values_t = torch.tensor([])
-        if isinstance(indicator_feat, CategoricalInput):
-            values = indicator_feat.to_ordinal_encoding(
-                pd.Series(indicator_feat.categories)
-            )
-            values_t = torch.from_numpy(values.to_numpy())
-        elif isinstance(indicator_feat, DiscreteInput):
-            values_t = torch.as_tensor(indicator_feat.values)
+        # FIXME: this assumes that the values are appropriately encoded.
+        # In practice, this will not be the case for CategoricalInputs. However, it
+        # isn't easy to pass the indicator feature to this function. A fix may be
+        # to create a new EncodedCondition class, that operates in the encoded
+        # feature space.
+        values_t = torch.tensor(condition.selection)
         return feat_idx, lambda X: torch.isin(X[..., indicator_feat_idx], values_t)
 
     if isinstance(condition, ThresholdCondition):
@@ -64,22 +58,18 @@ def _conditional_feature_to_indicator(
 
 
 def build_indicator_func(
-    inputs: Inputs, specs: InputTransformSpecs
+    conditions: list[tuple[str, str, Condition]],
+    features_to_idx_mapper: Callable[[list[str]], list[int]] | None,
 ) -> IndicatorFunction:
-    if (
-        CategoricalEncodingEnum.ONE_HOT in specs.values()
-        or CategoricalEncodingEnum.DESCRIPTOR in specs.values()
-    ):
-        # TODO: provide support for one hot and descriptor
-        # requires careful thought about how indexing changes
-        raise NotImplementedError(
-            "Conditional features currently only support ordinal encoding."
+    if features_to_idx_mapper is None:
+        raise RuntimeError(
+            "features_to_idx_mapper must be defined when using a conditional kernel"
         )
 
     thresholds = [
-        _conditional_feature_to_indicator(inputs, feat)
-        for feat in inputs.get(includes=ConditionalContinuousInput)
-    ]  # type: ignore
+        _conditional_feature_to_indicator(cond_tuple, features_to_idx_mapper)  # type: ignore
+        for cond_tuple in conditions
+    ]
 
     def indicator_func(X: Tensor) -> Tensor:
         mask = torch.ones_like(X, dtype=torch.bool)
@@ -89,6 +79,41 @@ def build_indicator_func(
         return mask
 
     return indicator_func
+
+
+def compute_base_kernel_active_dims(
+    data_model: WedgeKernelDataModel,
+    active_dims: list[int],
+    features_to_idx_mapper: Callable[[list[str]], list[int]] | None,
+) -> list[int]:
+    """Compute the active dimensions for the base_kernel of a conditional kernel.
+
+    The conditional kernel expands the input space by a factor of 2, by embedding each
+    input to a point in 2D. We therefore must drop any of the new dimensions that are
+    appended but not
+
+    This also removes any variables that were used as indicators."""
+    if features_to_idx_mapper is None:
+        raise RuntimeError(
+            "features_to_idx_mapper must be defined when using conditional kernels."
+        )
+
+    base_kernel_data_model = data_model.base_kernel
+    embedded_feats, indicator_feats, _ = zip(*data_model.conditions)
+    embedded_idcs = features_to_idx_mapper(list(embedded_feats))
+    indicator_idcs = features_to_idx_mapper(list(indicator_feats))
+
+    d = len(active_dims)
+
+    if base_kernel_data_model.features:
+        # if features are provided, we have already validated that the indicator_idcs
+        # have been dropped in the Kernel data model.
+        active_dims = features_to_idx_mapper(base_kernel_data_model.features)
+    elif data_model.drop_indicator_features_in_base_kernel:
+        active_dims = [i for i in active_dims if i not in indicator_idcs]
+
+    embedded_dims = [i + d for i in active_dims if i in embedded_idcs]
+    return active_dims + embedded_dims
 
 
 class WedgeKernel(Kernel):

@@ -9,6 +9,11 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
+from bofire.kernels.conditional import (
+    WedgeKernel,
+    build_indicator_func,
+    compute_base_kernel_active_dims,
+)
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
 
@@ -269,6 +274,49 @@ def map_PolynomialFeatureInteractionKernel(
         outputscale_prior=(
             priors.map(data_model.outputscale_prior, d=len(active_dims))
             if data_model.outputscale_prior is not None
+            else None
+        ),
+    )
+
+
+def map_WedgeKernel(
+    data_model: data_models.WedgeKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> WedgeKernel:
+    # TODO: `build_indicator_func` can only take some of the above arguments
+    indicator_func = build_indicator_func(data_model.conditions, features_to_idx_mapper)
+    base_kernel_active_dims = compute_base_kernel_active_dims(
+        data_model, active_dims, features_to_idx_mapper
+    )
+    base_kernel = map(
+        data_model=data_model.base_kernel,
+        batch_shape=batch_shape,
+        active_dims=base_kernel_active_dims,
+        features_to_idx_mapper=features_to_idx_mapper,
+    )
+    return WedgeKernel(
+        base_kernel,
+        indicator_func,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
+            else None
+        ),
+        angle_prior=(
+            priors.map(data_model.angle_prior, d=len(active_dims))
+            if data_model.angle_prior is not None
+            else None
+        ),
+        radius_prior=(
+            priors.map(data_model.radius_prior, d=len(active_dims))
+            if data_model.radius_prior is not None
             else None
         ),
     )
