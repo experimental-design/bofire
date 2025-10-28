@@ -457,6 +457,34 @@ specs.add_invalid(
     message="`start` is not a valid candidate.",
 )
 
+
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="a", categories=["a", "b", "c"]),
+                    CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+            constraints=[
+                CategoricalExcludeConstraint(
+                    features=["a", "b"],
+                    conditions=[
+                        SelectionCondition(selection=["a"]),
+                        SelectionCondition(selection=["ba"]),
+                    ],
+                )
+            ],
+        ),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(),
+    },
+)
+
+
 specs.add_invalid(
     strategies.ShortestPathStrategy,
     lambda: {
@@ -623,36 +651,6 @@ specs.add_invalid(
     message="LSR-BO only supported for linear constraints.",
 )
 
-for optimizer in [strategies.BotorchOptimizer, strategies.GeneticAlgorithmOptimizer]:
-    specs.add_invalid(
-        strategies.SoboStrategy,
-        lambda optimizer=optimizer: {
-            "domain": Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(key="a", categories=["a", "b", "c"]),
-                        CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
-                        ContinuousInput(key="c", bounds=(0, 1)),
-                    ]
-                ),
-                outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
-                constraints=[
-                    CategoricalExcludeConstraint(
-                        features=["a", "b"],
-                        conditions=[
-                            SelectionCondition(selection=["a"]),
-                            SelectionCondition(selection=["ba"]),
-                        ],
-                    )
-                ],
-            ),
-            "acquisition_optimizer": optimizer(
-                prefer_exhaustive_search_for_purely_categorical_domains=True,
-            ),
-        },
-        error=ValueError,
-        message="CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
-    )
 
 specs.add_invalid(
     strategies.SoboStrategy,
@@ -662,6 +660,7 @@ specs.add_invalid(
                 features=[
                     CategoricalInput(key="a", categories=["a", "b", "c"]),
                     CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                    ContinuousInput(key="c", bounds=(0, 1)),
                 ]
             ),
             outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
@@ -675,12 +674,12 @@ specs.add_invalid(
                 )
             ],
         ),
-        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
-            prefer_exhaustive_search_for_purely_categorical_domains=False,
+        "acquisition_optimizer": strategies.BotorchOptimizer(
+            prefer_exhaustive_search_for_purely_categorical_domains=True,
         ),
     },
     error=ValueError,
-    message="CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
+    message="CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
 )
 
 specs.add_invalid(
