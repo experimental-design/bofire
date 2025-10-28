@@ -18,7 +18,7 @@ from bofire.data_models.kernels.conditional import (
 )
 
 
-type IndicatorFunction = Callable[[Tensor], Tensor]
+IndicatorFunction = Callable[[Tensor], Tensor]
 
 _threshold_operators: dict[str, Callable] = {
     "<": ops.lt,
@@ -101,9 +101,8 @@ def compute_base_kernel_active_dims(
         )
 
     base_kernel_data_model = data_model.base_kernel
-    embedded_feats, indicator_feats, _ = zip(*data_model.conditions)
-    embedded_idcs = features_to_idx_mapper(list(embedded_feats))
-    indicator_idcs = features_to_idx_mapper(list(indicator_feats))
+    embedded_idcs = features_to_idx_mapper([tup[0] for tup in data_model.conditions])
+    indicator_idcs = features_to_idx_mapper([tup[1] for tup in data_model.conditions])
 
     d = len(active_dims)
 
