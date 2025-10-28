@@ -235,26 +235,6 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         ]
 
     def validate_domain(self, domain: Domain):
-        def validate_exclude_constraints(domain: Domain):
-            if (
-                len(domain.constraints.get(constraints.CategoricalExcludeConstraint))
-                > 0
-            ):
-                if len(
-                    domain.inputs.get([CategoricalInput, DiscreteInput]),
-                ) != len(domain.inputs):
-                    raise ValueError(
-                        "CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
-                    )
-                if (
-                    self.prefer_exhaustive_search_for_purely_categorical_domains
-                    is False
-                ):
-                    raise ValueError(
-                        "CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
-                    )
-
-        validate_exclude_constraints(domain)
         pass
 
     def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):

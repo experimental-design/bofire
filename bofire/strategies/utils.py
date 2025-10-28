@@ -25,6 +25,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
+    CategoricalExcludeConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -398,7 +399,7 @@ class DomainOptimizationProblem(PymooProblem):
 
         # pandas constraints: evaluated in original space
         if nonlinear_pandas_constraints is None:
-            nonlinear_pandas_constraints = [NonlinearInequalityConstraint]
+            nonlinear_pandas_constraints = [NonlinearInequalityConstraint, CategoricalExcludeConstraint]
         else:
             assert all(
                 c in (NonlinearInequalityConstraint,)
