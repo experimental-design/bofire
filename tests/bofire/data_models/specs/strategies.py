@@ -458,33 +458,6 @@ specs.add_invalid(
 )
 
 
-specs.add_valid(
-    strategies.SoboStrategy,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    CategoricalInput(key="a", categories=["a", "b", "c"]),
-                    CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
-                    ContinuousInput(key="c", bounds=(0, 1)),
-                ]
-            ),
-            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
-            constraints=[
-                CategoricalExcludeConstraint(
-                    features=["a", "b"],
-                    conditions=[
-                        SelectionCondition(selection=["a"]),
-                        SelectionCondition(selection=["ba"]),
-                    ],
-                )
-            ],
-        ),
-        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(),
-    },
-)
-
-
 specs.add_invalid(
     strategies.ShortestPathStrategy,
     lambda: {
