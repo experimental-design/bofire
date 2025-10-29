@@ -163,7 +163,7 @@ class CategoricalExcludeConstraint(Constraint):
             experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
 
         Returns:
-            pd.Series: Distance to reach constraint fulfillment.
+            pd.Series: Constraint fulfillment: Will be 1.0 for not fulfilled and 0.0 for fulfilled.
 
         """
         return 1 - self.is_fulfilled(experiments).astype(float)
