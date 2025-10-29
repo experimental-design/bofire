@@ -1527,10 +1527,10 @@ Default is "AND".</p>
 <span class="sd">            experiments (pd.DataFrame): Dataframe to evaluate the constraint on.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            pd.Series: Distance to reach constraint fulfillment.</span>
+<span class="sd">            pd.Series: Constraint fulfillment: Will be 1.0 for not fulfilled and 0.0 for fulfilled.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">is_fulfilled</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1642,7 +1642,7 @@ and 0 for fulfilled.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>pd.Series: Distance to reach constraint fulfillment.</p>
+                <p>pd.Series: Constraint fulfillment: Will be 1.0 for not fulfilled and 0.0 for fulfilled.</p>
               </div>
             </td>
           </tr>
@@ -1675,10 +1675,10 @@ and 0 for fulfilled.</p>
 <span class="sd">        experiments (pd.DataFrame): Dataframe to evaluate the constraint on.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        pd.Series: Distance to reach constraint fulfillment.</span>
+<span class="sd">        pd.Series: Constraint fulfillment: Will be 1.0 for not fulfilled and 0.0 for fulfilled.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
