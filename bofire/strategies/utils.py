@@ -19,6 +19,7 @@ from scipy import sparse
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -398,7 +399,10 @@ class DomainOptimizationProblem(PymooProblem):
 
         # pandas constraints: evaluated in original space
         if nonlinear_pandas_constraints is None:
-            nonlinear_pandas_constraints = [NonlinearInequalityConstraint]
+            nonlinear_pandas_constraints = [
+                NonlinearInequalityConstraint,
+                CategoricalExcludeConstraint,
+            ]
         else:
             assert all(
                 c in (NonlinearInequalityConstraint,)

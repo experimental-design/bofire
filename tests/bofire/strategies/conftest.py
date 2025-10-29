@@ -83,6 +83,22 @@ class ConstraintCollection:
         return domain
 
     @staticmethod
+    def categorical_exclude_constraint_for_ackley(domain: Domain) -> Domain:
+        domain.constraints.constraints += [
+            constraints_data_models.CategoricalExcludeConstraint(
+                features=["x_1", "category"],
+                conditions=[
+                    constraints_data_models.ThresholdCondition(
+                        threshold=0.0, operator=">="
+                    ),
+                    constraints_data_models.SelectionCondition(selection=["0"]),
+                ],
+                logical_op="AND",
+            )
+        ]
+        return domain
+
+    @staticmethod
     def nchoosek_constr_for_detergent(domain: Domain) -> Domain:
         lb = domain.inputs.get_bounds({})[0]
         feat = [
@@ -144,6 +160,7 @@ class OptimizerBenchmark:
                     [
                         constraints_data_models.NonlinearInequalityConstraint,
                         constraints_data_models.NChooseKConstraint,
+                        constraints_data_models.CategoricalExcludeConstraint,
                     ]
                 ).constraints
             )
@@ -151,7 +168,7 @@ class OptimizerBenchmark:
         ):
             if isinstance(optimizer, data_models_strategies.BotorchOptimizer):
                 pytest.skip(
-                    "skipping nonlinear constraints and n-choose-k constr. for botorch optimizer"
+                    "skipping nonlinear constraints / n-choose-k constr. / categorical exclude constr. for botorch optimizer"
                 )
 
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
@@ -259,6 +276,14 @@ class OptimizerBenchmark:
             data_models_strategies.SoboStrategy,
             map_conti_inputs_to_discrete=True,
         ),  # this is for testing the "all-categoric" usecase
+        OptimizerBenchmark(
+            benchmarks.Ackley(num_categories=3, categorical=True, dim=4),
+            10,
+            data_models_strategies.SoboStrategy,
+            additional_constraint_functions=[
+                ConstraintCollection.categorical_exclude_constraint_for_ackley,
+            ],
+        ),
     ]
 )
 def optimizer_benchmark(request) -> OptimizerBenchmark:
