@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Sequence, Union
 
 from pydantic import field_validator, model_validator
 
@@ -23,7 +23,7 @@ class ConditionalEmbeddingKernel(FeatureSpecificKernel):
         # ScaleKernel,
     ]
 
-    conditions: list[tuple[str, str, Condition]]
+    conditions: Sequence[tuple[str, str, Condition]]
     # Indicator features are used to determine whether the conditional features are
     # active or not. It is generally advised to remove these features from the base
     # kernel, to avoid "double-dipping" these features.
