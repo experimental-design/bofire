@@ -156,9 +156,6 @@ class FormulationWrapper(Benchmark):
             ]
         )
         if max_count is not None:
-            assert max_count < len(
-                inputs
-            ), "`max_count` must be smaller than total number of features."
             constraints.constraints.append(  # type: ignore
                 NChooseKConstraint(
                     features=self._benchmark.domain.inputs.get_keys(),
