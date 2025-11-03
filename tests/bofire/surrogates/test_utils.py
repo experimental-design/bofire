@@ -7,6 +7,7 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
     Normalize,
+    NumericToCategoricalEncoding,
 )
 
 from bofire.data_models.domain.api import Inputs
@@ -31,7 +32,7 @@ from bofire.surrogates.utils import (
     get_molecular_feature_keys,
     get_scaler,
 )
-from bofire.utils.torch_tools import NumericToCategoricalEncoding, tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None

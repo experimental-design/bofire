@@ -45,4 +45,4 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             num_taus=self.n_taus,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
