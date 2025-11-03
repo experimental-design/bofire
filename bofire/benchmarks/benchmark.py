@@ -115,7 +115,7 @@ class FormulationWrapper(Benchmark):
     the original benchmark is evaluated.
 
     Via the `max_count` parameter an additional NChooseK constraint can be added to
-    the formulation, that limits the number of non-zero features to `max_count`.
+    the formulation, that limits the number of non-zero non-filler features to `max_count`.
     """
 
     def __init__(
@@ -161,7 +161,7 @@ class FormulationWrapper(Benchmark):
             ), "`max_count` must be smaller than total number of features."
             constraints.constraints.append(  # type: ignore
                 NChooseKConstraint(
-                    features=inputs.get_keys(),
+                    features=self._benchmark.domain.inputs.get_keys(),
                     max_count=max_count,
                     min_count=0,
                     none_also_valid=True,
