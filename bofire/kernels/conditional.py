@@ -1,6 +1,6 @@
 import math
 import operator as ops
-from typing import Callable
+from typing import Callable, Sequence
 
 import torch
 from gpytorch.constraints import Interval, Positive
@@ -10,6 +10,7 @@ from torch import Tensor
 
 from bofire.data_models.constraints.condition import (
     Condition,
+    NonZeroCondition,
     SelectionCondition,
     ThresholdCondition,
 )
@@ -56,11 +57,14 @@ def _conditional_feature_to_indicator(
         op = _threshold_operators[condition.operator]
         return feat_idx, lambda X: op(X[..., indicator_feat_idx], condition.threshold)
 
+    if isinstance(condition, NonZeroCondition):
+        return feat_idx, lambda X: X[..., indicator_feat_idx] != 0
+
     raise ValueError(f"Unrecognised condition {condition.__class__.__name__}.")
 
 
 def build_indicator_func(
-    conditions: list[tuple[str, str, Condition]],
+    conditions: Sequence[tuple[str, str, Condition]],
     features_to_idx_mapper: Callable[[list[str]], list[int]] | None,
 ) -> IndicatorFunction:
     if features_to_idx_mapper is None:

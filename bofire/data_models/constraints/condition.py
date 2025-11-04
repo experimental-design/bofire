@@ -74,8 +74,8 @@ class ThresholdCondition(Condition):
     def validate_feature(self, feature: "AnyInput") -> None:
         if isinstance(feature, (CategoricalInput, MolecularInput)):
             raise TypeError(
-                f"Feature {feature.key} is a {feature.__class__.__name__}, and cannot be used "
-                f"with a {self.__class__.__name__}."
+                f"Feature {feature.key} is a {type(feature).__name__}, and cannot be used "
+                f"with a {type(self).__name__}."
             )
 
 
@@ -101,8 +101,8 @@ class SelectionCondition(Condition):
     def validate_feature(self, feature: "AnyInput") -> None:
         if isinstance(feature, (ContinuousInput, MolecularInput)):
             raise TypeError(
-                f"Feature {feature.key} is a {feature.__class__.__name__}, and cannot be used "
-                f"with a {self.__class__.__name__}."
+                f"Feature {feature.key} is a {type(feature).__name__}, and cannot be used "
+                f"with a {type(self).__name__}."
             )
 
         values = (
@@ -110,5 +110,26 @@ class SelectionCondition(Condition):
         )
         if not all(val in values for val in self.selection):
             raise ValueError(
-                f"Some categories in {self.__class__.__name__} are not in {feature.key}."
+                f"Some categories in {type(self).__name__} are not in {feature.key}."
+            )
+
+
+class NonZeroCondition(Condition):
+    """Class for modelling non-zero conditions.
+
+    It is checked if the feature value is not equal to zero. If this is the case,
+    the condition is fulfilled. It can be only applied to ContinuousInput and DiscreteInput
+    features.
+    """
+
+    type: Literal["NonZeroCondition"] = "NonZeroCondition"
+
+    def __call__(self, values: pd.Series) -> pd.Series:
+        return values != 0
+
+    def validate_feature(self, feature: "AnyInput") -> None:
+        if isinstance(feature, (CategoricalInput, MolecularInput)):
+            raise TypeError(
+                f"Feature {feature.key} is a {type(feature).__name__}, and cannot be used "
+                f"with a {type(self).__name__}."
             )

@@ -19,6 +19,9 @@ class ContinuousInput(NumericalInput):
         stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
             Defaults to None.
+        allow_zero (bool): A boolean indicating if the input feature can take inactive values. If True,
+            use a conditional encoding kernel for this feature. Useful for features that take values between `bounds`, but can
+            also take a value of 0.
 
     """
 
@@ -30,6 +33,7 @@ class ContinuousInput(NumericalInput):
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
     ] = None
     stepsize: Optional[PositiveFloat] = None
+    allow_zero: bool = False
 
     @property
     def lower_bound(self) -> float:
@@ -53,6 +57,18 @@ class ContinuousInput(NumericalInput):
         if range / self.stepsize < 1:
             raise ValueError(
                 "Stepsize is too big for provided range.",
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_allow_zero(self):
+        if not self.allow_zero:
+            return self
+        lower, upper = self.bounds
+        if lower <= 0.0 <= upper:
+            raise ValueError(
+                "If `allow_zero==True`, then zero must not lie within the bounds."
             )
 
         return self
