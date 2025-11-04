@@ -11,7 +11,9 @@ from botorch.utils.constraints import (
 import bofire
 import bofire.kernels.aggregation as aggregationKernels
 import bofire.kernels.api as kernels
+import bofire.kernels.conditional as conditionalKernels
 import bofire.kernels.shape as shapeKernels
+from bofire.data_models.constraints.condition import ThresholdCondition
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     FeatureSpecificKernel,
@@ -26,6 +28,7 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
     WassersteinKernel,
+    WedgeKernel,
 )
 from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
@@ -48,6 +51,7 @@ EQUIVALENTS = {
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
+    WedgeKernel: conditionalKernels.WedgeKernel,
 }
 
 
@@ -365,3 +369,39 @@ def test_map_PolynomialFeatureInteractionKernel():
 
     assert isinstance(k.kernels[1], gpytorch.kernels.MaternKernel)
     assert k.kernels[1].active_dims.tolist() == [2, 3]
+
+
+def test_map_WedgeKernel():
+    feats = ["x1", "x2", "indicator"]
+    conditions = [("x2", "indicator", ThresholdCondition(threshold=0.0, operator=">"))]
+    data_model = WedgeKernel(
+        base_kernel=RBFKernel(),
+        conditions=conditions,
+        drop_indicator_features_in_base_kernel=True,
+        features=feats,
+    )
+
+    k = kernels.map(
+        data_model,
+        active_dims=[0, 1, 2],
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: list(map(feats.index, ks)),
+    )
+    assert isinstance(k, conditionalKernels.WedgeKernel)
+    # the base kernel drops the indicator, and adds a second dimension for x2.
+    assert k.base_kernel.active_dims.tolist() == [0, 1, 4]
+
+    # test keeping indicator features
+    data_model = data_model.model_copy(
+        update={"drop_indicator_features_in_base_kernel": False}
+    )
+
+    k = kernels.map(
+        data_model,
+        active_dims=[0, 1, 2],
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: list(map(feats.index, ks)),
+    )
+
+    assert isinstance(k, conditionalKernels.WedgeKernel)
+    assert k.base_kernel.active_dims.tolist() == [0, 1, 2, 4]

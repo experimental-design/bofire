@@ -100,8 +100,14 @@ def compute_base_kernel_active_dims(
 
     This also removes any variables that were used as indicators."""
     if features_to_idx_mapper is None:
-        raise RuntimeError(
+        raise ValueError(
             "features_to_idx_mapper must be defined when using conditional kernels."
+        )
+    if not active_dims:
+        # since we append the embedded features on the right of the input features,
+        # we need to know the number of features passed to the kernel
+        raise ValueError(
+            "`active_dims` must not be empty when using conditional kernels."
         )
 
     base_kernel_data_model = data_model.base_kernel

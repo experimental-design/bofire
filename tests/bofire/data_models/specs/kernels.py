@@ -136,3 +136,16 @@ specs.add_valid(
         "outputscale_prior": priors.valid(LogNormalPrior).obj().model_dump(),
     },
 )
+specs.add_valid(
+    kernels.WedgeKernel,
+    lambda: {
+        "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
+        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "angle_prior": priors.valid().obj().model_dump(),
+        "features": None,
+        "conditions": [],
+    },
+)
