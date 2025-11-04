@@ -100,6 +100,33 @@ def test_inputs_get_categorical_combinations(inputs, data):
     assert inputs.get_number_of_categorical_combinations() == len(expected)
 
 
+def test_inputs_get_categorical_combinations_conditional():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="f1",
+                categories=["c11", "c12"],
+            ),
+            ContinuousInput(key="f2", bounds=(1, 2), allow_zero=True),
+        ],
+    )
+    expected = [
+        (("f1", "c11"), ("f2", 0.0)),
+        (("f1", "c11"),),
+        (("f1", "c12"), ("f2", 0.0)),
+        (("f1", "c12"),),
+    ]
+    assert inputs.get_categorical_combinations() == expected
+
+    # check purely continuous
+    continuous_inputs = inputs.get(includes=ContinuousInput)
+    continuous_expected = [
+        (("f2", 0.0),),
+        (),
+    ]
+    assert continuous_inputs.get_categorical_combinations() == continuous_expected
+
+
 def test_inputs_is_fulfilled():
     inputs = Inputs(
         features=[

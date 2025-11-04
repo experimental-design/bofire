@@ -433,7 +433,16 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         num_discretes = [len(d.values) for d in discretes]
 
-        num_values = num_cats + num_discretes
+        conditional_conts = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, ContinuousInput) and f.allow_zero and not f.is_fixed())
+        ]
+
+        # each conditional feature may be 'active' or 'inactive'
+        num_conditional_conts = [2 for _ in conditional_conts]
+
+        num_values = num_cats + num_discretes + num_conditional_conts
 
         return functools.reduce(operator.mul, num_values, 1)
 
@@ -441,7 +450,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         self,
         include: Union[Type, List[Type]] = Input,
         exclude: Union[Type, List[Type]] = None,  # type: ignore
-    ):
+    ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
         Args:
@@ -459,7 +468,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             for f in self.get(includes=include, excludes=exclude)
             if (isinstance(f, CategoricalInput) and not f.is_fixed())
         ]
-        list_of_lists = [
+        cat_values = [
             [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
         ]
 
@@ -469,11 +478,30 @@ class Inputs(_BaseFeatures[AnyInput]):
             if (isinstance(f, DiscreteInput) and not f.is_fixed())
         ]
 
-        list_of_lists_2 = [[(d.key, v) for v in d.values] for d in discretes]
+        discrete_values = [[(d.key, v) for v in d.values] for d in discretes]
 
-        list_of_lists = list_of_lists + list_of_lists_2
+        cat_and_discrete_values = cat_values + discrete_values
+        all_combos = list(itertools.product(*cat_and_discrete_values))
 
-        return list(itertools.product(*list_of_lists))
+        conditional_conts = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, ContinuousInput) and f.allow_zero and not f.is_fixed())
+        ]
+
+        conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]
+
+        if conditional_values:
+            # remove any `None`s in the fixed features, as these features should be free
+            all_combos = [
+                combo_cat_discrete
+                + tuple(filter(lambda x: x[1] is not None, combo_conditional))
+                for (combo_cat_discrete, *combo_conditional) in itertools.product(
+                    all_combos, *conditional_values
+                )
+            ]
+
+        return all_combos  # type: ignore
 
     # transformation related methods
     def _get_transform_info(
