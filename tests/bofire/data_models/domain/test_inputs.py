@@ -117,6 +117,7 @@ def test_inputs_get_categorical_combinations_conditional():
         (("f1", "c12"),),
     ]
     assert inputs.get_categorical_combinations() == expected
+    assert inputs.get_number_of_categorical_combinations() == len(expected)
 
     # check purely continuous
     continuous_inputs = inputs.get(includes=ContinuousInput)
@@ -125,6 +126,9 @@ def test_inputs_get_categorical_combinations_conditional():
         (),
     ]
     assert continuous_inputs.get_categorical_combinations() == continuous_expected
+    assert continuous_inputs.get_number_of_categorical_combinations() == len(
+        continuous_expected
+    )
 
 
 def test_inputs_is_fulfilled():

@@ -55,6 +55,13 @@ specs.add_invalid(
     message="Sequence is not monotonically increasing.",
 )
 
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": [3, 5], "allow_zero": False},
+    error=ValueError,
+    message="If `allow_zero==True`, then zero must not lie within the bounds.",
+)
+
 specs.add_valid(
     features.ContinuousDescriptorInput,
     lambda: {
