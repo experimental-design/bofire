@@ -119,9 +119,11 @@ class ContinuousInput(NumericalInput):
         Returns:
             A series with boolean values indicating if the input feature is fulfilled.
         """
-        return (values >= self.lower_bound - noise) & (
+        within_bounds = (values >= self.lower_bound - noise) & (
             values <= self.upper_bound + noise
         )
+        zero_and_allowed = (values.abs() <= noise) & self.allow_zero
+        return within_bounds | zero_and_allowed
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
@@ -140,13 +142,14 @@ class ContinuousInput(NumericalInput):
         """
         noise = 10e-6
         values = super().validate_candidental(values)
-        if (values < self.lower_bound - noise).any():
+        non_zero_idcs = (values.abs() > noise) | (not self.allow_zero)
+        if (values[non_zero_idcs] < self.lower_bound - noise).any():
             raise ValueError(
-                f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` ",
+                f"not all values of input feature `{self.key}` are larger than lower bound `{self.lower_bound}` ",
             )
-        if (values > self.upper_bound + noise).any():
+        if (values[non_zero_idcs] > self.upper_bound + noise).any():
             raise ValueError(
-                f"not all values of input feature `{self.key}`are smaller than upper bound `{self.upper_bound}` ",
+                f"not all values of input feature `{self.key}` are smaller than upper bound `{self.upper_bound}` ",
             )
         return values
 
