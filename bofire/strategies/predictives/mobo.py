@@ -8,7 +8,6 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
 )
 from botorch.models import ModelList
-from botorch.models.gpytorch import GPyTorchModel
 from pydantic import PositiveInt
 from typing_extensions import Self
 
@@ -85,11 +84,11 @@ class MoboStrategy(BotorchStrategy):
         # in case of sebo, we have to update the model with auxiliary sebo model
         # this has to be properly tidied up later
         if self.nchoosek_as_sebo:
-            constraints = self.domain.constraints.get(NChooseKConstraint)
+            n_choosek_constraints = self.domain.constraints.get(NChooseKConstraint)
             sebo_model = nchoosek_to_deterministic_model(
                 inputs=self.domain.inputs,
                 input_preprocessing_specs=self.input_preprocessing_specs,
-                constraint=constraints[0],
+                constraint=n_choosek_constraints[0],
             )
             model = ModelList(self.model, sebo_model)
         else:
@@ -105,7 +104,8 @@ class MoboStrategy(BotorchStrategy):
             constraints=constraints,
             eta=etas,
             mc_samples=self.acquisition_function.n_mc_samples,
-            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            cache_root=False,
+            # cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             alpha=self.acquisition_function.alpha,
             prune_baseline=(
                 self.acquisition_function.prune_baseline

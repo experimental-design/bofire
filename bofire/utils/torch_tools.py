@@ -841,17 +841,11 @@ def get_multiobjective_objective(
         adapt_weights_to_1_inf=False,
     )
 
-    print("Num callables:", len(callables_outputs))
-
     if sebo:
         idx = len(callables_outputs)
-        callables_outputs.append(lambda y, X=None: 1.0 * y[..., idx])
-
-    print("Num callables after sebo:", len(callables_outputs))
+        callables_outputs.append(lambda y, X=None: -1.0 * y[..., idx])
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
-        print(len(callables_outputs))
-        print(samples.shape)
         return torch.stack([c(samples, None) for c in callables_outputs], dim=-1)
 
     return objective

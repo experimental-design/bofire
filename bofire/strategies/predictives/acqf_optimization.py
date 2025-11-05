@@ -510,6 +510,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
         }
 
     def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
+        # just for testing purposes
+        return OptimizerEnum.OPTIMIZE_ACQF_HOMOTOPY
         if n_acqfs > 1:
             return OptimizerEnum.OPTIMIZE_ACQF_LIST
         n_categorical_combinations = (
@@ -625,9 +627,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             # setup homotopy
             # TODO: make this configurable
             homotopy_schedule = LogLinearHomotopySchedule(
-                start=0.2,
-                end=1e-3,
-                num_steps=30,
+                start=0.2,  # 0.5
+                end=1e-3,  # 1e-6
+                num_steps=30,  # 100
             )
             homotopy = Homotopy(
                 homotopy_parameters=[
@@ -644,6 +646,8 @@ class BotorchOptimizer(AcquisitionOptimizer):
             X_pareto = assert_is_instance(acqfs[0].X_baseline, Tensor)
             num_rand = self.n_restarts if len(X_pareto) == 0 else self.n_restarts // 2
             num_local = self.n_restarts - num_rand
+
+            # print(num_local)
             # setup initial conditions
             X_cand_rand = gen_batch_initial_conditions(
                 acq_function=acqfs[0],
@@ -688,7 +692,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 # options=self._get_optimizer_options(domain),  # type: ignore
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
-                nonlinear_inequality_constraints=nonlinear_constraints,
+                nonlinear_inequality_constraints=None,  # nonlinear_constraints, TODO: finish later
                 # ic_generator=ic_generator, # add later
                 # ic_gen_kwargs=ic_gen_kwargs, # add later
                 fixed_features_list=self.get_categorical_combinations(domain)
