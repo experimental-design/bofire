@@ -165,11 +165,19 @@ def test_get_acqf_input_tensors_infeasible():
 
     strategy = SoboStrategy.make(domain=benchmark.domain)
     strategy._experiments = experiments
-    with pytest.raises(
-        ValueError,
+    with pytest.warns(
+        RuntimeWarning,
         match="No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
     ):
-        strategy.get_acqf_input_tensors()
+        filtered_experiments, _ = strategy.get_acqf_input_tensors()
+        assert filtered_experiments.shape[0] == 10
+
+    for feat in benchmark.domain.inputs.get():
+        feat.bounds = (-6, 0)
+    strategy = SoboStrategy.make(domain=benchmark.domain)
+    strategy._experiments = experiments
+    filtered_experiments, _ = strategy.get_acqf_input_tensors()
+    assert filtered_experiments.shape[0] < 10
 
 
 @pytest.mark.parametrize(
