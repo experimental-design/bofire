@@ -4,8 +4,8 @@
 
 <hr/>
 
-[![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
-[![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
+[![Tests](https://github.com/experimental-design/bofire/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/experimental-design/bofire/actions/workflows/test.yaml)
+[![Lint](https://github.com/experimental-design/bofire/actions/workflows/lint.yaml/badge.svg?branch=main)](https://github.com/experimental-design/bofire/actions/workflows/lint.yaml)
 [![Docs](https://github.com/experimental-design/bofire/workflows/Docs/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ADocs)
 [![PyPI](https://img.shields.io/pypi/v/bofire.svg)](https://pypi.org/project/bofire)
 
