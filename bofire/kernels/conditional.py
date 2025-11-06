@@ -112,16 +112,11 @@ def compute_base_kernel_active_dims(
 
     base_kernel_data_model = data_model.base_kernel
     embedded_idcs = features_to_idx_mapper([tup[0] for tup in data_model.conditions])
-    indicator_idcs = features_to_idx_mapper([tup[1] for tup in data_model.conditions])
 
     d = len(active_dims)
 
     if base_kernel_data_model.features:
-        # if features are provided, we have already validated that the indicator_idcs
-        # have been dropped in the Kernel data model.
         active_dims = features_to_idx_mapper(base_kernel_data_model.features)
-    elif data_model.drop_indicator_features_in_base_kernel:
-        active_dims = [i for i in active_dims if i not in indicator_idcs]
 
     embedded_dims = [i + d for i in active_dims if i in embedded_idcs]
     return active_dims + embedded_dims

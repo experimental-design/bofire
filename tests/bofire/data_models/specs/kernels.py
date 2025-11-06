@@ -145,7 +145,6 @@ specs.add_valid(
         .obj()
         .model_dump(),
         "angle_prior": priors.valid().obj().model_dump(),
-        "features": None,
         "conditions": [],
     },
 )

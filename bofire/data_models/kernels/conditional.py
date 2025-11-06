@@ -1,17 +1,23 @@
 from typing import Literal, Optional, Sequence, Union
 
-from pydantic import field_validator, model_validator
+from pydantic import field_validator
 
 from bofire.data_models.constraints.condition import Condition
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
-from bofire.data_models.kernels.kernel import FeatureSpecificKernel
+from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
-class ConditionalEmbeddingKernel(FeatureSpecificKernel):
+class ConditionalEmbeddingKernel(Kernel):
     """A kernel that transforms inputs into an embedding space, to encode conditional
-    dependence on other input features."""
+    dependence on other input features.
+
+    By default, all features are passed to the base kernel. It is generally advised
+    that indicator features - those that only exist to indicate whether another
+    feature is active - not be included in `base_kernel.features`, since they
+    will not provide any useful information beyond their role as an indicator. This
+    avoids "double-dipping" these indicator features."""
 
     base_kernel: Union[
         RBFKernel,
@@ -24,27 +30,6 @@ class ConditionalEmbeddingKernel(FeatureSpecificKernel):
     ]
 
     conditions: Sequence[tuple[str, str, Condition]]
-    # Indicator features are used to determine whether the conditional features are
-    # active or not. It is generally advised to remove these features from the base
-    # kernel, to avoid "double-dipping" these features.
-    drop_indicator_features_in_base_kernel: bool = True
-
-    @model_validator(mode="after")
-    def validate_dropped_features(self):
-        if self.base_kernel.features is None:
-            return self
-
-        if self.drop_indicator_features_in_base_kernel:
-            dropped_feature_keys = {tup[1] for tup in self.conditions}
-            remaining_features = set(self.base_kernel.features)
-            if dropped_feature_keys & remaining_features:
-                raise ValueError(
-                    f"Base kernel {self.base_kernel.__class__.__name__} operates on features "
-                    f"that were dropped by the wrapping conditional kernel, and "
-                    f"`drop_indicator_features_in_base_kernel` is True."
-                )
-
-        return self
 
 
 class WedgeKernel(ConditionalEmbeddingKernel):

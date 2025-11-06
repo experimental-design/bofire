@@ -374,11 +374,11 @@ def test_map_PolynomialFeatureInteractionKernel():
 def test_map_WedgeKernel():
     feats = ["x1", "x2", "indicator"]
     conditions = [("x2", "indicator", ThresholdCondition(threshold=0.0, operator=">"))]
+
+    # test dropping indicator feature
     data_model = WedgeKernel(
-        base_kernel=RBFKernel(),
+        base_kernel=RBFKernel(features=["x1", "x2"]),
         conditions=conditions,
-        drop_indicator_features_in_base_kernel=True,
-        features=feats,
     )
 
     k = kernels.map(
@@ -391,9 +391,10 @@ def test_map_WedgeKernel():
     # the base kernel drops the indicator, and adds a second dimension for x2.
     assert k.base_kernel.active_dims.tolist() == [0, 1, 4]
 
-    # test keeping indicator features
-    data_model = data_model.model_copy(
-        update={"drop_indicator_features_in_base_kernel": False}
+    # test keeping indicator feature
+    data_model = WedgeKernel(
+        base_kernel=RBFKernel(features=["x1", "x2", "indicator"]),
+        conditions=conditions,
     )
 
     k = kernels.map(
