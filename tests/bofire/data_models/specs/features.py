@@ -45,6 +45,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "allow_zero": False,
     },
 )
 
@@ -57,7 +58,7 @@ specs.add_invalid(
 
 specs.add_invalid(
     features.ContinuousInput,
-    lambda: {"key": "a", "bounds": [3, 5], "allow_zero": False},
+    lambda: {"key": "a", "bounds": [-1, 5], "allow_zero": True},
     error=ValueError,
     message="If `allow_zero==True`, then zero must not lie within the bounds.",
 )
@@ -72,6 +73,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "allow_zero": False,
     },
 )
 specs.add_valid(

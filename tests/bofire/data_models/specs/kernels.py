@@ -140,11 +140,13 @@ specs.add_valid(
     kernels.WedgeKernel,
     lambda: {
         "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
+        "ard": True,
         "lengthscale_prior": priors.valid().obj().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
         "angle_prior": priors.valid().obj().model_dump(),
+        "radius_prior": priors.valid().obj().model_dump(),
         "conditions": [],
     },
 )
