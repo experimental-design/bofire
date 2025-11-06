@@ -1,7 +1,10 @@
 import unittest
+from typing import cast
 
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.optim.initializers import gen_batch_initial_conditions
+from botorch.utils.testing import MockAcquisitionFunction
 
 from bofire.benchmarks.api import Hartmann
 from bofire.data_models.constraints.api import (
@@ -31,7 +34,7 @@ from bofire.utils.torch_tools import tkwargs
 
 def test_determine_optimizer():
     optimizer_data = BotorchOptimizerModel()
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
         ],
@@ -45,7 +48,7 @@ def test_determine_optimizer():
     assert (
         optimizer._determine_optimizer(domain, n_acqfs=1) == OptimizerEnum.OPTIMIZE_ACQF
     )
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["a", "b"]),
@@ -56,7 +59,7 @@ def test_determine_optimizer():
         optimizer._determine_optimizer(domain, n_acqfs=1)
         == OptimizerEnum.OPTIMIZE_ACQF_MIXED
     )
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=[f"cat_{i}" for i in range(12)]),
@@ -67,7 +70,7 @@ def test_determine_optimizer():
         optimizer._determine_optimizer(domain, n_acqfs=1)
         == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
     )
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             ContinuousInput(key="x2", bounds=(0, 1)),
@@ -93,8 +96,7 @@ def test_get_arguments_for_optimizer():
     domain = benchmark.domain
     optimizer = BotorchOptimizer(optimizer_data)
 
-    def simple_acqf(X):
-        return -((X.squeeze(-2) - 2) ** 2).sum(dim=-1, keepdim=True)
+    simple_acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
 
     def get_bounds(domain: Domain) -> torch.Tensor:
         input_preprocessing_specs = optimizer._input_preprocessing_specs(domain)

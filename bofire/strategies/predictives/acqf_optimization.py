@@ -649,7 +649,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 if isinstance(feature, CategoricalInput):
                     assert feature.categories is not None
                     fixed_features[features2idx[feat][0]] = feature.categories.index(
-                        val
+                        val  # type: ignore
                     )  # this transforms to ordinal encoding
 
             list_of_fixed_features.append(fixed_features)
