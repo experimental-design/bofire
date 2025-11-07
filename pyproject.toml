@@ -43,7 +43,7 @@ optimization = [
     "pymoo>=0.6.0",
     "shap>=0.48.0",
 ]
-entmoot = ["entmoot>=2.0.6"]
+entmoot = ["entmoot>=2.0.6", "pyomo<=6.9.4"]
 xgb = ["xgboost>=1.7.5"]
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred>=1.2.0"]
 tests = [
