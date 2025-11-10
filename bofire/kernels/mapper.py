@@ -285,13 +285,17 @@ def map_WedgeKernel(
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> WedgeKernel:
-    # TODO: `build_indicator_func` can only take some of the above arguments
     indicator_func = build_indicator_func(data_model.conditions, features_to_idx_mapper)
     base_kernel_active_dims = compute_base_kernel_active_dims(
         data_model, active_dims, features_to_idx_mapper
     )
+    # we compute the active dimensions above, then remove `features` from the base_kernel
+    # to avoid re-filtering the active dimensions.
+    base_kernel_data_model = data_model.base_kernel.model_copy(
+        update={"features": None}
+    )
     base_kernel = map(
-        data_model=data_model.base_kernel,
+        data_model=base_kernel_data_model,
         batch_shape=batch_shape,
         active_dims=base_kernel_active_dims,
         features_to_idx_mapper=features_to_idx_mapper,
