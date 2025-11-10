@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from bofire.data_models.features.api import AnyInput
 
 
-_threshold_operators: dict[str, Callable] = {
+threshold_operators: dict[str, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
     ">": ops.gt,
@@ -67,7 +67,7 @@ class ThresholdCondition(Condition):
 
     def __call__(self, values: pd.Series) -> pd.Series:
         def evaluate(x: ArrayLike):
-            return _threshold_operators[self.operator](x, self.threshold)
+            return threshold_operators[self.operator](x, self.threshold)
 
         return values.apply(evaluate)
 

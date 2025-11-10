@@ -1,5 +1,4 @@
 import math
-import operator as ops
 from typing import Callable, Sequence
 
 import torch
@@ -13,6 +12,7 @@ from bofire.data_models.constraints.condition import (
     NonZeroCondition,
     SelectionCondition,
     ThresholdCondition,
+    threshold_operators,
 )
 from bofire.data_models.kernels.conditional import (
     ConditionalEmbeddingKernel as ConditionalEmbeddingKernelDataModel,
@@ -20,13 +20,6 @@ from bofire.data_models.kernels.conditional import (
 
 
 IndicatorFunction = Callable[[Tensor], Tensor]
-
-_threshold_operators: dict[str, Callable] = {
-    "<": ops.lt,
-    "<=": ops.le,
-    ">": ops.gt,
-    ">=": ops.ge,
-}
 
 
 def _conditional_feature_to_indicator(
@@ -54,7 +47,7 @@ def _conditional_feature_to_indicator(
         return feat_idx, lambda X: torch.isin(X[..., indicator_feat_idx], values_t)
 
     if isinstance(condition, ThresholdCondition):
-        op = _threshold_operators[condition.operator]
+        op = threshold_operators[condition.operator]
         return feat_idx, lambda X: op(X[..., indicator_feat_idx], condition.threshold)
 
     if isinstance(condition, NonZeroCondition):
