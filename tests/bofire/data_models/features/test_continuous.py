@@ -191,7 +191,7 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
             pd.Series([3.1, 3.2, 3.4]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(allow_zero=False),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 5), allow_zero=False),
             pd.Series([0.0, 4.0]),
         ),
     ],

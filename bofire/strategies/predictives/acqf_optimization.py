@@ -628,10 +628,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         fixed_basis = self.get_fixed_features(domain=domain)
 
-        combos = domain.inputs.get_categorical_combinations(
-            # TODO: is commented line below necessary? If not, remove
-            # include=[CategoricalInput, DiscreteInput],
-        )
+        combos = domain.inputs.get_categorical_combinations()
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
