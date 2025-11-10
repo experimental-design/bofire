@@ -17,7 +17,24 @@ class ConditionalEmbeddingKernel(Kernel):
     that indicator features - those that only exist to indicate whether another
     feature is active - not be included in `base_kernel.features`, since they
     will not provide any useful information beyond their role as an indicator. This
-    avoids "double-dipping" these indicator features."""
+    avoids "double-dipping" these indicator features.
+
+    Example:
+        >>> # Feature that is conditional on another (indicator) feature.
+        >>> # eg. only include catalyst concentration if catalyst != None
+        >>> inter_dependent_condition = (
+        >>>     "catalyst_concentration", "catalyst", SelectionCondition(selection=["Pt", "Pd"])
+        >>> )
+        >>> # Feature that depends on itself taking certain values
+        >>> self_dependent_condition = (
+        >>>     "acid_concentration", "acid_concentration", NonZeroCondition()
+        >>> )
+        >>> conditions = [inter_dependent_condition, self_dependent_condition]
+        >>> conditional_kernel = ConditionalEmebeddingKernel(
+        >>>     base_kernel=LinearKernel(),
+        >>>     conditions=conditions
+        >>> )
+    """
 
     base_kernel: Union[
         RBFKernel,

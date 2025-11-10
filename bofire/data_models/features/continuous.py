@@ -19,9 +19,10 @@ class ContinuousInput(NumericalInput):
         stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
             Defaults to None.
-        allow_zero (bool): A boolean indicating if the input feature can take inactive values. If True,
-            use a conditional encoding kernel for this feature. Useful for features that take values between `bounds`, but can
-            also take a value of 0.
+        allow_zero (bool): A boolean indicating if the input feature can take inactive values.
+            Useful for features that take values between `bounds`, but can also take a value of 0.
+            One may choose to use a conditional kernel for this, if taking a value of 0
+            represents a distinct behaviour from non-zero values.
 
     """
 
