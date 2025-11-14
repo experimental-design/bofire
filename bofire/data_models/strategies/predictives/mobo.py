@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Dict, Literal, Optional, Type, Union
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.acquisition_functions.api import (
     AnyMultiObjectiveAcquisitionFunction,
@@ -175,6 +175,27 @@ class MoboStrategy(MultiobjectiveStrategy):
     acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
         default_factory=lambda: qLogNEHVI(),
     )
+    nchoosek_as_sebo: bool = False
+
+    # this overwrites the original validator in MultiobjectiveStrategy
+    # TODO: unify this and get it working properly
+    @field_validator("domain")
+    @classmethod
+    def validate_domain_is_multiobjective(cls, v):
+        """Validate that the domain is multiobjective."""
+        # feats = v.outputs.get_by_objective(
+        #     [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
+        # )
+        # if len(feats) < 2:
+        #     raise ValueError(
+        #         "At least two output features with MaximizeObjective or MinimizeObjective has to be defined in the domain.",
+        #     )
+        # for feat in feats:
+        #     if feat.objective.w != 1.0:
+        #         raise ValueError(
+        #             f"Only objectives with weight 1 are supported. Violated by feature {feat.key}.",
+        #         )
+        return v
 
     @model_validator(mode="after")
     def validate_ref_point(self):
