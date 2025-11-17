@@ -33,7 +33,6 @@ The available dependencies are:
 - `optimization`: Core Bayesian optimization features.
 - `cheminfo`: Cheminformatics utilities.
 - `entmoot`: [Entmoot functionality.](https://github.com/cog-imperial/entmoot)
-- `xgb`: XGboost surrogates.
 - `tests`: Required for running the test suite.
 - `docs`: Required for building the documentation.
 - `tutorials`: Required for running the [tutorials.](https://github.com/experimental-design/bofire/tree/main/tutorials)
