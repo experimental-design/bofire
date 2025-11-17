@@ -14,7 +14,6 @@ BoFire offers the following classes of surrogate models.
 [RandomForestSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation
 [MLP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron
 [MixedSingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process
-[XGBoostSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/xgb.py)|a single objective|Rich data; black-box function does not have to be smooth|xgboost implementation of gradient boosting trees
 [TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points
 
 All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable [Strategy](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py) has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.
@@ -25,7 +24,7 @@ All of these are single-objective surrogate models. For optimization of multiple
             inputs=domain.inputs,
             outputs=Outputs(features=[domain.outputs[0]]),
     )
-    surrogate_data_1 = XGBoostSurrogate(
+    surrogate_data_1 = RandomForestSurrogate(
         inputs=domain.inputs,
         outputs=Outputs(features=[domain.outputs[1]]),
     )
@@ -39,7 +38,7 @@ All of these are single-objective surrogate models. For optimization of multiple
 **Note:**
 
 - The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
-- The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have kernels but quantify uncertainty using the standard deviation of the predictions of their individual trees.
+- The RandomForestSurrogate does not have kernels but quantifies uncertainty using the standard deviation of the predictions of its individual trees.
 - MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).
 
 ## Customization
