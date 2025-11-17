@@ -2,7 +2,7 @@ from typing import Dict, Optional
 
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.map_saas import AdditiveMapSaasSingleTaskGP, EnsambleMapSaasSingleTaskGP
+from botorch.models.map_saas import AdditiveMapSaasSingleTaskGP, EnsembleMapSaasSingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -47,7 +47,7 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
 
-class EnsambleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     def __init__(
         self,
         data_model: DataModel,
@@ -58,7 +58,7 @@ class EnsambleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         self.output_scaler = data_model.output_scaler
         super().__init__(data_model=data_model, **kwargs)
 
-    model: Optional[EnsambleMapSaasSingleTaskGP] = None
+    model: Optional[EnsembleMapSaasSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
@@ -70,7 +70,7 @@ class EnsambleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ):
-        self.model = EnsambleMapSaasSingleTaskGP(
+        self.model =EnsembleMapSaasSingleTaskGP(
             train_X=tX,
             train_Y=tY,
             outcome_transform=outcome_transform,
