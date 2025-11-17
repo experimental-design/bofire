@@ -105,7 +105,7 @@ class LinearProjection(DomainRepair):
         self,
         domain: Domain,
         q: int = 1,
-        input_preprocessing_specs: InputTransformSpecs = None,
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
         verbose: bool = False,
