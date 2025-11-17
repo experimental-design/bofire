@@ -26,10 +26,6 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.utils.domain_repair import (
-    LinearProjection,
-    default_input_preprocessing_specs,
-)
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -39,6 +35,10 @@ from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.utils.domain_repair import (
+    LinearProjection,
+    default_input_preprocessing_specs,
+)
 from bofire.utils.torch_tools import get_nonlinear_constraints, tkwargs
 
 

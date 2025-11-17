@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.domain import api as domain_module
-from bofire.utils.domain_repair import LinearProjection
 from bofire.data_models.features import api as feature_module
+from bofire.utils.domain_repair import LinearProjection
 
 
 class TestLinearProjection:
