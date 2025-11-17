@@ -48,12 +48,11 @@ from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDa
 from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
-from tests.bofire.strategies.test_base import domains
 
 
 def test_SOBO_not_fitted():
-    data_model = data_models.SoboStrategy(domain=domains[0])
-    strategy = SoboStrategy(data_model=data_model)
+    domain = Branin().domain
+    strategy = SoboStrategy.make(domain=domain)
 
     msg = "Model not trained."
     with pytest.raises(AssertionError, match=msg):
@@ -169,14 +168,23 @@ def test_get_acqf_input_tensors_infeasible(include_infeasible):
     )
     strategy._experiments = experiments
     if not include_infeasible:
-        with pytest.raises(
-            ValueError,
+        with pytest.warns(
+            RuntimeWarning,
             match="No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
         ):
-            strategy.get_acqf_input_tensors()  # not include_infeasible should be default behavior
+            filtered_experiments, _ = strategy.get_acqf_input_tensors()
+            assert filtered_experiments.shape[0] == 10
     else:
-        X_train, X_pending = strategy.get_acqf_input_tensors()
+        X_train, _ = strategy.get_acqf_input_tensors()
         assert X_train.shape[0] == len(experiments)
+
+    if not include_infeasible:
+        for feat in benchmark.domain.inputs.get():
+            feat.bounds = (-6, 0)
+        strategy = SoboStrategy.make(domain=benchmark.domain)
+        strategy._experiments = experiments
+        filtered_experiments, _ = strategy.get_acqf_input_tensors()
+        assert filtered_experiments.shape[0] < 10
 
 
 @pytest.mark.parametrize(
@@ -330,8 +338,7 @@ def test_custom_dumps_invalid():
 def test_sobo_fully_combinatorial(candidate_count):
     benchmark = _CategoricalDiscreteHimmelblau()
 
-    strategy_data = data_models.SoboStrategy(domain=benchmark.domain)
-    strategy = SoboStrategy(data_model=strategy_data)
+    strategy = SoboStrategy.make(domain=benchmark.domain)
 
     experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
 
@@ -450,6 +457,8 @@ def test_sobo_lsrbo():
     )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
+    preds = strategy.predict(experiments)
+    assert len(preds) == len(experiments)
     strategy.ask(1)
     np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.55276, 11.192913])  # type: ignore
     # global search

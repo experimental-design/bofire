@@ -74,6 +74,7 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
@@ -118,6 +119,7 @@ specs.add_valid(
         "convex_parametrization": True,
         "prior_mean_of_support": None,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
@@ -182,6 +184,7 @@ specs.add_valid(
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "hyperconfig": None,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "aggregations": None,
         "dump": None,
         "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
@@ -206,6 +209,7 @@ specs.add_valid(
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
     },
@@ -231,6 +235,7 @@ specs.add_valid(
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
         "model_type": "saas",
@@ -285,7 +290,7 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                features.valid(ContinuousInput).obj(),
+                ContinuousInput(key="num1", bounds=[0, 1]),
             ]
             + [CategoricalInput(key="cat1", categories=["a", "b", "c"])],
         ).model_dump(),
@@ -295,12 +300,17 @@ specs.add_valid(
             ],
         ).model_dump(),
         "aggregations": None,
-        "continuous_kernel": MaternKernel(ard=True, nu=2.5).model_dump(),
-        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, nu=2.5, features=["num1"]
+        ).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(
+            ard=True, features=["cat1"]
+        ).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ORDINAL},
+        "categorical_encodings": {"cat1": CategoricalEncodingEnum.ORDINAL},
         "dump": None,
         "hyperconfig": None,
     },
@@ -329,10 +339,94 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
+specs.add_invalid(
+    models.MixedSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
+)
+
+specs.add_invalid(
+    models.MixedSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+    },
+    error=ValueError,
+    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
+)
+
+(
+    specs.add_invalid(
+        models.MixedSingleTaskGPSurrogate,
+        lambda: {
+            "inputs": Inputs(
+                features=[
+                    ContinuousInput(key="x_cont", bounds=[0, 1]),
+                    CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+                ],
+            ).model_dump(),
+            "outputs": Outputs(
+                features=[
+                    features.valid(ContinuousOutput).obj(),
+                ],
+            ).model_dump(),
+            "continuous_kernel": MaternKernel(nu=2.5, features=["x_cat"]).model_dump(),
+        },
+        error=ValueError,
+        message="The features defined in",
+    ),
+)
+
+(
+    specs.add_invalid(
+        models.MixedSingleTaskGPSurrogate,
+        lambda: {
+            "inputs": Inputs(
+                features=[
+                    ContinuousInput(key="x_cont", bounds=[0, 1]),
+                    CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+                ],
+            ).model_dump(),
+            "outputs": Outputs(
+                features=[
+                    features.valid(ContinuousOutput).obj(),
+                ],
+            ).model_dump(),
+            "categorical_kernel": HammingDistanceKernel(
+                ard=True, features=["x_cont"]
+            ).model_dump(),
+        },
+        error=ValueError,
+        message="The features defined in the categorical",
+    ),
+)
+
 specs.add_valid(
     models.RandomForestSurrogate,
     lambda: {
@@ -348,6 +442,7 @@ specs.add_valid(
         ).model_dump(),
         "aggregations": None,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "n_estimators": 100,
         "criterion": "squared_error",
         "max_depth": None,
@@ -396,6 +491,7 @@ specs.add_valid(
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
         "hyperconfig": None,
     },
@@ -428,6 +524,7 @@ specs.add_invalid(
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
         "hyperconfig": None,
     },
@@ -462,6 +559,7 @@ specs.add_valid(
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
         "hyperconfig": None,
     },
@@ -564,7 +662,8 @@ specs.add_valid(
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "input_preprocessing_specs": {
+        "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
+        "categorical_encodings": {
             "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
         },
         "dump": None,
@@ -572,39 +671,6 @@ specs.add_valid(
     },
 )
 
-specs.add_valid(
-    models.MixedTanimotoGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                features.valid(ContinuousInput).obj(),
-            ]
-            + [MolecularInput(key="mol1")]
-            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "aggregations": None,
-        "molecular_kernel": TanimotoKernel(ard=True).model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True,
-            nu=random.choice([0.5, 1.5, 2.5]),
-        ).model_dump(),
-        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
-        "scaler": ScalerEnum.NORMALIZE,
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "input_preprocessing_specs": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
-            "cat1": CategoricalEncodingEnum.ONE_HOT,
-        },
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "dump": None,
-        "hyperconfig": None,
-    },
-)
 
 specs.add_valid(
     models.CategoricalDeterministicSurrogate,
@@ -619,7 +685,8 @@ specs.add_valid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
     },
@@ -640,7 +707,7 @@ specs.add_invalid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
     },
@@ -661,7 +728,7 @@ specs.add_invalid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "mapping": {"a": 0.1, "b": 0.2, "d": 1.0},
         "dump": None,
     },
@@ -686,6 +753,7 @@ specs.add_valid(
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0},
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "dump": None,
     },
 )
@@ -764,12 +832,14 @@ specs.add_valid(
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,
         },
+        "categorical_encodings": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
 )
 
-# if wrong encoding (one-hot) is used, there should be a validation error
 specs.add_invalid(
     models.MultiTaskGPSurrogate,
     lambda: {
@@ -836,6 +906,45 @@ specs.add_invalid(
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
     error=ValueError,
+    message="Exactly one task input",
+)
+
+specs.add_invalid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [TaskInput(key="task", categories=["a", "b", "c"])],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
+        "categorical_encodings": {
+            "task": CategoricalEncodingEnum.ONE_HOT,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
+    message="The task feature task has to be encoded as ordinal",
 )
 
 
@@ -870,6 +979,7 @@ specs.add_valid(
         "dump": None,
         "aggregations": None,
         "input_preprocessing_specs": {},
+        "categorical_encodings": {},
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "hyperconfig": PiecewiseLinearGPSurrogateHyperconfig().model_dump(),

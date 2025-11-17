@@ -4,11 +4,7 @@ import pytest
 
 from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    ContinuousInput,
-    ContinuousOutput,
-)
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective
 
 
@@ -35,14 +31,6 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
                     key="B",
                     type="ContinuousInput",
                     bounds=(-45, 20),
-                ),
-                CategoricalDescriptorInput(
-                    key="C",
-                    type="CategoricalDescriptorInput",
-                    categories=["0", "1"],
-                    allowed=[True, True],
-                    descriptors=["binary"],
-                    values=[[0.0], [1.0]],
                 ),
             ],
         ),

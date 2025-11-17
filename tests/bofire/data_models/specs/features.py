@@ -45,6 +45,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "allow_zero": False,
     },
 )
 
@@ -53,6 +54,13 @@ specs.add_invalid(
     lambda: {"key": "a", "bounds": [5, 3]},
     error=ValueError,
     message="Sequence is not monotonically increasing.",
+)
+
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": [-1, 5], "allow_zero": True},
+    error=ValueError,
+    message="If `allow_zero==True`, then zero must not lie within the bounds.",
 )
 
 specs.add_valid(
@@ -65,6 +73,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "allow_zero": False,
     },
 )
 specs.add_valid(

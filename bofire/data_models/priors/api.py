@@ -1,7 +1,12 @@
 from functools import partial
 from typing import Union
 
-from bofire.data_models.priors.constraint import PriorConstraint
+from bofire.data_models.priors.constraint import (
+    GreaterThan,
+    LessThan,
+    Positive,
+    PriorConstraint,
+)
 from bofire.data_models.priors.gamma import GammaPrior
 from bofire.data_models.priors.interval import (
     Interval,
@@ -28,7 +33,9 @@ AnyPrior = Union[
     DimensionalityScaledLogNormalPrior,
 ]
 
-AnyPriorConstraint = Union[NonTransformedInterval, LogTransformedInterval]
+AnyPriorConstraint = Union[
+    NonTransformedInterval, LogTransformedInterval, Positive, GreaterThan, LessThan
+]
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters

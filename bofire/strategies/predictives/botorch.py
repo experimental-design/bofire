@@ -1,3 +1,4 @@
+import warnings
 from abc import abstractmethod
 from typing import Callable, Dict, List, Optional, Tuple, get_args
 
@@ -187,7 +188,6 @@ class BotorchStrategy(PredictiveStrategy):
             candidate_count,
             acqfs,
             self.domain,
-            self.input_preprocessing_specs,
             self.experiments,
         )
 
@@ -238,15 +238,18 @@ class BotorchStrategy(PredictiveStrategy):
             # we should only provide those experiments to the acqf builder in which all
             # input constraints are fulfilled, output constraints are handled directly
             # in botorch
-            clean_experiments = clean_experiments[
+            fulfilled_experiments = clean_experiments[
                 self.domain.is_fulfilled(clean_experiments)
             ].copy()
-            if len(clean_experiments) == 0:
-                raise ValueError(
+            if len(fulfilled_experiments) == 0:
+                warnings.warn(
                     "No valid and feasible experiments are available for setting up the acquisition function. Check your constraints.",
+                    RuntimeWarning,
                 )
-        else:
-            clean_experiments = clean_experiments.copy()
+            else:
+                clean_experiments = fulfilled_experiments
+        # else:
+        #     clean_experiments = clean_experiments.copy()
 
         transformed = self.domain.inputs.transform(
             clean_experiments,

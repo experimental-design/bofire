@@ -1,3 +1,4 @@
+import importlib
 import random
 
 import numpy as np
@@ -5,6 +6,7 @@ import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.models.transforms.input import NumericToCategoricalEncoding
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 
 import bofire.strategies.api as strategies
@@ -20,9 +22,11 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -39,10 +43,12 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
+    Encoder,
     InterpolateTransform,
     _callables_and_weights,
     constrained_objective2botorch,
     get_additive_botorch_objective,
+    get_categorical_encoder,
     get_custom_botorch_objective,
     get_initial_conditions_generator,
     get_interpoint_constraints,
@@ -52,12 +58,16 @@ from bofire.utils.torch_tools import (
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
+    get_NumericToCategorical_input_transform,
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
     interp1d,
     tkwargs,
 )
+
+
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
 if1 = ContinuousInput(
@@ -1034,13 +1044,22 @@ def test_get_initial_conditions_generator(sequential: bool):
             CategoricalDescriptorInput(
                 key="b",
                 categories=["alpha", "beta", "gamma"],
-                descriptors=["omega"],
-                values=[[0], [1], [3]],
+                descriptors=["omega", "gamma"],
+                values=[[0, 4], [1, 5], [3, 6]],
             ),
         ]
     )
     domain = Domain(inputs=inputs)
     strategy = strategies.map(RandomStrategy(domain=domain))
+    # test with ordinal encoding
+    generator = get_initial_conditions_generator(
+        strategy=strategy,
+        transform_specs={"b": CategoricalEncodingEnum.ORDINAL},
+        ask_options={},
+        sequential=sequential,
+    )
+    initial_conditions = generator(n=3, q=2, seed=42)
+    assert initial_conditions.shape == torch.Size((3, 2, 2))
     # test with one hot encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
@@ -1058,7 +1077,7 @@ def test_get_initial_conditions_generator(sequential: bool):
         sequential=sequential,
     )
     initial_conditions = generator(n=3, q=2, seed=42)
-    assert initial_conditions.shape == torch.Size((3, 2, 2))
+    assert initial_conditions.shape == torch.Size((3, 2, 3))
 
 
 @pytest.mark.parametrize(
@@ -1413,3 +1432,88 @@ assert torch.allclose(
     new_y,
     new_x,
 )
+
+
+@pytest.mark.parametrize(
+    "feature, transform, expected_encoding",
+    [
+        (
+            CategoricalInput(
+                key="a",
+                categories=["a", "b", "c"],
+            ),
+            CategoricalEncodingEnum.ONE_HOT,
+            torch.tensor([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).to(**tkwargs),
+        ),
+        (
+            CategoricalDescriptorInput(
+                key="a",
+                categories=["a", "b", "c"],
+                descriptors=["oscar", "wilde"],
+                values=[[1, 2], [3, 4], [5, 6]],
+            ),
+            CategoricalEncodingEnum.DESCRIPTOR,
+            torch.tensor([[1, 2], [3, 4], [5, 6]]).to(**tkwargs),
+        ),
+        (
+            CategoricalMolecularInput(
+                key="a",
+                categories=["CC", "CCC"],
+            ),
+            CategoricalEncodingEnum.ONE_HOT,
+            torch.tensor([[1, 0], [0, 1]]).to(**tkwargs),
+        ),
+    ],
+)
+def test_get_categorical_encoder(feature, transform, expected_encoding):
+    encoder = get_categorical_encoder(feature, transform)
+    assert isinstance(encoder, Encoder)
+    assert encoder.dim == encoder.encoding.shape[1]
+    assert torch.allclose(encoder.encoding, expected_encoding)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_get_categorical_encoder_molecular():
+    feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
+    transform = Fingerprints()
+    expected_encoding = torch.from_numpy(
+        feat.to_descriptor_encoding(transform, pd.Series(feat.categories)).values
+    ).to(**tkwargs)
+    encoder = get_categorical_encoder(feat, transform)
+    assert isinstance(encoder, Encoder)
+    assert encoder.dim == encoder.encoding.shape[1]
+    assert torch.allclose(encoder.encoding, expected_encoding)
+
+
+def test_get_NumericToCategorical_input_transform():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            CategoricalInput(key="x2", categories=["a", "b", "c"]),
+            CategoricalInput(key="x3", categories=["d", "e"]),
+        ]
+    )
+    transform_specs = {
+        "x2": CategoricalEncodingEnum.ONE_HOT,
+        "x3": CategoricalEncodingEnum.ONE_HOT,
+    }
+    transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
+    assert isinstance(transform, NumericToCategoricalEncoding)
+    assert transform.categorical_features == {1: 3, 2: 2}
+    assert len(transform.encoders) == 2
+    assert list(transform.encoders.keys()) == [1, 2]
+    transform_specs = {
+        "x2": CategoricalEncodingEnum.ORDINAL,
+        "x3": CategoricalEncodingEnum.ONE_HOT,
+    }
+    transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
+    assert isinstance(transform, NumericToCategoricalEncoding)
+    assert transform.categorical_features == {2: 2}
+    assert len(transform.encoders) == 1
+    assert list(transform.encoders.keys()) == [2]
+    transform_specs = {
+        "x2": CategoricalEncodingEnum.ORDINAL,
+        "x3": CategoricalEncodingEnum.ORDINAL,
+    }
+    transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
+    assert transform is None

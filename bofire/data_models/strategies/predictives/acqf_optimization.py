@@ -8,18 +8,13 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints
 from bofire.data_models.constraints.api import InterpointConstraint
 from bofire.data_models.domain.domain import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    MixedSingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import BotorchSurrogates
 from bofire.data_models.types import IntPowerOfTwo
 
 
@@ -106,18 +101,13 @@ AnyLocalSearchConfig = LSRBO
 
 class BotorchOptimizer(AcquisitionOptimizer):
     type: Literal["BotorchOptimizer"] = "BotorchOptimizer"  # type: ignore
-    n_restarts: PositiveInt = 8
-    n_raw_samples: IntPowerOfTwo = 1024
+    n_restarts: PositiveInt = 20  # same default as in Ax
+    n_raw_samples: IntPowerOfTwo = 1024  # same default as in Ax
     maxiter: PositiveInt = 2000
     batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
     sequential: bool = False
     # for a discussion on the use of sequential, have a look here
     # https://github.com/pytorch/botorch/discussions/2810
-
-    # encoding params
-    descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
 
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
@@ -130,6 +120,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             info.data["n_restarts"],
         )
         return batch_limit
+
+    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
+        pass
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         """Checks if a constraint is implemented. Currently only linear constraints are supported.
@@ -193,34 +186,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         validate_interpoint_constraints(domain)
         validate_exclude_constraints(domain)
 
-    def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):
-        # we also have to check here that the categorical method is compatible with the chosen models
-        # categorical_method = (
-        #   values["categorical_method"] if "categorical_method" in values else None
-        # )
-
-        if self.categorical_method == CategoricalMethodEnum.FREE:
-            for m in surrogate_specs.surrogates:
-                if isinstance(m, MixedSingleTaskGPSurrogate):
-                    raise ValueError(
-                        "Categorical method FREE not compatible with a a MixedSingleTaskGPModel.",
-                    )
-        # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
-        # used for the descriptor as for the categoricals
-        for m in surrogate_specs.surrogates:
-            keys = m.inputs.get_keys(CategoricalDescriptorInput)
-            for k in keys:
-                input_proc_specs = (
-                    m.input_preprocessing_specs[k]
-                    if k in m.input_preprocessing_specs
-                    else None
-                )
-                if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
-                    if self.categorical_method != self.descriptor_method:
-                        raise ValueError(
-                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals.",
-                        )
-
 
 class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     """
@@ -270,26 +235,6 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         ]
 
     def validate_domain(self, domain: Domain):
-        def validate_exclude_constraints(domain: Domain):
-            if (
-                len(domain.constraints.get(constraints.CategoricalExcludeConstraint))
-                > 0
-            ):
-                if len(
-                    domain.inputs.get([CategoricalInput, DiscreteInput]),
-                ) != len(domain.inputs):
-                    raise ValueError(
-                        "CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
-                    )
-                if (
-                    self.prefer_exhaustive_search_for_purely_categorical_domains
-                    is False
-                ):
-                    raise ValueError(
-                        "CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
-                    )
-
-        validate_exclude_constraints(domain)
         pass
 
     def validate_surrogate_specs(self, surrogate_specs: BotorchSurrogates):

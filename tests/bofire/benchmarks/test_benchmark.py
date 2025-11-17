@@ -89,7 +89,6 @@ def test_FormulationWrapper():
     )
     transformed = wrapped._transform(candidates)
     assert transformed.shape == (3, 2)
-    print(transformed)
     assert_frame_equal(
         transformed,
         pd.DataFrame({"x_1": [-6.0, 6.0, 0], "x_2": [-6.0, 6.0, 6.0]}),
@@ -97,6 +96,14 @@ def test_FormulationWrapper():
     # now we test the full evaluation
     evaled = wrapped.f(candidates, return_complete=False)
     assert_frame_equal(evaled, benchmark.f(transformed, return_complete=False))
+    # test adding of NChooseK constraint
+    wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2, max_count=2)
+    assert len(wrapped.domain.constraints) == 2
+    nkc = wrapped.domain.constraints[1]
+    assert nkc.features == wrapped._benchmark.domain.inputs.get_keys()
+    assert nkc.max_count == 2
+    assert nkc.min_count == 0
+    assert nkc.none_also_valid is True
 
 
 def test_SpuriousFeaturesWrapper():

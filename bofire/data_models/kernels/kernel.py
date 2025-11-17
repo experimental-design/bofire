@@ -1,10 +1,10 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from bofire.data_models.base import BaseModel
 
 
 class Kernel(BaseModel):
-    type: str
+    type: Any
 
 
 class AggregationKernel(Kernel):
