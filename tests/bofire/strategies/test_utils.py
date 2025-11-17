@@ -233,6 +233,53 @@ class TestLinearProjection:
         mask = x[:, 0] < x[:, 1]
         assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
 
+    # def test_do2(self):
+    #     """actually run the optimization and check the results for toy system with known solution"""
+    #     # create simple linear system
+    #     domain = data_models_domain.Domain(
+    #         inputs=[
+    #             data_models_features.ContinuousInput(key=f"t_{i}", bounds=(0.0, 100.0)) for i in range(11)
+    #         ],
+    #         constraints=[
+    #             LinearEqualityConstraint(  # ti < t(i+1) --> -t(i) + t(i-1) > 0
+    #                 features=[f"t_{i}", f"t_{i+1}"],
+    #                 coefficients=[-1.0, 1.0],
+    #                 rhs=1.0,
+    #             )
+    #             for i in range(0)
+    #         ],
+    #     )
+    #
+    #     repair_instance = LinearProjection(
+    #         domain=domain,
+    #         d=2,
+    #         bounds=torch.from_numpy(np.array([[0.0, 0.0], [1.0, 1.0]])).to(**tkwargs),
+    #         q=1,
+    #         domain_handler=GaMixedDomainHandler(
+    #             domain=domain, input_preprocessing_specs={}, q=1
+    #         ),
+    #     )
+    #
+    #     # create a mock generation
+    #     x = pd.DataFrame(
+    #         np.random.uniform(-0.1, 1.1, size=(1000, 2)), columns=["x1_q0", "x2_q0"]
+    #     ).to_dict(orient="records")
+    #
+    #     # run the repair
+    #     xr = repair_instance._do(None, x)
+    #
+    #     # check the results
+    #     x = pd.DataFrame(x).values
+    #     xr = pd.DataFrame(xr).values
+    #
+    #     # equation constraint: x1 + x2 = 1
+    #     assert np.allclose(xr[:, 0] + xr[:, 1], 1.0, atol=1e-5)
+    #     # inequality constraint: x1 >= x2
+    #     assert np.all(xr[:, 0] + 1e-5 >= xr[:, 1])
+    #     # mapping of points in upper triangle to (0.5, 0.5)
+    #     mask = x[:, 0] < x[:, 1]
+    #     assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
+
     def test_do_nchoose_k(self):
         """actually run the optimization and check the results for toy system with known solution"""
         # create simple linear system
