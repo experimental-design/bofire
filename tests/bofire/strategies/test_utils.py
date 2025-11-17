@@ -3,7 +3,6 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
-import torch
 from scipy import linalg
 
 from bofire.data_models.constraints.api import (
@@ -14,12 +13,8 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain import api as data_models_domain
 from bofire.data_models.features import api as data_models_features
 from bofire.data_models.strategies import api as data_models_strategies
-from bofire.strategies.utils import (
-    GaMixedDomainHandler,
-    LinearProjectionPymooRepair,
-    get_torch_bounds_from_domain,
-)
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.strategies.utils import GaMixedDomainHandler, LinearProjectionPymooRepair
+from bofire.utils.torch_tools import get_linear_constraints
 
 
 @pytest.fixture
@@ -73,7 +68,6 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjectionPymo
         optimizer=data_models_strategies.GeneticAlgorithmOptimizer(),  # dummy
     )
 
-    input_preprocessing_specs = strategy.input_preprocessing_specs
     q = optimizer_benchmark.n_add
 
     # We handle linear equality constraint with a repair function
@@ -88,7 +82,9 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjectionPymo
 
 class TestLinearProjection:
     def test_create_qp_problem(
-        self, mock_pymoo_generation: List[dict], repair_instance: LinearProjectionPymooRepair
+        self,
+        mock_pymoo_generation: List[dict],
+        repair_instance: LinearProjectionPymooRepair,
     ):
         n_gen = len(mock_pymoo_generation)
         n_add = repair_instance.linear_projection.q
@@ -130,7 +126,9 @@ class TestLinearProjection:
             if len(nck_constr) > 0:
                 # check how NChooseK constraints manipulate the bounds
                 for idx_constr in range(len(nck_constr)):
-                    idx = repair_instance.linear_projection.n_choose_k_constr.idx[idx_constr]
+                    idx = repair_instance.linear_projection.n_choose_k_constr.idx[
+                        idx_constr
+                    ]
                     lb, ub = lb[idx], ub[idx]
                     assert int((lb > 0).sum()) >= nck_constr[idx_constr].min_count
                     assert (
@@ -140,10 +138,12 @@ class TestLinearProjection:
 
             else:
                 assert (
-                    ub.reshape(-1) == repair_instance.linear_projection.bounds[1, :].reshape(-1)
+                    ub.reshape(-1)
+                    == repair_instance.linear_projection.bounds[1, :].reshape(-1)
                 ).all()
                 assert (
-                    lb.reshape(-1) == repair_instance.linear_projection.bounds[0, :].reshape(-1)
+                    lb.reshape(-1)
+                    == repair_instance.linear_projection.bounds[0, :].reshape(-1)
                 ).all()
 
         # linear inequality constraints (lower part of G/h matrices)

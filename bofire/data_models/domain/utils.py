@@ -1,45 +1,23 @@
-
-from typing import Type
 from abc import abstractmethod
-
-import pandas as pd
-
-from bofire.data_models.constraints import api as constraints
-
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import List, Optional, Tuple, Type
 
 import cvxpy as cp
 import numpy as np
 import pandas as pd
-
 from scipy import sparse
-from torch import Tensor
 
+from bofire.data_models.constraints import api as constraints
 from bofire.data_models.constraints.api import (
-    CategoricalExcludeConstraint,
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
-    NonlinearInequalityConstraint,
-    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import (
-    CategoricalInput,
-    ContinuousInput,
-    DiscreteInput,
-)
-from bofire.data_models.strategies.api import (
-    GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
-)
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 from bofire.data_models.types import InputTransformSpecs
-from bofire.utils.torch_tools import (
-    get_linear_constraints,
-    get_nonlinear_constraints,
-    tkwargs,
-)
+from bofire.utils.torch_tools import get_linear_constraints
 
 
 def default_input_preprocessing_specs(
@@ -51,15 +29,15 @@ def default_input_preprocessing_specs(
         for key in domain.inputs.get_keys(CategoricalInput)
     }
 
+
 class DomainRepair:
-    """ Abstract class for all methods, considering 'repair' of experiments """
+    """Abstract class for all methods, considering 'repair' of experiments"""
 
     @abstractmethod
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """
         Converting a set of experiments in a domain, into the feasible space
         """
-
 
     @abstractmethod
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
@@ -82,7 +60,6 @@ class DomainRepair:
             domain (Domain): The domain to be validated.
         """
         pass
-
 
 
 class LinearProjection(DomainRepair):
@@ -155,7 +132,9 @@ class LinearProjection(DomainRepair):
         lower, upper = domain.inputs.get_bounds(
             specs=input_preprocessing_specs,
         )
-        bounds = np.vstack((np.array(lower).reshape((1, -1)), np.array(upper).reshape((1, -1))))
+        bounds = np.vstack(
+            (np.array(lower).reshape((1, -1)), np.array(upper).reshape((1, -1)))
+        )
         self.bounds = bounds
 
         def lin_constr_to_list(constr_) -> Tuple[List[int], List[float], float]:
@@ -291,13 +270,12 @@ class LinearProjection(DomainRepair):
                     n_choose_k_constr_min_delta,
                 )
 
-        #self.domain_handler = domain_handler
+        # self.domain_handler = domain_handler
         self.d = bounds.shape[1]
         self.q = q
         self.domain = domain
         self.bounds = bounds
         self.verbose = verbose
-
 
     def _create_qp_problem_input(self, X: np.ndarray) -> dict:
         n_pop = X.shape[0]
@@ -404,7 +382,6 @@ class LinearProjection(DomainRepair):
             "initvals": x,
         }
 
-
     def solve_numeric(self, X: np.ndarray) -> np.ndarray:
         """
         Converting a set of experiments in a domain, into the feasible space, considering the inputs in the numerical
@@ -438,12 +415,15 @@ class LinearProjection(DomainRepair):
         """
         Converting a set of experiments in a domain, into the feasible space
         """
-        X = self.domain.inputs.transform(experiments, self.input_preprocessing_specs).values
+        X = self.domain.inputs.transform(
+            experiments, self.input_preprocessing_specs
+        ).values
 
         X_corrected = self.solve_numeric(X)
 
         return self.domain.inputs.inverse_transform(
-            experiments=pd.DataFrame(X_corrected, columns=self.domain.inputs.get_keys()),
+            experiments=pd.DataFrame(
+                X_corrected, columns=self.domain.inputs.get_keys()
+            ),
             specs=self.input_preprocessing_specs,
         )
-

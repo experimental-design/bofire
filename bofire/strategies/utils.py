@@ -1,6 +1,5 @@
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
-import cvxpy as cp
 import numpy as np
 import pandas as pd
 import torch
@@ -15,7 +14,6 @@ from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
-from scipy import sparse
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -28,7 +26,10 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.domain.utils import (
+    LinearProjection,
+    default_input_preprocessing_specs,
+)
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -38,12 +39,7 @@ from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.types import InputTransformSpecs
-from bofire.utils.torch_tools import (
-    get_linear_constraints,
-    get_nonlinear_constraints,
-    tkwargs,
-)
-from bofire.data_models.domain.utils import default_input_preprocessing_specs, LinearProjection
+from bofire.utils.torch_tools import get_nonlinear_constraints, tkwargs
 
 
 class GaMixedDomainHandler:
@@ -509,7 +505,6 @@ class LinearProjectionPymooRepair(PymooRepair):
         n_choose_k_constr_min_delta: float = 1e-3,
         verbose: bool = False,
     ):
-
         self.domain_handler = domain_handler
         self.linear_projection = LinearProjection(
             domain=domain,
@@ -522,10 +517,7 @@ class LinearProjectionPymooRepair(PymooRepair):
 
         super().__init__()
 
-
-
     def _do(self, problem, X, **kwargs):
-
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
