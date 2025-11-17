@@ -127,7 +127,6 @@ class LinearProjection(DomainRepair):
     def __init__(
         self,
         domain: Domain,
-        d: int,
         q: int = 1,
         input_preprocessing_specs: InputTransformSpecs = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
@@ -292,7 +291,7 @@ class LinearProjection(DomainRepair):
                 )
 
         #self.domain_handler = domain_handler
-        self.d = d
+        self.d = bounds.shape[1]
         self.q = q
         self.domain = domain
         self.bounds = bounds
@@ -368,7 +367,7 @@ class LinearProjection(DomainRepair):
             G = sparse.block_diag([G_bounds_] * n_x_points)
 
             if self.n_choose_k_constr is None:  # use the normal lb/ub
-                lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
+                lb, ub = (self.bounds[i, :] for i in range(2))
                 h_bounds_ = np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
                 h = np.vstack([h_bounds_.reshape(-1, 1)] * n_x_points)
             else:
@@ -408,7 +407,7 @@ class LinearProjection(DomainRepair):
     def solve_numeric(self, X: np.ndarray) -> np.ndarray:
         """
         Converting a set of experiments in a domain, into the feasible space, considering the inputs in the numerical
-        space. inputs must be in the right orde (according to the order in domain)
+        space. inputs must be in the right orde (according to the order in domain.inputs.get_keys())
         """
 
         matrices = self._create_qp_problem_input(X)
@@ -440,7 +439,10 @@ class LinearProjection(DomainRepair):
         """
         X = self.domain.inputs.transform(experiments, self.input_preprocessing_specs).values
 
+        X_corrected = self.solve_numeric(X)
+
         return self.domain.inputs.inverse_transform(
-            experiments=pd.DataFrame(X, columns=self.domain.inputs.get_keys())
+            experiments=pd.DataFrame(X_corrected, columns=self.domain.inputs.get_keys()),
+            specs=self.input_preprocessing_specs,
         )
 
