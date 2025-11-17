@@ -11,6 +11,7 @@ nav:
   - Examples: examples.md
   - Strategies: strategies.md
   - Data Models vs Functional Components: data_models_functionals.md
+  - Strategies: userguide_strategies.md
   - Surrogate Models: userguide_surrogates.md
   - API Reference:
     - Domain: ref-domain.md
@@ -65,10 +66,18 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify {kwds: {case: lower}}
   - admonition
 
+extra_css:
+  - https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/default.min.css
+
 extra_javascript:
+  - https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@latest/build/highlight.min.js
   - javascripts/mathjax.js
+  - javascripts/selectortabs.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 extra:
