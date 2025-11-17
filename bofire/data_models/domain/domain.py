@@ -429,6 +429,62 @@ class Domain(BaseModel):
         
         return experiments
 
+    def add_trajectory_id(
+        self,
+        experiments: pd.DataFrame,
+        eps: float = 1e-6,
+    ) -> pd.DataFrame:
+        """Add _trajectory_id column to experiments by inferring trajectory groupings.
+
+        This method automatically groups experiments into trajectories based on their
+        non-timeseries input feature values. Experiments with the same (or nearly same,
+        within eps) values for all non-timeseries features are assigned the same
+        trajectory ID.
+
+        This is useful when you have experimental data from multiple runs/trajectories
+        but haven't manually labeled which observations belong to which trajectory.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data. Must contain
+                columns for all input features defined in the domain. If _trajectory_id
+                already exists, it will be overwritten.
+            eps (float, optional): Tolerance for comparing continuous values. Two
+                continuous values are considered equal if their absolute difference is
+                less than eps. Default: 1e-6. Does not apply to discrete, categorical,
+                or molecular features.
+
+        Returns:
+            pd.DataFrame: Copy of experiments with _trajectory_id column added or updated.
+
+        Raises:
+            ValueError: If no timeseries feature is found in the domain.
+            ValueError: If required input feature columns are missing from experiments.
+
+        Example:
+            >>> domain = Domain(
+            ...     inputs=Inputs(features=[
+            ...         ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
+            ...         ContinuousInput(key="temperature", bounds=(20, 80)),
+            ...     ]),
+            ...     outputs=Outputs(features=[ContinuousOutput(key="yield")]),
+            ... )
+            >>> experiments = pd.DataFrame({
+            ...     'time': [0, 10, 20, 0, 10, 20],
+            ...     'temperature': [25, 25, 25, 30, 30, 30],
+            ...     'yield': [0.1, 0.2, 0.3, 0.2, 0.3, 0.4],
+            ...     'valid_yield': [1] * 6,
+            ... })
+            >>> experiments = domain.add_trajectory_id(experiments)
+            >>> # Rows with temperature=25 get one ID, temperature=30 get another
+        """
+        from bofire.utils.timeseries import infer_trajectory_id
+
+        experiments = experiments.copy()
+        experiments["_trajectory_id"] = infer_trajectory_id(
+            experiments, self, eps=eps
+        )
+        return experiments
+
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature
 
