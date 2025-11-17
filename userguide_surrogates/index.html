@@ -837,12 +837,6 @@
 <td style="text-align: center;">Gaussian process</td>
 </tr>
 <tr>
-<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/xgb.py">XGBoostSurrogate</a></td>
-<td style="text-align: center;">a single objective</td>
-<td style="text-align: center;">Rich data; black-box function does not have to be smooth</td>
-<td style="text-align: center;">xgboost implementation of gradient boosting trees</td>
-</tr>
-<tr>
 <td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py">TanimotoGP</a></td>
 <td style="text-align: center;">a single objective</td>
 <td style="text-align: center;">At least one input feature is a molecule represented as fingerprint</td>
@@ -856,7 +850,7 @@
         inputs=domain.inputs,
         outputs=Outputs(features=[domain.outputs[0]]),
 )
-surrogate_data_1 = XGBoostSurrogate(
+surrogate_data_1 = RandomForestSurrogate(
     inputs=domain.inputs,
     outputs=Outputs(features=[domain.outputs[1]]),
 )
@@ -870,7 +864,7 @@ qparego_data_model = QparegoStrategy(
 <p><strong>Note:</strong></p>
 <ul>
 <li>The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.</li>
-<li>The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have kernels but quantify uncertainty using the standard deviation of the predictions of their individual trees.</li>
+<li>The RandomForestSurrogate does not have kernels but quantifies uncertainty using the standard deviation of the predictions of its individual trees.</li>
 <li>MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).</li>
 </ul>
 <h2 id="customization">Customization</h2>
