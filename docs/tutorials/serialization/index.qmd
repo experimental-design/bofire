@@ -1,0 +1,25 @@
+---
+title: "Serialization"
+---
+
+# Serialization
+
+All classes in BoFire are serializable and can be saved to JSON formats. These tutorials demonstrate how to serialize and deserialize BoFire objects for storage, sharing, and integration with RESTful APIs.
+
+## Available Tutorials
+
+### [Model Serialization](models_serial.ipynb)
+Learn how to serialize and deserialize surrogate models.
+
+### [Strategy Serialization](strategies_serial.ipynb)
+Save and load optimization strategies for reproducibility and deployment.
+
+## Why Serialization Matters
+
+Serialization is crucial for:
+
+- **Reproducibility**: Save the exact configuration of your optimization runs
+- **Collaboration**: Share strategies and models with team members
+- **API Integration**: Seamlessly integrate BoFire into RESTful services
+- **Version Control**: Track changes in experimental designs over time
+- **Deployment**: Move configurations from development to production environments

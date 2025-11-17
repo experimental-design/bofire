@@ -1,0 +1,24 @@
+---
+title: "Design of Experiments (DOE)"
+---
+
+# Design of Experiments
+
+These tutorials demonstrate the usage of traditional design of experiments algorithms implemented in BoFire, including optimal designs and factorial designs.
+
+## Available Tutorials
+
+### [Basic DOE Examples](basic_examples.ipynb)
+Introduction to basic design of experiments concepts and implementations.
+
+### [Design with Explicit Formula](design_with_explicit_formula.ipynb)
+Creating experimental designs using explicit model formulas.
+
+### [Fractional Factorial Designs](fractional_factorial.ipynb)
+Efficient screening designs using fractional factorial approaches.
+
+### [N-Choose-K Constraints](nchoosek_constraint.ipynb)
+Handling n-choose-k constraints in experimental designs.
+
+### [Optimality Criteria](optimality_criteria.ipynb)
+Using different optimality criteria (D-optimal, A-optimal, etc.) for design generation.

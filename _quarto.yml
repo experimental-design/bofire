@@ -1,0 +1,173 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "index.qmd"
+    - "install.qmd"
+    - "getting_started.ipynb"
+    - "docs/tutorials/**/*.qmd"
+    - "docs/tutorials/**/*.ipynb"
+    - "docs/userguides/*.qmd"
+    - "docs/reference/*.qmd"
+    - "!docs/*.md"
+    - "!docs/_build/"
+    - "!docs/javascripts/"
+  resources:
+    - "docs/**/*.png"
+    - "docs/**/*.jpg"
+    - "docs/**/*.svg"
+    - "docs/**/*.gif"
+    - "docs/**/*.css"
+    - "docs/**/*.js"
+    - "!docs/CONTRIBUTING.md"
+    - "!docs/javascripts/"
+
+website:
+  title: "BoFire"
+  site-url: "https://experimental-design.github.io/bofire"
+  repo-url: "https://github.com/experimental-design/bofire"
+  repo-actions: [edit, issue]
+  page-navigation: true
+  
+  navbar:
+    background: primary
+    search: true
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Getting Started"
+        href: getting_started.ipynb
+      - text: "Tutorials"
+        menu:
+          - text: "Basic Examples"
+            href: docs/tutorials/basic_examples/index.qmd
+          - text: "Advanced Examples"
+            href: docs/tutorials/advanced_examples/index.qmd
+          - text: "Benchmarks"
+            href: docs/tutorials/benchmarks/index.qmd
+          - text: "Design of Experiments"
+            href: docs/tutorials/doe/index.qmd
+          - text: "Serialization"
+            href: docs/tutorials/serialization/index.qmd
+      - text: "User Guides"
+        menu:
+          - text: "Domain Configuration"
+            href: docs/userguides/domain.qmd
+          - text: "Strategies"
+            href: docs/userguides/strategies.qmd
+          - text: "Surrogate Models"
+            href: docs/userguides/surrogates.qmd
+          - text: "Data Models vs Functionals"
+            href: docs/userguides/data_models_functionals.qmd
+      - text: "API Reference"
+        menu:
+          - text: "Domain"
+            href: docs/reference/domain.qmd
+          - text: "Constraints"
+            href: docs/reference/constraints.qmd
+          - text: "Objectives"
+            href: docs/reference/objectives.qmd
+          - text: "Features"
+            href: docs/reference/features.qmd
+          - text: "Utils"
+            href: docs/reference/utils.qmd
+    right:
+      - icon: github
+        href: "https://github.com/experimental-design/bofire"
+
+  sidebar:
+    - title: "Getting Started"
+      style: "docked"
+      contents:
+        - index.qmd
+        - install.qmd
+        - getting_started.ipynb
+    
+    - title: "Tutorials"
+      contents:
+        - section: "Basic Examples"
+          contents:
+            - docs/tutorials/basic_examples/index.qmd
+            - docs/tutorials/basic_examples/basic_terminology.ipynb
+            - docs/tutorials/basic_examples/Reaction_Optimization_Example.ipynb
+            - docs/tutorials/basic_examples/Model_Fitting_and_analysis.ipynb
+            - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.ipynb
+            - docs/tutorials/basic_examples/Unknown_Constraint_Classification.ipynb
+        - section: "Advanced Examples"
+          contents:
+            - docs/tutorials/advanced_examples/index.qmd
+            - docs/tutorials/advanced_examples/custom_sobo.ipynb
+            - docs/tutorials/advanced_examples/desirability_objectives.ipynb
+            - docs/tutorials/advanced_examples/genetic_algorithm.ipynb
+            - docs/tutorials/advanced_examples/merging_objectives.ipynb
+            - docs/tutorials/advanced_examples/multifidelity_bo.ipynb
+            - docs/tutorials/advanced_examples/objectives_on_inputs.ipynb
+            - docs/tutorials/advanced_examples/random_forest_in_bofire.ipynb
+            - docs/tutorials/advanced_examples/transfer_learning_bo.ipynb
+        - section: "Benchmarks"
+          contents:
+            - docs/tutorials/benchmarks/index.qmd
+            - docs/tutorials/benchmarks/001-Himmelblau.ipynb
+            - docs/tutorials/benchmarks/002-DTLZ2.ipynb
+            - docs/tutorials/benchmarks/004-Aspen_benchmark.ipynb
+            - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.ipynb
+            - docs/tutorials/benchmarks/006-30dimBranin.ipynb
+            - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.ipynb
+            - docs/tutorials/benchmarks/008-Himmelblau_with_outliers.ipynb
+            - docs/tutorials/benchmarks/009-Bayesian_optimization_over_molecules.ipynb
+            - docs/tutorials/benchmarks/010-LSRBO.ipynb
+            - docs/tutorials/benchmarks/011-ZDT1.ipynb
+            - docs/tutorials/benchmarks/012-BNH.ipynb
+            - docs/tutorials/benchmarks/013-TNK.ipynb
+            - docs/tutorials/benchmarks/014-ActiveLearning.ipynb
+        - section: "Design of Experiments"
+          contents:
+            - docs/tutorials/doe/index.qmd
+            - docs/tutorials/doe/basic_examples.ipynb
+            - docs/tutorials/doe/design_with_explicit_formula.ipynb
+            - docs/tutorials/doe/fractional_factorial.ipynb
+            - docs/tutorials/doe/nchoosek_constraint.ipynb
+            - docs/tutorials/doe/optimality_criteria.ipynb
+        - section: "Serialization"
+          contents:
+            - docs/tutorials/serialization/index.qmd
+            - docs/tutorials/serialization/models_serial.ipynb
+            - docs/tutorials/serialization/strategies_serial.ipynb
+    
+    - title: "User Guides"
+      contents:
+        - docs/userguides/domain.qmd
+        - docs/userguides/strategies.qmd
+        - docs/userguides/surrogates.qmd
+        - docs/userguides/data_models_functionals.qmd
+    
+    - title: "API Reference"
+      contents:
+        - docs/reference/domain.qmd
+        - docs/reference/constraints.qmd
+        - docs/reference/objectives.qmd
+        - docs/reference/features.qmd
+        - docs/reference/utils.qmd
+
+format:
+  html:
+    theme:
+      light: [cosmo, theme-light.scss]
+      dark: [cosmo, theme-dark.scss]
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-fold: false
+    code-tools: true
+    number-sections: false
+    link-external-newwindow: true
+    
+filters:
+  - quarto
+
+execute:
+  freeze: auto
+  cache: true
+  
+jupyter: python3

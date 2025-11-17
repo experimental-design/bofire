@@ -132,6 +132,15 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Quarto
+/.quarto/
+/_site/
+/_freeze/
+*.html
+!docs/javascripts/*.html
+*_files/
+site_libs/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -149,3 +158,5 @@ bofire/version.py
 
 # output files
 notebook_test_stats.csv
+
+**/*.quarto_ipynb

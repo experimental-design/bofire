@@ -1,0 +1,48 @@
+---
+title: "Benchmark Examples"
+---
+
+# Benchmark Examples
+
+These tutorials demonstrate how to recreate results from various papers and common studies using BoFire's benchmarking capabilities. Benchmarks are useful for validating optimization strategies and comparing performance across different approaches.
+
+## Available Benchmarks
+
+### [001 - Himmelblau Function](001-Himmelblau.ipynb)
+Classic optimization benchmark using the Himmelblau function.
+
+### [002 - DTLZ2](002-DTLZ2.ipynb)
+Multi-objective optimization using the DTLZ2 test problem.
+
+### [004 - Aspen Benchmark](004-Aspen_benchmark.ipynb)
+Industrial process optimization using Aspen simulation.
+
+### [005 - Hartmann with N-Choose-K](005-Hartmann_with_nchoosek.ipynb)
+Hartmann function optimization with n-choose-k constraints.
+
+### [006 - 30-Dimensional Branin](006-30dimBranin.ipynb)
+High-dimensional optimization using an extended Branin function.
+
+### [007 - Benchmark Outlier Detection](007-Benchmark_outlier_detection.ipynb)
+Testing outlier detection capabilities on benchmark problems.
+
+### [008 - Himmelblau with Outliers](008-Himmelblau_with_outliers.ipynb)
+Robust optimization in the presence of outliers.
+
+### [009 - Bayesian Optimization over Molecules](009-Bayesian_optimization_over_molecules.ipynb)
+Molecular optimization using chemical fingerprints and specialized kernels.
+
+### [010 - LSRBO](010-LSRBO.ipynb)
+Local search-based Bayesian optimization.
+
+### [011 - ZDT1](011-ZDT1.ipynb)
+Multi-objective optimization using the ZDT1 test problem.
+
+### [012 - BNH](012-BNH.ipynb)
+Binh and Korn multi-objective test function.
+
+### [013 - TNK](013-TNK.ipynb)
+Tanaka multi-objective test function.
+
+### [014 - Active Learning](014-ActiveLearning.ipynb)
+Active learning strategies for experimental design.
