@@ -1,0 +1,82 @@
+---
+title: Himmelblau Benchmark
+jupyter: python3
+---
+
+## Imports
+
+
+```{python}
+#| papermill: {duration: 2.927369, end_time: '2024-10-10T20:35:00.807838', exception: false, start_time: '2024-10-10T20:34:57.880469', status: completed}
+#| tags: []
+import os
+
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.benchmarks.single import Hartmann
+from bofire.data_models.acquisition_functions.api import qLogEI
+from bofire.data_models.api import Domain
+from bofire.data_models.strategies.api import (
+    BotorchOptimizer,
+    RandomStrategy,
+    SoboStrategy,
+)
+from bofire.runners.api import run
+
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+## Random Optimization
+
+```{python}
+#| papermill: {duration: 0.269411, end_time: '2024-10-10T20:35:01.079961', exception: true, start_time: '2024-10-10T20:35:00.810550', status: failed}
+#| tags: []
+def sample(domain):
+    datamodel = RandomStrategy(domain=domain)
+    sampler = strategies.map(data_model=datamodel)
+    sampled = sampler.ask(10)
+    return sampled
+
+
+def best(domain: Domain, experiments: pd.DataFrame) -> float:
+    return experiments.y.min()
+
+
+random_results = run(
+    Hartmann(dim=6, allowed_k=4),
+    strategy_factory=lambda domain: strategies.map(RandomStrategy(domain=domain)),
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=best,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+## SOBO (GPEI) Optimization
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+def strategy_factory(domain: Domain):
+    data_model = SoboStrategy(
+        domain=domain,
+        acquisition_function=qLogEI(),
+        acquisition_optimizer=BotorchOptimizer(n_raw_samples=512, n_restarts=24),
+    )
+    return strategies.map(data_model)
+
+
+bo_results = run(
+    Hartmann(dim=6, allowed_k=4),
+    strategy_factory=strategy_factory,
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=best,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+

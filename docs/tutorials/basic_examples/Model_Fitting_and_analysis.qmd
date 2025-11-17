@@ -1,0 +1,104 @@
+---
+title: Model Building with BoFire
+jupyter: python3
+---
+
+
+This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.
+
+
+## Imports
+
+```{python}
+#| papermill: {duration: 2.690868, end_time: '2024-10-10T20:34:24.683197', exception: false, start_time: '2024-10-10T20:34:21.992329', status: completed}
+#| tags: []
+import bofire.surrogates.api as surrogates
+from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.plot.feature_importance import plot_feature_importance_by_feature_plotly
+from bofire.surrogates.feature_importance import (
+    combine_lengthscale_importances,
+    combine_permutation_importances,
+    lengthscale_importance_hook,
+    permutation_importance_hook,
+)
+```
+
+## Problem Setup
+
+For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.
+
+```{python}
+#| papermill: {duration: 0.010285, end_time: '2024-10-10T20:34:24.696815', exception: false, start_time: '2024-10-10T20:34:24.686530', status: completed}
+#| tags: []
+# TODO: replace this after JDs PR is ready.
+input_features = Inputs(
+    features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)],
+)
+output_features = Outputs(features=[ContinuousOutput(key="y")])
+experiments = input_features.sample(n=50)
+experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+experiments["valid_y"] = 1
+```
+
+## Cross Validation
+### Run the cross validation
+
+```{python}
+#| papermill: {duration: 0.229142, end_time: '2024-10-10T20:34:24.929279', exception: true, start_time: '2024-10-10T20:34:24.700137', status: failed}
+#| tags: []
+data_model = SingleTaskGPSurrogate(
+    inputs=input_features,
+    outputs=output_features,
+)
+
+model = surrogates.map(data_model=data_model)
+train_cv, test_cv, pi = model.cross_validate(
+    experiments,
+    folds=5,
+    hooks={
+        "permutation_importance": permutation_importance_hook,
+        "lengthscale_importance": lengthscale_importance_hook,
+    },
+)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+combined_importances = {
+    m.name: combine_permutation_importances(pi["permutation_importance"], m).describe()
+    for m in RegressionMetricsEnum
+}
+combined_importances["lengthscale"] = combine_lengthscale_importances(
+    pi["lengthscale_importance"],
+).describe()
+plot_feature_importance_by_feature_plotly(
+    combined_importances,
+    relative=False,
+    caption="Permutation Feature Importances",
+    show_std=True,
+    importance_measure="Permutation Feature Importance",
+)
+```
+
+### Analyze the cross validation
+
+Plots are added in a future PR.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Performance on test sets
+test_cv.get_metrics(combine_folds=True)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+display(test_cv.get_metrics(combine_folds=False))
+display(test_cv.get_metrics(combine_folds=False).describe())
+```
+

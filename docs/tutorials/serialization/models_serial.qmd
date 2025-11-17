@@ -1,0 +1,384 @@
+---
+title: Model Building with BoFire
+jupyter: python3
+---
+
+
+This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.
+
+
+## Imports
+
+```{python}
+#| papermill: {duration: 2.815003, end_time: '2024-10-10T20:36:38.814413', exception: false, start_time: '2024-10-10T20:36:35.999410', status: completed}
+#| tags: []
+from pydantic import TypeAdapter
+
+import bofire.surrogates.api as surrogates
+from bofire.benchmarks.multi import CrossCoupling
+from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.domain.api import Outputs
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.surrogates.api import (
+    AnySurrogate,
+    EmpiricalSurrogate,
+    MixedSingleTaskGPSurrogate,
+    RandomForestSurrogate,
+    RegressionMLPEnsemble,
+    SingleTaskGPSurrogate,
+)
+```
+
+## Problem Setup
+
+For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.
+
+```{python}
+#| papermill: {duration: 0.016598, end_time: '2024-10-10T20:36:38.839445', exception: false, start_time: '2024-10-10T20:36:38.822847', status: completed}
+#| tags: []
+benchmark = Himmelblau()
+samples = benchmark.domain.inputs.sample(n=50)
+experiments = benchmark.f(samples, return_complete=True)
+
+experiments.head(10)
+```
+
+## Model Fitting
+
+```{python}
+#| papermill: {duration: 0.006643, end_time: '2024-10-10T20:36:38.855747', exception: false, start_time: '2024-10-10T20:36:38.849104', status: completed}
+#| tags: []
+input_features = benchmark.domain.inputs
+output_features = benchmark.domain.outputs
+```
+
+```{python}
+#| papermill: {duration: 0.008751, end_time: '2024-10-10T20:36:38.867475', exception: false, start_time: '2024-10-10T20:36:38.858724', status: completed}
+#| tags: []
+input_features.model_dump_json()
+```
+
+```{python}
+#| papermill: {duration: 0.006762, end_time: '2024-10-10T20:36:38.877170', exception: false, start_time: '2024-10-10T20:36:38.870408', status: completed}
+#| tags: []
+output_features.model_dump_json()
+```
+
+### Single Task GP
+
+Generate the json spec
+
+```{python}
+#| papermill: {duration: 0.008037, end_time: '2024-10-10T20:36:38.894071', exception: false, start_time: '2024-10-10T20:36:38.886034', status: completed}
+#| tags: []
+# we setup the data model, here a Single Task GP
+surrogate_data = SingleTaskGPSurrogate(inputs=input_features, outputs=output_features)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+Load it from the spec
+
+```{python}
+#| papermill: {duration: 0.081247, end_time: '2024-10-10T20:36:38.985423', exception: false, start_time: '2024-10-10T20:36:38.904176', status: completed}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+```
+
+Map it 
+
+```{python}
+#| papermill: {duration: 0.006211, end_time: '2024-10-10T20:36:39.001350', exception: false, start_time: '2024-10-10T20:36:38.995139', status: completed}
+#| tags: []
+surrogate = surrogates.map(surrogate_data)
+```
+
+Fit it. This is not 100% finished. In the future we will call here hyperfit which will return the CV results etc. This has to be finished. So ignore this for now and just call fit.
+
+```{python}
+#| papermill: {duration: 0.239008, end_time: '2024-10-10T20:36:39.250076', exception: true, start_time: '2024-10-10T20:36:39.011068', status: failed}
+#| tags: []
+surrogate.fit(experiments=experiments)
+```
+
+Dump it.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# dump it
+dump = surrogate.dumps()
+```
+
+Make predictions.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+Load again from spec and dump and make predictions.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+### Random Forest
+
+Generate the json spec
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# we setup the data model, here a Single Task GP
+surrogate_data = RandomForestSurrogate(
+    inputs=input_features,
+    outputs=output_features,
+    random_state=42,
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# Fit it
+surrogate.fit(experiments=experiments)
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+### MLP Ensemble
+
+Generate the json spec
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# we setup the data model, here a Single Task GP
+surrogate_data = RegressionMLPEnsemble(
+    inputs=input_features,
+    outputs=output_features,
+    n_estimators=2,
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# Fit it
+surrogate.fit(experiments=experiments)
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+## Empirical Surrogate
+
+The empirical model is special as it has per default no fit and you need cloudpickle. There can be empirical models which implement a fit, but for this they also have to inherit from `Trainable`. The current example is the default without any fit functionality.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+from botorch.models.deterministic import DeterministicModel
+from torch import Tensor
+
+
+class HimmelblauModel(DeterministicModel):
+    def __init__(self):
+        super().__init__()
+        self._num_outputs = 1
+
+    def forward(self, X: Tensor) -> Tensor:
+        return (
+            (X[..., 0] ** 2 + X[..., 1] - 11.0) ** 2
+            + (X[..., 0] + X[..., 1] ** 2 - 7.0) ** 2
+        ).unsqueeze(-1)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# we setup the data model, here a Single Task GP
+surrogate_data = EmpiricalSurrogate(
+    inputs=input_features,
+    outputs=output_features,
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# attach the actual model to it
+surrogate.model = HimmelblauModel()
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+### Mixed GP
+
+Generate data for a mixed problem.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+benchmark = CrossCoupling()
+samples = benchmark.domain.inputs.sample(n=50)
+experiments = benchmark.f(samples, return_complete=True)
+
+experiments.head(10)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# we setup the data model, here a Single Task GP
+surrogate_data = MixedSingleTaskGPSurrogate(
+    inputs=benchmark.domain.inputs,
+    outputs=Outputs(features=[benchmark.domain.outputs.features[0]]),
+    input_preprocessing_specs={"catalyst": CategoricalEncodingEnum.ONE_HOT},
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# Fit it
+surrogate.fit(experiments=experiments)
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+

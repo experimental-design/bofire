@@ -1,0 +1,310 @@
+---
+title: Aspen Benchmark
+jupyter: python3
+---
+
+Tutorial for the Aspen Benchmark interface. Aspen Benchmark connects to an Aspen Plus simulation which then can be optimized by a BO algorithm from BoFire.
+
+Make sure to close running Aspen Plus instances in the Task Manager to not cover licenses if not needed.
+
+
+## Imports
+
+```{python}
+#| papermill: {duration: 2.920415, end_time: '2024-10-10T20:34:55.628171', exception: false, start_time: '2024-10-10T20:34:52.707756', status: completed}
+#| tags: []
+import os
+
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
+from bofire.data_models.api import Domain, Inputs, Outputs
+from bofire.data_models.constraints.api import LinearInequalityConstraint
+from bofire.data_models.domain.constraints import Constraints
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.objectives.api import MinimizeObjective
+from bofire.data_models.strategies.api import MoboStrategy, RandomStrategy
+from bofire.runners.api import run
+from bofire.utils.multiobjective import compute_hypervolume, get_pareto_front
+
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+## The Optimization case
+The following Aspen Plus digital twin of a heat pump process is supposed to be optimized. The process includes a simple two-stage heat pump shown in the figure. The degrees of freedom are the cold temperature of the secondary cycle (TW1), the hot temperatures of the secondary cycle after heat absorption in HX-01 and HX-02 (TW2, TW3), the temperatures of the input streams into mentioned heat exchangers (THX1, THX2), the smallest temperature difference for heat flow in HX-03 and HX-04 (delta THX3, delta THX4), the temperature of condensation in HX-04, and most importantly the type of working fluid used by the heat pump (WF).
+
+<img src="../../graphics/tutorials/aspen_benchmark_flowsheet.svg" alt="heat pump flowsheet" />
+
+## Manual Setup of the model domain
+
+```{python}
+#| papermill: {duration: 0.009385, end_time: '2024-10-10T20:34:55.650069', exception: false, start_time: '2024-10-10T20:34:55.640684', status: completed}
+#| tags: []
+# Define the input features that are supposed to be given to Aspen before each simulation run.
+# These are the parameters that are suggested by the optimizer.
+
+input_features = Inputs(
+    features=[
+        ContinuousInput(key="THX1", bounds=(200, 300)),
+        ContinuousInput(key="TW1", bounds=(200, 300)),
+        ContinuousInput(key="TW2", bounds=(200, 300)),
+        ContinuousInput(key="TW4", bounds=(200, 300)),
+        ContinuousInput(key="DTVAP", bounds=(200, 300)),
+        ContinuousInput(key="TCOND", bounds=(200, 300)),
+        ContinuousInput(key="DTSG", bounds=(200, 300)),
+        ContinuousInput(key="THX2", bounds=(200, 300)),
+        CategoricalInput(key="WF", categories=["WF1", "WF2", "WF3"]),
+    ],
+)
+
+
+# Define the output values of the Aspen simulation that are supposed to be optimized.
+# Each values needs a name "key" and information about whether it should be minmized "MinimizeObjective" or maximized "MaximizeObjective".
+output_features = Outputs(
+    features=[
+        ContinuousOutput(
+            key="QIN",
+            objective=MinimizeObjective(
+                w=1.0,
+            ),  # values for heat are returned as a negative value, thus the need to be minimized
+        ),
+        ContinuousOutput(key="PEL", objective=MinimizeObjective(w=1.0)),
+        ContinuousOutput(key="CAPEX", objective=MinimizeObjective(w=1.0)),
+    ],
+)
+
+
+# Define constraints that describe relationships between input values and thus limit the input domain.
+# E.g. x1- 2*x2 <= 0
+# Linear inequality constraints need to be manipulated into the form "something <= right-hand-side".
+# The involved variable names need to be passed as "features" within a list.
+# Coefficients are passed in the same order in another list, while the right-hand-side is passed as a constant.
+constraints = Constraints(
+    constraints=[
+        LinearInequalityConstraint(
+            features=["THX1", "TW1"],
+            coefficients=[-1, 1],
+            rhs=-2,
+        ),
+        LinearInequalityConstraint(
+            features=["TW1", "THX2"],
+            coefficients=[1, -1],
+            rhs=-8,
+        ),
+        LinearInequalityConstraint(
+            features=["TW2", "TW1"],
+            coefficients=[-1, 1],
+            rhs=-3,
+        ),
+        LinearInequalityConstraint(
+            features=["THX2", "TW4"],
+            coefficients=[-1, 1],
+            rhs=-2,
+        ),
+        LinearInequalityConstraint(
+            features=["TW4", "TW1"],
+            coefficients=[-1, 1],
+            rhs=-3,
+        ),
+        LinearInequalityConstraint(
+            features=["TCOND", "DTSG"],
+            coefficients=[-1, 1],
+            rhs=-100,
+        ),
+    ],
+)
+
+# Create the domain object
+domain = Domain(inputs=input_features, outputs=output_features, constraints=constraints)
+```
+
+## Setup of the Variable Paths to Aspen
+The transfer of variables between Python and Aspen Plus is based on the Python interface of Aspen. For more info see https://kitchingroup.cheme.cmu.edu/blog/2013/06/14/Running-Aspen-via-Python/. Each simulation variable of Aspen Plus can be accessed manually through the variable explorer in the program "Customize -> Variable Explorer". Similarly, Python can read and write values from and into the variable tree. Therefore, the variable paths through that tree need to be provided.
+
+```{python}
+#| papermill: {duration: 0.005383, end_time: '2024-10-10T20:34:55.661067', exception: false, start_time: '2024-10-10T20:34:55.655684', status: completed}
+#| tags: []
+# Store the paths to each variable within a dictionary with the variable names as the keys and the paths as the values.
+
+paths = {
+    "THX1": "\\Data\\Blocks\\HX-01-1\\Input\\VALUE",
+    "TW1": "\\\\Data\\Streams\\W1\\Input\\TEMP\\MIXED",
+    "TW2": "\\Data\\Blocks\\DUM-01\\Input\\TEMP",
+    "TW4": "\\Data\\Blocks\\DUM-02\\Input\\TEMP",
+    "DTVAP": "\\Data\\Blocks\\DUM-10\\Input\\DELT",
+    "TCOND": "\\Data\\Blocks\\DUM-11\\Input\\TEMP",
+    "DTSG": "\\Data\\Flowsheeting Options\\Calculator\\CA-01\\Input\\FVN_INIT_VAL\\DTSG",
+    "THX2": "\\Data\\Flowsheeting Options\\Calculator\\CA-06\\Input\\FVN_INIT_VAL\\TCRYST",
+    "WF": "\\Data\\Flowsheeting Options\\Calculator\\CA-07\\Input\\FVN_INIT_VAL\\WF",
+    "QIN": "\\Data\\Flowsheeting Options\\Calculator\\OBJ-01\\Output\\WRITE_VAL\\2",
+    "PEL": "\\Data\\Flowsheeting Options\\Calculator\\OBJ-02\\Output\\WRITE_VAL\\9",
+    "CAPEX": "\\Data\\Flowsheeting Options\\Calculator\\OBJ-03\\Output\\WRITE_VAL\\22",
+}
+```
+
+## Aspen Readability
+Depending on the implementation of the simulation in Aspen Plus itself, certain input values can differ between Aspen and BoFire. Categorical inputs for example need to be set as discrete integer values in Aspen whereas BoFire uses strings for each category. To translate into the Aspen-readable version, a conversion function is needed. This is not necessary for continuous inputs.
+
+```{python}
+#| papermill: {duration: 0.005384, end_time: '2024-10-10T20:34:55.671647', exception: false, start_time: '2024-10-10T20:34:55.666263', status: completed}
+#| tags: []
+# The conversion function is passed to Aspen_benchmark and will be called before new values are going to be passed to the simulation.
+# It needs the "domain" and the input values "candidates" as inputs and needs to return the input dataframe containing the translated columns that are aspen-readable.
+
+
+def conversion_function(domain: Domain, candidates: pd.DataFrame) -> pd.DataFrame:
+    # Iterate through input features to find the inputs, that need to be translated.
+    for feature in domain.inputs.features:
+        # Translate "CategoricalInputs"
+        if feature.type == "CategoricalInput":
+            translated_values = []
+            for elem in candidates[feature.key]:
+                if elem == "WF1":
+                    value = 1
+                elif elem == "WF2":
+                    value = 2
+                else:
+                    value = 3
+                translated_values.append(value)
+            # Add elif for other input types that require a translation.
+
+            candidates[feature.key] = translated_values
+
+    return candidates
+```
+
+## Initialization
+
+```{python}
+#| papermill: {duration: 0.215535, end_time: '2024-10-10T20:34:55.892477', exception: true, start_time: '2024-10-10T20:34:55.676942', status: failed}
+#| tags: []
+# if smoke test, this is skipped as no aspen is installed then
+
+if not SMOKE_TEST:
+    # Provide the filename to where the Aspen simulation file is located.
+    # Make sure it is a .apwz file.
+    filename = "../../../../HeatPump_case_study/python/aspen_simulations/heat_pump_aspen_sim_V5.apwz"
+    aspen_benchmark = Aspen_benchmark(
+        filename=filename,
+        domain=domain,
+        paths=paths,
+        translate_into_aspen_readable=conversion_function,
+    )
+```
+
+## Sampling and Hypervolume Functions
+The sampling function generates random input values according the the constraints that serve as the start points for the optimizer.
+
+To assess the bayesian optimization algorithm, a hypervolume function is needed. The hypervolume function returns the current hypervolume after each run which tells the optimizer the amount of improvement. The hypervolume is computed from a reference point that needs to be derived from a first random run.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+def sample(domain):
+    datamodel = RandomStrategy(domain=domain)
+    sampler = strategies.map(data_model=datamodel)
+    sampled = sampler.ask(15)
+    return sampled
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+ref_point = {"QIN": -26, "PEL": 30, "CAPEX": 45}
+
+
+def hypervolume(domain: Domain, experiments: pd.DataFrame) -> float:
+    pareto_points = get_pareto_front(
+        domain=domain,
+        experiments=experiments,
+        output_feature_keys=domain.outputs.get_keys(),
+    )
+    hypervolume = compute_hypervolume(
+        domain=domain,
+        optimal_experiments=pareto_points,
+        ref_point=ref_point,
+    )
+    return hypervolume
+```
+
+## Run Random Strategy
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+if not SMOKE_TEST:
+    random_results = run(
+        aspen_benchmark,
+        strategy_factory=lambda domain: strategies.map(RandomStrategy(domain=domain)),
+        n_iterations=2,
+        metric=hypervolume,
+        n_runs=1,
+        n_procs=1,
+    )
+```
+
+## Run QNEHVI Strategy
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+if not SMOKE_TEST:
+
+    def strategy_factory(domain: Domain):
+        data_model = MoboStrategy(domain=domain, ref_point=ref_point)
+        return strategies.map(data_model)
+
+    results = run(
+        aspen_benchmark,
+        strategy_factory=strategy_factory,
+        n_iterations=15,
+        metric=hypervolume,
+        initial_sampler=sample,
+        n_runs=1,
+        n_procs=1,
+    )
+```
+
+## Performance Plot
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+import plotly.express as px
+
+
+if not SMOKE_TEST:
+    random_results_df = random_results[0][0]
+    random_results_df["strategy"] = "RANDOM"  # type: ignore
+    results_df = results[0][0].iloc[:, 15:-1]  # type: ignore
+    # first 15 points are set random by the initial sampler
+    results_df["strategy"] = "QNEHVI"  # type: ignore
+    ref_df = pd.DataFrame(ref_point, index=[0])
+    ref_df["strategy"] = "REF POINT"
+    df_to_plot = pd.concat([random_results_df, results_df, ref_df], axis=0)  # type: ignore
+    df_to_plot.reset_index(inplace=True, drop=True)
+
+    display(df_to_plot)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+if not SMOKE_TEST:
+    fig = px.scatter_matrix(
+        df_to_plot,
+        dimensions=["PEL", "CAPEX", "QIN"],
+        color="strategy",
+        width=1200,
+        height=900,
+    )
+
+    fig.show()
+```
+

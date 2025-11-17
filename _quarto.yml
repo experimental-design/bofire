@@ -4,9 +4,9 @@ project:
   render:
     - "index.qmd"
     - "install.qmd"
-    - "getting_started.ipynb"
+    - "getting_started.qmd"
     - "docs/tutorials/**/*.qmd"
-    - "docs/tutorials/**/*.ipynb"
+    - "docs/tutorials/**/*.qmd"
     - "docs/userguides/*.qmd"
     - "docs/reference/*.qmd"
     - "!docs/*.md"
@@ -36,7 +36,7 @@ website:
       - text: "Home"
         href: index.qmd
       - text: "Getting Started"
-        href: getting_started.ipynb
+        href: getting_started.qmd
       - text: "Tutorials"
         menu:
           - text: "Basic Examples"
@@ -81,58 +81,58 @@ website:
       contents:
         - index.qmd
         - install.qmd
-        - getting_started.ipynb
+        - getting_started.qmd
     
     - title: "Tutorials"
       contents:
         - section: "Basic Examples"
           contents:
             - docs/tutorials/basic_examples/index.qmd
-            - docs/tutorials/basic_examples/basic_terminology.ipynb
-            - docs/tutorials/basic_examples/Reaction_Optimization_Example.ipynb
-            - docs/tutorials/basic_examples/Model_Fitting_and_analysis.ipynb
-            - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.ipynb
-            - docs/tutorials/basic_examples/Unknown_Constraint_Classification.ipynb
+            - docs/tutorials/basic_examples/basic_terminology.qmd
+            - docs/tutorials/basic_examples/Reaction_Optimization_Example.qmd
+            - docs/tutorials/basic_examples/Model_Fitting_and_analysis.qmd
+            - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.qmd
+            - docs/tutorials/basic_examples/Unknown_Constraint_Classification.qmd
         - section: "Advanced Examples"
           contents:
             - docs/tutorials/advanced_examples/index.qmd
-            - docs/tutorials/advanced_examples/custom_sobo.ipynb
-            - docs/tutorials/advanced_examples/desirability_objectives.ipynb
-            - docs/tutorials/advanced_examples/genetic_algorithm.ipynb
-            - docs/tutorials/advanced_examples/merging_objectives.ipynb
-            - docs/tutorials/advanced_examples/multifidelity_bo.ipynb
-            - docs/tutorials/advanced_examples/objectives_on_inputs.ipynb
-            - docs/tutorials/advanced_examples/random_forest_in_bofire.ipynb
-            - docs/tutorials/advanced_examples/transfer_learning_bo.ipynb
+            - docs/tutorials/advanced_examples/custom_sobo.qmd
+            - docs/tutorials/advanced_examples/desirability_objectives.qmd
+            - docs/tutorials/advanced_examples/genetic_algorithm.qmd
+            - docs/tutorials/advanced_examples/merging_objectives.qmd
+            - docs/tutorials/advanced_examples/multifidelity_bo.qmd
+            - docs/tutorials/advanced_examples/objectives_on_inputs.qmd
+            - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
+            - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
         - section: "Benchmarks"
           contents:
             - docs/tutorials/benchmarks/index.qmd
-            - docs/tutorials/benchmarks/001-Himmelblau.ipynb
-            - docs/tutorials/benchmarks/002-DTLZ2.ipynb
-            - docs/tutorials/benchmarks/004-Aspen_benchmark.ipynb
-            - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.ipynb
-            - docs/tutorials/benchmarks/006-30dimBranin.ipynb
-            - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.ipynb
-            - docs/tutorials/benchmarks/008-Himmelblau_with_outliers.ipynb
-            - docs/tutorials/benchmarks/009-Bayesian_optimization_over_molecules.ipynb
-            - docs/tutorials/benchmarks/010-LSRBO.ipynb
-            - docs/tutorials/benchmarks/011-ZDT1.ipynb
-            - docs/tutorials/benchmarks/012-BNH.ipynb
-            - docs/tutorials/benchmarks/013-TNK.ipynb
-            - docs/tutorials/benchmarks/014-ActiveLearning.ipynb
+            - docs/tutorials/benchmarks/001-Himmelblau.qmd
+            - docs/tutorials/benchmarks/002-DTLZ2.qmd
+            - docs/tutorials/benchmarks/004-Aspen_benchmark.qmd
+            - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.qmd
+            - docs/tutorials/benchmarks/006-30dimBranin.qmd
+            - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.qmd
+            - docs/tutorials/benchmarks/008-Himmelblau_with_outliers.qmd
+            - docs/tutorials/benchmarks/009-Bayesian_optimization_over_molecules.qmd
+            - docs/tutorials/benchmarks/010-LSRBO.qmd
+            - docs/tutorials/benchmarks/011-ZDT1.qmd
+            - docs/tutorials/benchmarks/012-BNH.qmd
+            - docs/tutorials/benchmarks/013-TNK.qmd
+            - docs/tutorials/benchmarks/014-ActiveLearning.qmd
         - section: "Design of Experiments"
           contents:
             - docs/tutorials/doe/index.qmd
-            - docs/tutorials/doe/basic_examples.ipynb
-            - docs/tutorials/doe/design_with_explicit_formula.ipynb
-            - docs/tutorials/doe/fractional_factorial.ipynb
-            - docs/tutorials/doe/nchoosek_constraint.ipynb
-            - docs/tutorials/doe/optimality_criteria.ipynb
+            - docs/tutorials/doe/basic_examples.qmd
+            - docs/tutorials/doe/design_with_explicit_formula.qmd
+            - docs/tutorials/doe/fractional_factorial.qmd
+            - docs/tutorials/doe/nchoosek_constraint.qmd
+            - docs/tutorials/doe/optimality_criteria.qmd
         - section: "Serialization"
           contents:
             - docs/tutorials/serialization/index.qmd
-            - docs/tutorials/serialization/models_serial.ipynb
-            - docs/tutorials/serialization/strategies_serial.ipynb
+            - docs/tutorials/serialization/models_serial.qmd
+            - docs/tutorials/serialization/strategies_serial.qmd
     
     - title: "User Guides"
       contents:
@@ -167,6 +167,7 @@ filters:
   - quarto
 
 execute:
+  enabled: false
   freeze: auto
   cache: true
   

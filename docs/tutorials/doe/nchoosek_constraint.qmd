@@ -1,0 +1,88 @@
+---
+title: Design with NChooseK constraint
+jupyter: python3
+---
+
+
+The doe subpackage also supports problems with NChooseK constraints. Since IPOPT has problems finding feasible solutions
+using the gradient of the NChooseK constraint violation, a closely related (but stricter) constraint that suffices
+to fulfill the NChooseK constraint is imposed onto the problem: For each experiment $j$
+N-K decision variables $x_{i_1,j},...,x_{i_{N-K,j}}$ from the NChooseK constraints' names attribute are picked
+that are forced to be zero. This is done by setting the upper and lower bounds of the picked variables are set to 0
+in the corresponding experiments. This causes IPOPT to treat them as "fixed variables" (i.e. it will not optimize for them)
+and will always stick to the only feasible value (which is 0 here).
+However, this constraint is stricter than the original NChooseK constraint. In combination with other
+constraints on the same decision variables this can result in a situation where the constraints cannot be fulfilled
+even though the original constraints would allow for a solution. For example consider a problem with four decision
+variables $x_1, x_2, x_3, x_4$, an NChooseK constraint on the first four variable that restricts the number of nonzero variables
+to two. Additionally, we have a linear constraint
+$$
+x_3 + x_4 \geq 0.1
+$$
+We can easily find points that fulfill both constraints (e.g. $(0,0,0,0.1)$). Now consider the stricter, linear constraint
+from above. Eventually, it will happen that $x_3$ and $x_4$ are chosen to be zero for one experiment. For this experiment
+it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_3 = x_4 = 0$.
+
+Therefore one has to be very careful when imposing linear constraints upon decision variables that already show up in an NChooseK constraint.
+
+For practical reasons it necessary that two NChooseK constraints of the same problem must not share any variables.
+
+You can find an example for a problem with NChooseK constraints and additional linear constraints imposed on the same variables.
+
+
+```{python}
+#| papermill: {duration: 2.941079, end_time: '2024-10-10T20:36:20.399927', exception: true, start_time: '2024-10-10T20:36:17.458848', status: failed}
+#| tags: []
+import numpy as np
+
+import bofire.strategies.api as strategies
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+)
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.api import DoEStrategy
+from bofire.data_models.strategies.doe import DOptimalityCriterion
+
+
+domain = Domain(
+    inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(8)],
+    outputs=[ContinuousOutput(key="y")],
+    constraints=[
+        LinearEqualityConstraint(
+            features=[f"x{i+1}" for i in range(8)],
+            coefficients=[1, 1, 1, 1, 1, 1, 1, 1],
+            rhs=1,
+        ),
+        NChooseKConstraint(
+            features=["x1", "x2", "x3"],
+            min_count=0,
+            max_count=1,
+            none_also_valid=True,
+        ),
+        LinearInequalityConstraint(
+            features=["x1", "x2", "x3"],
+            coefficients=[1, 1, 1],
+            rhs=0.7,
+        ),
+        LinearInequalityConstraint(
+            features=["x7", "x8"],
+            coefficients=[-1, -1],
+            rhs=-0.1,
+        ),
+        LinearInequalityConstraint(features=["x7", "x8"], coefficients=[1, 1], rhs=0.9),
+    ],
+)
+
+data_model = DoEStrategy(
+    domain=domain,
+    criterion=DOptimalityCriterion(formula="fully-quadratic"),
+    ipopt_options={"max_iter": 500},
+)
+strategy = strategies.map(data_model=data_model)
+candidates = strategy.ask(candidate_count=12)
+np.round(candidates, 3)
+```
+

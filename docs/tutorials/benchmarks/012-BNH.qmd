@@ -1,0 +1,168 @@
+---
+title: BNH Benchmark
+jupyter: python3
+---
+
+## Imports
+
+
+```{python}
+#| tags: []
+import os
+import warnings
+
+import matplotlib.pyplot as plt
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.benchmarks.api import BNH
+from bofire.data_models.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import (
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+    MinimizeSigmoidObjective,
+)
+from bofire.data_models.strategies.api import MoboStrategy, RandomStrategy
+from bofire.plot.api import plot_objective_plotly
+from bofire.runners.api import run
+from bofire.utils.multiobjective import compute_hypervolume
+
+
+warnings.simplefilter("once")
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+## Random Strategy
+
+```{python}
+#| tags: []
+def sample(domain):
+    datamodel = RandomStrategy(domain=domain)
+    sampler = strategies.map(data_model=datamodel)
+    sampled = sampler.ask(10)
+    return sampled
+
+
+def hypervolume(domain: Domain, experiments: pd.DataFrame) -> float:
+    if "c1" in experiments.columns:
+        return compute_hypervolume(
+            domain,
+            experiments.loc[(experiments.c1 <= 25) & (experiments.c2 >= 7.7)],
+            ref_point={"f1": 140, "f2": 50},
+        )
+    return compute_hypervolume(domain, experiments, ref_point={"f1": 140, "f2": 50})
+
+
+random_results = run(
+    BNH(constraints=True),
+    strategy_factory=lambda domain: strategies.map(RandomStrategy(domain=domain)),
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=hypervolume,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+## MOBO Strategy
+### Without Constraints
+
+```{python}
+#| tags: []
+def strategy_factory(domain: Domain):
+    data_model = MoboStrategy(domain=domain, ref_point={"f1": 140, "f2": 50})
+    return strategies.map(data_model)
+
+
+results = run(
+    BNH(constraints=False),
+    strategy_factory=strategy_factory,
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=hypervolume,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+### With Constraints
+
+#### Manual Setup of the Domain
+
+```{python}
+#| tags: []
+domain = Domain(
+    inputs=Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 3)),
+        ],
+    ),
+    outputs=Outputs(
+        features=[
+            ContinuousOutput(key="f1", objective=MinimizeObjective()),
+            ContinuousOutput(key="f2", objective=MinimizeObjective()),
+            # these are the output constraints, choose MinimizeSigmoidObjective for lower bound constraints
+            # and MaximizeSigmoidObjective for upper bound constraints
+            # tp is the threshold point, steepness is the steepness of the sigmoid that is applied to the constraint
+            # usually a steepness of 1000 is fine.
+            ContinuousOutput(
+                key="c1",
+                objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
+            ),
+            ContinuousOutput(
+                key="c2",
+                objective=MaximizeSigmoidObjective(tp=7.7, steepness=1000),
+            ),
+        ],
+    ),
+)
+```
+
+One can visualize the objectives in the following way:
+
+```{python}
+#| tags: []
+feat = domain.outputs.get_by_key("c1")
+
+if not SMOKE_TEST:
+    plot_objective_plotly(feat, lower=20, upper=30)  # type: ignore
+```
+
+```{python}
+#| tags: []
+feat = domain.outputs.get_by_key("c2")
+
+if not SMOKE_TEST:
+    plot_objective_plotly(feat, lower=5, upper=10)  # type: ignore
+```
+
+#### Run tbe optimization
+The warnings can be ignored. They are stemming just from an internal postprocessing step and will be removed soon.
+
+```{python}
+#| tags: []
+c_results = run(
+    BNH(constraints=True),
+    strategy_factory=strategy_factory,
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=hypervolume,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+```{python}
+#| tags: []
+if not SMOKE_TEST:
+    fig, ax = plt.subplots()
+    ax.plot(results[0][1], label="without constraints")
+    ax.plot(c_results[0][1], label="with constraints")
+    ax.set_xlabel("iteration")
+    ax.set_ylabel("hypervolume")
+    ax.legend()
+    plt.show()
+```
+

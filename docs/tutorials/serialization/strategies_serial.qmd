@@ -1,0 +1,254 @@
+---
+title: Strategy Serialization with BoFire
+jupyter: python3
+---
+
+
+
+## Imports
+
+```{python}
+#| papermill: {duration: 3.7129, end_time: '2024-10-10T20:36:44.983985', exception: false, start_time: '2024-10-10T20:36:41.271085', status: completed}
+#| tags: []
+from pydantic import TypeAdapter
+
+import bofire.strategies.api as strategies
+from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.acquisition_functions.api import qLogNEI
+from bofire.data_models.domain.api import Domain, Outputs
+from bofire.data_models.kernels.api import RBFKernel, ScaleKernel
+from bofire.data_models.strategies.api import AnyStrategy
+from bofire.data_models.strategies.api import MoboStrategy as MoboStrategyDataModel
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
+from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
+from bofire.surrogates.diagnostics import CvResults2CrossValidationValues
+from bofire.surrogates.trainable import TrainableSurrogate
+```
+
+## Single Objective Problem Setup
+
+```{python}
+#| papermill: {duration: 0.013459, end_time: '2024-10-10T20:36:45.004781', exception: false, start_time: '2024-10-10T20:36:44.991322', status: completed}
+#| tags: []
+benchmark = Himmelblau()
+samples = benchmark.domain.inputs.sample(n=10)
+
+# this is the training data
+experiments = benchmark.f(samples, return_complete=True)
+
+# this are the pending candidates
+pending_candidates = benchmark.domain.inputs.sample(2)
+```
+
+## Random Strategy
+
+The random strategy and other strategies that just inherit from `Strategy` and not `PredictiveStrategy` are special as they do not need defined output features in the domain and they do not need a call to `tell` before the `ask`. Furthermore they online provide input features in the candidates and no predictions for output features.
+
+```{python}
+#| papermill: {duration: 0.021248, end_time: '2024-10-10T20:36:45.031772', exception: false, start_time: '2024-10-10T20:36:45.010524', status: completed}
+#| tags: []
+# setup the data model
+domain = Domain(inputs=benchmark.domain.inputs)
+strategy_data = RandomStrategyDataModel(domain=domain)
+
+# we generate the json spec
+jspec = strategy_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+#| papermill: {duration: 0.036003, end_time: '2024-10-10T20:36:45.070282', exception: false, start_time: '2024-10-10T20:36:45.034279', status: completed}
+#| tags: []
+# load it
+strategy_data = TypeAdapter(AnyStrategy).validate_json(jspec)
+
+# map it
+strategy = strategies.map(strategy_data)
+
+# ask it
+df_candidates = strategy.ask(candidate_count=5)
+
+# transform to spec
+candidates = strategy.to_candidates(df_candidates)
+
+candidates
+```
+
+## SOBO Strategy
+
+Setup the strategies data model.
+
+```{python}
+#| papermill: {duration: 0.009083, end_time: '2024-10-10T20:36:45.089494', exception: false, start_time: '2024-10-10T20:36:45.080411', status: completed}
+#| tags: []
+# setup the data model
+strategy_data = SoboStrategyDataModel(
+    domain=benchmark.domain,
+    acquisition_function=qLogNEI(),
+)
+
+# we generate the json spec
+jspec = strategy_data.model_dump_json()
+
+jspec
+```
+
+As SOBO is a predictive strategy, training data has to be provided before candidated can be requested. 
+
+```{python}
+#| papermill: {duration: 1.607265, end_time: '2024-10-10T20:36:46.703175', exception: true, start_time: '2024-10-10T20:36:45.095910', status: failed}
+#| tags: []
+# load it
+strategy_data = TypeAdapter(AnyStrategy).validate_json(jspec)
+
+# map it
+strategy = strategies.map(strategy_data)
+
+# tell it the pending candidates if present
+if pending_candidates is not None:
+    strategy.add_candidates(pending_candidates)
+
+# tell it
+strategy.tell(experiments=experiments)
+
+# ask it
+df_candidates = strategy.ask(candidate_count=2)
+
+# transform to spec
+candidates = strategy.to_candidates(df_candidates)
+
+candidates
+```
+
+We can also save the trained models of the strategy, for more info look at the `model_serial.ipynb` notebook. It could be that the `dumps` command fails here. But this is already fixed in the main branch of the `linear_operator` package, and if not yet, it should be available in main soon.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+jsurrogate_spec = strategy_data.surrogate_specs.surrogates[0].model_dump_json()
+dump = strategy.surrogates.surrogates[0].dumps()
+```
+
+## MOBO Strategy
+
+As example for a multiobjective strategy we are using here the `MoboStrategy`. Related strategies would be Qparego, MultiplicativeSobo etc. To use it, we have to first generate a multiobjective domain.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+benchmark = DTLZ2(dim=6)
+samples = benchmark.domain.inputs.sample(n=20)
+experiments = benchmark.f(samples, return_complete=True)
+pending_candidates = benchmark.domain.inputs.sample(2)
+```
+
+Now the strategy spec is setup. Note that we can define there exactly which model to use.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# setup the data model
+strategy_data = MoboStrategyDataModel(
+    domain=benchmark.domain,
+    surrogate_specs=BotorchSurrogates(
+        surrogates=[
+            SingleTaskGPSurrogate(
+                inputs=benchmark.domain.inputs,
+                outputs=Outputs(features=[benchmark.domain.outputs[0]]),
+                kernel=ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ),
+        ],
+    ),
+)
+
+# we generate the json spec
+jspec = strategy_data.model_dump_json()
+
+jspec
+```
+
+Generate the candidates.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# load it
+strategy_data = TypeAdapter(AnyStrategy).validate_json(jspec)
+
+# map it
+strategy = strategies.map(strategy_data)
+
+# tell it the pending candidates if available
+if pending_candidates is not None:
+    strategy.add_candidates(pending_candidates)
+
+# tell it
+strategy.tell(experiments=experiments)
+
+# ask it
+df_candidates = strategy.ask(candidate_count=1)
+
+# transform to spec
+candidates = strategy.to_candidates(df_candidates)
+
+candidates
+```
+
+To fill the model info section accordingly, the following snippet has to be executed for every surrogate, incldung saving the actual models.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+from typing import Literal
+
+from pydantic import BaseModel
+
+
+class TestMethod(BaseModel):
+    type: str
+
+
+class CrossValidation(TestMethod):
+    type: Literal["CrossValidation"] = "CrossValidation"
+    foldCount: int
+
+
+for i in range(len(strategy_data.surrogate_specs.surrogates)):
+    surrogate_data = strategy.surrogate_specs.surrogates[i]
+    surrogate = strategy.surrogates.surrogates[i]
+    # get the spec
+    jsurrogate_spec = surrogate_data.model_dump_json()
+    # get the dump
+    dump = surrogate.dumps()
+    # do the cross validation, only if we have a trainable model under the hood
+    if isinstance(surrogate, TrainableSurrogate):
+        cv_train, cv_test, _ = surrogate.cross_validate(strategy.experiments, folds=5)
+        # transform the bofire objects to the backend objects
+        testMethod = CrossValidation(foldCount=5)
+        cvResultsTrain = CvResults2CrossValidationValues(cv_train)
+        cvResultsTest = CvResults2CrossValidationValues(cv_test)
+        metricsTrain = {
+            surrogate.outputs[0].key: cv_train.get_metrics(combine_folds=False)
+            .describe()
+            .loc["mean"]
+            .to_dict(),
+        }
+        metricsTest = {
+            surrogate.outputs[0].key: cv_test.get_metrics(combine_folds=True)
+            .describe()
+            .loc["mean"]
+            .to_dict(),
+        }
+        # save to backend
+        # - jsurrogate_spec
+        # - dump
+        # - testMethod
+        # - cvResultsTrain
+        # - cvResultsTest
+        # - metricsTrain
+        # - metricsTest
+```
+
