@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - docs
   pull_request:
     branches:
       - main
@@ -43,7 +42,7 @@ jobs:
         uses: quarto-dev/quarto-actions/render@v2
 
       - name: Deploy to GitHub Pages
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/docs')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
