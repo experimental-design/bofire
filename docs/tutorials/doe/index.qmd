@@ -8,17 +8,17 @@ These tutorials demonstrate the usage of traditional design of experiments algor
 
 ## Available Tutorials
 
-### [Basic DOE Examples](basic_examples.ipynb)
+### [Basic DOE Examples](basic_examples.qmd)
 Introduction to basic design of experiments concepts and implementations.
 
-### [Design with Explicit Formula](design_with_explicit_formula.ipynb)
+### [Design with Explicit Formula](design_with_explicit_formula.qmd)
 Creating experimental designs using explicit model formulas.
 
-### [Fractional Factorial Designs](fractional_factorial.ipynb)
+### [Fractional Factorial Designs](fractional_factorial.qmd)
 Efficient screening designs using fractional factorial approaches.
 
-### [N-Choose-K Constraints](nchoosek_constraint.ipynb)
+### [N-Choose-K Constraints](nchoosek_constraint.qmd)
 Handling n-choose-k constraints in experimental designs.
 
-### [Optimality Criteria](optimality_criteria.ipynb)
+### [Optimality Criteria](optimality_criteria.qmd)
 Using different optimality criteria (D-optimal, A-optimal, etc.) for design generation.

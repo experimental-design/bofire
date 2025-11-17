@@ -8,10 +8,10 @@ All classes in BoFire are serializable and can be saved to JSON formats. These t
 
 ## Available Tutorials
 
-### [Model Serialization](models_serial.ipynb)
+### [Model Serialization](models_serial.qmd)
 Learn how to serialize and deserialize surrogate models.
 
-### [Strategy Serialization](strategies_serial.ipynb)
+### [Strategy Serialization](strategies_serial.qmd)
 Save and load optimization strategies for reproducibility and deployment.
 
 ## Why Serialization Matters

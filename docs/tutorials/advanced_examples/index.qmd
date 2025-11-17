@@ -8,26 +8,26 @@ These notebooks showcase more specialized and advanced use cases in BoFire. Thes
 
 ## Available Tutorials
 
-### [Custom SOBO](custom_sobo.ipynb)
+### [Custom SOBO](custom_sobo.qmd)
 Create custom single-objective Bayesian optimization strategies.
 
-### [Desirability Objectives](desirability_objectives.ipynb)
+### [Desirability Objectives](desirability_objectives.qmd)
 Working with desirability functions for multi-criteria optimization.
 
-### [Genetic Algorithm](genetic_algorithm.ipynb)
+### [Genetic Algorithm](genetic_algorithm.qmd)
 Using genetic algorithms for optimization in BoFire.
 
-### [Merging Objectives](merging_objectives.ipynb)
+### [Merging Objectives](merging_objectives.qmd)
 Techniques for combining multiple objectives in optimization.
 
-### [Multifidelity Bayesian Optimization](multifidelity_bo.ipynb)
+### [Multifidelity Bayesian Optimization](multifidelity_bo.qmd)
 Leveraging multiple fidelity levels for efficient optimization.
 
-### [Objectives on Inputs](objectives_on_inputs.ipynb)
+### [Objectives on Inputs](objectives_on_inputs.qmd)
 Defining optimization objectives directly on input parameters.
 
-### [Random Forest in BoFire](random_forest_in_bofire.ipynb)
+### [Random Forest in BoFire](random_forest_in_bofire.qmd)
 Using Random Forest as a surrogate model instead of Gaussian Processes.
 
-### [Transfer Learning BO](transfer_learning_bo.ipynb)
+### [Transfer Learning BO](transfer_learning_bo.qmd)
 Applying transfer learning techniques to Bayesian optimization.

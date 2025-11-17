@@ -9,11 +9,12 @@ pip install bofire
 ```
 
 
-!!! tip
-    The command from above will install a minimal BoFire version, consisting only of the [data models](data_models_functionals.md). To install BoFire's including its core optimization features, execute:
-    ```
-    pip install 'bofire[optimization]'
-    ```
+:::{.callout-tip}
+The command from above will install a minimal BoFire version, consisting only of the [data models](docs/userguides/data_models_functionals.qmd). To install BoFire's including its core optimization features, execute:
+```
+pip install 'bofire[optimization]'
+```
+:::
 
 ### Additional optional dependencies
 
@@ -38,14 +39,15 @@ The available dependencies are:
 - `tutorials`: Required for running the [tutorials.](https://github.com/experimental-design/bofire/tree/main/tutorials)
 - `all`: Install all possible options (except DoE)
 
-!!! warning
-    BoFire has the functionalities for creating D, E, A, G, K and I-optimal experimental designs via the `DoEStrategy`. This feature depends on [cyipopt](https://cyipopt.readthedocs.io/en/stable/) which is a python interface to `ipopt`. Unfortunately, it is not possible to install `cyipopt` including `ipopt` via pip. A solution is to install `cyipopt` and its dependencies via conda:
+:::{.callout-warning}
+BoFire has the functionalities for creating D, E, A, G, K and I-optimal experimental designs via the `DoEStrategy`. This feature depends on [cyipopt](https://cyipopt.readthedocs.io/en/stable/) which is a python interface to `ipopt`. Unfortunately, it is not possible to install `cyipopt` including `ipopt` via pip. A solution is to install `cyipopt` and its dependencies via conda:
 
-    ```
-    conda install -c conda-forge cyipopt
-    ```
+```
+conda install -c conda-forge cyipopt
+```
 
-    We are working on a solution that makes BoFire's model based DoE functionalities also accessible to users which do not have `cyipopt` available.
+We are working on a solution that makes BoFire's model based DoE functionalities also accessible to users which do not have `cyipopt` available.
+:::
 
 
 ## Development Installation

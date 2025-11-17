@@ -8,41 +8,41 @@ These tutorials demonstrate how to recreate results from various papers and comm
 
 ## Available Benchmarks
 
-### [001 - Himmelblau Function](001-Himmelblau.ipynb)
+### [001 - Himmelblau Function](001-Himmelblau.qmd)
 Classic optimization benchmark using the Himmelblau function.
 
-### [002 - DTLZ2](002-DTLZ2.ipynb)
+### [002 - DTLZ2](002-DTLZ2.qmd)
 Multi-objective optimization using the DTLZ2 test problem.
 
-### [004 - Aspen Benchmark](004-Aspen_benchmark.ipynb)
+### [004 - Aspen Benchmark](004-Aspen_benchmark.qmd)
 Industrial process optimization using Aspen simulation.
 
-### [005 - Hartmann with N-Choose-K](005-Hartmann_with_nchoosek.ipynb)
+### [005 - Hartmann with N-Choose-K](005-Hartmann_with_nchoosek.qmd)
 Hartmann function optimization with n-choose-k constraints.
 
-### [006 - 30-Dimensional Branin](006-30dimBranin.ipynb)
+### [006 - 30-Dimensional Branin](006-30dimBranin.qmd)
 High-dimensional optimization using an extended Branin function.
 
-### [007 - Benchmark Outlier Detection](007-Benchmark_outlier_detection.ipynb)
+### [007 - Benchmark Outlier Detection](007-Benchmark_outlier_detection.qmd)
 Testing outlier detection capabilities on benchmark problems.
 
-### [008 - Himmelblau with Outliers](008-Himmelblau_with_outliers.ipynb)
+### [008 - Himmelblau with Outliers](008-Himmelblau_with_outliers.qmd)
 Robust optimization in the presence of outliers.
 
-### [009 - Bayesian Optimization over Molecules](009-Bayesian_optimization_over_molecules.ipynb)
+### [009 - Bayesian Optimization over Molecules](009-Bayesian_optimization_over_molecules.qmd)
 Molecular optimization using chemical fingerprints and specialized kernels.
 
-### [010 - LSRBO](010-LSRBO.ipynb)
+### [010 - LSRBO](010-LSRBO.qmd)
 Local search-based Bayesian optimization.
 
-### [011 - ZDT1](011-ZDT1.ipynb)
+### [011 - ZDT1](011-ZDT1.qmd)
 Multi-objective optimization using the ZDT1 test problem.
 
-### [012 - BNH](012-BNH.ipynb)
+### [012 - BNH](012-BNH.qmd)
 Binh and Korn multi-objective test function.
 
-### [013 - TNK](013-TNK.ipynb)
+### [013 - TNK](013-TNK.qmd)
 Tanaka multi-objective test function.
 
-### [014 - Active Learning](014-ActiveLearning.ipynb)
+### [014 - Active Learning](014-ActiveLearning.qmd)
 Active learning strategies for experimental design.

@@ -27,9 +27,6 @@ domain = dm_domain.Domain(
     constraints=constraints,
 )
 
-```{python}
-
-```
 data_model = dm_strategies.RandomStrategy(domain=domain)
 ```
 

@@ -15,17 +15,17 @@ These notebooks demonstrate the basic functionality of BoFire, including:
 
 ## Available Tutorials
 
-### [Basic Terminology](basic_terminology.ipynb)
+### [Basic Terminology](basic_terminology.qmd)
 Introduction to fundamental concepts and terminology used throughout BoFire.
 
-### [Reaction Optimization Example](Reaction_Optimization_Example.ipynb)
+### [Reaction Optimization Example](Reaction_Optimization_Example.qmd)
 A comprehensive example showing how to optimize chemical reactions using BoFire.
 
-### [Model Fitting and Analysis](Model_Fitting_and_analysis.ipynb)
+### [Model Fitting and Analysis](Model_Fitting_and_analysis.qmd)
 Learn how to fit surrogate models and analyze their performance.
 
-### [Outlier Detection and Robust GP](Outlier_Detection_and_Robust_GP.ipynb)
+### [Outlier Detection and Robust GP](Outlier_Detection_and_Robust_GP.qmd)
 Techniques for detecting outliers and building robust Gaussian Process models.
 
-### [Unknown Constraint Classification](Unknown_Constraint_Classification.ipynb)
+### [Unknown Constraint Classification](Unknown_Constraint_Classification.qmd)
 Handling and classifying unknown constraints in optimization problems.
