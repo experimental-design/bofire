@@ -408,6 +408,25 @@ class Domain(BaseModel):
             strict=strict,
         )
         experiments = self.outputs.validate_experiments(experiments=experiments)
+        
+        # Check for _trajectory_id if timeseries features are present
+        from bofire.data_models.features.numerical import NumericalInput
+        
+        timeseries_features = [
+            f.key
+            for f in self.inputs
+            if isinstance(f, NumericalInput) and getattr(f, "is_timeseries", False)
+        ]
+        
+        if len(timeseries_features) > 0:
+            trajectory_col = "_trajectory_id"
+            if trajectory_col not in experiments.columns:
+                raise ValueError(
+                    f"Timeseries feature '{timeseries_features[0]}' detected, but required column '{trajectory_col}' "
+                    f"is not present in the experiments. When using timeseries features, you must include a "
+                    f"'{trajectory_col}' column that identifies which trajectory/experiment each row belongs to."
+                )
+        
         return experiments
 
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:

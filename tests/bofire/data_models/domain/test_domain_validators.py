@@ -446,3 +446,61 @@ def test_domain_timeseries_validation():
     )
     # Check that no timeseries features exist
     assert len([f for f in domain3.inputs if hasattr(f, 'is_timeseries') and f.is_timeseries]) == 0
+
+
+def test_domain_timeseries_trajectory_id_validation():
+    """Test that validate_experiments checks for _trajectory_id when timeseries features are present."""
+    
+    # Create domain with timeseries feature
+    time_input = ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True)
+    x_input = ContinuousInput(key="x", bounds=(0, 10))
+    y_output = ContinuousOutput(key="y")
+    
+    domain = Domain(
+        inputs=Inputs(features=[time_input, x_input]),
+        outputs=Outputs(features=[y_output]),
+    )
+    
+    # Test 1: Experiments with _trajectory_id - should work
+    experiments_with_trajectory = pd.DataFrame({
+        "_trajectory_id": [0, 0, 0, 1, 1, 1],
+        "time": [0, 10, 20, 0, 10, 20],
+        "x": [1, 2, 3, 4, 5, 6],
+        "y": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+        "valid_y": [1, 1, 1, 1, 1, 1],
+    })
+    
+    # Should not raise an error
+    validated = domain.validate_experiments(experiments_with_trajectory)
+    assert validated is not None
+    assert "_trajectory_id" in validated.columns
+    
+    # Test 2: Experiments without _trajectory_id - should fail
+    experiments_without_trajectory = pd.DataFrame({
+        "time": [0, 10, 20, 0, 10, 20],
+        "x": [1, 2, 3, 4, 5, 6],
+        "y": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+        "valid_y": [1, 1, 1, 1, 1, 1],
+    })
+    
+    with pytest.raises(
+        ValueError, 
+        match="Timeseries feature 'time' detected, but required column '_trajectory_id' is not present"
+    ):
+        domain.validate_experiments(experiments_without_trajectory)
+    
+    # Test 3: Non-timeseries domain doesn't require _trajectory_id
+    domain_no_timeseries = Domain(
+        inputs=Inputs(features=[x_input]),  # No timeseries feature
+        outputs=Outputs(features=[y_output]),
+    )
+    
+    experiments_no_timeseries = pd.DataFrame({
+        "x": [1, 2, 3, 4, 5, 6],
+        "y": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
+        "valid_y": [1, 1, 1, 1, 1, 1],
+    })
+    
+    # Should work without _trajectory_id since there's no timeseries feature
+    validated_no_ts = domain_no_timeseries.validate_experiments(experiments_no_timeseries)
+    assert validated_no_ts is not None
