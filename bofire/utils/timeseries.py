@@ -1,8 +1,10 @@
 """Utilities for working with timeseries data in BoFire."""
 
-import pandas as pd
-import numpy as np
 from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
 
 if TYPE_CHECKING:
     from bofire.data_models.domain.domain import Domain
@@ -72,10 +74,10 @@ def infer_trajectory_id(
         >>> print(experiments['_trajectory_id'].tolist())
         [0, 0, 0, 1, 1, 1, 0, 0, 0]  # Rows with temp=25 get same ID
     """
-    from bofire.data_models.features.numerical import NumericalInput
     from bofire.data_models.features.categorical import CategoricalInput
     from bofire.data_models.features.discrete import DiscreteInput
     from bofire.data_models.features.molecular import MolecularInput
+    from bofire.data_models.features.numerical import NumericalInput
 
     # Identify timeseries feature
     timeseries_features = [

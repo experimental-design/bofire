@@ -335,9 +335,7 @@ class Domain(BaseModel):
         experiments = self.coerce_invalids(experiments)
 
         # group and aggregate
-        agg: Dict[str, Any] = {
-            feat: method for feat in self.outputs.get_keys(ContinuousOutput)
-        }
+        agg: Dict[str, Any] = dict.fromkeys(self.outputs.get_keys(ContinuousOutput), method)
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1
@@ -408,16 +406,16 @@ class Domain(BaseModel):
             strict=strict,
         )
         experiments = self.outputs.validate_experiments(experiments=experiments)
-        
+
         # Check for _trajectory_id if timeseries features are present
         from bofire.data_models.features.numerical import NumericalInput
-        
+
         timeseries_features = [
             f.key
             for f in self.inputs
             if isinstance(f, NumericalInput) and getattr(f, "is_timeseries", False)
         ]
-        
+
         if len(timeseries_features) > 0:
             trajectory_col = "_trajectory_id"
             if trajectory_col not in experiments.columns:
@@ -426,7 +424,7 @@ class Domain(BaseModel):
                     f"is not present in the experiments. When using timeseries features, you must include a "
                     f"'{trajectory_col}' column that identifies which trajectory/experiment each row belongs to."
                 )
-        
+
         return experiments
 
     def add_trajectory_id(
