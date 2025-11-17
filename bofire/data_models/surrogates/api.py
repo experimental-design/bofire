@@ -93,7 +93,7 @@ AnyTrainableSurrogate = Union[
     TanimotoGPSurrogate,
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
-
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyRegressionSurrogate = Union[
@@ -113,7 +113,7 @@ AnyRegressionSurrogate = Union[
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble
