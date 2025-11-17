@@ -28,7 +28,7 @@ website:
   repo-url: "https://github.com/experimental-design/bofire"
   repo-actions: [edit, issue]
   page-navigation: true
-  
+
   navbar:
     background: primary
     search: true
@@ -82,7 +82,7 @@ website:
         - index.qmd
         - install.qmd
         - getting_started.qmd
-    
+
     - title: "Tutorials"
       contents:
         - section: "Basic Examples"
@@ -133,14 +133,14 @@ website:
             - docs/tutorials/serialization/index.qmd
             - docs/tutorials/serialization/models_serial.qmd
             - docs/tutorials/serialization/strategies_serial.qmd
-    
+
     - title: "User Guides"
       contents:
         - docs/userguides/domain.qmd
         - docs/userguides/strategies.qmd
         - docs/userguides/surrogates.qmd
         - docs/userguides/data_models_functionals.qmd
-    
+
     - title: "API Reference"
       contents:
         - docs/reference/domain.qmd
@@ -162,7 +162,7 @@ format:
     code-tools: true
     number-sections: false
     link-external-newwindow: true
-    
+
 filters:
   - quarto
 
@@ -170,5 +170,5 @@ execute:
   enabled: false
   freeze: auto
   cache: true
-  
+
 jupyter: python3

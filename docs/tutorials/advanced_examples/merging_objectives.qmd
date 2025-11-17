@@ -16,7 +16,7 @@ from bofire.data_models.objectives import api as objectives_data_model
 from bofire.data_models.strategies import api as strategies_data_model
 ```
 
-## Benchmark Problem 
+## Benchmark Problem
 Only used for domain definition
 
 ```{python}
@@ -58,7 +58,7 @@ We see the following:
 - Additive: The objective is a sum of the objectives: We see a linear increase in the objective with increasing $f_0$ and $f_1$. This is useful for complementary objectives.
 - Mixed: The objective is more strict w.r.t. $f_0$ than the additive objective $f_1$. The overall desirability can also be high, if $f_1$ is low.
 
-Changing the weights $w_i$ in the objectives above will further change the preference of $f_0$ and $f_1$. 
+Changing the weights $w_i$ in the objectives above will further change the preference of $f_0$ and $f_1$.
 
 ```{python}
 # map from the strategy data-model to the actual strategy object instances
@@ -110,4 +110,3 @@ for key, obj in objectives_eval.items():
 
 plt.show()
 ```
-

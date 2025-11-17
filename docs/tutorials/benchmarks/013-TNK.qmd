@@ -91,4 +91,3 @@ if not SMOKE_TEST:
     ax.legend()
     plt.show()
 ```
-

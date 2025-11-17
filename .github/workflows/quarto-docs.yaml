@@ -15,7 +15,7 @@ jobs:
       contents: write
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
-    
+
     steps:
       - name: Check out repo
         uses: actions/checkout@v4

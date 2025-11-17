@@ -9,12 +9,12 @@ In the following it is showed how to setup optimization problems in BoFire and h
 
 ## Setting up the optimization problem
 
-In BoFire, an optimization problem is defined by defining a domain containing input and output features, 
+In BoFire, an optimization problem is defined by defining a domain containing input and output features,
 as well as optionally including constraints.
 
 ### Features
 
-Input features can be continuous, discrete, categorical. 
+Input features can be continuous, discrete, categorical.
 
 We also support a range of specialized inputs that make defining your experiments easier, such as:
 - `MolecularInput` allows transformations of molecules to featurizations (`Fingerprints`, `Fragments` and more).
@@ -55,8 +55,8 @@ x6 = CategoricalDescriptorInput(
 )
 ```
 
-We can define both continuous and categorical outputs. Each output feature should have an objective, 
-which determines if we aim to minimize, maximize, or drive the feature to a given value. Furthermore, we can 
+We can define both continuous and categorical outputs. Each output feature should have an objective,
+which determines if we aim to minimize, maximize, or drive the feature to a given value. Furthermore, we can
 define weights between 0 and 1 in case the objectives should not be weighted equally.
 
 ```{python}
@@ -76,7 +76,7 @@ objective2 = MinimizeObjective(w=1.0)
 y2 = ContinuousOutput(key="time_taken", objective=objective2)
 ```
 
-In- and output features are collected in respective feature lists, which can be summarized 
+In- and output features are collected in respective feature lists, which can be summarized
 with the `get_reps_df` method.
 
 ```{python}
@@ -112,7 +112,7 @@ input_features.get_by_key("catalyst")
 input_features.get_by_keys(["catalyst", "conc_B"])
 ```
 
-Features of a specific type can be returned by the `get` method. By using the `exact` 
+Features of a specific type can be returned by the `get` method. By using the `exact`
 argument, we can force the method to only return features that match the class exactly.
 
 ```{python}
@@ -200,7 +200,7 @@ constr2 = LinearInequalityConstraint(
 
 Linear constraints can only operate on `ContinuousInput` features.
 
-#### Nonlinear constraints 
+#### Nonlinear constraints
 
 `NonlinearEqualityConstraint` and `NonlinearInequalityConstraint` take any expression that can be evaluated by [pandas.eval](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.eval.html), including mathematical operators such as `sin`, `exp`, `log10` or exponentiation. So far, they cannot be used in any optimizations.
 
@@ -513,4 +513,3 @@ ax.scatter(
     color="orange",
 )
 ```
-

@@ -63,4 +63,3 @@ strategy.f = f
 strategy.tell(experiments)
 strategy.ask(1)
 ```
-

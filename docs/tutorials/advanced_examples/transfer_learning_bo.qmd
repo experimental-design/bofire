@@ -507,4 +507,3 @@ plt.show()
 ```
 
 We can see that using transfer learning leads to significant improvement.
-

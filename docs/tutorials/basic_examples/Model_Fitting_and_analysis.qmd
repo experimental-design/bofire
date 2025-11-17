@@ -101,4 +101,3 @@ test_cv.get_metrics(combine_folds=True)
 display(test_cv.get_metrics(combine_folds=False))
 display(test_cv.get_metrics(combine_folds=False).describe())
 ```
-

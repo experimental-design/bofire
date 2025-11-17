@@ -264,4 +264,3 @@ figsize = (6, 4)
 fig = plt.figure(dpi=100, figsize=figsize)
 bmc_plot(model.model.bmc_support_sizes.detach(), model.model.bmc_probabilities.detach())
 ```
-

@@ -5,7 +5,7 @@ jupyter: python3
 
 
 
-Showcase of active learning in bofire. Active learning per definition focusses on fitting the model to the experimental observations best possible in an iterative manner reducing some kind of uncertainty. The ActiveLearningStrategy proposes a set of evaluation points that will gain the most information about the problem each iteration. Thus, an unknown black-box-function can be approximated without optimization. It represents an exploration-only strategy. 
+Showcase of active learning in bofire. Active learning per definition focusses on fitting the model to the experimental observations best possible in an iterative manner reducing some kind of uncertainty. The ActiveLearningStrategy proposes a set of evaluation points that will gain the most information about the problem each iteration. Thus, an unknown black-box-function can be approximated without optimization. It represents an exploration-only strategy.
 
 ```{python}
 #| papermill: {duration: 3.229388, end_time: '2024-10-10T20:35:57.504196', exception: false, start_time: '2024-10-10T20:35:54.274808', status: completed}
@@ -164,7 +164,7 @@ Now, we want to actively learn an objective function with a multi-dimensional ou
 
 \begin{equation}
     \bm{f}: \mathbb{R}^2 \rightarrow \mathbb{R}^2   \quad | \quad 
-    \bm{f}(x_1, x_2) = 
+    \bm{f}(x_1, x_2) =
         \begin{pmatrix}
             (x_1^2 + x_2 - 11)^2 + (x_1 + x_2^2) ^2 \\
             -20\exp \left[-0.2{\sqrt {0.5\left(x_1^{2}+x_2^{2}\right)}}\right]
@@ -337,4 +337,3 @@ ax[0, 0].set_title("random strategy")
 ax[0, 1].set_title("active learning strategy")
 fig.show()
 ```
-

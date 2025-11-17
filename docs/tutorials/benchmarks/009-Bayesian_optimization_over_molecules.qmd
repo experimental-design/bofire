@@ -4,9 +4,9 @@ jupyter: python3
 ---
 
 An example notebook for Bayesian optimisation on a molecular dataset using a Tanimoto fingerprint kernel and the photoswitch dataset.$\newline$
-Paper: https://pubs.rsc.org/en/content/articlelanding/2022/sc/d2sc04306h $\newline$                                                                                      
-Code: https://github.com/Ryan-Rhys/The-Photoswitch-Dataset $\newline$                                                                                                    
-This notebook is adapted from https://github.com/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb $\newline$                      
+Paper: https://pubs.rsc.org/en/content/articlelanding/2022/sc/d2sc04306h $\newline$
+Code: https://github.com/Ryan-Rhys/The-Photoswitch-Dataset $\newline$
+This notebook is adapted from https://github.com/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb $\newline$
 The method of obtaining new data from a discrete dataset is explained in the notebook and the details of the dataset and the method are explained in the code and the paper respectively.
 
 
@@ -40,7 +40,7 @@ warnings.filterwarnings("ignore")
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 ```
 
-## Benchmark 
+## Benchmark
 input and output feature keys and extract them to get LookUpTable
 
 ```{python}
@@ -182,4 +182,3 @@ if not SMOKE_TEST:
     plt.legend(loc="lower right")
     plt.show()
 ```
-

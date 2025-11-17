@@ -4,7 +4,7 @@ jupyter: python3
 ---
 
 
-In this notebook the Branin benchmark from paper about local search region BO (https://www.merl.com/publications/docs/TR2023-057.pdf) is reproduced. Note that we use here by purpose `qEI` as acquisition function to reproduce the paper. 
+In this notebook the Branin benchmark from paper about local search region BO (https://www.merl.com/publications/docs/TR2023-057.pdf) is reproduced. Note that we use here by purpose `qEI` as acquisition function to reproduce the paper.
 
 
 ## Imports and helper methods
@@ -256,4 +256,3 @@ if not SMOKE_TEST:
 
     plt.show()
 ```
-

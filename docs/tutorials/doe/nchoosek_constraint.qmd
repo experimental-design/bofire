@@ -85,4 +85,3 @@ strategy = strategies.map(data_model=data_model)
 candidates = strategy.ask(candidate_count=12)
 np.round(candidates, 3)
 ```
-

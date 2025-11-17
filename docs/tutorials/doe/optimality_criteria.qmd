@@ -116,4 +116,3 @@ ax.scatter(xs=X[:, 0], ys=X[:, 1], zs=X[:, 2], s=40)
 
 plt.show()
 ```
-

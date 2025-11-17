@@ -85,4 +85,3 @@ for key, objective in objectives.items():
 plt.grid(True)
 plt.legend()
 ```
-

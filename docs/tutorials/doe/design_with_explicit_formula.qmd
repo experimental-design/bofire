@@ -84,4 +84,3 @@ m = get_confounding_matrix(
 sns.heatmap(m, annot=True, annot_kws={"fontsize": 7}, fmt="2.1f")
 plt.show()
 ```
-

@@ -7,14 +7,14 @@ jupyter: python3
 In this example we take on a reaction condition optimization problem:
 Suppose you have some simple reaction where two ingredients **A** and **B** react to **C**.
 
-Our reactors can be temperature controlled, and we can use different solvents. Furthermore, we can dilute our reaction mixture by using a different solvent volume. 
+Our reactors can be temperature controlled, and we can use different solvents. Furthermore, we can dilute our reaction mixture by using a different solvent volume.
 parameters like the **temperature** or the **solvent volume** are **continuous parameters**, where we have to set lower and upper bounds for. The **temperature** can be controlled between 0 and 60°C and the **solvent volume** between 20 and 90 ml.
 
 Parameters like the use of **which solvent**, where there's a choice of either this or that, are **categorical parameters**. Here we can choose between MeOH, THF and Dioxane.
 
 For now we only wish top optimize the Reaction yield, making this a **single objective optimization problem**.
 
-Below we'll see how to perform such an optimization using bofire, Utilizing a **Single Objective Bayesian Optimization (SOBO)** Strategy 
+Below we'll see how to perform such an optimization using bofire, Utilizing a **Single Objective Bayesian Optimization (SOBO)** Strategy
 
 
 ```{python}
@@ -282,9 +282,9 @@ experiments
 ```
 
 # Strategy Setup
-a BO Strategy requires a choice of an acquisition function in order to evaluate the quality of new trial candidates. 
+a BO Strategy requires a choice of an acquisition function in order to evaluate the quality of new trial candidates.
 
-In this example we'll use the popular **Expected Improvement (EI)** acqf, which can evaluate the expectation value for obtaining a better function value compared to the current best value by utilizing the regression models' prediction of botht the function value as well as the variance at that point. 
+In this example we'll use the popular **Expected Improvement (EI)** acqf, which can evaluate the expectation value for obtaining a better function value compared to the current best value by utilizing the regression models' prediction of botht the function value as well as the variance at that point.
 
 ```{python}
 #| papermill: {duration: 1.870962, end_time: '2024-10-10T20:34:29.893823', exception: false, start_time: '2024-10-10T20:34:28.022861', status: completed}
@@ -316,7 +316,7 @@ sobo_strategy = strategies.map(sobo_strategy_data_model)
 sobo_strategy.tell(experiments)
 ```
 
-Each implemented strategy has a `strategy.ask(n)` method implemented, where new experiment candidates can be fetched from.  
+Each implemented strategy has a `strategy.ask(n)` method implemented, where new experiment candidates can be fetched from.
 
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
@@ -327,7 +327,7 @@ Each implemented strategy has a `strategy.ask(n)` method implemented, where new 
 
 Since a BO strategy requires an underlying regression model for predictions, it requires a certain amount of initial experiments for it to be able to build such a model.
 
-In order to obtain initial experiments, one way is to (pseudo)randomly sample candidate points in the reaction domain. This can e.g. be done by the RandomStrategy. 
+In order to obtain initial experiments, one way is to (pseudo)randomly sample candidate points in the reaction domain. This can e.g. be done by the RandomStrategy.
 
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
@@ -376,7 +376,7 @@ experiments = evaluate_experiments(domain, candidates)
 experiments
 ```
 
-note, that the columns `Yield` and `valid_Yield` have been added. `Yield` contains the actual output, whereas `valid_Yield` labels the experiment as valid w.r.t. this respective measured output. 
+note, that the columns `Yield` and `valid_Yield` have been added. `Yield` contains the actual output, whereas `valid_Yield` labels the experiment as valid w.r.t. this respective measured output.
 
 This info can now be given to the bo strategy so it can use it to fit the underlying regression model it utilizes via the `strategy.tell()` method.
 
@@ -446,4 +446,3 @@ sobo_strategy.experiments
 # quick plot of yield vs. Iteration
 sobo_strategy.experiments["Yield"].plot()
 ```
-

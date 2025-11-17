@@ -96,7 +96,7 @@ jspec = strategy_data.model_dump_json()
 jspec
 ```
 
-As SOBO is a predictive strategy, training data has to be provided before candidated can be requested. 
+As SOBO is a predictive strategy, training data has to be provided before candidated can be requested.
 
 ```{python}
 #| papermill: {duration: 1.607265, end_time: '2024-10-10T20:36:46.703175', exception: true, start_time: '2024-10-10T20:36:45.095910', status: failed}
@@ -251,4 +251,3 @@ for i in range(len(strategy_data.surrogate_specs.surrogates)):
         # - metricsTrain
         # - metricsTest
 ```
-

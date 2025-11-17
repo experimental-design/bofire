@@ -307,4 +307,3 @@ if not SMOKE_TEST:
 
     fig.show()
 ```
-

@@ -39,10 +39,10 @@ To build the documentation, you need:
    # On Linux
    wget https://github.com/quarto-dev/quarto-cli/releases/download/v1.4.549/quarto-1.4.549-linux-amd64.deb
    sudo dpkg -i quarto-1.4.549-linux-amd64.deb
-   
+
    # On macOS
    brew install quarto
-   
+
    # On Windows
    # Download and run the installer from quarto.org
    ```

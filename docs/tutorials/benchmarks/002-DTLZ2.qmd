@@ -201,4 +201,3 @@ ax.set_ylabel("f_1")
 
 fig.show()
 ```
-

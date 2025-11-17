@@ -88,7 +88,7 @@ Load it from the spec
 surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
 ```
 
-Map it 
+Map it
 
 ```{python}
 #| papermill: {duration: 0.006211, end_time: '2024-10-10T20:36:39.001350', exception: false, start_time: '2024-10-10T20:36:38.995139', status: completed}
@@ -381,4 +381,3 @@ predictions2 = surrogate.to_predictions(predictions=df_predictions2)
 # check for equality
 predictions == predictions2
 ```
-

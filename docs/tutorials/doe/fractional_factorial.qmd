@@ -56,7 +56,7 @@ domain = Domain(
 
 ## Setup a full factorial design
 
-Here we setup a full two-level factorial design including a center point and plot it. 
+Here we setup a full two-level factorial design including a center point and plot it.
 
 ```{python}
 #| papermill: {duration: 0.193231, end_time: '2024-10-10T20:36:14.897979', exception: false, start_time: '2024-10-10T20:36:14.704748', status: completed}
@@ -86,7 +86,7 @@ plt.show()
 
 ## Setup a full factorial design with blocking
 
-Here we setup a blocked full two-level factorial design including a center point and plot it. 
+Here we setup a blocked full two-level factorial design including a center point and plot it.
 
 ```{python}
 blocked_domain = Domain(
@@ -183,4 +183,3 @@ m = get_confounding_matrix(domain.inputs, design=design, interactions=[2])
 sns.heatmap(m, annot=True, annot_kws={"fontsize": 7}, fmt="2.1f")
 plt.show()
 ```
-

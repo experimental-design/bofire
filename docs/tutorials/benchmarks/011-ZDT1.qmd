@@ -231,4 +231,3 @@ ax.set_xlabel("Iteration")
 
 ax.legend()
 ```
-

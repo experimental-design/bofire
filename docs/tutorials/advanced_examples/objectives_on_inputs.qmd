@@ -101,4 +101,3 @@ strategy = strategies.map(strategy_data)
 strategy.tell(experiments)
 strategy.ask(4)
 ```
-

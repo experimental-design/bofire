@@ -3,7 +3,7 @@ title: For optimizations in the bofire domain, a GA optimizer is available
 jupyter: python3
 ---
 
-Usage is possible in multiple ways: 
+Usage is possible in multiple ways:
 1. As an alternative to the botorch optimizer in predictive strategies
 2. To optimize custom function in the bofire domain. The utiliy function take care of the definition of the objective domain (variable types, constraints, etc.) and the handling of multiple experiment ($q$ points).
 
@@ -243,7 +243,7 @@ optimizer = strategies_data_models.GeneticAlgorithmOptimizer(
 )
 ```
 
-### Define the optimization problem: a) Using evaluations on `pd.DataFrame` 
+### Define the optimization problem: a) Using evaluations on `pd.DataFrame`
 We want to maximize the mean variance of the experiments dataframe. The objective function will be called with a list of dataframes, each representing a set of experiments. Each list entry is one individual in the population of the GA.
 The direction of the optimizer is a minimization of the objective function. So we minimize the negative mean variance of each 3 experiments in a batch in this case.
 
@@ -287,11 +287,11 @@ plt.show()
 ```
 
 ### Define the optimization problem: a) Using evaluations on `torch.Tensor`
-For efficiency, we can also compute the objective function as a callable of type `Tensor`. In this case, the computation is in the *numerical domain*. 
+For efficiency, we can also compute the objective function as a callable of type `Tensor`. In this case, the computation is in the *numerical domain*.
 
 This means, that categorical columns etc. are encoded. A specification with `input_preprocessing_specs` can be passed to the objective function (otherwise, defaults are used)
 
-The objective accepts a Tensor in shape (n, q, d) and should return a Tensor of shape (n,)   
+The objective accepts a Tensor in shape (n, q, d) and should return a Tensor of shape (n,)
 
 ```{python}
 def objective_function(x: torch.Tensor) -> torch.Tensor:
@@ -361,4 +361,3 @@ x_opt[0]
 ```{python}
 x_opt[1]
 ```
-

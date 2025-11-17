@@ -78,4 +78,3 @@ recommender.tell(experiments=experiments)
 #     new_experiments = benchmark.f(candidates[benchmark.domain.inputs.get_keys().copy()], return_complete=True)
 #     recommender.tell(experiments=new_experiments)
 ```
-

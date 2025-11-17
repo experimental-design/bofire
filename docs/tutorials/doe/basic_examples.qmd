@@ -4,7 +4,7 @@ jupyter: python3
 ---
 
 
-The following example has been taken from the paper "The construction of D- and I-optimal designs for mixture experiments with linear constraints on the components" by R. Coetzer and L. M. Haines (https://www.sciencedirect.com/science/article/pii/S0169743917303106). 
+The following example has been taken from the paper "The construction of D- and I-optimal designs for mixture experiments with linear constraints on the components" by R. Coetzer and L. M. Haines (https://www.sciencedirect.com/science/article/pii/S0169743917303106).
 
 
 ```{python}
@@ -30,12 +30,12 @@ from bofire.data_models.strategies.doe import DOptimalityCriterion, IOptimalityC
 
 ## Linear model
 
-Creating an experimental design that is D-optimal with respect to a linear model is done the same way as making proposals using other methods in BoFire; you 
+Creating an experimental design that is D-optimal with respect to a linear model is done the same way as making proposals using other methods in BoFire; you
 1. create a domain
 2. construct a stategy data model (here we want DoEStrategy)
-3. map the strategy to its functional version, and finally 
-4. ask the strategy for proposals. 
-   
+3. map the strategy to its functional version, and finally
+4. ask the strategy for proposals.
+
 We will start with the simplest case: make a design based on a linear model containing main-effects (i.e., simply the inputs themselves and an intercept, without any second-order terms).
 
 ```{python}
@@ -112,7 +112,7 @@ plt.legend()
 
 While the previous design is optimal for the main-effects model, we might prefer to see something that does not allocate all the experimental effort to values at the boundary of the space. This implies that we think there might be some higher-order effects present in the system - if we were sure that the target variable would follow straight-line behavior across the domain, we would not need to investigate any points away from the extremes.
 
-We can address this by specifying our own linear model that includes higher-order terms. 
+We can address this by specifying our own linear model that includes higher-order terms.
 
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
@@ -313,7 +313,7 @@ def plot_results_3d(result, surface_func):
 
 ### Example 1: Design inside a cone / nonlinear inequality
 
-In the following example we have three design variables. 
+In the following example we have three design variables.
 We impose the constraint that all experiments have to be contained in the interior of a cone, which corresponds to the nonlinear inequality constraint
 $\sqrt{x_1^2 + x_2^2} - x_3 \leq 0$.
 The optimization is done for a linear model and we will see that it places the points on the surface of the cone so as to maximize the distance between them (although this is not explicitly the objective of the optimization).
@@ -418,7 +418,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))
 ### Example 3: Batch constraints
 Batch constraints can be used to create designs where each set of `multiplicity` subsequent experiments have the same value for a certain feature. This can be useful for setups where experiments are done in parallel and some parameters must be shared by experiments in the same parallel batch.
 
-In the following example we fix the value of the decision variable `x1` for each batch of 3 experiments.   
+In the following example we fix the value of the decision variable `x1` for each batch of 3 experiments.
 
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
@@ -441,4 +441,3 @@ strategy = strategies.map(data_model=data_model)
 result = strategy.ask(12)
 result.round(3)
 ```
-

@@ -64,7 +64,7 @@ from bofire.utils.torch_tools import tkwargs
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 ```
 
-## Class for Student-t GP 
+## Class for Student-t GP
 
 ```{python}
 #| papermill: {duration: 0.015305, end_time: '2024-10-10T20:35:11.071970', exception: false, start_time: '2024-10-10T20:35:11.056665', status: completed}
@@ -506,4 +506,3 @@ plt.legend(handles=legend_elements, fontsize=8)
 
 plt.show()
 ```
-

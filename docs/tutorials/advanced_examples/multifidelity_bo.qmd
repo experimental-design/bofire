@@ -44,10 +44,10 @@ else:
 
 # Multi-fidelity Bayesian Optimization
 
-In the previous notebook, we saw how using low-fidelity approximations to our 
-target function can improve the predictions from our surrogate model, leading to 
+In the previous notebook, we saw how using low-fidelity approximations to our
+target function can improve the predictions from our surrogate model, leading to
 a faster optimization procedure. In this notebook, we show how we can gain even
-further performance gains by querying the cheap low-fidelity approximations during 
+further performance gains by querying the cheap low-fidelity approximations during
 the BO loop.
 
 ## Problem definition
@@ -56,15 +56,15 @@ benchmark, with a low-fidelity function biased by the Ackley function (with fewe
 points, to demonstrate the strength of being able to query low fidelities). Below, we
 define the problem domain, and the strategies we will use to optimize.
 
-As a baseline, we use the `SoboStrategy` with the `MultiTaskSurrogate`, as in the 
-previous notebook. We also introduce the `MultiFidelityStrategy` here, which uses 
-the same surrogate, but is able to query the lower fidelity functions using a 
+As a baseline, we use the `SoboStrategy` with the `MultiTaskSurrogate`, as in the
+previous notebook. We also introduce the `MultiFidelityStrategy` here, which uses
+the same surrogate, but is able to query the lower fidelity functions using a
 variance-based acquisition function [Kandasamy et al. 2016, Folch et al. 2023].
 
-Both strategies first select a design point $x$ by optimizing the target fidelity. 
-The `MultiFidelityStrategy` then selects the fidelity, $m$, by selecting the 
-lowest fidelity that has a variance over a fixed threshold. This means that the 
-strategy will explore the cheapest fidelities first, and only query the expensive 
+Both strategies first select a design point $x$ by optimizing the target fidelity.
+The `MultiFidelityStrategy` then selects the fidelity, $m$, by selecting the
+lowest fidelity that has a variance over a fixed threshold. This means that the
+strategy will explore the cheapest fidelities first, and only query the expensive
 fidelities when there is no information to be gained by the cheap approximations.
 
 ```{python}
@@ -157,7 +157,7 @@ tl_data_model = SoboStrategy(
 
 # Multi-fidelity Bayesian Optimisation
 
-We first optimize only on the target fidelity (the "Transfer Learning" baseline). 
+We first optimize only on the target fidelity (the "Transfer Learning" baseline).
 This uses the `SoboStrategy` defined above.
 
 ```{python}
@@ -190,7 +190,7 @@ for run in range(num_runs):
     tl_results["y", f"{run}"] = tl_strategy.experiments["y"]
 ```
 
-We now repeat the experiment using multi-fidelity BO, allowing the strategy to query 
+We now repeat the experiment using multi-fidelity BO, allowing the strategy to query
 the low fidelity function as well as the high fidelity function:
 
 ```{python}
@@ -223,14 +223,14 @@ for run in range(num_runs):
     mf_results["y", f"{run}"] = mf_strategy.experiments["y"]
 ```
 
-When evaluating the performance, we need to consider how cheap the low-fidelity (LF) is 
+When evaluating the performance, we need to consider how cheap the low-fidelity (LF) is
 to query. When the LF has the same cost as the target fidelity, then we
-gain very little from the multi-fidelity approach. However, if the LF is cheaper 
-than the target (in the example below, 3x cheaper) then we observe an improvement in 
+gain very little from the multi-fidelity approach. However, if the LF is cheaper
+than the target (in the example below, 3x cheaper) then we observe an improvement in
 BO performance.
 
-Specifically, although both strategies have a budget of 10 function queries, the MF 
-approach uses some of them on 
+Specifically, although both strategies have a budget of 10 function queries, the MF
+approach uses some of them on
 
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
@@ -302,11 +302,10 @@ axs[0].set_ylabel("Regret")
 plt.show()
 ```
 
-We can see that allowing the lower fidelities to be queries leads to stronger optimization performance. 
-We can also see below that the MF approach only samples the target fidelity in later 
+We can see that allowing the lower fidelities to be queries leads to stronger optimization performance.
+We can also see below that the MF approach only samples the target fidelity in later
 iterations, once the variance of the LF has been sufficiently reduced.
 
 ```{python}
 (mf_results["fidelity"] == "task_hf")[-num_iters:].mean(axis=1)  # type: ignore
 ```
-
