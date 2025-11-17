@@ -108,7 +108,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         scaler = get_scaler(self.inputs, self.categorical_encodings, self.scaler, X)
         input_transform = get_input_transform(
-            self.inputs, scaler, self.categorical_encodings
+            self.inputs, self.aggregations, scaler, self.categorical_encodings
         )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         # in case of classification we need to convert y from str to int

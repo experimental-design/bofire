@@ -17,6 +17,7 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
+from bofire.data_models.surrogates.api import AnyAggregation
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
@@ -171,10 +172,12 @@ def get_scaler(
 
 def get_input_transform(
     inputs: Inputs,
+    aggregations: List[AnyAggregation],
     scaler: Union[InputStandardize, Normalize, None],
-    categorical_encodings,
+    categorical_encodings,  # TODO: specify type
 ) -> Union[InputTransform, None]:
     input_transform: Optional[InputTransform] = None
+
     if len(categorical_encodings) > 0:
         categorical_transform = get_NumericToCategorical_input_transform(
             inputs, categorical_encodings

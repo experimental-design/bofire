@@ -1,5 +1,5 @@
 import warnings
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -9,6 +9,7 @@ from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.data_models.surrogates.api import AnyAggregation
 
 
 metrics2objectives = {
@@ -26,23 +27,6 @@ metrics2objectives = {
     UQRegressionMetricsEnum.MISCALIBRATIONAREA: MinimizeObjective,
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: MinimizeObjective,
 }
-
-
-class Aggregation(BaseModel):
-    type: str
-    features: Annotated[List[str], Field(min_length=2)]
-    keep_features: bool = False
-
-
-class SumAggregation(Aggregation):
-    type: Literal["SumAggregation"] = "SumAggregation"  # type: ignore
-
-
-class MeanAggregation(Aggregation):
-    type: Literal["MeanAggregation"] = "MeanAggregation"  # type: ignore
-
-
-AnyAggregation = Union[SumAggregation, MeanAggregation]
 
 
 class Hyperconfig(BaseModel):
@@ -113,6 +97,7 @@ class TrainableSurrogate(BaseModel):
                         f"Feature with key {key} is not of type ContinuousInput",
                     )
         warnings.warn("Aggregations currently only implemented in the data models.")
+        # TODO: implement that aggregations are unique
         return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):

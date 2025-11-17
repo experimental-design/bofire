@@ -4,7 +4,11 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputTransform, NumericToCategoricalEncoding
+from botorch.models.transforms.input import (
+    AppendFeatures,
+    InputTransform,
+    NumericToCategoricalEncoding,
+)
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
@@ -43,6 +47,10 @@ from bofire.data_models.objectives.api import (
     Objective,
     PeakDesirabilityObjective,
     TargetObjective,
+)
+from bofire.data_models.surrogates.aggregations import (
+    SumAggregation,
+    WeightedSumAggregation,
 )
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.strategy import Strategy
@@ -1162,3 +1170,54 @@ def get_NumericToCategorical_input_transform(
             encoders=encoders,
         )
     return None
+
+
+def get_sum_aggregation(
+    inputs: Inputs, transform_specs: InputTransformSpecs, aggregation: SumAggregation
+) -> AppendFeatures:
+    # Get indices of features to be summed
+    features2idx, _ = inputs._get_transform_info(transform_specs)
+    indices = [features2idx[key][0] for key in aggregation.features]
+
+    def sum_features(X: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
+        result = torch.sum(X[..., indices], dim=-1, keepdim=True).unsqueeze(-2)
+        return result.expand(*result.shape[:-2], 1, -1)
+
+    return AppendFeatures(
+        f=sum_features,  # type: ignore
+        fkwargs={"indices": indices},
+        transform_on_train=True,
+    )
+
+
+def get_weighted_sum_aggregation(
+    inputs: Inputs,
+    transform_specs: InputTransformSpecs,
+    aggregation: WeightedSumAggregation,
+) -> AppendFeatures:
+    # use get_feature_indices
+
+    features2idx, _ = inputs._get_transform_info(transform_specs)
+    indices = [features2idx[key][0] for key in aggregation.features]
+
+    descriptors = torch.tensor(
+        [inputs.get_by_key(key).value for key in aggregation.features],  # type: ignore
+        dtype=torch.double,
+    )
+
+    def weighted_sum_features(
+        X: torch.Tensor,
+        indices: torch.Tensor,
+        descriptors: torch.Tensor,
+    ) -> torch.Tensor:
+        result = torch.sum(
+            X[..., indices] * descriptors, dim=-1, keepdim=True
+        ).unsqueeze(-2)
+        return result.expand(*result.shape[:-2], 1, -1)
+
+    # we need to get the descriptors into one tensor
+    return AppendFeatures(
+        f=weighted_sum_features,  # type: ignore
+        fkwargs={"indices": indices, "descriptors": descriptors},
+        transform_on_train=True,
+    )
