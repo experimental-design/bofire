@@ -503,8 +503,6 @@ class LinearProjectionPymooRepair(PymooRepair):
     def __init__(
         self,
         domain: Domain,
-        d: int,
-        bounds: Tensor,
         q: int,
         domain_handler: Optional[GaMixedDomainHandler] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
@@ -514,7 +512,12 @@ class LinearProjectionPymooRepair(PymooRepair):
 
         self.domain_handler = domain_handler
         self.linear_projection = LinearProjection(
-            ...
+            domain=domain,
+            q=q,
+            input_preprocessing_specs=domain_handler.input_preprocessing_specs,
+            constraints_include=constraints_include,
+            n_choose_k_constr_min_delta=n_choose_k_constr_min_delta,
+            verbose=verbose,
         )
 
         super().__init__()
@@ -526,7 +529,7 @@ class LinearProjectionPymooRepair(PymooRepair):
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
-        X_corrected = self.linear_projection(X)
+        X_corrected = self.linear_projection.solve_numeric(X)
 
         if self.domain_handler is not None:
             X_corrected = self.domain_handler.inverse_transform_to_mixed(X_corrected)
@@ -604,11 +607,7 @@ def get_ga_problem_and_algorithm(
     """
 
     if input_preprocessing_specs is None:
-        input_preprocessing_specs = _default_input_preprocessing_specs(domain)
-
-    bounds_botorch_space = get_torch_bounds_from_domain(
-        domain, input_preprocessing_specs
-    )
+        input_preprocessing_specs = default_input_preprocessing_specs(domain)
 
     n_obj = n_obj or len(objective_callables)
 
@@ -637,10 +636,8 @@ def get_ga_problem_and_algorithm(
         ],
     )
     if len(repair_constraints) > 0:
-        repair = LinearProjection(
+        repair = LinearProjectionPymooRepair(
             domain=domain,
-            d=bounds_botorch_space.shape[1],
-            bounds=bounds_botorch_space,
             q=q,
             domain_handler=problem.domain_handler,
             verbose=verbose,

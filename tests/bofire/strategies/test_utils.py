@@ -16,7 +16,7 @@ from bofire.data_models.features import api as data_models_features
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies.utils import (
     GaMixedDomainHandler,
-    LinearProjection,
+    LinearProjectionPymooRepair,
     get_torch_bounds_from_domain,
 )
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
@@ -65,7 +65,7 @@ def mock_pymoo_generation(optimizer_benchmark) -> List[dict]:
 
 
 @pytest.fixture
-def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
+def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjectionPymooRepair:
     """Fixture to provide a problem and algorithm for testing."""
 
     domain = optimizer_benchmark.get_adapted_domain()
@@ -74,16 +74,11 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
     )
 
     input_preprocessing_specs = strategy.input_preprocessing_specs
-    bounds_botorch_space = get_torch_bounds_from_domain(
-        domain, input_preprocessing_specs
-    )
     q = optimizer_benchmark.n_add
 
     # We handle linear equality constraint with a repair function
-    repair = LinearProjection(
+    repair = LinearProjectionPymooRepair(
         domain=domain,
-        d=bounds_botorch_space.shape[1],
-        bounds=bounds_botorch_space,
         q=q,
         domain_handler=domain_handler,
     )
@@ -93,16 +88,16 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjection:
 
 class TestLinearProjection:
     def test_create_qp_problem(
-        self, mock_pymoo_generation: List[dict], repair_instance: LinearProjection
+        self, mock_pymoo_generation: List[dict], repair_instance: LinearProjectionPymooRepair
     ):
         n_gen = len(mock_pymoo_generation)
-        n_add = repair_instance.q
-        d = repair_instance.d
-        domain = repair_instance.domain
+        n_add = repair_instance.linear_projection.q
+        d = repair_instance.linear_projection.d
+        domain = repair_instance.linear_projection.domain
 
         X = repair_instance.domain_handler.transform_mixed_to_2D(mock_pymoo_generation)
 
-        matrices = repair_instance._create_qp_problem_input(X)
+        matrices = repair_instance.linear_projection._create_qp_problem_input(X)
 
         P, q, G, h, A, b = (matrices.get(key) for key in ["P", "q", "G", "h", "A", "b"])
 
@@ -135,7 +130,7 @@ class TestLinearProjection:
             if len(nck_constr) > 0:
                 # check how NChooseK constraints manipulate the bounds
                 for idx_constr in range(len(nck_constr)):
-                    idx = repair_instance.n_choose_k_constr.idx[idx_constr]
+                    idx = repair_instance.linear_projection.n_choose_k_constr.idx[idx_constr]
                     lb, ub = lb[idx], ub[idx]
                     assert int((lb > 0).sum()) >= nck_constr[idx_constr].min_count
                     assert (
@@ -145,10 +140,10 @@ class TestLinearProjection:
 
             else:
                 assert (
-                    ub.reshape(-1) == repair_instance.bounds[1, :].numpy().reshape(-1)
+                    ub.reshape(-1) == repair_instance.linear_projection.bounds[1, :].reshape(-1)
                 ).all()
                 assert (
-                    lb.reshape(-1) == repair_instance.bounds[0, :].numpy().reshape(-1)
+                    lb.reshape(-1) == repair_instance.linear_projection.bounds[0, :].reshape(-1)
                 ).all()
 
         # linear inequality constraints (lower part of G/h matrices)
@@ -203,10 +198,8 @@ class TestLinearProjection:
             ],
         )
 
-        repair_instance = LinearProjection(
+        repair_instance = LinearProjectionPymooRepair(
             domain=domain,
-            d=2,
-            bounds=torch.from_numpy(np.array([[0.0, 0.0], [1.0, 1.0]])).to(**tkwargs),
             q=1,
             domain_handler=GaMixedDomainHandler(
                 domain=domain, input_preprocessing_specs={}, q=1
@@ -233,53 +226,6 @@ class TestLinearProjection:
         mask = x[:, 0] < x[:, 1]
         assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
 
-    # def test_do2(self):
-    #     """actually run the optimization and check the results for toy system with known solution"""
-    #     # create simple linear system
-    #     domain = data_models_domain.Domain(
-    #         inputs=[
-    #             data_models_features.ContinuousInput(key=f"t_{i}", bounds=(0.0, 100.0)) for i in range(11)
-    #         ],
-    #         constraints=[
-    #             LinearEqualityConstraint(  # ti < t(i+1) --> -t(i) + t(i-1) > 0
-    #                 features=[f"t_{i}", f"t_{i+1}"],
-    #                 coefficients=[-1.0, 1.0],
-    #                 rhs=1.0,
-    #             )
-    #             for i in range(0)
-    #         ],
-    #     )
-    #
-    #     repair_instance = LinearProjection(
-    #         domain=domain,
-    #         d=2,
-    #         bounds=torch.from_numpy(np.array([[0.0, 0.0], [1.0, 1.0]])).to(**tkwargs),
-    #         q=1,
-    #         domain_handler=GaMixedDomainHandler(
-    #             domain=domain, input_preprocessing_specs={}, q=1
-    #         ),
-    #     )
-    #
-    #     # create a mock generation
-    #     x = pd.DataFrame(
-    #         np.random.uniform(-0.1, 1.1, size=(1000, 2)), columns=["x1_q0", "x2_q0"]
-    #     ).to_dict(orient="records")
-    #
-    #     # run the repair
-    #     xr = repair_instance._do(None, x)
-    #
-    #     # check the results
-    #     x = pd.DataFrame(x).values
-    #     xr = pd.DataFrame(xr).values
-    #
-    #     # equation constraint: x1 + x2 = 1
-    #     assert np.allclose(xr[:, 0] + xr[:, 1], 1.0, atol=1e-5)
-    #     # inequality constraint: x1 >= x2
-    #     assert np.all(xr[:, 0] + 1e-5 >= xr[:, 1])
-    #     # mapping of points in upper triangle to (0.5, 0.5)
-    #     mask = x[:, 0] < x[:, 1]
-    #     assert np.allclose(xr[mask, :], np.array([[0.5, 0.5]] * mask.sum()), atol=1e-3)
-
     def test_do_nchoose_k(self):
         """actually run the optimization and check the results for toy system with known solution"""
         # create simple linear system
@@ -301,10 +247,8 @@ class TestLinearProjection:
             ],
         )
 
-        repair_instance = LinearProjection(
+        repair_instance = LinearProjectionPymooRepair(
             domain=domain,
-            d=5,
-            bounds=torch.from_numpy(np.array([[0.0] * 5, [1.0] * 5])).to(**tkwargs),
             q=1,
             domain_handler=GaMixedDomainHandler(
                 domain=domain, input_preprocessing_specs={}, q=1

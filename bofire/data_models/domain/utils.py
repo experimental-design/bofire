@@ -156,6 +156,7 @@ class LinearProjection(DomainRepair):
             specs=input_preprocessing_specs,
         )
         bounds = np.vstack((np.array(lower).reshape((1, -1)), np.array(upper).reshape((1, -1))))
+        self.bounds = bounds
 
         def lin_constr_to_list(constr_) -> Tuple[List[int], List[float], float]:
             """decode "get_linear_constraints" output: x-index, coefficients, and b
