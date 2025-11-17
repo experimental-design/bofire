@@ -95,9 +95,7 @@ def infer_trajectory_id(
     timeseries_key = timeseries_features[0].key
 
     # Get all non-timeseries input features
-    grouping_features = [
-        f for f in domain.inputs if f.key != timeseries_key
-    ]
+    grouping_features = [f for f in domain.inputs if f.key != timeseries_key]
 
     if len(grouping_features) == 0:
         # Special case: only timeseries feature exists
@@ -105,7 +103,9 @@ def infer_trajectory_id(
         return pd.Series(0, index=experiments.index)
 
     # Check that all required columns are present
-    missing_cols = [f.key for f in grouping_features if f.key not in experiments.columns]
+    missing_cols = [
+        f.key for f in grouping_features if f.key not in experiments.columns
+    ]
     if missing_cols:
         raise ValueError(
             f"Required input feature columns missing from experiments: {missing_cols}"

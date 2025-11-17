@@ -49,7 +49,10 @@ def test_infer_trajectory_id_continuous_only():
     assert trajectory_ids.iloc[6] == trajectory_ids.iloc[7] == trajectory_ids.iloc[8]
 
     # All three trajectories should have different IDs
-    assert len({trajectory_ids.iloc[0], trajectory_ids.iloc[3], trajectory_ids.iloc[6]}) == 3
+    assert (
+        len({trajectory_ids.iloc[0], trajectory_ids.iloc[3], trajectory_ids.iloc[6]})
+        == 3
+    )
 
 
 def test_infer_trajectory_id_with_categorical():
@@ -89,7 +92,10 @@ def test_infer_trajectory_id_with_categorical():
     assert trajectory_ids.iloc[6] == trajectory_ids.iloc[7] == trajectory_ids.iloc[8]
 
     # All three should be different
-    assert len({trajectory_ids.iloc[0], trajectory_ids.iloc[3], trajectory_ids.iloc[6]}) == 3
+    assert (
+        len({trajectory_ids.iloc[0], trajectory_ids.iloc[3], trajectory_ids.iloc[6]})
+        == 3
+    )
 
 
 def test_infer_trajectory_id_with_discrete():
@@ -134,7 +140,9 @@ def test_infer_trajectory_id_mixed_features():
     inputs = Inputs(
         features=[
             ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
-            CategoricalInput(key="solvent", categories=["water", "ethanol", "methanol"]),
+            CategoricalInput(
+                key="solvent", categories=["water", "ethanol", "methanol"]
+            ),
             DiscreteInput(key="stirring_speed", values=[100, 200, 300]),
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
@@ -145,7 +153,17 @@ def test_infer_trajectory_id_mixed_features():
     experiments = pd.DataFrame(
         {
             "time": [0, 10, 20, 0, 10, 20, 0, 10, 20],
-            "solvent": ["water", "water", "water", "ethanol", "ethanol", "ethanol", "water", "water", "water"],
+            "solvent": [
+                "water",
+                "water",
+                "water",
+                "ethanol",
+                "ethanol",
+                "ethanol",
+                "water",
+                "water",
+                "water",
+            ],
             "stirring_speed": [100, 100, 100, 100, 100, 100, 200, 200, 200],
             "temperature": [25, 25, 25, 25, 25, 25, 25, 25, 25],
             "yield": [0.1, 0.2, 0.3, 0.2, 0.3, 0.4, 0.15, 0.25, 0.35],
@@ -318,7 +336,17 @@ def test_infer_trajectory_id_with_molecular():
     experiments = pd.DataFrame(
         {
             "time": [0, 10, 20, 0, 10, 20, 0, 10, 20],
-            "solvent": ["O", "O", "O", "CCO", "CCO", "CCO", "O", "O", "O"],  # water, ethanol, water
+            "solvent": [
+                "O",
+                "O",
+                "O",
+                "CCO",
+                "CCO",
+                "CCO",
+                "O",
+                "O",
+                "O",
+            ],  # water, ethanol, water
             "temperature": [25, 25, 25, 25, 25, 25, 30, 30, 30],
             "yield": [0.1, 0.2, 0.3, 0.2, 0.3, 0.4, 0.15, 0.25, 0.35],
             "valid_yield": [1] * 9,

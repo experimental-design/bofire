@@ -335,7 +335,9 @@ class Domain(BaseModel):
         experiments = self.coerce_invalids(experiments)
 
         # group and aggregate
-        agg: Dict[str, Any] = dict.fromkeys(self.outputs.get_keys(ContinuousOutput), method)
+        agg: Dict[str, Any] = dict.fromkeys(
+            self.outputs.get_keys(ContinuousOutput), method
+        )
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1
@@ -478,9 +480,7 @@ class Domain(BaseModel):
         from bofire.utils.timeseries import infer_trajectory_id
 
         experiments = experiments.copy()
-        experiments["_trajectory_id"] = infer_trajectory_id(
-            experiments, self, eps=eps
-        )
+        experiments["_trajectory_id"] = infer_trajectory_id(experiments, self, eps=eps)
         return experiments
 
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:

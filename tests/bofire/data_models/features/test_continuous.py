@@ -334,14 +334,14 @@ def test_continuous_input_is_timeseries():
     """Test that the is_timeseries flag works correctly for ContinuousInput."""
     # Default value should be False
     feature = ContinuousInput(key="x", bounds=(0, 10))
-    assert feature.is_timeseries == False
+    assert not feature.is_timeseries
 
     # Should be able to set to True
     time_feature = ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True)
-    assert time_feature.is_timeseries == True
+    assert time_feature.is_timeseries
 
     # DiscreteInput should also support is_timeseries
     discrete_time_feature = DiscreteInput(
         key="timestep", values=[0, 1, 2, 3, 4], is_timeseries=True
     )
-    assert discrete_time_feature.is_timeseries == True
+    assert discrete_time_feature.is_timeseries

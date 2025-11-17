@@ -1,5 +1,3 @@
-import warnings
-
 import pandas as pd
 import pytest
 from sklearn.model_selection import (
@@ -737,10 +735,22 @@ def test_model_cross_validate_timeseries():
     experiments = pd.DataFrame(
         {
             "time": [
-                0.0, 4.95, 10.1, 14.9,    # trajectory 0
-                0.05, 5.02, 9.98, 15.05,   # trajectory 1
-                0.0, 5.1, 10.03, 15.01,    # trajectory 2
-                0.02, 4.99, 9.95, 14.98    # trajectory 3
+                0.0,
+                4.95,
+                10.1,
+                14.9,  # trajectory 0
+                0.05,
+                5.02,
+                9.98,
+                15.05,  # trajectory 1
+                0.0,
+                5.1,
+                10.03,
+                15.01,  # trajectory 2
+                0.02,
+                4.99,
+                9.95,
+                14.98,  # trajectory 3
             ],
             "x": [-4, -3, -2, -1, 0, 1, 2, 3, -4, -3, -2, -1, 0, 1, 2, 3],
             "y": [1, 2, 3, 4, 5, 6, 7, 8, 2, 3, 4, 5, 6, 7, 8, 9],
@@ -914,12 +924,17 @@ def test_model_cross_validate_timeseries_automatic_trajectory_id():
         test_trajectories = set(experiments.loc[test_indices, "_trajectory_id"])
 
         # Ensure no overlap between train and test trajectory groups
-        assert len(train_trajectories.intersection(test_trajectories)) == 0, \
-            f"Fold {fold_idx}: Trajectory groups are mixed between train and test!"
+        assert (
+            len(train_trajectories.intersection(test_trajectories)) == 0
+        ), f"Fold {fold_idx}: Trajectory groups are mixed between train and test!"
 
         # Ensure all trajectories are accounted for
-        assert train_trajectories.union(test_trajectories) == {0, 1, 2, 3}, \
-            f"Fold {fold_idx}: Not all trajectories are covered!"
+        assert train_trajectories.union(test_trajectories) == {
+            0,
+            1,
+            2,
+            3,
+        }, f"Fold {fold_idx}: Not all trajectories are covered!"
 
 
 def test_model_cross_validate_timeseries_use_shuffle_split():
@@ -979,13 +994,15 @@ def test_model_cross_validate_groupkfold_exhaustive():
 
     # Create experiments with 6 trajectories
     n_trajectories = 6
-    experiments = pd.DataFrame({
-        "_trajectory_id": [i for i in range(n_trajectories) for _ in range(3)],
-        "time": [0, 5, 10] * n_trajectories,
-        "x": list(range(18)),
-        "y": list(range(18)),
-        "valid_y": [1] * 18,
-    })
+    experiments = pd.DataFrame(
+        {
+            "_trajectory_id": [i for i in range(n_trajectories) for _ in range(3)],
+            "time": [0, 5, 10] * n_trajectories,
+            "x": list(range(18)),
+            "y": list(range(18)),
+            "valid_y": [1] * 18,
+        }
+    )
 
     model = SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)
     model = surrogates.map(model)
