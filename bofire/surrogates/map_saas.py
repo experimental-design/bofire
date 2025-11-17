@@ -1,4 +1,8 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, cast, List
+from typing_extensions import Self
+from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.types import PositiveInt
 
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -7,11 +11,14 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import (
     AdditiveMapSaasSingleTaskGPSurrogate as DataModel,
 )
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 
 
 class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -46,3 +53,35 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        hyperconfig: Optional[Hyperconfig] = None,
+        aggregations: Optional[List[AnyAggregation]] = None,
+        input_preprocessing_specs: InputTransformSpecs = {},
+        dump: Optional[str] = None,
+        categorical_encodings: InputTransformSpecs = {},
+        scaler: ScalerEnum = ScalerEnum.NORMALIZE,
+        output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
+        n_taus: PositiveInt = 4,
+    ) -> Self:
+        """
+        Factory method to create an AdditiveMapSaasSingleTaskGPSurrogate from a data model.
+        Args:
+            inputs: Inputs
+            outputs: Outputs
+            hyperconfig: Hyperconfig | None
+            aggregations: List[AnyAggregation] | None
+            input_preprocessing_specs: InputTransformSpecs
+            dump: str | None
+            categorical_encodings: InputTransformSpecs
+            scaler: ScalerEnum
+            output_scaler: ScalerEnum
+            n_taus: PositiveInt
+        Returns:
+            AdditiveMapSaasSingleTaskGPSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, DataModel, locals()))

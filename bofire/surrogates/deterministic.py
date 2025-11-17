@@ -1,6 +1,9 @@
+from typing import Dict, cast
+from typing_extensions import Self
 import torch
 from botorch.models.deterministic import AffineDeterministicModel
 
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.surrogates.api import (
     CategoricalDeterministicSurrogate as CategoricalDeterministicSurrogateDataModel,
@@ -8,7 +11,9 @@ from bofire.data_models.surrogates.api import (
 from bofire.data_models.surrogates.api import (
     LinearDeterministicSurrogate as LinearDeterministicSurrogateDataModel,
 )
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import BotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
@@ -30,6 +35,25 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
             .unsqueeze(-1),
         )
 
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        coefficients: Dict[str, float],
+        intercept: float,
+        input_preprocessing_specs: InputTransformSpecs = {},
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {}
+    ) -> Self:
+        """
+        Factory method to create an EmpiricalSurrogate from a data model.
+        Args:
+            # document parameters
+        Returns:
+            LinearDeterministicSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, LinearDeterministicSurrogateDataModel, locals()))
 
 class CategoricalDeterministicSurrogate(BotorchSurrogate):
     def __init__(
@@ -53,3 +77,23 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
             inputs=self.inputs,
             transform_specs={self.inputs[0].key: CategoricalEncodingEnum.ONE_HOT},
         )
+        
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        mapping: Dict[str, float],
+        input_preprocessing_specs: InputTransformSpecs = {},
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {}
+    ) -> Self:
+        """
+        Factory method to create an EmpiricalSurrogate from a data model.
+        Args:
+            # document parameters
+        Returns:
+            CategoricalDeterministicSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, CategoricalDeterministicSurrogateDataModel, locals()))
+

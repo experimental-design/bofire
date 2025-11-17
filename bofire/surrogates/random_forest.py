@@ -1,6 +1,7 @@
 import base64
 import io
-from typing import Optional
+from typing import Optional, cast, List, Literal, Union
+from typing_extensions import Self
 
 import numpy as np
 import torch
@@ -13,7 +14,11 @@ from torch import Tensor
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
+from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
+from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -163,3 +168,63 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         """Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         buffer = io.BytesIO(base64.b64decode(data.encode()))
         self.model = torch.load(buffer, weights_only=False)
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        hyperconfig: Optional[Hyperconfig] = None,
+        aggregations: Optional[List[AnyAggregation]] = None,
+        input_preprocessing_specs: dict = dict(),
+        dump: Optional[str] = None,
+        categorical_encodings: dict = dict(),
+        scaler: ScalerEnum = ScalerEnum.NORMALIZE,
+        output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
+        n_estimators: int = 100,
+        criterion: Literal['squared_error', 'absolute_error', 'friedman_mse', 'poisson'] = "squared_error",
+        max_depth: Optional[int] = None,
+        min_samples_split: Union[int, float] = 2,
+        min_samples_leaf: Union[int, float] = 1,
+        min_weight_fraction_leaf: float = 0.0,
+        max_features: Union[int, float, Literal['auto', 'sqrt', 'log2']] = 1.0,
+        max_leaf_nodes: Optional[int] = None,
+        min_impurity_decrease: float = 0.0,
+        bootstrap: bool = True,
+        oob_score: bool = False,
+        random_state: Optional[int] = None,
+        ccp_alpha: float = 0.0,
+        max_samples: Optional[Union[int, float]] = None,
+    ) -> Self:
+        """
+        Factory method to create a RandomForestSurrogate from a data model.
+        Args:
+            inputs: Inputs
+            outputs: Outputs
+            hyperconfig: Hyperconfig | None
+            aggregations: List[AnyAggregation] | None
+            input_preprocessing_specs: dict
+            dump: str | None
+            categorical_encodings: dict
+            scaler: ScalerEnum
+            output_scaler: ScalerEnum
+            n_estimators: int
+            criterion: Literal['squared_error', 'absolute_error', 'friedman_mse', 'poisson']
+            max_depth: int | None
+            min_samples_split: int | float
+            min_samples_leaf: int | float
+            min_weight_fraction_leaf: float
+            max_features: int | float | Literal['auto', 'sqrt', 'log2']
+            max_leaf_nodes: int | None
+            min_impurity_decrease: float
+            bootstrap: bool
+            oob_score: bool
+            random_state: int | None
+            ccp_alpha: float
+            max_samples: int | float | None
+        Returns:
+            RandomForestSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, DataModel, locals()))
+
+
