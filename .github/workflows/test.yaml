@@ -86,7 +86,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+          pip install ".[optimization,tests,cheminfo,entmoot]"
 
       - name: Run tests
         shell: bash -l {0}
@@ -119,7 +119,7 @@ jobs:
           pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
           export ALLOW_LATEST_GPYTORCH_LINOP=true
           pip install --upgrade git+https://github.com/pytorch/botorch.git
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+          pip install ".[optimization,tests,cheminfo,entmoot]"
 
       - name: Run tests
         shell: bash -l {0}
@@ -150,7 +150,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
+          pip install ".[optimization,tests,cheminfo,entmoot,tutorials]"
 
       - name: Run Notebooks
         shell: bash -l {0}
