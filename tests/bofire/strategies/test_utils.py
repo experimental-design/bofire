@@ -64,10 +64,6 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjectionPymo
     """Fixture to provide a problem and algorithm for testing."""
 
     domain = optimizer_benchmark.get_adapted_domain()
-    strategy: data_models_strategies.BotorchStrategy = optimizer_benchmark.get_strategy(
-        optimizer=data_models_strategies.GeneticAlgorithmOptimizer(),  # dummy
-    )
-
     q = optimizer_benchmark.n_add
 
     # We handle linear equality constraint with a repair function
