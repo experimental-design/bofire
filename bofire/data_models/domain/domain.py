@@ -419,7 +419,7 @@ class Domain(BaseModel):
         self,
         candidates: pd.DataFrame,
         only_inputs: bool = False,
-        tol: float = 1e-5,
+        tol: float = 1e-2,
         raise_validation_error: bool = True,
     ) -> pd.DataFrame:
         """Method to check the validty of proposed candidates

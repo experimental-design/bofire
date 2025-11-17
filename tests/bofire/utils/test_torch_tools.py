@@ -63,6 +63,7 @@ from bofire.utils.torch_tools import (
     get_output_constraints,
     get_product_constraints,
     interp1d,
+    nchoosek_to_deterministic_model,
     tkwargs,
 )
 
@@ -785,6 +786,41 @@ def test_get_nchoosek_constraints():
     assert torch.allclose(
         constraints[2][0](samples),
         torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs),
+    )
+
+
+def test_nchoosek_to_deterministic_model():
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(4)],
+    )
+    input_preprocessing_specs = {}
+    constraint = NChooseKConstraint(
+        features=[f"x_{i}" for i in range(4)],
+        min_count=1,
+        max_count=2,
+        none_also_valid=True,
+    )
+    with pytest.raises(NotImplementedError):
+        nchoosek_to_deterministic_model(
+            inputs=inputs,
+            constraint=constraint,
+            input_preprocessing_specs=input_preprocessing_specs,
+        )
+    constraint = NChooseKConstraint(
+        features=["x_0", "x_2", "x_3"], min_count=0, max_count=2, none_also_valid=True
+    )
+    model = nchoosek_to_deterministic_model(
+        inputs=inputs,
+        constraint=constraint,
+        input_preprocessing_specs=input_preprocessing_specs,
+        a=1e-3,
+    )
+    samples = torch.tensor([[1, 0, 0, 0], [1, 1, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1]]).to(
+        **tkwargs
+    )
+    assert torch.allclose(
+        model.posterior(samples).mean.detach().squeeze(),
+        torch.tensor([1.0, 1.0, 2.0, 3.0]).to(**tkwargs),
     )
 
 

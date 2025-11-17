@@ -7,7 +7,7 @@ from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
-from botorch.models.gpytorch import GPyTorchModel
+from botorch.models import ModelList
 from pydantic import PositiveInt
 from typing_extensions import Self
 
@@ -18,6 +18,7 @@ from bofire.data_models.acquisition_functions.api import (
     qLogNEHVI,
     qNEHVI,
 )
+from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
@@ -31,6 +32,7 @@ from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import (
     get_multiobjective_objective,
     get_output_constraints,
+    nchoosek_to_deterministic_model,
     tkwargs,
 )
 
@@ -46,6 +48,7 @@ class MoboStrategy(BotorchStrategy):
         self.ref_point: ExplicitReferencePoint = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
+        self.nchoosek_as_sebo = data_model.nchoosek_as_sebo
 
     objective: Optional[MCMultiOutputObjective] = None
 
@@ -78,9 +81,22 @@ class MoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        # in case of sebo, we have to update the model with auxiliary sebo model
+        # this has to be properly tidied up later
+        if self.nchoosek_as_sebo:
+            n_choosek_constraints = self.domain.constraints.get(NChooseKConstraint)
+            sebo_model = nchoosek_to_deterministic_model(
+                inputs=self.domain.inputs,
+                input_preprocessing_specs=self.input_preprocessing_specs,
+                constraint=n_choosek_constraints[0],
+            )
+            model = ModelList(self.model, sebo_model)
+        else:
+            model = self.model
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
-            self.model,
+            model,
             ref_point=self.get_adjusted_refpoint(),
             objective=objective,
             X_observed=X_train,
@@ -88,7 +104,8 @@ class MoboStrategy(BotorchStrategy):
             constraints=constraints,
             eta=etas,
             mc_samples=self.acquisition_function.n_mc_samples,
-            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            cache_root=False,
+            # cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             alpha=self.acquisition_function.alpha,
             prune_baseline=(
                 self.acquisition_function.prune_baseline
@@ -104,6 +121,7 @@ class MoboStrategy(BotorchStrategy):
         objective = get_multiobjective_objective(
             outputs=self.domain.outputs,
             experiments=self.experiments,
+            sebo=self.nchoosek_as_sebo,
         )
         return GenericMCMultiOutputObjective(objective=objective)
 
@@ -122,7 +140,7 @@ class MoboStrategy(BotorchStrategy):
             reference_point=self.ref_point,
         )
 
-        return (
+        ref_point_list = (
             self.ref_point_mask
             * np.array(
                 [
@@ -133,6 +151,12 @@ class MoboStrategy(BotorchStrategy):
                 ],
             )
         ).tolist()
+
+        if self.nchoosek_as_sebo:
+            constraints = self.domain.constraints.get(NChooseKConstraint)
+            if len(constraints) > 0:
+                ref_point_list.append(constraints[0].max_count * -1.0)
+        return ref_point_list
 
     @classmethod
     def make(
