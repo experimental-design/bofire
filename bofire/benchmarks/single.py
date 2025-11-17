@@ -356,7 +356,7 @@ class Branin30(Benchmark):
         self.branin = torchBranin().to(**tkwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        lb, ub = self.branin.bounds
+        lb, ub = self.branin.bounds  # type: ignore
         c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
             **tkwargs,
         )

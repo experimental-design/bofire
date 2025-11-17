@@ -1,12 +1,12 @@
-import operator as ops
-from abc import abstractmethod
-from typing import Annotated, Any, Callable, Dict, List, Literal, Optional, Union
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
 import pandas as pd
-from numpy.typing import ArrayLike
 from pydantic import Field
 
-from bofire.data_models.base import BaseModel
+from bofire.data_models.constraints.condition import (
+    SelectionCondition,
+    ThresholdCondition,
+)
 from bofire.data_models.constraints.constraint import Constraint
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import (
@@ -15,78 +15,6 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.types import FeatureKeys
-
-
-_threshold_operators: dict[str, Callable] = {
-    "<": ops.lt,
-    "<=": ops.le,
-    ">": ops.gt,
-    ">=": ops.ge,
-}
-
-
-class Condition(BaseModel):
-    """Base class for all conditions.
-
-    Conditions evaluate an expression regarding a single feature.
-    Conditions are part of the CategoricalExcludeConstraint.
-    """
-
-    type: Any
-
-    @abstractmethod
-    def __call__(self, values: pd.Series) -> pd.Series:
-        """Evaluate the condition on a given data series.
-
-        Args:
-            values: A series containing feature values.
-
-        Returns:
-            A Boolean series indicating which elements satisfy the condition.
-        """
-
-
-class ThresholdCondition(Condition):
-    """Class for modelling threshold conditions.
-
-    It can only be applied to ContinuousInput and DiscreteInput features. It is
-    checked if the feature value is above or below a certain threshold depending on the
-    operator. If the expression evaluated to true, the condition is fulfilled.
-
-    Attributes:
-        threshold: Threshold value.
-        operator: Operator to use for comparison. Can be one of "<", "<=", ">", ">=".
-    """
-
-    type: Literal["ThresholdCondition"] = "ThresholdCondition"
-    threshold: float
-    operator: Literal["<", "<=", ">", ">="]
-
-    def __call__(self, values: pd.Series) -> pd.Series:
-        def evaluate(x: ArrayLike):
-            return _threshold_operators[self.operator](x, self.threshold)
-
-        return values.apply(evaluate)
-
-
-class SelectionCondition(Condition):
-    """Class for modelling selection conditions.
-
-    It is checked if the feature value is in the selection of values. If this is the case,
-    the condition is fulfilled. It can be only applied to CategoricalInput and DiscreteInput
-    features.
-
-    Attributes:
-        selection: In case of CategoricalInput, the selection of categories to be included.
-            In case of DiscreteInput, the selection of values to be included.
-    """
-
-    type: Literal["SelectionCondition"] = "SelectionCondition"
-
-    selection: List[Union[str, float, int]]
-
-    def __call__(self, values: pd.Series) -> pd.Series:
-        return values.isin(self.selection)
 
 
 class CategoricalExcludeConstraint(Constraint):
@@ -163,10 +91,10 @@ class CategoricalExcludeConstraint(Constraint):
             experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
 
         Returns:
-            pd.Series: Distance to reach constraint fulfillment.
+            pd.Series: Constraint fulfillment: Will be 1.0 for not fulfilled and 0.0 for fulfilled.
 
         """
-        return self.is_fulfilled(experiments).astype(float)
+        return 1 - self.is_fulfilled(experiments).astype(float)
 
     def is_fulfilled(
         self,

@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
 import torch
-from botorch.models.transforms.input import InputStandardize, Normalize
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    InputStandardize,
+    Normalize,
+    NumericToCategoricalEncoding,
+)
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
 from sklearn.ensemble import RandomForestRegressor
@@ -118,17 +123,18 @@ def test_random_forest(scaler, output_scaler):
         output_scaler=output_scaler,
     )
     rf = surrogates.map(rf)
-    assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ONE_HOT
+    assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ORDINAL
     with pytest.raises(ValueError):
         rf.dumps()
     rf.fit(experiments=experiments)
     if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(rf.model.input_transform, Normalize)
+        assert isinstance(rf.model.input_transform, ChainedInputTransform)
+        assert isinstance(rf.model.input_transform.tf2, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(rf.model.input_transform, InputStandardize)
+        assert isinstance(rf.model.input_transform, ChainedInputTransform)
+        assert isinstance(rf.model.input_transform.tf2, InputStandardize)
     else:
-        with pytest.raises(AttributeError):
-            assert rf.model.input_transform is None
+        assert isinstance(rf.model.input_transform, NumericToCategoricalEncoding)
 
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(rf.model.outcome_transform, Standardize)
@@ -149,12 +155,13 @@ def test_random_forest(scaler, output_scaler):
     preds2 = rf2.predict(experiments)
     assert_frame_equal(preds, preds2)
     if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(rf2.model.input_transform, Normalize)
+        assert isinstance(rf2.model.input_transform, ChainedInputTransform)
+        assert isinstance(rf2.model.input_transform.tf2, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(rf2.model.input_transform, InputStandardize)
+        assert isinstance(rf2.model.input_transform, ChainedInputTransform)
+        assert isinstance(rf2.model.input_transform.tf2, InputStandardize)
     else:
-        with pytest.raises(AttributeError):
-            assert rf2.model.input_transform is None
+        assert isinstance(rf2.model.input_transform, NumericToCategoricalEncoding)
 
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(rf2.model.outcome_transform, Standardize)

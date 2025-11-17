@@ -1,12 +1,10 @@
-from abc import abstractmethod
 from collections.abc import Sequence
 from typing import Literal, Optional
 
-import numpy as np
-import pandas as pd
 import torch
 from botorch.models.ensemble import EnsembleModel
-from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 
@@ -18,10 +16,7 @@ from bofire.data_models.surrogates.api import MLPEnsemble as DataModel
 from bofire.data_models.surrogates.api import (
     RegressionMLPEnsemble as DataModelRegression,
 )
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.surrogates.utils import get_scaler
+from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -188,7 +183,7 @@ def fit_mlp(
             current_loss += loss.item()
 
 
-class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
+class MLPEnsemble(TrainableBotorchSurrogate):
     def __init__(self, data_model: DataModel, **kwargs):
         self.n_estimators = data_model.n_estimators
         self.hidden_layer_sizes = data_model.hidden_layer_sizes
@@ -207,36 +202,38 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     model: Optional[_MLPEnsemble] = None
 
-    @abstractmethod
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
-        pass
-
 
 class RegressionMLPEnsemble(MLPEnsemble):
     def __init__(self, data_model: DataModelRegression, **kwargs):
         self.final_activation = "identity"
         super().__init__(data_model, **kwargs)
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
-        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-
-        if self.output_scaler == ScalerEnum.STANDARDIZE:
-            output_scaler = Standardize(m=Y.shape[-1])
-        else:
-            output_scaler = None
-
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs,
+    ):
         mlps = []
-        subsample_size = round(self.subsample_fraction * X.shape[0])
+        subsample_size = round(self.subsample_fraction * tX.shape[0])
         for _ in range(self.n_estimators):
             # resample X and Y
-            sample_idx = np.random.choice(X.shape[0], replace=True, size=subsample_size)
-            tX = torch.from_numpy(transformed_X.values[sample_idx]).to(**tkwargs)
-            ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
+            sample_idx = torch.randint(0, tX.shape[0], (subsample_size,))
+            stX = tX[sample_idx]
+            stY = tY[sample_idx]
+
+            transformed_X = (
+                input_transform.transform(stX) if input_transform is not None else stX
+            )
+            transformed_Y = (
+                outcome_transform(stY)[0] if outcome_transform is not None else stY
+            )
 
             dataset = MLPDataset(
-                X=scaler.transform(tX) if scaler is not None else tX,
-                y=output_scaler(ty)[0] if output_scaler is not None else ty,
+                X=transformed_X,
+                y=transformed_Y,
             )
             mlp = MLP(
                 input_size=transformed_X.shape[1],
@@ -257,9 +254,9 @@ class RegressionMLPEnsemble(MLPEnsemble):
                 loss_function=nn.L1Loss,
             )
             mlps.append(mlp)
-        self.model = _MLPEnsemble(mlps, output_scaler=output_scaler)
-        if scaler is not None:
-            self.model.input_transform = scaler
+        self.model = _MLPEnsemble(mlps, output_scaler=outcome_transform)
+        if input_transform is not None:
+            self.model.input_transform = input_transform
 
 
 class ClassificationMLPEnsemble(MLPEnsemble):
@@ -267,33 +264,33 @@ class ClassificationMLPEnsemble(MLPEnsemble):
         self.final_activation = "softmax"
         super().__init__(data_model, **kwargs)
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
-        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-        # Map dictionary of objective values to labels
-        label_mapping = self.outputs[0].objective.to_dict_label()
-
-        # Convert Y to classification tensor
-        Y = pd.DataFrame.from_dict(
-            {col: Y[col].map(label_mapping) for col in Y.columns},
-        )
-
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs,
+    ):
         mlps = []
-        subsample_size = round(self.subsample_fraction * X.shape[0])
+        subsample_size = round(self.subsample_fraction * tX.shape[0])
         for _ in range(self.n_estimators):
             # resample X and Y
-            sample_idx = np.random.choice(X.shape[0], replace=True, size=subsample_size)
-            tX = torch.from_numpy(transformed_X.values[sample_idx]).to(**tkwargs)
-            ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
-
-            dataset = MLPDataset(
-                X=scaler.transform(tX) if scaler is not None else tX,
-                y=ty,
+            sample_idx = torch.randint(0, tX.shape[0], (subsample_size,))
+            stX = tX[sample_idx]
+            stY = tY[sample_idx]
+            transformed_X = (
+                input_transform.transform(stX) if input_transform is not None else stX
             )
+            dataset = MLPDataset(
+                X=transformed_X,
+                y=stY,
+            )
+
             mlp = MLP(
                 input_size=transformed_X.shape[1],
                 output_size=len(
-                    label_mapping,
+                    self.outputs[0].objective.to_dict_label()
                 ),  # Set outputs based on number of categories
                 hidden_layer_sizes=self.hidden_layer_sizes,
                 activation=self.activation,  # type: ignore
@@ -312,5 +309,5 @@ class ClassificationMLPEnsemble(MLPEnsemble):
             )
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps=mlps)
-        if scaler is not None:
-            self.model.input_transform = scaler
+        if input_transform is not None:
+            self.model.input_transform = input_transform

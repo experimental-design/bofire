@@ -52,3 +52,7 @@ specs.add_invalid(
     error=ValueError,
     message="The initial value must be within the bounds of the interval.",
 )
+
+specs.add_valid(priors.Positive, lambda: {})
+specs.add_valid(priors.GreaterThan, lambda: {"lower_bound": 42})
+specs.add_valid(priors.LessThan, lambda: {"upper_bound": 42})

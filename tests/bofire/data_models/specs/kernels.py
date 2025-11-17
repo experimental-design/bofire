@@ -16,13 +16,18 @@ specs.add_valid(
     lambda: {
         "ard": True,
         "features": None,
+        "lengthscale_prior": None,
+        "lengthscale_constraint": None,
     },
 )
+
 specs.add_valid(
     kernels.HammingDistanceKernel,
     lambda: {
         "ard": True,
         "features": ["x_cat_1", "x_cat_2"],
+        "lengthscale_prior": None,
+        "lengthscale_constraint": None,
     },
 )
 specs.add_valid(
@@ -129,5 +134,19 @@ specs.add_valid(
             specs.valid(kernels.MaternKernel).obj().model_dump(),
         ],
         "outputscale_prior": priors.valid(LogNormalPrior).obj().model_dump(),
+    },
+)
+specs.add_valid(
+    kernels.WedgeKernel,
+    lambda: {
+        "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
+        "ard": True,
+        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "angle_prior": priors.valid().obj().model_dump(),
+        "radius_prior": priors.valid().obj().model_dump(),
+        "conditions": [],
     },
 )

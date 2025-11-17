@@ -87,6 +87,8 @@ def test_mf_fidelity_selection():
     )
 
     strategy.tell(experiments)
+    preds = strategy.predict(experiments)
+    assert len(preds) == len(experiments)
     # test that for a point close to training data, the highest fidelity is selected
     close_to_training = experiments.iloc[2:3].copy()
     close_to_training[benchmark.domain.inputs.get_keys(excludes=TaskInput)] += 0.01

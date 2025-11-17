@@ -62,8 +62,8 @@ def test_model_cross_validate_descriptor():
             CategoricalDescriptorInput(
                 key="x_3",
                 categories=["a", "b", "c"],
-                descriptors=["alpha"],
-                values=[[1], [2], [3]],
+                descriptors=["alpha", "beta"],
+                values=[[1, 3], [2, 2], [3, 1]],
             ),
         ],
     )
@@ -81,7 +81,8 @@ def test_model_cross_validate_descriptor():
         model = SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            input_preprocessing_specs={"x_3": encoding},
+            input_preprocessing_specs={"x_3": CategoricalEncodingEnum.ORDINAL},
+            categorical_encodings={"x_3": encoding},
         )
         model = surrogates.map(model)
         train_cv, test_cv, _ = model.cross_validate(experiments, folds=folds)
@@ -297,8 +298,8 @@ def test_model_cross_validate_stratified(random_state):
             CategoricalDescriptorInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha"],
-                values=[[1], [2], [3]],
+                descriptors=["alpha", "beta"],
+                values=[[1, 3], [2, 2], [3, 1]],
             ),
         ],
     )
@@ -382,8 +383,8 @@ def test_model_cross_validate_stratified_invalid_feature_name():
             CategoricalDescriptorInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha"],
-                values=[[1], [2], [3]],
+                descriptors=["alpha", "beta"],
+                values=[[1, 3], [2, 2], [3, 1]],
             ),
         ],
     )
@@ -438,8 +439,8 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
             CategoricalDescriptorInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha"],
-                values=[[1], [2], [3]],
+                descriptors=["alpha", "beta"],
+                values=[[1, 3], [2, 2], [3, 1]],
             ),
         ],
     )
@@ -495,8 +496,8 @@ def test_model_cross_validate_groupfold(random_state):
             CategoricalDescriptorInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha"],
-                values=[[1], [2], [3]],
+                descriptors=["alpha", "beta"],
+                values=[[1, 3], [2, 2], [3, 1]],
             ),
         ],
     )

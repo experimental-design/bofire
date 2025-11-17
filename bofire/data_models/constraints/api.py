@@ -1,7 +1,8 @@
 from typing import Union
 
-from bofire.data_models.constraints.categorical import (
-    CategoricalExcludeConstraint,
+from bofire.data_models.constraints.categorical import CategoricalExcludeConstraint
+from bofire.data_models.constraints.condition import (
+    NonZeroCondition,
     SelectionCondition,
     ThresholdCondition,
 )
@@ -74,6 +75,7 @@ AnyCategoricalConstraint = CategoricalExcludeConstraint
 AnyCondition = Union[
     SelectionCondition,
     ThresholdCondition,
+    NonZeroCondition,
 ]
 
 AnyConstraintError = Union[ConstraintError, ConstraintNotFulfilledError]

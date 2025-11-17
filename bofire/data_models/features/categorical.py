@@ -90,11 +90,11 @@ class CategoricalInput(Input):
             if transform_type == CategoricalEncodingEnum.ORDINAL:
                 return self.to_ordinal_encoding(pd.Series([val])).tolist()
             raise ValueError(
-                f"Unkwon transform type {transform_type} for categorical input {self.key}",
+                f"Unknown transform type {transform_type} for categorical input {self.key}",
             )
         return None
 
-    def get_allowed_categories(self):
+    def get_allowed_categories(self) -> list[str]:
         """Returns the allowed categories.
 
         Returns:
