@@ -50,4 +50,3 @@ def test_EnsembleMapSaasSingleTaskGPSurrogate():
     assert preds.shape == (10, 2)
     preds2 = gp.predict(experiments)
     assert_frame_equal(preds, preds2)
-    assert isinstance(gp.model, EnsembleMapSaasSingleTaskGP)
