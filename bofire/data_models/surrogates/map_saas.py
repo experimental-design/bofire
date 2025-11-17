@@ -35,8 +35,8 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-class EnsambleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Ensamble MAP SAAS single-task GP
+class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+    """Ensemble MAP SAAS single-task GP
 
     Maximum-a-posteriori (MAP) version of the sparse axis-aligned subspace
     `FullyBayesianSingleTaskGPSurrogate` with `model_type` equals to "saas".
@@ -45,8 +45,8 @@ class EnsambleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
     """
 
-    type: Literal["EnsambleMapSaasSingleTaskGPSurrogate"] = (
-        "EnsambleMapSaasSingleTaskGPSurrogate"
+    type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (
+        "EnsembleMapSaasSingleTaskGPSurrogate"
     )
     n_taus: PositiveInt = 4
 

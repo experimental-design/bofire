@@ -12,7 +12,7 @@ from bofire.surrogates.deterministic import (
 )
 from bofire.surrogates.empirical import EmpiricalSurrogate
 from bofire.surrogates.fully_bayesian import FullyBayesianSingleTaskGPSurrogate
-from bofire.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate, EnsambleMapSaasSingleTaskGPSurrogate
+from bofire.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate, EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
@@ -86,7 +86,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.PiecewiseLinearGPSurrogate: PiecewiseLinearGPSurrogate,
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
     data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
-    data_models.EnsambleMapSaasSingleTaskGPSurrogate: EnsambleMapSaasSingleTaskGPSurrogate,
+    data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,
 }
 
 
