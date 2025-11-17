@@ -26,7 +26,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.domain.utils import (
+from bofire.utils.domain_repair import (
     LinearProjection,
     default_input_preprocessing_specs,
 )

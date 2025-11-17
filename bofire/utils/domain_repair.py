@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import List, Optional, Tuple, Type
 
+import pandas as pd
 import cvxpy as cp
 import numpy as np
-import pandas as pd
 from scipy import sparse
 
 from bofire.data_models.constraints import api as constraints
