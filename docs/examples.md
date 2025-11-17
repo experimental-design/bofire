@@ -19,6 +19,7 @@ Optimization with some of the challenges faced in real-world experiments:
 - [A toy example for optimizing a reaction](reaction_optimization.ipynb)
 - [Using a Tanimoto fingerprint kernel to optimize over molecules](fingerprint_bayesopt.ipynb)
 - [Using a MultiFidelity strategy with cheap, approximate experiments](multifidelity_bo.ipynb)
+- [Handling timeseries data and kinetic measurements](timeseries_kinetic_measurements.ipynb)
 
 ## API with BoFire
 
