@@ -70,8 +70,7 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ):
-    # comment to see if works 
-        self.model =EnsembleMapSaasSingleTaskGP(
+        self.model = EnsembleMapSaasSingleTaskGP(
             train_X=tX,
             train_Y=tY,
             outcome_transform=outcome_transform,
