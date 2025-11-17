@@ -503,7 +503,7 @@ class LinearProjectionPymooRepair(PymooRepair):
     def __init__(
         self,
         domain: Domain,
-        q: int,
+        q: int = 1,
         domain_handler: Optional[GaMixedDomainHandler] = None,
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
