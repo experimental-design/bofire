@@ -15,7 +15,7 @@ from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.linear import LinearSurrogate
-from bofire.data_models.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate
+from bofire.data_models.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate, EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPHyperconfig,
     MixedSingleTaskGPSurrogate,
@@ -75,6 +75,7 @@ AnySurrogate = Union[
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -92,6 +93,7 @@ AnyTrainableSurrogate = Union[
     TanimotoGPSurrogate,
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyRegressionSurrogate = Union[
@@ -111,6 +113,7 @@ AnyRegressionSurrogate = Union[
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

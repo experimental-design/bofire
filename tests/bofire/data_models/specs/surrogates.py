@@ -216,6 +216,30 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    models.EnsembleMapSaasSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "aggregations": None,
+        "n_taus": 4,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "hyperconfig": None,
+        "dump": None,
+    },
+)
+
+specs.add_valid(
     models.FullyBayesianSingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
