@@ -92,7 +92,17 @@ class LinearProjection(DomainRepair):
 
     This class is passed to the pymoo algorithm class to correct the population after each generation
 
-    
+    Args:
+        domain: The domain containing input features and constraints to be repaired.
+        q: Number of candidates to generate in batch mode. Defaults to 1.
+        input_preprocessing_specs: Specifications for preprocessing input features. If None,
+            default preprocessing specs are generated from the domain.
+        constraints_include: List of constraint types to include in the repair process.
+            Supported types are LinearEqualityConstraint, LinearInequalityConstraint,
+            and NChooseKConstraint. If None, all three constraint types are included.
+        n_choose_k_constr_min_delta: Minimum delta value for enforcing NChooseK constraints.
+            The lower bound of the largest n_non_zero elements is set to this value. Defaults to 1e-3.
+        verbose: If True, enables verbose logging of the repair process. Defaults to False.
 
     """
 
