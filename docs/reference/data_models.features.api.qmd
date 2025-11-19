@@ -1,3 +1,1078 @@
 # data_models.features.api { #bofire.data_models.features.api }
 
 `data_models.features.api`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [CategoricalInput](#bofire.data_models.features.api.CategoricalInput) | Base class for all categorical input features. |
+| [CategoricalOutput](#bofire.data_models.features.api.CategoricalOutput) |  |
+| [ContinuousInput](#bofire.data_models.features.api.ContinuousInput) | Base class for all continuous input features. |
+| [ContinuousOutput](#bofire.data_models.features.api.ContinuousOutput) | The base class for a continuous output feature |
+| [DiscreteInput](#bofire.data_models.features.api.DiscreteInput) | Feature with discretized ordinal values allowed in the optimization. |
+| [ContinuousDescriptorInput](#bofire.data_models.features.api.ContinuousDescriptorInput) | Class for continuous input features with descriptors |
+| [CategoricalDescriptorInput](#bofire.data_models.features.api.CategoricalDescriptorInput) | Class for categorical input features with descriptors |
+| [MolecularInput](#bofire.data_models.features.api.MolecularInput) |  |
+| [CategoricalMolecularInput](#bofire.data_models.features.api.CategoricalMolecularInput) |  |
+| [TaskInput](#bofire.data_models.features.api.TaskInput) |  |
+
+### CategoricalInput { #bofire.data_models.features.api.CategoricalInput }
+
+```python
+data_models.features.api.CategoricalInput()
+```
+
+Base class for all categorical input features.
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name       | Type         | Description                                                                |
+|------------|--------------|----------------------------------------------------------------------------|
+| categories | List\[str\]  | Names of the categories.                                                   |
+| allowed    | List\[bool\] | List of bools indicating if a category is allowed within the optimization. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [fixed_value](#bofire.data_models.features.api.CategoricalInput.fixed_value) | Returns the categories to which the feature is fixed, None if the feature is not fixed |
+| [from_dummy_encoding](#bofire.data_models.features.api.CategoricalInput.from_dummy_encoding) | Convert points back from dummy encoding. |
+| [from_onehot_encoding](#bofire.data_models.features.api.CategoricalInput.from_onehot_encoding) | Converts values back from one-hot encoding. |
+| [from_ordinal_encoding](#bofire.data_models.features.api.CategoricalInput.from_ordinal_encoding) | Convertes values back from ordinal encoding. |
+| [generate_allowed](#bofire.data_models.features.api.CategoricalInput.generate_allowed) | Generates the list of allowed categories if not provided. |
+| [get_allowed_categories](#bofire.data_models.features.api.CategoricalInput.get_allowed_categories) | Returns the allowed categories. |
+| [get_forbidden_categories](#bofire.data_models.features.api.CategoricalInput.get_forbidden_categories) | Returns the non-allowed categories |
+| [get_possible_categories](#bofire.data_models.features.api.CategoricalInput.get_possible_categories) | Return the superset of categories that have been used in the experimental dataset and |
+| [is_fixed](#bofire.data_models.features.api.CategoricalInput.is_fixed) | Returns True if there is only one allowed category. |
+| [is_fulfilled](#bofire.data_models.features.api.CategoricalInput.is_fulfilled) | Method to check if the values are all allowed categories. |
+| [sample](#bofire.data_models.features.api.CategoricalInput.sample) | Draw random samples from the feature. |
+| [to_dummy_encoding](#bofire.data_models.features.api.CategoricalInput.to_dummy_encoding) | Converts values to a dummy-hot encoding, dropping the first categorical level. |
+| [to_onehot_encoding](#bofire.data_models.features.api.CategoricalInput.to_onehot_encoding) | Converts values to a one-hot encoding. |
+| [to_ordinal_encoding](#bofire.data_models.features.api.CategoricalInput.to_ordinal_encoding) | Converts values to an ordinal integer based encoding. |
+| [validate_candidental](#bofire.data_models.features.api.CategoricalInput.validate_candidental) | Method to validate the suggested candidates |
+| [validate_experimental](#bofire.data_models.features.api.CategoricalInput.validate_experimental) | Method to validate the experimental dataFrame |
+
+##### fixed_value { #bofire.data_models.features.api.CategoricalInput.fixed_value }
+
+```python
+data_models.features.api.CategoricalInput.fixed_value(transform_type=None)
+```
+
+Returns the categories to which the feature is fixed, None if the feature is not fixed
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                      | Description                           |
+|--------|-------------------------------------------|---------------------------------------|
+|        | Union\[List\[str\], List\[float\], None\] | List[str]: List of categories or None |
+
+##### from_dummy_encoding { #bofire.data_models.features.api.CategoricalInput.from_dummy_encoding }
+
+```python
+data_models.features.api.CategoricalInput.from_dummy_encoding(values)
+```
+
+Convert points back from dummy encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type         | Description               | Default    |
+|--------|--------------|---------------------------|------------|
+| values | pd.DataFrame | Dummy-hot encoded values. | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                 |
+|--------|------------|---------------------------------------------|
+|        | ValueError | If one-hot columns not present in `values`. |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                |
+|--------|-----------|--------------------------------------------|
+|        | pd.Series | pd.Series: Series with categorical values. |
+
+##### from_onehot_encoding { #bofire.data_models.features.api.CategoricalInput.from_onehot_encoding }
+
+```python
+data_models.features.api.CategoricalInput.from_onehot_encoding(values)
+```
+
+Converts values back from one-hot encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type         | Description             | Default    |
+|--------|--------------|-------------------------|------------|
+| values | pd.DataFrame | One-hot encoded values. | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                 |
+|--------|------------|---------------------------------------------|
+|        | ValueError | If one-hot columns not present in `values`. |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                |
+|--------|-----------|--------------------------------------------|
+|        | pd.Series | pd.Series: Series with categorical values. |
+
+##### from_ordinal_encoding { #bofire.data_models.features.api.CategoricalInput.from_ordinal_encoding }
+
+```python
+data_models.features.api.CategoricalInput.from_ordinal_encoding(values)
+```
+
+Convertes values back from ordinal encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description             | Default    |
+|--------|-----------|-------------------------|------------|
+| values | pd.Series | Ordinal encoded series. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                |
+|--------|-----------|--------------------------------------------|
+|        | pd.Series | pd.Series: Series with categorical values. |
+
+##### generate_allowed { #bofire.data_models.features.api.CategoricalInput.generate_allowed }
+
+```python
+data_models.features.api.CategoricalInput.generate_allowed(allowed, info)
+```
+
+Generates the list of allowed categories if not provided.
+
+##### get_allowed_categories { #bofire.data_models.features.api.CategoricalInput.get_allowed_categories }
+
+```python
+data_models.features.api.CategoricalInput.get_allowed_categories()
+```
+
+Returns the allowed categories.
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type        | Description                         |
+|--------|-------------|-------------------------------------|
+|        | list\[str\] | list of str: The allowed categories |
+
+##### get_forbidden_categories { #bofire.data_models.features.api.CategoricalInput.get_forbidden_categories }
+
+```python
+data_models.features.api.CategoricalInput.get_forbidden_categories()
+```
+
+Returns the non-allowed categories
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                   |
+|--------|--------|-----------------------------------------------|
+|        |        | List[str]: List of the non-allowed categories |
+
+##### get_possible_categories { #bofire.data_models.features.api.CategoricalInput.get_possible_categories }
+
+```python
+data_models.features.api.CategoricalInput.get_possible_categories(values)
+```
+
+Return the superset of categories that have been used in the experimental dataset and
+that can be used in the optimization
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                             | Default    |
+|--------|-----------|-----------------------------------------|------------|
+| values | pd.Series | Series with the values for this feature | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                 |
+|--------|--------|-----------------------------|
+| list   | list   | list of possible categories |
+
+##### is_fixed { #bofire.data_models.features.api.CategoricalInput.is_fixed }
+
+```python
+data_models.features.api.CategoricalInput.is_fixed()
+```
+
+Returns True if there is only one allowed category.
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                        |
+|--------|--------|----------------------------------------------------|
+|        | bool   | [bool]: True if there is only one allowed category |
+
+##### is_fulfilled { #bofire.data_models.features.api.CategoricalInput.is_fulfilled }
+
+```python
+data_models.features.api.CategoricalInput.is_fulfilled(values)
+```
+
+Method to check if the values are all allowed categories.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                                 | Default    |
+|--------|-----------|---------------------------------------------|------------|
+| values | pd.Series | A series with values for the input feature. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                                                |
+|--------|-----------|----------------------------------------------------------------------------|
+|        | pd.Series | A series with boolean values indicating if the input feature is fulfilled. |
+
+##### sample { #bofire.data_models.features.api.CategoricalInput.sample }
+
+```python
+data_models.features.api.CategoricalInput.sample(n, seed=None)
+```
+
+Draw random samples from the feature.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type   | Description                    | Default    |
+|--------|--------|--------------------------------|------------|
+| n      | int    | number of samples.             | _required_ |
+| seed   | int    | random seed. Defaults to None. | `None`     |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description               |
+|--------|-----------|---------------------------|
+|        | pd.Series | pd.Series: drawn samples. |
+
+##### to_dummy_encoding { #bofire.data_models.features.api.CategoricalInput.to_dummy_encoding }
+
+```python
+data_models.features.api.CategoricalInput.to_dummy_encoding(values)
+```
+
+Converts values to a dummy-hot encoding, dropping the first categorical level.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description               | Default    |
+|--------|-----------|---------------------------|------------|
+| values | pd.Series | Series to be transformed. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                     |
+|--------|--------------|-------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dummy-hot transformed data frame. |
+
+##### to_onehot_encoding { #bofire.data_models.features.api.CategoricalInput.to_onehot_encoding }
+
+```python
+data_models.features.api.CategoricalInput.to_onehot_encoding(values)
+```
+
+Converts values to a one-hot encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description               | Default    |
+|--------|-----------|---------------------------|------------|
+| values | pd.Series | Series to be transformed. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                   |
+|--------|--------------|-----------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: One-hot transformed data frame. |
+
+##### to_ordinal_encoding { #bofire.data_models.features.api.CategoricalInput.to_ordinal_encoding }
+
+```python
+data_models.features.api.CategoricalInput.to_ordinal_encoding(values)
+```
+
+Converts values to an ordinal integer based encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description               | Default    |
+|--------|-----------|---------------------------|------------|
+| values | pd.Series | Series to be transformed. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                        |
+|--------|-----------|------------------------------------|
+|        | pd.Series | pd.Series: Ordinal encoded values. |
+
+##### validate_candidental { #bofire.data_models.features.api.CategoricalInput.validate_candidental }
+
+```python
+data_models.features.api.CategoricalInput.validate_candidental(values)
+```
+
+Method to validate the suggested candidates
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                 | Default    |
+|--------|-----------|-----------------------------|------------|
+| values | pd.Series | A dataFrame with candidates | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                         |
+|--------|------------|---------------------------------------------------------------------|
+|        | ValueError | when not all values for a feature are one of the allowed categories |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                     |
+|--------|-----------|-------------------------------------------------|
+|        | pd.Series | pd.Series: The passed dataFrame with candidates |
+
+##### validate_experimental { #bofire.data_models.features.api.CategoricalInput.validate_experimental }
+
+```python
+data_models.features.api.CategoricalInput.validate_experimental(
+    values,
+    strict=False,
+)
+```
+
+Method to validate the experimental dataFrame
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                                                                                                               | Default    |
+|--------|-----------|---------------------------------------------------------------------------------------------------------------------------|------------|
+| values | pd.Series | A dataFrame with experiments                                                                                              | _required_ |
+| strict | bool      | Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False. | `False`    |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                               |
+|--------|------------|---------------------------------------------------------------------------|
+|        | ValueError | when an entry is not in the list of allowed categories                    |
+|        | ValueError | when there is no variation in a feature provided by the experimental data |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                             |
+|--------|-----------|-----------------------------------------|
+|        | pd.Series | pd.Series: A dataFrame with experiments |
+
+### CategoricalOutput { #bofire.data_models.features.api.CategoricalOutput }
+
+```python
+data_models.features.api.CategoricalOutput()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [validate_objective_categories](#bofire.data_models.features.api.CategoricalOutput.validate_objective_categories) | Validates that objective categories match the output categories |
+
+##### validate_objective_categories { #bofire.data_models.features.api.CategoricalOutput.validate_objective_categories }
+
+```python
+data_models.features.api.CategoricalOutput.validate_objective_categories()
+```
+
+Validates that objective categories match the output categories
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                       |
+|--------|------------|---------------------------------------------------|
+|        | ValueError | when categories do not match objective categories |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description   |
+|--------|--------|---------------|
+|        |        | self          |
+
+### ContinuousInput { #bofire.data_models.features.api.ContinuousInput }
+
+```python
+data_models.features.api.ContinuousInput()
+```
+
+Base class for all continuous input features.
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name                  | Type                  | Description                                                                                                                                                                                                                                                                                  |
+|-----------------------|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| bounds                | Tuple\[float, float\] | A tuple that stores the lower and upper bound of the feature.                                                                                                                                                                                                                                |
+| stepsize              | PositiveFloat         | Float indicating the allowed stepsize between lower and upper. Defaults to None.                                                                                                                                                                                                             |
+| local_relative_bounds | Tuple\[float, float\] | A tuple that stores the lower and upper bounds relative to a reference value. Defaults to None.                                                                                                                                                                                              |
+| allow_zero            | bool                  | A boolean indicating if the input feature can take inactive values. Useful for features that take values between `bounds`, but can also take a value of 0. One may choose to use a conditional kernel for this, if taking a value of 0 represents a distinct behaviour from non-zero values. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_fulfilled](#bofire.data_models.features.api.ContinuousInput.is_fulfilled) | Method to check if the values are within the bounds of the feature. |
+| [round](#bofire.data_models.features.api.ContinuousInput.round) | Round values to the stepsize of the feature. If no stepsize is provided return the |
+| [sample](#bofire.data_models.features.api.ContinuousInput.sample) | Draw random samples from the feature. |
+| [validate_candidental](#bofire.data_models.features.api.ContinuousInput.validate_candidental) | Method to validate the suggested candidates |
+
+##### is_fulfilled { #bofire.data_models.features.api.ContinuousInput.is_fulfilled }
+
+```python
+data_models.features.api.ContinuousInput.is_fulfilled(values, noise=1e-05)
+```
+
+Method to check if the values are within the bounds of the feature.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                                                     | Default    |
+|--------|-----------|-----------------------------------------------------------------|------------|
+| values | pd.Series | A series with values for the input feature.                     | _required_ |
+| noise  | float     | A small value to allow for numerical errors. Defaults to 10e-6. | `1e-05`    |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                                                |
+|--------|-----------|----------------------------------------------------------------------------|
+|        | pd.Series | A series with boolean values indicating if the input feature is fulfilled. |
+
+##### round { #bofire.data_models.features.api.ContinuousInput.round }
+
+```python
+data_models.features.api.ContinuousInput.round(values)
+```
+
+Round values to the stepsize of the feature. If no stepsize is provided return the
+provided values.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                        | Default    |
+|--------|-----------|------------------------------------|------------|
+| values | pd.Series | The values that should be rounded. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                   |
+|--------|-----------|-------------------------------|
+|        | pd.Series | pd.Series: The rounded values |
+
+##### sample { #bofire.data_models.features.api.ContinuousInput.sample }
+
+```python
+data_models.features.api.ContinuousInput.sample(n, seed=None)
+```
+
+Draw random samples from the feature.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type   | Description                    | Default    |
+|--------|--------|--------------------------------|------------|
+| n      | int    | number of samples.             | _required_ |
+| seed   | int    | random seed. Defaults to None. | `None`     |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description               |
+|--------|-----------|---------------------------|
+|        | pd.Series | pd.Series: drawn samples. |
+
+##### validate_candidental { #bofire.data_models.features.api.ContinuousInput.validate_candidental }
+
+```python
+data_models.features.api.ContinuousInput.validate_candidental(values)
+```
+
+Method to validate the suggested candidates
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                 | Default    |
+|--------|-----------|-----------------------------|------------|
+| values | pd.Series | A dataFrame with candidates | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                |
+|--------|------------|------------------------------------------------------------|
+|        | ValueError | when non numerical values are passed                       |
+|        | ValueError | when values are larger than the upper bound of the feature |
+|        | ValueError | when values are lower than the lower bound of the feature  |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                     |
+|--------|-----------|-------------------------------------------------|
+|        | pd.Series | pd.Series: The passed dataFrame with candidates |
+
+### ContinuousOutput { #bofire.data_models.features.api.ContinuousOutput }
+
+```python
+data_models.features.api.ContinuousOutput()
+```
+
+The base class for a continuous output feature
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name      | Type      | Description                                                                                                     |
+|-----------|-----------|-----------------------------------------------------------------------------------------------------------------|
+| objective | objective | objective of the feature indicating in which direction it should be optimized. Defaults to `MaximizeObjective`. |
+
+### DiscreteInput { #bofire.data_models.features.api.DiscreteInput }
+
+```python
+data_models.features.api.DiscreteInput()
+```
+
+Feature with discretized ordinal values allowed in the optimization.
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name                | Type   | Description                                             |
+|---------------------|--------|---------------------------------------------------------|
+| key(str)            |        | key of the feature.                                     |
+| values(List[float]) |        | the discretized allowed values during the optimization. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [from_continuous](#bofire.data_models.features.api.DiscreteInput.from_continuous) | Rounds continuous values to the closest discrete ones. |
+| [is_fulfilled](#bofire.data_models.features.api.DiscreteInput.is_fulfilled) | Method to check if the values are close to the discrete values. |
+| [sample](#bofire.data_models.features.api.DiscreteInput.sample) | Draw random samples from the feature. |
+| [validate_candidental](#bofire.data_models.features.api.DiscreteInput.validate_candidental) | Method to validate the provided candidates. |
+| [validate_values_unique](#bofire.data_models.features.api.DiscreteInput.validate_values_unique) | Validates that provided values are unique. |
+
+##### from_continuous { #bofire.data_models.features.api.DiscreteInput.from_continuous }
+
+```python
+data_models.features.api.DiscreteInput.from_continuous(values)
+```
+
+Rounds continuous values to the closest discrete ones.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type         | Description                        | Default    |
+|--------|--------------|------------------------------------|------------|
+| values | pd.DataFrame | Dataframe with continuous entries. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                             |
+|--------|-----------|-----------------------------------------|
+|        | pd.Series | pd.Series: Series with discrete values. |
+
+##### is_fulfilled { #bofire.data_models.features.api.DiscreteInput.is_fulfilled }
+
+```python
+data_models.features.api.DiscreteInput.is_fulfilled(values)
+```
+
+Method to check if the values are close to the discrete values.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                                 | Default    |
+|--------|-----------|---------------------------------------------|------------|
+| values | pd.Series | A series with values for the input feature. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                                                |
+|--------|-----------|----------------------------------------------------------------------------|
+|        | pd.Series | A series with boolean values indicating if the input feature is fulfilled. |
+
+##### sample { #bofire.data_models.features.api.DiscreteInput.sample }
+
+```python
+data_models.features.api.DiscreteInput.sample(n, seed=None)
+```
+
+Draw random samples from the feature.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type   | Description                    | Default    |
+|--------|--------|--------------------------------|------------|
+| n      | int    | number of samples.             | _required_ |
+| seed   | int    | random seed. Defaults to None. | `None`     |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description               |
+|--------|-----------|---------------------------|
+|        | pd.Series | pd.Series: drawn samples. |
+
+##### validate_candidental { #bofire.data_models.features.api.DiscreteInput.validate_candidental }
+
+```python
+data_models.features.api.DiscreteInput.validate_candidental(values)
+```
+
+Method to validate the provided candidates.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                          | Default    |
+|--------|-----------|--------------------------------------|------------|
+| values | pd.Series | suggested candidates for the feature | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                                                  |
+|--------|------------|----------------------------------------------------------------------------------------------|
+|        | ValueError | Raises error when one of the provided values is not contained in the list of allowed values. |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                     |
+|--------|-----------|-------------------------------------------------|
+|        | pd.Series | pd.Series: suggested candidates for the feature |
+
+##### validate_values_unique { #bofire.data_models.features.api.DiscreteInput.validate_values_unique }
+
+```python
+data_models.features.api.DiscreteInput.validate_values_unique(values)
+```
+
+Validates that provided values are unique.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type          | Description    | Default    |
+|--------|---------------|----------------|------------|
+| values | List\[float\] | List of values | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                          |
+|--------|------------|--------------------------------------|
+|        | ValueError | when values are non-unique.          |
+|        | ValueError | when values contains only one entry. |
+|        | ValueError | when values is empty.                |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                         |
+|--------|--------|-------------------------------------|
+|        |        | List[values]: Sorted list of values |
+
+### ContinuousDescriptorInput { #bofire.data_models.features.api.ContinuousDescriptorInput }
+
+```python
+data_models.features.api.ContinuousDescriptorInput()
+```
+
+Class for continuous input features with descriptors
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name        | Type          | Description                                     |
+|-------------|---------------|-------------------------------------------------|
+| lower_bound | float         | Lower bound of the feature in the optimization. |
+| upper_bound | float         | Upper bound of the feature in the optimization. |
+| descriptors | List\[str\]   | Names of the descriptors.                       |
+| values      | List\[float\] | Values of the descriptors.                      |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [to_df](#bofire.data_models.features.api.ContinuousDescriptorInput.to_df) | Tabular overview of the feature as DataFrame |
+| [validate_list_lengths](#bofire.data_models.features.api.ContinuousDescriptorInput.validate_list_lengths) | Compares the length of the defined descriptors list with the provided values |
+
+##### to_df { #bofire.data_models.features.api.ContinuousDescriptorInput.to_df }
+
+```python
+data_models.features.api.ContinuousDescriptorInput.to_df()
+```
+
+Tabular overview of the feature as DataFrame
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                |
+|--------|--------------|------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: tabular overview of the feature as DataFrame |
+
+##### validate_list_lengths { #bofire.data_models.features.api.ContinuousDescriptorInput.validate_list_lengths }
+
+```python
+data_models.features.api.ContinuousDescriptorInput.validate_list_lengths()
+```
+
+Compares the length of the defined descriptors list with the provided values
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type   | Description                    | Default    |
+|--------|--------|--------------------------------|------------|
+| values | Dict   | Dictionary with all attributes | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                                |
+|--------|------------|----------------------------------------------------------------------------|
+|        | ValueError | when the number of descriptors does not math the number of provided values |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description              |
+|--------|--------|--------------------------|
+| Dict   |        | Dict with the attributes |
+
+### CategoricalDescriptorInput { #bofire.data_models.features.api.CategoricalDescriptorInput }
+
+```python
+data_models.features.api.CategoricalDescriptorInput()
+```
+
+Class for categorical input features with descriptors
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name        | Type                  | Description                                                                |
+|-------------|-----------------------|----------------------------------------------------------------------------|
+| categories  | List\[str\]           | Names of the categories.                                                   |
+| allowed     | List\[bool\]          | List of bools indicating if a category is allowed within the optimization. |
+| descriptors | List\[str\]           | List of strings representing the names of the descriptors.                 |
+| values      | List\[List\[float\]\] | List of lists representing the descriptor values.                          |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [fixed_value](#bofire.data_models.features.api.CategoricalDescriptorInput.fixed_value) | Returns the categories to which the feature is fixed, None if the feature is not fixed |
+| [from_descriptor_encoding](#bofire.data_models.features.api.CategoricalDescriptorInput.from_descriptor_encoding) | Converts values back from descriptor encoding. |
+| [from_df](#bofire.data_models.features.api.CategoricalDescriptorInput.from_df) | Creates a feature from a dataframe |
+| [to_descriptor_encoding](#bofire.data_models.features.api.CategoricalDescriptorInput.to_descriptor_encoding) | Converts values to descriptor encoding. |
+| [to_df](#bofire.data_models.features.api.CategoricalDescriptorInput.to_df) | Tabular overview of the feature as DataFrame |
+| [validate_experimental](#bofire.data_models.features.api.CategoricalDescriptorInput.validate_experimental) | Method to validate the experimental dataFrame |
+| [validate_values](#bofire.data_models.features.api.CategoricalDescriptorInput.validate_values) | Validates the compatibility of passed values for the descriptors and the defined categories |
+
+##### fixed_value { #bofire.data_models.features.api.CategoricalDescriptorInput.fixed_value }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.fixed_value(
+    transform_type=None,
+)
+```
+
+Returns the categories to which the feature is fixed, None if the feature is not fixed
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                      | Description                           |
+|--------|-------------------------------------------|---------------------------------------|
+|        | Union\[List\[str\], List\[float\], None\] | List[str]: List of categories or None |
+
+##### from_descriptor_encoding { #bofire.data_models.features.api.CategoricalDescriptorInput.from_descriptor_encoding }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.from_descriptor_encoding(
+    values,
+)
+```
+
+Converts values back from descriptor encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type         | Description                   | Default    |
+|--------|--------------|-------------------------------|------------|
+| values | pd.DataFrame | Descriptor encoded dataframe. | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                       |
+|--------|------------|---------------------------------------------------|
+|        | ValueError | If descriptor columns not found in the dataframe. |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                |
+|--------|-----------|--------------------------------------------|
+|        | pd.Series | pd.Series: Series with categorical values. |
+
+##### from_df { #bofire.data_models.features.api.CategoricalDescriptorInput.from_df }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.from_df(key, df)
+```
+
+Creates a feature from a dataframe
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type         | Description                                   | Default    |
+|--------|--------------|-----------------------------------------------|------------|
+| key    | str          | The name of the feature                       | _required_ |
+| df     | pd.DataFrame | Categories as rows and descriptors as columns | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description   |
+|--------|--------|---------------|
+| _type_ |        | _description_ |
+
+##### to_descriptor_encoding { #bofire.data_models.features.api.CategoricalDescriptorInput.to_descriptor_encoding }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.to_descriptor_encoding(
+    values,
+)
+```
+
+Converts values to descriptor encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description          | Default    |
+|--------|-----------|----------------------|------------|
+| values | pd.Series | Values to transform. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                 |
+|--------|--------------|---------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Descriptor encoded dataframe. |
+
+##### to_df { #bofire.data_models.features.api.CategoricalDescriptorInput.to_df }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.to_df()
+```
+
+Tabular overview of the feature as DataFrame
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                |
+|--------|--------|------------------------------------------------------------|
+|        |        | pd.DataFrame: tabular overview of the feature as DataFrame |
+
+##### validate_experimental { #bofire.data_models.features.api.CategoricalDescriptorInput.validate_experimental }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.validate_experimental(
+    values,
+    strict=False,
+)
+```
+
+Method to validate the experimental dataFrame
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                                                                                                               | Default    |
+|--------|-----------|---------------------------------------------------------------------------------------------------------------------------|------------|
+| values | pd.Series | A dataFrame with experiments                                                                                              | _required_ |
+| strict | bool      | Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False. | `False`    |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                               |
+|--------|------------|---------------------------------------------------------------------------|
+|        | ValueError | when an entry is not in the list of allowed categories                    |
+|        | ValueError | when there is no variation in a feature provided by the experimental data |
+|        | ValueError | when no variation is present or planned for a given descriptor            |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                             |
+|--------|-----------|-----------------------------------------|
+|        | pd.Series | pd.Series: A dataFrame with experiments |
+
+##### validate_values { #bofire.data_models.features.api.CategoricalDescriptorInput.validate_values }
+
+```python
+data_models.features.api.CategoricalDescriptorInput.validate_values(v, info)
+```
+
+Validates the compatibility of passed values for the descriptors and the defined categories
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type                  | Description                        | Default    |
+|--------|-----------------------|------------------------------------|------------|
+| v      | List\[List\[float\]\] | Nested list with descriptor values | _required_ |
+| values | Dict                  | Dictionary with attributes         | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                |
+|--------|------------|------------------------------------------------------------|
+|        | ValueError | when values have different length than categories          |
+|        | ValueError | when rows in values have different length than descriptors |
+|        | ValueError | when a descriptor shows no variance in the data            |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                           |
+|--------|--------|-------------------------------------------------------|
+|        |        | List[List[float]]: Nested list with descriptor values |
+
+### MolecularInput { #bofire.data_models.features.api.MolecularInput }
+
+```python
+data_models.features.api.MolecularInput()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [get_bounds](#bofire.data_models.features.api.MolecularInput.get_bounds) | Calculates the lower and upper bounds for the feature based on the given transform type and values. |
+| [to_descriptor_encoding](#bofire.data_models.features.api.MolecularInput.to_descriptor_encoding) | Converts values to descriptor encoding. |
+
+##### get_bounds { #bofire.data_models.features.api.MolecularInput.get_bounds }
+
+```python
+data_models.features.api.MolecularInput.get_bounds(
+    transform_type,
+    values,
+    reference_value=None,
+)
+```
+
+Calculates the lower and upper bounds for the feature based on the given transform type and values.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name            | Type            | Description                                                                  | Default    |
+|-----------------|-----------------|------------------------------------------------------------------------------|------------|
+| transform_type  | AnyMolFeatures  | The type of transformation to apply to the data.                             | _required_ |
+| values          | pd.Series       | The actual data over which the lower and upper bounds are calculated.        | _required_ |
+| reference_value | Optional\[str\] | The reference value for the transformation. Not used here. Defaults to None. | `None`     |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                  | Description                                                                                             |
+|--------|---------------------------------------|---------------------------------------------------------------------------------------------------------|
+|        | Tuple\[List\[float\], List\[float\]\] | Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data. |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type                | Description                                                                     |
+|--------|---------------------|---------------------------------------------------------------------------------|
+|        | NotImplementedError | Raised when `values` is None, as it is currently required for `MolecularInput`. |
+
+##### to_descriptor_encoding { #bofire.data_models.features.api.MolecularInput.to_descriptor_encoding }
+
+```python
+data_models.features.api.MolecularInput.to_descriptor_encoding(
+    transform_type,
+    values,
+)
+```
+
+Converts values to descriptor encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description          | Default    |
+|--------|-----------|----------------------|------------|
+| values | pd.Series | Values to transform. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                 |
+|--------|--------------|---------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Descriptor encoded dataframe. |
+
+### CategoricalMolecularInput { #bofire.data_models.features.api.CategoricalMolecularInput }
+
+```python
+data_models.features.api.CategoricalMolecularInput()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [from_descriptor_encoding](#bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding) | Converts values back from descriptor encoding. |
+| [validate_smiles](#bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles) | Validates that categories are valid smiles. Note that this check can only |
+
+##### from_descriptor_encoding { #bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding }
+
+```python
+data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding(
+    transform_type,
+    values,
+)
+```
+
+Converts values back from descriptor encoding.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type         | Description                   | Default    |
+|--------|--------------|-------------------------------|------------|
+| values | pd.DataFrame | Descriptor encoded dataframe. | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                       |
+|--------|------------|---------------------------------------------------|
+|        | ValueError | If descriptor columns not found in the dataframe. |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                |
+|--------|-----------|--------------------------------------------|
+|        | pd.Series | pd.Series: Series with categorical values. |
+
+##### validate_smiles { #bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles }
+
+```python
+data_models.features.api.CategoricalMolecularInput.validate_smiles(categories)
+```
+
+Validates that categories are valid smiles. Note that this check can only
+be executed when rdkit is available.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type        | Description    | Default    |
+|------------|-------------|----------------|------------|
+| categories | List\[str\] | List of smiles | _required_ |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                 |
+|--------|------------|-----------------------------|
+|        | ValueError | when string is not a smiles |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                   |
+|--------|--------|-------------------------------|
+|        |        | List[str]: List of the smiles |
+
+### TaskInput { #bofire.data_models.features.api.TaskInput }
+
+```python
+data_models.features.api.TaskInput()
+```

@@ -1,3 +1,1153 @@
 # strategies.api { #bofire.strategies.api }
 
 `strategies.api`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [Strategy](#bofire.strategies.api.Strategy) | Base class for all strategies |
+| [RandomStrategy](#bofire.strategies.api.RandomStrategy) | Strategy for randomly selecting new candidates. |
+| [DoEStrategy](#bofire.strategies.api.DoEStrategy) | Strategy for design of experiments. This strategy is used to generate a set of |
+| [FractionalFactorialStrategy](#bofire.strategies.api.FractionalFactorialStrategy) |  |
+| [SoboStrategy](#bofire.strategies.api.SoboStrategy) |  |
+| [AdditiveSoboStrategy](#bofire.strategies.api.AdditiveSoboStrategy) |  |
+| [MultiplicativeSoboStrategy](#bofire.strategies.api.MultiplicativeSoboStrategy) |  |
+| [CustomSoboStrategy](#bofire.strategies.api.CustomSoboStrategy) |  |
+| [QparegoStrategy](#bofire.strategies.api.QparegoStrategy) |  |
+| [MoboStrategy](#bofire.strategies.api.MoboStrategy) |  |
+| [BotorchStrategy](#bofire.strategies.api.BotorchStrategy) |  |
+| [EntingStrategy](#bofire.strategies.api.EntingStrategy) | Strategy for selecting new candidates using ENTMOOT |
+| [MultiFidelityStrategy](#bofire.strategies.api.MultiFidelityStrategy) |  |
+| [ActiveLearningStrategy](#bofire.strategies.api.ActiveLearningStrategy) | ActiveLearningStrategy that uses an acquisition function which focuses on |
+| [ShortestPathStrategy](#bofire.strategies.api.ShortestPathStrategy) |  |
+| [StepwiseStrategy](#bofire.strategies.api.StepwiseStrategy) |  |
+
+### Strategy { #bofire.strategies.api.Strategy }
+
+```python
+strategies.api.Strategy(data_model)
+```
+
+Base class for all strategies
+
+Attributes:
+
+#### Attributes
+
+| Name | Description |
+| --- | --- |
+| [candidates](#bofire.strategies.api.Strategy.candidates) | Returns the (pending) candidates of the strategy. |
+| [domain](#bofire.strategies.api.Strategy.domain) | Returns the domain of the strategy. |
+| [experiments](#bofire.strategies.api.Strategy.experiments) | Returns the experiments of the strategy. |
+| [inputs](#bofire.strategies.api.Strategy.inputs) | Shortcut to access the inputs of the strategy's domain. |
+| [num_candidates](#bofire.strategies.api.Strategy.num_candidates) | Returns number of (pending) candidates |
+| [num_experiments](#bofire.strategies.api.Strategy.num_experiments) | Returns number of experiments |
+| [outputs](#bofire.strategies.api.Strategy.outputs) | Shortcut to access the outputs of the strategy's domain. |
+| [seed](#bofire.strategies.api.Strategy.seed) | Returns the seed of the strategy. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [add_candidates](#bofire.strategies.api.Strategy.add_candidates) | Add pending candidates to the strategy. Appends to existing ones. |
+| [add_experiments](#bofire.strategies.api.Strategy.add_experiments) | Add experiments to the strategy. Appends to existing ones. |
+| [ask](#bofire.strategies.api.Strategy.ask) | Function to generate new candidates. |
+| [from_spec](#bofire.strategies.api.Strategy.from_spec) | Used by the mapper to map from data model to functional strategy. |
+| [has_sufficient_experiments](#bofire.strategies.api.Strategy.has_sufficient_experiments) | Abstract method to check if sufficient experiments are available. |
+| [postprocess_candidates](#bofire.strategies.api.Strategy.postprocess_candidates) | Method to allow for postprocessing of candidates. |
+| [reset_candidates](#bofire.strategies.api.Strategy.reset_candidates) | Resets the pending candidates of the strategy. |
+| [set_candidates](#bofire.strategies.api.Strategy.set_candidates) | Set pending candidates of the strategy. Overwrites existing ones. |
+| [set_experiments](#bofire.strategies.api.Strategy.set_experiments) | Set experiments of the strategy. Overwrites existing ones. |
+| [tell](#bofire.strategies.api.Strategy.tell) | This function passes new experimental data to the optimizer |
+| [to_candidates](#bofire.strategies.api.Strategy.to_candidates) | Transform candiadtes dataframe to a list of `Candidate` objects. |
+
+##### add_candidates { #bofire.strategies.api.Strategy.add_candidates }
+
+```python
+strategies.api.Strategy.add_candidates(candidates)
+```
+
+Add pending candidates to the strategy. Appends to existing ones.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                | Default    |
+|-------------|--------------|----------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with candidates. | _required_ |
+
+##### add_experiments { #bofire.strategies.api.Strategy.add_experiments }
+
+```python
+strategies.api.Strategy.add_experiments(experiments)
+```
+
+Add experiments to the strategy. Appends to existing ones.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                 | Default    |
+|-------------|--------------|-----------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with experiments. | _required_ |
+
+##### ask { #bofire.strategies.api.Strategy.ask }
+
+```python
+strategies.api.Strategy.ask(
+    candidate_count=None,
+    add_pending=False,
+    raise_validation_error=True,
+)
+```
+
+Function to generate new candidates.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name                   | Type        | Description                                                                                                                      | Default   |
+|------------------------|-------------|----------------------------------------------------------------------------------------------------------------------------------|-----------|
+| candidate_count        | PositiveInt | Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.   | `None`    |
+| add_pending            | bool        | If true the proposed candidates are added to the set of pending experiments. Defaults to False.                                  | `False`   |
+| raise_validation_error | bool        | If true an error will be raised if candidates violate constraints, otherwise only a warning will be displayed. Defaults to True. | `True`    |
+
+###### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                               |
+|--------|------------|---------------------------------------------------------------------------|
+|        | ValueError | if candidate count is smaller than 1                                      |
+|        | ValueError | if not enough experiments are available to execute the strategy           |
+|        | ValueError | if the number of generated candidates does not match the requested number |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                    |
+|--------|--------------|----------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: DataFrame with candidates (proposed experiments) |
+
+##### from_spec { #bofire.strategies.api.Strategy.from_spec }
+
+```python
+strategies.api.Strategy.from_spec(data_model)
+```
+
+Used by the mapper to map from data model to functional strategy.
+
+##### has_sufficient_experiments { #bofire.strategies.api.Strategy.has_sufficient_experiments }
+
+```python
+strategies.api.Strategy.has_sufficient_experiments()
+```
+
+Abstract method to check if sufficient experiments are available.
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                         |
+|--------|--------|---------------------------------------------------------------------|
+| bool   | bool   | True if number of passed experiments is sufficient, False otherwise |
+
+##### postprocess_candidates { #bofire.strategies.api.Strategy.postprocess_candidates }
+
+```python
+strategies.api.Strategy.postprocess_candidates(candidates)
+```
+
+Method to allow for postprocessing of candidates.
+
+By default this methods applies the stepsize of continuous features if applicable.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type         | Description                | Default    |
+|------------|--------------|----------------------------|------------|
+| candidates | pd.DataFrame | DataFrame with candidates. | _required_ |
+
+Returns:
+    DataFrame with postprocessed candidates.
+
+##### reset_candidates { #bofire.strategies.api.Strategy.reset_candidates }
+
+```python
+strategies.api.Strategy.reset_candidates()
+```
+
+Resets the pending candidates of the strategy.
+
+##### set_candidates { #bofire.strategies.api.Strategy.set_candidates }
+
+```python
+strategies.api.Strategy.set_candidates(candidates)
+```
+
+Set pending candidates of the strategy. Overwrites existing ones.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                | Default    |
+|-------------|--------------|----------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with candidates. | _required_ |
+
+##### set_experiments { #bofire.strategies.api.Strategy.set_experiments }
+
+```python
+strategies.api.Strategy.set_experiments(experiments)
+```
+
+Set experiments of the strategy. Overwrites existing ones.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                 | Default    |
+|-------------|--------------|-----------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with experiments. | _required_ |
+
+##### tell { #bofire.strategies.api.Strategy.tell }
+
+```python
+strategies.api.Strategy.tell(experiments, replace=False)
+```
+
+This function passes new experimental data to the optimizer
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                                                                                                                                     | Default    |
+|-------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| experiments | pd.DataFrame | DataFrame with experimental data                                                                                                                | _required_ |
+| replace     | bool         | Boolean to decide if the experimental data should replace the former DataFrame or if the new experiments should be attached. Defaults to False. | `False`    |
+
+##### to_candidates { #bofire.strategies.api.Strategy.to_candidates }
+
+```python
+strategies.api.Strategy.to_candidates(candidates)
+```
+
+Transform candiadtes dataframe to a list of `Candidate` objects.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type         | Description                       | Default    |
+|------------|--------------|-----------------------------------|------------|
+| candidates | pd.DataFrame | candidates formatted as dataframe | _required_ |
+
+Returns:
+    List[Candidate]: candidates formatted as list of `Candidate` objects.
+
+### RandomStrategy { #bofire.strategies.api.RandomStrategy }
+
+```python
+strategies.api.RandomStrategy(data_model, **kwargs)
+```
+
+Strategy for randomly selecting new candidates.
+
+This strategy generates candidate samples using the random strategy. It first checks if the domain
+is compatible with polytope sampling. If so, it uses polytope sampling to generate candidate
+samples. If not, it performs rejection sampling by repeatedly generating candidates with polytope sampling
+until the desired number of valid samples is obtained.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type                       | Description                             | Default    |
+|------------|----------------------------|-----------------------------------------|------------|
+| data_model | data_models.RandomStrategy | The data model for the random strategy. | _required_ |
+| **kwargs   |                            | Additional keyword arguments.           | `{}`       |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [has_sufficient_experiments](#bofire.strategies.api.RandomStrategy.has_sufficient_experiments) | Check if there are sufficient experiments for the strategy. |
+| [make](#bofire.strategies.api.RandomStrategy.make) | Create a new instance of the RandomStrategy class. |
+
+##### has_sufficient_experiments { #bofire.strategies.api.RandomStrategy.has_sufficient_experiments }
+
+```python
+strategies.api.RandomStrategy.has_sufficient_experiments()
+```
+
+Check if there are sufficient experiments for the strategy.
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                |
+|--------|--------|------------------------------------------------------------|
+| bool   | bool   | True if there are sufficient experiments, False otherwise. |
+
+##### make { #bofire.strategies.api.RandomStrategy.make }
+
+```python
+strategies.api.RandomStrategy.make(
+    domain,
+    fallback_sampling_method=None,
+    n_burnin=None,
+    n_thinning=None,
+    num_base_samples=None,
+    max_iters=None,
+    seed=None,
+)
+```
+
+Create a new instance of the RandomStrategy class.
+Args:
+    domain: The domain we randomly sample from.
+    fallback_sampling_method: The fallback sampling method to use when the domain has no constraints.
+    n_burnin: The number of burn-in samples for the polytope sampler.
+    n_thinning: The thinning factor for the polytope sampler.
+    num_base_samples: The number of base samples for rejection sampling.
+    max_iters: The maximum number of iterations for rejection sampling.
+    seed: The seed value for random number generation.
+Returns:
+    RandomStrategy: A new instance of the RandomStrategy class.
+
+### DoEStrategy { #bofire.strategies.api.DoEStrategy }
+
+```python
+strategies.api.DoEStrategy(data_model, **kwargs)
+```
+
+Strategy for design of experiments. This strategy is used to generate a set of
+experiments for a given domain.
+The experiments are generated via minimization of a user defined optimality criterion.
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [has_sufficient_experiments](#bofire.strategies.api.DoEStrategy.has_sufficient_experiments) | Abstract method to check if sufficient experiments are available. |
+| [make](#bofire.strategies.api.DoEStrategy.make) | Create a new design of experimence strategy instance. |
+
+##### has_sufficient_experiments { #bofire.strategies.api.DoEStrategy.has_sufficient_experiments }
+
+```python
+strategies.api.DoEStrategy.has_sufficient_experiments()
+```
+
+Abstract method to check if sufficient experiments are available.
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                         |
+|--------|--------|---------------------------------------------------------------------|
+| bool   | bool   | True if number of passed experiments is sufficient, False otherwise |
+
+##### make { #bofire.strategies.api.DoEStrategy.make }
+
+```python
+strategies.api.DoEStrategy.make(
+    domain,
+    seed=None,
+    criterion=None,
+    verbose=None,
+    ipopt_options=None,
+    scip_params=None,
+    use_hessian=None,
+    use_cyipopt=None,
+    sampling=None,
+    return_fixed_candidates=None,
+)
+```
+
+Create a new design of experimence strategy instance.
+Args:
+    domain: The domain for the strategy.
+    seed: Random seed for reproducibility.
+    criterion: Optimality criterion for the strategy. Default is d-optimality.
+    verbose: Verbosity level.
+    ipopt_options: Options for IPOPT solver. IPOPT is used to minize the optimality criterion.
+    scip_params: Parameters for SCIP solver. SCIP is used to for backprojection of
+                 discrete and categorical variables.
+    use_hessian: Whether to use Hessian information.
+    use_cyipopt: Whether to use cyipopt.
+    sampling: Initial points for the strategy.
+    return_fixed_candidates: Whether to return fixed candidates.
+Returns:
+    DoEStrategy: A new instance of the DoEStrategy class.
+
+### FractionalFactorialStrategy { #bofire.strategies.api.FractionalFactorialStrategy }
+
+```python
+strategies.api.FractionalFactorialStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.FractionalFactorialStrategy.make) | Create a new instance of the strategy with the given parameters. This method will create the datamodel |
+| [randomize_design](#bofire.strategies.api.FractionalFactorialStrategy.randomize_design) | Randomize the run order of the design if `self.randomize_runorder` is True. |
+
+##### make { #bofire.strategies.api.FractionalFactorialStrategy.make }
+
+```python
+strategies.api.FractionalFactorialStrategy.make(
+    domain,
+    n_repetitions=None,
+    n_center=None,
+    block_feature_key=None,
+    generator=None,
+    n_generators=None,
+    randomize_runorder=None,
+    seed=None,
+)
+```
+
+Create a new instance of the strategy with the given parameters. This method will create the datamodel
+under the hood and pass it to the constructor of the strategy.
+Args:
+    domain: The domain of the strategy.
+    n_repetitions: The number of repetitions of the continuous part of the design.
+    n_center: The number of center points in the continuous part of the design per block.
+    block_feature_key: The feature key to use for blocking the design.
+    generator: The generator for the continuous part of the design.
+    n_generators: The number of reducing factors.
+    randomize_runorder: If true, the run order is randomized, else it is deterministic.
+    seed: The seed for the random number generator.
+
+##### randomize_design { #bofire.strategies.api.FractionalFactorialStrategy.randomize_design }
+
+```python
+strategies.api.FractionalFactorialStrategy.randomize_design(design)
+```
+
+Randomize the run order of the design if `self.randomize_runorder` is True.
+
+### SoboStrategy { #bofire.strategies.api.SoboStrategy }
+
+```python
+strategies.api.SoboStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.SoboStrategy.make) | Creates a single objective Bayesian optimization strategy. |
+
+##### make { #bofire.strategies.api.SoboStrategy.make }
+
+```python
+strategies.api.SoboStrategy.make(
+    domain,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Creates a single objective Bayesian optimization strategy.
+Args:
+    domain: The optimization domain of the strategy.
+    acquisition_function: The acquisition function to use.
+    acquisition_optimizer: The optimizer to use for the acquisition function.
+    surrogate_specs: The specifications for the surrogate model.
+    outlier_detection_specs: The specifications for the outlier detection.
+    min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+    frequency_check: The frequency of checking for outliers.
+    frequency_hyperopt: The frequency of hyperparameter optimization.
+    folds: The number of folds for cross-validation.
+    seed: The random seed to use.
+    include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+        of experiments used to compute the acquisition function.
+
+### AdditiveSoboStrategy { #bofire.strategies.api.AdditiveSoboStrategy }
+
+```python
+strategies.api.AdditiveSoboStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.AdditiveSoboStrategy.make) | Creates a Bayesian optimization strategy that adds multiple objectives. |
+
+##### make { #bofire.strategies.api.AdditiveSoboStrategy.make }
+
+```python
+strategies.api.AdditiveSoboStrategy.make(
+    domain,
+    use_output_constraints=None,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Creates a Bayesian optimization strategy that adds multiple objectives.
+The weights of the objectives are defines in the outputs of the domain.
+Args:
+    domain: The optimization domain of the strategy.
+    use_output_constraints: Whether to use output constraints.
+    acquisition_function: The acquisition function to use.
+    acquisition_optimizer: The optimizer to use for the acquisition function.
+    surrogate_specs: The specifications for the surrogate model.
+    outlier_detection_specs: The specifications for the outlier detection.
+    min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+    frequency_check: The frequency of checking for outliers.
+    frequency_hyperopt: The frequency of hyperparameter optimization.
+    folds: The number of folds for cross-validation for hyperparameter optimization.
+    seed: The random seed to use.
+    include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+        of experiments used to compute the acquisition function.
+
+### MultiplicativeSoboStrategy { #bofire.strategies.api.MultiplicativeSoboStrategy }
+
+```python
+strategies.api.MultiplicativeSoboStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.MultiplicativeSoboStrategy.make) | Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of |
+
+##### make { #bofire.strategies.api.MultiplicativeSoboStrategy.make }
+
+```python
+strategies.api.MultiplicativeSoboStrategy.make(
+    domain,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
+the objectives are defines in the outputs of the domain.
+Args:
+    domain: The optimization domain of the strategy.
+    acquisition_function: The acquisition function to use.
+    acquisition_optimizer: The optimizer to use for the acquisition function.
+    surrogate_specs: The specifications for the surrogate model.
+    outlier_detection_specs: The specifications for the outlier detection.
+    min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
+    frequency_check: The frequency of checking for outliers.
+    frequency_hyperopt: The frequency of hyperparameter optimization.
+    folds: The number of folds for cross-validation for hyperparameter optimization.
+    seed: The random seed to use.
+    include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+        of experiments used to compute the acquisition function.
+
+### CustomSoboStrategy { #bofire.strategies.api.CustomSoboStrategy }
+
+```python
+strategies.api.CustomSoboStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [dumps](#bofire.strategies.api.CustomSoboStrategy.dumps) | Dumps the function to a string via pickle as this is not directly json serializable. |
+| [loads](#bofire.strategies.api.CustomSoboStrategy.loads) | Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute. |
+| [make](#bofire.strategies.api.CustomSoboStrategy.make) | The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations. |
+
+##### dumps { #bofire.strategies.api.CustomSoboStrategy.dumps }
+
+```python
+strategies.api.CustomSoboStrategy.dumps()
+```
+
+Dumps the function to a string via pickle as this is not directly json serializable.
+
+##### loads { #bofire.strategies.api.CustomSoboStrategy.loads }
+
+```python
+strategies.api.CustomSoboStrategy.loads(data)
+```
+
+Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute.
+
+##### make { #bofire.strategies.api.CustomSoboStrategy.make }
+
+```python
+strategies.api.CustomSoboStrategy.make(
+    domain,
+    use_output_constraints=None,
+    dump=None,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations.
+In this tutorial notebook, it is shown how to use it to optimize a quantity that depends on a combination of
+an inferred quantity and one of the inputs. See tutorials/advanced_examples/custom_sobo.ipynb.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name                                 | Type                                          | Description                                                                                                           | Default    |
+|--------------------------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|------------|
+| domain                               | Domain                                        | The optimization domain of the strategy.                                                                              | _required_ |
+| use_output_constraints               | bool \| None                                  | Whether to use output constraints.                                                                                    | `None`     |
+| dump                                 | str \| None                                   | The function to use for the optimization.                                                                             | `None`     |
+| acquisition_function                 | AnySingleObjectiveAcquisitionFunction \| None | The acquisition function to use.                                                                                      | `None`     |
+| acquisition_optimizer                | AnyAcqfOptimizer \| None                      | The optimizer to use for the acquisition function.                                                                    | `None`     |
+| surrogate_specs                      | BotorchSurrogates \| None                     | The specifications for the surrogate model.                                                                           | `None`     |
+| outlier_detection_specs              | OutlierDetections \| None                     | The specifications for the outlier detection.                                                                         | `None`     |
+| min_experiments_before_outlier_check | PositiveInt \| None                           | The minimum number of experiments before checking for outliers.                                                       | `None`     |
+| frequency_check                      | PositiveInt \| None                           | The frequency of checking for outliers.                                                                               | `None`     |
+| frequency_hyperopt                   | int \| None                                   | The frequency of hyperparameter optimization.                                                                         | `None`     |
+| folds                                | int \| None                                   | The number of folds for cross-validation.                                                                             | `None`     |
+| seed                                 | int \| None                                   | The random seed to use.                                                                                               | `None`     |
+| include_infeasible_exps_in_acqf_calc | bool \| None                                  | Whether infeasible experiments should be included in the set of experiments used to compute the acquisition function. | `False`    |
+
+### QparegoStrategy { #bofire.strategies.api.QparegoStrategy }
+
+```python
+strategies.api.QparegoStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.QparegoStrategy.make) | Creates an instance of the multi-objective strategy ParEGO using the provided configuration parameters. |
+
+##### make { #bofire.strategies.api.QparegoStrategy.make }
+
+```python
+strategies.api.QparegoStrategy.make(
+    domain,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Creates an instance of the multi-objective strategy ParEGO using the provided configuration parameters.
+
+J. Knowles. Parego: a hybrid algorithm with on-line landscape approximation for expensive multiobjective
+optimization problems. IEEE Transactions on Evolutionary Computation, 10(1):50-66, 2006
+
+S. Daulton, M. Balandat, and E. Bakshy.
+Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization.
+Advances in Neural Information Processing Systems 33, 2020.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name                                 | Type                                     | Description                                                                                                           | Default    |
+|--------------------------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|------------|
+| domain                               | Domain                                   | The optimization domain of the strategy.                                                                              | _required_ |
+| acquisition_function                 | qEI \| qLogEI \| qLogNEI \| qNEI \| None | The acquisition function to use.                                                                                      | `None`     |
+| acquisition_optimizer                | AnyAcqfOptimizer \| None                 | The optimizer for the acquisition function.                                                                           | `None`     |
+| surrogate_specs                      | BotorchSurrogates \| None                | Specifications for the surrogate model.                                                                               | `None`     |
+| outlier_detection_specs              | OutlierDetections \| None                | Specifications for outlier detection.                                                                                 | `None`     |
+| min_experiments_before_outlier_check | PositiveInt \| None                      | Minimum number of experiments before checking for outliers.                                                           | `None`     |
+| frequency_check                      | PositiveInt \| None                      | Frequency of outlier checks.                                                                                          | `None`     |
+| frequency_hyperopt                   | int \| None                              | Frequency of hyperparameter optimization.                                                                             | `None`     |
+| folds                                | int \| None                              | Number of folds for cross-validation for hyperparameter optimization.                                                 | `None`     |
+| seed                                 | int \| None                              | Random seed for reproducibility.                                                                                      | `None`     |
+| include_infeasible_exps_in_acqf_calc | bool \| None                             | Whether infeasible experiments should be included in the set of experiments used to compute the acquisition function. | `False`    |
+
+Returns:
+    An instance of the strategy configured with the provided parameters.
+
+### MoboStrategy { #bofire.strategies.api.MoboStrategy }
+
+```python
+strategies.api.MoboStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.MoboStrategy.make) | Creates an instance of a multi-objective strategy based on expected hypervolume improvement. |
+
+##### make { #bofire.strategies.api.MoboStrategy.make }
+
+```python
+strategies.api.MoboStrategy.make(
+    domain,
+    ref_point=None,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Creates an instance of a multi-objective strategy based on expected hypervolume improvement.
+
+S. Daulton, M. Balandat, and E. Bakshy.
+Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement.
+Advances in Neural Information Processing Systems 34, 2021.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name                                 | Type                                                 | Description                                                                                                           | Default    |
+|--------------------------------------|------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|------------|
+| domain                               | Domain                                               | The domain specifying the search space.                                                                               | _required_ |
+| ref_point                            | ExplicitReferencePoint \| Dict\[str, float\] \| None | Reference point for hypervolume computation.                                                                          | `None`     |
+| acquisition_function                 | AnyMultiObjectiveAcquisitionFunction \| None         | Acquisition function.                                                                                                 | `None`     |
+| acquisition_optimizer                | AnyAcqfOptimizer \| None                             | Optimizer for the acquisition function.                                                                               | `None`     |
+| surrogate_specs                      | BotorchSurrogates \| None                            | Surrogate model specifications.                                                                                       | `None`     |
+| outlier_detection_specs              | OutlierDetections \| None                            | Outlier detection configuration.                                                                                      | `None`     |
+| min_experiments_before_outlier_check | PositiveInt \| None                                  | Minimum number of experiments before performing outlier detection.                                                    | `None`     |
+| frequency_check                      | PositiveInt \| None                                  | Frequency at which to perform outlier checks.                                                                         | `None`     |
+| frequency_hyperopt                   | int \| None                                          | Frequency at which to perform hyperparameter optimization.                                                            | `None`     |
+| folds                                | int \| None                                          | Number of folds for cross-validation for hyperparameter optimization.                                                 | `None`     |
+| seed                                 | int \| None                                          | Random seed for reproducibility.                                                                                      | `None`     |
+| include_infeasible_exps_in_acqf_calc | bool \| None                                         | Whether infeasible experiments should be included in the set of experiments used to compute the acquisition function. | `False`    |
+
+Returns:
+    An instance of the strategy configured with the specified parameters.
+
+### BotorchStrategy { #bofire.strategies.api.BotorchStrategy }
+
+```python
+strategies.api.BotorchStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [calc_acquisition](#bofire.strategies.api.BotorchStrategy.calc_acquisition) | Calculate the acquisition value for a set of experiments. |
+| [get_acqf_input_tensors](#bofire.strategies.api.BotorchStrategy.get_acqf_input_tensors) |  |
+
+##### calc_acquisition { #bofire.strategies.api.BotorchStrategy.calc_acquisition }
+
+```python
+strategies.api.BotorchStrategy.calc_acquisition(candidates, combined=False)
+```
+
+Calculate the acquisition value for a set of experiments.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type         | Description                                                                                                  | Default    |
+|------------|--------------|--------------------------------------------------------------------------------------------------------------|------------|
+| candidates | pd.DataFrame | Dataframe with experimentes for which the acqf value should be calculated.                                   | _required_ |
+| combined   | bool         | If combined an acquisition value for the whole batch is calculated, else individual ones. Defaults to False. | `False`    |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type       | Description                                        |
+|--------|------------|----------------------------------------------------|
+|        | np.ndarray | np.ndarray: Dataframe with the acquisition values. |
+
+##### get_acqf_input_tensors { #bofire.strategies.api.BotorchStrategy.get_acqf_input_tensors }
+
+```python
+strategies.api.BotorchStrategy.get_acqf_input_tensors()
+```
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name      | Type           | Description                                                           |
+|-----------|----------------|-----------------------------------------------------------------------|
+| X_train   | Tensor         | Tensor of shape (n, d) with n training points and d input dimensions. |
+| X_pending | Tensor \| None | Tensor of shape (m, d) with m pending points                          |
+
+### EntingStrategy { #bofire.strategies.api.EntingStrategy }
+
+```python
+strategies.api.EntingStrategy(data_model, **kwargs)
+```
+
+Strategy for selecting new candidates using ENTMOOT
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.EntingStrategy.make) | Create an enting strategy instance with the specified parameters. |
+
+##### make { #bofire.strategies.api.EntingStrategy.make }
+
+```python
+strategies.api.EntingStrategy.make(
+    domain,
+    beta=None,
+    bound_coeff=None,
+    acq_sense=None,
+    dist_trafo=None,
+    dist_metric=None,
+    cat_metric=None,
+    kappa_fantasy=None,
+    num_boost_round=None,
+    max_depth=None,
+    min_data_in_leaf=None,
+    min_data_per_group=None,
+    verbose=None,
+    solver_name=None,
+    solver_verbose=None,
+    solver_params=None,
+    seed=None,
+)
+```
+
+Create an enting strategy instance with the specified parameters.
+
+https://github.com/cog-imperial/entmoot
+
+ENTMOOT: A Framework for Optimization over Ensemble Tree Models
+A. Thebelt, J. Kronqvist, M. Mistry, R. Lee, N. Sudermann-Merx, R. Misener
+Computers & Chemical Engineering, 2021
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name               | Type                                                     | Description                                                                      | Default    |
+|--------------------|----------------------------------------------------------|----------------------------------------------------------------------------------|------------|
+| domain             | Domain                                                   | The domain object defining the problem space.                                    | _required_ |
+| beta               | PositiveFloat \| None                                    | Parameter controlling the trade-off in acquisition.                              | `None`     |
+| bound_coeff        | PositiveFloat \| None                                    | Coefficient for bounding constraints.                                            | `None`     |
+| acq_sense          | Literal\[\'exploration\', \'penalty\'\] \| None          | Acquisition sense, either "exploration" or "penalty".                            | `None`     |
+| dist_trafo         | Literal\[\'normal\', \'standard\'\] \| None              | Transformation applied to distances, either "normal" or "standard".              | `None`     |
+| dist_metric        | Literal\[\'euclidean_squared\', \'l1\', \'l2\'\] \| None | Metric used for distance calculations, e.g., "euclidean_squared", "l1", or "l2". | `None`     |
+| cat_metric         | Literal\[\'overlap\', \'of\', \'goodall4\'\] \| None     | Metric for categorical variables, e.g., "overlap", "of", or "goodall4".          | `None`     |
+| kappa_fantasy      | float \| None                                            | Kappa parameter for fantasy strategy for batch proposals.                        | `None`     |
+| num_boost_round    | PositiveInt \| None                                      | Number of boosting rounds for the model.                                         | `None`     |
+| max_depth          | PositiveInt \| None                                      | Maximum depth of the model.                                                      | `None`     |
+| min_data_in_leaf   | PositiveInt \| None                                      | Minimum data points required in a leaf.                                          | `None`     |
+| min_data_per_group | PositiveInt \| None                                      | Minimum data points required per group.                                          | `None`     |
+| verbose            | Literal\[-1, 0, 1, 2\] \| None                           | Verbosity level of the process.                                                  | `None`     |
+| solver_name        | str \| None                                              | Name of the solver to be used.                                                   | `None`     |
+| solver_verbose     | bool \| None                                             | Whether to enable verbose output for the solver.                                 | `None`     |
+| solver_params      | Dict\[str, Any\] \| None                                 | Additional parameters for the solver.                                            | `None`     |
+| seed               | int \| None                                              | Random seed for reproducibility.                                                 | `None`     |
+
+Returns:
+    A strategy instance configured with the provided parameters.
+
+### MultiFidelityStrategy { #bofire.strategies.api.MultiFidelityStrategy }
+
+```python
+strategies.api.MultiFidelityStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.MultiFidelityStrategy.make) | Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy |
+
+##### make { #bofire.strategies.api.MultiFidelityStrategy.make }
+
+```python
+strategies.api.MultiFidelityStrategy.make(
+    domain,
+    fidelity_thresholds=None,
+    acquisition_function=None,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy
+is useful if you have different measurement fidelities that measure the same thing with different cost and accuracy.
+As an example, you can have a simulation that is fast but inaccurate and the real experiment that is slow and expensive,
+but more accurate.
+
+K. Kandasamy, G. Dasarathy, J. B. Oliva, J. Schneider, B. Póczos.
+Gaussian Process Bandit Optimisation with Multi-fidelity Evaluations.
+Advances in Neural Information Processing Systems, 29, 2016.
+
+Jose Pablo Folch, Robert M Lee, Behrang Shafei, David Walz, Calvin Tsay, Mark van der Wilk, Ruth Misener.
+Combining Multi-Fidelity Modelling and Asynchronous Batch Bayesian Optimization.
+Computers & Chemical Engineering Volume 172, 2023.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name                                 | Type                                          | Description                                                                                                           | Default    |
+|--------------------------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|------------|
+| domain                               | Domain                                        | The optimization domain of the strategy.                                                                              | _required_ |
+| fidelity_thresholds                  | List\[float\] \| float \| None                | The thresholds for the fidelity. If a single value is provided, it will be used for all fidelities.                   | `None`     |
+| acquisition_function                 | AnySingleObjectiveAcquisitionFunction \| None | The acquisition function to use.                                                                                      | `None`     |
+| acquisition_optimizer                | AnyAcqfOptimizer \| None                      | The acquisition optimizer to use.                                                                                     | `None`     |
+| surrogate_specs                      | BotorchSurrogates \| None                     | The specifications for the surrogate model.                                                                           | `None`     |
+| outlier_detection_specs              | OutlierDetections \| None                     | The specifications for the outlier detection.                                                                         | `None`     |
+| min_experiments_before_outlier_check | PositiveInt \| None                           | The minimum number of experiments before checking for outliers.                                                       | `None`     |
+| frequency_check                      | PositiveInt \| None                           | The frequency of outlier checks.                                                                                      | `None`     |
+| frequency_hyperopt                   | int \| None                                   | The frequency of hyperparameter optimization.                                                                         | `None`     |
+| folds                                | int \| None                                   | The number of folds for cross-validation.                                                                             | `None`     |
+| seed                                 | int \| None                                   | The random seed to use.                                                                                               | `None`     |
+| include_infeasible_exps_in_acqf_calc | bool \| None                                  | Whether infeasible experiments should be included in the set of experiments used to compute the acquisition function. | `False`    |
+
+### ActiveLearningStrategy { #bofire.strategies.api.ActiveLearningStrategy }
+
+```python
+strategies.api.ActiveLearningStrategy(data_model, **kwargs)
+```
+
+ActiveLearningStrategy that uses an acquisition function which focuses on
+pure exploration of the objective function only. Can be used for single and multi-objective functions.
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [make](#bofire.strategies.api.ActiveLearningStrategy.make) | Creates an ActiveLearningStrategy instance. ActiveLearningStrategy that uses an acquisition function which focuses on |
+
+##### make { #bofire.strategies.api.ActiveLearningStrategy.make }
+
+```python
+strategies.api.ActiveLearningStrategy.make(
+    domain,
+    acquisition_optimizer=None,
+    surrogate_specs=None,
+    outlier_detection_specs=None,
+    min_experiments_before_outlier_check=None,
+    frequency_check=None,
+    frequency_hyperopt=None,
+    folds=None,
+    acquisition_function=None,
+    seed=None,
+    include_infeasible_exps_in_acqf_calc=False,
+)
+```
+
+Creates an ActiveLearningStrategy instance. ActiveLearningStrategy that uses an acquisition function which focuses on
+pure exploration of the objective function only. Can be used for single and multi-objective functions.
+    Args:
+        domain: Domain of the strategy.
+        acquisition_optimizer: Acquisition optimizer to use.
+        surrogate_specs: Surrogate specifications.
+        outlier_detection_specs: Outlier detection specifications.
+        min_experiments_before_outlier_check: Minimum number of experiments before checking for outliers.
+        frequency_check: Frequency of outlier checks.
+        frequency_hyperopt: Frequency of hyperparameter optimization.
+        folds: Number of folds for cross-validation in hyperparameter optimization.
+        acquisition_function: Acquisition function to use.
+        seed: Seed for the random number generator.
+        include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+            of experiments used to compute the acquisition function.
+    Returns:
+        ActiveLearningStrategy: An instance of the ActiveLearningStrategy class.
+
+### ShortestPathStrategy { #bofire.strategies.api.ShortestPathStrategy }
+
+```python
+strategies.api.ShortestPathStrategy(data_model, **kwargs)
+```
+
+
+
+#### Attributes
+
+| Name | Description |
+| --- | --- |
+| [continuous_inputs](#bofire.strategies.api.ShortestPathStrategy.continuous_inputs) | Returns the continuous inputs from the domain. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [get_linear_constraints](#bofire.strategies.api.ShortestPathStrategy.get_linear_constraints) | Returns the linear constraints in the form of matrices A and b, where Ax = b for |
+| [has_sufficient_experiments](#bofire.strategies.api.ShortestPathStrategy.has_sufficient_experiments) | Checks if there are sufficient experiments available. |
+| [make](#bofire.strategies.api.ShortestPathStrategy.make) | Represents a strategy for finding the shortest path between two points |
+| [step](#bofire.strategies.api.ShortestPathStrategy.step) | Takes a starting point and returns the next step in the shortest path. |
+
+##### get_linear_constraints { #bofire.strategies.api.ShortestPathStrategy.get_linear_constraints }
+
+```python
+strategies.api.ShortestPathStrategy.get_linear_constraints(constraints)
+```
+
+Returns the linear constraints in the form of matrices A and b, where Ax = b for
+    equality constraints and Ax <= b for inequality constraints.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type        | Description                                                 | Default    |
+|-------------|-------------|-------------------------------------------------------------|------------|
+| constraints | Constraints | The `Constraints` object containing the linear constraints. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                            | Description                                                             |
+|--------|---------------------------------|-------------------------------------------------------------------------|
+|        | Tuple\[np.ndarray, np.ndarray\] | Tuple[np.ndarray, np.ndarray]: A tuple containing the matrices A and b. |
+
+##### has_sufficient_experiments { #bofire.strategies.api.ShortestPathStrategy.has_sufficient_experiments }
+
+```python
+strategies.api.ShortestPathStrategy.has_sufficient_experiments()
+```
+
+Checks if there are sufficient experiments available.
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                |
+|--------|--------|------------------------------------------------------------|
+| bool   | bool   | True if there are sufficient experiments, False otherwise. |
+
+##### make { #bofire.strategies.api.ShortestPathStrategy.make }
+
+```python
+strategies.api.ShortestPathStrategy.make(
+    domain,
+    start=None,
+    end=None,
+    atol=None,
+    seed=None,
+)
+```
+
+Represents a strategy for finding the shortest path between two points
+Args:
+    start: The starting point of the path.
+    end: The ending point of the path.
+    atol: The absolute tolerance used for numerical comparisons.
+
+##### step { #bofire.strategies.api.ShortestPathStrategy.step }
+
+```python
+strategies.api.ShortestPathStrategy.step(start)
+```
+
+Takes a starting point and returns the next step in the shortest path.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type      | Description                               | Default    |
+|--------|-----------|-------------------------------------------|------------|
+| start  | pd.Series | The starting point for the shortest path. | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                    |
+|--------|-----------|------------------------------------------------|
+|        | pd.Series | pd.Series: The next step in the shortest path. |
+
+### StepwiseStrategy { #bofire.strategies.api.StepwiseStrategy }
+
+```python
+strategies.api.StepwiseStrategy(data_model, **kwargs)
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [get_step](#bofire.strategies.api.StepwiseStrategy.get_step) | Returns the strategy at the current step and the corresponding transform if given. |
+| [make](#bofire.strategies.api.StepwiseStrategy.make) | Create a StepwiseStrategy from a list of steps. Each step is a strategy the runs until a |
+
+##### get_step { #bofire.strategies.api.StepwiseStrategy.get_step }
+
+```python
+strategies.api.StepwiseStrategy.get_step()
+```
+
+Returns the strategy at the current step and the corresponding transform if given.
+
+##### make { #bofire.strategies.api.StepwiseStrategy.make }
+
+```python
+strategies.api.StepwiseStrategy.make(domain, steps=None, seed=None)
+```
+
+Create a StepwiseStrategy from a list of steps. Each step is a strategy the runs until a
+condition is satisfied.  One example of a stepwise strategy is
+is to start with a few random samples to gather initial data for subsequent Bayesian optimization.
+An example steps-list for two random experiments followed by a SoboStrategy is:
+
+```python
+from bofire.data_models.strategies.api import (
+    Step,
+    RandomStrategy,
+    SoboStrategy,
+    NumberOfExperimentsCondition,
+    AlwaysTrueCondition
+)
+from bofire.stratgies.api import StepwiseStrategy
+steps = [
+    Step(
+        strategy_data=RandomStrategy(domain=domain),
+        condition=NumberOfExperimentsCondition(n_experiments=2),
+    ),
+    Step(
+        strategy_data=SoboStrategy(domain=domain), condition=AlwaysTrueCondition()
+    )
+]
+stepwise_strategy = StepwiseStrategy.make(domain, steps)
+```
+
+All passed domains need to compatible, i.e.,
+
+- they have the same number of features,
+- the same feature keys and
+- the features with the same key have the same type and categories.
+- The bounds and allowed categories of the features can vary.
+
+Further, the data and domain are passed to the next step. They can also
+be transformed before being passed to the next step.
+Args:
+    steps: List of steps to be used in the strategy.
+    seed: Seed for random number generation.

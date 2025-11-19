@@ -35,11 +35,39 @@ quartodoc:
     - title: Features
       desc: Input and output features
       contents:
-        - data_models.features.api
+        - name: data_models.features.api
+          members:
+            - CategoricalInput
+            - CategoricalOutput
+            - ContinuousInput
+            - ContinuousOutput
+            - DiscreteInput
+            - ContinuousDescriptorInput
+            - CategoricalDescriptorInput
+            - MolecularInput
+            - CategoricalMolecularInput
+            - TaskInput
     - title: Strategies
       desc: Optimization strategies
       contents:
-        - strategies.api
+        - name: strategies.api
+          members:
+            - Strategy
+            - RandomStrategy
+            - DoEStrategy
+            - FractionalFactorialStrategy
+            - SoboStrategy
+            - AdditiveSoboStrategy
+            - MultiplicativeSoboStrategy
+            - CustomSoboStrategy
+            - QparegoStrategy
+            - MoboStrategy
+            - BotorchStrategy
+            - EntingStrategy
+            - MultiFidelityStrategy
+            - ActiveLearningStrategy
+            - ShortestPathStrategy
+            - StepwiseStrategy
 
 website:
   title: "BoFire"
@@ -56,7 +84,7 @@ website:
         href: index.qmd
       - text: "Getting Started"
         href: getting_started.qmd
-      - text: "Tutorials"
+      - text: "Examples"
         menu:
           - text: "Basic Examples"
             href: docs/tutorials/basic_examples/index.qmd
@@ -79,17 +107,7 @@ website:
           - text: "Data Models vs Functionals"
             href: docs/userguides/data_models_functionals.qmd
       - text: "API Reference"
-        menu:
-          - text: "Domain"
-            href: docs/reference/domain.qmd
-          - text: "Constraints"
-            href: docs/reference/constraints.qmd
-          - text: "Objectives"
-            href: docs/reference/objectives.qmd
-          - text: "Features"
-            href: docs/reference/features.qmd
-          - text: "Utils"
-            href: docs/reference/utils.qmd
+        href: docs/reference/index.qmd
     right:
       - icon: github
         href: "https://github.com/experimental-design/bofire"
@@ -102,7 +120,14 @@ website:
         - install.qmd
         - getting_started.qmd
 
-    - title: "Tutorials"
+    - title: "User Guides"
+      contents:
+        - docs/userguides/domain.qmd
+        - docs/userguides/strategies.qmd
+        - docs/userguides/surrogates.qmd
+        - docs/userguides/data_models_functionals.qmd
+
+    - title: "Examples"
       contents:
         - section: "Basic Examples"
           contents:
@@ -153,13 +178,6 @@ website:
             - docs/tutorials/serialization/models_serial.qmd
             - docs/tutorials/serialization/strategies_serial.qmd
 
-    - title: "User Guides"
-      contents:
-        - docs/userguides/domain.qmd
-        - docs/userguides/strategies.qmd
-        - docs/userguides/surrogates.qmd
-        - docs/userguides/data_models_functionals.qmd
-
     - title: "API Reference"
       contents:
         - docs/reference/domain.qmd
@@ -186,7 +204,7 @@ filters:
   - quarto
 
 execute:
-  enabled: false
+  enabled: true
   freeze: auto
   cache: true
 

@@ -46,17 +46,20 @@ features. Continuous input features are rounded before identifying the
 duplicates. Aggregation is performed by taking the average of the
 involved output features.
 
-Args:
-    experiments (pd.DataFrame): Dataframe containing experimental data
-    prec (int): Precision of the rounding of the continuous input features
-    delimiter (str, optional): Delimiter used when combining the orig.
-        labcodes to a new one. Defaults to "-".
-    method (Literal["mean", "median"], optional): Which aggregation
-        method to use. Defaults to "mean".
+#### Parameters {.doc-section .doc-section-parameters}
 
-Returns:
-    Tuple[pd.DataFrame, list]: Dataframe holding the aggregated
-        experiments, list of lists holding the labcodes of the duplicates
+| Name        | Type                            | Description                                                                     | Default    |
+|-------------|---------------------------------|---------------------------------------------------------------------------------|------------|
+| experiments | pd.DataFrame                    | Dataframe containing experimental data                                          | _required_ |
+| prec        | int                             | Precision of the rounding of the continuous input features                      | _required_ |
+| delimiter   | str                             | Delimiter used when combining the orig. labcodes to a new one. Defaults to "-". | `'-'`      |
+| method      | Literal\[\'mean\', \'median\'\] | Which aggregation method to use. Defaults to "mean".                            | `'mean'`   |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                        | Description                                                                                                                   |
+|--------|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+|        | Tuple\[pd.DataFrame, list\] | Tuple[pd.DataFrame, list]: Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates |
 
 ### coerce_invalids { #bofire.data_models.domain.domain.Domain.coerce_invalids }
 
@@ -66,11 +69,17 @@ data_models.domain.domain.Domain.coerce_invalids(experiments)
 
 Coerces all invalid output measurements to np.nan
 
-Args:
-    experiments (pd.DataFrame): Dataframe containing experimental data
+#### Parameters {.doc-section .doc-section-parameters}
 
-Returns:
-    pd.DataFrame: coerced dataframe
+| Name        | Type         | Description                            | Default    |
+|-------------|--------------|----------------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe containing experimental data | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                     |
+|--------|--------------|---------------------------------|
+|        | pd.DataFrame | pd.DataFrame: coerced dataframe |
 
 ### describe_experiments { #bofire.data_models.domain.domain.Domain.describe_experiments }
 
@@ -80,11 +89,17 @@ data_models.domain.domain.Domain.describe_experiments(experiments)
 
 Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature
 
-Args:
-    experiments (pd.DataFrame): Dataframe with experimental data
+#### Parameters {.doc-section .doc-section-parameters}
 
-Returns:
-    pd.DataFrame: Dataframe with counts how many measurements and how many valid entries are included in the input data for each output feature
+| Name        | Type         | Description                      | Default    |
+|-------------|--------------|----------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with experimental data | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                                                                                                 |
+|--------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dataframe with counts how many measurements and how many valid entries are included in the input data for each output feature |
 
 ### get_nchoosek_combinations { #bofire.data_models.domain.domain.Domain.get_nchoosek_combinations }
 
@@ -94,12 +109,17 @@ data_models.domain.domain.Domain.get_nchoosek_combinations(exhaustive=False)
 
 Get all possible NChooseK combinations
 
-Args:
-    exhaustive (bool, optional): if True all combinations are returned. Defaults to False.
+#### Parameters {.doc-section .doc-section-parameters}
 
-Returns:
-    Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
-        unused_features_list is a list of lists containing features unused in each NChooseK combination.
+| Name       | Type   | Description                                               | Default   |
+|------------|--------|-----------------------------------------------------------|-----------|
+| exhaustive | bool   | if True all combinations are returned. Defaults to False. | `False`   |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                       | Description                                                                                                                                                                                   |
+|--------|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Tuple  | (used_features_list, unused_features_list) | used_features_list is a list of lists containing features used in each NChooseK combination. unused_features_list is a list of lists containing features unused in each NChooseK combination. |
 
 ### is_fulfilled { #bofire.data_models.domain.domain.Domain.is_fulfilled }
 
@@ -114,13 +134,19 @@ data_models.domain.domain.Domain.is_fulfilled(
 Check if all constraints are fulfilled on all rows of the provided dataframe
 both constraints and inputs are checked.
 
-Args:
-    experiments: Dataframe with data, the constraint validity should be tested on
-    tol: Tolerance for checking the constraints. Defaults to 1e-6.
-    exlude_interpoint: If True, InterpointConstraints are excluded from the check. Defaults to True.
+#### Parameters {.doc-section .doc-section-parameters}
 
-Returns:
-    Boolean series indicating if all constraints are fulfilled for all rows.
+| Name              | Type         | Description                                                                   | Default    |
+|-------------------|--------------|-------------------------------------------------------------------------------|------------|
+| experiments       | pd.DataFrame | Dataframe with data, the constraint validity should be tested on              | _required_ |
+| tol               | float        | Tolerance for checking the constraints. Defaults to 1e-6.                     | `1e-06`    |
+| exlude_interpoint | bool         | If True, InterpointConstraints are excluded from the check. Defaults to True. | `True`     |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                                              |
+|--------|-----------|--------------------------------------------------------------------------|
+|        | pd.Series | Boolean series indicating if all constraints are fulfilled for all rows. |
 
 ### validate_candidates { #bofire.data_models.domain.domain.Domain.validate_candidates }
 
@@ -135,23 +161,30 @@ data_models.domain.domain.Domain.validate_candidates(
 
 Method to check the validty of proposed candidates
 
-Args:
-    candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)
-    only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.
-    tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation
-        is larger than tol. Defaults to 1e-6.
-    raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
-        otherwise only a warning will be displayed. Defaults to True.
+#### Parameters {.doc-section .doc-section-parameters}
 
-Raises:
-    ValueError: when a column is missing for a defined input feature
-    ValueError: when a column is missing for a defined output feature
-    ValueError: when a non-numerical value is proposed
-    ValueError: when an additional column is found
-    ConstraintNotFulfilledError: when the constraints are not fulfilled and `raise_validation_error = True`
+| Name                   | Type              | Description                                                                                                                             | Default    |
+|------------------------|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------|------------|
+| candidates             | pd.DataFrame      | Dataframe with suggested new experiments (candidates)                                                                                   | _required_ |
+| only_inputs            | (bool, optional)  | If True, only the input columns are validated. Defaults to False.                                                                       | `False`    |
+| tol                    | (float, optional) | tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation is larger than tol. Defaults to 1e-6. | `1e-05`    |
+| raise_validation_error | bool              | If true an error will be raised if candidates violate constraints, otherwise only a warning will be displayed. Defaults to True.        | `True`     |
 
-Returns:
-    pd.DataFrame: dataframe with suggested experiments (candidates)
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type                        | Description                                                                |
+|--------|-----------------------------|----------------------------------------------------------------------------|
+|        | ValueError                  | when a column is missing for a defined input feature                       |
+|        | ValueError                  | when a column is missing for a defined output feature                      |
+|        | ValueError                  | when a non-numerical value is proposed                                     |
+|        | ValueError                  | when an additional column is found                                         |
+|        | ConstraintNotFulfilledError | when the constraints are not fulfilled and `raise_validation_error = True` |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                     |
+|--------|--------------|-----------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: dataframe with suggested experiments (candidates) |
 
 ### validate_constraints { #bofire.data_models.domain.domain.Domain.validate_constraints }
 
@@ -161,15 +194,24 @@ data_models.domain.domain.Domain.validate_constraints()
 
 Validate that the constraints defined in the domain fit to the input features.
 
-Args:
-    v (List[Constraint]): List of constraints or empty if no constraints are defined
-    values (List[Input]): List of input features of the domain
+#### Parameters {.doc-section .doc-section-parameters}
 
-Raises:
-    ValueError: Feature key in constraint is unknown.
+| Name   | Type               | Description                                                | Default    |
+|--------|--------------------|------------------------------------------------------------|------------|
+| v      | List\[Constraint\] | List of constraints or empty if no constraints are defined | _required_ |
+| values | List\[Input\]      | List of input features of the domain                       | _required_ |
 
-Returns:
-    List[Constraint]: List of constraints defined for the domain
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                           |
+|--------|------------|---------------------------------------|
+|        | ValueError | Feature key in constraint is unknown. |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                  |
+|--------|--------|--------------------------------------------------------------|
+|        |        | List[Constraint]: List of constraints defined for the domain |
 
 ### validate_experiments { #bofire.data_models.domain.domain.Domain.validate_experiments }
 
@@ -179,25 +221,32 @@ data_models.domain.domain.Domain.validate_experiments(experiments, strict=False)
 
 Checks the experimental data on validity
 
-Args:
-    experiments (pd.DataFrame): Dataframe with experimental data
-    strict (bool, optional): Boolean to distinguish if the occurrence of
-        fixed features in the dataset should be considered or not.
-        Defaults to False.
+#### Parameters {.doc-section .doc-section-parameters}
 
-Raises:
-    ValueError: empty dataframe
-    ValueError: the column for a specific feature is missing the provided data
-    ValueError: there are labcodes with null value
-    ValueError: there are labcodes with nan value
-    ValueError: labcodes are not unique
-    ValueError: the provided columns do no match to the defined domain
-    ValueError: the provided columns do no match to the defined domain
-    ValueError: Input with null values
-    ValueError: Input with nan values
+| Name        | Type         | Description                                                                                                               | Default    |
+|-------------|--------------|---------------------------------------------------------------------------------------------------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with experimental data                                                                                          | _required_ |
+| strict      | bool         | Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False. | `False`    |
 
-Returns:
-    pd.DataFrame: The provided dataframe with experimental data
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                    |
+|--------|------------|----------------------------------------------------------------|
+|        | ValueError | empty dataframe                                                |
+|        | ValueError | the column for a specific feature is missing the provided data |
+|        | ValueError | there are labcodes with null value                             |
+|        | ValueError | there are labcodes with nan value                              |
+|        | ValueError | labcodes are not unique                                        |
+|        | ValueError | the provided columns do no match to the defined domain         |
+|        | ValueError | the provided columns do no match to the defined domain         |
+|        | ValueError | Input with null values                                         |
+|        | ValueError | Input with nan values                                          |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                 |
+|--------|--------------|-------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: The provided dataframe with experimental data |
 
 ### validate_unique_feature_keys { #bofire.data_models.domain.domain.Domain.validate_unique_feature_keys }
 
@@ -207,12 +256,21 @@ data_models.domain.domain.Domain.validate_unique_feature_keys()
 
 Validates if provided input and output feature keys are unique
 
-Args:
-    v (Outputs): List of all output features of the domain.
-    value (Dict[str, Inputs]): Dict containing a list of input features as single entry.
+#### Parameters {.doc-section .doc-section-parameters}
 
-Raises:
-    ValueError: Feature keys are not unique.
+| Name   | Type                | Description                                               | Default    |
+|--------|---------------------|-----------------------------------------------------------|------------|
+| v      | Outputs             | List of all output features of the domain.                | _required_ |
+| value  | Dict\[str, Inputs\] | Dict containing a list of input features as single entry. | _required_ |
 
-Returns:
-    Outputs: Keeps output features as given.
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                  |
+|--------|------------|------------------------------|
+|        | ValueError | Feature keys are not unique. |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name    | Type   | Description                     |
+|---------|--------|---------------------------------|
+| Outputs |        | Keeps output features as given. |
