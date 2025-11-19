@@ -91,7 +91,7 @@ class TestLinearProjection:
         with pytest.raises(
             SolverError
         ):  # this fails, due to badly conditioned constraints
-            corrected_no_scaling = linear_projection_no_scaling(experiments)
+            _ = linear_projection_no_scaling(experiments)
 
         # this works, and projects on the diagonal
         corrected_with_scaling = linear_projection_with_scaling(experiments)
