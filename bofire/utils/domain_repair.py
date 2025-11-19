@@ -385,7 +385,6 @@ class LinearProjection(DomainRepair):
             h = np.vstack([h, h_])
 
         x = X.reshape(-1)
-        q = -x
 
         if self.scale_problem:
             scale = np.clip(self.bounds[1, :] - self.bounds[0, :], a_min=1e-3, a_max=np.inf)
@@ -399,8 +398,9 @@ class LinearProjection(DomainRepair):
             h = h - G @ intercept.reshape((-1, 1))
             G = G @ sparse.diags(scale, 0)
             
-            q = (q - intercept)/scale
             x = (x - intercept)/scale
+
+        q = -x
 
         return {
             "P": P,

@@ -75,21 +75,37 @@ class TestLinearProjection:
         linear_projection_no_scaling = LinearProjection(domain, scale_problem=False)
         linear_projection_with_scaling = LinearProjection(domain, scale_problem=True)
 
+        # sample in complete space
         experiments = pd.DataFrame({
             "small": np.random.uniform(low=1., high=2., size=(100,)), "large": np.random.uniform(low=1e4, high=1e5, size=(100,)),
         })
 
+        # project to diagonal with/without scaling
         corrected_no_scaling = linear_projection_no_scaling(experiments)
         corrected_with_scaling = linear_projection_with_scaling(experiments)
+
+        domain.constraints.is_fulfilled(corrected_no_scaling).sum()
 
         plt.figure()
         plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
         plt.scatter(x=corrected_no_scaling["small"], y=corrected_no_scaling["large"], marker="x", color="red")
-        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.2)
+        for i in experiments.index:
+            plt.plot((experiments.loc[i, "small"], corrected_no_scaling.loc[i, "small"]),
+                     (experiments.loc[i, "large"], corrected_no_scaling.loc[i, "large"]),
+                     "-", color="grey", lw=".1",
+                     )
+        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.7)
         plt.show()
 
         plt.figure()
         plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
         plt.scatter(x=corrected_with_scaling["small"], y=corrected_with_scaling["large"], marker="x", color="green")
-        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.2)
+        for i in experiments.index:
+            plt.plot((experiments.loc[i, "small"], corrected_with_scaling.loc[i, "small"]),
+                     (experiments.loc[i, "large"], corrected_with_scaling.loc[i, "large"]),
+                     "-", color="grey", lw=".1",
+                     )
+        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.7)
         plt.show()
+
+        assert 1==0
