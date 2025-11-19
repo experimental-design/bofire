@@ -104,7 +104,9 @@ class LinearProjection(DomainRepair):
         n_choose_k_constr_min_delta: Minimum delta value for enforcing NChooseK constraints.
             The lower bound of the largest n_non_zero elements is set to this value. Defaults to 1e-3.
         verbose: If True, enables verbose logging of the repair process. Defaults to False.
-
+        scale_problem (bool): If True, solves the QP in scaled space where variables are normalized to [0, 1].
+            This improves numerical stability but changes the solution since distances are measured in 
+            scaled space. The returned solution is transformed back to the original space. Defaults to True.
     """
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:

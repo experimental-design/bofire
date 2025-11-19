@@ -1,12 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytest
 
 from bofire.data_models.domain import api as domain_module
 from bofire.data_models.features import api as feature_module
 from bofire.data_models.constraints import api as constraing_module
 from bofire.utils.domain_repair import LinearProjection
 
+from cvxpy.error import SolverError
 
 class TestLinearProjection:
     def test_feature_ordering(self):
@@ -61,13 +63,13 @@ class TestLinearProjection:
         domain = domain_module.Domain(
             inputs=domain_module.Inputs(features=[
                 feature_module.ContinuousInput(key="small", bounds=(1., 2.)),
-                feature_module.ContinuousInput(key="large", bounds=(1e4, 1e5)),
+                feature_module.ContinuousInput(key="large", bounds=(1e8, 1e9)),
             ]),
             constraints=domain_module.Constraints(constraints=[
                 constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
                     features=["small", "large"],
-                    coefficients=[-9e4, 1.],
-                    rhs=-8e4,
+                    coefficients=[-9e8, 1.],
+                    rhs=-8e8,
                 )
             ])
         )
@@ -77,35 +79,14 @@ class TestLinearProjection:
 
         # sample in complete space
         experiments = pd.DataFrame({
-            "small": np.random.uniform(low=1., high=2., size=(100,)), "large": np.random.uniform(low=1e4, high=1e5, size=(100,)),
+            "small": np.random.uniform(low=1., high=2., size=(100,)), "large": np.random.uniform(low=1e8, high=1e9, size=(100,)),
         })
 
         # project to diagonal with/without scaling
-        corrected_no_scaling = linear_projection_no_scaling(experiments)
+        with pytest.raises(SolverError):  # this fails, due to badly conditioned constraints
+            corrected_no_scaling = linear_projection_no_scaling(experiments)
+
+        # this works, and projects on the diagonal
         corrected_with_scaling = linear_projection_with_scaling(experiments)
 
-        domain.constraints.is_fulfilled(corrected_no_scaling).sum()
-
-        plt.figure()
-        plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
-        plt.scatter(x=corrected_no_scaling["small"], y=corrected_no_scaling["large"], marker="x", color="red")
-        for i in experiments.index:
-            plt.plot((experiments.loc[i, "small"], corrected_no_scaling.loc[i, "small"]),
-                     (experiments.loc[i, "large"], corrected_no_scaling.loc[i, "large"]),
-                     "-", color="grey", lw=".1",
-                     )
-        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.7)
-        plt.show()
-
-        plt.figure()
-        plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
-        plt.scatter(x=corrected_with_scaling["small"], y=corrected_with_scaling["large"], marker="x", color="green")
-        for i in experiments.index:
-            plt.plot((experiments.loc[i, "small"], corrected_with_scaling.loc[i, "small"]),
-                     (experiments.loc[i, "large"], corrected_with_scaling.loc[i, "large"]),
-                     "-", color="grey", lw=".1",
-                     )
-        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.7)
-        plt.show()
-
-        assert 1==0
+        assert domain.constraints.is_fulfilled(corrected_with_scaling).all()
