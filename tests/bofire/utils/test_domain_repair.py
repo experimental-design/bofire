@@ -1,10 +1,9 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from bofire.data_models.constraints import api as constraing_module
 from bofire.data_models.domain import api as domain_module
 from bofire.data_models.features import api as feature_module
-from bofire.data_models.constraints import api as constraing_module
 from bofire.utils.domain_repair import LinearProjection
 
 
@@ -57,28 +56,34 @@ class TestLinearProjection:
         )
 
     def test_scaling(self):
-
         domain = domain_module.Domain(
-            inputs=domain_module.Inputs(features=[
-                feature_module.ContinuousInput(key="small", bounds=(1., 2.)),
-                feature_module.ContinuousInput(key="large", bounds=(1e4, 1e5)),
-            ]),
-            constraints=domain_module.Constraints(constraints=[
-                constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
-                    features=["small", "large"],
-                    coefficients=[-9e4, 1.],
-                    rhs=-8e4,
-                )
-            ])
+            inputs=domain_module.Inputs(
+                features=[
+                    feature_module.ContinuousInput(key="small", bounds=(1.0, 2.0)),
+                    feature_module.ContinuousInput(key="large", bounds=(1e4, 1e5)),
+                ]
+            ),
+            constraints=domain_module.Constraints(
+                constraints=[
+                    constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
+                        features=["small", "large"],
+                        coefficients=[-9e4, 1.0],
+                        rhs=-8e4,
+                    )
+                ]
+            ),
         )
 
         linear_projection_no_scaling = LinearProjection(domain, scale_problem=False)
         linear_projection_with_scaling = LinearProjection(domain, scale_problem=True)
 
         # sample in complete space
-        experiments = pd.DataFrame({
-            "small": np.random.uniform(low=1., high=2., size=(100,)), "large": np.random.uniform(low=1e4, high=1e5, size=(100,)),
-        })
+        experiments = pd.DataFrame(
+            {
+                "small": np.random.uniform(low=1.0, high=2.0, size=(100,)),
+                "large": np.random.uniform(low=1e4, high=1e5, size=(100,)),
+            }
+        )
 
         # project to diagonal with/without scaling
         corrected_no_scaling = linear_projection_no_scaling(experiments)
@@ -86,5 +91,10 @@ class TestLinearProjection:
 
         # compare corrections: 'large' dimension should be significantly different
         mean_corrections_no_scaling = (corrected_no_scaling - experiments).abs().mean()
-        mean_corrections_with_scaling = (corrected_with_scaling - experiments).abs().mean()
-        assert mean_corrections_no_scaling["large"] < mean_corrections_with_scaling["large"]
+        mean_corrections_with_scaling = (
+            (corrected_with_scaling - experiments).abs().mean()
+        )
+        assert (
+            mean_corrections_no_scaling["large"]
+            < mean_corrections_with_scaling["large"]
+        )

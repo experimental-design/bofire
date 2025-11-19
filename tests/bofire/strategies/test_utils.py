@@ -78,7 +78,6 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjectionPymo
 
 
 class TestLinearProjection:
-
     @pytest.mark.parametrize("repair_instance", ["unscaled"], indirect=True)
     def test_create_qp_problem(
         self,
