@@ -86,7 +86,7 @@ class MultiTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
+class MultiTaskGPSurrogate(TrainableBotorchSurrogate[MultiTaskGPHyperconfig]):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: MaternKernel(

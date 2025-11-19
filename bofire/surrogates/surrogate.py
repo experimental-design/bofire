@@ -120,3 +120,9 @@ class Surrogate(ABC):
     @abstractmethod
     def loads(self, data: str):
         """Loads the actual model from a string and writes it to the `model` attribute."""
+
+    
+    @classmethod
+    def from_spec(cls, data_model: DataModel) -> "Surrogate":
+        """Used by the mapper to map from data model to functional surrogate."""
+        return cls(data_model=data_model)

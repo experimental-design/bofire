@@ -3,11 +3,12 @@ from typing import Annotated, List, Literal, Type
 from pydantic import AfterValidator, Field, field_validator, model_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.types import make_unique_validator
 
 
-class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate[Hyperconfig]):
     type: Literal["FullyBayesianSingleTaskGPSurrogate"] = (
         "FullyBayesianSingleTaskGPSurrogate"
     )

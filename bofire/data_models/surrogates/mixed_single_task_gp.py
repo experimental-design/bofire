@@ -102,7 +102,7 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate[MixedSingleTaskGPHyperconfig]):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: RBFKernel(

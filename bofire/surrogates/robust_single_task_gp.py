@@ -1,4 +1,5 @@
-from typing import Dict, Optional, Self, cast, List, Literal, Union
+from typing import Dict, Optional, cast, List, Union
+from typing_extensions import Self
 
 import pandas as pd
 import torch

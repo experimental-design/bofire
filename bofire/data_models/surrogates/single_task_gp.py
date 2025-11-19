@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type, Union
+from typing import Generic, Literal, Optional, Type, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field
@@ -133,20 +133,11 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         else:
             surrogate_data.kernel = base_kernel
 
+T = TypeVar("T")
 
-class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
-
-    kernel: AnyKernel = Field(
-        default_factory=lambda: RBFKernel(
-            ard=True,
-            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        )
-    )
+class BaseSingleTaskGPSurrogate(TrainableBotorchSurrogate[SingleTaskGPHyperconfig], Generic[T]):
+    kernel: T
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: SingleTaskGPHyperconfig(),
-    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -157,3 +148,16 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
+
+class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
+    type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
+    kernel: AnyKernel = Field(
+        default_factory=lambda: RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+        )
+    )
+    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
+        default_factory=lambda: SingleTaskGPHyperconfig(),
+    )
+

@@ -3,10 +3,11 @@ from typing import Annotated, Literal, Optional, Type, Union
 from pydantic import Field
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class RandomForestSurrogate(TrainableBotorchSurrogate):
+class RandomForestSurrogate(TrainableBotorchSurrogate[Hyperconfig]):
     type: Literal["RandomForestSurrogate"] = "RandomForestSurrogate"
 
     # hyperparams passed down to `RandomForestRegressor`

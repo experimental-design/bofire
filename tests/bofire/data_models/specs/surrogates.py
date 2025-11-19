@@ -58,7 +58,7 @@ specs.add_valid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
+                ard=True, nu=2.5,# lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
@@ -98,8 +98,8 @@ specs.add_valid(
             base_kernel=MaternKernel(
                 ard=True,
                 nu=2.5,
-                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
-                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+                #lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                #lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
             outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
@@ -330,7 +330,7 @@ specs.add_valid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
+                ard=True, nu=2.5,# lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
