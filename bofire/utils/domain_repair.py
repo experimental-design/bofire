@@ -105,7 +105,7 @@ class LinearProjection(DomainRepair):
             The lower bound of the largest n_non_zero elements is set to this value. Defaults to 1e-3.
         verbose: If True, enables verbose logging of the repair process. Defaults to False.
         scale_problem (bool): If True, solves the QP in scaled space where variables are normalized to [0, 1].
-            This improves numerical stability but changes the solution since distances are measured in 
+            This improves numerical stability but changes the solution since distances are measured in
             scaled space. The returned solution is transformed back to the original space. Defaults to True.
     """
 
@@ -377,7 +377,9 @@ class LinearProjection(DomainRepair):
             return G, h
 
         # Prepare Matrices for solving the estimation problem
-        P = sparse.identity(self.d * n_x_points)  # the unit-matrix: same for scaled and unscaled problem
+        P = sparse.identity(
+            self.d * n_x_points
+        )  # the unit-matrix: same for scaled and unscaled problem
 
         A, b = _build_A_b_matrices_for_n_points(self.eq_constr)
         G, h = _build_G_h_for_box_bounds()
@@ -389,9 +391,13 @@ class LinearProjection(DomainRepair):
         x = X.reshape(-1)
 
         if self.scale_problem:
-            scale = np.clip(self.bounds[1, :] - self.bounds[0, :], a_min=1e-3, a_max=np.inf)
+            scale = np.clip(
+                self.bounds[1, :] - self.bounds[0, :], a_min=1e-3, a_max=np.inf
+            )
             scale = np.repeat(scale.reshape((1, -1)), n_x_points, axis=0).reshape(-1)
-            intercept = np.repeat(self.bounds[0, :].reshape((1, -1)), n_x_points, axis=0).reshape(-1)
+            intercept = np.repeat(
+                self.bounds[0, :].reshape((1, -1)), n_x_points, axis=0
+            ).reshape(-1)
             self.scale, self.intercept = scale, intercept
 
             b = b - A @ intercept.reshape((-1, 1))
@@ -399,8 +405,8 @@ class LinearProjection(DomainRepair):
 
             h = h - G @ intercept.reshape((-1, 1))
             G = G @ sparse.diags(scale, 0)
-            
-            x = (x - intercept)/scale
+
+            x = (x - intercept) / scale
 
         q = -x
 
@@ -440,11 +446,12 @@ class LinearProjection(DomainRepair):
 
         x_corrected = x_var.value
         if self.scale_problem:
-            x_corrected = self.intercept.reshape(x_corrected.shape) + x_corrected * self.scale.reshape(x_corrected.shape)
+            x_corrected = self.intercept.reshape(
+                x_corrected.shape
+            ) + x_corrected * self.scale.reshape(x_corrected.shape)
 
         X_corrected = x_corrected.reshape(X.shape)
         return X_corrected
-
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """

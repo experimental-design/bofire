@@ -1,14 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
+from cvxpy.error import SolverError
 
+from bofire.data_models.constraints import api as constraing_module
 from bofire.data_models.domain import api as domain_module
 from bofire.data_models.features import api as feature_module
-from bofire.data_models.constraints import api as constraing_module
 from bofire.utils.domain_repair import LinearProjection
 
-from cvxpy.error import SolverError
 
 class TestLinearProjection:
     def test_feature_ordering(self):
@@ -59,31 +58,39 @@ class TestLinearProjection:
         )
 
     def test_scaling(self):
-
         domain = domain_module.Domain(
-            inputs=domain_module.Inputs(features=[
-                feature_module.ContinuousInput(key="small", bounds=(1., 2.)),
-                feature_module.ContinuousInput(key="large", bounds=(1e8, 1e9)),
-            ]),
-            constraints=domain_module.Constraints(constraints=[
-                constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
-                    features=["small", "large"],
-                    coefficients=[-9e8, 1.],
-                    rhs=-8e8,
-                )
-            ])
+            inputs=domain_module.Inputs(
+                features=[
+                    feature_module.ContinuousInput(key="small", bounds=(1.0, 2.0)),
+                    feature_module.ContinuousInput(key="large", bounds=(1e8, 1e9)),
+                ]
+            ),
+            constraints=domain_module.Constraints(
+                constraints=[
+                    constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
+                        features=["small", "large"],
+                        coefficients=[-9e8, 1.0],
+                        rhs=-8e8,
+                    )
+                ]
+            ),
         )
 
         linear_projection_no_scaling = LinearProjection(domain, scale_problem=False)
         linear_projection_with_scaling = LinearProjection(domain, scale_problem=True)
 
         # sample in complete space
-        experiments = pd.DataFrame({
-            "small": np.random.uniform(low=1., high=2., size=(100,)), "large": np.random.uniform(low=1e8, high=1e9, size=(100,)),
-        })
+        experiments = pd.DataFrame(
+            {
+                "small": np.random.uniform(low=1.0, high=2.0, size=(100,)),
+                "large": np.random.uniform(low=1e8, high=1e9, size=(100,)),
+            }
+        )
 
         # project to diagonal with/without scaling
-        with pytest.raises(SolverError):  # this fails, due to badly conditioned constraints
+        with pytest.raises(
+            SolverError
+        ):  # this fails, due to badly conditioned constraints
             corrected_no_scaling = linear_projection_no_scaling(experiments)
 
         # this works, and projects on the diagonal
