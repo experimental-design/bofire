@@ -31,12 +31,16 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv pip install ".[optimization,cheminfo]" jupyter nbformat nbclient --system
+        run: uv pip install ".[optimization,cheminfo]" jupyter nbformat nbclient quartodoc --system
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: 1.8.21
+
+      - name: Build quartodoc API docs
+        run: |
+          PYTHONPATH=bofire python -m quartodoc build
 
       - name: Render Quarto Project
         uses: quarto-dev/quarto-actions/render@v2

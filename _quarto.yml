@@ -22,6 +22,25 @@ project:
     - "!docs/CONTRIBUTING.md"
     - "!docs/javascripts/"
 
+quartodoc:
+  package: bofire
+  title: API Reference
+  dir: docs/reference
+  parser: google
+  sections:
+    - title: Domain
+      desc: Domain and feature data models
+      contents:
+        - data_models.domain.domain.Domain
+    - title: Features
+      desc: Input and output features
+      contents:
+        - data_models.features.api
+    - title: Strategies
+      desc: Optimization strategies
+      contents:
+        - strategies.api
+
 website:
   title: "BoFire"
   site-url: "https://experimental-design.github.io/bofire"

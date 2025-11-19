@@ -1,3 +1,8 @@
 # Domain
 
-::: bofire.data_models.domain
+::: {.callout-note}
+API documentation for domain data models.
+:::
+
+<!-- TODO: Replace with Quarto autodoc when available -->
+See `bofire.data_models.domain` module.
