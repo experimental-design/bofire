@@ -504,6 +504,7 @@ class LinearProjectionPymooRepair(PymooRepair):
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
         verbose: bool = False,
+        scale_problem: bool = True,
     ):
         self.domain_handler = domain_handler
         self.linear_projection = LinearProjection(
@@ -513,6 +514,7 @@ class LinearProjectionPymooRepair(PymooRepair):
             constraints_include=constraints_include,
             n_choose_k_constr_min_delta=n_choose_k_constr_min_delta,
             verbose=verbose,
+            scale_problem=scale_problem,
         )
 
         super().__init__()

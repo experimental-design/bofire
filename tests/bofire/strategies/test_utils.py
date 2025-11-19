@@ -71,12 +71,15 @@ def repair_instance(optimizer_benchmark, domain_handler) -> LinearProjectionPymo
         domain=domain,
         q=q,
         domain_handler=domain_handler,
+        scale_problem=False,  # tests defined on unscaled matrices
     )
 
     return repair
 
 
 class TestLinearProjection:
+
+    @pytest.mark.parametrize("repair_instance", ["unscaled"], indirect=True)
     def test_create_qp_problem(
         self,
         mock_pymoo_generation: List[dict],
