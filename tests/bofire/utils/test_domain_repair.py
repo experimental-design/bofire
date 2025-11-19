@@ -1,8 +1,10 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from bofire.data_models.domain import api as domain_module
 from bofire.data_models.features import api as feature_module
+from bofire.data_models.constraints import api as constraing_module
 from bofire.utils.domain_repair import LinearProjection
 
 
@@ -53,3 +55,36 @@ class TestLinearProjection:
             ]
             == 1.0
         )
+
+    def test_scaling(self):
+
+        domain = domain_module.Domain(
+            inputs=domain_module.Inputs(features=[
+                feature_module.ContinuousInput(key="small", bounds=(1., 2.)),
+                feature_module.ContinuousInput(key="large", bounds=(1e4, 1e5)),
+            ]),
+            constraints=domain_module.Constraints(constraints=[
+                constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
+                    features=["small", "large"],
+                    coefficients=[-1., 9e4],
+                    rhs=9e8-1,
+                )
+            ])
+        )
+
+        linear_projection_no_scaling = LinearProjection(domain, scale_problem=False)
+        linear_projection_with_scaling = LinearProjection(domain, scale_problem=True)
+
+        experiments = pd.DataFrame({
+            "small": [1., 2.], "large": [1e5, 1e4],
+        })
+
+        corrected_no_scaling = linear_projection_no_scaling(experiments)
+        corrected_with_scaling = linear_projection_with_scaling(experiments)
+
+        plt.figure()
+        plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
+        plt.scatter(x=corrected_no_scaling["small"], y=corrected_no_scaling["large"], marker="x")
+        plt.scatter(x=corrected_with_scaling["small"], y=corrected_with_scaling["large"], marker="x")
+        plt.plot([1., 2.], [1e4, 1e5])
+        plt.show()

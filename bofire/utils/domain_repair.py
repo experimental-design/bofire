@@ -389,14 +389,15 @@ class LinearProjection(DomainRepair):
 
         if self.scale_problem:
             scale = np.clip(self.bounds[1, :] - self.bounds[0, :], a_min=1e-3, a_max=np.inf)
-            scale = np.repeat(scale, n_x_points, axis=0)
-            intercept = np.repeat(self.bounds[0, :], n_x_points, axis=0)
+            scale = np.repeat(scale.reshape((1, -1)), n_x_points, axis=0).reshape(-1)
+            intercept = np.repeat(self.bounds[0, :].reshape((1, -1)), n_x_points, axis=0).reshape(-1)
+            self.scale, self.intercept = scale, intercept
 
-            b = b - A @ sparse.diags(intercept)
-            A = sparse.diags(scale, 0) @ A
+            b = b - A @ intercept.reshape((-1, 1))
+            A = A @ sparse.diags(scale, 0)
 
-            h = h - G @ sparse.diags(intercept)
-            G = sparse.diags(scale, 0) @ G
+            h = h - G @ intercept.reshape((-1, 1))
+            G = G @ sparse.diags(scale, 0)
             
             q = (q - intercept)/scale
             x = (x - intercept)/scale
@@ -436,9 +437,12 @@ class LinearProjection(DomainRepair):
         problem.solve(verbose=self.verbose)
 
         x_corrected = x_var.value
-        X_corrected = x_corrected.reshape(X.shape)
+        if self.scale_problem:
+            x_corrected = self.intercept.reshape(x_corrected.shape) + x_corrected * self.scale.reshape(x_corrected.shape)
 
+        X_corrected = x_corrected.reshape(X.shape)
         return X_corrected
+
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """
