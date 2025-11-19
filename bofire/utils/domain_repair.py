@@ -92,6 +92,8 @@ class LinearProjection(DomainRepair):
 
     This class is passed to the pymoo algorithm class to correct the population after each generation
 
+    
+
     """
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
