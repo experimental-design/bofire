@@ -80,6 +80,7 @@ class LinearProjection(DomainRepair):
         s.t.
             ...
 
+    The scaled problem will instead solve for z = (x - lb) / (ub - lb), where z in [0, 1]
 
     in order to solve this with the performant cvxpy solver. (https://www.cvxpy.org/examples/basic/quadratic_program.html)
 
@@ -121,6 +122,7 @@ class LinearProjection(DomainRepair):
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
         verbose: bool = False,
+        scale_problem: bool = True,
     ):
         if constraints_include is None:
             constraints_include = [
@@ -288,6 +290,7 @@ class LinearProjection(DomainRepair):
         self.domain = domain
         self.bounds = bounds
         self.verbose = verbose
+        self.scale_problem = scale_problem
 
     def _create_qp_problem_input(self, X: np.ndarray) -> dict:
         n_pop = X.shape[0]
@@ -372,7 +375,7 @@ class LinearProjection(DomainRepair):
             return G, h
 
         # Prepare Matrices for solving the estimation problem
-        P = sparse.identity(self.d * n_x_points)  # the unit-matrix
+        P = sparse.identity(self.d * n_x_points)  # the unit-matrix: same for scaled and unscaled problem
 
         A, b = _build_A_b_matrices_for_n_points(self.eq_constr)
         G, h = _build_G_h_for_box_bounds()
@@ -383,6 +386,20 @@ class LinearProjection(DomainRepair):
 
         x = X.reshape(-1)
         q = -x
+
+        if self.scale_problem:
+            scale = np.clip(self.bounds[1, :] - self.bounds[0, :], a_min=1e-3, a_max=np.inf)
+            scale = np.repeat(scale, n_x_points, axis=0)
+            intercept = np.repeat(self.bounds[0, :], n_x_points, axis=0)
+
+            b = b - A @ sparse.diags(intercept)
+            A = sparse.diags(scale, 0) @ A
+
+            h = h - G @ sparse.diags(intercept)
+            G = sparse.diags(scale, 0) @ G
+            
+            q = (q - intercept)/scale
+            x = (x - intercept)/scale
 
         return {
             "P": P,
