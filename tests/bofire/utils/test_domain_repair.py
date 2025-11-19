@@ -66,8 +66,8 @@ class TestLinearProjection:
             constraints=domain_module.Constraints(constraints=[
                 constraing_module.LinearEqualityConstraint(  # a diagonal line in scaled small/large space
                     features=["small", "large"],
-                    coefficients=[-1., 9e4],
-                    rhs=9e8-1,
+                    coefficients=[-9e4, 1.],
+                    rhs=-8e4,
                 )
             ])
         )
@@ -76,7 +76,7 @@ class TestLinearProjection:
         linear_projection_with_scaling = LinearProjection(domain, scale_problem=True)
 
         experiments = pd.DataFrame({
-            "small": [1., 2.], "large": [1e5, 1e4],
+            "small": np.random.uniform(low=1., high=2., size=(100,)), "large": np.random.uniform(low=1e4, high=1e5, size=(100,)),
         })
 
         corrected_no_scaling = linear_projection_no_scaling(experiments)
@@ -84,7 +84,12 @@ class TestLinearProjection:
 
         plt.figure()
         plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
-        plt.scatter(x=corrected_no_scaling["small"], y=corrected_no_scaling["large"], marker="x")
-        plt.scatter(x=corrected_with_scaling["small"], y=corrected_with_scaling["large"], marker="x")
-        plt.plot([1., 2.], [1e4, 1e5])
+        plt.scatter(x=corrected_no_scaling["small"], y=corrected_no_scaling["large"], marker="x", color="red")
+        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.2)
+        plt.show()
+
+        plt.figure()
+        plt.scatter(x=experiments["small"], y=experiments["large"], marker="o")
+        plt.scatter(x=corrected_with_scaling["small"], y=corrected_with_scaling["large"], marker="x", color="green")
+        plt.plot([1., 2.], [1e4, 1e5], "--", color="black", lw=.2)
         plt.show()
