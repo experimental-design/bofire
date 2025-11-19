@@ -160,3 +160,5 @@ bofire/version.py
 notebook_test_stats.csv
 
 **/*.quarto_ipynb
+
+.jupyter-cache
