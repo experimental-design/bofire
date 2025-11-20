@@ -16,17 +16,13 @@ import bofire.priors.api as priors
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import TaskInput
-from bofire.data_models.kernels.api import AnyKernel, MaternKernel
-from bofire.data_models.priors.api import (
-    THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_NOISE_PRIOR,
-    AnyPrior,
-    LKJPrior,
-)
+from bofire.data_models.kernels.api import AnyKernel
+from bofire.data_models.priors.api import AnyPrior, LKJPrior
 from bofire.data_models.surrogates.api import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable import AnyAggregation
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
@@ -123,15 +119,13 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         outputs: Outputs,
         hyperconfig: Optional[MultiTaskGPHyperconfig] = None,
         aggregations: Optional[List[AnyAggregation]] = None,
-        input_preprocessing_specs: dict = dict(),
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: Optional[str] = None,
-        categorical_encodings: dict = dict(),
+        categorical_encodings: Optional[InputTransformSpecs] = None,
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        kernel: AnyKernel = MaternKernel(
-            ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-        ),
-        noise_prior: AnyPrior = THREESIX_NOISE_PRIOR(),
+        kernel: Optional[AnyKernel] = None,
+        noise_prior: Optional[AnyPrior] = None,
         task_prior: Optional[LKJPrior] = None,
     ) -> Self:
         """

@@ -22,12 +22,7 @@ import bofire.priors.api as priors
 from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel, ScaleKernel
-from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
-    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
-    AnyPrior,
-)
+from bofire.data_models.priors.api import AnyPrior
 
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
@@ -150,17 +145,13 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         outputs: Outputs,
         hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
         aggregations: Optional[List[AnyAggregation]] = None,
-        input_preprocessing_specs: InputTransformSpecs = {},
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: Optional[str] = None,
-        categorical_encodings: InputTransformSpecs = {},
+        categorical_encodings: Optional[InputTransformSpecs] = None,
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = RBFKernel(
-            ard=True,
-            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-            lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
-        ),
-        noise_prior: AnyPrior = HVARFNER_NOISE_PRIOR(),
+        kernel: Optional[Union[ScaleKernel, RBFKernel, MaternKernel]] = None,
+        noise_prior: Optional[AnyPrior] = None,
         prior_mean_of_support: Optional[int] = None,
         convex_parametrization: bool = True,
         cache_model_trace: bool = False,

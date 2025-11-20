@@ -98,16 +98,16 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         outputs: Outputs,
         hyperconfig: Optional[Hyperconfig] = None,
         aggregations: Optional[List[AnyAggregation]] = None,
-        input_preprocessing_specs: InputTransformSpecs = {},
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: Optional[str] = None,
-        categorical_encodings: InputTransformSpecs = {},
+        categorical_encodings: Optional[InputTransformSpecs] = None,
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
         model_type: Literal["linear", "saas", "hvarfner"] = "saas",
         warmup_steps: int = 256,
         num_samples: int = 128,
         thinning: int = 16,
-        features_to_warp: List[str] = [],
+        features_to_warp: Optional[List[str]] = None,
     ) -> Self:
         """
         Factory method to create a SingleTaskGPSurrogate from a data model.

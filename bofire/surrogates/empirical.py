@@ -37,9 +37,9 @@ class EmpiricalSurrogate(BotorchSurrogate):
         cls,
         inputs: Inputs,
         outputs: Outputs,
-        input_preprocessing_specs: InputTransformSpecs = {},
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: str | None = None,
-        categorical_encodings: InputTransformSpecs = {},
+        categorical_encodings: Optional[InputTransformSpecs] = None,
     ) -> Self:
         """
         Factory method to create an EmpiricalSurrogate from a data model.

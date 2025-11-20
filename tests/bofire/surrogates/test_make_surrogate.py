@@ -71,7 +71,7 @@ def test_make():
                 k in param_names_make
             ), f"{k} not in {type(surrogate_type).__name__}'s make parameters"
 
-        if not type(data_model) in surrogates_skip_annotations:        
+        if type(data_model) not in surrogates_skip_annotations:
             # do the non-optional annotation-parts match?
             for name, p_annotation in get_type_hints(surrogate_type.make).items():
                 if name == "return":

@@ -12,12 +12,8 @@ import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
-from bofire.data_models.kernels.api import AnyKernel, RBFKernel
-from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
-    AnyPrior,
-)
+from bofire.data_models.kernels.api import AnyKernel
+from bofire.data_models.priors.api import AnyPrior
 from bofire.data_models.surrogates.api import ScalerEnum
 
 # from bofire.data_models.molfeatures.api import MolFeatures
@@ -82,15 +78,13 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         outputs: Outputs,
         hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
         aggregations: Optional[List[AnyAggregation]] = None,
-        input_preprocessing_specs: InputTransformSpecs = {},
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: Optional[str] = None,
-        categorical_encodings: InputTransformSpecs = {},
+        categorical_encodings: Optional[InputTransformSpecs] = None,
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        kernel: AnyKernel = RBFKernel(
-            ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR()
-        ),
-        noise_prior: AnyPrior = HVARFNER_NOISE_PRIOR(),
+        kernel: Optional[AnyKernel] = None,
+        noise_prior: Optional[AnyPrior] = None,
     ) -> Self:
         """
         Factory method to create a SingleTaskGPSurrogate from a data model.

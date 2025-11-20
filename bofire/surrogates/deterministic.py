@@ -1,4 +1,4 @@
-from typing import Dict, cast
+from typing import Dict, Optional, cast
 
 import torch
 from botorch.models.deterministic import AffineDeterministicModel
@@ -43,9 +43,9 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
         outputs: Outputs,
         coefficients: Dict[str, float],
         intercept: float,
-        input_preprocessing_specs: InputTransformSpecs = {},
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: str | None = None,
-        categorical_encodings: InputTransformSpecs = {},
+        categorical_encodings: Optional[InputTransformSpecs] = None,
     ) -> Self:
         """
         Factory method to create an EmpiricalSurrogate from a data model.
@@ -88,9 +88,9 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         inputs: Inputs,
         outputs: Outputs,
         mapping: Dict[str, float],
-        input_preprocessing_specs: InputTransformSpecs = {},
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: str | None = None,
-        categorical_encodings: InputTransformSpecs = {},
+        categorical_encodings: Optional[InputTransformSpecs] = None,
     ) -> Self:
         """
         Factory method to create an EmpiricalSurrogate from a data model.

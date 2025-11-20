@@ -17,6 +17,7 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
@@ -176,9 +177,9 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         outputs: Outputs,
         hyperconfig: Optional[Hyperconfig] = None,
         aggregations: Optional[List[AnyAggregation]] = None,
-        input_preprocessing_specs: dict = dict(),
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
         dump: Optional[str] = None,
-        categorical_encodings: dict = dict(),
+        categorical_encodings: Optional[InputTransformSpecs] = None,
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
         n_estimators: int = 100,
