@@ -86,6 +86,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install ".[optimization,tests,cheminfo,entmoot]"
 
       - name: Run tests
@@ -115,6 +116,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
           pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
           export ALLOW_LATEST_GPYTORCH_LINOP=true
@@ -150,6 +152,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install ".[optimization,tests,cheminfo,entmoot,tutorials]"
 
       - name: Run Notebooks
