@@ -29,13 +29,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          enable-cache: true
-
       - name: Install Dependencies
-        run: uv pip install "." pytest --system
+        run: pip install "." pytest
 
       - name: Run data model tests
         run: pytest tests/bofire/data_models
@@ -54,13 +49,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          enable-cache: true
-
       - name: Install Dependencies
-        run: uv pip install ".[optimization, tests]" --system
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[optimization, tests]"
 
       - name: Run tests
         shell: bash -l {0}
@@ -86,7 +78,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[optimization,tests,cheminfo,entmoot]"
 
       - name: Run tests
         shell: bash -l {0}
@@ -115,11 +108,12 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
           pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
           export ALLOW_LATEST_GPYTORCH_LINOP=true
           pip install --upgrade git+https://github.com/pytorch/botorch.git
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+          pip install ".[optimization,tests,cheminfo,entmoot]"
 
       - name: Run tests
         shell: bash -l {0}
@@ -150,7 +144,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[optimization,tests,cheminfo,entmoot,tutorials]"
 
       - name: Run Notebooks
         shell: bash -l {0}
