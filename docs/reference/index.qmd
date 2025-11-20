@@ -1,0 +1,25 @@
+# API Reference {.doc .doc-index}
+
+## Domain
+
+Domain and feature data models
+
+| | |
+| --- | --- |
+| [data_models.domain.domain.Domain](data_models.domain.domain.Domain.qmd#bofire.data_models.domain.domain.Domain) |  |
+
+## Features
+
+Input and output features
+
+| | |
+| --- | --- |
+| [data_models.features.api](data_models.features.api.qmd#bofire.data_models.features.api) |  |
+
+## Strategies
+
+Optimization strategies
+
+| | |
+| --- | --- |
+| [strategies.api](strategies.api.qmd#bofire.strategies.api) |  |

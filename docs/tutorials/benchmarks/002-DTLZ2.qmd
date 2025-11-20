@@ -1,0 +1,203 @@
+---
+title: DTLZ2 Benchmark
+jupyter: python3
+---
+
+## Imports
+
+
+```{python}
+#| papermill: {duration: 2.877548, end_time: '2024-10-10T20:34:48.494020', exception: false, start_time: '2024-10-10T20:34:45.616472', status: completed}
+#| tags: []
+import os
+
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.benchmarks.multi import DTLZ2
+from bofire.data_models.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import MinimizeObjective
+from bofire.data_models.strategies.api import (
+    MoboStrategy,
+    QparegoStrategy,
+    RandomStrategy,
+)
+from bofire.runners.api import run
+from bofire.utils.multiobjective import compute_hypervolume
+
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+## Manual setup of the optimization domain
+
+The following cell shows how to manually setup the optimization problem in BoFire for didactic purposes. In the following the implemented benchmark module is then used.
+
+```{python}
+#| papermill: {duration: 0.006199, end_time: '2024-10-10T20:34:48.504930', exception: false, start_time: '2024-10-10T20:34:48.498731', status: completed}
+#| tags: []
+input_features = Inputs(
+    features=[ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(6)],
+)
+# here the minimize objective is used, if you want to maximize you have to use the maximize objective.
+output_features = Outputs(
+    features=[
+        ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
+        for i in range(2)
+    ],
+)
+# no constraints are present so we can create the domain
+domain = Domain(inputs=input_features, outputs=output_features)
+```
+
+## Random Strategy
+
+```{python}
+#| papermill: {duration: 0.324348, end_time: '2024-10-10T20:34:48.833702', exception: true, start_time: '2024-10-10T20:34:48.509354', status: failed}
+#| tags: []
+def sample(domain):
+    datamodel = RandomStrategy(domain=domain)
+    sampler = strategies.map(data_model=datamodel)
+    sampled = sampler.ask(10)
+    return sampled
+
+
+def hypervolume(domain: Domain, experiments: pd.DataFrame) -> float:
+    return compute_hypervolume(domain, experiments, ref_point={"f_0": 1.1, "f_1": 1.1})
+
+
+random_results = run(
+    DTLZ2(dim=6),
+    strategy_factory=lambda domain: strategies.map(RandomStrategy(domain=domain)),
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=hypervolume,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+## MOBO Strategy
+### Automatic run
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+def strategy_factory(domain: Domain):
+    data_model = MoboStrategy(domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1})
+    return strategies.map(data_model)
+
+
+results = run(
+    DTLZ2(dim=6),
+    strategy_factory=strategy_factory,
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=hypervolume,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+### Manual setup
+
+#### Using the default Models
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# we get the domain from the benchmark module, in real use case we have to build it on our own
+# make sure that the objective is set correctly
+domain = DTLZ2(dim=6).domain
+# we generate training data
+experiments = DTLZ2(dim=6).f(domain.inputs.sample(10), return_complete=True)
+# we setup the strategy
+# providing of a reference point is not mandatory but can help
+# the reference point has to be wrt to the assigned objective always worse than the points on the paretofront.
+data_model = MoboStrategy(domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1})
+recommender = strategies.map(data_model=data_model)
+# we tell the strategy our historical data
+recommender.tell(experiments=experiments)
+# we ask for a new point to evaluate
+candidates = recommender.ask(candidate_count=1)
+# we show the candidate
+display(candidates)
+# this candidate has to be then provided to the benchmark function and evaluated and then told back to the optimizer to get the next candidate
+```
+
+#### Setup specific models
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+from bofire.data_models.kernels.api import RBFKernel, ScaleKernel
+from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
+
+
+# in this case you would use non default kernels for the different outputs
+# it is also possible to build the models for a subset of the complete features
+data_model = MoboStrategy(
+    domain=domain,
+    ref_point={"f_0": 1.1, "f_1": 1.1},
+    surrogate_specs=BotorchSurrogates(
+        surrogates=[
+            SingleTaskGPSurrogate(
+                inputs=domain.inputs,
+                outputs=Outputs(features=[domain.outputs[0]]),
+                kernel=ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            ),
+            SingleTaskGPSurrogate(
+                inputs=domain.inputs,
+                outputs=Outputs(features=[domain.outputs[1]]),
+                kernel=ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ),
+        ],
+    ),
+)
+recommender = strategies.map(data_model=data_model)
+# we tell the strategy our historical data
+recommender.tell(experiments=experiments)
+# we ask for a new point to evaluate
+candidates = recommender.ask(candidate_count=1)
+# we show the candidate
+display(candidates)
+```
+
+## QPAREGO Strategy
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+results_qparego = run(
+    DTLZ2(dim=6),
+    strategy_factory=lambda domain: strategies.map(QparegoStrategy(domain=domain)),
+    n_iterations=50 if not SMOKE_TEST else 1,
+    metric=hypervolume,
+    initial_sampler=sample,
+    n_runs=1,
+    n_procs=1,
+)
+```
+
+## Performance Plot
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+import matplotlib.pyplot as plt
+
+
+fig, ax = plt.subplots()
+
+ax.scatter(results[0][0].f_0, results[0][0].f_1, label="qehvi")
+ax.scatter(results_qparego[0][0].f_0, results_qparego[0][0].f_1, label="qparego")
+ax.scatter(random_results[0][0].f_0, random_results[0][0].f_1, label="random")
+
+ax.legend()
+
+ax.set_xlabel("f_0")
+ax.set_ylabel("f_1")
+
+fig.show()
+```

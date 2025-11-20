@@ -1,0 +1,247 @@
+---
+title: Classification Surrogate Tests
+jupyter: python3
+---
+
+
+We are interested in testing whether or not a surrogate model can correctly identify unknown constraints based on categorical criteria with classification surrogates. Essentially, we want to account for scenarios where specialists can look at a set of experiments and label outcomes as 'acceptable', 'unacceptable', 'ideal', etc.
+
+This involves new models that produce `CategoricalOutput`'s rather than continuous outputs. Mathematically, if $g_{\theta}:\mathbb{R}^d\to[0,1]^c$ represents the function governed by learnable parameters $\theta$ which outputs a probability vector over $c$ potential classes (i.e. for input $x\in\mathbb{R}^d$, $g_{\theta}(x)^\top\mathbf{1}=1$ where $\mathbf{1}$ is the vector of all 1's) and we have acceptibility criteria for the corresponding classes given by $a\in\{0,1\}^c$, we can compute the scalar output $g_{\theta}(x)^\top a\in[0,1]$ which represents the expected value of acceptance as an objective value to be passed in as a constrained function.
+
+In this script, we look at the [Rosenbrock function constrained to a disk](https://en.wikipedia.org/wiki/Test_functions_for_optimization#cite_note-12) which attains a global minima at $(x_0^*,x_1^*)=(1.0, 1.0)$. To facilitate testing the functionality offered by BoFire, we label all points inside of the circle $x_0^2+x_1^2\le2$ as 'acceptable' and further label anything inside of the intersection of this circle and the circle $(x_0-1)^2+(x_1-1)^2\le1.0$ as 'ideal'; points lying outside of these two locations are labeled as "unacceptable."
+
+
+```{python}
+#| papermill: {duration: 2.996427, end_time: '2024-10-10T20:34:35.182910', exception: false, start_time: '2024-10-10T20:34:32.186483', status: completed}
+#| tags: []
+# Import packages
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.data_models.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    CategoricalOutput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.objectives.api import (
+    ConstrainedCategoricalObjective,
+    MinimizeObjective,
+)
+```
+
+## Manual setup of the optimization domain
+
+The following cells show how to manually setup the optimization problem in BoFire for didactic purposes.
+
+```{python}
+#| papermill: {duration: 0.005827, end_time: '2024-10-10T20:34:35.193653', exception: false, start_time: '2024-10-10T20:34:35.187826', status: completed}
+#| tags: []
+# Write helper functions which give the objective and the constraints
+def rosenbrock(x: pd.Series) -> pd.Series:
+    assert "x_0" in x.columns
+    assert "x_1" in x.columns
+    return (1 - x["x_0"]) ** 2 + 100 * (x["x_1"] - x["x_0"] ** 2) ** 2
+
+
+def constraints(x: pd.Series) -> pd.Series:
+    assert "x_0" in x.columns
+    assert "x_1" in x.columns
+    feasiblity_vector = []
+    for _, row in x.iterrows():
+        if (row["x_0"] ** 2 + row["x_1"] ** 2 <= 2.0) and (
+            (row["x_0"] - 1.0) ** 2 + (row["x_1"] - 1.0) ** 2 <= 1.0
+        ):
+            feasiblity_vector.append("ideal")
+        elif row["x_0"] ** 2 + row["x_1"] ** 2 <= 2.0:
+            feasiblity_vector.append("acceptable")
+        else:
+            feasiblity_vector.append("unacceptable")
+    return feasiblity_vector
+```
+
+```{python}
+#| papermill: {duration: 0.01961, end_time: '2024-10-10T20:34:35.214891', exception: false, start_time: '2024-10-10T20:34:35.195281', status: completed}
+#| tags: []
+# Set-up the inputs and outputs, use categorical domain just as an example
+input_features = Inputs(
+    features=[ContinuousInput(key=f"x_{i}", bounds=(-1.75, 1.75)) for i in range(2)]
+    + [CategoricalInput(key="x_3", categories=["0", "1"], allowed=[True, True])],
+)
+
+# here the minimize objective is used, if you want to maximize you have to use the maximize objective.
+output_features = Outputs(
+    features=[
+        ContinuousOutput(key="f_0", objective=MinimizeObjective(w=1.0)),
+        CategoricalOutput(
+            key="f_1",
+            categories=["unacceptable", "acceptable", "ideal"],
+            objective=ConstrainedCategoricalObjective(
+                categories=["unacceptable", "acceptable", "ideal"],
+                desirability=[False, True, True],
+            ),
+        ),  # This function will be associated with learning the categories
+    ],
+)
+
+# Create domain
+domain1 = Domain(inputs=input_features, outputs=output_features)
+
+# Sample random points
+sample_df = domain1.inputs.sample(100)
+
+# Write a function which outputs one continuous variable and another discrete based on some logic
+sample_df["f_0"] = rosenbrock(x=sample_df)
+sample_df["f_1"] = constraints(x=sample_df)
+
+sample_df.head(5)
+```
+
+```{python}
+#| papermill: {duration: 0.600439, end_time: '2024-10-10T20:34:35.816921', exception: false, start_time: '2024-10-10T20:34:35.216482', status: completed}
+#| tags: []
+# Plot the sample df
+import math
+
+import plotly.express as px
+
+
+fig = px.scatter(
+    sample_df,
+    x="x_0",
+    y="x_1",
+    color="f_1",
+    width=550,
+    height=525,
+    title="Samples with labels",
+)
+fig.add_shape(
+    type="circle",
+    xref="x",
+    yref="y",
+    opacity=0.1,
+    fillcolor="red",
+    x0=-math.sqrt(2),
+    y0=-math.sqrt(2),
+    x1=math.sqrt(2),
+    y1=math.sqrt(2),
+    line_color="red",
+)
+fig.add_shape(
+    type="circle",
+    xref="x",
+    yref="y",
+    opacity=0.2,
+    fillcolor="LightSeaGreen",
+    x0=0,
+    y0=0,
+    x1=2,
+    y1=2,
+    line_color="LightSeaGreen",
+)
+fig.show()
+```
+
+## Evaluate the classification model performance (outside of the optimization procedure)
+
+```{python}
+#| papermill: {duration: 0.208408, end_time: '2024-10-10T20:34:36.095990', exception: true, start_time: '2024-10-10T20:34:35.887582', status: failed}
+#| tags: []
+# Import packages
+import bofire.surrogates.api as surrogates
+from bofire.data_models.surrogates.api import ClassificationMLPEnsemble
+from bofire.surrogates.diagnostics import ClassificationMetricsEnum
+
+
+# Instantiate the surrogate data model
+surrogate_data = ClassificationMLPEnsemble(
+    inputs=domain1.inputs,
+    outputs=Outputs(features=[domain1.outputs.get_by_key("f_1")]),
+    lr=0.03,
+    n_epochs=100,
+    hidden_layer_sizes=(
+        4,
+        2,
+    ),
+    weight_decay=0.0,
+    batch_size=10,
+    activation="tanh",
+)
+surrogate = surrogates.map(surrogate_data)
+
+# Fit the surrogate to the classification data
+cv_df = sample_df.drop(["f_0"], axis=1)
+cv_df["valid_f_1"] = 1
+cv_train, cv_test, _ = surrogate.cross_validate(cv_df, folds=3)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Print training performance
+cv_train.get_metrics(
+    metrics=ClassificationMetricsEnum,
+    combine_folds=True,
+)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Print test performance
+cv_test.get_metrics(
+    metrics=ClassificationMetricsEnum,
+    combine_folds=True,
+)
+```
+
+## Setup strategy and ask for candidates
+
+Now we setup a `SoboStrategy` for generating candidates, the categorical output is modelled using the surrogate from above. The categorical output is modelled as an output constraint in the acquistion function optimization (constrained expected improvement). For more details have a look at this notebook: https://github.com/pytorch/botorch/blob/main/notebooks_community/clf_constrained_bo.ipynb and/or this paper: https://arxiv.org/abs/2402.07692.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+from bofire.data_models.acquisition_functions.api import qLogEI
+from bofire.data_models.strategies.api import SoboStrategy
+from bofire.data_models.surrogates.api import BotorchSurrogates
+
+
+strategy_data = SoboStrategy(
+    domain=domain1,
+    acquisition_function=qLogEI(),
+    surrogate_specs=BotorchSurrogates(
+        surrogates=[surrogate_data],
+    ),
+)
+
+strategy = strategies.map(strategy_data)
+
+strategy.tell(sample_df)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+candidates = strategy.ask(10)
+candidates
+```
+
+## Check classification of proposed candidates
+
+Use the logic from above to verify the classification values
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Append to the candidates
+candidates["f_1_true"] = constraints(x=candidates)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+# Print results
+candidates[["x_0", "x_1", "f_1_pred", "f_1_true"]]
+```
