@@ -423,7 +423,7 @@ class LinearProjection(DomainRepair):
     def solve_numeric(self, X: np.ndarray) -> np.ndarray:
         """
         Converting a set of experiments in a domain, into the feasible space, considering the inputs in the numerical
-        space. inputs must be in the right orde (according to the order in domain.inputs.get_keys())
+        space. inputs must be in the right order (according to the order in domain.inputs.get_keys())
         """
 
         matrices = self._create_qp_problem_input(X)
