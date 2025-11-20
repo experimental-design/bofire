@@ -3,6 +3,7 @@ from typing import Literal, Type
 from pydantic import PositiveInt
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -10,7 +11,7 @@ class TestSurrogate:
     pass
 
 
-class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate[Hyperconfig]):
     """Additive MAP SAAS single-task GP
 
     Maximum-a-posteriori (MAP) version of the sparse axis-aligned subspace

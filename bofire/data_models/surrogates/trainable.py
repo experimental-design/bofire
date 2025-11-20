@@ -1,5 +1,5 @@
 import warnings
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Generic, List, Literal, Optional, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -92,8 +92,11 @@ class Hyperconfig(BaseModel):
         )
 
 
-class TrainableSurrogate(BaseModel):
-    hyperconfig: Optional[Hyperconfig] = None
+T = TypeVar("T", bound=Hyperconfig)
+
+
+class TrainableSurrogate(BaseModel, Generic[T]):
+    hyperconfig: Optional[T] = None
     aggregations: Optional[Annotated[List[AnyAggregation], Field(min_length=1)]] = None
 
     @model_validator(mode="after")

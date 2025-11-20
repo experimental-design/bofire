@@ -15,7 +15,7 @@ from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate[SingleTaskGPHyperconfig]):
     """
     Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
 

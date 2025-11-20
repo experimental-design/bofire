@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union, cast
 
 import pandas as pd
 import torch
@@ -15,14 +15,23 @@ from botorch.models.robust_relevance_pursuit_model import (
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from typing_extensions import Self
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.kernels.api import MaternKernel, RBFKernel, ScaleKernel
+from bofire.data_models.priors.api import AnyPrior
 
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
+from bofire.data_models.surrogates.trainable import AnyAggregation
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 
 
 class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -128,3 +137,43 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
 
         return pd.concat([predictions, rho_df], axis=1)
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
+        aggregations: Optional[List[AnyAggregation]] = None,
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+        dump: Optional[str] = None,
+        categorical_encodings: Optional[InputTransformSpecs] = None,
+        scaler: ScalerEnum = ScalerEnum.NORMALIZE,
+        output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
+        kernel: Optional[Union[ScaleKernel, RBFKernel, MaternKernel]] = None,
+        noise_prior: Optional[AnyPrior] = None,
+        prior_mean_of_support: Optional[int] = None,
+        convex_parametrization: bool = True,
+        cache_model_trace: bool = False,
+    ) -> Self:
+        """
+        Factory method to create a RobustSingleTaskGPSurrogate from a data model.
+        Args:
+            inputs: Inputs
+            outputs: Outputs
+            hyperconfig: SingleTaskGPHyperconfig | None
+            aggregations: List[AnyAggregation] | None
+            input_preprocessing_specs: dict
+            dump: str | None
+            categorical_encodings: dict
+            scaler: ScalerEnum
+            output_scaler: ScalerEnum
+            kernel: ScaleKernel | RBFKernel | MaternKernel
+            noise_prior: AnyPrior
+            prior_mean_of_support: int | None
+            convex_parametrization: bool
+            cache_model_trace: bool
+        Returns:
+            RobustSingleTaskGPSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, DataModel, locals()))

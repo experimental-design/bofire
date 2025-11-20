@@ -16,10 +16,11 @@ from bofire.data_models.priors.api import (
     AnyPrior,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class TanimotoGPSurrogate(TrainableBotorchSurrogate):
+class TanimotoGPSurrogate(TrainableBotorchSurrogate[SingleTaskGPHyperconfig]):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
     kernel: AnyKernel = Field(
