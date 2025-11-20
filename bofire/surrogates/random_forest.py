@@ -1,7 +1,6 @@
 import base64
 import io
-from typing import Optional, cast, List, Literal, Union
-from typing_extensions import Self
+from typing import List, Literal, Optional, Union, cast
 
 import numpy as np
 import torch
@@ -11,12 +10,13 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils.validation import check_is_fitted
 from torch import Tensor
+from typing_extensions import Self
 
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
-from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
-from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
@@ -182,12 +182,14 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
         n_estimators: int = 100,
-        criterion: Literal['squared_error', 'absolute_error', 'friedman_mse', 'poisson'] = "squared_error",
+        criterion: Literal[
+            "squared_error", "absolute_error", "friedman_mse", "poisson"
+        ] = "squared_error",
         max_depth: Optional[int] = None,
         min_samples_split: Union[int, float] = 2,
         min_samples_leaf: Union[int, float] = 1,
         min_weight_fraction_leaf: float = 0.0,
-        max_features: Union[int, float, Literal['auto', 'sqrt', 'log2']] = 1.0,
+        max_features: Union[int, float, Literal["auto", "sqrt", "log2"]] = 1.0,
         max_leaf_nodes: Optional[int] = None,
         min_impurity_decrease: float = 0.0,
         bootstrap: bool = True,
@@ -226,5 +228,3 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
             RandomForestSurrogate: A new instance.
         """
         return cast(Self, make_surrogate(cls, DataModel, locals()))
-
-

@@ -1,10 +1,4 @@
-from typing import Dict, Optional, cast, List
-from typing_extensions import Self
-from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
-from bofire.data_models.surrogates.trainable import AnyAggregation
-from bofire.data_models.surrogates.api import ScalerEnum
-from bofire.data_models.kernels.api import AnyKernel, RBFKernel
-from bofire.data_models.priors.api import AnyPrior, HVARFNER_LENGTHSCALE_PRIOR, HVARFNER_NOISE_PRIOR
+from typing import Dict, List, Optional, cast
 
 import botorch
 import torch
@@ -12,15 +6,25 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from typing_extensions import Self
 
-from bofire.data_models.domain.features import Inputs, Outputs
-from bofire.data_models.types import InputTransformSpecs
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.kernels.api import AnyKernel, RBFKernel
+from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
+    AnyPrior,
+)
+from bofire.data_models.surrogates.api import ScalerEnum
 
 # from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
+from bofire.data_models.surrogates.trainable import AnyAggregation
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 
@@ -83,7 +87,9 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         categorical_encodings: InputTransformSpecs = {},
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        kernel: AnyKernel = RBFKernel(ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR()),
+        kernel: AnyKernel = RBFKernel(
+            ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR()
+        ),
         noise_prior: AnyPrior = HVARFNER_NOISE_PRIOR(),
     ) -> Self:
         """
@@ -104,4 +110,3 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             SingleTaskGPSurrogate: A new instance.
         """
         return cast(Self, make_surrogate(cls, DataModel, locals()))
-

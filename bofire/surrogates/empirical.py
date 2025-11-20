@@ -2,16 +2,16 @@ import base64
 import io
 import warnings
 from typing import Optional, cast
+
+import torch
+from botorch.models.deterministic import DeterministicModel
 from typing_extensions import Self
 
 from bofire.data_models.domain.features import Inputs, Outputs
-from bofire.data_models.types import InputTransformSpecs
-from bofire.surrogates.model_utils import make_surrogate
-import torch
-from botorch.models.deterministic import DeterministicModel
-
 from bofire.data_models.surrogates.api import EmpiricalSurrogate as DataModel
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import BotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 
 
 class EmpiricalSurrogate(BotorchSurrogate):
@@ -39,7 +39,7 @@ class EmpiricalSurrogate(BotorchSurrogate):
         outputs: Outputs,
         input_preprocessing_specs: InputTransformSpecs = {},
         dump: str | None = None,
-        categorical_encodings: InputTransformSpecs = {}
+        categorical_encodings: InputTransformSpecs = {},
     ) -> Self:
         """
         Factory method to create an EmpiricalSurrogate from a data model.

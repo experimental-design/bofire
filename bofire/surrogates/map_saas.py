@@ -1,8 +1,4 @@
-from typing import Dict, Optional, cast, List
-from typing_extensions import Self
-from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.types import PositiveInt
+from typing import Dict, List, Optional, cast
 
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -10,13 +6,16 @@ from botorch.models.map_saas import AdditiveMapSaasSingleTaskGP
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from typing_extensions import Self
 
 from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import (
     AdditiveMapSaasSingleTaskGPSurrogate as DataModel,
 )
-from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
+from bofire.data_models.types import InputTransformSpecs, PositiveInt
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 

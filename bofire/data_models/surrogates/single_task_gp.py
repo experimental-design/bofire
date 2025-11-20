@@ -133,9 +133,13 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         else:
             surrogate_data.kernel = base_kernel
 
+
 T = TypeVar("T")
 
-class BaseSingleTaskGPSurrogate(TrainableBotorchSurrogate[SingleTaskGPHyperconfig], Generic[T]):
+
+class BaseSingleTaskGPSurrogate(
+    TrainableBotorchSurrogate[SingleTaskGPHyperconfig], Generic[T]
+):
     kernel: T
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
 
@@ -149,6 +153,7 @@ class BaseSingleTaskGPSurrogate(TrainableBotorchSurrogate[SingleTaskGPHyperconfi
         """
         return isinstance(my_type, type(ContinuousOutput))
 
+
 class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
     kernel: AnyKernel = Field(
@@ -160,4 +165,3 @@ class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(),
     )
-

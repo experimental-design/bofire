@@ -1,6 +1,5 @@
 import warnings
-from typing import Dict, Optional, cast, List
-from typing_extensions import Self
+from typing import Dict, List, Optional, cast
 
 import botorch
 import numpy as np
@@ -10,17 +9,24 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from typing_extensions import Self
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import TaskInput
-from bofire.data_models.priors.api import LKJPrior, AnyPrior, THREESIX_LENGTHSCALE_PRIOR, THREESIX_NOISE_PRIOR
-from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel, MultiTaskGPHyperconfig
-from bofire.data_models.surrogates.trainable import AnyAggregation
-from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel
+from bofire.data_models.priors.api import (
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    AnyPrior,
+    LKJPrior,
+)
+from bofire.data_models.surrogates.api import MultiTaskGPHyperconfig
+from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import AnyAggregation
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
@@ -109,7 +115,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             stds = np.sqrt(posterior.variance.cpu().detach().numpy())
 
         return preds, stds
-    
+
     @classmethod
     def make(
         cls,
@@ -122,7 +128,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         categorical_encodings: dict = dict(),
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        kernel: AnyKernel = MaternKernel(ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()),
+        kernel: AnyKernel = MaternKernel(
+            ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
+        ),
         noise_prior: AnyPrior = THREESIX_NOISE_PRIOR(),
         task_prior: Optional[LKJPrior] = None,
     ) -> Self:

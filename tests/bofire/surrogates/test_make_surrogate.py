@@ -1,32 +1,36 @@
 import inspect
 import types
 import typing
-from typing import get_origin, get_type_hints, Protocol
+from typing import Protocol, get_origin, get_type_hints
 
 import typing_extensions
 
+import bofire.surrogates.api as surrogates
 from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
-from bofire.data_models.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate
+from bofire.data_models.surrogates.mixed_single_task_gp import (
+    MixedSingleTaskGPSurrogate,
+)
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
-import bofire.surrogates.api as surrogates
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from tests.bofire.data_models.specs.api import surrogates as surrogate_specs
 
+
 surrogates_skip_annotations = [
     SingleTaskIBNNSurrogate,
     RandomForestSurrogate,
-    MultiTaskGPSurrogate
+    MultiTaskGPSurrogate,
 ]
 
 surrogates_skip_all = [
     MixedSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     ClassificationMLPEnsemble,
-    PiecewiseLinearGPSurrogate
+    PiecewiseLinearGPSurrogate,
 ]
+
 
 def remove_optional(anno):
     origin = get_origin(anno)
@@ -47,7 +51,7 @@ def test_make():
             or type(surrogate_type) in surrogates_skip_all
         ):
             return
-        
+
         data_model_dump = data_model.model_dump()
         data_model_dump.pop("type")
 
@@ -97,7 +101,7 @@ def test_make():
 
         made_surrogate = surrogate_type.make(**data_model_dump)
         for k in data_model_dump.keys():
-            field_info = getattr(type(data_model), 'model_fields', {}).get(k, None)
+            field_info = getattr(type(data_model), "model_fields", {}).get(k, None)
             is_optional = False
             if field_info is not None:
                 anno = field_info.annotation
@@ -108,12 +112,13 @@ def test_make():
             if not is_optional:
                 assert hasattr(
                     made_surrogate, k
-                ), f"{type(surrogate_type).__name__}. {k} missing in made_strat"
+                ), f"{type(surrogate_type).__name__}. {k} missing in made_surrogate"
 
     for spec in surrogate_specs.valids:
         data_model = spec.obj()
         surrogate_type = surrogates.map(data_model)
         test(surrogate_type, data_model)
+
 
 if __name__ == "__main__":
     test_make()

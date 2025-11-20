@@ -1,5 +1,4 @@
-from typing import Dict, Optional, cast, List, Union
-from typing_extensions import Self
+from typing import Dict, List, Optional, Union, cast
 
 import pandas as pd
 import torch
@@ -16,21 +15,26 @@ from botorch.models.robust_relevance_pursuit_model import (
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from typing_extensions import Self
 
-from bofire.data_models.domain.features import Inputs, Outputs
-from bofire.data_models.types import InputTransformSpecs
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.kernels.api import MaternKernel, RBFKernel, ScaleKernel
+from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
+    AnyPrior,
+)
 
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
-from bofire.data_models.surrogates.trainable import AnyAggregation
-from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
-from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.kernels.api import ScaleKernel, RBFKernel, MaternKernel
-from bofire.data_models.priors.api import AnyPrior, HVARFNER_LENGTHSCALE_PRIOR, HVARFNER_NOISE_PRIOR, ROBUSTGP_LENGTHSCALE_CONSTRAINT, ROBUSTGP_OUTPUTSCALE_CONSTRAINT
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
+from bofire.data_models.surrogates.trainable import AnyAggregation
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 
@@ -151,7 +155,11 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         categorical_encodings: InputTransformSpecs = {},
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = RBFKernel(ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(), lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT()),
+        kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+        ),
         noise_prior: AnyPrior = HVARFNER_NOISE_PRIOR(),
         prior_mean_of_support: Optional[int] = None,
         convex_parametrization: bool = True,
@@ -178,4 +186,3 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             RobustSingleTaskGPSurrogate: A new instance.
         """
         return cast(Self, make_surrogate(cls, DataModel, locals()))
-

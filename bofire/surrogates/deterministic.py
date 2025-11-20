@@ -1,7 +1,8 @@
 from typing import Dict, cast
-from typing_extensions import Self
+
 import torch
 from botorch.models.deterministic import AffineDeterministicModel
+from typing_extensions import Self
 
 from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -44,7 +45,7 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
         intercept: float,
         input_preprocessing_specs: InputTransformSpecs = {},
         dump: str | None = None,
-        categorical_encodings: InputTransformSpecs = {}
+        categorical_encodings: InputTransformSpecs = {},
     ) -> Self:
         """
         Factory method to create an EmpiricalSurrogate from a data model.
@@ -53,7 +54,10 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
         Returns:
             LinearDeterministicSurrogate: A new instance.
         """
-        return cast(Self, make_surrogate(cls, LinearDeterministicSurrogateDataModel, locals()))
+        return cast(
+            Self, make_surrogate(cls, LinearDeterministicSurrogateDataModel, locals())
+        )
+
 
 class CategoricalDeterministicSurrogate(BotorchSurrogate):
     def __init__(
@@ -77,7 +81,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
             inputs=self.inputs,
             transform_specs={self.inputs[0].key: CategoricalEncodingEnum.ONE_HOT},
         )
-        
+
     @classmethod
     def make(
         cls,
@@ -86,7 +90,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         mapping: Dict[str, float],
         input_preprocessing_specs: InputTransformSpecs = {},
         dump: str | None = None,
-        categorical_encodings: InputTransformSpecs = {}
+        categorical_encodings: InputTransformSpecs = {},
     ) -> Self:
         """
         Factory method to create an EmpiricalSurrogate from a data model.
@@ -95,5 +99,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         Returns:
             CategoricalDeterministicSurrogate: A new instance.
         """
-        return cast(Self, make_surrogate(cls, CategoricalDeterministicSurrogateDataModel, locals()))
-
+        return cast(
+            Self,
+            make_surrogate(cls, CategoricalDeterministicSurrogateDataModel, locals()),
+        )

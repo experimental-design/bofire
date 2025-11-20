@@ -89,7 +89,9 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate[PiecewiseLinearGPSurrogateHyperconfig]):
+class PiecewiseLinearGPSurrogate(
+    TrainableBotorchSurrogate[PiecewiseLinearGPSurrogateHyperconfig]
+):
     """GP surrogate that is based on a `WassersteinKernel` for modeling functions
     that take a monotonically increasing piecewise linear function as input. The
     computation of the covariance between the piecewise linears is done by the

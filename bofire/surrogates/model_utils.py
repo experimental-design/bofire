@@ -1,4 +1,3 @@
-
 def make_surrogate(surrogate_type, data_model_type, locals_of_make: dict):
     """Factory function to create a surrogate of type surrogate_type from a data model of type data_model_type.
     This function is a helper for the `make`-`@classmethod`s of the surrogates. All locals that are not None are passed to the

@@ -1,5 +1,5 @@
 import warnings
-from typing import Annotated, Generic, List, Literal, Optional, Union, TypeVar
+from typing import Annotated, Generic, List, Literal, Optional, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -91,7 +91,9 @@ class Hyperconfig(BaseModel):
             "Ideally this would be an abstract method, but this causes problems in pydantic.",
         )
 
+
 T = TypeVar("T", bound=Hyperconfig)
+
 
 class TrainableSurrogate(BaseModel, Generic[T]):
     hyperconfig: Optional[T] = None

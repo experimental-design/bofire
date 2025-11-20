@@ -1,4 +1,5 @@
 from typing import Generic, TypeVar
+
 from pydantic import field_validator
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -7,6 +8,7 @@ from bofire.data_models.surrogates.trainable import Hyperconfig, TrainableSurrog
 
 
 T = TypeVar("T", bound=Hyperconfig)
+
 
 class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate[T], Generic[T]):
     scaler: ScalerEnum = ScalerEnum.NORMALIZE

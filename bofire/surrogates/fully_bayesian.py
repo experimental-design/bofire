@@ -1,9 +1,4 @@
-from typing import Dict, Optional, cast, List, Literal
-from typing_extensions import Self
-from bofire.data_models.surrogates.trainable import Hyperconfig, AnyAggregation
-from bofire.data_models.domain.features import Inputs, Outputs
-from bofire.data_models.types import InputTransformSpecs
-from bofire.data_models.surrogates.scaler import ScalerEnum
+from typing import Dict, List, Literal, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -16,11 +11,16 @@ from botorch.models.fully_bayesian import (
 )
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from typing_extensions import Self
 
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import (
     FullyBayesianSingleTaskGPSurrogate as DataModel,
 )
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import AnyAggregation, Hyperconfig
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
@@ -103,7 +103,7 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         categorical_encodings: InputTransformSpecs = {},
         scaler: ScalerEnum = ScalerEnum.NORMALIZE,
         output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
-        model_type: Literal['linear', 'saas', 'hvarfner'] = "saas",
+        model_type: Literal["linear", "saas", "hvarfner"] = "saas",
         warmup_steps: int = 256,
         num_samples: int = 128,
         thinning: int = 16,
