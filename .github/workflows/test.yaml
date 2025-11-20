@@ -29,13 +29,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          enable-cache: true
-
       - name: Install Dependencies
-        run: uv pip install "." pytest --system
+        run: pip install "." pytest
 
       - name: Run data model tests
         run: pytest tests/bofire/data_models
@@ -54,13 +49,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v2
-        with:
-          enable-cache: true
-
       - name: Install Dependencies
-        run: uv pip install ".[optimization, tests]" --system
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[optimization, tests]"
 
       - name: Run tests
         shell: bash -l {0}
