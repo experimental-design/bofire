@@ -78,6 +78,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt=1.5.0
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install ".[optimization,tests,cheminfo,entmoot]"
 
       - name: Run tests
