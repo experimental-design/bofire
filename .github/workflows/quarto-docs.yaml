@@ -28,7 +28,9 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install ".[optimization,cheminfo]" jupyter jupyter-cache nbformat nbclient quartodoc
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[optimization,cheminfo]" jupyter jupyter-cache nbformat nbclient quartodoc
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
