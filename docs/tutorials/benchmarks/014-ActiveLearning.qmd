@@ -61,6 +61,7 @@ Currently, the default active learning acquisition function implemented is `qNeg
 The `ActiveLearningStrategy` uses Monte-Carlo-integration to evaluate the acquisition function. The number of integration nodes significantly influences the speed of the integration. These can be adjusted by changing the parameter `data_model.num_sobol_samples`. Note that a sample size representing a power of $2$ increases performance.
 
 ```{python}
+# | output: false
 # Manual set up of ActiveLearning
 from bofire.data_models.acquisition_functions.api import qNegIntPosVar
 from bofire.data_models.strategies.api import ActiveLearningStrategy
@@ -75,10 +76,13 @@ data_model = ActiveLearningStrategy(domain=himmelblau.domain, acquisition_functi
 recommender = strategies.map(data_model=data_model)
 recommender.tell(experiments=initial_experiments)
 candidates = recommender.ask(candidate_count=1)
+```
+```{python}
 display(candidates)
 ```
 
 ```{python}
+# | output: false
 # Running the active learning strategy
 n_iter = 1 if SMOKE_TEST else 20
 results = initial_experiments
@@ -93,6 +97,7 @@ for _ in range(n_iter):
 ```
 
 ```{python}
+# | output: false
 # Running a random strategy for comparison
 def strategy_factory(domain: Domain):
     data_model = RandomStrategy(domain=domain)
@@ -113,35 +118,35 @@ random_results = run(
 #### Plotting
 
 ```{python}
-plt.rcParams["figure.figsize"] = (10, 4)
+if not SMOKE_TEST:
+    plt.rcParams["figure.figsize"] = (10, 4)
 
-fig, ax = plt.subplots(1, 2)
-
+    fig, ax = plt.subplots(1, 2)
 
 # contour plot of himmelblau
-def f(grid):
-    return (grid[0] ** 2 + grid[1] - 11) ** 2 + (grid[0] + grid[1] ** 2) ** 2
+    def f(grid):
+        return (grid[0] ** 2 + grid[1] - 11) ** 2 + (grid[0] + grid[1] ** 2) ** 2
 
 
-X_grid = np.arange(-7, 7, 0.01)
-Y_grid = np.arange(-7, 7, 0.01)
-mesh = np.meshgrid(X_grid, Y_grid)
-Z = f(grid=mesh)
-levels = np.linspace(Z.min(), Z.max(), 6)
+    X_grid = np.arange(-7, 7, 0.01)
+    Y_grid = np.arange(-7, 7, 0.01)
+    mesh = np.meshgrid(X_grid, Y_grid)
+    Z = f(grid=mesh)
+    levels = np.linspace(Z.min(), Z.max(), 6)
 
 
-ax[0].contourf(X_grid, Y_grid, Z, cmap=cm.viridis)
-ax[0].scatter(random_results[0][0].x_1, random_results[0][0].x_2, c="white")
-ax[1].contourf(X_grid, Y_grid, Z, cmap=cm.viridis)
-ax[1].scatter(results.x_1, results.x_2, c="white")
+    ax[0].contourf(X_grid, Y_grid, Z, cmap=cm.viridis)
+    ax[0].scatter(random_results[0][0].x_1, random_results[0][0].x_2, c="white")
+    ax[1].contourf(X_grid, Y_grid, Z, cmap=cm.viridis)
+    ax[1].scatter(results.x_1, results.x_2, c="white")
 
-ax[0].axis([-7, 7, -7, 7])
-ax[0].set_xlabel("$x_1$")
-ax[1].set_xlabel("$x_1$")
-ax[0].set_ylabel("$x_2$")
-ax[0].set_title("random strategy")
-ax[1].set_title("active learning strategy")
-fig.show()
+    ax[0].axis([-7, 7, -7, 7])
+    ax[0].set_xlabel("$x_1$")
+    ax[1].set_xlabel("$x_1$")
+    ax[0].set_ylabel("$x_2$")
+    ax[0].set_title("random strategy")
+    ax[1].set_title("active learning strategy")
+    fig.show()
 ```
 
 The plot shows the exploratory behavior of the `ActiveLearningStrategy`.
@@ -151,8 +156,8 @@ The plot shows the exploratory behavior of the `ActiveLearningStrategy`.
 Now, we want to actively learn an objective function with a multi-dimensional output space. This is shown by an example function with $2$ output variables. For this, we again utilize the Himmelblau benchmark function and the Ackley function.
 
 \begin{equation}
-    \bm{f}: \mathbb{R}^2 \rightarrow \mathbb{R}^2   \quad | \quad 
-    \bm{f}(x_1, x_2) =
+    f: \mathbb{R}^2 \rightarrow \mathbb{R}^2   \quad | \quad 
+    f(x_1, x_2) =
         \begin{pmatrix}
             (x_1^2 + x_2 - 11)^2 + (x_1 + x_2^2) ^2 \\
             -20\exp \left[-0.2{\sqrt {0.5\left(x_1^{2}+x_2^{2}\right)}}\right]
@@ -208,6 +213,7 @@ For the multi-objective function we need to pass two models to the strategy as e
 By default, the `ActiveLearningStrategy` focusses on minimizing the negative integrated posterior variance of each model equally. To minimize the variances in a more specific way certain weights can be provided for each output feature. This can be done by passing a `dictionary` containing the individual weights for each output feature with its corresponding key to the parameter `weights`.
 
 ```{python}
+# | output: false
 # Manual set up of ActiveLearning
 weights = {
     "f_0": 0.4,
@@ -235,10 +241,13 @@ data_model = ActiveLearningStrategy(
 recommender = strategies.map(data_model=data_model)
 recommender.tell(experiments=initial_experiments)
 candidates = recommender.ask(candidate_count=1)
+```
+```{python}
 display(candidates)
 ```
 
 ```{python}
+# | output: false
 # Running the active learning strategy
 n_iter = 1 if SMOKE_TEST else 20
 results = initial_experiments
@@ -253,6 +262,7 @@ for _ in range(n_iter):
 ```
 
 ```{python}
+# | output: false
 random_results = run(
     function,
     strategy_factory=strategy_factory,
@@ -267,51 +277,52 @@ random_results = run(
 #### Plotting
 
 ```{python}
-plt.rcParams["figure.figsize"] = (10, 8)
-fig, ax = plt.subplots(2, 2)
+if not SMOKE_TEST:
+    plt.rcParams["figure.figsize"] = (10, 8)
+    fig, ax = plt.subplots(2, 2)
 
 
-def f1(grid):
-    return (
-        -20 * np.exp(-0.2 * np.sqrt(0.5 * (grid[0] ** 2 + grid[1] ** 2)))
-        - np.exp(0.5 * (np.cos(2 * np.pi * grid[0]) + np.cos(2 * np.pi * grid[1])))
-        + np.exp(1)
-        + 20
+    def f1(grid):
+        return (
+            -20 * np.exp(-0.2 * np.sqrt(0.5 * (grid[0] ** 2 + grid[1] ** 2)))
+            - np.exp(0.5 * (np.cos(2 * np.pi * grid[0]) + np.cos(2 * np.pi * grid[1])))
+            + np.exp(1)
+            + 20
+        )
+
+
+    Z1 = f1(mesh)
+    levels = np.linspace(Z1.min(), Z1.max(), 10)
+    ax[0, 0].contourf(
+        X_grid,
+        Y_grid,
+        Z,
+        cmap=cm.viridis,
     )
+    ax[0, 0].scatter(random_results[0][0].x_1, random_results[0][0].x_2, c="white")
+    ax[0, 1].contourf(
+        X_grid,
+        Y_grid,
+        Z,
+        cmap=cm.viridis,
+    )
+    ax[0, 1].scatter(results.x_1, results.x_2, c="white")
+    ax[1, 0].contourf(X_grid, Y_grid, Z1, cmap=cm.viridis, levels=levels)
+    ax[1, 0].scatter(
+        random_results[0][0].x_1,
+        random_results[0][0].x_2,
+        c="white",
+        edgecolors="black",
+    )
+    ax[1, 1].contourf(X_grid, Y_grid, Z1, cmap=cm.viridis, levels=levels)
+    ax[1, 1].scatter(results.x_1, results.x_2, c="white", edgecolors="black")
 
-
-Z1 = f1(mesh)
-levels = np.linspace(Z1.min(), Z1.max(), 10)
-ax[0, 0].contourf(
-    X_grid,
-    Y_grid,
-    Z,
-    cmap=cm.viridis,
-)
-ax[0, 0].scatter(random_results[0][0].x_1, random_results[0][0].x_2, c="white")
-ax[0, 1].contourf(
-    X_grid,
-    Y_grid,
-    Z,
-    cmap=cm.viridis,
-)
-ax[0, 1].scatter(results.x_1, results.x_2, c="white")
-ax[1, 0].contourf(X_grid, Y_grid, Z1, cmap=cm.viridis, levels=levels)
-ax[1, 0].scatter(
-    random_results[0][0].x_1,
-    random_results[0][0].x_2,
-    c="white",
-    edgecolors="black",
-)
-ax[1, 1].contourf(X_grid, Y_grid, Z1, cmap=cm.viridis, levels=levels)
-ax[1, 1].scatter(results.x_1, results.x_2, c="white", edgecolors="black")
-
-ax[0, 0].axis([-7, 7, -7, 7])
-ax[1, 0].set_xlabel("$x_1$")
-ax[1, 1].set_xlabel("$x_1$")
-ax[0, 0].set_ylabel("$x_2$")
-ax[1, 0].set_ylabel("$x_2$")
-ax[0, 0].set_title("random strategy")
-ax[0, 1].set_title("active learning strategy")
-fig.show()
+    ax[0, 0].axis([-7, 7, -7, 7])
+    ax[1, 0].set_xlabel("$x_1$")
+    ax[1, 1].set_xlabel("$x_1$")
+    ax[0, 0].set_ylabel("$x_2$")
+    ax[1, 0].set_ylabel("$x_2$")
+    ax[0, 0].set_title("random strategy")
+    ax[0, 1].set_title("active learning strategy")
+    fig.show()
 ```
