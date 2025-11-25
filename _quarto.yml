@@ -150,6 +150,16 @@ website:
         href: index.qmd
       - text: "Getting Started"
         href: getting_started.qmd
+      - text: "User Guides"
+        menu:
+          - text: "Domain Configuration"
+            href: docs/userguides/domain.qmd
+          - text: "Strategies"
+            href: docs/userguides/strategies.qmd
+          - text: "Surrogate Models"
+            href: docs/userguides/surrogates.qmd
+          - text: "Data Models vs Functionals"
+            href: docs/userguides/data_models_functionals.qmd
       - text: "Examples"
         menu:
           - text: "Basic Examples"
@@ -162,16 +172,6 @@ website:
             href: docs/tutorials/doe/index.qmd
           - text: "Serialization"
             href: docs/tutorials/serialization/index.qmd
-      - text: "User Guides"
-        menu:
-          - text: "Domain Configuration"
-            href: docs/userguides/domain.qmd
-          - text: "Strategies"
-            href: docs/userguides/strategies.qmd
-          - text: "Surrogate Models"
-            href: docs/userguides/surrogates.qmd
-          - text: "Data Models vs Functionals"
-            href: docs/userguides/data_models_functionals.qmd
       - text: "API Reference"
         href: docs/reference/index.qmd
     right:
