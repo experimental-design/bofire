@@ -153,7 +153,6 @@ website:
             - docs/tutorials/benchmarks/index.qmd
             - docs/tutorials/benchmarks/001-Himmelblau.qmd
             - docs/tutorials/benchmarks/002-DTLZ2.qmd
-            - docs/tutorials/benchmarks/004-Aspen_benchmark.qmd
             - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.qmd
             - docs/tutorials/benchmarks/006-30dimBranin.qmd
             - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.qmd

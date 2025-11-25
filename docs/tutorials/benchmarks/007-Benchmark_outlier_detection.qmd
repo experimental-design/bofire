@@ -56,8 +56,8 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.surrogates.api import ScalerEnum, SingleTaskGPSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate as BotorchSurrogateDM
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.surrogates.utils import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -139,7 +139,6 @@ class SingleTaskVariationalGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(range(tX.shape[1])),
-                ard_num_dims=1,  # this keyword is ignored
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
                 ),

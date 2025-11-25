@@ -111,7 +111,7 @@ for _ in range(n_iter):
     surrogate = TanimotoGPSurrogate(
         inputs=Benchmark.domain.inputs,
         outputs=Benchmark.domain.outputs,
-        input_preprocessing_specs=specs,
+        categorical_encodings=specs,
     )
 
     def sobo_factory(domain: Domain, surrogate=surrogate):

@@ -161,4 +161,4 @@ notebook_test_stats.csv
 
 **/*.quarto_ipynb
 
-.jupyter-cache
+**/.jupyter_cache

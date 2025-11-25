@@ -8,8 +8,6 @@ jupyter: python3
 Showcase of active learning in bofire. Active learning per definition focusses on fitting the model to the experimental observations best possible in an iterative manner reducing some kind of uncertainty. The ActiveLearningStrategy proposes a set of evaluation points that will gain the most information about the problem each iteration. Thus, an unknown black-box-function can be approximated without optimization. It represents an exploration-only strategy.
 
 ```{python}
-#| papermill: {duration: 3.229388, end_time: '2024-10-10T20:35:57.504196', exception: false, start_time: '2024-10-10T20:35:54.274808', status: completed}
-#| tags: []
 import os
 
 import matplotlib.pyplot as plt
@@ -39,8 +37,6 @@ For a 1-D objective function. The Himmelblau benchmark is used.
 To start the active learning strategy we need to supply some initial data points to set up the Gaussian Regression Model in the background.
 
 ```{python}
-#| papermill: {duration: 0.017059, end_time: '2024-10-10T20:35:57.530124', exception: false, start_time: '2024-10-10T20:35:57.513065', status: completed}
-#| tags: []
 himmelblau = Himmelblau()
 
 
@@ -65,8 +61,6 @@ Currently, the default active learning acquisition function implemented is `qNeg
 The `ActiveLearningStrategy` uses Monte-Carlo-integration to evaluate the acquisition function. The number of integration nodes significantly influences the speed of the integration. These can be adjusted by changing the parameter `data_model.num_sobol_samples`. Note that a sample size representing a power of $2$ increases performance.
 
 ```{python}
-#| papermill: {duration: 0.19008, end_time: '2024-10-10T20:35:57.729662', exception: true, start_time: '2024-10-10T20:35:57.539582', status: failed}
-#| tags: []
 # Manual set up of ActiveLearning
 from bofire.data_models.acquisition_functions.api import qNegIntPosVar
 from bofire.data_models.strategies.api import ActiveLearningStrategy
@@ -85,13 +79,11 @@ display(candidates)
 ```
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 # Running the active learning strategy
-max_iter = 20
+n_iter = 1 if SMOKE_TEST else 20
 results = initial_experiments
 
-for _ in range(max_iter):
+for _ in range(n_iter):
     # run active learning strategy
     X = recommender.ask(candidate_count=1)[himmelblau.domain.inputs.get_keys()]
     Y = himmelblau.f(X)
@@ -101,8 +93,6 @@ for _ in range(max_iter):
 ```
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 # Running a random strategy for comparison
 def strategy_factory(domain: Domain):
     data_model = RandomStrategy(domain=domain)
@@ -112,7 +102,7 @@ def strategy_factory(domain: Domain):
 random_results = run(
     himmelblau,
     strategy_factory=strategy_factory,
-    n_iterations=max_iter if not SMOKE_TEST else 1,
+    n_iterations=n_iter,
     metric=lambda domain, experiments: 1.0,
     initial_sampler=sample,
     n_runs=1,
@@ -123,8 +113,6 @@ random_results = run(
 #### Plotting
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 plt.rcParams["figure.figsize"] = (10, 4)
 
 fig, ax = plt.subplots(1, 2)
@@ -174,8 +162,6 @@ Now, we want to actively learn an objective function with a multi-dimensional ou
 \end{equation}
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 inputs = Inputs(
     features=[
         ContinuousInput(key="x_1", bounds=(-6, 6)),
@@ -222,8 +208,6 @@ For the multi-objective function we need to pass two models to the strategy as e
 By default, the `ActiveLearningStrategy` focusses on minimizing the negative integrated posterior variance of each model equally. To minimize the variances in a more specific way certain weights can be provided for each output feature. This can be done by passing a `dictionary` containing the individual weights for each output feature with its corresponding key to the parameter `weights`.
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 # Manual set up of ActiveLearning
 weights = {
     "f_0": 0.4,
@@ -255,13 +239,11 @@ display(candidates)
 ```
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 # Running the active learning strategy
-max_iter = 20
+n_iter = 1 if SMOKE_TEST else 20
 results = initial_experiments
 
-for _ in range(max_iter):
+for _ in range(n_iter):
     # run active learning strategy
     X = recommender.ask(candidate_count=1)[domain.inputs.get_keys()]
     Y = function.f(candidates=X)
@@ -271,12 +253,10 @@ for _ in range(max_iter):
 ```
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 random_results = run(
     function,
     strategy_factory=strategy_factory,
-    n_iterations=max_iter if not SMOKE_TEST else 1,
+    n_iterations=n_iter,
     metric=lambda domain, experiments: 1.0,
     initial_sampler=sample,
     n_runs=1,
@@ -287,8 +267,6 @@ random_results = run(
 #### Plotting
 
 ```{python}
-#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
-#| tags: []
 plt.rcParams["figure.figsize"] = (10, 8)
 fig, ax = plt.subplots(2, 2)
 

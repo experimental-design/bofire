@@ -14,9 +14,6 @@ Classic optimization benchmark using the Himmelblau function.
 ### [002 - DTLZ2](002-DTLZ2.qmd)
 Multi-objective optimization using the DTLZ2 test problem.
 
-### [004 - Aspen Benchmark](004-Aspen_benchmark.qmd)
-Industrial process optimization using Aspen simulation.
-
 ### [005 - Hartmann with N-Choose-K](005-Hartmann_with_nchoosek.qmd)
 Hartmann function optimization with n-choose-k constraints.
 
