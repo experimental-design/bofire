@@ -1,8 +1,0 @@
-# Constraints
-
-::: {.callout-note}
-API documentation for constraint data models.
-:::
-
-<!-- TODO: Replace with Quarto autodoc when available -->
-See `bofire.data_models.constraints` module.

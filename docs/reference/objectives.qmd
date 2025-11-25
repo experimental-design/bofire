@@ -1,7 +1,0 @@
-# Objectives
-::: {.callout-note}
-API documentation for objective data models.
-:::
-
-<!-- TODO: Replace with Quarto autodoc when available -->
-See `bofire.data_models.objectives` module.

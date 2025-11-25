@@ -1,3 +1,0 @@
-# strategies { #bofire.strategies }
-
-`strategies`

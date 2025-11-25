@@ -28,12 +28,15 @@ quartodoc:
   dir: docs/reference
   parser: google
   sections:
-    - title: Domain
-      desc: Domain and feature data models
+    - title: Data Models - Domain
+      desc: Domain configuration data models
       contents:
         - data_models.domain.domain.Domain
-    - title: Features
-      desc: Input and output features
+        - data_models.domain.features.Inputs
+        - data_models.domain.features.Outputs
+        - data_models.domain.constraints.Constraints
+    - title: Data Models - Features
+      desc: Feature data models
       contents:
         - name: data_models.features.api
           members:
@@ -47,8 +50,56 @@ quartodoc:
             - MolecularInput
             - CategoricalMolecularInput
             - TaskInput
+    - title: Data Models - Strategies
+      desc: Strategy configuration data models
+      contents:
+        - name: data_models.strategies.api
+          members:
+            - DoEStrategy
+            - FactorialStrategy
+            - FractionalFactorialStrategy
+            - ActiveLearningStrategy
+            - BotorchStrategy
+            - EntingStrategy
+            - MoboStrategy
+            - MultiFidelityStrategy
+            - MultiobjectiveStrategy
+            - AdditiveSoboStrategy
+            - CustomSoboStrategy
+    - title: Data Models - Kernels
+      desc: Kernel configuration data models
+      contents:
+        - name: data_models.kernels.api
+          members:
+            - Kernel
+            - AdditiveKernel
+            - MultiplicativeKernel
+            - ScaleKernel
+            - MaternKernel
+            - RBFKernel
+            - LinearKernel
+            - PolynomialKernel
+            - HammingDistanceKernel
+            - TanimotoKernel
+            - WassersteinKernel
+    - title: Data Models - Surrogates
+      desc: Surrogate model configuration data models
+      contents:
+        - name: data_models.surrogates.api
+          members:
+            - Surrogate
+            - SingleTaskGPSurrogate
+            - MixedSingleTaskGPSurrogate
+            - MultiTaskGPSurrogate
+            - RobustSingleTaskGPSurrogate
+            - TanimotoGPSurrogate
+            - LinearSurrogate
+            - PolynomialSurrogate
+            - RandomForestSurrogate
+            - MLPEnsemble
+            - BotorchSurrogates
     - title: Strategies
-      desc: Optimization strategies
+      desc: Strategy implementations
       contents:
         - name: strategies.api
           members:
@@ -68,6 +119,21 @@ quartodoc:
             - ActiveLearningStrategy
             - ShortestPathStrategy
             - StepwiseStrategy
+    - title: Surrogates
+      desc: Surrogate model implementations
+      contents:
+        - name: surrogates.api
+          members:
+            - Surrogate
+            - TrainableSurrogate
+            - SingleTaskGPSurrogate
+            - MultiTaskGPSurrogate
+            - BotorchSurrogates
+            - LinearDeterministicSurrogate
+            - EmpiricalSurrogate
+            - RandomForestSurrogate
+            - MLPEnsemble
+            - PiecewiseLinearGPSurrogate
 
 website:
   title: "BoFire"
@@ -153,6 +219,7 @@ website:
             - docs/tutorials/benchmarks/index.qmd
             - docs/tutorials/benchmarks/001-Himmelblau.qmd
             - docs/tutorials/benchmarks/002-DTLZ2.qmd
+            - docs/tutorials/benchmarks/004-Aspen_benchmark.qmd
             - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.qmd
             - docs/tutorials/benchmarks/006-30dimBranin.qmd
             - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.qmd

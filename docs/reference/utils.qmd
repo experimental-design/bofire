@@ -1,8 +1,0 @@
-# Utils
-
-::: {.callout-note}
-API documentation for utility functions.
-:::
-
-<!-- TODO: Replace with Quarto autodoc when available -->
-See `bofire.utils` module.
