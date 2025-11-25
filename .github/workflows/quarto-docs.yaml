@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install ".[optimization,cheminfo]" jupyter jupyter-cache nbformat nbclient quartodoc
+          pip install ".[optimization,cheminfo]" jupyter jupyter-cache nbformat nbclient quartodoc seaborn
 
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
