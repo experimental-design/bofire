@@ -60,7 +60,7 @@ def represent_categories_as_by_their_states(
 
 
 def get_formula_from_string(
-    model_type: str | Formula | None = "linear",
+    model_type: str | Formula = "linear",
     inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:
@@ -85,7 +85,7 @@ def get_formula_from_string(
         # build model if a keyword and a problem are given.
     # linear model#
 
-    if model_type is not None and model_type in [
+    if model_type in [
         "linear",
         "linear-and-quadratic",
         "linear-and-interactions",
