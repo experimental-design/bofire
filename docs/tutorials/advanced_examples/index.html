@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>BoFire</title>
+<title>Advanced Examples – BoFire</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -58,29 +58,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<link href="./install.html" rel="next">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-9338a2aedca5918bf5568e26fd7c5ceb.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script src="../../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../../">
+<link href="../../../docs/tutorials/advanced_examples/custom_sobo.html" rel="next">
+<link href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" rel="prev">
+<script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-dark-9338a2aedca5918bf5568e26fd7c5ceb.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -109,37 +110,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
-
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../../styles.css">
 </head>
 
 <body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
@@ -311,9 +283,9 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    <a href="../../../index.html" class="navbar-brand navbar-brand-logo">
     </a>
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../../../index.html">
     <span class="navbar-title">BoFire</span>
     </a>
   </div>
@@ -324,11 +296,11 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link active" href="../../../index.html" aria-current="page"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./getting_started.html"> 
+    <a class="nav-link" href="../../../getting_started.html"> 
 <span class="menu-text">Getting Started</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -337,19 +309,19 @@ window.Quarto = {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-user-guides">    
         <li>
-    <a class="dropdown-item" href="./docs/userguides/domain.html">
+    <a class="dropdown-item" href="../../../docs/userguides/domain.html">
  <span class="dropdown-text">Domain Configuration</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/userguides/strategies.html">
+    <a class="dropdown-item" href="../../../docs/userguides/strategies.html">
  <span class="dropdown-text">Strategies</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/userguides/surrogates.html">
+    <a class="dropdown-item" href="../../../docs/userguides/surrogates.html">
  <span class="dropdown-text">Surrogate Models</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/userguides/data_models_functionals.html">
+    <a class="dropdown-item" href="../../../docs/userguides/data_models_functionals.html">
  <span class="dropdown-text">Data Models vs Functionals</span></a>
   </li>  
     </ul>
@@ -360,29 +332,29 @@ window.Quarto = {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-examples">    
         <li>
-    <a class="dropdown-item" href="./docs/tutorials/basic_examples/index.html">
+    <a class="dropdown-item" href="../../../docs/tutorials/basic_examples/index.html">
  <span class="dropdown-text">Basic Examples</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/tutorials/advanced_examples/index.html">
+    <a class="dropdown-item" href="../../../docs/tutorials/advanced_examples/index.html">
  <span class="dropdown-text">Advanced Examples</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/tutorials/benchmarks/index.html">
+    <a class="dropdown-item" href="../../../docs/tutorials/benchmarks/index.html">
  <span class="dropdown-text">Benchmarks</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/tutorials/doe/index.html">
+    <a class="dropdown-item" href="../../../docs/tutorials/doe/index.html">
  <span class="dropdown-text">Design of Experiments</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./docs/tutorials/serialization/index.html">
+    <a class="dropdown-item" href="../../../docs/tutorials/serialization/index.html">
  <span class="dropdown-text">Serialization</span></a>
   </li>  
     </ul>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="./docs/reference/index.html"> 
+    <a class="nav-link" href="../../../docs/reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
 </ul>
@@ -404,7 +376,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Introduction</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/index.html">Advanced Examples</a></li><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/index.html">Advanced Examples</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -415,29 +387,291 @@ window.Quarto = {
 <!-- sidebar -->
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
-      <a href="./index.html" class="sidebar-logo-link">
+      <a href="../../../index.html" class="sidebar-logo-link">
       </a>
       </div>
     <div class="sidebar-menu-container"> 
     <ul class="list-unstyled mt-1">
-        <li class="sidebar-item">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Basic Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Introduction</span></a>
+  <a href="../../../docs/tutorials/basic_examples/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic Examples</span></a>
   </div>
 </li>
-        <li class="sidebar-item">
+          <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./install.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Installation Guide</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./getting_started.html" class="sidebar-item-text sidebar-link">
+  <a href="../../../docs/tutorials/basic_examples/basic_terminology.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Basic terminology</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Reaction_Optimization_Example.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Getting started by Example: Optimization of Reaction Conditions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Model_Fitting_and_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Building with BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Outlier Detection and Robust GP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classification Surrogate Tests</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Advanced Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/index.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Advanced Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Custom Sobo Strategy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/desirability_objectives.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Desirability Functions for Multi-Objective Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">For optimizations in the bofire domain, a GA optimizer is available</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/merging_objectives.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Merging multiple objectives to a scalar target for single-target BO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-fidelity Bayesian Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Input Features as Output Objectives</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/random_forest_in_bofire.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Random Forest in BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Benchmarks</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Benchmark Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/001-Himmelblau.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/002-DTLZ2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DTLZ2 Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+ <span class="menu-text">docs/tutorials/benchmarks/004-Aspen_benchmark.qmd</span>
+  </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/006-30dimBranin.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">30dim Branin Benchmark with SAASBO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/007-Benchmark_outlier_detection.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Outlier detection benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/008-Himmelblau_with_outliers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark with outliers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/009-Bayesian_optimization_over_molecules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bayesian Optimisation Over Molecules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/010-LSRBO.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Local Search Region Bayesian Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/011-ZDT1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ZDT1</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/012-BNH.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">BNH Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/013-TNK.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TNK Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/014-ActiveLearning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Active Learning</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Design of Experiments</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design of Experiments (DOE)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/basic_examples.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic Examples for the DoE Subpackage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/design_with_explicit_formula.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design with explicit Formula</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/fractional_factorial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Full and Fractional Factorial Designs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/nchoosek_constraint.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design with NChooseK constraint</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/optimality_criteria.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DoE Optimality Criteria in BoFire</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Serialization</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Serialization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/models_serial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Building with BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/strategies_serial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Strategy Serialization with BoFire</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -448,108 +682,87 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <li><a href="#advanced-examples" id="toc-advanced-examples" class="nav-link active" data-scroll-target="#advanced-examples">Advanced Examples</a>
   <ul class="collapse">
-  <li><a href="#experimental-design" id="toc-experimental-design" class="nav-link" data-scroll-target="#experimental-design">Experimental design</a></li>
-  <li><a href="#multi-objective-optimization" id="toc-multi-objective-optimization" class="nav-link" data-scroll-target="#multi-objective-optimization">Multi-objective optimization</a></li>
-  <li><a href="#bayesian-optimization" id="toc-bayesian-optimization" class="nav-link" data-scroll-target="#bayesian-optimization">Bayesian optimization</a></li>
-  <li><a href="#design-of-experiments" id="toc-design-of-experiments" class="nav-link" data-scroll-target="#design-of-experiments">Design of Experiments</a></li>
-  <li><a href="#reference" id="toc-reference" class="nav-link" data-scroll-target="#reference">Reference</a></li>
+  <li><a href="#available-tutorials" id="toc-available-tutorials" class="nav-link" data-scroll-target="#available-tutorials">Available Tutorials</a>
+  <ul class="collapse">
+  <li><a href="#custom-sobo" id="toc-custom-sobo" class="nav-link" data-scroll-target="#custom-sobo">Custom SOBO</a></li>
+  <li><a href="#desirability-objectives" id="toc-desirability-objectives" class="nav-link" data-scroll-target="#desirability-objectives">Desirability Objectives</a></li>
+  <li><a href="#genetic-algorithm" id="toc-genetic-algorithm" class="nav-link" data-scroll-target="#genetic-algorithm">Genetic Algorithm</a></li>
+  <li><a href="#merging-objectives" id="toc-merging-objectives" class="nav-link" data-scroll-target="#merging-objectives">Merging Objectives</a></li>
+  <li><a href="#multifidelity-bayesian-optimization" id="toc-multifidelity-bayesian-optimization" class="nav-link" data-scroll-target="#multifidelity-bayesian-optimization">Multifidelity Bayesian Optimization</a></li>
+  <li><a href="#objectives-on-inputs" id="toc-objectives-on-inputs" class="nav-link" data-scroll-target="#objectives-on-inputs">Objectives on Inputs</a></li>
+  <li><a href="#random-forest-in-bofire" id="toc-random-forest-in-bofire" class="nav-link" data-scroll-target="#random-forest-in-bofire">Random Forest in BoFire</a></li>
+  <li><a href="#transfer-learning-bo" id="toc-transfer-learning-bo" class="nav-link" data-scroll-target="#transfer-learning-bo">Transfer Learning BO</a></li>
+  </ul></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/tutorials/advanced_examples/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+<main class="content" id="quarto-document-content">
+
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/index.html">Advanced Examples</a></li><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/index.html">Advanced Examples</a></li></ol></nav>
+<div class="quarto-title">
+<div class="quarto-title-block"><div><h1 class="title">Advanced Examples</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
+</div>
 
 
 
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
 
 
-<p><a href="https://experimental-design.github.io/bofire/"> <img width="350" src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/logos/bofire-long.png" alt="BoFire Logo"> </a></p>
-<section id="introduction" class="level1">
-<h1>Introduction</h1>
-<p>BoFire is a powerful Python package that serves as a comprehensive framework for experimental design and black-box optimization. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques. BoFire is developed by BO practitioners from the chemical and pharmaceutical industry and academic partners, with a focus on solving real-world experimental design and optimization challenges like reaction, formulation, digital twin and closed-loop optimization. It is actively used by hundreds of users across leading organizations such as Agilent, BASF, Bayer, Boehringer Ingelheim and Evonik.</p>
-<p>Why BoFire? BoFire …</p>
-<ul>
-<li>supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,</li>
-<li>separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,</li>
-<li>supports different specific and generic constraints as well as black-box output constraints,</li>
-<li>supports single and multi-objective Bayesian optimization,</li>
-<li>supports built-in chemical encodings and kernels to boost surrogate performance for optimization problems including molecules,</li>
-<li>can provide flexible DoEs that fulfill constraints,</li>
-<li>provides sampling methods for constrained mixed variable spaces,</li>
-<li>provides seamless integration into RESTful APIs, by builtin serialization capabilities for problems, optimization strategies and surrogates.</li>
-</ul>
-<p>You can find code-examples in the Getting Started section of this document, as well as full worked-out examples of code-usage in the /tutorials section of this repository!</p>
-<section id="experimental-design" class="level2">
-<h2 class="anchored" data-anchor-id="experimental-design">Experimental design</h2>
-<p>In the context of experimental design BoFire allows to define a design space</p>
-<p><span class="math display">\[
-\mathbb{X} = x_1 \otimes x_2 \ldots \otimes x_D
-\]</span></p>
-<p>where the design parameters may take values depending on their type and domain, e.g.</p>
-<ul>
-<li>continuous: <span class="math inline">\(x_1 \in [0, 1]\)</span></li>
-<li>discrete: <span class="math inline">\(x_2 \in \{1, 2, 5, 7.5\}\)</span></li>
-<li>categorical: <span class="math inline">\(x_3 \in \{A, B, C\}\)</span></li>
-</ul>
-<p>and a set of equations define additional experimental constraints, e.g.</p>
-<ul>
-<li>linear equality: <span class="math inline">\(\sum x_i = 1\)</span></li>
-<li>linear inequality: <span class="math inline">\(2 x_1 \leq x_2\)</span></li>
-<li>non-linear inequality: <span class="math inline">\(\sum x_i^2 \leq 1\)</span></li>
-<li>n-choose-k: only <span class="math inline">\(k\)</span> out of <span class="math inline">\(n\)</span> parameters can take non-zero values.</li>
-</ul>
+</header>
+
+
+<section id="advanced-examples" class="level1">
+<h1>Advanced Examples</h1>
+<p>These notebooks showcase more specialized and advanced use cases in BoFire. These examples are not necessarily better strategies, but represent more complex uses of components within the library.</p>
+<section id="available-tutorials" class="level2">
+<h2 class="anchored" data-anchor-id="available-tutorials">Available Tutorials</h2>
+<section id="custom-sobo" class="level3">
+<h3 class="anchored" data-anchor-id="custom-sobo"><a href="../../../docs/tutorials/advanced_examples/custom_sobo.html">Custom SOBO</a></h3>
+<p>Create custom single-objective Bayesian optimization strategies.</p>
 </section>
-<section id="multi-objective-optimization" class="level2">
-<h2 class="anchored" data-anchor-id="multi-objective-optimization">Multi-objective optimization</h2>
-<p>In the context of multi-objective optimization BoFire allows to define a vector-valued optimization problem</p>
-<p><span class="math display">\[
-\mathrm{argmax}_{x \in \mathbb{X}} s(y(x))
-\]</span></p>
-<p>where</p>
-<ul>
-<li><span class="math inline">\(\mathbb{X}\)</span> is again the experimental design space</li>
-<li><span class="math inline">\(y = \{y_1, \ldots y_M\}\)</span> are known functions describing your experimental outputs and</li>
-<li><span class="math inline">\(s = \{s_1, \ldots s_M\}\)</span> are the objectives to be maximized. For instance, <span class="math inline">\(s_1\)</span> is the identity function if <span class="math inline">\(y_1\)</span> is to be maximized.</li>
-</ul>
-<p>Since the objectives are usually conflicting, there is no point <span class="math inline">\(x\)</span> that simultaneously optimizes all objectives. Instead the goal is to find the Pareto front of all optimal compromises.</p>
-<p>A decision maker can then explore these compromises to get a deep understanding of the problem and make the best informed decision.</p>
+<section id="desirability-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="desirability-objectives"><a href="../../../docs/tutorials/advanced_examples/desirability_objectives.html">Desirability Objectives</a></h3>
+<p>Working with desirability functions for multi-criteria optimization.</p>
 </section>
-<section id="bayesian-optimization" class="level2">
-<h2 class="anchored" data-anchor-id="bayesian-optimization">Bayesian optimization</h2>
-<p>In the context of Bayesian optimization we want to simultaneously learn the unknown function <span class="math inline">\(y(x)\)</span> (exploration), while focusing the experimental effort on promising regions (exploitation). This is done by using the experimental data to fit a probabilistic model <span class="math inline">\(p(y|x, \mathrm{data})\)</span> that estimates the distribution of possible outcomes for <span class="math inline">\(y\)</span>. An acquisition function <span class="math inline">\(a\)</span> then formulates the desired trade-off between exploration and exploitation</p>
-<p><span class="math display">\[
-\mathrm{argmax}_{x \in \mathbb{X}} a(s(p_y(x)))
-\]</span></p>
-<p>and the maximizer <span class="math inline">\(x_\mathrm{opt}\)</span> of this acquisition function determines the next experiment <span class="math inline">\(y(x)\)</span> to run.</p>
-<p>When there are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.</p>
+<section id="genetic-algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="genetic-algorithm"><a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html">Genetic Algorithm</a></h3>
+<p>Using genetic algorithms for optimization in BoFire.</p>
 </section>
-<section id="design-of-experiments" class="level2">
-<h2 class="anchored" data-anchor-id="design-of-experiments">Design of Experiments</h2>
-<p>BoFire can be used to generate optimal experimental designs with respect to various optimality criteria like D-optimality, A-optimality or uniform space filling.</p>
-<p>For this, the user specifies a design space and a model formula, then chooses an optimality criterion and the desired number of experiments in the design. The resulting optimization problem is then solved by <a href="https://coin-or.github.io/Ipopt/">IPOPT</a>.</p>
-<p>The doe subpackage also supports a wide range of constraints on the design space including linear and nonlinear equalities and inequalities as well a (limited) use of NChooseK constraints. The user can provide fixed experiments that will be treated as part of the design but remain fixed during the optimization process. While some of the <em>optimization</em> algorithms support non-continuous design variables, the doe subpackage only supports those that are continuous.</p>
-<p>By default IPOPT uses the freely available linear solver MUMPS. For large models choosing a different linear solver (e.g.&nbsp;ma57 from Coin-HSL) can vastly reduce optimization time. A free academic license for Coin-HSL can be obtained <a href="https://licences.stfc.ac.uk/product/coin-hsl">here</a>. Instructions on how to install additional linear solvers for IPOPT are given in the <a href="https://coin-or.github.io/Ipopt/INSTALL.html#DOWNLOAD_HSL">IPOPT documentation</a>. For choosing a specific (HSL) linear solver in BoFire you can just pass the name of the solver to <code>find_local_max_ipopt()</code> with the <code>linear_solver</code> option together with the library’s name in the option <code>hsllib</code>, e.g.</p>
-<pre><code>find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"linear_solver":"ma57", "hsllib":"libcoinhsl.so"})</code></pre>
+<section id="merging-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="merging-objectives"><a href="../../../docs/tutorials/advanced_examples/merging_objectives.html">Merging Objectives</a></h3>
+<p>Techniques for combining multiple objectives in optimization.</p>
 </section>
-<section id="reference" class="level2">
-<h2 class="anchored" data-anchor-id="reference">Reference</h2>
-<p>We would love for you to use BoFire in your work! If you do, please cite <a href="https://arxiv.org/abs/2408.05040">our paper</a>:</p>
-<pre><code>@misc{durholt2024bofire,
-  title={BoFire: Bayesian Optimization Framework Intended for Real Experiments},
-  author={Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Wagner Steuer Costa and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and David Walz and Niklas Wulkow and Behrang Shafei},
-  year={2024},
-  eprint={2408.05040},
-  archivePrefix={arXiv},
-  primaryClass={cs.LG},
-  url={https://arxiv.org/abs/2408.05040},
-}</code></pre>
+<section id="multifidelity-bayesian-optimization" class="level3">
+<h3 class="anchored" data-anchor-id="multifidelity-bayesian-optimization"><a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html">Multifidelity Bayesian Optimization</a></h3>
+<p>Leveraging multiple fidelity levels for efficient optimization.</p>
+</section>
+<section id="objectives-on-inputs" class="level3">
+<h3 class="anchored" data-anchor-id="objectives-on-inputs"><a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html">Objectives on Inputs</a></h3>
+<p>Defining optimization objectives directly on input parameters.</p>
+</section>
+<section id="random-forest-in-bofire" class="level3">
+<h3 class="anchored" data-anchor-id="random-forest-in-bofire"><a href="../../../docs/tutorials/advanced_examples/random_forest_in_bofire.html">Random Forest in BoFire</a></h3>
+<p>Using Random Forest as a surrogate model instead of Gaussian Processes.</p>
+</section>
+<section id="transfer-learning-bo" class="level3">
+<h3 class="anchored" data-anchor-id="transfer-learning-bo"><a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html">Transfer Learning BO</a></h3>
+<p>Applying transfer learning techniques to Bayesian optimization.</p>
 
 
 <!-- -->
 
+</section>
 </section>
 </section>
 
@@ -1024,118 +1237,53 @@ window.Quarto = {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
+      <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="pagination-link" aria-label="Classification Surrogate Tests">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Classification Surrogate Tests</span>
+      </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./install.html" class="pagination-link" aria-label="Installation Guide">
-        <span class="nav-page-text">Installation Guide</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="pagination-link" aria-label="Custom Sobo Strategy">
+        <span class="nav-page-text">Custom Sobo Strategy</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">a</span><span class="ot"> href</span><span class="op">=</span><span class="st">https://experimental-design.github.io/bofire/</span><span class="dt">&gt;</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> width</span><span class="op">=</span><span class="st">"350"</span><span class="ot"> src</span><span class="op">=</span><span class="st">"https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/logos/bofire-long.png"</span><span class="ot"> alt</span><span class="op">=</span><span class="st">"BoFire Logo"</span><span class="ot"> </span><span class="dt">/&gt;</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">a</span><span class="dt">&gt;</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu"># Introduction</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>BoFire is a powerful Python package that serves as a comprehensive framework for experimental design and black-box optimization. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques. BoFire is developed by BO practitioners from the chemical and pharmaceutical industry and academic partners, with a focus on solving real-world experimental design and optimization challenges like reaction, formulation, digital twin and closed-loop optimization.  It is actively used by hundreds of users across leading organizations such as Agilent, BASF, Bayer, Boehringer Ingelheim and Evonik.</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>Why BoFire? BoFire ...</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>supports different specific and generic constraints as well as black-box output constraints,</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>supports single and multi-objective Bayesian optimization,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>supports built-in chemical encodings and kernels to boost surrogate performance for optimization problems including molecules,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>can provide flexible DoEs that fulfill constraints,</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>provides sampling methods for constrained mixed variable spaces,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>provides seamless integration into RESTful APIs, by builtin serialization capabilities for problems, optimization strategies and surrogates.</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>You can find code-examples in the Getting Started section of this document, as well as full worked-out examples of code-usage in the /tutorials section of this repository!</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="fu">## Experimental design</span></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>In the context of experimental design BoFire allows to define a design space</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>\mathbb{X} = x_1 \otimes x_2 \ldots \otimes x_D</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>where the design parameters may take values depending on their type and domain, e.g.</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>continuous: $x_1 \in <span class="co">[</span><span class="ot">0, 1</span><span class="co">]</span>$</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>discrete: $x_2 \in <span class="sc">\{</span>1, 2, 5, 7.5<span class="sc">\}</span>$</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>categorical: $x_3 \in <span class="sc">\{</span>A, B, C<span class="sc">\}</span>$</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>and a set of equations define additional experimental constraints, e.g.</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>linear equality: $\sum x_i = 1$</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>linear inequality: $2 x_1 \leq x_2$</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>non-linear inequality: $\sum x_i^2 \leq 1$</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>n-choose-k: only $k$ out of $n$ parameters can take non-zero values.</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="fu">## Multi-objective optimization</span></span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>In the context of multi-objective optimization BoFire allows to define a vector-valued optimization problem</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>\mathrm{argmax}_{x \in \mathbb{X}} s(y(x))</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>where</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>$\mathbb{X}$ is again the experimental design space</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>$y = <span class="sc">\{</span>y_1, \ldots y_M<span class="sc">\}</span>$ are known functions describing your experimental outputs and</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a><span class="ss">* </span>$s = <span class="sc">\{</span>s_1, \ldots s_M<span class="sc">\}</span>$ are the objectives to be maximized. For instance, $s_1$ is the identity function if $y_1$ is to be maximized.</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>Since the objectives are usually conflicting, there is no point $x$ that simultaneously optimizes all objectives.</span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>Instead the goal is to find the Pareto front of all optimal compromises.</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>A decision maker can then explore these compromises to get a deep understanding of the problem and make the best informed decision.</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="fu">## Bayesian optimization</span></span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>In the context of Bayesian optimization we want to simultaneously learn the unknown function $y(x)$ (exploration), while focusing the experimental effort on promising regions (exploitation).</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>This is done by using the experimental data to fit a probabilistic model $p(y|x, \mathrm{data})$ that estimates the distribution of possible outcomes for $y$.</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>An acquisition function $a$ then formulates the desired trade-off between exploration and exploitation</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>\mathrm{argmax}_{x \in \mathbb{X}} a(s(p_y(x)))</span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>$$</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>and the maximizer $x_\mathrm{opt}$ of this acquisition function determines the next experiment $y(x)$ to run.</span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>When there are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.</span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="fu">## Design of Experiments</span></span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>BoFire can be used to generate optimal experimental designs with respect to various optimality criteria like D-optimality, A-optimality or uniform space filling.</span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>For this, the user specifies a design space and a model formula, then chooses an optimality criterion and the desired number of experiments in the design. The resulting optimization problem is then solved by <span class="co">[</span><span class="ot">IPOPT</span><span class="co">](https://coin-or.github.io/Ipopt/)</span>.</span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>The doe subpackage also supports a wide range of constraints on the design space including linear and nonlinear equalities and inequalities as well a (limited) use of NChooseK constraints. The user can provide fixed experiments that will be treated as part of the design but remain fixed during the optimization process. While some of the *optimization* algorithms support non-continuous design variables, the doe subpackage only supports those that are continuous.</span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>By default IPOPT uses the freely available linear solver MUMPS. For large models choosing a different linear solver (e.g. ma57 from Coin-HSL) can vastly reduce optimization time. A free academic license for Coin-HSL can be obtained <span class="co">[</span><span class="ot">here</span><span class="co">](https://licences.stfc.ac.uk/product/coin-hsl)</span>. Instructions on how to install additional linear solvers for IPOPT are given in the <span class="co">[</span><span class="ot">IPOPT documentation</span><span class="co">](https://coin-or.github.io/Ipopt/INSTALL.html#DOWNLOAD_HSL)</span>. For choosing a specific (HSL) linear solver in BoFire you can just pass the name of the solver to <span class="in">`find_local_max_ipopt()`</span> with the <span class="in">`linear_solver`</span> option together with the library's name in the option <span class="in">`hsllib`</span>, e.g.</span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a><span class="in">find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"linear_solver":"ma57", "hsllib":"libcoinhsl.so"})</span></span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reference</span></span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>We would love for you to use BoFire in your work! If you do, please cite <span class="co">[</span><span class="ot">our paper</span><span class="co">](https://arxiv.org/abs/2408.05040)</span>:</span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a><span class="in">    @misc{durholt2024bofire,</span></span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a><span class="in">      title={BoFire: Bayesian Optimization Framework Intended for Real Experiments},</span></span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a><span class="in">      author={Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Wagner Steuer Costa and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and David Walz and Niklas Wulkow and Behrang Shafei},</span></span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a><span class="in">      year={2024},</span></span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a><span class="in">      eprint={2408.05040},</span></span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a><span class="in">      archivePrefix={arXiv},</span></span>
-<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a><span class="in">      primaryClass={cs.LG},</span></span>
-<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a><span class="in">      url={https://arxiv.org/abs/2408.05040},</span></span>
-<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a><span class="in">    }</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Advanced Examples"</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu"># Advanced Examples</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>These notebooks showcase more specialized and advanced use cases in BoFire. These examples are not necessarily better strategies, but represent more complex uses of components within the library.</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Available Tutorials</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Custom SOBO](custom_sobo.qmd)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Create custom single-objective Bayesian optimization strategies.</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Desirability Objectives](desirability_objectives.qmd)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>Working with desirability functions for multi-criteria optimization.</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Genetic Algorithm](genetic_algorithm.qmd)</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>Using genetic algorithms for optimization in BoFire.</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Merging Objectives](merging_objectives.qmd)</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>Techniques for combining multiple objectives in optimization.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Multifidelity Bayesian Optimization](multifidelity_bo.qmd)</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>Leveraging multiple fidelity levels for efficient optimization.</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Objectives on Inputs](objectives_on_inputs.qmd)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>Defining optimization objectives directly on input parameters.</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Random Forest in BoFire](random_forest_in_bofire.qmd)</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>Using Random Forest as a surrogate model instead of Gaussian Processes.</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Transfer Learning BO](transfer_learning_bo.qmd)</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Applying transfer learning techniques to Bayesian optimization.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/tutorials/advanced_examples/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

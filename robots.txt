@@ -1,0 +1,1 @@
+Sitemap: https://experimental-design.github.io/bofire/sitemap.xml
