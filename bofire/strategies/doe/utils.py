@@ -60,7 +60,7 @@ def represent_categories_as_by_their_states(
 
 
 def get_formula_from_string(
-    model_type: Union[str, Formula] = "linear",
+    model_type: str | Formula = "linear",
     inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:

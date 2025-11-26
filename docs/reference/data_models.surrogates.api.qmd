@@ -1,0 +1,305 @@
+# data_models.surrogates.api { #bofire.data_models.surrogates.api }
+
+`data_models.surrogates.api`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [Surrogate](#bofire.data_models.surrogates.api.Surrogate) |  |
+| [SingleTaskGPSurrogate](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate) |  |
+| [MixedSingleTaskGPSurrogate](#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate) |  |
+| [MultiTaskGPSurrogate](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate) |  |
+| [RobustSingleTaskGPSurrogate](#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate) | Robust Relevance Pursuit Single Task Gaussian Process Surrogate. |
+| [TanimotoGPSurrogate](#bofire.data_models.surrogates.api.TanimotoGPSurrogate) |  |
+| [LinearSurrogate](#bofire.data_models.surrogates.api.LinearSurrogate) |  |
+| [PolynomialSurrogate](#bofire.data_models.surrogates.api.PolynomialSurrogate) |  |
+| [RandomForestSurrogate](#bofire.data_models.surrogates.api.RandomForestSurrogate) |  |
+| [MLPEnsemble](#bofire.data_models.surrogates.api.MLPEnsemble) |  |
+| [BotorchSurrogates](#bofire.data_models.surrogates.api.BotorchSurrogates) | "List of botorch surrogates. |
+
+### Surrogate { #bofire.data_models.surrogates.api.Surrogate }
+
+```python
+data_models.surrogates.api.Surrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.Surrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.Surrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.Surrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    outputs: objective functions for the surrogate
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### SingleTaskGPSurrogate { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate }
+
+```python
+data_models.surrogates.api.SingleTaskGPSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### MixedSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate }
+
+```python
+data_models.surrogates.api.MixedSingleTaskGPSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented(
+    my_type,
+)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### MultiTaskGPSurrogate { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate }
+
+```python
+data_models.surrogates.api.MultiTaskGPSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### RobustSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate }
+
+```python
+data_models.surrogates.api.RobustSingleTaskGPSurrogate()
+```
+
+Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
+
+A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.
+See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/
+Paper: https://arxiv.org/pdf/2410.24222
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name                   | Type            | Description                                                                                                            |
+|------------------------|-----------------|------------------------------------------------------------------------------------------------------------------------|
+| prior_mean_of_support  | Optional\[int\] | The prior mean of the support.                                                                                         |
+| convex_parametrization | bool            | Whether to use convex parametrization of the sparse noise model.                                                       |
+| cache_model_trace      | bool            | Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization. |
+
+#### Note {.doc-section .doc-section-note}
+
+The definition of "outliers" depends on the model capacity, so what is an outlier
+with respect to a simple model might not be an outlier with respect to a complex model.
+For this reason, it is necessary to bound the lengthscale of the GP kernel from below.
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented(
+    my_type,
+)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### TanimotoGPSurrogate { #bofire.data_models.surrogates.api.TanimotoGPSurrogate }
+
+```python
+data_models.surrogates.api.TanimotoGPSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+| [validate_moleculars](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars) | Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present. |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+##### validate_moleculars { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars }
+
+```python
+data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()
+```
+
+Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present.
+
+### LinearSurrogate { #bofire.data_models.surrogates.api.LinearSurrogate }
+
+```python
+data_models.surrogates.api.LinearSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.LinearSurrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### PolynomialSurrogate { #bofire.data_models.surrogates.api.PolynomialSurrogate }
+
+```python
+data_models.surrogates.api.PolynomialSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.PolynomialSurrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### RandomForestSurrogate { #bofire.data_models.surrogates.api.RandomForestSurrogate }
+
+```python
+data_models.surrogates.api.RandomForestSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_output_implemented](#bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented) | Abstract method to check output type for surrogate models |
+
+##### is_output_implemented { #bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented }
+
+```python
+data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)
+```
+
+Abstract method to check output type for surrogate models
+Args:
+    my_type: continuous or categorical output
+Returns:
+    bool: True if the output type is valid for the surrogate chosen, False otherwise
+
+### MLPEnsemble { #bofire.data_models.surrogates.api.MLPEnsemble }
+
+```python
+data_models.surrogates.api.MLPEnsemble()
+```
+
+
+
+### BotorchSurrogates { #bofire.data_models.surrogates.api.BotorchSurrogates }
+
+```python
+data_models.surrogates.api.BotorchSurrogates()
+```
+
+"List of botorch surrogates.
+
+Behaves similar to a Surrogate.
