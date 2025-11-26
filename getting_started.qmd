@@ -1,0 +1,515 @@
+---
+title: Basic terminology
+jupyter: python3
+---
+
+
+In the following it is showed how to setup optimization problems in BoFire and how to use strategies to solve them.
+
+
+## Setting up the optimization problem
+
+In BoFire, an optimization problem is defined by defining a domain containing input and output features,
+as well as optionally including constraints.
+
+### Features
+
+Input features can be continuous, discrete, categorical.
+
+We also support a range of specialized inputs that make defining your experiments easier, such as:
+- `MolecularInput` allows transformations of molecules to featurizations (`Fingerprints`, `Fragments` and more).
+- `TaskInput` enables transfer learning and multi-fidelity methods, where you have access to similar experiments that can inform your optimization.
+- `*DescriptorInput` gives additional information about its value, combining the data with its significance.
+
+```{python}
+#| papermill: {duration: 0.769684, end_time: '2024-10-10T20:36:29.430820', exception: false, start_time: '2024-10-10T20:36:28.661136', status: completed}
+#| tags: []
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
+
+
+x1 = ContinuousInput(key="conc_A", bounds=[0, 1])
+x2 = ContinuousInput(key="conc_B", bounds=[0, 1])
+x3 = ContinuousInput(key="conc_C", bounds=[0, 1])
+x4 = DiscreteInput(key="temperature", values=[20, 50, 90], unit="°C")
+
+x5 = CategoricalInput(
+    key="catalyst",
+    categories=["cat_X", "cat_Y", "cat_Z"],
+    allowed=[
+        True,
+        True,
+        False,
+    ],  # we have run out of catalyst Z, but still want to model past experiments
+)
+
+x6 = CategoricalDescriptorInput(
+    key="solvent",
+    categories=["water", "methanol", "ethanol"],
+    descriptors=["viscosity (mPa s)", "density (kg/m3)"],
+    values=[[1.0, 997], [0.59, 792], [1.2, 789]],
+)
+```
+
+We can define both continuous and categorical outputs. Each output feature should have an objective,
+which determines if we aim to minimize, maximize, or drive the feature to a given value. Furthermore, we can
+define weights between 0 and 1 in case the objectives should not be weighted equally.
+
+```{python}
+#| papermill: {duration: 0.008613, end_time: '2024-10-10T20:36:29.452617', exception: false, start_time: '2024-10-10T20:36:29.444004', status: completed}
+#| tags: []
+from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+
+
+objective1 = MaximizeObjective(
+    w=1.0,
+    bounds=[0.0, 1.0],
+)
+y1 = ContinuousOutput(key="yield", objective=objective1)
+
+objective2 = MinimizeObjective(w=1.0)
+y2 = ContinuousOutput(key="time_taken", objective=objective2)
+```
+
+In- and output features are collected in respective feature lists, which can be summarized
+with the `get_reps_df` method.
+
+```{python}
+#| papermill: {duration: 0.398482, end_time: '2024-10-10T20:36:29.863506', exception: false, start_time: '2024-10-10T20:36:29.465024', status: completed}
+#| tags: []
+from bofire.data_models.domain.api import Inputs, Outputs
+
+
+input_features = Inputs(features=[x1, x2, x3, x4, x5, x6])
+output_features = Outputs(features=[y1, y2])
+
+input_features.get_reps_df()
+```
+
+```{python}
+#| papermill: {duration: 0.009683, end_time: '2024-10-10T20:36:29.904163', exception: false, start_time: '2024-10-10T20:36:29.894480', status: completed}
+#| tags: []
+output_features.get_reps_df()
+```
+
+Individual features can be retrieved by name, and a collection of features can be retrieved with
+a list of names.
+
+```{python}
+#| papermill: {duration: 0.008096, end_time: '2024-10-10T20:36:29.925815', exception: false, start_time: '2024-10-10T20:36:29.917719', status: completed}
+#| tags: []
+input_features.get_by_key("catalyst")
+```
+
+```{python}
+#| papermill: {duration: 0.008321, end_time: '2024-10-10T20:36:29.947436', exception: false, start_time: '2024-10-10T20:36:29.939115', status: completed}
+#| tags: []
+input_features.get_by_keys(["catalyst", "conc_B"])
+```
+
+Features of a specific type can be returned by the `get` method. By using the `exact`
+argument, we can force the method to only return features that match the class exactly.
+
+```{python}
+#| papermill: {duration: 0.008406, end_time: '2024-10-10T20:36:29.970809', exception: false, start_time: '2024-10-10T20:36:29.962403', status: completed}
+#| tags: []
+input_features.get(CategoricalInput)
+```
+
+```{python}
+#| papermill: {duration: 0.008519, end_time: '2024-10-10T20:36:29.993081', exception: false, start_time: '2024-10-10T20:36:29.984562', status: completed}
+#| tags: []
+input_features.get(CategoricalInput, exact=True)
+```
+
+The `get_keys` method follows the same logic as the `get` method, but returns just the keys of the features instead of the features itself.
+
+```{python}
+#| papermill: {duration: 0.008301, end_time: '2024-10-10T20:36:30.015887', exception: false, start_time: '2024-10-10T20:36:30.007586', status: completed}
+#| tags: []
+input_features.get_keys(CategoricalInput)
+```
+
+The input feature container further provides methods to return a feature container with only all fixed or all free features.
+
+```{python}
+#| papermill: {duration: 0.008271, end_time: '2024-10-10T20:36:30.039024', exception: false, start_time: '2024-10-10T20:36:30.030753', status: completed}
+#| tags: []
+free_inputs = input_features.get_free()
+fixed_inputs = input_features.get_fixed()
+```
+
+One can uniformly sample from individual input features.
+
+```{python}
+#| papermill: {duration: 0.009305, end_time: '2024-10-10T20:36:30.062977', exception: false, start_time: '2024-10-10T20:36:30.053672', status: completed}
+#| tags: []
+x5.sample(2)
+```
+
+Or directly from input feature containers, uniform, sobol and LHS sampling is possible. A default, uniform sampling is used.
+
+```{python}
+#| papermill: {duration: 0.016638, end_time: '2024-10-10T20:36:30.094262', exception: false, start_time: '2024-10-10T20:36:30.077624', status: completed}
+#| tags: []
+from bofire.data_models.enum import SamplingMethodEnum
+
+
+X = input_features.sample(n=10, method=SamplingMethodEnum.LHS)
+
+X
+```
+
+### Constraints
+
+The search space can be further defined by constraints on the input features. BoFire supports linear equality and inequality constraints, as well as non-linear equality and inequality constraints.
+
+#### Linear constraints
+
+`LinearEqualityConstraint` and `LinearInequalityConstraint` are expressions of the form $\sum_i a_i x_i = b$ or $\leq b$ for equality and inequality constraints respectively.
+They take a list of names of the input features they are operating on, a list of left-hand-side coefficients $a_i$ and a right-hand-side constant $b$.
+
+```{python}
+#| papermill: {duration: 0.025392, end_time: '2024-10-10T20:36:30.143809', exception: false, start_time: '2024-10-10T20:36:30.118417', status: completed}
+#| tags: []
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
+
+
+# A mixture: x1 + x2 + x3 = 1
+constr1 = LinearEqualityConstraint(
+    features=["conc_A", "conc_B", "conc_C"],
+    coefficients=[1, 1, 1],
+    rhs=1,
+)
+
+# x1 + 2 * x3 < 0.8
+constr2 = LinearInequalityConstraint(
+    features=["conc_A", "conc_C"],
+    coefficients=[1, 2],
+    rhs=0.8,
+)
+```
+
+Linear constraints can only operate on `ContinuousInput` features.
+
+#### Nonlinear constraints
+
+`NonlinearEqualityConstraint` and `NonlinearInequalityConstraint` take any expression that can be evaluated by [pandas.eval](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.eval.html), including mathematical operators such as `sin`, `exp`, `log10` or exponentiation. So far, they cannot be used in any optimizations.
+
+```{python}
+#| papermill: {duration: 0.182596, end_time: '2024-10-10T20:36:30.361772', exception: false, start_time: '2024-10-10T20:36:30.179176', status: completed}
+#| tags: []
+from bofire.data_models.constraints.api import NonlinearEqualityConstraint
+
+
+# The unit circle: x1**2 + x2**2 = 1
+const3 = NonlinearEqualityConstraint(
+    features=["conc_A", "conc_B"], expression="conc_A**2 + conc_B**2 - 1"
+)
+const3
+```
+
+#### Combinatorial constraint
+
+Use `NChooseKConstraint` to express that we only want to have $k$ out of the $n$ parameters to take positive values.
+Think of a mixture, where we have long list of possible ingredients, but want to limit number of ingredients in any given recipe.
+
+```{python}
+#| papermill: {duration: 0.009512, end_time: '2024-10-10T20:36:30.386610', exception: false, start_time: '2024-10-10T20:36:30.377098', status: completed}
+#| tags: []
+from bofire.data_models.constraints.api import NChooseKConstraint
+
+
+# Only 1 or 2 out of 3 compounds can be present (have non-zero concentration)
+constr5 = NChooseKConstraint(
+    features=["conc_A", "conc_B", "conc_C"],
+    min_count=1,
+    max_count=2,
+    none_also_valid=False,
+)
+constr5
+```
+
+Note that we have to set a boolean, if none is also a valid selection, e.g. if we want to have 0, 1, or 2 of the ingredients in our recipe.
+
+
+#### CategoricalExcludeConstraint
+
+The `CategoricalExcludeConstraint` can be used to exclude certain combinations of categories between categorical features or exclude a combination between categories and numerical values. So far, this constraint is only supported by the `RandomStrategy`.
+
+In the example below, it would be forbidden that `cat_C` is used together with one of the solvents `methanol` or `ethanol`.
+
+```{python}
+from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
+    SelectionCondition,
+)
+
+
+feat_cat = CategoricalInput(
+    key="cat1",
+    categories=["cat_A", "cat_B", "cat_C"],
+)
+feat_solvent = CategoricalInput(
+    key="solvent", categories=["water", "methanol", "ethanol"]
+)
+
+constr6 = CategoricalExcludeConstraint(
+    features=["cat1", "solvent"],
+    conditions=[
+        SelectionCondition(selection=["cat_C"]),
+        SelectionCondition(selection=["methanol", "ethanol"]),
+    ],
+)
+```
+
+The next example shows how to forbid that solvent `ethanol` is used at a temperature higher than 40°C, this is achieved by using a `ThresholdCondition`.
+
+```{python}
+from bofire.data_models.constraints.api import ThresholdCondition
+
+
+feat_temp = ContinuousInput(
+    key="temperature",
+    bounds=[0, 100],
+    unit="°C",
+)
+constr7 = CategoricalExcludeConstraint(
+    features=["solvent", "temperature"],
+    conditions=[
+        SelectionCondition(selection=["water"]),
+        ThresholdCondition(
+            threshold=40,
+            operator=">=",
+        ),
+    ],
+)
+```
+
+Similar to the features, constraints can be grouped in a container which acts as the union constraints.
+
+```{python}
+#| papermill: {duration: 0.008133, end_time: '2024-10-10T20:36:30.410819', exception: false, start_time: '2024-10-10T20:36:30.402686', status: completed}
+#| tags: []
+from bofire.data_models.domain.api import Constraints
+
+
+constraints = Constraints(constraints=[constr1, constr2])
+```
+
+A summary of the constraints can be obtained by the method `get_reps_df`:
+
+```{python}
+#| papermill: {duration: 0.011042, end_time: '2024-10-10T20:36:30.438540', exception: false, start_time: '2024-10-10T20:36:30.427498', status: completed}
+#| tags: []
+constraints.get_reps_df()
+```
+
+We can check whether a point satisfies individual constraints or the list of constraints.
+
+```{python}
+#| papermill: {duration: 0.010048, end_time: '2024-10-10T20:36:30.464463', exception: false, start_time: '2024-10-10T20:36:30.454415', status: completed}
+#| tags: []
+constr2.is_fulfilled(X).values
+```
+
+Output constraints can be setup via sigmoid-shaped objectives passed as argument to the respective feature, which can then also be plotted.
+
+```{python}
+#| papermill: {duration: 1.414213, end_time: '2024-10-10T20:36:31.895159', exception: false, start_time: '2024-10-10T20:36:30.480946', status: completed}
+#| tags: []
+from bofire.data_models.objectives.api import MinimizeSigmoidObjective
+from bofire.plot.api import plot_objective_plotly
+
+
+output_constraint = MinimizeSigmoidObjective(w=1.0, steepness=10, tp=0.5)
+y3 = ContinuousOutput(key="y3", objective=output_constraint)
+
+output_features = Outputs(features=[y1, y2, y3])
+
+fig = plot_objective_plotly(feature=y3, lower=0, upper=1)
+
+fig.show()
+```
+
+### The domain
+
+The domain holds then all information about an optimization problem and can be understood as a search space definition. A detailed description of the domain can be found in [docs](https://experimental-design.github.io/bofire/domain).
+
+```{python}
+#| papermill: {duration: 0.042249, end_time: '2024-10-10T20:36:32.058183', exception: false, start_time: '2024-10-10T20:36:32.015934', status: completed}
+#| tags: []
+from bofire.data_models.domain.api import Domain
+
+
+domain = Domain(inputs=input_features, outputs=output_features, constraints=constraints)
+```
+
+In addition one can instantiate the domain also just from lists.
+
+```{python}
+#| papermill: {duration: 0.040091, end_time: '2024-10-10T20:36:32.233500', exception: false, start_time: '2024-10-10T20:36:32.193409', status: completed}
+#| tags: []
+domain_single_objective = Domain.from_lists(
+    inputs=[x1, x2, x3, x4, x5, x6],
+    outputs=[y1],
+    constraints=[],
+)
+```
+
+## Optimization
+
+To solve the optimization problem, we further need a solving strategy. BoFire supports strategies without a prediction model such as a random strategy and predictive strategies which are based on a prediction model.
+
+All strategies contain an `ask` method returning a defined number of candidate experiments.
+
+### Random Strategy
+
+```{python}
+#| papermill: {duration: 1.342557, end_time: '2024-10-10T20:36:33.757836', exception: true, start_time: '2024-10-10T20:36:32.415279', status: failed}
+#| tags: []
+import bofire.strategies.api as strategies
+from bofire.data_models.strategies.api import RandomStrategy
+
+
+strategy_data_model = RandomStrategy(domain=domain)
+
+random_strategy = strategies.map(strategy_data_model)
+random_candidates = random_strategy.ask(2)
+
+random_candidates
+```
+
+### Single objective Bayesian Optimization strategy
+
+Since a predictive strategy includes a prediction model, we need to generate some historical data, which we can afterwards pass as training data to the strategy via the tell method.
+
+For didactic purposes we just choose here from one of our benchmark methods.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+from bofire.benchmarks.single import Himmelblau
+
+
+benchmark = Himmelblau()
+
+(benchmark.domain.inputs + benchmark.domain.outputs).get_reps_df()
+```
+
+Generating some initial data works as follows:
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+samples = benchmark.domain.inputs.sample(10)
+
+experiments = benchmark.f(samples, return_complete=True)
+
+experiments
+```
+
+Let's setup the SOBO strategy and ask for a candidate. First we need a serializable data model that contains the hyperparameters.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+from pprint import pprint
+
+from bofire.data_models.acquisition_functions.api import qLogNEI
+from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDM
+
+
+sobo_strategy_data_model = SoboStrategyDM(
+    domain=benchmark.domain,
+    acquisition_function=qLogNEI(),
+)
+
+# print information about hyperparameters
+print("Acquisition function:", sobo_strategy_data_model.acquisition_function)
+print()
+print("Surrogate type:", sobo_strategy_data_model.surrogate_specs.surrogates[0].type)
+print()
+print("Surrogate's kernel:")
+pprint(sobo_strategy_data_model.surrogate_specs.surrogates[0].kernel.model_dump())
+```
+
+The actual strategy can then be created via the mapper function.
+
+```{python}
+sobo_strategy = strategies.map(sobo_strategy_data_model)
+sobo_strategy.tell(experiments=experiments)
+sobo_strategy.ask(candidate_count=1)
+```
+
+An alternative way is calling the strategy's constructor directly.
+
+```{python}
+sobo_strategy = strategies.SoboStrategy(sobo_strategy_data_model)
+```
+
+The latter way is helpful to keep type information.
+
+### Design of Experiments
+
+As a simple example for the DoE functionalities we consider the task of finding a D-optimal design for a fully-quadratic model with three design variables with bounds (0,1) and a mixture constraint.
+
+We define the design space including the constraint as a domain. Then we pass it to the optimization routine and specify the model. If the user does not indicate a number of experiments it will be chosen automatically based on the number of model terms.
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+import numpy as np
+
+from bofire.data_models.strategies.api import DoEStrategy
+from bofire.data_models.strategies.doe import DOptimalityCriterion
+
+
+domain = Domain.from_lists(inputs=[x1, x2, x3], outputs=[y1], constraints=[constr1])
+data_model = DoEStrategy(
+    domain=domain,
+    criterion=DOptimalityCriterion(formula="fully-quadratic"),
+)
+strategy = strategies.map(data_model=data_model)
+candidates = strategy.ask(candidate_count=12)
+np.round(candidates, 3)
+```
+
+The resulting design looks like this:
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+import matplotlib.pyplot as plt
+
+
+fig = plt.figure(figsize=((10, 10)))
+ax = fig.add_subplot(111, projection="3d")
+ax.view_init(45, 45)
+ax.set_title("fully-quadratic model")
+ax.set_xlabel("$x_1$")
+ax.set_ylabel("$x_2$")
+ax.set_zlabel("$x_3$")
+plt.rcParams["figure.figsize"] = (10, 8)
+
+# plot feasible polytope
+ax.plot(xs=[1, 0, 0, 1], ys=[0, 1, 0, 0], zs=[0, 0, 1, 0], linewidth=2)
+
+# plot D-optimal solutions
+ax.scatter(
+    xs=candidates[x1.key],
+    ys=candidates[x2.key],
+    zs=candidates[x3.key],
+    marker="o",
+    s=40,
+    color="orange",
+)
+```

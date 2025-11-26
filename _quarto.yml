@@ -1,0 +1,277 @@
+project:
+  type: website
+  output-dir: _site
+  render:
+    - "index.qmd"
+    - "install.qmd"
+    - "getting_started.qmd"
+    - "docs/tutorials/**/*.qmd"
+    - "docs/tutorials/**/*.qmd"
+    - "docs/userguides/*.qmd"
+    - "docs/reference/*.qmd"
+    - "!docs/*.md"
+    - "!docs/_build/"
+    - "!docs/javascripts/"
+  resources:
+    - "docs/**/*.png"
+    - "docs/**/*.jpg"
+    - "docs/**/*.svg"
+    - "docs/**/*.gif"
+    - "docs/**/*.css"
+    - "docs/**/*.js"
+    - "!docs/CONTRIBUTING.md"
+    - "!docs/javascripts/"
+
+quartodoc:
+  package: bofire
+  title: API Reference
+  dir: docs/reference
+  parser: google
+  sections:
+    - title: Data Models - Domain
+      desc: Domain configuration data models
+      contents:
+        - data_models.domain.domain.Domain
+        - data_models.domain.features.Inputs
+        - data_models.domain.features.Outputs
+        - data_models.domain.constraints.Constraints
+    - title: Data Models - Features
+      desc: Feature data models
+      contents:
+        - name: data_models.features.api
+          members:
+            - CategoricalInput
+            - CategoricalOutput
+            - ContinuousInput
+            - ContinuousOutput
+            - DiscreteInput
+            - ContinuousDescriptorInput
+            - CategoricalDescriptorInput
+            - MolecularInput
+            - CategoricalMolecularInput
+            - TaskInput
+    - title: Data Models - Strategies
+      desc: Strategy configuration data models
+      contents:
+        - name: data_models.strategies.api
+          members:
+            - DoEStrategy
+            - FactorialStrategy
+            - FractionalFactorialStrategy
+            - ActiveLearningStrategy
+            - BotorchStrategy
+            - EntingStrategy
+            - MoboStrategy
+            - MultiFidelityStrategy
+            - MultiobjectiveStrategy
+            - AdditiveSoboStrategy
+            - CustomSoboStrategy
+    - title: Data Models - Kernels
+      desc: Kernel configuration data models
+      contents:
+        - name: data_models.kernels.api
+          members:
+            - Kernel
+            - AdditiveKernel
+            - MultiplicativeKernel
+            - ScaleKernel
+            - MaternKernel
+            - RBFKernel
+            - LinearKernel
+            - PolynomialKernel
+            - HammingDistanceKernel
+            - TanimotoKernel
+            - WassersteinKernel
+    - title: Data Models - Surrogates
+      desc: Surrogate model configuration data models
+      contents:
+        - name: data_models.surrogates.api
+          members:
+            - Surrogate
+            - SingleTaskGPSurrogate
+            - MixedSingleTaskGPSurrogate
+            - MultiTaskGPSurrogate
+            - RobustSingleTaskGPSurrogate
+            - TanimotoGPSurrogate
+            - LinearSurrogate
+            - PolynomialSurrogate
+            - RandomForestSurrogate
+            - MLPEnsemble
+            - BotorchSurrogates
+    - title: Strategies
+      desc: Strategy implementations
+      contents:
+        - name: strategies.api
+          members:
+            - Strategy
+            - RandomStrategy
+            - DoEStrategy
+            - FractionalFactorialStrategy
+            - SoboStrategy
+            - AdditiveSoboStrategy
+            - MultiplicativeSoboStrategy
+            - CustomSoboStrategy
+            - QparegoStrategy
+            - MoboStrategy
+            - BotorchStrategy
+            - EntingStrategy
+            - MultiFidelityStrategy
+            - ActiveLearningStrategy
+            - ShortestPathStrategy
+            - StepwiseStrategy
+    - title: Surrogates
+      desc: Surrogate model implementations
+      contents:
+        - name: surrogates.api
+          members:
+            - Surrogate
+            - TrainableSurrogate
+            - SingleTaskGPSurrogate
+            - MultiTaskGPSurrogate
+            - BotorchSurrogates
+            - LinearDeterministicSurrogate
+            - EmpiricalSurrogate
+            - RandomForestSurrogate
+            - MLPEnsemble
+            - PiecewiseLinearGPSurrogate
+
+website:
+  title: "BoFire"
+  site-url: "https://experimental-design.github.io/bofire"
+  repo-url: "https://github.com/experimental-design/bofire"
+  repo-actions: [edit, issue]
+  page-navigation: true
+
+  navbar:
+    background: primary
+    search: true
+    left:
+      - text: "Home"
+        href: index.qmd
+      - text: "Getting Started"
+        href: getting_started.qmd
+      - text: "User Guides"
+        menu:
+          - text: "Domain Configuration"
+            href: docs/userguides/domain.qmd
+          - text: "Strategies"
+            href: docs/userguides/strategies.qmd
+          - text: "Surrogate Models"
+            href: docs/userguides/surrogates.qmd
+          - text: "Data Models vs Functionals"
+            href: docs/userguides/data_models_functionals.qmd
+      - text: "Examples"
+        menu:
+          - text: "Basic Examples"
+            href: docs/tutorials/basic_examples/index.qmd
+          - text: "Advanced Examples"
+            href: docs/tutorials/advanced_examples/index.qmd
+          - text: "Benchmarks"
+            href: docs/tutorials/benchmarks/index.qmd
+          - text: "Design of Experiments"
+            href: docs/tutorials/doe/index.qmd
+          - text: "Serialization"
+            href: docs/tutorials/serialization/index.qmd
+      - text: "API Reference"
+        href: docs/reference/index.qmd
+    right:
+      - icon: github
+        href: "https://github.com/experimental-design/bofire"
+
+  sidebar:
+    - title: "Getting Started"
+      style: "docked"
+      contents:
+        - index.qmd
+        - install.qmd
+        - getting_started.qmd
+
+    - title: "User Guides"
+      contents:
+        - docs/userguides/domain.qmd
+        - docs/userguides/strategies.qmd
+        - docs/userguides/surrogates.qmd
+        - docs/userguides/data_models_functionals.qmd
+
+    - title: "Examples"
+      contents:
+        - section: "Basic Examples"
+          contents:
+            - docs/tutorials/basic_examples/index.qmd
+            - docs/tutorials/basic_examples/basic_terminology.qmd
+            - docs/tutorials/basic_examples/Reaction_Optimization_Example.qmd
+            - docs/tutorials/basic_examples/Model_Fitting_and_analysis.qmd
+            - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.qmd
+            - docs/tutorials/basic_examples/Unknown_Constraint_Classification.qmd
+        - section: "Advanced Examples"
+          contents:
+            - docs/tutorials/advanced_examples/index.qmd
+            - docs/tutorials/advanced_examples/custom_sobo.qmd
+            - docs/tutorials/advanced_examples/desirability_objectives.qmd
+            - docs/tutorials/advanced_examples/genetic_algorithm.qmd
+            - docs/tutorials/advanced_examples/merging_objectives.qmd
+            - docs/tutorials/advanced_examples/multifidelity_bo.qmd
+            - docs/tutorials/advanced_examples/objectives_on_inputs.qmd
+            - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
+            - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
+        - section: "Benchmarks"
+          contents:
+            - docs/tutorials/benchmarks/index.qmd
+            - docs/tutorials/benchmarks/001-Himmelblau.qmd
+            - docs/tutorials/benchmarks/002-DTLZ2.qmd
+            - docs/tutorials/benchmarks/004-Aspen_benchmark.qmd
+            - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.qmd
+            - docs/tutorials/benchmarks/006-30dimBranin.qmd
+            - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.qmd
+            - docs/tutorials/benchmarks/008-Himmelblau_with_outliers.qmd
+            - docs/tutorials/benchmarks/009-Bayesian_optimization_over_molecules.qmd
+            - docs/tutorials/benchmarks/010-LSRBO.qmd
+            - docs/tutorials/benchmarks/011-ZDT1.qmd
+            - docs/tutorials/benchmarks/012-BNH.qmd
+            - docs/tutorials/benchmarks/013-TNK.qmd
+            - docs/tutorials/benchmarks/014-ActiveLearning.qmd
+        - section: "Design of Experiments"
+          contents:
+            - docs/tutorials/doe/index.qmd
+            - docs/tutorials/doe/basic_examples.qmd
+            - docs/tutorials/doe/design_with_explicit_formula.qmd
+            - docs/tutorials/doe/fractional_factorial.qmd
+            - docs/tutorials/doe/nchoosek_constraint.qmd
+            - docs/tutorials/doe/optimality_criteria.qmd
+        - section: "Serialization"
+          contents:
+            - docs/tutorials/serialization/index.qmd
+            - docs/tutorials/serialization/models_serial.qmd
+            - docs/tutorials/serialization/strategies_serial.qmd
+
+    - title: "API Reference"
+      contents:
+        - docs/reference/domain.qmd
+        - docs/reference/constraints.qmd
+        - docs/reference/objectives.qmd
+        - docs/reference/features.qmd
+        - docs/reference/utils.qmd
+
+format:
+  html:
+    theme:
+      light: [cosmo, theme-light.scss]
+      dark: [cosmo, theme-dark.scss]
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-fold: false
+    code-tools: true
+    number-sections: false
+    link-external-newwindow: true
+
+filters:
+  - quarto
+
+execute:
+  enabled: true
+  freeze: auto
+  cache: true
+
+jupyter: python3

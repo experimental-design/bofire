@@ -50,7 +50,14 @@ If you add new functionality, make sure that it is tested properly and that it d
 
 ## Documentation
 
-We use [MkDocs](https://www.mkdocs.org/) with [material theme](https://squidfunk.github.io/mkdocs-material/) and deploy our documentation to https://experimental-design.github.io/bofire/. Thereby, an API description is extracted from the doc-strings. Additionally, we have tutorials and getting-started-sections.
+We use [Quarto](https://quarto.org/) and [Quartodoc](https://github.com/machow/quartodoc) deploy our documentation to https://experimental-design.github.io/bofire/. Thereby, an API description is extracted from the doc-strings. Additionally, we have tutorials and getting-started-sections. To build the documentation locally, install Quarto and Quartodoc and run
+
+```
+quartodoc build
+quarto render
+```
+
+Optionally, you can use the environment variable `SMOKE_TEST=1` if you just want a test build. Otherwise, some benchmarks will take some time until they finish.
 
 ## License
 
