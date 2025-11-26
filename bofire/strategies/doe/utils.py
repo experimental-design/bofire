@@ -24,7 +24,6 @@ from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.features.api import CategoricalInput, NumericalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import PREDEFINED_MODEL_TYPES 
 from bofire.strategies.doe.doe_problem import (
     FirstOrderDoEProblem,
     SecondOrderDoEProblem,
@@ -61,7 +60,7 @@ def represent_categories_as_by_their_states(
 
 
 def get_formula_from_string(
-    model_type: str | PREDEFINED_MODEL_TYPES | Formula | None = "linear", 
+    model_type: str | Formula | None = "linear",
     inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:
@@ -86,7 +85,12 @@ def get_formula_from_string(
         # build model if a keyword and a problem are given.
     # linear model#
 
-    if model_type in PREDEFINED_MODEL_TYPES.__args__:
+    if model_type is not None and model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
         if inputs is None:
             raise AssertionError(
                 "Inputs must be provided if only a model type is given.",
