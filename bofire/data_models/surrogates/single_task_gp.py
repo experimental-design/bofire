@@ -52,24 +52,56 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
     ] = "FractionalFactorialStrategy"
 
-    @staticmethod
-    def _update_hyperparameters(
-        surrogate_data: "SingleTaskGPSurrogate",
-        hyperparameters: pd.Series,
-        outputscale_constraint: Optional[AnyPriorConstraint] = None,
-        lengthscale_constraint: Optional[AnyPriorConstraint] = None,
-    ):
+
+T = TypeVar("T")
+
+
+class BaseSingleTaskGPSurrogate(
+    TrainableBotorchSurrogate[SingleTaskGPHyperconfig], Generic[T]
+):
+    kernel: T
+    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))
+
+
+class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
+    type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
+    kernel: AnyKernel = Field(
+        default_factory=lambda: RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+        )
+    )
+    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
+        default_factory=lambda: SingleTaskGPHyperconfig(),
+    )
+
+    def update_hyperparameters(self, hyperparameters: pd.Series):
+        super().update_hyperparameters(hyperparameters)
+        # update_hyperparameters throws when hyperconfig is None
+        assert self.hyperconfig is not None
+
         def matern_25(
-            ard: bool,
-            lengthscale_prior: AnyPrior,
-            lengthscale_constraint: Union[AnyPriorConstraint, None],
-        ) -> MaternKernel:
-            return MaternKernel(
-                nu=2.5,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
-                ard=ard,
-            )
+                ard: bool,
+                lengthscale_prior: AnyPrior,
+                lengthscale_constraint: Union[AnyPriorConstraint, None],
+            ) -> MaternKernel:
+                return MaternKernel(
+                    nu=2.5,
+                    lengthscale_prior=lengthscale_prior,
+                    lengthscale_constraint=lengthscale_constraint,
+                    ard=ard,
+                )
 
         def matern_15(
             ard: bool,
@@ -101,67 +133,34 @@ class SingleTaskGPHyperconfig(Hyperconfig):
                 HVARFNER_LENGTHSCALE_PRIOR(),
                 THREESIX_SCALE_PRIOR(),
             )
-        surrogate_data.noise_prior = noise_prior
+        self.noise_prior = noise_prior
 
         if hyperparameters.kernel == "rbf":
             base_kernel = RBFKernel(
                 ard=hyperparameters.ard,
                 lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
+                lengthscale_constraint=self.hyperconfig.lengthscale_constraint,
             )
         elif hyperparameters.kernel == "matern_2.5":
             base_kernel = matern_25(
                 ard=hyperparameters.ard,
                 lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
+                lengthscale_constraint=self.hyperconfig.lengthscale_constraint,
             )
         elif hyperparameters.kernel == "matern_1.5":
             base_kernel = matern_15(
                 ard=hyperparameters.ard,
                 lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
+                lengthscale_constraint=self.hyperconfig.lengthscale_constraint,
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
         if hyperparameters.scalekernel == "True":
-            surrogate_data.kernel = ScaleKernel(
+            self.kernel = ScaleKernel(
                 base_kernel=base_kernel,
                 outputscale_prior=outputscale_prior,
-                outputscale_constraint=outputscale_constraint,
+                outputscale_constraint=self.hyperconfig.outputscale_constraint,
             )
         else:
-            surrogate_data.kernel = base_kernel
-
-
-T = TypeVar("T")
-
-
-class BaseSingleTaskGPSurrogate(
-    TrainableBotorchSurrogate[SingleTaskGPHyperconfig], Generic[T]
-):
-    kernel: T
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-
-    @classmethod
-    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
-        """Abstract method to check output type for surrogate models
-        Args:
-            my_type: continuous or categorical output
-        Returns:
-            bool: True if the output type is valid for the surrogate chosen, False otherwise
-        """
-        return isinstance(my_type, type(ContinuousOutput))
-
-
-class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
-    type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
-    kernel: AnyKernel = Field(
-        default_factory=lambda: RBFKernel(
-            ard=True,
-            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        )
-    )
-    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: SingleTaskGPHyperconfig(),
-    )
+            self.kernel = base_kernel

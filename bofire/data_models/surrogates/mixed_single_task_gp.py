@@ -54,53 +54,6 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
     ] = "FractionalFactorialStrategy"
 
-    @staticmethod
-    def _update_hyperparameters(
-        surrogate_data: "MixedSingleTaskGPSurrogate",
-        hyperparameters: pd.Series,
-    ):
-        if hyperparameters.prior == "mbo":
-            noise_prior, lengthscale_prior, _ = (
-                MBO_NOISE_PRIOR(),
-                MBO_LENGTHSCALE_PRIOR(),
-                MBO_OUTPUTSCALE_PRIOR(),
-            )
-        elif hyperparameters.prior == "threesix":
-            noise_prior, lengthscale_prior, _ = (
-                THREESIX_NOISE_PRIOR(),
-                THREESIX_LENGTHSCALE_PRIOR(),
-                THREESIX_SCALE_PRIOR(),
-            )
-        else:
-            noise_prior, lengthscale_prior = (
-                HVARFNER_NOISE_PRIOR(),
-                HVARFNER_LENGTHSCALE_PRIOR(),
-            )
-
-        surrogate_data.noise_prior = noise_prior
-        if hyperparameters.continuous_kernel == "rbf":
-            surrogate_data.continuous_kernel = RBFKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-
-        elif hyperparameters.continuous_kernel == "matern_2.5":
-            surrogate_data.continuous_kernel = MaternKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                nu=2.5,
-            )
-
-        elif hyperparameters.continuous_kernel == "matern_1.5":
-            surrogate_data.continuous_kernel = MaternKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                nu=1.5,
-            )
-
-        else:
-            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
-
 
 class MixedSingleTaskGPSurrogate(
     TrainableBotorchSurrogate[MixedSingleTaskGPHyperconfig]
@@ -192,3 +145,53 @@ class MixedSingleTaskGPSurrogate(
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
+    
+    
+    def update_hyperparameters(
+        self,
+        hyperparameters: pd.Series,
+    ):
+        super().update_hyperparameters(hyperparameters)
+
+        if hyperparameters.prior == "mbo":
+            noise_prior, lengthscale_prior, _ = (
+                MBO_NOISE_PRIOR(),
+                MBO_LENGTHSCALE_PRIOR(),
+                MBO_OUTPUTSCALE_PRIOR(),
+            )
+        elif hyperparameters.prior == "threesix":
+            noise_prior, lengthscale_prior, _ = (
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
+                THREESIX_SCALE_PRIOR(),
+            )
+        else:
+            noise_prior, lengthscale_prior = (
+                HVARFNER_NOISE_PRIOR(),
+                HVARFNER_LENGTHSCALE_PRIOR(),
+            )
+
+        self.noise_prior = noise_prior
+        if hyperparameters.continuous_kernel == "rbf":
+            self.continuous_kernel = RBFKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_2.5":
+            self.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                nu=2.5,
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_1.5":
+            self.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                nu=1.5,
+            )
+
+        else:
+            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
+

@@ -45,49 +45,6 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
     ] = "FractionalFactorialStrategy"
 
-    @staticmethod
-    def _update_hyperparameters(
-        surrogate_data: "PiecewiseLinearGPSurrogate",
-        hyperparameters: pd.Series,
-    ):
-        if hyperparameters.prior == "mbo":
-            noise_prior, lengthscale_prior, outputscale_prior = (
-                MBO_NOISE_PRIOR(),
-                MBO_LENGTHSCALE_PRIOR(),
-                MBO_OUTPUTSCALE_PRIOR(),
-            )
-        else:
-            noise_prior, lengthscale_prior, outputscale_prior = (
-                THREESIX_NOISE_PRIOR(),
-                THREESIX_LENGTHSCALE_PRIOR(),
-                THREESIX_SCALE_PRIOR(),
-            )
-        surrogate_data.noise_prior = noise_prior
-        surrogate_data.outputscale_prior = outputscale_prior
-
-        if hyperparameters.continuous_kernel == "rbf":
-            surrogate_data.continuous_kernel = RBFKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-
-        elif hyperparameters.continuous_kernel == "matern_2.5":
-            surrogate_data.continuous_kernel = MaternKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                nu=2.5,
-            )
-
-        elif hyperparameters.continuous_kernel == "matern_1.5":
-            surrogate_data.continuous_kernel = MaternKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                nu=1.5,
-            )
-
-        else:
-            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
-
 
 class PiecewiseLinearGPSurrogate(
     TrainableBotorchSurrogate[PiecewiseLinearGPSurrogateHyperconfig]
@@ -183,3 +140,45 @@ class PiecewiseLinearGPSurrogate(
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
+    
+    
+    def update_hyperparameters(self, hyperparameters: pd.Series):
+        super().update_hyperparameters(hyperparameters)
+
+        if hyperparameters.prior == "mbo":
+            noise_prior, lengthscale_prior, outputscale_prior = (
+                MBO_NOISE_PRIOR(),
+                MBO_LENGTHSCALE_PRIOR(),
+                MBO_OUTPUTSCALE_PRIOR(),
+            )
+        else:
+            noise_prior, lengthscale_prior, outputscale_prior = (
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
+                THREESIX_SCALE_PRIOR(),
+            )
+        self.noise_prior = noise_prior
+        self.outputscale_prior = outputscale_prior
+
+        if hyperparameters.continuous_kernel == "rbf":
+            self.continuous_kernel = RBFKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_2.5":
+            self.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                nu=2.5,
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_1.5":
+            self.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                nu=1.5,
+            )
+
+        else:
+            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")

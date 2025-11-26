@@ -85,10 +85,11 @@ class Hyperconfig(BaseModel):
             ),
         )
 
-    @staticmethod
-    def _update_hyperparameters(surrogate_data, hyperparameters: pd.Series):
-        raise NotImplementedError(
-            "Ideally this would be an abstract method, but this causes problems in pydantic.",
+    def update_hyperparameters(self, hyperparameters: pd.Series):
+        self.domain.validate_candidates(
+            pd.DataFrame(hyperparameters).T,
+            only_inputs=True,
+            raise_validation_error=True,
         )
 
 
@@ -120,14 +121,6 @@ class TrainableSurrogate(BaseModel, Generic[T]):
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         if self.hyperconfig is not None:
-            self.hyperconfig.domain.validate_candidates(
-                pd.DataFrame(hyperparameters).T,
-                only_inputs=True,
-                raise_validation_error=True,
-            )
-            self.hyperconfig._update_hyperparameters(
-                self,
-                hyperparameters=hyperparameters,
-            )
+            self.hyperconfig.update_hyperparameters(hyperparameters)
         else:
             raise ValueError("No hyperconfig available.")
