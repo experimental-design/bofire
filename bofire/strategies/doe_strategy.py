@@ -49,22 +49,22 @@ class DoEStrategy(Strategy):
 
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)
-        to_many_columns = []
+        too_many_columns = []
         for col in candidates.columns:
             if col not in original_columns:
-                to_many_columns.append(col)
-        if len(to_many_columns) > 0:
+                too_many_columns.append(col)
+        if len(too_many_columns) > 0:
             raise AttributeError(
-                f"provided candidates have columns: {(*to_many_columns,)},  which do not exist in original domain",
+                f"provided candidates have columns: {(*too_many_columns,)},  which do not exist in original domain",
             )
 
-        to_few_columns = []
+        too_few_columns = []
         for col in original_columns:
             if col not in candidates.columns:
-                to_few_columns.append(col)
-        if len(to_few_columns) > 0:
+                too_few_columns.append(col)
+        if len(too_few_columns) > 0:
             raise AttributeError(
-                f"provided candidates are missing columns: {(*to_few_columns,)} which exist in original domain",
+                f"provided candidates are missing columns: {(*too_few_columns,)} which exist in original domain",
             )
 
         self._candidates = candidates
