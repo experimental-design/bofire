@@ -45,7 +45,7 @@ class DoEStrategy(Strategy):
             if self._data_model.sampling is not None
             else None
         )
-        self._return_fixed_candidates = data_model.return_fixed_candidates
+        self._return_fixed_candidates = data_model.return_fixed_candidates # this defaults to False in the data model
 
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)
@@ -78,34 +78,41 @@ class DoEStrategy(Strategy):
             mapped_aux_categorical_inputs,
             mapped_continous_inputs,
         ) = create_continuous_domain(domain=self.domain)
-        fixed_experiments_count = 0
-        _candidate_count = candidate_count
-        if self.candidates is not None:
-            adapted_partially_fixed_candidates = (
+        
+
+        # if you have fixed experiments, so-called _candidates, you need to relaxe them and add them to the total number of experiments
+        if self._candidates is not None:
+            # transform candidates to new domain
+            relaxed_candidates = (
                 self._transform_candidates_to_new_domain(
                     relaxed_domain,
-                    self.candidates,
+                    self._candidates,
                 )
             )
+            fixed_experiments_count = self._candidates.notnull().all(axis=1).sum()
         else:
-            adapted_partially_fixed_candidates = None
-        if self.candidates is not None:
-            fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
-            _candidate_count = candidate_count + fixed_experiments_count
+            relaxed_candidates = None
+            fixed_experiments_count = 0
+
+        # total number of experiments that will go into the design 
+        _total_count = candidate_count + fixed_experiments_count
+        
         objective_function = get_objective_function(
             self._data_model.criterion,
             domain=relaxed_domain,
-            n_experiments=_candidate_count,
+            n_experiments=_total_count,
             inputs_for_formula=self.domain.inputs,
         )
         assert objective_function is not None, "Criterion type is not supported!"
+
         design = find_local_max_ipopt(
             relaxed_domain,
             fixed_experiments=None,
-            partially_fixed_experiments=adapted_partially_fixed_candidates,
+            partially_fixed_experiments=relaxed_candidates, #wait, why are these 'partially fixed' and not fixed?
             ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
         )
+
         if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
             design_no_categoricals, design_categoricals = (
                 filter_out_categorical_and_categorical_auxilliary_vars(
