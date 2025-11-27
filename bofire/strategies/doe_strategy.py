@@ -113,7 +113,10 @@ class DoEStrategy(Strategy):
             objective_function=objective_function,
         )
 
+        # if cats or discrete var present, need to filture out all the aux vars and project back into original domain
         if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
+
+            # deal with tthe categoricals first
             design_no_categoricals, design_categoricals = (
                 filter_out_categorical_and_categorical_auxilliary_vars(
                     design,
