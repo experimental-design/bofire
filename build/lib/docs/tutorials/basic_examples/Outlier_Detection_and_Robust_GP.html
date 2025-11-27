@@ -452,7 +452,7 @@ window.Quarto = {
 <p>This tutorial will show how to use the model, how to obtain the data-point specific noise levels, and how to obtain the full model trace.</p>
 <section id="imports" class="level3">
 <h3 class="anchored" data-anchor-id="imports">Imports</h3>
-<div id="7ca7bb9c" class="cell" data-execution_count="1">
+<div id="6d11a8df" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model imports</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -471,7 +471,7 @@ window.Quarto = {
 </section>
 <section id="setting-up-a-synthetic-example" class="level3">
 <h3 class="anchored" data-anchor-id="setting-up-a-synthetic-example">Setting up a Synthetic example</h3>
-<div id="f6e290cb" class="cell" data-execution_count="2">
+<div id="4274c6f5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> Inputs(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[ContinuousInput(key<span class="op">=</span><span class="ss">f"x_</span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>)) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>)],</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -489,11 +489,11 @@ window.Quarto = {
 </section>
 <section id="lets-add-two-clear-outliers" class="level3">
 <h3 class="anchored" data-anchor-id="lets-add-two-clear-outliers">Let’s add two clear outliers</h3>
-<div id="f35d7c81" class="cell" data-execution_count="3">
+<div id="09858801" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>experiments.loc[<span class="dv">0</span>, <span class="st">"y_1"</span>] <span class="op">=</span> <span class="dv">5</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>experiments.loc[<span class="dv">1</span>, <span class="st">"y_1"</span>] <span class="op">=</span> <span class="op">-</span><span class="dv">5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="bdda45f9" class="cell" data-execution_count="4">
+<div id="ee831918" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>plt.plot(experiments[<span class="st">"x_1"</span>], experiments[<span class="st">"y_1"</span>], <span class="st">"o"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the last two points in red</span></span>
@@ -517,7 +517,7 @@ window.Quarto = {
 </section>
 <section id="testing-a-singletaskgp" class="level3">
 <h3 class="anchored" data-anchor-id="testing-a-singletaskgp">Testing a SingleTaskGP</h3>
-<div id="6e000eec" class="cell" data-execution_count="5">
+<div id="0de6a438" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>stgp_data_model <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
@@ -527,7 +527,7 @@ window.Quarto = {
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>stgp_model.fit(experiments)</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>stgp_predictions <span class="op">=</span> stgp_model.predict(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f47bc559" class="cell" data-execution_count="6">
+<div id="699fbc13" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the surrogate</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>plt.plot(experiments[<span class="st">"x_1"</span>], experiments[<span class="st">"y_1"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"observations"</span>)</span>
@@ -564,7 +564,7 @@ window.Quarto = {
 </section>
 <section id="testing-the-robust-gp" class="level3">
 <h3 class="anchored" data-anchor-id="testing-the-robust-gp">Testing the Robust GP</h3>
-<div id="f6122963" class="cell" data-execution_count="7">
+<div id="9c1fa799" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> RobustSingleTaskGPSurrogate(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
@@ -585,7 +585,7 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 </code></pre>
 </div>
 </div>
-<div id="e0e51b66" class="cell" data-execution_count="8">
+<div id="78ea5e56" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the surrogate</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>plt.plot(experiments[<span class="st">"x_1"</span>], experiments[<span class="st">"y_1"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"observations"</span>)</span>
@@ -622,7 +622,7 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 </section>
 <section id="returning-data-point-specific-noise-values-rho" class="level3">
 <h3 class="anchored" data-anchor-id="returning-data-point-specific-noise-values-rho">Returning data point specific noise values <span class="math inline">\(\rho\)</span></h3>
-<div id="aef63970" class="cell" data-execution_count="9">
+<div id="e8a39d50" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>model.predict_outliers(experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <div>
@@ -640,62 +640,62 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-0.213634</td>
-<td>0.447639</td>
-<td>4.616730</td>
+<td>0.643673</td>
+<td>0.489976</td>
+<td>3.289529</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-0.461129</td>
-<td>0.263510</td>
-<td>3.496195</td>
+<td>-0.375715</td>
+<td>0.270212</td>
+<td>3.698711</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-0.748296</td>
-<td>0.138466</td>
+<td>-0.937162</td>
+<td>0.129874</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>0.119439</td>
-<td>0.139642</td>
+<td>-0.102522</td>
+<td>0.114781</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.911038</td>
-<td>0.129408</td>
+<td>0.001562</td>
+<td>0.116787</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>-0.717135</td>
-<td>0.133764</td>
+<td>0.726475</td>
+<td>0.120383</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>-0.322119</td>
-<td>0.122468</td>
+<td>0.298478</td>
+<td>0.118860</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>0.560549</td>
-<td>0.129698</td>
+<td>0.367589</td>
+<td>0.117807</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>0.550081</td>
-<td>0.143698</td>
+<td>0.577444</td>
+<td>0.111499</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>-0.466283</td>
-<td>0.124826</td>
+<td>-0.087647</td>
+<td>0.124751</td>
 <td>0.000000</td>
 </tr>
 </tbody>
@@ -707,7 +707,7 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 </section>
 <section id="plotting-the-data-point-specific-noise-values" class="level3">
 <h3 class="anchored" data-anchor-id="plotting-the-data-point-specific-noise-values">Plotting the data point specific noise values</h3>
-<div id="513ab7af" class="cell" data-execution_count="10">
+<div id="fbe9b07d" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the outlier scores (rho) from the robust GP model</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>outlier_scores <span class="op">=</span> model.predict_outliers(experiments)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -759,14 +759,14 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 <section id="hyperparameter-optimization" class="level3">
 <h3 class="anchored" data-anchor-id="hyperparameter-optimization">Hyperparameter optimization</h3>
 <p>The RobustSingleTaskGPSurrogate also support hyperparameter optimization over different kernels, priors, etc.</p>
-<div id="db7f8255" class="cell" data-execution_count="11">
+<div id="690c6c4e" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># opt_surrogate_data, perf = hyperoptimize(surrogate_data=data_model, training_data=experiments, folds=4)</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># surrogate = surrogates.map(opt_surrogate_data)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="obtaining-the-full-model-trace" class="level3">
 <h3 class="anchored" data-anchor-id="obtaining-the-full-model-trace">Obtaining the full model trace</h3>
-<div id="1fa50582" class="cell" data-execution_count="12">
+<div id="37f4fdcb" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bmc_plot(bmc_support_sizes: Tensor, bmc_probabilities: Tensor) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    cmap <span class="op">=</span> plt.colormaps[<span class="st">"viridis"</span>]</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    bar_width <span class="op">=</span> <span class="dv">1</span></span>
@@ -797,7 +797,7 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    plt.ylabel(<span class="st">"Posterior Marginal Likelihood (%)"</span>)</span>
 <span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    plt.legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="6e3f10bc" class="cell" data-execution_count="13">
+<div id="064c4da3" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> RobustSingleTaskGPSurrogate(</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
@@ -814,7 +814,7 @@ SparseOutlierNoise: Robust rho not applied because the last dimension of the bas
 </code></pre>
 </div>
 </div>
-<div id="8aae4440" class="cell" data-execution_count="14">
+<div id="f6b27066" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>figsize <span class="op">=</span> (<span class="dv">6</span>, <span class="dv">4</span>)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(dpi<span class="op">=</span><span class="dv">100</span>, figsize<span class="op">=</span>figsize)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>bmc_plot(model.model.bmc_support_sizes.detach(), model.model.bmc_probabilities.detach())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

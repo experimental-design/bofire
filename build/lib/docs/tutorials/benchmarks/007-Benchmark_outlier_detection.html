@@ -415,7 +415,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Tutorial for benchmarking Robust Iterative trimming GP that detects outliers. It is benchmarked against standard GP and Student-t GP. Here, we compare on neal dataset. The idea is adapted from https://www.sciencedirect.com/science/article/pii/S2213133721000378?via%3Dihub. Their code is available at https://github.com/syrte/robustgp/</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="06a1930d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.847944,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.051779&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:08.203835&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="066e3d20" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.847944,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.051779&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:08.203835&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> base64</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> io</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
@@ -469,7 +469,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="class-for-student-t-gp" class="level2">
 <h2 class="anchored" data-anchor-id="class-for-student-t-gp">Class for Student-t GP</h2>
-<div id="2fab9803" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.015305,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.071970&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.056665&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="391e2a82" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.015305,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.071970&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.056665&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DataModel(BotorchSurrogateDM):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">class</span> Config:</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        arbitrary_types_allowed <span class="op">=</span> <span class="va">True</span></span>
@@ -598,11 +598,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.model <span class="op">=</span> path[<span class="st">"model"</span>]</span>
 <span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.output_transform <span class="op">=</span> path[<span class="st">"output_transform"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_3363/1654293840.py:4: PydanticDeprecatedSince20:
+<pre><code>/tmp/ipykernel_3256/1654293840.py:4: PydanticDeprecatedSince20:
 
 `pydantic.config.Extra` is deprecated, use literal values instead (e.g. `extra='allow'`). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
 
-/tmp/ipykernel_3363/1654293840.py:1: PydanticDeprecatedSince20:
+/tmp/ipykernel_3256/1654293840.py:1: PydanticDeprecatedSince20:
 
 Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
 </code></pre>
@@ -611,7 +611,7 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 </section>
 <section id="set-up-inputs-outputs-and-surrogate-models-for-different-gps" class="level2">
 <h2 class="anchored" data-anchor-id="set-up-inputs-outputs-and-surrogate-models-for-different-gps">set up inputs, outputs and surrogate models for different GPs</h2>
-<div id="38db8c0b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004833,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.081633&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.076800&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="926953ed" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004833,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.081633&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.076800&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(</span>
@@ -622,11 +622,11 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="33ed4a97" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004156,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.087399&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.083243&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="b7e1835e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004156,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.087399&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.083243&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>kernel <span class="op">=</span> ScaleKernel(base_kernel<span class="op">=</span>RBFKernel(ard<span class="op">=</span><span class="va">True</span>))</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>scaler <span class="op">=</span> ScalerEnum.NORMALIZE</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="01e2070c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005224,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.094336&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.089112&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="16a00b47" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005224,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.094336&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.089112&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>model_GP <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
@@ -663,7 +663,7 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 <span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>model_ITGP_final <span class="op">=</span> surrogate_mapper.<span class="bu">map</span>(model_ITGP_final)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="4186f065" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004286,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.100260&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.095974&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="bbda2ff3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004286,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.100260&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.095974&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ITGP_detector <span class="op">=</span> IterativeTrimming(base_gp<span class="op">=</span>model_ITGP)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ITGP_detector <span class="op">=</span> outlier_mapper.<span class="bu">map</span>(ITGP_detector)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -671,7 +671,7 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 <section id="neal-dataset" class="level2">
 <h2 class="anchored" data-anchor-id="neal-dataset">Neal dataset</h2>
 <p>We create neal dataset for benchmarking from the paper https://www.sciencedirect.com/science/article/pii/S2213133721000378?via%3Dihub.</p>
-<div id="fcd9bc7d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006263,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.111200&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.104937&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="15bc091a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006263,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.111200&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.104937&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> neal_func(x):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.3</span> <span class="op">+</span> <span class="fl">0.4</span> <span class="op">*</span> x <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> np.sin(<span class="fl">2.7</span> <span class="op">*</span> x) <span class="op">+</span> <span class="fl">1.1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> x<span class="op">**</span><span class="dv">2</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -733,7 +733,7 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 <section id="adding-outliers" class="level2">
 <h2 class="anchored" data-anchor-id="adding-outliers">Adding outliers</h2>
 <p>We use 9 outlier noise conditions to test our models</p>
-<div id="25b891f1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005192,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.121527&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.116335&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="9e0c8f73" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005192,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.121527&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.116335&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>args_list <span class="op">=</span> [</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"zero"</span>, {<span class="st">"n"</span>: n, <span class="st">"s1"</span>: <span class="fl">0.1</span>, <span class="st">"s2"</span>: <span class="fl">1.0</span>, <span class="st">"m2"</span>: <span class="dv">0</span>, <span class="st">"f2"</span>: <span class="dv">0</span>, <span class="st">"t2"</span>: <span class="st">"n"</span>}),</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"rare"</span>, {<span class="st">"n"</span>: n, <span class="st">"s1"</span>: <span class="fl">0.1</span>, <span class="st">"s2"</span>: <span class="fl">1.0</span>, <span class="st">"m2"</span>: <span class="dv">0</span>, <span class="st">"f2"</span>: <span class="fl">0.05</span>, <span class="st">"t2"</span>: <span class="st">"n"</span>}),</span>
@@ -746,7 +746,7 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"t1"</span>, {<span class="st">"n"</span>: n, <span class="st">"s1"</span>: <span class="fl">0.1</span>, <span class="st">"s2"</span>: <span class="fl">0.1</span>, <span class="st">"m2"</span>: <span class="dv">0</span>, <span class="st">"f2"</span>: <span class="dv">1</span>, <span class="st">"t2"</span>: <span class="st">"t1"</span>}),</span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f39495af" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.376773,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.500130&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.123357&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="d816ec8b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.376773,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.500130&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.123357&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">10</span>))</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> <span class="dv">0</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
@@ -771,7 +771,7 @@ Support for class-based `config` is deprecated, use ConfigDict instead. Deprecat
 <span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>fig.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_3363/703123806.py:6: UserWarning:
+<pre><code>/tmp/ipykernel_3256/703123806.py:6: UserWarning:
 
 No data for colormapping provided via 'c'. Parameters 'vmin', 'vmax' will be ignored
 </code></pre>
@@ -788,7 +788,7 @@ No data for colormapping provided via 'c'. Parameters 'vmin', 'vmax' will be ign
 <section id="run-fitting" class="level2">
 <h2 class="anchored" data-anchor-id="run-fitting">Run fitting</h2>
 <p>We use standard GP for dataset without outliers, standard GP for outliers, Iterative gp (ITGP) and student-t GP</p>
-<div id="46e2c7b5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.182817,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.689455&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.506638&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="1591cdf8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.182817,&quot;end_time&quot;:&quot;2024-10-10T20:35:11.689455&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:11.506638&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loss_RMSE(y, y0):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.sqrt(np.mean((y <span class="op">-</span> y0) <span class="op">**</span> <span class="dv">2</span>))</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -892,7 +892,7 @@ Using an input transform with `SingleTaskVariationalGP`. If this model is traine
 <section id="performance-comparison" class="level2">
 <h2 class="anchored" data-anchor-id="performance-comparison">Performance comparison</h2>
 <p>Here we plot the performance comparison similar to fig 4 in paper https://www.sciencedirect.com/science/article/pii/S2213133721000378?via%3Dihub. ITGP performs better than other GPs</p>
-<div id="cfdbf969" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="3d98cf8f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib <span class="im">import</span> ticker</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.patches <span class="im">import</span> Patch</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
