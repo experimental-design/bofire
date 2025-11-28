@@ -29,6 +29,7 @@ from typing_extensions import Self
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
+    AnyEngineeredFeature,
     AnyFeature,
     AnyInput,
     AnyOutput,
@@ -110,10 +111,20 @@ class _BaseFeatures(BaseModel, Generic[F]):
         def is_outfeats(feats):
             return is_feats_of_type(feats, Outputs, Output)
 
+        def is_engineeredfeats(feats):
+            return is_feats_of_type(feats, EngineeredFeatures, AnyEngineeredFeature)
+
         if is_infeats(self) and is_infeats(other):
             return Inputs(features=cast(Tuple[AnyInput, ...], new_feature_seq))
         if is_outfeats(self) and is_outfeats(other):
             return Outputs(features=cast(Tuple[AnyOutput, ...], new_feature_seq))
+        if is_engineeredfeats(self) and is_engineeredfeats(other):
+            return EngineeredFeatures(
+                features=cast(
+                    Tuple[AnyEngineeredFeature, ...],
+                    new_feature_seq,
+                ),
+            )
         return Features(features=new_feature_seq)
 
     def get_by_key(self, key: str, use_regex: bool = False) -> F:
@@ -239,6 +250,38 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
 class Features(_BaseFeatures[AnyFeature]):
     pass
+
+
+class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
+    def get_features2idx(self, offset: int = 0):
+        features2idx = {}
+        counter = offset
+        for feat in self.get():
+            features2idx[feat.key] = tuple(
+                (np.array(range(feat.n_outputs)) + counter).tolist(),
+            )
+            counter += feat.n_outputs
+        return features2idx
+
+    def get_feature_indices(
+        self,
+        offset: int,
+        feature_keys: List[str],
+    ) -> List[int]:
+        features2idx = self.get_features2idx(offset)
+        return sorted(
+            itertools.chain.from_iterable(
+                [features2idx[feat] for feat in feature_keys]
+            ),
+        )
+
+    def validate_inputs(self, inputs: Inputs):
+        for feat in self.get():
+            feat.validate_features(inputs)
+
+    @property
+    def n_outputs(self) -> int:
+        return sum(feat.n_outputs for feat in self.get())
 
 
 class Inputs(_BaseFeatures[AnyInput]):

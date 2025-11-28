@@ -1,10 +1,5 @@
 from typing import Union
 
-from bofire.data_models.surrogates.aggregations import (
-    AnyAggregation,
-    MeanAggregation,
-    SumAggregation,
-)
 from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (

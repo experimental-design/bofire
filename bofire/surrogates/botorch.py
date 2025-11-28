@@ -1,7 +1,7 @@
 import base64
 import io
 from abc import abstractmethod
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.surrogates.utils import get_input_transform, get_scaler
+from bofire.surrogates.utils import get_input_transform
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -103,12 +103,38 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     ):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
+        self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
 
+    def get_feature_indices(
+        self,
+        feature_keys: List[str],
+    ) -> List[int]:
+        # get the keys belonging to the original inputs
+        original_keys = [key for key in feature_keys if key in self.inputs.get_keys()]
+        indices = self.inputs.get_feature_indices(
+            specs=self.categorical_encodings, feature_keys=original_keys
+        )
+        engineered_keys = [key for key in feature_keys if key not in original_keys]
+        if len(engineered_keys) == 0:
+            return indices
+        # get the offset introduced by the original inputs
+        features2idx, _ = self.inputs._get_transform_info(self.categorical_encodings)
+        d = 0
+        for idx in features2idx.values():
+            d += len(idx)
+        indices += self.engineered_features.get_feature_indices(
+            offset=d, feature_keys=engineered_keys
+        )
+        return indices
+
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
-        scaler = get_scaler(self.inputs, self.categorical_encodings, self.scaler, X)
+        # scaler = get_scaler(self.inputs, self.categorical_encodings, self.scaler, X)
         input_transform = get_input_transform(
-            self.inputs, self.aggregations, scaler, self.categorical_encodings
+            inputs=self.inputs,
+            engineered_features=self.engineered_features,
+            scaler_type=self.scaler,
+            categorical_encodings=self.categorical_encodings,
         )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         # in case of classification we need to convert y from str to int

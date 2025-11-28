@@ -1,14 +1,14 @@
-import random
-
 import bofire.data_models.surrogates.api as models
-from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
+    MeanFeature,
     MolecularInput,
+    SumFeature,
     TaskInput,
 )
 from bofire.data_models.kernels.api import (
@@ -28,11 +28,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     LogNormalPrior,
 )
-from bofire.data_models.surrogates.api import (
-    MeanAggregation,
-    ScalerEnum,
-    SumAggregation,
-)
+from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
@@ -62,14 +58,9 @@ specs.add_valid(
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
-        "aggregations": [
-            random.choice(
-                [
-                    SumAggregation(features=["a", "b"]).model_dump(),
-                    MeanAggregation(features=["a", "b"]).model_dump(),
-                ],
-            ),
-        ],
+        "engineered_features": EngineeredFeatures(
+            features=[MeanFeature(key="mean1", features=["a", "b"])]
+        ).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
@@ -104,14 +95,9 @@ specs.add_valid(
             outputscale_prior=THREESIX_SCALE_PRIOR(),
             outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
-        "aggregations": [
-            random.choice(
-                [
-                    SumAggregation(features=["a", "b"]).model_dump(),
-                    MeanAggregation(features=["a", "b"]).model_dump(),
-                ],
-            ),
-        ],
+        "engineered_features": EngineeredFeatures(
+            features=[SumFeature(key="sum1", features=["a", "b"])]
+        ).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),

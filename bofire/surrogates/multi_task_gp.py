@@ -71,9 +71,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 active_dims=list(
                     range(n_dim - 1),
                 ),  # kernel is for input space so we subtract one for the fidelity index
-                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                    self.categorical_encodings, feats
-                ),
+                features_to_idx_mapper=self.get_feature_indices,
             ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,

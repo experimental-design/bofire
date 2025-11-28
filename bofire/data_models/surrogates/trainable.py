@@ -1,15 +1,13 @@
-import warnings
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.domain.api import Domain, EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
-from bofire.data_models.surrogates.api import AnyAggregation
 
 
 metrics2objectives = {
@@ -78,26 +76,13 @@ class Hyperconfig(BaseModel):
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
-    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_length=1)]] = None
+    engineered_features: EngineeredFeatures = Field(
+        default_factory=lambda: EngineeredFeatures()
+    )
 
     @model_validator(mode="after")
     def validate_aggregations(self):
-        if self.aggregations is None:
-            return self
-
-        for agg in self.aggregations:
-            for key in agg.features:
-                if key not in self.inputs.get_keys():  # type: ignore
-                    raise ValueError(
-                        f"Unknown feature key {key} provided in aggregations.",
-                    )
-                feat = self.inputs.get_by_key(key)  # type: ignore
-                if not isinstance(feat, ContinuousInput):
-                    raise ValueError(
-                        f"Feature with key {key} is not of type ContinuousInput",
-                    )
-        warnings.warn("Aggregations currently only implemented in the data models.")
-        # TODO: implement that aggregations are unique
+        self.engineered_features.validate_inputs(self.inputs)  # type: ignore
         return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):

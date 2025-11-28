@@ -1,15 +1,15 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
-import pandas as pd
 import torch
 from botorch.models.transforms.input import (
     ChainedInputTransform,
+    FilterFeatures,
     InputStandardize,
     InputTransform,
     Normalize,
 )
 
-from bofire.data_models.domain.api import Inputs
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
@@ -17,10 +17,10 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.surrogates.api import AnyAggregation
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
-from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
+from bofire.surrogates.engineered_features import map as map_feature
+from bofire.utils.torch_tools import get_NumericToCategorical_input_transform
 
 
 def get_molecular_feature_keys(
@@ -108,88 +108,136 @@ def get_categorical_feature_keys(
 
 def get_scaler(
     inputs: Inputs,
-    input_preprocessing_specs: InputTransformSpecs,
-    scaler: ScalerEnum,
-    X: pd.DataFrame,
+    engineered_features: EngineeredFeatures,
+    categorical_encodings: InputTransformSpecs,
+    scaler_type: ScalerEnum,
 ) -> Union[InputStandardize, Normalize, None]:
     """Returns the instanitated scaler object for a set of input features and
-    input_preprocessing_specs.
+    categorical_encodings.
 
 
     Args:
         inputs (Inputs): Input features.
-        input_preprocessing_specs (InputTransformSpecs): Dictionary how to treat
+        categorical_encodings (InputTransformSpecs): Dictionary how to treat
             the categoricals and/or molecules.
-        scaler (ScalerEnum): Enum indicating the scaler of interest.
+        scaler_type (ScalerEnum): Enum indicating the scaler of interest.
         X (pd.DataFrame): The dataset of interest.
 
     Returns:
         Union[InputStandardize, Normalize]: The instantiated scaler class
 
     """
-    if scaler != ScalerEnum.IDENTITY:
-        features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
+    if scaler_type == ScalerEnum.IDENTITY:
+        return None
+    features2idx, _ = inputs._get_transform_info(categorical_encodings)
 
-        d = 0
-        for indices in features2idx.values():
-            d += len(indices)
+    d = 0
+    for indices in features2idx.values():
+        d += len(indices)
 
-        continuous_feature_keys = get_continuous_feature_keys(
-            inputs=inputs,
-            specs=input_preprocessing_specs,
+    # now we get the engineered feature information
+    offset = d
+    efeatures2idx = engineered_features.get_features2idx(offset=offset)
+    for indices in efeatures2idx.values():
+        d += len(indices)
+
+    continuous_feature_keys = get_continuous_feature_keys(
+        inputs=inputs,
+        specs=categorical_encodings,
+    )
+
+    ord_dims = inputs.get_feature_indices(
+        specs=categorical_encodings,
+        feature_keys=continuous_feature_keys,
+    ) + engineered_features.get_feature_indices(
+        offset=offset, feature_keys=engineered_features.get_keys()
+    )
+
+    if len(ord_dims) == 0:
+        return None
+
+    if scaler_type == ScalerEnum.NORMALIZE:
+        # lower, upper = inputs.get_bounds(
+        #     specs=input_preprocessing_specs,
+        #     experiments=X,
+        # )
+        return Normalize(
+            d=d,
+            # bounds=torch.tensor([lower, upper]).to(**tkwargs),
+            indices=ord_dims,
+            batch_shape=torch.Size(),
         )
-
-        ord_dims = inputs.get_feature_indices(
-            specs=input_preprocessing_specs,
-            feature_keys=continuous_feature_keys,
-        )
-
-        if len(ord_dims) == 0:
-            return None
-
-        if scaler == ScalerEnum.NORMALIZE:
-            lower, upper = inputs.get_bounds(
-                specs=input_preprocessing_specs,
-                experiments=X,
-            )
-            scaler_transform = Normalize(
-                d=d,
-                bounds=torch.tensor([lower, upper]).to(**tkwargs),
-                indices=ord_dims,
-                batch_shape=torch.Size(),
-            )
-        elif scaler == ScalerEnum.STANDARDIZE:
-            scaler_transform = InputStandardize(
-                d=d,
-                indices=ord_dims,
-                batch_shape=torch.Size(),
-            )
-        else:
-            raise ValueError("Scaler enum not known.")
-        return scaler_transform
-    return None
+    # it has to be standardize
+    return InputStandardize(
+        d=d,
+        indices=ord_dims,
+        batch_shape=torch.Size(),
+    )
 
 
 def get_input_transform(
     inputs: Inputs,
-    aggregations: List[AnyAggregation],
-    scaler: Union[InputStandardize, Normalize, None],
+    engineered_features: EngineeredFeatures,
+    scaler_type: ScalerEnum,
     categorical_encodings,  # TODO: specify type
 ) -> Union[InputTransform, None]:
-    input_transform: Optional[InputTransform] = None
+    transforms = {}
+    ignored = []
 
-    if len(categorical_encodings) > 0:
-        categorical_transform = get_NumericToCategorical_input_transform(
-            inputs, categorical_encodings
+    # first categorical encodings
+    categorical_transform = get_NumericToCategorical_input_transform(
+        inputs, categorical_encodings
+    )
+    if categorical_transform is not None:
+        transforms["cat"] = categorical_transform
+
+    # second engineered features
+    for feature in engineered_features.get():
+        transforms[feature.key] = map_feature(
+            data_model=feature, inputs=inputs, transform_specs=categorical_encodings
         )
-        if scaler is not None and categorical_transform is not None:
-            input_transform = ChainedInputTransform(
-                tf1=categorical_transform, tf2=scaler
-            )
-        elif categorical_transform is not None:
-            input_transform = categorical_transform
-        elif scaler is not None:
-            input_transform = scaler
-    else:
-        input_transform = scaler
-    return input_transform
+        if feature.keep_features is False:
+            ignored.extend(feature.features)
+
+    # third scaler
+    scaler = get_scaler(
+        inputs=inputs,
+        engineered_features=engineered_features,
+        categorical_encodings=categorical_encodings,
+        scaler_type=scaler_type,
+    )
+    if scaler is not None:
+        transforms["scaler"] = scaler
+
+    # fourth remove ignored features
+    if len(ignored) > 0:
+        ignored_idx = inputs.get_feature_indices(
+            specs=categorical_encodings,
+            feature_keys=list(set(ignored)),
+        )
+        transforms["filter_engineered"] = FilterFeatures(
+            feature_indices=torch.tensor(ignored_idx, dtype=torch.int64)
+        )
+
+    # now chain them
+    if len(transforms) == 0:
+        return None
+    if len(transforms) == 1:
+        return list(transforms.values())[0]
+    return ChainedInputTransform(**transforms)
+
+    # if len(categorical_encodings) > 0:
+    #     categorical_transform = get_NumericToCategorical_input_transform(
+    #         inputs, categorical_encodings
+    #     )
+    #     if scaler is not None and categorical_transform is not None:
+    #         input_transform = ChainedInputTransform(
+    #             tf1=categorical_transform, tf2=scaler
+    #         )
+    #     elif categorical_transform is not None:
+    #         input_transform = categorical_transform
+    #     elif scaler is not None:
+    #         input_transform = scaler
+    # else:
+    #     input_transform = scaler
+    # return input_transform
