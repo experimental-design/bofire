@@ -54,6 +54,11 @@ def invalid_inputs_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
+@fixture(params=specs.engineered_features.invalids)
+def invalid_engineered_features_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.outputs.invalids)
 def invalid_outputs_spec(request) -> specs.InvalidSpec:
     return request.param
@@ -132,6 +137,11 @@ def acquisition_function_spec(request) -> specs.Spec:
 
 @fixture(params=specs.inputs.valids)
 def inputs_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.engineered_features.valids)
+def engineered_features_spec(request) -> specs.Spec:
     return request.param
 
 

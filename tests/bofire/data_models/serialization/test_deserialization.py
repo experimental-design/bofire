@@ -17,6 +17,7 @@ from bofire.data_models.api import (
     AnySurrogate,
     Constraints,
     Domain,
+    EngineeredFeatures,
     Inputs,
     Outputs,
 )
@@ -115,6 +116,14 @@ def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
 def test_inputs_should_be_deserializable(inputs_spec: Spec):
     obj = inputs_spec.obj()
     deserialized = TypeAdapter(Inputs).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_engineered_features_should_be_deserializable(
+    engineered_features_spec: Spec,
+):
+    obj = engineered_features_spec.obj()
+    deserialized = TypeAdapter(EngineeredFeatures).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

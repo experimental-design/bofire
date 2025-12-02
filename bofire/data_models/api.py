@@ -5,7 +5,14 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.dataframes.api import AnyDataFrame, AnyRow
-from bofire.data_models.domain.api import Constraints, Domain, Features, Inputs, Outputs
+from bofire.data_models.domain.api import (
+    Constraints,
+    Domain,
+    EngineeredFeatures,
+    Features,
+    Inputs,
+    Outputs,
+)
 from bofire.data_models.features.api import (
     AnyFeature,
     AnyInput,
@@ -56,6 +63,7 @@ data_model_list = [
     Inputs,
     Outputs,
     Constraints,
+    EngineeredFeatures,
 ]
 
 AnyThing = [model for models in data_model_list for model in unions.to_list(models)]

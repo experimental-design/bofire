@@ -253,6 +253,8 @@ class Features(_BaseFeatures[AnyFeature]):
 
 
 class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
+    type: Literal["EngineeredFeatures"] = "EngineeredFeatures"  # type: ignore
+
     def get_features2idx(self, offset: int = 0):
         features2idx = {}
         counter = offset
