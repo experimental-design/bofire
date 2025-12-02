@@ -67,7 +67,7 @@ class DoEStrategy(Strategy):
                 f"provided candidates are missing columns: {(*too_few_columns,)} which exist in original domain",
             )
 
-        self._candidates = candidates
+        self._candidates = candidates # due to inheriting from Strategy, we then later call this using self.candidates
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         (
@@ -81,15 +81,15 @@ class DoEStrategy(Strategy):
         
 
         # if you have fixed experiments, so-called _candidates, you need to relaxe them and add them to the total number of experiments
-        if self._candidates is not None:
+        if self.candidates is not None: #aka if self._candidates is not None
             # transform candidates to new domain
             relaxed_candidates = (
                 self._transform_candidates_to_new_domain(
                     relaxed_domain,
-                    self._candidates,
+                    self.candidates,
                 )
             )
-            fixed_experiments_count = self._candidates.notnull().all(axis=1).sum()
+            fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
         else:
             relaxed_candidates = None
             fixed_experiments_count = 0
@@ -107,8 +107,8 @@ class DoEStrategy(Strategy):
 
         design = find_local_max_ipopt(
             relaxed_domain,
-            fixed_experiments=None,
-            partially_fixed_experiments=relaxed_candidates, #wait, why are these 'partially fixed' and not fixed?
+            fixed_experiments=None, #effectively deprecated, but others use it so we have not removed it yet
+            partially_fixed_experiments=relaxed_candidates, # technically fixed experiments are also partially_fixed, so we only use this 
             ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
         )
@@ -149,7 +149,7 @@ class DoEStrategy(Strategy):
                     aux_vars_for_discrete=aux_vars_for_discrete,
                 )
                 design = pd.concat([design, design_categoricals], axis=1)
-        if self._return_fixed_candidates:
+        if self._return_fixed_candidates:  #this is asking if the fixed candidates should be returned together with the new ones, or just the new ones. Default just the new ones. 
             fixed_experiments_count = 0
         return design.iloc[fixed_experiments_count:, :].reset_index(
             drop=True,
