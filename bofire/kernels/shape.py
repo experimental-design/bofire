@@ -10,8 +10,8 @@ class WassersteinKernel(Kernel):
         super(WassersteinKernel, self).__init__(**kwargs)
         self.squared = squared
 
-    def calc_wasserstein_distances(self, x1: Tensor, x2: Tensor):
-        return (torch.cdist(x1, x2, p=1) / x1.shape[-1]).clamp_min(1e-15)
+    def calc_wasserstein_distances(self, x1: Tensor, x2: Tensor, norm: Tensor):
+        return (torch.cdist(x1, x2, p=1) / norm).clamp_min(1e-15)
 
     def forward(
         self,
@@ -20,8 +20,20 @@ class WassersteinKernel(Kernel):
         diag: bool = False,
         last_dim_is_batch: bool = False,
     ) -> Tensor:
-        dists = self.calc_wasserstein_distances(x1, x2)
-        dists = dists / self.lengthscale
+        # to allow for ard now
+        x1_scaled = x1 / self.lengthscale
+        x2_scaled = x2 / self.lengthscale
+
+        # check if lengthscale is a vector or a scalar
+        if self.lengthscale.numel() == 1:
+            norm = x1.shape[-1]
+        else:
+            # sum lengthscales this did not work.
+            norm = x1.shape[-1]  # torch.sum(self.lengthscale)
+
+        dists = self.calc_wasserstein_distances(x1_scaled, x2_scaled, norm)
+
+        # dists = dists / self.lengthscale
         if self.squared:
             return torch.exp(-(dists**2))
         return torch.exp(-dists)

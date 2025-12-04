@@ -146,6 +146,8 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
 
     outputscale_prior: AnyPrior = Field(default_factory=lambda: THREESIX_SCALE_PRIOR())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    ard: bool = False
+    saas: bool = False
 
     @model_validator(mode="after")
     def validate_keys(self):

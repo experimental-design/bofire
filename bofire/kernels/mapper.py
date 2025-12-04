@@ -284,6 +284,7 @@ def map_WassersteinKernel(
             else None
         ),
         active_dims=active_dims,
+        ard_num_dims=ard_num_dims,
     )
 
 

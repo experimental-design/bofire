@@ -10,7 +10,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousOutput,
 )
-from bofire.data_models.kernels.api import MaternKernel, RBFKernel, WassersteinKernel
+from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
     MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
@@ -89,10 +89,10 @@ class SortingGPSurrogateHyperconfig(Hyperconfig):
 
 
 class SortingGPSurrogate(TrainableBotorchSurrogate):
-    """GP surrogate that is based on a `WassersteinKernel` for modeling functions
+    """GP surrogate that is based on a `SortingKernel` for modeling functions
     that take a monotonically increasing piecewise linear function as input. The
     computation of the covariance between the piecewise linears is done by the
-    Wasserstein distance kernel. The continuous features are modeled by a separate
+    Sorting distance kernel. The continuous features are modeled by a separate
     kernel, which can be either of Matern or RBF type. Both kernels are then combined
     by a product kernel.
 
@@ -116,9 +116,8 @@ class SortingGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: SortingGPSurrogateHyperconfig(),
     )
 
-    shape_kernel: Union[WassersteinKernel, RBFKernel] = Field(
-        default_factory=lambda: WassersteinKernel(
-            squared=False,
+    shape_kernel: Union[RBFKernel, MaternKernel] = Field(
+        default_factory=lambda: RBFKernel(
             lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
         ),
     )
@@ -131,7 +130,7 @@ class SortingGPSurrogate(TrainableBotorchSurrogate):
 
     outputscale_prior: AnyPrior = Field(default_factory=lambda: THREESIX_SCALE_PRIOR())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    ard: bool = False
+    ard: bool = True
 
     @model_validator(mode="after")
     def validate_keys(self):

@@ -45,7 +45,7 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         if self.ard:
             self.ard_dims = len(data_model.x_keys) + len(data_model.y_keys)
         else:
-            self.ard_dims = 1
+            self.ard_dims = None
 
         # get indices of x keys and normalize them
         self.idx_continuous = sorted(
@@ -64,7 +64,9 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 bounds=bounds,
             )
 
-        self.transform = ChainedInputTransform(tf1=sort, tf2=norm)
+            self.transform = ChainedInputTransform(tf1=sort, tf2=norm)
+        else:
+            self.transform = sort
 
         super().__init__(data_model=data_model, **kwargs)
 
