@@ -94,7 +94,7 @@ class CategoricalInput(Input):
             )
         return None
 
-    def get_allowed_categories(self):
+    def get_allowed_categories(self) -> list[str]:
         """Returns the allowed categories.
 
         Returns:

@@ -161,6 +161,10 @@ def test_continuous_input_feature_validate_invalid(input_feature, values, strict
             specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
         ),
+        (
+            specs.features.valid(ContinuousInput).obj(allow_zero=True),
+            pd.Series([0.0, 4.0]),
+        ),
     ],
 )
 def test_continuous_input_feature_validate_candidental_valid(input_feature, values):
@@ -186,6 +190,10 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
             specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.1, 3.2, 3.4]),
         ),
+        (
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 5), allow_zero=False),
+            pd.Series([0.0, 4.0]),
+        ),
     ],
 )
 def test_continuous_input_feature_validate_candidental_invalid(input_feature, values):
@@ -194,11 +202,17 @@ def test_continuous_input_feature_validate_candidental_invalid(input_feature, va
 
 
 def test_continuous_input_is_fulfilled():
-    feature = ContinuousInput(key="a", bounds=(0, 2))
-    values = pd.Series([-1.0, 1.0, 2.0, 3.0], index=["a1", "a2", "a3", "a4"])
+    feature = ContinuousInput(key="a", bounds=(0.5, 2))
+    values = pd.Series([-1.0, 0.0, 1.0, 2.0, 3.0], index=["a1", "a2", "a3", "a4", "a5"])
     fulfilled = feature.is_fulfilled(values)
     assert_series_equal(
-        fulfilled, pd.Series([False, True, True, False], index=["a1", "a2", "a3", "a4"])
+        fulfilled, pd.Series([False, False, True, True, False], index=values.index)
+    )
+
+    feature_allow_zero = ContinuousInput(key="a", bounds=(0.5, 2), allow_zero=True)
+    fulfilled = feature_allow_zero.is_fulfilled(values)
+    assert_series_equal(
+        fulfilled, pd.Series([False, True, True, True, False], index=values.index)
     )
 
 

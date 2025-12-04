@@ -583,47 +583,6 @@ specs.add_invalid(
 )
 
 specs.add_valid(
-    models.XGBoostSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                features.valid(ContinuousInput).obj(),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "n_estimators": 10,
-        "max_depth": 6,
-        "max_leaves": 0,
-        "max_bin": 256,
-        "grow_policy": "depthwise",
-        "learning_rate": 0.3,
-        "objective": "reg:squarederror",
-        "booster": "gbtree",
-        "n_jobs": 1,
-        "gamma": 0.0,
-        "min_child_weight": 1.0,
-        "max_delta_step": 0.0,
-        "subsample": 1.0,
-        "sampling_method": "uniform",
-        "colsample_bytree": 1.0,
-        "colsample_bylevel": 1.0,
-        "colsample_bynode": 1.0,
-        "reg_alpha": 0.0,
-        "reg_lambda": 1.0,
-        "scale_pos_weight": 1,
-        "random_state": None,
-        "num_parallel_tree": 1,
-        "input_preprocessing_specs": {},
-        "dump": None,
-        "hyperconfig": None,
-    },
-)
-specs.add_valid(
     models.TanimotoGPSurrogate,
     lambda: {
         "inputs": Inputs(
@@ -934,7 +893,7 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
+            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(2)]
             + [ContinuousInput(key=f"t_{3}", bounds=(2, 60))],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
@@ -972,7 +931,7 @@ specs.add_invalid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)],
+            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(2)],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
@@ -1009,7 +968,7 @@ specs.add_invalid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(3)],
+            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(3)],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),

@@ -7,9 +7,13 @@ name = "bofire"
 description = ""
 dynamic = ["version"]
 authors = []
-license = {text = "BSD-3"}
-urls = {homepage = "https://github.com/experimental-design/bofire"}
-keywords = ["Bayesian optimization", "Multi-objective optimization", "Experimental design"]
+license = { text = "BSD-3" }
+urls = { homepage = "https://github.com/experimental-design/bofire" }
+keywords = [
+    "Bayesian optimization",
+    "Multi-objective optimization",
+    "Experimental design",
+]
 classifiers = [
     "Development Status :: 1 - Planning",
     "Programming Language :: Python :: 3 :: Only",
@@ -18,7 +22,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
 ]
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10.0"
 dependencies = [
     "numpy",
@@ -39,27 +43,17 @@ optimization = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]",
-    "scikit-learn>=1.0.0,<1.6",
+    "scikit-learn>=1.0.0",
     "pymoo>=0.6.0",
     "shap>=0.48.0",
 ]
-entmoot = ["pyomo<=6.9.4","entmoot>=2.0.6"] # we pin the pyomo version here due to compatibility issues
-xgb = ["xgboost>=1.7.5"]
-cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred>=1.2.0"]
-tests = [
-    "pytest",
-    "pytest-cov",
-    "papermill",
-]
-docs = [
-    "mkdocs",
-    "mkdocs-material",
-    "mkdocs-jupyter",
-    "mkdocstrings>=0.18",
-    "mkdocstrings-python",
-    "mike",
-]
-tutorials = ["jupyter", "matplotlib", "seaborn"]
+entmoot = [
+    "pyomo<=6.9.4",
+    "entmoot>=2.0.6",
+] # we pin the pyomo version here due to compatibility issues
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordred>=1.2.0"]
+tests = ["pytest", "pytest-cov", "papermill"]
+docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
     "botorch>=0.16.0",
     "numpy",
@@ -69,10 +63,9 @@ all = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]",
-    "scikit-learn>=1.0.0,<1.6",
+    "scikit-learn>=1.0.0",
     "entmoot>=2.0.6",
     "pyomo<=6.9.4",
-    "xgboost>=1.7.5",
     "rdkit>=2023.3.2",
     "mordred>=1.2.0",
     "mopti",
@@ -107,9 +100,9 @@ output-format = "concise"
 [tool.ruff.lint]
 select = ["B", "C", "E", "F", "W", "I"]
 ignore = [
-    "E501",  # don't enforce for comments and docstrings
-    "B017",  # required for tests
-    "B027",  # required for optional _tell method
+    "E501", # don't enforce for comments and docstrings
+    "B017", # required for tests
+    "B027", # required for optional _tell method
     "B028",
     "B904",
     "B905",

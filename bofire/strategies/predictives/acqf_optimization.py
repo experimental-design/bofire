@@ -25,7 +25,12 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import CategoricalInput, DiscreteInput, Input
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+    Input,
+)
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
 )
@@ -623,9 +628,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         fixed_basis = self.get_fixed_features(domain=domain)
 
-        combos = domain.inputs.get_categorical_combinations(
-            include=[CategoricalInput, DiscreteInput],
-        )
+        combos = domain.inputs.get_categorical_combinations()
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
@@ -638,12 +641,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
             for pair in combo:
                 feat, val = pair
                 feature = domain.inputs.get_by_key(feat)
-                if isinstance(feature, DiscreteInput):
+                if isinstance(feature, (ContinuousInput, DiscreteInput)):
                     fixed_features[features2idx[feat][0]] = val  # type: ignore
                 if isinstance(feature, CategoricalInput):
                     assert feature.categories is not None
                     fixed_features[features2idx[feat][0]] = feature.categories.index(
-                        val
+                        val  # type: ignore
                     )  # this transforms to ordinal encoding
 
             list_of_fixed_features.append(fixed_features)
