@@ -230,6 +230,25 @@ class DoEStrategy(Strategy):
         else:
             raise ValueError("Only ModelBasedObjective support get_model_matrix_rank method")
 
+    def get_additional_experiments_needed(self, epsilon: int = 3) -> Optional[int]:
+        """Calculate the additional number of experiments needed beyond current candidates.
+        
+        This method computes: get_required_number_of_experiments() - get_candidate_fim_rank() + epsilon
+        
+        Args:
+            epsilon (int): Additional buffer experiments to add. Defaults to 3.
+            
+        Returns:
+            Optional[int]: Number of additional experiments needed, or None if required number 
+                          cannot be calculated (e.g., for SpaceFillingCriterion).
+        """
+        required_experiments = self.get_required_number_of_experiments()
+        if required_experiments is None:
+            return None
+            
+        candidate_rank = self.get_candidate_fim_rank()
+        return required_experiments - candidate_rank + epsilon
+
     def has_sufficient_experiments(
         self,
     ) -> bool:

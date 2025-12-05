@@ -1014,7 +1014,8 @@ def test_get_candidate_fim_rank_categorical_discrete():
 
 
 def test_get_candidate_fim_rank_vs_required_experiments():
-    """Test that Fisher Information Matrix rank is at most the required number of experiments."""
+    """Test that Fisher Information Matrix rank is at most the required number of experiments.
+    Also tests the get_additional_experiments_needed method."""
     # Test with continuous inputs only
     continuous_domain = Domain.from_lists(
         inputs=[
@@ -1033,6 +1034,12 @@ def test_get_candidate_fim_rank_vs_required_experiments():
         
         required_experiments = strategy.get_required_number_of_experiments()
         
+        # Test with no candidates set (edge case)
+        if required_experiments is not None:
+            additional_no_candidates = strategy.get_additional_experiments_needed()
+            expected_no_candidates = required_experiments - 0 + 3  # FIM rank is 0 when no candidates
+            assert additional_no_candidates == expected_no_candidates, f"No candidates: Additional experiments mismatch for {formula}: got {additional_no_candidates}, expected {expected_no_candidates}"
+        
         # Create candidates with more experiments than required
         n_candidates = required_experiments + 5 if required_experiments else 10
         candidates = pd.DataFrame({
@@ -1050,6 +1057,21 @@ def test_get_candidate_fim_rank_vs_required_experiments():
         
         # Also should be at most the number of candidates
         assert fim_rank <= n_candidates, f"FIM rank ({fim_rank}) exceeds number of candidates ({n_candidates}) for {formula}"
+        
+        # Test the new get_additional_experiments_needed method
+        if required_experiments is not None:
+            # With default epsilon=3
+            additional_needed = strategy.get_additional_experiments_needed()
+            expected_additional = required_experiments - fim_rank + 3
+            assert additional_needed == expected_additional, f"Additional experiments mismatch for {formula}: got {additional_needed}, expected {expected_additional}"
+            
+            # With custom epsilon=5
+            additional_needed_custom = strategy.get_additional_experiments_needed(epsilon=5)
+            expected_additional_custom = required_experiments - fim_rank + 5
+            assert additional_needed_custom == expected_additional_custom, f"Additional experiments (epsilon=5) mismatch for {formula}: got {additional_needed_custom}, expected {expected_additional_custom}"
+            
+            # Additional experiments should be non-negative when we have fewer candidates than required
+            assert additional_needed >= 0, f"Additional experiments should be non-negative for {formula}"
     
     # Test with mixed input types
     mixed_domain = Domain.from_lists(
@@ -1079,6 +1101,16 @@ def test_get_candidate_fim_rank_vs_required_experiments():
     
     if required_experiments is not None:
         assert fim_rank <= required_experiments, f"Mixed domain: FIM rank ({fim_rank}) exceeds required experiments ({required_experiments})"
+        
+        # Test get_additional_experiments_needed with mixed inputs
+        additional_needed = strategy.get_additional_experiments_needed()
+        expected_additional = required_experiments - fim_rank + 3
+        assert additional_needed == expected_additional, f"Mixed domain: Additional experiments mismatch: got {additional_needed}, expected {expected_additional}"
+        
+        # Test with epsilon=0 (no buffer)
+        additional_no_buffer = strategy.get_additional_experiments_needed(epsilon=0)
+        expected_no_buffer = required_experiments - fim_rank
+        assert additional_no_buffer == expected_no_buffer, f"Mixed domain: Additional experiments (no buffer) mismatch: got {additional_no_buffer}, expected {expected_no_buffer}"
 
 
 if __name__ == "__main__":
