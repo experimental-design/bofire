@@ -182,9 +182,20 @@ def test_get_acqf_input_tensors_infeasible(include_infeasible):
         for feat in benchmark.domain.inputs.get():
             feat.bounds = (-6, 0)
         strategy = SoboStrategy.make(domain=benchmark.domain)
+        # we do this to make the test more robust and not depend on the random sampling
+        experiments = pd.concat(
+            [
+                experiments,
+                pd.DataFrame(
+                    {"x_1": [6.0], "x_2": [6.0], "y": [700.0], "valid_y": [1]}
+                ),
+            ],
+            ignore_index=True,
+        )
+        assert len(experiments) == 11
         strategy._experiments = experiments
         filtered_experiments, _ = strategy.get_acqf_input_tensors()
-        assert filtered_experiments.shape[0] < 10
+        assert filtered_experiments.shape[0] < 11
 
 
 @pytest.mark.parametrize(
