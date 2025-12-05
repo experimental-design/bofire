@@ -885,8 +885,8 @@ def one_cont_3_cat():
     assert n_successfull_runs == 9
 
 
-def test_get_candidate_rank():
-    """Test the get_candidate_rank method of DoEStrategy."""
+def test_get_candidate_fim_rank():
+    """Test the get_candidate_fim_rank method of DoEStrategy."""
     # Create a simple domain with 3 continuous inputs
     simple_domain = Domain.from_lists(
         inputs=[
@@ -902,7 +902,7 @@ def test_get_candidate_rank():
         domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
     )
     strategy = DoEStrategy(data_model=data_model)
-    assert strategy.get_candidate_rank() == 0
+    assert strategy.get_candidate_fim_rank() == 0
     
     # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
     candidates_full_rank = pd.DataFrame({
@@ -911,7 +911,7 @@ def test_get_candidate_rank():
         "x3": [0.0, 0.0, 1.0, 0.5],
     })
     strategy.set_candidates(candidates_full_rank)
-    rank = strategy.get_candidate_rank()
+    rank = strategy.get_candidate_fim_rank()
     assert rank == 4  # Fisher Information Matrix should be full rank for this design
     
     # Test 3: Rank-deficient Fisher Information Matrix (repeated candidates)
@@ -921,7 +921,7 @@ def test_get_candidate_rank():
         "x3": [0.0, 0.0, 0.0, 0.0],
     })
     strategy.set_candidates(candidates_rank_deficient)
-    rank = strategy.get_candidate_rank()
+    rank = strategy.get_candidate_fim_rank()
     assert rank < 4  # Fisher Information Matrix should be rank deficient
     assert rank >= 1  # At least intercept should contribute
     
@@ -931,7 +931,7 @@ def test_get_candidate_rank():
     )
     strategy_quad = DoEStrategy(data_model_quad)
     strategy_quad.set_candidates(candidates_full_rank)
-    rank_quad = strategy_quad.get_candidate_rank()
+    rank_quad = strategy_quad.get_candidate_fim_rank()
     # Fully quadratic has more terms: 1 + x1 + x2 + x3 + x1^2 + x2^2 + x3^2 + x1:x2 + x1:x3 + x2:x3 = 10 terms
     # Fisher Information Matrix is 10x10, but with only 4 candidates, rank should be <= 4
     assert rank_quad <= 4
@@ -944,8 +944,73 @@ def test_get_candidate_rank():
     strategy_space = DoEStrategy(data_model_space)
     strategy_space.set_candidates(candidates_full_rank)
     
-    with pytest.raises(ValueError, match="get_candidate_rank\\(\\) only works with DoEOptimalityCriterion"):
-        strategy_space.get_candidate_rank()
+    with pytest.raises(ValueError, match="get_candidate_fim_rank\\(\\) only works with DoEOptimalityCriterion"):
+        strategy_space.get_candidate_fim_rank()
+
+
+def test_get_candidate_fim_rank_categorical_discrete():
+    """Test the get_candidate_fim_rank method with categorical and discrete inputs."""
+    # Create a domain with mixed input types
+    mixed_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+            CategoricalInput(key="x3", categories=["A", "B", "C"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_fim_rank() == 0
+    
+    # Test 2: Mixed input candidates
+    candidates_mixed = pd.DataFrame({
+        "x1": [0.0, 1.0, 0.5, 0.2],
+        "x2": [0.1, 0.5, 1.0, 0.5],  # Discrete values
+        "x3": ["A", "B", "C", "A"],  # Categorical values
+    })
+    strategy.set_candidates(candidates_mixed)
+    rank = strategy.get_candidate_fim_rank()
+    # Linear model with continuous + discrete + categorical (one-hot encoded)
+    # Should have reasonable rank given the mixed inputs
+    assert rank >= 1
+    assert rank <= 4  # At most 4 candidates
+    
+    # Test 3: Test with interactions formula for mixed types
+    data_model_interactions = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear-and-interactions")
+    )
+    strategy_interactions = DoEStrategy(data_model_interactions)
+    strategy_interactions.set_candidates(candidates_mixed)
+    rank_interactions = strategy_interactions.get_candidate_fim_rank()
+    assert rank_interactions >= 1
+    assert rank_interactions <= 4  # Limited by number of candidates
+    
+    # Test 4: Rank-deficient case with repeated categorical/discrete values
+    candidates_repeated = pd.DataFrame({
+        "x1": [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
+        "x2": [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
+        "x3": ["A", "A", "B", "B"],  # Repeated categorical values
+    })
+    strategy.set_candidates(candidates_repeated)
+    rank_repeated = strategy.get_candidate_fim_rank()
+    assert rank_repeated >= 1
+    assert rank_repeated < 4  # Should be rank deficient due to repetition
+    
+    # Test 5: Single categorical level (should reduce rank)
+    candidates_single_cat = pd.DataFrame({
+        "x1": [0.0, 1.0, 0.5, 0.2],
+        "x2": [0.1, 0.5, 1.0, 0.1], 
+        "x3": ["A", "A", "A", "A"],  # All same category
+    })
+    strategy.set_candidates(candidates_single_cat)
+    rank_single = strategy.get_candidate_fim_rank()
+    assert rank_single >= 1
+    # Should have lower rank than mixed categories since categorical contribution is reduced
 
 
 if __name__ == "__main__":

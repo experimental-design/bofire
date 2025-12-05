@@ -173,7 +173,7 @@ class DoEStrategy(Strategy):
                 f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
             )
 
-    def get_candidate_rank(self) -> int: 
+    def get_candidate_fim_rank(self) -> int: 
         """Get the rank of the Fisher Information Matrix (X.T @ X) for the current candidates.
         
         Returns:
@@ -184,7 +184,7 @@ class DoEStrategy(Strategy):
         
         # Only works for DoEOptimalityCriterion (model-based criteria), not SpaceFilling
         if not isinstance(self._data_model.criterion, DoEOptimalityCriterion):
-            raise ValueError("get_candidate_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion")
+            raise ValueError("get_candidate_fim_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion")
         
         # Step 1: get_relaxed_domain(original_domain)
         relaxed_domain, *_ = create_continuous_domain(domain=self.domain)
@@ -195,19 +195,35 @@ class DoEStrategy(Strategy):
             self.candidates,
         )
         
-        # Step 3: get_objective_function (combines model + objective from pseudocode)
+        # Step 3: get_objective_function (combines model + objective)
         n_candidates = len(self.candidates)
         objective_function = get_objective_function(
             criterion=self._data_model.criterion,
             domain=relaxed_domain,
-            n_experiments=n_candidates,
+            n_experiments=n_candidates, #not actually used in this context, so effectively a dummy value 
             inputs_for_formula=self.domain.inputs,
         )
         
         # Step 4 & 5: Combined tensor_to_model_matrix + rank calculation
         if isinstance(objective_function, ModelBasedObjective):
-            # Convert to tensor as expected
-            candidates_tensor = torch.tensor(relaxed_candidates.to_numpy(), dtype=torch.float64)
+            # Handle relaxed candidates which may have NaN values for auxiliary variables
+            # Fill NaN with 0.0 and ensure all data is numeric
+            relaxed_candidates_clean = relaxed_candidates.copy()
+            
+            # Convert object columns to numeric where possible, coerce errors to NaN
+            for col in relaxed_candidates_clean.columns:
+                if relaxed_candidates_clean[col].dtype == 'object':
+                    relaxed_candidates_clean[col] = pd.to_numeric(relaxed_candidates_clean[col], errors='coerce')
+            
+            # Fill all NaN values with 0.0
+            relaxed_candidates_clean = relaxed_candidates_clean.fillna(0.0)
+            
+            # Ensure we only use columns that match the relaxed domain inputs
+            expected_columns = relaxed_domain.inputs.get_keys()
+            relaxed_candidates_clean = relaxed_candidates_clean[expected_columns]
+            
+            # Convert to tensor
+            candidates_tensor = torch.tensor(relaxed_candidates_clean.to_numpy(), dtype=torch.float64)
             
             # Get Fisher Information Matrix rank (X.T @ X rank)
             return objective_function.get_fisher_information_matrix_rank(candidates_tensor)
