@@ -491,4 +491,6 @@ def test_get_input_transform():
     assert list(input_transform.keys()) == ["cat", "sum", "scaler", "filter_engineered"]
     filter = input_transform["filter_engineered"]
     assert isinstance(filter, FilterFeatures)
-    assert (filter.feature_indices == torch.tensor([0, 1], dtype=torch.int64)).all()
+    assert (
+        filter.feature_indices == torch.tensor([2, 3, 4, 5], dtype=torch.int64)
+    ).all()

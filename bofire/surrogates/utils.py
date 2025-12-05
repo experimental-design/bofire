@@ -215,8 +215,17 @@ def get_input_transform(
             specs=categorical_encodings,
             feature_keys=list(set(ignored)),
         )
+        original_idx = inputs.get_feature_indices(
+            specs=categorical_encodings, feature_keys=inputs.get_keys()
+        )
+        engineered_idx = engineered_features.get_feature_indices(
+            offset=len(original_idx),
+            feature_keys=engineered_features.get_keys(),
+        )
+        all_idx = original_idx + engineered_idx
+        keep_idx = list(set(all_idx) - set(ignored_idx))
         transforms["filter_engineered"] = FilterFeatures(
-            feature_indices=torch.tensor(ignored_idx, dtype=torch.int64)
+            feature_indices=torch.tensor(keep_idx, dtype=torch.int64)
         )
 
     # now chain them
