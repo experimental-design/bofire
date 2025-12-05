@@ -1013,6 +1013,74 @@ def test_get_candidate_fim_rank_categorical_discrete():
     # Should have lower rank than mixed categories since categorical contribution is reduced
 
 
+def test_get_candidate_fim_rank_vs_required_experiments():
+    """Test that Fisher Information Matrix rank is at most the required number of experiments."""
+    # Test with continuous inputs only
+    continuous_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)), 
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    
+    for formula in ["linear", "linear-and-interactions", "fully-quadratic"]:
+        data_model = data_models.DoEStrategy(
+            domain=continuous_domain, criterion=DOptimalityCriterion(formula=formula)
+        )
+        strategy = DoEStrategy(data_model=data_model)
+        
+        required_experiments = strategy.get_required_number_of_experiments()
+        
+        # Create candidates with more experiments than required
+        n_candidates = required_experiments + 5 if required_experiments else 10
+        candidates = pd.DataFrame({
+            "x1": np.random.uniform(0, 1, n_candidates),
+            "x2": np.random.uniform(0, 1, n_candidates),
+            "x3": np.random.uniform(0, 1, n_candidates),
+        })
+        
+        strategy.set_candidates(candidates)
+        fim_rank = strategy.get_candidate_fim_rank()
+        
+        # Fisher Information Matrix rank should be at most the required number of experiments
+        if required_experiments is not None:
+            assert fim_rank <= required_experiments, f"FIM rank ({fim_rank}) exceeds required experiments ({required_experiments}) for {formula}"
+        
+        # Also should be at most the number of candidates
+        assert fim_rank <= n_candidates, f"FIM rank ({fim_rank}) exceeds number of candidates ({n_candidates}) for {formula}"
+    
+    # Test with mixed input types
+    mixed_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+            CategoricalInput(key="x3", categories=["A", "B"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    
+    data_model = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    
+    required_experiments = strategy.get_required_number_of_experiments()
+    
+    candidates_mixed = pd.DataFrame({
+        "x1": [0.0, 1.0, 0.5, 0.2, 0.8, 0.3],
+        "x2": [0.1, 0.5, 1.0, 0.5, 0.1, 1.0],
+        "x3": ["A", "B", "A", "B", "A", "B"],
+    })
+    
+    strategy.set_candidates(candidates_mixed)
+    fim_rank = strategy.get_candidate_fim_rank()
+    
+    if required_experiments is not None:
+        assert fim_rank <= required_experiments, f"Mixed domain: FIM rank ({fim_rank}) exceeds required experiments ({required_experiments})"
+
+
 if __name__ == "__main__":
     test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
     test_purely_categorical_doe()
