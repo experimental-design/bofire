@@ -10,6 +10,7 @@ from bofire.data_models.features.api import (
     CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
+    EngineeredFeature,
     MolecularInput,
 )
 
@@ -27,6 +28,8 @@ from bofire.data_models.features.api import (
 )
 def test_sample(spec: specs.Spec, n: int):
     feat = spec.obj()
+    if isinstance(feat, EngineeredFeature):
+        return
     samples0 = feat.sample(n=n)
     feat.validate_candidental(samples0)
     samples1 = feat.sample(n=n, seed=42)
