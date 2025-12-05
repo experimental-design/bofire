@@ -891,40 +891,44 @@ def test_get_candidate_fim_rank():
     simple_domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
-            ContinuousInput(key="x2", bounds=(0, 1)), 
+            ContinuousInput(key="x2", bounds=(0, 1)),
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    
+
     # Test 1: No candidates should return 0
     data_model = data_models.DoEStrategy(
         domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
     )
     strategy = DoEStrategy(data_model=data_model)
     assert strategy.get_candidate_fim_rank() == 0
-    
+
     # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
-    candidates_full_rank = pd.DataFrame({
-        "x1": [1.0, 0.0, 0.0, 0.5],
-        "x2": [0.0, 1.0, 0.0, 0.5],
-        "x3": [0.0, 0.0, 1.0, 0.5],
-    })
+    candidates_full_rank = pd.DataFrame(
+        {
+            "x1": [1.0, 0.0, 0.0, 0.5],
+            "x2": [0.0, 1.0, 0.0, 0.5],
+            "x3": [0.0, 0.0, 1.0, 0.5],
+        }
+    )
     strategy.set_candidates(candidates_full_rank)
     rank = strategy.get_candidate_fim_rank()
     assert rank == 4  # Fisher Information Matrix should be full rank for this design
-    
+
     # Test 3: Rank-deficient Fisher Information Matrix (repeated candidates)
-    candidates_rank_deficient = pd.DataFrame({
-        "x1": [1.0, 1.0, 0.0, 0.0],  # Repeated rows
-        "x2": [0.0, 0.0, 1.0, 1.0],  # Repeated rows
-        "x3": [0.0, 0.0, 0.0, 0.0],
-    })
+    candidates_rank_deficient = pd.DataFrame(
+        {
+            "x1": [1.0, 1.0, 0.0, 0.0],  # Repeated rows
+            "x2": [0.0, 0.0, 1.0, 1.0],  # Repeated rows
+            "x3": [0.0, 0.0, 0.0, 0.0],
+        }
+    )
     strategy.set_candidates(candidates_rank_deficient)
     rank = strategy.get_candidate_fim_rank()
     assert rank < 4  # Fisher Information Matrix should be rank deficient
     assert rank >= 1  # At least intercept should contribute
-    
+
     # Test 4: Test with quadratic formula
     data_model_quad = data_models.DoEStrategy(
         domain=simple_domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
@@ -936,15 +940,18 @@ def test_get_candidate_fim_rank():
     # Fisher Information Matrix is 10x10, but with only 4 candidates, rank should be <= 4
     assert rank_quad <= 4
     assert rank_quad >= 1
-    
+
     # Test 5: SpaceFilling criterion should raise error
     data_model_space = data_models.DoEStrategy(
         domain=simple_domain, criterion=SpaceFillingCriterion()
     )
     strategy_space = DoEStrategy(data_model_space)
     strategy_space.set_candidates(candidates_full_rank)
-    
-    with pytest.raises(ValueError, match="get_candidate_fim_rank\\(\\) only works with DoEOptimalityCriterion"):
+
+    with pytest.raises(
+        ValueError,
+        match="get_candidate_fim_rank\\(\\) only works with DoEOptimalityCriterion",
+    ):
         strategy_space.get_candidate_fim_rank()
 
 
@@ -959,54 +966,61 @@ def test_get_candidate_fim_rank_categorical_discrete():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    
+
     # Test 1: No candidates should return 0
     data_model = data_models.DoEStrategy(
         domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
     )
     strategy = DoEStrategy(data_model=data_model)
     assert strategy.get_candidate_fim_rank() == 0
-    
+
     # Test 2: Mixed input candidates
-    candidates_mixed = pd.DataFrame({
-        "x1": [0.0, 1.0, 0.5, 0.2],
-        "x2": [0.1, 0.5, 1.0, 0.5],  # Discrete values
-        "x3": ["A", "B", "C", "A"],  # Categorical values
-    })
+    candidates_mixed = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.5],  # Discrete values
+            "x3": ["A", "B", "C", "A"],  # Categorical values
+        }
+    )
     strategy.set_candidates(candidates_mixed)
     rank = strategy.get_candidate_fim_rank()
     # Linear model with continuous + discrete + categorical (one-hot encoded)
     # Should have reasonable rank given the mixed inputs
     assert rank >= 1
     assert rank <= 4  # At most 4 candidates
-    
+
     # Test 3: Test with interactions formula for mixed types
     data_model_interactions = data_models.DoEStrategy(
-        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear-and-interactions")
+        domain=mixed_domain,
+        criterion=DOptimalityCriterion(formula="linear-and-interactions"),
     )
     strategy_interactions = DoEStrategy(data_model_interactions)
     strategy_interactions.set_candidates(candidates_mixed)
     rank_interactions = strategy_interactions.get_candidate_fim_rank()
     assert rank_interactions >= 1
     assert rank_interactions <= 4  # Limited by number of candidates
-    
+
     # Test 4: Rank-deficient case with repeated categorical/discrete values
-    candidates_repeated = pd.DataFrame({
-        "x1": [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
-        "x2": [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
-        "x3": ["A", "A", "B", "B"],  # Repeated categorical values
-    })
+    candidates_repeated = pd.DataFrame(
+        {
+            "x1": [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
+            "x2": [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
+            "x3": ["A", "A", "B", "B"],  # Repeated categorical values
+        }
+    )
     strategy.set_candidates(candidates_repeated)
     rank_repeated = strategy.get_candidate_fim_rank()
     assert rank_repeated >= 1
     assert rank_repeated < 4  # Should be rank deficient due to repetition
-    
+
     # Test 5: Single categorical level (should reduce rank)
-    candidates_single_cat = pd.DataFrame({
-        "x1": [0.0, 1.0, 0.5, 0.2],
-        "x2": [0.1, 0.5, 1.0, 0.1], 
-        "x3": ["A", "A", "A", "A"],  # All same category
-    })
+    candidates_single_cat = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.1],
+            "x3": ["A", "A", "A", "A"],  # All same category
+        }
+    )
     strategy.set_candidates(candidates_single_cat)
     rank_single = strategy.get_candidate_fim_rank()
     assert rank_single >= 1
@@ -1020,59 +1034,77 @@ def test_get_candidate_fim_rank_vs_required_experiments():
     continuous_domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
-            ContinuousInput(key="x2", bounds=(0, 1)), 
+            ContinuousInput(key="x2", bounds=(0, 1)),
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    
+
     for formula in ["linear", "linear-and-interactions", "fully-quadratic"]:
         data_model = data_models.DoEStrategy(
             domain=continuous_domain, criterion=DOptimalityCriterion(formula=formula)
         )
         strategy = DoEStrategy(data_model=data_model)
-        
+
         required_experiments = strategy.get_required_number_of_experiments()
-        
+
         # Test with no candidates set (edge case)
         if required_experiments is not None:
             additional_no_candidates = strategy.get_additional_experiments_needed()
-            expected_no_candidates = required_experiments - 0 + 3  # FIM rank is 0 when no candidates
-            assert additional_no_candidates == expected_no_candidates, f"No candidates: Additional experiments mismatch for {formula}: got {additional_no_candidates}, expected {expected_no_candidates}"
-        
+            expected_no_candidates = (
+                required_experiments - 0 + 3
+            )  # FIM rank is 0 when no candidates
+            assert (
+                additional_no_candidates == expected_no_candidates
+            ), f"No candidates: Additional experiments mismatch for {formula}: got {additional_no_candidates}, expected {expected_no_candidates}"
+
         # Create candidates with more experiments than required
         n_candidates = required_experiments + 5 if required_experiments else 10
-        candidates = pd.DataFrame({
-            "x1": np.random.uniform(0, 1, n_candidates),
-            "x2": np.random.uniform(0, 1, n_candidates),
-            "x3": np.random.uniform(0, 1, n_candidates),
-        })
-        
+        candidates = pd.DataFrame(
+            {
+                "x1": np.random.uniform(0, 1, n_candidates),
+                "x2": np.random.uniform(0, 1, n_candidates),
+                "x3": np.random.uniform(0, 1, n_candidates),
+            }
+        )
+
         strategy.set_candidates(candidates)
         fim_rank = strategy.get_candidate_fim_rank()
-        
+
         # Fisher Information Matrix rank should be at most the required number of experiments
         if required_experiments is not None:
-            assert fim_rank <= required_experiments, f"FIM rank ({fim_rank}) exceeds required experiments ({required_experiments}) for {formula}"
-        
+            assert (
+                fim_rank <= required_experiments
+            ), f"FIM rank ({fim_rank}) exceeds required experiments ({required_experiments}) for {formula}"
+
         # Also should be at most the number of candidates
-        assert fim_rank <= n_candidates, f"FIM rank ({fim_rank}) exceeds number of candidates ({n_candidates}) for {formula}"
-        
+        assert (
+            fim_rank <= n_candidates
+        ), f"FIM rank ({fim_rank}) exceeds number of candidates ({n_candidates}) for {formula}"
+
         # Test the new get_additional_experiments_needed method
         if required_experiments is not None:
             # With default epsilon=3
             additional_needed = strategy.get_additional_experiments_needed()
             expected_additional = required_experiments - fim_rank + 3
-            assert additional_needed == expected_additional, f"Additional experiments mismatch for {formula}: got {additional_needed}, expected {expected_additional}"
-            
+            assert (
+                additional_needed == expected_additional
+            ), f"Additional experiments mismatch for {formula}: got {additional_needed}, expected {expected_additional}"
+
             # With custom epsilon=5
-            additional_needed_custom = strategy.get_additional_experiments_needed(epsilon=5)
+            additional_needed_custom = strategy.get_additional_experiments_needed(
+                epsilon=5
+            )
             expected_additional_custom = required_experiments - fim_rank + 5
-            assert additional_needed_custom == expected_additional_custom, f"Additional experiments (epsilon=5) mismatch for {formula}: got {additional_needed_custom}, expected {expected_additional_custom}"
-            
+            assert (
+                additional_needed_custom == expected_additional_custom
+            ), f"Additional experiments (epsilon=5) mismatch for {formula}: got {additional_needed_custom}, expected {expected_additional_custom}"
+
             # Additional experiments should be non-negative when we have fewer candidates than required
-            assert additional_needed >= 0, f"Additional experiments should be non-negative for {formula}"
-    
+            assert (
+                additional_needed >= 0
+            ), f"Additional experiments should be non-negative for {formula}"
+
     # Test with mixed input types
     mixed_domain = Domain.from_lists(
         inputs=[
@@ -1082,40 +1114,48 @@ def test_get_candidate_fim_rank_vs_required_experiments():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    
+
     data_model = data_models.DoEStrategy(
         domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
     )
     strategy = DoEStrategy(data_model=data_model)
-    
+
     required_experiments = strategy.get_required_number_of_experiments()
-    
-    candidates_mixed = pd.DataFrame({
-        "x1": [0.0, 1.0, 0.5, 0.2, 0.8, 0.3],
-        "x2": [0.1, 0.5, 1.0, 0.5, 0.1, 1.0],
-        "x3": ["A", "B", "A", "B", "A", "B"],
-    })
-    
+
+    candidates_mixed = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2, 0.8, 0.3],
+            "x2": [0.1, 0.5, 1.0, 0.5, 0.1, 1.0],
+            "x3": ["A", "B", "A", "B", "A", "B"],
+        }
+    )
+
     strategy.set_candidates(candidates_mixed)
     fim_rank = strategy.get_candidate_fim_rank()
-    
+
     if required_experiments is not None:
-        assert fim_rank <= required_experiments, f"Mixed domain: FIM rank ({fim_rank}) exceeds required experiments ({required_experiments})"
-        
+        assert (
+            fim_rank <= required_experiments
+        ), f"Mixed domain: FIM rank ({fim_rank}) exceeds required experiments ({required_experiments})"
+
         # Test get_additional_experiments_needed with mixed inputs
         additional_needed = strategy.get_additional_experiments_needed()
         expected_additional = required_experiments - fim_rank + 3
-        assert additional_needed == expected_additional, f"Mixed domain: Additional experiments mismatch: got {additional_needed}, expected {expected_additional}"
-        
+        assert (
+            additional_needed == expected_additional
+        ), f"Mixed domain: Additional experiments mismatch: got {additional_needed}, expected {expected_additional}"
+
         # Test with epsilon=0 (no buffer)
         additional_no_buffer = strategy.get_additional_experiments_needed(epsilon=0)
         expected_no_buffer = required_experiments - fim_rank
-        assert additional_no_buffer == expected_no_buffer, f"Mixed domain: Additional experiments (no buffer) mismatch: got {additional_no_buffer}, expected {expected_no_buffer}"
+        assert (
+            additional_no_buffer == expected_no_buffer
+        ), f"Mixed domain: Additional experiments (no buffer) mismatch: got {additional_no_buffer}, expected {expected_no_buffer}"
 
 
 def test_upgrade_linear_to_quadratic_design():
     """Test upgrading from a linear design to a fully-quadratic design.
-    
+
     This test demonstrates a common scenario where you have candidates from a linear design
     but want to upgrade to a fully-quadratic design, and need to know how many additional
     experiments are required.
@@ -1124,56 +1164,72 @@ def test_upgrade_linear_to_quadratic_design():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
-            ContinuousInput(key="x2", bounds=(0, 1)), 
+            ContinuousInput(key="x2", bounds=(0, 1)),
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    
+
     # Get required number of experiments for linear design
     linear_data_model = data_models.DoEStrategy(
         domain=domain, criterion=DOptimalityCriterion(formula="linear")
     )
     linear_strategy = DoEStrategy(data_model=linear_data_model)
     linear_required = linear_strategy.get_required_number_of_experiments()
-    
+
     # Get required number of experiments for fully-quadratic design
     quadratic_data_model = data_models.DoEStrategy(
         domain=domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
     )
     quadratic_strategy = DoEStrategy(data_model=quadratic_data_model)
     quadratic_required = quadratic_strategy.get_required_number_of_experiments()
-    
+
     # Generate the linear design
     linear_design = linear_strategy.ask(candidate_count=linear_required)
-    
+
     # Create new DoE strategy for fully-quadratic design using linear design as candidates
     upgrade_strategy = DoEStrategy(data_model=quadratic_data_model)
     upgrade_strategy.set_candidates(linear_design)
-    
+
     # Get Fisher Information Matrix rank of the linear design for quadratic model
     fim_rank = upgrade_strategy.get_candidate_fim_rank()
-    
+
     # Calculate additional experiments needed to upgrade to fully-quadratic
-    additional_needed_default = upgrade_strategy.get_additional_experiments_needed()  # epsilon=3
-    additional_needed_exact = upgrade_strategy.get_additional_experiments_needed(epsilon=0)  # no buffer
-    
+    additional_needed_default = (
+        upgrade_strategy.get_additional_experiments_needed()
+    )  # epsilon=3
+    additional_needed_exact = upgrade_strategy.get_additional_experiments_needed(
+        epsilon=0
+    )  # no buffer
+
     # Validate the calculations
     expected_exact = quadratic_required - fim_rank
     expected_with_buffer = quadratic_required - fim_rank + 3
-    
-    assert additional_needed_exact == expected_exact, f"Exact additional experiments mismatch: got {additional_needed_exact}, expected {expected_exact}"
-    assert additional_needed_default == expected_with_buffer, f"Buffered additional experiments mismatch: got {additional_needed_default}, expected {expected_with_buffer}"
-    
+
+    assert (
+        additional_needed_exact == expected_exact
+    ), f"Exact additional experiments mismatch: got {additional_needed_exact}, expected {expected_exact}"
+    assert (
+        additional_needed_default == expected_with_buffer
+    ), f"Buffered additional experiments mismatch: got {additional_needed_default}, expected {expected_with_buffer}"
+
     # Verify that we need more experiments for quadratic than linear
-    assert quadratic_required > linear_required, "Fully-quadratic should require more experiments than linear"
-    
+    assert (
+        quadratic_required > linear_required
+    ), "Fully-quadratic should require more experiments than linear"
+
     # Verify that the linear design provides some information for the quadratic model
-    assert fim_rank > 0, "Linear design should provide some information for quadratic model"
-    assert fim_rank <= quadratic_required, "FIM rank should not exceed quadratic requirements"
-    
+    assert (
+        fim_rank > 0
+    ), "Linear design should provide some information for quadratic model"
+    assert (
+        fim_rank <= quadratic_required
+    ), "FIM rank should not exceed quadratic requirements"
+
     # The additional experiments needed should be positive (we need to add experiments)
-    assert additional_needed_exact >= 0, "Should need additional experiments to upgrade from linear to quadratic"
+    assert (
+        additional_needed_exact >= 0
+    ), "Should need additional experiments to upgrade from linear to quadratic"
 
 
 if __name__ == "__main__":
