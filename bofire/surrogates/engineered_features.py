@@ -94,7 +94,7 @@ AGGREGATE_MAP = {
 def map(
     data_model: EngineeredFeature, inputs: Inputs, transform_specs: InputTransformSpecs
 ) -> AppendFeatures:
-    return AGGREGATE_MAP[type(data_model)](
+    return AGGREGATE_MAP[type(data_model)](  # type: ignore
         inputs=inputs,
         transform_specs=transform_specs,
         feature=data_model,
