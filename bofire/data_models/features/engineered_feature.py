@@ -12,7 +12,7 @@ class EngineeredFeature(Feature):
     features: FeatureKeys
     keep_features: bool = True
 
-    def validate_features(self, inputs: "Inputs"):  # noqa: F821
+    def validate_features(self, inputs: "Inputs"):  # noqa: F821 # type: ignore
         missing_features = [
             feature
             for feature in self.features
@@ -24,7 +24,7 @@ class EngineeredFeature(Feature):
             )
         self._validate_features(inputs)
 
-    def _validate_features(self, inputs: "Inputs"):  # noqa: F821
+    def _validate_features(self, inputs: "Inputs"):  # noqa: F821 # type: ignore
         pass
 
     @property
@@ -60,7 +60,7 @@ class WeightedSumFeature(EngineeredFeature):
     def n_outputs(self) -> int:
         return len(self.descriptors)
 
-    def validate_features(self, inputs: "Inputs"):  # noqa: F821
+    def validate_features(self, inputs: "Inputs"):  # noqa: F821 # type: ignore
         super().validate_features(inputs)
         for feature_key in self.features:
             feature = inputs.get_by_key(feature_key)
