@@ -14,7 +14,7 @@ from bofire.data_models.strategies.doe import (
     DoEOptimalityCriterion,
 )
 from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
-from bofire.strategies.doe.objective import get_objective_function, ModelBasedObjective
+from bofire.strategies.doe.objective import ModelBasedObjective, get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
@@ -46,7 +46,9 @@ class DoEStrategy(Strategy):
             if self._data_model.sampling is not None
             else None
         )
-        self._return_fixed_candidates = data_model.return_fixed_candidates # this defaults to False in the data model
+        self._return_fixed_candidates = (
+            data_model.return_fixed_candidates
+        )  # this defaults to False in the data model
 
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)
@@ -68,7 +70,7 @@ class DoEStrategy(Strategy):
                 f"provided candidates are missing columns: {(*too_few_columns,)} which exist in original domain",
             )
 
-        self._candidates = candidates # due to inheriting from Strategy, we then later call this using self.candidates
+        self._candidates = candidates  # due to inheriting from Strategy, we then later call this using self.candidates
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         (
@@ -79,25 +81,22 @@ class DoEStrategy(Strategy):
             mapped_aux_categorical_inputs,
             mapped_continous_inputs,
         ) = create_continuous_domain(domain=self.domain)
-        
 
         # if you have fixed experiments, so-called _candidates, you need to relaxe them and add them to the total number of experiments
-        if self.candidates is not None: #aka if self._candidates is not None
+        if self.candidates is not None:  # aka if self._candidates is not None
             # transform candidates to new domain
-            relaxed_candidates = (
-                self._transform_candidates_to_new_domain(
-                    relaxed_domain,
-                    self.candidates,
-                )
+            relaxed_candidates = self._transform_candidates_to_new_domain(
+                relaxed_domain,
+                self.candidates,
             )
             fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
         else:
             relaxed_candidates = None
             fixed_experiments_count = 0
 
-        # total number of experiments that will go into the design 
+        # total number of experiments that will go into the design
         _total_count = candidate_count + fixed_experiments_count
-        
+
         objective_function = get_objective_function(
             self._data_model.criterion,
             domain=relaxed_domain,
@@ -108,15 +107,14 @@ class DoEStrategy(Strategy):
 
         design = find_local_max_ipopt(
             relaxed_domain,
-            fixed_experiments=None, #effectively deprecated, but others use it so we have not removed it yet
-            partially_fixed_experiments=relaxed_candidates, # technically fixed experiments are also partially_fixed, so we only use this 
+            fixed_experiments=None,  # effectively deprecated, but others use it so we have not removed it yet
+            partially_fixed_experiments=relaxed_candidates,  # technically fixed experiments are also partially_fixed, so we only use this
             ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
         )
 
         # if cats or discrete var present, need to filture out all the aux vars and project back into original domain
         if len(self.domain.inputs.get([DiscreteInput, CategoricalInput])) > 0:
-
             # deal with tthe categoricals first
             design_no_categoricals, design_categoricals = (
                 filter_out_categorical_and_categorical_auxilliary_vars(
@@ -150,7 +148,7 @@ class DoEStrategy(Strategy):
                     aux_vars_for_discrete=aux_vars_for_discrete,
                 )
                 design = pd.concat([design, design_categoricals], axis=1)
-        if self._return_fixed_candidates:  #this is asking if the fixed candidates should be returned together with the new ones, or just the new ones. Default just the new ones. 
+        if self._return_fixed_candidates:  # this is asking if the fixed candidates should be returned together with the new ones, or just the new ones. Default just the new ones.
             fixed_experiments_count = 0
         return design.iloc[fixed_experiments_count:, :].reset_index(
             drop=True,
@@ -173,79 +171,89 @@ class DoEStrategy(Strategy):
                 f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
             )
 
-    def get_candidate_fim_rank(self) -> int: 
+    def get_candidate_fim_rank(self) -> int:
         """Get the rank of the Fisher Information Matrix (X.T @ X) for the current candidates.
-        
+
         Returns:
             int: The rank of the Fisher Information Matrix. Returns 0 if no candidates are set.
         """
         if self.candidates is None:
             return 0
-        
+
         # Only works for DoEOptimalityCriterion (model-based criteria), not SpaceFilling
         if not isinstance(self._data_model.criterion, DoEOptimalityCriterion):
-            raise ValueError("get_candidate_fim_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion")
-        
+            raise ValueError(
+                "get_candidate_fim_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion"
+            )
+
         # Step 1: get_relaxed_domain(original_domain)
         relaxed_domain, *_ = create_continuous_domain(domain=self.domain)
-        
+
         # Step 2: get_relaxed_candidates(candidates)
         relaxed_candidates = self._transform_candidates_to_new_domain(
             relaxed_domain,
             self.candidates,
         )
-        
+
         # Step 3: get_objective_function (combines model + objective)
         n_candidates = len(self.candidates)
         objective_function = get_objective_function(
             criterion=self._data_model.criterion,
             domain=relaxed_domain,
-            n_experiments=n_candidates, #not actually used in this context, so effectively a dummy value 
+            n_experiments=n_candidates,  # not actually used in this context, so effectively a dummy value
             inputs_for_formula=self.domain.inputs,
         )
-        
+
         # Step 4 & 5: Combined tensor_to_model_matrix + rank calculation
         if isinstance(objective_function, ModelBasedObjective):
             # Handle relaxed candidates which may have NaN values for auxiliary variables
             # Fill NaN with 0.0 and ensure all data is numeric
             relaxed_candidates_clean = relaxed_candidates.copy()
-            
+
             # Convert object columns to numeric where possible, coerce errors to NaN
             for col in relaxed_candidates_clean.columns:
-                if relaxed_candidates_clean[col].dtype == 'object':
-                    relaxed_candidates_clean[col] = pd.to_numeric(relaxed_candidates_clean[col], errors='coerce')
-            
+                if relaxed_candidates_clean[col].dtype == "object":
+                    relaxed_candidates_clean[col] = pd.to_numeric(
+                        relaxed_candidates_clean[col], errors="coerce"
+                    )
+
             # Fill all NaN values with 0.0
             relaxed_candidates_clean = relaxed_candidates_clean.fillna(0.0)
-            
+
             # Ensure we only use columns that match the relaxed domain inputs
             expected_columns = relaxed_domain.inputs.get_keys()
             relaxed_candidates_clean = relaxed_candidates_clean[expected_columns]
-            
+
             # Convert to tensor
-            candidates_tensor = torch.tensor(relaxed_candidates_clean.to_numpy(), dtype=torch.float64)
-            
+            candidates_tensor = torch.tensor(
+                relaxed_candidates_clean.to_numpy(), dtype=torch.float64
+            )
+
             # Get Fisher Information Matrix rank (X.T @ X rank)
-            return objective_function.get_fisher_information_matrix_rank(candidates_tensor)
+            return objective_function.get_fisher_information_matrix_rank(
+                candidates_tensor
+            )
         else:
-            raise ValueError("Only ModelBasedObjective support get_model_matrix_rank method")
+            raise ValueError(
+                "Only ModelBasedObjective support get_model_matrix_rank method"
+            )
 
     def get_additional_experiments_needed(self, epsilon: int = 3) -> Optional[int]:
         """Calculate the additional number of experiments needed beyond current candidates.
-        
+
         This method computes: get_required_number_of_experiments() - get_candidate_fim_rank() + epsilon
-        
+
         Args:
             epsilon (int): Additional buffer experiments to add. Defaults to 3.
-            
+
         Returns:
-            Optional[int]: Number of additional experiments needed, or None if required number 
+            Optional[int]: Number of additional experiments needed, or None if required number
                           cannot be calculated (e.g., for SpaceFillingCriterion).
         """
         required_experiments = self.get_required_number_of_experiments()
         if required_experiments is None:
             return None
-            
+
         candidate_rank = self.get_candidate_fim_rank()
         return required_experiments - candidate_rank + epsilon
 
