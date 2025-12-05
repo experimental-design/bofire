@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, cast
 
 import pandas as pd
+import torch
 from pydantic.types import PositiveInt
 from typing_extensions import Self
 
@@ -13,7 +14,7 @@ from bofire.data_models.strategies.doe import (
     DoEOptimalityCriterion,
 )
 from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
-from bofire.strategies.doe.objective import get_objective_function
+from bofire.strategies.doe.objective import get_objective_function, ModelBasedObjective
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
@@ -171,6 +172,47 @@ class DoEStrategy(Strategy):
             ValueError(
                 f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
             )
+
+    def get_candidate_rank(self) -> int: 
+        """Get the rank of the Fisher Information Matrix (X.T @ X) for the current candidates.
+        
+        Returns:
+            int: The rank of the Fisher Information Matrix. Returns 0 if no candidates are set.
+        """
+        if self.candidates is None:
+            return 0
+        
+        # Only works for DoEOptimalityCriterion (model-based criteria), not SpaceFilling
+        if not isinstance(self._data_model.criterion, DoEOptimalityCriterion):
+            raise ValueError("get_candidate_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion")
+        
+        # Step 1: get_relaxed_domain(original_domain)
+        relaxed_domain, *_ = create_continuous_domain(domain=self.domain)
+        
+        # Step 2: get_relaxed_candidates(candidates)
+        relaxed_candidates = self._transform_candidates_to_new_domain(
+            relaxed_domain,
+            self.candidates,
+        )
+        
+        # Step 3: get_objective_function (combines model + objective from pseudocode)
+        n_candidates = len(self.candidates)
+        objective_function = get_objective_function(
+            criterion=self._data_model.criterion,
+            domain=relaxed_domain,
+            n_experiments=n_candidates,
+            inputs_for_formula=self.domain.inputs,
+        )
+        
+        # Step 4 & 5: Combined tensor_to_model_matrix + rank calculation
+        if isinstance(objective_function, ModelBasedObjective):
+            # Convert to tensor as expected
+            candidates_tensor = torch.tensor(relaxed_candidates.to_numpy(), dtype=torch.float64)
+            
+            # Get Fisher Information Matrix rank (X.T @ X rank)
+            return objective_function.get_fisher_information_matrix_rank(candidates_tensor)
+        else:
+            raise ValueError("Only ModelBasedObjective support get_model_matrix_rank method")
 
     def has_sufficient_experiments(
         self,

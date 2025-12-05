@@ -885,6 +885,69 @@ def one_cont_3_cat():
     assert n_successfull_runs == 9
 
 
+def test_get_candidate_rank():
+    """Test the get_candidate_rank method of DoEStrategy."""
+    # Create a simple domain with 3 continuous inputs
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)), 
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_rank() == 0
+    
+    # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
+    candidates_full_rank = pd.DataFrame({
+        "x1": [1.0, 0.0, 0.0, 0.5],
+        "x2": [0.0, 1.0, 0.0, 0.5],
+        "x3": [0.0, 0.0, 1.0, 0.5],
+    })
+    strategy.set_candidates(candidates_full_rank)
+    rank = strategy.get_candidate_rank()
+    assert rank == 4  # Fisher Information Matrix should be full rank for this design
+    
+    # Test 3: Rank-deficient Fisher Information Matrix (repeated candidates)
+    candidates_rank_deficient = pd.DataFrame({
+        "x1": [1.0, 1.0, 0.0, 0.0],  # Repeated rows
+        "x2": [0.0, 0.0, 1.0, 1.0],  # Repeated rows
+        "x3": [0.0, 0.0, 0.0, 0.0],
+    })
+    strategy.set_candidates(candidates_rank_deficient)
+    rank = strategy.get_candidate_rank()
+    assert rank < 4  # Fisher Information Matrix should be rank deficient
+    assert rank >= 1  # At least intercept should contribute
+    
+    # Test 4: Test with quadratic formula
+    data_model_quad = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
+    )
+    strategy_quad = DoEStrategy(data_model_quad)
+    strategy_quad.set_candidates(candidates_full_rank)
+    rank_quad = strategy_quad.get_candidate_rank()
+    # Fully quadratic has more terms: 1 + x1 + x2 + x3 + x1^2 + x2^2 + x3^2 + x1:x2 + x1:x3 + x2:x3 = 10 terms
+    # Fisher Information Matrix is 10x10, but with only 4 candidates, rank should be <= 4
+    assert rank_quad <= 4
+    assert rank_quad >= 1
+    
+    # Test 5: SpaceFilling criterion should raise error
+    data_model_space = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_space = DoEStrategy(data_model_space)
+    strategy_space.set_candidates(candidates_full_rank)
+    
+    with pytest.raises(ValueError, match="get_candidate_rank\\(\\) only works with DoEOptimalityCriterion"):
+        strategy_space.get_candidate_rank()
+
+
 if __name__ == "__main__":
     test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
     test_purely_categorical_doe()

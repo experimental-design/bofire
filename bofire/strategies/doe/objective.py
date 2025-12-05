@@ -108,7 +108,6 @@ class ModelBasedObjective(Objective):
 
     def get_model_matrix_rank(self, D: Tensor) -> int:
         """Get the rank of the model matrix from the design matrix tensor.
-        
         Args:
             D (Tensor): Design matrix tensor.
             
@@ -116,7 +115,19 @@ class ModelBasedObjective(Objective):
             int: The rank of the model matrix.
         """
         X = self.tensor_to_model_matrix(D)
-        return torch.linalg.matrix_rank(X)
+        return torch.linalg.matrix_rank(X).item()   #matrix_rank returns a tensor with the rank in every entry. .item() converts to python number
+
+    def get_fisher_information_matrix_rank(self, D: Tensor) -> int:
+        """Get the rank of the Fisher Information Matrix (X.T @ X) from the design matrix tensor.
+        Args:
+            D (Tensor): Design matrix tensor.
+            
+        Returns:
+            int: The rank of the Fisher Information Matrix.
+        """
+        X = self.tensor_to_model_matrix(D)
+        XTX = X.T @ X
+        return torch.linalg.matrix_rank(XTX).item()
 
     def _evaluate_tensor(self, D: Tensor) -> Tensor:
         """Evaluate the objective function on the design matrix as a tensor."""
