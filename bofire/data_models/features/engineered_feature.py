@@ -25,7 +25,6 @@ class EngineeredFeature(Feature):
         self._validate_features(inputs)
 
     def _validate_features(self, inputs: "Inputs"):  # noqa: F821
-        print("papa")
         pass
 
     @property
@@ -65,7 +64,6 @@ class WeightedSumFeature(EngineeredFeature):
         super().validate_features(inputs)
         for feature_key in self.features:
             feature = inputs.get_by_key(feature_key)
-            print(feature)
             if not isinstance(feature, ContinuousDescriptorInput):
                 raise ValueError(
                     f"Feature '{feature_key}' is not a ContinuousDescriptorInput",
