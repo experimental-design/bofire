@@ -160,6 +160,19 @@ def test_SingleTaskGPModel_with_engineered_features():
     )
 
     surrogate = surrogates.map(surrogate_data)
+
+    with pytest.raises(KeyError, match="Feature with key 'sum123' not found."):
+        surrogate.get_feature_indices(["sum123", "x_1", "x_2"])
+
+    surrogate.engineered_features[0].keep_features = False
+    with pytest.raises(
+        NotImplementedError,
+        match="Cannot get feature indices if original features are filtered.",
+    ):
+        surrogate.get_feature_indices(["sum", "x_1", "x_2"])
+
+    surrogate.engineered_features[0].keep_features = True
+
     assert surrogate.get_feature_indices(["sum", "x_1", "x_2"]) == [0, 1, 2]
     assert surrogate.get_feature_indices(["sum", "x_2"]) == [1, 2]
 

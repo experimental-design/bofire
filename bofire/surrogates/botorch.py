@@ -116,8 +116,18 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             specs=self.categorical_encodings, feature_keys=original_keys
         )
         engineered_keys = [key for key in feature_keys if key not in original_keys]
+        for key in engineered_keys:
+            if key not in self.engineered_features.get_keys():
+                raise KeyError(f"Feature with key '{key}' not found.")
         if len(engineered_keys) == 0:
             return indices
+        for feat in self.engineered_features.get():
+            if feat.keep_features is False:
+                raise NotImplementedError(
+                    "Cannot get feature indices if original features are filtered. "
+                    "Define a feature specific kernel to filter out features and set "
+                    "`keep_features=True`."
+                )
         # get the offset introduced by the original inputs
         features2idx, _ = self.inputs._get_transform_info(self.categorical_encodings)
         d = 0
