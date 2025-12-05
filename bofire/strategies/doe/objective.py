@@ -106,6 +106,18 @@ class ModelBasedObjective(Objective):
         var_dict["torch"] = torch  # type: ignore
         return eval(str(self.model_terms_string_expression), {}, var_dict)
 
+    def get_model_matrix_rank(self, D: Tensor) -> int:
+        """Get the rank of the model matrix from the design matrix tensor.
+        
+        Args:
+            D (Tensor): Design matrix tensor.
+            
+        Returns:
+            int: The rank of the model matrix.
+        """
+        X = self.tensor_to_model_matrix(D)
+        return torch.linalg.matrix_rank(X)
+
     def _evaluate_tensor(self, D: Tensor) -> Tensor:
         """Evaluate the objective function on the design matrix as a tensor."""
         return self._criterion(self.tensor_to_model_matrix(D))
