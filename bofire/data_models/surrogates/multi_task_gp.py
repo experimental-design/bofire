@@ -45,7 +45,7 @@ class MultiTaskGPHyperconfig(Hyperconfig):
     ] = "FractionalFactorialStrategy"
 
 
-class MultiTaskGPSurrogate(TrainableBotorchSurrogate[MultiTaskGPHyperconfig]):
+class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: MaternKernel(
@@ -59,6 +59,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate[MultiTaskGPHyperconfig]):
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig(),
     )
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     @classmethod
     def _default_categorical_encodings(
@@ -118,7 +122,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate[MultiTaskGPHyperconfig]):
     def update_hyperparameters(
         self,
         hyperparameters: pd.Series,
-    ):    
+    ):
         super().update_hyperparameters(hyperparameters)
 
         def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:

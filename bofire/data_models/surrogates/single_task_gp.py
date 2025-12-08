@@ -1,4 +1,4 @@
-from typing import Generic, Literal, Optional, Type, TypeVar, Union
+from typing import Literal, Optional, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -53,15 +53,8 @@ class SingleTaskGPHyperconfig(Hyperconfig):
     ] = "FractionalFactorialStrategy"
 
 
-T = TypeVar("T")
-
-
-class BaseSingleTaskGPSurrogate(
-    TrainableBotorchSurrogate[SingleTaskGPHyperconfig], Generic[T]
-):
-    kernel: T
+class BaseSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -74,7 +67,7 @@ class BaseSingleTaskGPSurrogate(
         return isinstance(my_type, type(ContinuousOutput))
 
 
-class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
+class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
@@ -83,8 +76,12 @@ class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
         )
     )
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: SingleTaskGPHyperconfig(),
+        default_factory=lambda: SingleTaskGPHyperconfig()
     )
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         super().update_hyperparameters(hyperparameters)
@@ -92,16 +89,16 @@ class SingleTaskGPSurrogate(BaseSingleTaskGPSurrogate[AnyKernel]):
         assert self.hyperconfig is not None
 
         def matern_25(
-                ard: bool,
-                lengthscale_prior: AnyPrior,
-                lengthscale_constraint: Union[AnyPriorConstraint, None],
-            ) -> MaternKernel:
-                return MaternKernel(
-                    nu=2.5,
-                    lengthscale_prior=lengthscale_prior,
-                    lengthscale_constraint=lengthscale_constraint,
-                    ard=ard,
-                )
+            ard: bool,
+            lengthscale_prior: AnyPrior,
+            lengthscale_constraint: Union[AnyPriorConstraint, None],
+        ) -> MaternKernel:
+            return MaternKernel(
+                nu=2.5,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
+                ard=ard,
+            )
 
         def matern_15(
             ard: bool,

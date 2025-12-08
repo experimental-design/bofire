@@ -12,6 +12,7 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
+from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
@@ -22,6 +23,7 @@ surrogates_skip_annotations = [
     SingleTaskIBNNSurrogate,
     RandomForestSurrogate,
     MultiTaskGPSurrogate,
+    TanimotoGPSurrogate,
 ]
 
 surrogates_skip_all = [
@@ -118,7 +120,3 @@ def test_make():
         data_model = spec.obj()
         surrogate_type = surrogates.map(data_model)
         test(surrogate_type, data_model)
-
-
-if __name__ == "__main__":
-    test_make()

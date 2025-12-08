@@ -29,7 +29,7 @@ def hyperoptimize(
     folds: int,
     random_state: Optional[int] = None,
 ) -> Tuple[AnyTrainableSurrogate, pd.DataFrame]:
-    if surrogate_data.hyperconfig is None:
+    if surrogate_data.hyperconfig_access is None:
         warnings.warn(
             "No hyperopt is possible as no hyperopt config is available. Returning initial config.",
         )
@@ -54,11 +54,12 @@ def hyperoptimize(
         folds=folds,
         random_state=random_state,
         show_progress_bar=True
-        if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy"
+        if surrogate_data.hyperconfig_access.hyperstrategy
+        == "FractionalFactorialStrategy"
         else False,
     )
 
-    if surrogate_data.hyperconfig.hyperstrategy == "FractionalFactorialStrategy":
+    if surrogate_data.hyperconfig_access.hyperstrategy == "FractionalFactorialStrategy":
         strategy = strategies.map(FractionalFactorialStrategy(domain=benchmark.domain))
         experiments = benchmark.f(
             strategy.ask(candidate_count=None),
@@ -67,7 +68,7 @@ def hyperoptimize(
     else:
         strategy_data = (
             RandomStrategy
-            if surrogate_data.hyperconfig.hyperstrategy == "RandomStrategy"
+            if surrogate_data.hyperconfig_access.hyperstrategy == "RandomStrategy"
             else SoboStrategy
         )
         experiments = run(
@@ -77,7 +78,7 @@ def hyperoptimize(
             ),
             metric=best,
             n_runs=1,
-            n_iterations=surrogate_data.hyperconfig.n_iterations  # type: ignore
+            n_iterations=surrogate_data.hyperconfig_access.n_iterations  # type: ignore
             - len(benchmark.domain.inputs)
             - 1,
             initial_sampler=sample,
@@ -99,7 +100,7 @@ def hyperoptimize(
     return (
         surrogate_data,
         experiments[
-            surrogate_data.hyperconfig.domain.inputs.get_keys()
+            surrogate_data.hyperconfig_access.domain.inputs.get_keys()
             + [e.name for e in RegressionMetricsEnum]
         ],
     )

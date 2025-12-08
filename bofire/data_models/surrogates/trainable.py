@@ -1,5 +1,6 @@
 import warnings
-from typing import Annotated, Generic, List, Literal, Optional, TypeVar, Union
+from abc import ABC, abstractmethod
+from typing import Annotated, List, Literal, Optional, Union
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -93,11 +94,12 @@ class Hyperconfig(BaseModel):
         )
 
 
-T = TypeVar("T", bound=Hyperconfig)
+class TrainableSurrogate(BaseModel, ABC):
+    @property
+    @abstractmethod
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        pass
 
-
-class TrainableSurrogate(BaseModel, Generic[T]):
-    hyperconfig: Optional[T] = None
     aggregations: Optional[Annotated[List[AnyAggregation], Field(min_length=1)]] = None
 
     @model_validator(mode="after")
@@ -120,7 +122,7 @@ class TrainableSurrogate(BaseModel, Generic[T]):
         return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
-        if self.hyperconfig is not None:
-            self.hyperconfig.update_hyperparameters(hyperparameters)
+        if self.hyperconfig_access is not None:
+            self.hyperconfig_access.update_hyperparameters(hyperparameters)
         else:
             raise ValueError("No hyperconfig available.")

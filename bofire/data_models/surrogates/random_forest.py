@@ -7,8 +7,14 @@ from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class RandomForestSurrogate(TrainableBotorchSurrogate[Hyperconfig]):
+class RandomForestSurrogate(TrainableBotorchSurrogate):
     type: Literal["RandomForestSurrogate"] = "RandomForestSurrogate"
+
+    hyperconfig: Optional[Hyperconfig] = None
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     # hyperparams passed down to `RandomForestRegressor`
     n_estimators: int = 100

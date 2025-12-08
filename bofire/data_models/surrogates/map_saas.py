@@ -1,6 +1,6 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
-from pydantic import PositiveInt
+from pydantic import Field, PositiveInt
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.trainable import Hyperconfig
@@ -11,7 +11,7 @@ class TestSurrogate:
     pass
 
 
-class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate[Hyperconfig]):
+class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     """Additive MAP SAAS single-task GP
 
     Maximum-a-posteriori (MAP) version of the sparse axis-aligned subspace
@@ -25,6 +25,12 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate[Hyperconfig
         "AdditiveMapSaasSingleTaskGPSurrogate"
     )
     n_taus: PositiveInt = 4
+
+    hyperconfig: Optional[Hyperconfig] = Field(default=None)
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

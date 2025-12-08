@@ -33,6 +33,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     ):
         self.kernel = data_model.kernel
         self.noise_prior = data_model.noise_prior
+        self.hyperconfig = data_model.hyperconfig
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.SingleTaskGP] = None

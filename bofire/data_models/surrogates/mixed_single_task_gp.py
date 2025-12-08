@@ -55,9 +55,7 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
     ] = "FractionalFactorialStrategy"
 
 
-class MixedSingleTaskGPSurrogate(
-    TrainableBotorchSurrogate[MixedSingleTaskGPHyperconfig]
-):
+class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: RBFKernel(
@@ -75,6 +73,10 @@ class MixedSingleTaskGPSurrogate(
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
         default_factory=lambda: MixedSingleTaskGPHyperconfig(),
     )
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     @classmethod
     def _default_categorical_encodings(
@@ -145,8 +147,7 @@ class MixedSingleTaskGPSurrogate(
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
-    
-    
+
     def update_hyperparameters(
         self,
         hyperparameters: pd.Series,
@@ -194,4 +195,3 @@ class MixedSingleTaskGPSurrogate(
 
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
-

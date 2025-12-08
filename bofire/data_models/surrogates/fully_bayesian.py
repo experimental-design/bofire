@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Type
+from typing import Annotated, List, Literal, Optional, Type
 
 from pydantic import AfterValidator, Field, field_validator, model_validator
 
@@ -8,7 +8,7 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 from bofire.data_models.types import make_unique_validator
 
 
-class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate[Hyperconfig]):
+class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["FullyBayesianSingleTaskGPSurrogate"] = (
         "FullyBayesianSingleTaskGPSurrogate"
     )
@@ -19,6 +19,12 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate[Hyperconfig])
     features_to_warp: Annotated[
         List[str], AfterValidator(make_unique_validator("Features"))
     ] = []
+
+    hyperconfig: Optional[Hyperconfig] = None
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     @model_validator(mode="after")
     def validate_features_to_warp(self):

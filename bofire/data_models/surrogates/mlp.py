@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated, Literal, Type
+from typing import Annotated, Literal, Optional, Type
 
 from pydantic import Field
 
@@ -9,11 +9,18 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class MLPEnsemble(TrainableBotorchSurrogate):
     type: Literal["MLPEnsemble"] = "MLPEnsemble"
+    hyperconfig: Optional[Hyperconfig] = None
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
+
     n_estimators: Annotated[int, Field(ge=1)] = 5
     hidden_layer_sizes: Sequence = (100,)
     activation: Literal["relu", "logistic", "tanh"] = "relu"

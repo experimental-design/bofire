@@ -46,9 +46,7 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
     ] = "FractionalFactorialStrategy"
 
 
-class PiecewiseLinearGPSurrogate(
-    TrainableBotorchSurrogate[PiecewiseLinearGPSurrogateHyperconfig]
-):
+class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     """GP surrogate that is based on a `WassersteinKernel` for modeling functions
     that take a monotonically increasing piecewise linear function as input. The
     computation of the covariance between the piecewise linears is done by the
@@ -89,6 +87,10 @@ class PiecewiseLinearGPSurrogate(
     hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(  # type: ignore
         default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig(),
     )
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     shape_kernel: WassersteinKernel = Field(
         default_factory=lambda: WassersteinKernel(
@@ -140,8 +142,7 @@ class PiecewiseLinearGPSurrogate(
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
-    
-    
+
     def update_hyperparameters(self, hyperparameters: pd.Series):
         super().update_hyperparameters(hyperparameters)
 

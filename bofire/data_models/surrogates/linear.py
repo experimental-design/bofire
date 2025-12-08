@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field
 
@@ -7,11 +7,18 @@ from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, AnyPrior
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class LinearSurrogate(TrainableBotorchSurrogate):
     type: Literal["LinearSurrogate"] = "LinearSurrogate"
+
+    hyperconfig: Optional[Hyperconfig] = None
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
