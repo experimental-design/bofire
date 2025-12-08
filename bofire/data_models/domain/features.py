@@ -260,7 +260,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         counter = offset
         for feat in self.get():
             features2idx[feat.key] = tuple(
-                (np.array(range(feat.n_outputs)) + counter).tolist(),
+                out_idx + counter for out_idx in range(feat.n_outputs)
             )
             counter += feat.n_outputs
         return features2idx
