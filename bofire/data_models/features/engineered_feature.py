@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, ClassVar, List, Literal
+from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 from pydantic import Field
 
@@ -8,11 +8,15 @@ from bofire.data_models.features.feature import Feature
 from bofire.data_models.types import FeatureKeys
 
 
+if TYPE_CHECKING:
+    from bofire.data_models.domain.api import Inputs
+
+
 class EngineeredFeature(Feature):
     features: FeatureKeys
     keep_features: bool = True
 
-    def validate_features(self, inputs: "Inputs"):  # noqa: F821 # type: ignore
+    def validate_features(self, inputs: "Inputs"):
         missing_features = [
             feature
             for feature in self.features
@@ -24,7 +28,7 @@ class EngineeredFeature(Feature):
             )
         self._validate_features(inputs)
 
-    def _validate_features(self, inputs: "Inputs"):  # noqa: F821 # type: ignore
+    def _validate_features(self, inputs: "Inputs"):
         pass
 
     @property
@@ -60,7 +64,7 @@ class WeightedSumFeature(EngineeredFeature):
     def n_outputs(self) -> int:
         return len(self.descriptors)
 
-    def validate_features(self, inputs: "Inputs"):  # noqa: F821 # type: ignore
+    def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
         for feature_key in self.features:
             feature = inputs.get_by_key(feature_key)
