@@ -101,7 +101,7 @@ def test_map_weighted_sum_feature():
         ],
     )
 
-    assert aggregation.n_outputs == 2
+    assert aggregation.n_transformed_inputs == 2
 
     aggregator = map_weighted_sum_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
@@ -113,4 +113,6 @@ def test_map_weighted_sum_feature():
     assert result.shape[0] == 2
     assert result.shape[1] == 5
 
-    assert torch.allclose(result[:, :-2], orig)
+    assert torch.allclose(
+        result[:, :-2], torch.tensor([[0.1, 0.2, 0.7], [0.4, 0.1, 0.5]]).to(**tkwargs)
+    )

@@ -196,7 +196,7 @@ def get_input_transform(
         transforms[feature.key] = map_feature(
             data_model=feature, inputs=inputs, transform_specs=categorical_encodings
         )
-        if feature.keep_features is False:
+        if not feature.keep_features:
             ignored.extend(feature.features)
 
     # third scaler
@@ -234,19 +234,3 @@ def get_input_transform(
     if len(transforms) == 1:
         return list(transforms.values())[0]
     return ChainedInputTransform(**transforms)
-
-    # if len(categorical_encodings) > 0:
-    #     categorical_transform = get_NumericToCategorical_input_transform(
-    #         inputs, categorical_encodings
-    #     )
-    #     if scaler is not None and categorical_transform is not None:
-    #         input_transform = ChainedInputTransform(
-    #             tf1=categorical_transform, tf2=scaler
-    #         )
-    #     elif categorical_transform is not None:
-    #         input_transform = categorical_transform
-    #     elif scaler is not None:
-    #         input_transform = scaler
-    # else:
-    #     input_transform = scaler
-    # return input_transform

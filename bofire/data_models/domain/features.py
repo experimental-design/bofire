@@ -260,9 +260,9 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         counter = offset
         for feat in self.get():
             features2idx[feat.key] = tuple(
-                out_idx + counter for out_idx in range(feat.n_outputs)
+                out_idx + counter for out_idx in range(feat.n_transformed_inputs)
             )
-            counter += feat.n_outputs
+            counter += feat.n_transformed_inputs
         return features2idx
 
     def get_feature_indices(
@@ -282,8 +282,8 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
             feat.validate_features(inputs)
 
     @property
-    def n_outputs(self) -> int:
-        return sum(feat.n_outputs for feat in self.get())
+    def n_transformed_inputs(self) -> int:
+        return sum(feat.n_transformed_inputs for feat in self.get())
 
 
 class Inputs(_BaseFeatures[AnyInput]):

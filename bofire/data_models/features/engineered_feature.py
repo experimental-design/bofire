@@ -1,11 +1,9 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
-
-from pydantic import Field
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
-from bofire.data_models.types import FeatureKeys
+from bofire.data_models.types import Descriptors, FeatureKeys
 
 
 if TYPE_CHECKING:
@@ -33,7 +31,7 @@ class EngineeredFeature(Feature):
 
     @property
     @abstractmethod
-    def n_outputs(self) -> int:
+    def n_transformed_inputs(self) -> int:
         pass
 
 
@@ -42,7 +40,7 @@ class SumFeature(EngineeredFeature):
     order_id: ClassVar[int] = 0
 
     @property
-    def n_outputs(self) -> int:
+    def n_transformed_inputs(self) -> int:
         return 1
 
 
@@ -51,17 +49,17 @@ class MeanFeature(EngineeredFeature):
     order_id: ClassVar[int] = 1
 
     @property
-    def n_outputs(self) -> int:
+    def n_transformed_inputs(self) -> int:
         return 1
 
 
 class WeightedSumFeature(EngineeredFeature):
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
-    descriptors: Annotated[List[str], Field(min_length=2)]
+    descriptors: Descriptors
     order_id: ClassVar[int] = 2
 
     @property
-    def n_outputs(self) -> int:
+    def n_transformed_inputs(self) -> int:
         return len(self.descriptors)
 
     def validate_features(self, inputs: "Inputs"):
