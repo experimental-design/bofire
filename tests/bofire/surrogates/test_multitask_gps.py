@@ -1,6 +1,7 @@
 import importlib
 
 import pytest
+import torch
 from botorch.models import MultiTaskGP
 from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
@@ -129,6 +130,19 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
             model.fit(experiments)
     else:
         model.fit(experiments)
+    # check that the active_dims are set correctly
+    assert torch.allclose(
+        model.model.covar_module.kernels[0].active_dims,
+        torch.tensor([0, 1], dtype=torch.long),
+    )
+    assert torch.allclose(
+        model.model.covar_module.kernels[0].active_dims,
+        torch.tensor([0, 1], dtype=torch.long),
+    )
+    assert torch.allclose(
+        model.model.covar_module.kernels[1].active_dims,
+        torch.tensor([2], dtype=torch.long),
+    )
     # dump the model
     dump = model.dumps()
     # make predictions
