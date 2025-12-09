@@ -916,17 +916,29 @@ def test_get_candidate_fim_rank():
     rank = strategy.get_candidate_fim_rank()
     assert rank == 4  # Intercept + 3 variables = 4 estimable parameters
 
-    # Test 3: Rank-deficient Fisher Information Matrix (repeated candidates)
+    # Test 3: Rank-deficient Fisher Information Matrix (linearly dependent design points)
     candidates_rank_deficient = pd.DataFrame(
         {
-            "x1": [1.0, 1.0, 0.0, 0.0],  # Repeated rows
-            "x2": [0.0, 0.0, 1.0, 1.0],  # Repeated rows
-            "x3": [0.0, 0.0, 0.0, 0.0],
+            "x1": [
+                1.0,
+                1.0,
+                0.0,
+                0.0,
+            ],  # Two pairs of identical rows creates linear dependence in design matrix
+            "x2": [0.0, 0.0, 1.0, 1.0],
+            "x3": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],  # Constant, provides no information beyond intercept
         }
     )
     strategy.set_candidates(candidates_rank_deficient)
     rank = strategy.get_candidate_fim_rank()
-    assert rank == 2  # Only 2 unique design points give rank 2
+    assert (
+        rank == 2
+    )  # Only 2 linearly independent design points: spans intercept + 1 direction
 
     # Test 4: Test with quadratic formula
     data_model_quad = data_models.DoEStrategy(
@@ -1137,13 +1149,8 @@ def test_get_candidate_fim_rank_vs_required_experiments():
 
 
 def test_upgrade_linear_to_quadratic_design():
-    """Test upgrading from a linear design to a fully-quadratic design.
-
-    This test demonstrates a common scenario where you have candidates from a linear design
-    but want to upgrade to a fully-quadratic design, and need to know how many additional
-    experiments are required.
-    """
-    # Create a domain with 3 continuous inputs
+    """Test upgrading a linear design to fully-quadratic using FIM rank and additional experiments calculation."""
+    # Create domain and strategies for linear and quadratic models
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 1)),
@@ -1153,62 +1160,49 @@ def test_upgrade_linear_to_quadratic_design():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    # Get required number of experiments for linear design
-    linear_data_model = data_models.DoEStrategy(
-        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    linear_strategy = DoEStrategy(
+        data_model=data_models.DoEStrategy(
+            domain=domain, criterion=DOptimalityCriterion(formula="linear")
+        )
     )
-    linear_strategy = DoEStrategy(data_model=linear_data_model)
-    linear_required = linear_strategy.get_required_number_of_experiments()
+    quadratic_strategy = DoEStrategy(
+        data_model=data_models.DoEStrategy(
+            domain=domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
+        )
+    )
 
-    # Get required number of experiments for fully-quadratic design
-    quadratic_data_model = data_models.DoEStrategy(
-        domain=domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
+    # Generate linear design and evaluate it for quadratic model
+    linear_design = linear_strategy.ask(
+        candidate_count=linear_strategy.get_required_number_of_experiments()
     )
-    quadratic_strategy = DoEStrategy(data_model=quadratic_data_model)
+    quadratic_strategy.set_candidates(linear_design)
+
+    # Get metrics
+    fim_rank = quadratic_strategy.get_candidate_fim_rank()
     quadratic_required = quadratic_strategy.get_required_number_of_experiments()
 
-    # Generate the linear design
-    linear_design = linear_strategy.ask(candidate_count=linear_required)
+    assert quadratic_required is not None
 
-    # Create new DoE strategy for fully-quadratic design using linear design as candidates
-    upgrade_strategy = DoEStrategy(data_model=quadratic_data_model)
-    upgrade_strategy.set_candidates(linear_design)
+    # Linear design won't fully span quadratic model (design-independent assertion)
+    assert 0 < fim_rank < quadratic_required
+    # not specifying specific numbers here because the design is not the same each run, the rank may vary
 
-    # Get Fisher Information Matrix rank of the linear design for quadratic model
-    fim_rank = upgrade_strategy.get_candidate_fim_rank()
+    # Verify calculation formula: additional = required - rank
+    additional = quadratic_strategy.get_additional_experiments_needed(epsilon=0)
+    assert additional is not None
+    assert additional == quadratic_required - fim_rank
 
-    # Calculate additional experiments needed to upgrade to fully-quadratic
-    additional_needed_default = (
-        upgrade_strategy.get_additional_experiments_needed()
-    )  # epsilon=3
-    additional_needed_exact = upgrade_strategy.get_additional_experiments_needed(
-        epsilon=0
-    )  # no buffer
-
-    # Validate the calculations
-    assert quadratic_required is not None and linear_required is not None
-    difference = quadratic_required - fim_rank
-    expected_exact = 0 if difference == 0 else difference
-    expected_with_buffer = 3 if difference == 0 else difference
-
-    assert (
-        additional_needed_exact == expected_exact
-    ), f"Exact additional experiments mismatch: got {additional_needed_exact}, expected {expected_exact}"
-    assert (
-        additional_needed_default == expected_with_buffer
-    ), f"Buffered additional experiments mismatch: got {additional_needed_default}, expected {expected_with_buffer}"
-
-    # Verify key properties of the upgrade scenario
-    assert (
-        quadratic_required > linear_required
-    ), "Fully-quadratic should require more experiments than linear"
-    assert (
-        0 < fim_rank <= quadratic_required
-    ), f"FIM rank {fim_rank} should be positive and not exceed quadratic requirements {quadratic_required}"
-    assert expected_exact >= 0, "Should need non-negative additional experiments"
+    # Epsilon parameter only matters when difference is exactly 0
+    additional_with_epsilon = quadratic_strategy.get_additional_experiments_needed(
+        epsilon=5
+    )
+    if quadratic_required - fim_rank == 0:
+        assert additional_with_epsilon == 5
+    else:
+        assert additional_with_epsilon == additional
 
 
-if __name__ == "__main__":
-    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
-    test_purely_categorical_doe()
-    one_cont_3_cat()
+# if __name__ == "__main__":
+#     test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
+#     test_purely_categorical_doe()
+#     one_cont_3_cat()
