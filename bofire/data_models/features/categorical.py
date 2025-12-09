@@ -130,11 +130,24 @@ class CategoricalInput(Input):
                 f"invalid values for `{self.key}`, allowed are: `{self.categories}`",
             )
         if strict:
-            possible_categories = self.get_possible_categories(values)
-            if len(possible_categories) != len(self.categories):
-                raise ValueError(
-                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
-                )
+            # When allowed is set, only check that allowed categories are present in the data
+            # Otherwise check that all categories are present
+            if self.allowed is not None:
+                # For features with restricted allowed categories, check if all allowed categories are used
+                allowed_categories = self.get_allowed_categories()
+                categories_in_data = set(values.unique().tolist())
+                missing_categories = set(allowed_categories) - categories_in_data
+                if missing_categories:
+                    raise ValueError(
+                        f"Allowed categories {list(missing_categories)} of feature {self.key} not used in data. Remove them.",
+                    )
+            else:
+                # For features without allowed restrictions, check if all defined categories are used
+                possible_categories = self.get_possible_categories(values)
+                if len(possible_categories) != len(self.categories):
+                    raise ValueError(
+                        f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
+                    )
         return values
 
     def is_fulfilled(self, values: pd.Series) -> pd.Series:

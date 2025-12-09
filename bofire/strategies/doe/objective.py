@@ -108,27 +108,18 @@ class ModelBasedObjective(Objective):
 
     def get_fisher_information_matrix_rank(self, D: Tensor) -> int:
         """Get the rank of the Fisher Information Matrix (X.T @ X) from the design matrix tensor.
+
+        Standard practice in experimental design is to include the intercept when calculating
+        FIM rank, as it represents a real model parameter that needs to be estimated.
+
         Args:
             D (Tensor): Design matrix tensor.
 
         Returns:
-            int: The rank of the Fisher Information Matrix.
+            int: The rank of the Fisher Information Matrix (includes intercept if present).
         """
         X = self.tensor_to_model_matrix(D)
-
-        # Drop the intercept (first column) before proceeding, otherwise too pessimistic
-        # This matches the approach: formulaic.model_matrix(formula, data).iloc[:, 1:]
-        if X.shape[1] > 1:  # Only drop if there's more than one column
-            # Check if first column is intercept (all ones) - more robust approach
-            first_col = X[:, 0]
-            if torch.allclose(first_col, torch.ones_like(first_col), atol=1e-6):
-                X_no_intercept = X[:, 1:]  # Drop intercept column
-            else:
-                X_no_intercept = X  # First column isn't intercept, keep all
-        else:
-            X_no_intercept = X  # Only one column, keep as is
-
-        XTX = X_no_intercept.T @ X_no_intercept
+        XTX = X.T @ X
         return torch.linalg.matrix_rank(XTX).item()
 
     def _evaluate_tensor(self, D: Tensor) -> Tensor:
