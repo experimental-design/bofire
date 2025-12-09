@@ -139,7 +139,8 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     calc = Calculator(descriptors, ignore_3D=True)  # type: ignore
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
-    descriptors_df = calc.pandas(mols)
+    descriptors_temp_df = calc.pandas(mols)
+    descriptors_df = descriptors_temp_df.astype(float).fillna(0)
     nan_list = [
         pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()  # type: ignore
         for col in descriptors_df.columns
@@ -162,3 +163,4 @@ def smiles2fragments_fingerprints(
     fragments = smiles2fragments(smiles, fragments_list=fragments_list)
 
     return np.hstack((fingerprints, fragments))
+ 
