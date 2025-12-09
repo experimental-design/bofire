@@ -22,3 +22,6 @@ Handling n-choose-k constraints in experimental designs.
 
 ### [Optimality Criteria](optimality_criteria.qmd)
 Using different optimality criteria (D-optimal, A-optimal, etc.) for design generation.
+
+### [Adaptive Design Augmentation](adaptive_design_augmentation.qmd)
+Upgrading existing experimental designs and determining optimal number of additional experiments needed.

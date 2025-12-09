@@ -1,0 +1,304 @@
+---
+title: "Adaptive Design Augmentation: Upgrading and Optimizing Experimental Designs"
+jupyter: python3
+---
+
+This tutorial demonstrates how to use BoFire's adaptive design augmentation capabilities to upgrade existing experimental designs and determine the optimal number of additional experiments needed. This functionality is particularly useful when you have an existing design (e.g., a linear screening design) and want to upgrade it to support a more complex model (e.g., a fully-quadratic model with interactions).
+
+## Key Concepts
+
+The adaptive design augmentation workflow is built around two key concepts:
+
+1. **Fisher Information Matrix (FIM) Rank Assessment**: Evaluating how much information existing experiments provide for a given model
+2. **Smart Experiment Planning**: Calculating exactly how many additional experiments are needed to support more complex models
+
+## Imports
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import torch
+
+import bofire.strategies.api as strategies
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, CategoricalInput, DiscreteInput
+from bofire.data_models.strategies.api import DoEStrategy
+from bofire.data_models.strategies.doe import DOptimalityCriterion
+from bofire.strategies.doe_strategy import DoEStrategy as DoEStrategyClass
+from bofire.strategies.doe.objective import get_objective_function
+
+```
+
+## Understanding Fisher Information Matrix Rank
+
+The Fisher Information Matrix (FIM) rank tells us how much information our experimental design provides about the model parameters. For a design to fully support a model, the FIM rank should ideally equal the number of model parameters.
+
+Let's start by exploring this concept with a simple example:
+
+```{python}
+# Create a domain with 3 continuous inputs
+domain = Domain.from_lists(
+    inputs=[
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        ContinuousInput(key="x2", bounds=(0, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+    ],
+    outputs=[ContinuousOutput(key="y")],
+)
+
+# Create DoE strategies for different model complexities
+linear_data_model = DoEStrategy(
+    domain=domain,
+    criterion=DOptimalityCriterion(formula="linear")
+)
+quadratic_data_model = DoEStrategy(
+    domain=domain,
+    criterion=DOptimalityCriterion(formula="fully-quadratic")
+)
+
+linear_strategy = DoEStrategyClass(data_model=linear_data_model)
+quadratic_strategy = DoEStrategyClass(data_model=quadratic_data_model)
+
+print("Required experiments for linear model:", linear_strategy.get_required_number_of_experiments())
+print("Required experiments for fully-quadratic model:", quadratic_strategy.get_required_number_of_experiments())
+```
+
+The linear model requires 4 parameters (intercept + 3 linear terms), while the fully-quadratic model requires 10 parameters (intercept + 3 linear + 3 quadratic + 3 interaction terms).
+
+## Linear to Quadratic Design Upgrade Workflow
+
+A common scenario is starting with a linear screening design and then wanting to upgrade to a fully-quadratic model for optimization. Let's demonstrate how Fisher Information Matrix (FIM) rank calculations guide this process:
+
+```{python}
+# Step 1: Generate an optimal linear design
+linear_required = linear_strategy.get_required_number_of_experiments()
+linear_design = linear_strategy.ask(candidate_count=linear_required)
+```
+
+```{python}
+#| echo: false
+print("Generated linear design:")
+print(linear_design.round(3).abs())
+
+# Count duplicates/replicates
+n_duplicates = linear_design.round(3).abs().duplicated().sum()
+n_unique = len(linear_design.round(3).abs().drop_duplicates())
+
+print(f"\nLinear design has {len(linear_design)} experiments")
+```
+
+```{python}
+quadratic_upgrade_strategy = DoEStrategyClass(data_model=quadratic_data_model)
+quadratic_upgrade_strategy.set_candidates(linear_design)
+
+# Get Fisher Information Matrix rank - this tells us how much information
+# our linear design provides for the more complex quadratic model
+fim_rank_linear_for_quad = quadratic_upgrade_strategy.get_candidate_fim_rank()
+```
+
+```{python}
+# Let's examine the model matrix transformation for the quadratic model
+quadratic_objective = get_objective_function(
+    criterion=DOptimalityCriterion(formula="fully-quadratic"),
+    domain=domain,
+    n_experiments=quadratic_strategy.get_required_number_of_experiments()
+)
+
+# Convert linear design to tensor and get model matrix
+design_tensor = torch.tensor(linear_design.values, dtype=torch.float64)
+model_matrix = quadratic_objective.tensor_to_model_matrix(design_tensor)
+```
+
+```{python}
+#| echo: false
+print(f"\nModel matrix transformation from {len(linear_design)} experiments to quadratic terms:")
+
+# Drop the intercept column (first column) for clearer display
+model_matrix_no_intercept = model_matrix[:, 1:]  # Skip first column (intercept)
+fim_no_intercept = model_matrix_no_intercept.T @ model_matrix_no_intercept
+
+# Format matrices as DataFrames for better readability
+model_matrix_df = pd.DataFrame(
+    model_matrix_no_intercept.numpy(),
+    columns=[f"Term_{i+2}" for i in range(model_matrix_no_intercept.shape[1])],  # Start from Term_2 since we dropped intercept
+    index=[f"Exp {i+1}" for i in range(len(model_matrix_no_intercept))]
+)
+
+fim_df = pd.DataFrame(
+    fim_no_intercept.numpy(),
+    columns=[f"T{i+2}" for i in range(model_matrix_no_intercept.shape[1])],  # Shorter column names
+)
+
+print("Model Matrix (without intercept):")
+print(model_matrix_df.round(4).abs().to_string(index=False))
+print()
+
+print("Fisher Information Matrix (X.T @ X, without intercept):")
+pd.set_option('display.width', 120)
+pd.set_option('display.max_columns', 10)
+print(fim_df.round(4).to_string(index=False))
+print()
+print(f"Linear design FIM rank for quadratic model: {fim_rank_linear_for_quad}")
+print(f"Quadratic model requires: {quadratic_strategy.get_required_number_of_experiments()} parameters")
+
+# Step 3: Calculate additional experiments needed for the upgrade
+# The key method get_additional_experiments_needed() automates this calculation
+
+# Calculate additional experiments needed (with default buffer of 3)
+additional_needed_with_buffer = quadratic_upgrade_strategy.get_additional_experiments_needed()
+
+# Calculate exact additional experiments needed (no buffer)
+additional_needed_exact = quadratic_upgrade_strategy.get_additional_experiments_needed(epsilon=0)
+
+print(f"Additional experiments needed: {additional_needed_exact}")
+
+```
+
+The method calculates: `required_experiments - current_fim_rank`, and only adds the epsilon buffer when the difference is exactly 0.
+
+## Working with Mixed Input Types
+
+The FIM rank calculation also works seamlessly with categorical and discrete inputs. Let's explore this:
+
+```{python}
+# Create a domain with mixed input types
+mixed_domain = Domain.from_lists(
+    inputs=[
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+        CategoricalInput(key="x3", categories=["A", "B", "C"]),
+    ],
+    outputs=[ContinuousOutput(key="y")],
+)
+
+# Create strategy for mixed domain with linear model
+mixed_data_model = DoEStrategy(
+    domain=mixed_domain,
+    criterion=DOptimalityCriterion(formula="linear")
+)
+mixed_strategy = DoEStrategyClass(data_model=mixed_data_model)
+
+# Create some candidate experiments with mixed types
+mixed_candidates = pd.DataFrame({
+    'x1': [0.0, 1.0, 0.5, 0.2],
+    'x2': [0.1, 0.5, 1.0, 0.5],  # Discrete values
+    'x3': ['A', 'B', 'C', 'A'],  # Categorical values
+})
+
+print("Required experiments for mixed domain (linear):", mixed_strategy.get_required_number_of_experiments())
+
+print("Mixed type candidates:")
+print(mixed_candidates)
+
+# Set candidates and evaluate FIM rank
+mixed_strategy.set_candidates(mixed_candidates)
+mixed_fim_rank = mixed_strategy.get_candidate_fim_rank()
+
+print(f"\nFIM rank for mixed candidates: {mixed_fim_rank}")
+
+# print the get additional number of experiments for a linear model using these candidates
+
+print("Experiments beyond the candidates needed for linear doe with the mixed domain:", mixed_strategy.get_additional_experiments_needed())
+
+```
+
+### Impact of Design Quality on FIM Rank
+
+Let's see how the quality of our candidate design affects the FIM rank:
+
+```{python}
+# Test with rank-deficient candidates (repeated values)
+repeated_candidates = pd.DataFrame({
+    'x1': [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
+    'x2': [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
+    'x3': ['A', 'A', 'B', 'B'],  # Repeated categorical values
+})
+
+print("Repeated (rank-deficient) candidates:")
+print(repeated_candidates)
+
+mixed_strategy.set_candidates(repeated_candidates)
+repeated_fim_rank = mixed_strategy.get_candidate_fim_rank()
+
+print(f"FIM rank for repeated candidates: {repeated_fim_rank}")
+print(f"Original mixed candidates FIM rank: {mixed_fim_rank}")
+```
+
+As expected, the repeated candidates provide less information (lower FIM rank) than the diverse candidates.
+
+## Practical Workflow Example
+
+Here's a complete workflow showing how you might use these capabilities in practice:
+
+```{python}
+def design_upgrade_workflow(domain, current_design, target_model_formula, epsilon=3):
+    """
+    Complete workflow for upgrading an experimental design.
+
+    Args:
+        domain: BoFire domain
+        current_design: DataFrame with existing experiments
+        target_model_formula: String describing target model (e.g., "fully-quadratic")
+        epsilon: Safety buffer for additional experiments
+
+    Returns:
+        Dictionary with upgrade analysis results
+    """
+
+    # Create strategy for target model
+    target_data_model = DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula=target_model_formula)
+    )
+    target_strategy = DoEStrategyClass(data_model=target_data_model)
+
+    # Set existing design as candidates
+    target_strategy.set_candidates(current_design)
+
+    # Calculate metrics
+    required_experiments = target_strategy.get_required_number_of_experiments()
+    current_fim_rank = target_strategy.get_candidate_fim_rank()
+    additional_needed = target_strategy.get_additional_experiments_needed(epsilon=epsilon)
+
+    # Calculate efficiency metrics
+    design_efficiency = current_fim_rank / required_experiments if required_experiments > 0 else 0
+
+    results = {
+        'current_experiments': len(current_design),
+        'required_experiments': required_experiments,
+        'current_fim_rank': current_fim_rank,
+        'additional_needed': additional_needed,
+        'design_efficiency': design_efficiency,
+        'target_model': target_model_formula
+    }
+
+    return results
+
+# Example usage
+upgrade_analysis = design_upgrade_workflow(
+    domain=domain,
+    current_design=linear_design,
+    target_model_formula="fully-quadratic",
+    epsilon=2  # Custom buffer
+)
+
+print("Design Upgrade Analysis:")
+print("=" * 40)
+for key, value in upgrade_analysis.items():
+    print(f"{key:20}: {value}")
+```
+
+## Key Takeaways
+
+1. **Fisher Information Matrix Rank** provides a quantitative measure of how much information your current design provides for a given model.
+
+2. **`get_additional_experiments_needed()`** automates the calculation of exactly how many more experiments you need to upgrade to a more complex model.
+
+3. **The epsilon parameter** provides a safety buffer only when the design is exactly at the required rank (difference = 0), helping with numerical stability in edge cases.
+
+4. **Mixed input types** (continuous, discrete, categorical) are handled seamlessly through the internal domain transformation.
+
+5. **Design efficiency** can be quantified as the ratio of current FIM rank to required parameters, helping you make informed decisions about when to upgrade.
+
+This adaptive design augmentation capability enables efficient experimental campaigns where you can start with simple screening designs and systematically upgrade to more sophisticated models as needed, minimizing experimental cost while maximizing information gain.

@@ -106,19 +106,6 @@ class ModelBasedObjective(Objective):
         var_dict["torch"] = torch  # type: ignore
         return eval(str(self.model_terms_string_expression), {}, var_dict)
 
-    def get_model_matrix_rank(self, D: Tensor) -> int:
-        """Get the rank of the model matrix from the design matrix tensor.
-        Args:
-            D (Tensor): Design matrix tensor.
-
-        Returns:
-            int: The rank of the model matrix.
-        """
-        X = self.tensor_to_model_matrix(D)
-        return torch.linalg.matrix_rank(
-            X
-        ).item()  # matrix_rank returns a tensor with the rank in every entry. .item() converts to python number
-
     def get_fisher_information_matrix_rank(self, D: Tensor) -> int:
         """Get the rank of the Fisher Information Matrix (X.T @ X) from the design matrix tensor.
         Args:
@@ -128,7 +115,20 @@ class ModelBasedObjective(Objective):
             int: The rank of the Fisher Information Matrix.
         """
         X = self.tensor_to_model_matrix(D)
-        XTX = X.T @ X
+
+        # Drop the intercept (first column) before proceeding, otherwise too pessimistic
+        # This matches the approach: formulaic.model_matrix(formula, data).iloc[:, 1:]
+        if X.shape[1] > 1:  # Only drop if there's more than one column
+            # Check if first column is intercept (all ones) - more robust approach
+            first_col = X[:, 0]
+            if torch.allclose(first_col, torch.ones_like(first_col), atol=1e-6):
+                X_no_intercept = X[:, 1:]  # Drop intercept column
+            else:
+                X_no_intercept = X  # First column isn't intercept, keep all
+        else:
+            X_no_intercept = X  # Only one column, keep as is
+
+        XTX = X_no_intercept.T @ X_no_intercept
         return torch.linalg.matrix_rank(XTX).item()
 
     def _evaluate_tensor(self, D: Tensor) -> Tensor:

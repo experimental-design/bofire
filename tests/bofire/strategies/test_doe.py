@@ -1086,7 +1086,8 @@ def test_get_candidate_fim_rank_vs_required_experiments():
         if required_experiments is not None:
             # With default epsilon=3
             additional_needed = strategy.get_additional_experiments_needed()
-            expected_additional = required_experiments - fim_rank + 3
+            difference = required_experiments - fim_rank
+            expected_additional = 3 if difference == 0 else difference
             assert (
                 additional_needed == expected_additional
             ), f"Additional experiments mismatch for {formula}: got {additional_needed}, expected {expected_additional}"
@@ -1095,7 +1096,7 @@ def test_get_candidate_fim_rank_vs_required_experiments():
             additional_needed_custom = strategy.get_additional_experiments_needed(
                 epsilon=5
             )
-            expected_additional_custom = required_experiments - fim_rank + 5
+            expected_additional_custom = 5 if difference == 0 else difference
             assert (
                 additional_needed_custom == expected_additional_custom
             ), f"Additional experiments (epsilon=5) mismatch for {formula}: got {additional_needed_custom}, expected {expected_additional_custom}"
@@ -1140,14 +1141,15 @@ def test_get_candidate_fim_rank_vs_required_experiments():
 
         # Test get_additional_experiments_needed with mixed inputs
         additional_needed = strategy.get_additional_experiments_needed()
-        expected_additional = required_experiments - fim_rank + 3
+        difference = required_experiments - fim_rank
+        expected_additional = 3 if difference == 0 else difference
         assert (
             additional_needed == expected_additional
         ), f"Mixed domain: Additional experiments mismatch: got {additional_needed}, expected {expected_additional}"
 
         # Test with epsilon=0 (no buffer)
         additional_no_buffer = strategy.get_additional_experiments_needed(epsilon=0)
-        expected_no_buffer = required_experiments - fim_rank
+        expected_no_buffer = 0 if difference == 0 else difference
         assert (
             additional_no_buffer == expected_no_buffer
         ), f"Mixed domain: Additional experiments (no buffer) mismatch: got {additional_no_buffer}, expected {expected_no_buffer}"
@@ -1203,8 +1205,9 @@ def test_upgrade_linear_to_quadratic_design():
     )  # no buffer
 
     # Validate the calculations
-    expected_exact = quadratic_required - fim_rank
-    expected_with_buffer = quadratic_required - fim_rank + 3
+    difference = quadratic_required - fim_rank
+    expected_exact = 0 if difference == 0 else difference
+    expected_with_buffer = 3 if difference == 0 else difference
 
     assert (
         additional_needed_exact == expected_exact

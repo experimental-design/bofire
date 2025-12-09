@@ -580,65 +580,6 @@ def test_tensor_to_model_matrix():
     assert torch.allclose(X[:, 4], D[:, 0] * D[:, 1])  # x1:x2
 
 
-def test_get_model_matrix_rank():
-    """Test the get_model_matrix_rank method of ModelBasedObjective."""
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
-        outputs=[ContinuousOutput(key="y")],
-    )
-
-    formula = get_formula_from_string("linear", inputs=domain.inputs)
-    d_optimality = DOptimality(
-        domain=domain,
-        formula=formula,
-        n_experiments=4,
-    )
-
-    # Test with full rank design matrix (4 experiments for 4 model terms)
-    D_full_rank = torch.tensor(
-        [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.5, 0.5, 0.5]],
-        dtype=torch.float64,
-    )
-
-    rank = d_optimality.get_model_matrix_rank(D_full_rank)
-    # Should be full rank (4 for linear model: intercept + 3 variables)
-    assert rank == 4
-
-    # Test with rank-deficient design matrix (repeated rows)
-    D_rank_deficient = torch.tensor(
-        [
-            [1.0, 0.0, 0.0],
-            [1.0, 0.0, 0.0],  # Same as first row
-            [0.0, 1.0, 0.0],
-            [0.0, 0.0, 1.0],
-        ],
-        dtype=torch.float64,
-    )
-
-    rank = d_optimality.get_model_matrix_rank(D_rank_deficient)
-    # Should be rank deficient (< 4)
-    assert rank < 4
-    assert rank >= 1  # At least intercept should contribute
-
-    # Test with different model formula (with explicit intercept)
-    formula = Formula("1 + x1 + x2")  # 3 terms: 1 + x1 + x2
-    d_optimality = DOptimality(
-        domain=domain,
-        formula=formula,
-        n_experiments=4,
-    )
-
-    rank = d_optimality.get_model_matrix_rank(D_full_rank)
-    # Should be rank 3 (intercept + x1 + x2, x3 not used)
-    assert rank == 3
-
-    # Test edge case: single experiment
-    D_single = torch.tensor([[0.5, 0.3, 0.7]], dtype=torch.float64)
-    rank = d_optimality.get_model_matrix_rank(D_single)
-    # Single experiment can only have rank 1
-    assert rank == 1
-
-
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_IOptimality_instantiation():
     # no constraints

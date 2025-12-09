@@ -53,7 +53,7 @@ entmoot = [
 ] # we pin the pyomo version here due to compatibility issues
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordred>=1.2.0"]
 tests = ["pytest", "pytest-cov", "papermill"]
-docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
+docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn", "quartodoc"]
 all = [
     "botorch>=0.16.0",
     "numpy",
