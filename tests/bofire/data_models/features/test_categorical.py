@@ -58,23 +58,21 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
             False,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            CategoricalInput(
+                key="test_key_restricted",
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
             pd.Series(["a"] * 20),  # Only use the allowed category
-            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
-            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            CategoricalInput(
+                key="test_key_restricted_int",
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
             ),
             pd.Series([1] * 20),  # Only use the allowed category (as integer)
-            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
-            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
     ],
