@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
@@ -16,11 +16,18 @@ from bofire.data_models.priors.api import (
     AnyPrior,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.single_task_gp import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
+
+    hyperconfig: Optional[Hyperconfig] = None
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(

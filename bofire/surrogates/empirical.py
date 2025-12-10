@@ -1,13 +1,17 @@
 import base64
 import io
 import warnings
-from typing import Optional
+from typing import Optional, cast
 
 import torch
 from botorch.models.deterministic import DeterministicModel
+from typing_extensions import Self
 
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.surrogates.api import EmpiricalSurrogate as DataModel
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import BotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 
 
 class EmpiricalSurrogate(BotorchSurrogate):
@@ -27,6 +31,24 @@ class EmpiricalSurrogate(BotorchSurrogate):
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[DeterministicModel] = None
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+        dump: str | None = None,
+        categorical_encodings: Optional[InputTransformSpecs] = None,
+    ) -> Self:
+        """
+        Factory method to create an EmpiricalSurrogate from a data model.
+        Args:
+            # document parameters
+        Returns:
+            EmpiricalSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, DataModel, locals()))
 
     def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""

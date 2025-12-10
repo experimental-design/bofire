@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict, Optional
+from typing import Dict, List, Optional, cast
 
 import botorch
 import numpy as np
@@ -9,16 +9,22 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from gpytorch.mlls import ExactMarginalLogLikelihood
+from typing_extensions import Self
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import TaskInput
-from bofire.data_models.priors.api import LKJPrior
-
-# from bofire.data_models.molfeatures.api import MolFeatures
+from bofire.data_models.kernels.api import AnyKernel
+from bofire.data_models.priors.api import AnyPrior, LKJPrior
+from bofire.data_models.surrogates.api import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import AnyAggregation
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.model_utils import make_surrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -105,6 +111,42 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             stds = np.sqrt(posterior.variance.cpu().detach().numpy())
 
         return preds, stds
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        hyperconfig: Optional[MultiTaskGPHyperconfig] = None,
+        aggregations: Optional[List[AnyAggregation]] = None,
+        input_preprocessing_specs: Optional[InputTransformSpecs] = None,
+        dump: Optional[str] = None,
+        categorical_encodings: Optional[InputTransformSpecs] = None,
+        scaler: ScalerEnum = ScalerEnum.NORMALIZE,
+        output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
+        kernel: Optional[AnyKernel] = None,
+        noise_prior: Optional[AnyPrior] = None,
+        task_prior: Optional[LKJPrior] = None,
+    ) -> Self:
+        """
+        Factory method to create a MultiTaskGPSurrogate from a data model.
+        Args:
+            inputs: Inputs
+            outputs: Outputs
+            hyperconfig: MultiTaskGPHyperconfig | None
+            aggregations: List[AnyAggregation] | None
+            input_preprocessing_specs: dict
+            dump: str | None
+            categorical_encodings: dict
+            scaler: ScalerEnum
+            output_scaler: ScalerEnum
+            kernel: AnyKernel
+            noise_prior: AnyPrior
+            task_prior: LKJPrior | None
+        Returns:
+            MultiTaskGPSurrogate: A new instance.
+        """
+        return cast(Self, make_surrogate(cls, DataModel, locals()))
 
 
 def _index_kernel_prior_closure(m):

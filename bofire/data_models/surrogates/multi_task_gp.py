@@ -44,47 +44,6 @@ class MultiTaskGPHyperconfig(Hyperconfig):
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
     ] = "FractionalFactorialStrategy"
 
-    @staticmethod
-    def _update_hyperparameters(
-        surrogate_data: "MultiTaskGPSurrogate",
-        hyperparameters: pd.Series,
-    ):
-        def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
-
-        def matern_15(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
-
-        if hyperparameters.prior == "mbo":
-            noise_prior, lengthscale_prior = (
-                MBO_NOISE_PRIOR(),
-                MBO_LENGTHSCALE_PRIOR(),
-            )
-        else:
-            noise_prior, lengthscale_prior = (
-                THREESIX_NOISE_PRIOR(),
-                THREESIX_LENGTHSCALE_PRIOR(),
-            )
-
-        surrogate_data.noise_prior = noise_prior
-        if hyperparameters.kernel == "rbf":
-            surrogate_data.kernel = RBFKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-        elif hyperparameters.kernel == "matern_2.5":
-            surrogate_data.kernel = matern_25(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-        elif hyperparameters.kernel == "matern_1.5":
-            surrogate_data.kernel = matern_15(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-        else:
-            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
-
 
 class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
@@ -100,6 +59,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig(),
     )
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     @classmethod
     def _default_categorical_encodings(
@@ -155,3 +118,45 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             )
 
         return v
+
+    def update_hyperparameters(
+        self,
+        hyperparameters: pd.Series,
+    ):
+        super().update_hyperparameters(hyperparameters)
+
+        def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
+            return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
+
+        def matern_15(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
+            return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
+
+        if hyperparameters.prior == "mbo":
+            noise_prior, lengthscale_prior = (
+                MBO_NOISE_PRIOR(),
+                MBO_LENGTHSCALE_PRIOR(),
+            )
+        else:
+            noise_prior, lengthscale_prior = (
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
+            )
+
+        self.noise_prior = noise_prior
+        if hyperparameters.kernel == "rbf":
+            self.kernel = RBFKernel(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+            )
+        elif hyperparameters.kernel == "matern_2.5":
+            self.kernel = matern_25(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+            )
+        elif hyperparameters.kernel == "matern_1.5":
+            self.kernel = matern_15(
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+            )
+        else:
+            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")

@@ -19,7 +19,7 @@ class Hyperopt(Benchmark):
         show_progress_bar: bool = False,
     ) -> None:
         super().__init__()
-        if surrogate_data.hyperconfig is None:
+        if surrogate_data.hyperconfig_access is None:
             raise ValueError("No hyperoptimization configuration found.")
         self.surrogate_data = surrogate_data
         self.training_data = training_data
@@ -30,11 +30,11 @@ class Hyperopt(Benchmark):
 
     @property
     def domain(self) -> Domain:
-        return self.surrogate_data.hyperconfig.domain  # type: ignore
+        return self.surrogate_data.hyperconfig_access.domain  # type: ignore
 
     @property
     def target_metric(self):
-        return self.surrogate_data.hyperconfig.target_metric  # type: ignore
+        return self.surrogate_data.hyperconfig_access.target_metric  # type: ignore
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         for i, candidate in tqdm(

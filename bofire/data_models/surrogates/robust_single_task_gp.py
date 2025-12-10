@@ -12,6 +12,7 @@ from bofire.data_models.priors.api import (
     AnyPrior,
 )
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -34,7 +35,7 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         For this reason, it is necessary to bound the lengthscale of the GP kernel from below.
     """
 
-    type: Literal["RobustSingleTaskGPSurrogate"] = "RobustSingleTaskGPSurrogate"
+    type: Literal["RobustSingleTaskGPSurrogate"] = "RobustSingleTaskGPSurrogate"  # type: ignore
 
     kernel: Union[ScaleKernel, RBFKernel, MaternKernel] = Field(
         default_factory=lambda: RBFKernel(
@@ -50,6 +51,10 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
         ),
     )
+
+    @property
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        return self.hyperconfig
 
     prior_mean_of_support: Optional[int] = Field(default=None)
     convex_parametrization: bool = Field(default=True)

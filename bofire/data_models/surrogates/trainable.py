@@ -1,4 +1,5 @@
 import warnings
+from abc import ABC, abstractmethod
 from typing import Annotated, List, Literal, Optional, Union
 
 import pandas as pd
@@ -85,15 +86,20 @@ class Hyperconfig(BaseModel):
             ),
         )
 
-    @staticmethod
-    def _update_hyperparameters(surrogate_data, hyperparameters: pd.Series):
-        raise NotImplementedError(
-            "Ideally this would be an abstract method, but this causes problems in pydantic.",
+    def update_hyperparameters(self, hyperparameters: pd.Series):
+        self.domain.validate_candidates(
+            pd.DataFrame(hyperparameters).T,
+            only_inputs=True,
+            raise_validation_error=True,
         )
 
 
-class TrainableSurrogate(BaseModel):
-    hyperconfig: Optional[Hyperconfig] = None
+class TrainableSurrogate(BaseModel, ABC):
+    @property
+    @abstractmethod
+    def hyperconfig_access(self) -> Optional[Hyperconfig]:
+        pass
+
     aggregations: Optional[Annotated[List[AnyAggregation], Field(min_length=1)]] = None
 
     @model_validator(mode="after")
@@ -116,15 +122,7 @@ class TrainableSurrogate(BaseModel):
         return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
-        if self.hyperconfig is not None:
-            self.hyperconfig.domain.validate_candidates(
-                pd.DataFrame(hyperparameters).T,
-                only_inputs=True,
-                raise_validation_error=True,
-            )
-            self.hyperconfig._update_hyperparameters(
-                self,
-                hyperparameters=hyperparameters,
-            )
+        if self.hyperconfig_access is not None:
+            self.hyperconfig_access.update_hyperparameters(hyperparameters)
         else:
             raise ValueError("No hyperconfig available.")
