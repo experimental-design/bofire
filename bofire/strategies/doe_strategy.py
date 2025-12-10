@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional, cast
 
 import pandas as pd
+import torch
 from pydantic.types import PositiveInt
 from typing_extensions import Self
 
@@ -13,7 +14,7 @@ from bofire.data_models.strategies.doe import (
     DoEOptimalityCriterion,
 )
 from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
-from bofire.strategies.doe.objective import get_objective_function
+from bofire.strategies.doe.objective import ModelBasedObjective, get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
     create_continuous_domain,
@@ -169,6 +170,95 @@ class DoEStrategy(Strategy):
             ValueError(
                 f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
             )
+
+    def get_candidate_fim_rank(self) -> int:
+        """Get the rank of the Fisher Information Matrix (X.T @ X) for the current candidates.
+        Returns:
+            int: The rank of the Fisher Information Matrix. Returns 0 if no candidates are set.
+        """
+        if self.candidates is None:
+            return 0
+
+        # Only works for DoEOptimalityCriterion (model-based criteria), not SpaceFilling
+        if not isinstance(self._data_model.criterion, DoEOptimalityCriterion):
+            raise ValueError(
+                "get_candidate_fim_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion"
+            )
+
+        # Step 1: get_relaxed_domain(original_domain)
+        relaxed_domain, *_ = create_continuous_domain(domain=self.domain)
+
+        # Step 2: get_relaxed_candidates(candidates)
+        relaxed_candidates = self._transform_candidates_to_new_domain(
+            relaxed_domain,
+            self.candidates,
+        )
+
+        # Step 3: get_objective_function (combines model + objective)
+        n_candidates = len(self.candidates)
+        objective_function = get_objective_function(
+            criterion=self._data_model.criterion,
+            domain=relaxed_domain,
+            n_experiments=n_candidates,  # not actually used in this context, so effectively a dummy value
+            inputs_for_formula=self.domain.inputs,
+        )
+
+        # Step 4 & 5: Combined tensor_to_model_matrix + rank calculation
+        if isinstance(objective_function, ModelBasedObjective):
+            # Handle relaxed candidates which may have NaN values for auxiliary variables
+            # Fill NaN with 0.0 and ensure all data is numeric
+            relaxed_candidates_clean = relaxed_candidates.copy()
+
+            # Convert object columns to numeric where possible, coerce errors to NaN
+            for col in relaxed_candidates_clean.columns:
+                if relaxed_candidates_clean[col].dtype == "object":
+                    relaxed_candidates_clean[col] = pd.to_numeric(
+                        relaxed_candidates_clean[col], errors="coerce"
+                    )
+
+            # Fill all NaN values with 0.0
+            relaxed_candidates_clean = relaxed_candidates_clean.fillna(0.0)
+
+            # Ensure we only use columns that match the relaxed domain inputs
+            expected_columns = relaxed_domain.inputs.get_keys()
+            relaxed_candidates_clean = relaxed_candidates_clean[expected_columns]
+
+            # Convert to tensor
+            candidates_tensor = torch.tensor(
+                relaxed_candidates_clean.to_numpy(), dtype=torch.float64
+            )
+
+            # Get Fisher Information Matrix rank (X.T @ X rank)
+            return objective_function.get_fisher_information_matrix_rank(
+                candidates_tensor
+            )
+        else:
+            raise ValueError(
+                "Only ModelBasedObjective supports Fisher Information Matrix rank calculation"
+            )
+
+    def get_additional_experiments_needed(self, epsilon: int = 3) -> Optional[int]:
+        """Calculate the additional number of experiments needed beyond current candidates.
+        This method computes: get_required_number_of_experiments() - get_candidate_fim_rank()
+        The epsilon buffer is only added when the difference is exactly 0 to handle numerical issues.
+        Args:
+            epsilon (int): Additional buffer experiments to add only when difference is 0. Defaults to 3.
+        Returns:
+            Optional[int]: Number of additional experiments needed, or None if required number
+                          cannot be calculated (e.g., for SpaceFillingCriterion).
+        """
+        required_experiments = self.get_required_number_of_experiments()
+        if required_experiments is None:
+            return None
+
+        candidate_rank = self.get_candidate_fim_rank()
+        difference = required_experiments - candidate_rank
+
+        # Only add epsilon buffer when difference is exactly 0
+        if difference == 0:
+            return epsilon
+        else:
+            return difference
 
     def has_sufficient_experiments(
         self,
