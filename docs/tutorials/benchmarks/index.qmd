@@ -14,32 +14,29 @@ Classic optimization benchmark using the Himmelblau function.
 ### [002 - DTLZ2](002-DTLZ2.qmd)
 Multi-objective optimization using the DTLZ2 test problem.
 
-### [005 - Hartmann with N-Choose-K](005-Hartmann_with_nchoosek.qmd)
+### [003 - Hartmann with N-Choose-K](003-Hartmann_with_nchoosek.qmd)
 Hartmann function optimization with n-choose-k constraints.
 
-### [006 - 30-Dimensional Branin](006-30dimBranin.qmd)
+### [004 - 30-Dimensional Branin](004-30dimBranin.qmd)
 High-dimensional optimization using an extended Branin function.
 
-### [007 - Benchmark Outlier Detection](007-Benchmark_outlier_detection.qmd)
-Testing outlier detection capabilities on benchmark problems.
-
-### [008 - Himmelblau with Outliers](008-Himmelblau_with_outliers.qmd)
+### [005 - Himmelblau with Outliers](005-Himmelblau_with_outliers.qmd)
 Robust optimization in the presence of outliers.
 
-### [009 - Bayesian Optimization over Molecules](009-Bayesian_optimization_over_molecules.qmd)
+### [006 - Bayesian Optimization over Molecules](006-Bayesian_optimization_over_molecules.qmd)
 Molecular optimization using chemical fingerprints and specialized kernels.
 
-### [010 - LSRBO](010-LSRBO.qmd)
+### [007 - LSRBO](007-LSRBO.qmd)
 Local search-based Bayesian optimization.
 
-### [011 - ZDT1](011-ZDT1.qmd)
+### [008 - ZDT1](008-ZDT1.qmd)
 Multi-objective optimization using the ZDT1 test problem.
 
-### [012 - BNH](012-BNH.qmd)
+### [009 - BNH](009-BNH.qmd)
 Binh and Korn multi-objective test function.
 
-### [013 - TNK](013-TNK.qmd)
+### [010 - TNK](010-TNK.qmd)
 Tanaka multi-objective test function.
 
-### [014 - Active Learning](014-ActiveLearning.qmd)
+### [011 - Active Learning](011-ActiveLearning.qmd)
 Active learning strategies for experimental design.
