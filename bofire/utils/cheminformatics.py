@@ -163,4 +163,3 @@ def smiles2fragments_fingerprints(
     fragments = smiles2fragments(smiles, fragments_list=fragments_list)
 
     return np.hstack((fingerprints, fragments))
- 
