@@ -228,8 +228,17 @@ class DoEStrategy(Strategy):
                 relaxed_candidates_clean.to_numpy(), dtype=torch.float64
             )
 
-            # Get Fisher Information Matrix rank (X.T @ X rank)
-            return objective_function.model_matrix_rank(candidates_tensor)
+            # get candidate model matrix using objective:
+            candidates_model_matrix = objective_function.tensor_to_model_matrix(
+                candidates_tensor
+            )
+
+            # Convert tensor to model matrix
+            # X = tensor_to_model_matrix(candidates_tensor)
+            model_matrix_rank = torch.linalg.matrix_rank(candidates_model_matrix).item()
+
+            return model_matrix_rank
+
         else:
             raise ValueError(
                 "Only ModelBasedObjective supports Fisher Information Matrix rank calculation"
@@ -237,7 +246,7 @@ class DoEStrategy(Strategy):
 
     def get_additional_experiments_needed(self) -> Optional[int]:
         """Calculate the additional number of experiments needed beyond current candidates.
-        This method computes: get_required_number_of_experiments() - get_candidate_fim_rank()
+        This method computes: get_required_number_of_experiments() - get_candidate_rank()
 
         Returns:
             Optional[int]: Number of additional experiments needed, or None if required number
@@ -247,7 +256,7 @@ class DoEStrategy(Strategy):
         if required_experiments is None:
             return None
 
-        candidate_rank = self.get_candidate_fim_rank()
+        candidate_rank = self.get_candidate_rank()
         difference = required_experiments - candidate_rank
         return difference
 
