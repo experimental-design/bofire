@@ -110,6 +110,15 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         self,
         feature_keys: List[str],
     ) -> List[int]:
+        """Returns the indices of the specified features (both original and engineered)
+        after applying all input transforms.
+
+        Args:
+            feature_keys: The feature keys to get the indices for.
+
+        Returns:
+            The indices of the specified features.
+        """
         # get the keys belonging to the original inputs
         original_keys = [key for key in feature_keys if key in self.inputs.get_keys()]
         indices = self.inputs.get_feature_indices(
@@ -139,7 +148,6 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         return indices
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
-        # scaler = get_scaler(self.inputs, self.categorical_encodings, self.scaler, X)
         input_transform = get_input_transform(
             inputs=self.inputs,
             engineered_features=self.engineered_features,

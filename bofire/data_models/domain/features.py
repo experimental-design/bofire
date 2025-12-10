@@ -253,9 +253,28 @@ class Features(_BaseFeatures[AnyFeature]):
 
 
 class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
+    """Container of engineered (input) features, only engineered features
+    are allowed.
+
+    Engineered features can be used in surrogate models to enhance the
+    learning capabilities.
+
+    Attributes:
+        features: list of the engineered features.
+    """
+
     type: Literal["EngineeredFeatures"] = "EngineeredFeatures"  # type: ignore
 
-    def get_features2idx(self, offset: int = 0):
+    def get_features2idx(self, offset: int = 0) -> Dict[str, Tuple[int, ...]]:
+        """Get a dictionary that maps feature names to indices (used for surrogate
+        building).
+
+        Args:
+            offset: Offset for computing the indices. Defaults to 0.
+
+        Returns:
+            Dictionary mapping feature names to their indices.
+        """
         features2idx = {}
         counter = offset
         for feat in self.get():
@@ -270,6 +289,15 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         offset: int,
         feature_keys: List[str],
     ) -> List[int]:
+        """Get the indices of the specified feature keys.
+
+        Args:
+            offset: Offset for computing the indices.
+            feature_keys: List of feature keys to get the indices for.
+
+        Returns:
+            List of indices for the specified feature keys.
+        """
         features2idx = self.get_features2idx(offset)
         return sorted(
             itertools.chain.from_iterable(
@@ -278,11 +306,25 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         )
 
     def validate_inputs(self, inputs: Inputs):
+        """Validates that the engineered features fit to the original
+        input features.
+
+        Args:
+            inputs: Input features to validate against.
+        """
         for feat in self.get():
             feat.validate_features(inputs)
 
     @property
     def n_transformed_inputs(self) -> int:
+        """Get the total number of number of created engineered features.
+
+        There could be multiple created engineered features per engineered
+        feature (example: `WeightedSumFeature`).
+
+        Returns:
+            int: Total number of created engineered features.
+        """
         return sum(feat.n_transformed_inputs for feat in self.get())
 
 

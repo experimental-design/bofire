@@ -11,6 +11,14 @@ if TYPE_CHECKING:
 
 
 class EngineeredFeature(Feature):
+    """Base class for an engineered feature.
+
+    Args:
+        features: The features to be used to compute the engineered feature.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
     features: FeatureKeys
     keep_features: bool = True
 
@@ -36,6 +44,14 @@ class EngineeredFeature(Feature):
 
 
 class SumFeature(EngineeredFeature):
+    """Sum feature, which computes the sum over the specified features.
+
+    Args:
+        features: The features to be used to compute the sum.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
     type: Literal["SumFeature"] = "SumFeature"
     order_id: ClassVar[int] = 0
 
@@ -45,6 +61,14 @@ class SumFeature(EngineeredFeature):
 
 
 class MeanFeature(EngineeredFeature):
+    """Mean feature, which computes the mean over the specified features.
+
+    Args:
+        features: The features to be used to compute the mean.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
     type: Literal["MeanFeature"] = "MeanFeature"
     order_id: ClassVar[int] = 1
 
@@ -54,13 +78,23 @@ class MeanFeature(EngineeredFeature):
 
 
 class WeightedSumFeature(EngineeredFeature):
+    """Weighted sum feature, which computes the sum over the specified
+    descriptors weighted by the involved feature values.
+
+    Args:
+        features: The features to be used to compute the weighted sum.
+        descriptors: The descriptors to be used to compute the weighted sum.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
     descriptors: Descriptors
     order_id: ClassVar[int] = 2
 
     @property
     def n_transformed_inputs(self) -> int:
-        return len(self.descriptors)
+        return len(self.descriptors)  # type: ignore
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)

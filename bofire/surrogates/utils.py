@@ -117,14 +117,15 @@ def get_scaler(
 
 
     Args:
-        inputs (Inputs): Input features.
-        categorical_encodings (InputTransformSpecs): Dictionary how to treat
+        inputs: Input features.
+        engineered_features: Engineered features.
+        categorical_encodings: Dictionary how to treat
             the categoricals and/or molecules.
         scaler_type (ScalerEnum): Enum indicating the scaler of interest.
-        X (pd.DataFrame): The dataset of interest.
 
     Returns:
-        Union[InputStandardize, Normalize]: The instantiated scaler class
+        The instantiated botorch scaler object or None if no scaling is to be
+            applied.
 
     """
     if scaler_type == ScalerEnum.IDENTITY:
@@ -157,10 +158,6 @@ def get_scaler(
         return None
 
     if scaler_type == ScalerEnum.NORMALIZE:
-        # lower, upper = inputs.get_bounds(
-        #     specs=input_preprocessing_specs,
-        #     experiments=X,
-        # )
         return Normalize(
             d=d,
             # bounds=torch.tensor([lower, upper]).to(**tkwargs),
@@ -181,6 +178,20 @@ def get_input_transform(
     scaler_type: ScalerEnum,
     categorical_encodings,  # TODO: specify type
 ) -> Union[InputTransform, None]:
+    """Creates the botorch input transform on the basis of
+    the specified inputs, engineered features and categorical
+    encodings.
+
+    Args:
+        inputs: Input features.
+        engineered_features: Engineered features.
+        scaler_type: The scaler enum to be used.
+        categorical_encodings: Dictionary how to treat
+            the categoricals and/or molecules.
+
+    Returns:
+        The created input transform or None.
+    """
     transforms = {}
     ignored = []
 
