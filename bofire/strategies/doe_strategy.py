@@ -172,10 +172,7 @@ class DoEStrategy(Strategy):
             )
 
     def get_candidate_rank(self) -> int:
-        """Get the rank of the model matrix with the current candidates.
-        Returns:
-            int: The rank. Returns 0 if no candidates are set.
-        """
+        """Get the rank of the model matrix with the current candidates."""
         if self.candidates is None:
             return 0
 
