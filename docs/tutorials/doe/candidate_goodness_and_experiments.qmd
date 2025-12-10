@@ -1,0 +1,121 @@
+---
+title: "Evaluating Design Quality and Planning Additional Experiments"
+---
+
+BoFire supports classical design of experiments where you can specify different models.
+If you have already started running experiments, say with a linear design, and you have resources to search more broadly in the same space (aka domain definition), you might want to 'augment' the original design to a larger design, say 'fully quadratic'.
+
+Another case is when you have existing experiments and want to see what can be (re)used in a design of experiments. This is different from Bayesian Optimization: with classical DoE, we do one set of experiments rather than iteratively asking for an experiment or two, then retraining the model with the acquired data before asking again. For DoE, outputs are not taken into account, unlike Bayesian Optimization.
+
+You can set these as your candidate experiments.
+
+BoFire provides methods to evaluate design quality and plan additional experiments by calculating the **Fisher Information Matrix (FIM) rank** of your candidate experiments. The FIM rank tells you how many model parameters for the current design can be uniquely estimated from your candidates.
+
+## Key Concepts
+
+For a **linear model** with 3 continuous inputs:
+
+- Model: `y = β₀ + β₁x₁ + β₂x₂ + β₃x₃`
+- Number of parameters to estimate: **4** (intercept + 3 coefficients)
+- Minimum experiments for parameter estimation: **4**
+- Recommended experiments (with buffer for error estimation): **7** (4 + 3)
+
+The **FIM rank** of your candidates tells you how many parameters you can actually estimate. If rank < number of parameters, your design is **rank-deficient** and cannot estimate all model coefficients uniquely.
+
+## Example: Checking Design Quality
+
+Let's create a simple domain and check the quality of different experimental designs:
+
+```{python}
+import pandas as pd
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.doe import DOptimalityCriterion
+import bofire.data_models.strategies.api as data_models
+from bofire.strategies.api import DoEStrategy
+
+# Create a simple domain with 3 continuous inputs
+domain = Domain.from_lists(
+    inputs=[
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        ContinuousInput(key="x2", bounds=(0, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+    ],
+    outputs=[ContinuousOutput(key="y")],
+)
+
+# Create a DoE strategy with a linear model
+data_model = data_models.DoEStrategy(
+    domain=domain,
+    criterion=DOptimalityCriterion(formula="linear")
+)
+strategy = DoEStrategy(data_model=data_model)
+```
+
+### How many experiments are recommended?
+
+```{python}
+required = strategy.get_required_number_of_experiments()
+print(f"Recommended number of experiments: {required}")
+print(f"Additional experiments needed (no candidates yet): {strategy.get_additional_experiments_needed()}")
+```
+
+The recommended number is 7 (4 parameters + 3 buffer for error estimation and validation).
+
+### Looking at the quality of candidates towards that design
+
+Let's say you've run 2 experiments. If they're good, we expect to only need 5 more for our D-Optimal linear design (recall above the recommended number of experiments was 7).
+
+```{python}
+# Two experiments along one axis only
+candidates_partial = pd.DataFrame({
+    "x1": [0.0, 1.0],
+    "x2": [0.0, 0.0],
+    "x3": [0.0, 0.0]
+})
+
+strategy.set_candidates(candidates_partial)
+rank = strategy.get_candidate_fim_rank()
+additional = strategy.get_additional_experiments_needed()
+
+print(f"FIM rank of current design: {rank}")
+print(f"Model parameters: 4 (intercept + 3 coefficients)")
+print(f"Additional experiments needed: {additional}")
+```
+
+With only 2 experiments along one axis, the FIM rank is 2 - you can only estimate 2 parameters (intercept and x1 coefficient). You need 5 more experiments to reach the recommended count.
+
+### Generating and evaluating a full design
+
+```{python}
+# Generate a full D-optimal design
+full_doe = strategy.ask(candidate_count=required)
+print(f"Generated {len(full_doe)} experiments:")
+print(full_doe.round(3))
+
+# Evaluate the design quality
+strategy_fresh = DoEStrategy(data_model=data_model)
+strategy_fresh.set_candidates(full_doe)
+rank_full = strategy_fresh.get_candidate_fim_rank()
+additional_full = strategy_fresh.get_additional_experiments_needed()
+
+print(f"\nFIM rank: {rank_full}")
+print(f"Additional experiments needed: {additional_full}")
+```
+
+Notice that even though we generated 7 experiments, the FIM rank is 4 (the number of model parameters). This is correct! The D-optimal design places experiments at strategic locations (typically corners of the design space) to estimate all 4 parameters. The extra 3 experiments provide:
+
+- Degrees of freedom for error estimation
+- Ability to detect lack-of-fit
+- Robustness against experimental errors
+
+## Practical Workflow
+
+When planning experiments:
+
+1. **Check requirements**: Use `get_required_number_of_experiments()` to see the recommended count
+2. **Evaluate existing data**: Use `get_candidate_fim_rank()` to assess your candidates, if you have any that you want to incorporate
+3. **Plan additions**: Use `get_additional_experiments_needed()` to determine how many more experiments to run
+4. **Generate design**: Use `ask()` to get the additional experiments, which will be optimized to complement your existing data
+
+This approach works for any model type (`"linear"`, `"linear-and-quadratic"`, `"linear-and-interactions"`, `"fully-quadratic"`) and automatically handles constraints, discrete inputs, and categorical inputs.
