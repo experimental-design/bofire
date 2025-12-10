@@ -129,6 +129,16 @@ class CategoricalInput(Input):
             raise ValueError(
                 f"invalid values for `{self.key}`, allowed are: `{self.categories}`",
             )
+
+        # Check if values respect the allowed categories constraint
+        if self.allowed is not None:
+            allowed_categories = self.get_allowed_categories()
+            if not all(values.isin(allowed_categories)):
+                disallowed_values = set(values.unique()) - set(allowed_categories)
+                raise ValueError(
+                    f"Feature {self.key} has values {list(disallowed_values)} that are not in allowed categories {allowed_categories}",
+                )
+
         if strict:
             # When allowed is set, only check that allowed categories are present in the data
             # Otherwise check that all categories are present
