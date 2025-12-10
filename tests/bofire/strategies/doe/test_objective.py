@@ -1,16 +1,24 @@
 import importlib
+import importlib.util
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from formulaic import Formula
 
+import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.linear import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+    DiscreteInput,
+)
 from bofire.data_models.strategies.doe import (
     AOptimalityCriterion,
     DOptimalityCriterion,
@@ -19,6 +27,7 @@ from bofire.data_models.strategies.doe import (
     IOptimalityCriterion,
     SpaceFillingCriterion,
 )
+from bofire.strategies.api import DoEStrategy
 from bofire.strategies.doe.objective import (
     AOptimality,
     DOptimality,
@@ -528,58 +537,6 @@ def test_MinMaxTransform():
             )
 
 
-def test_tensor_to_model_matrix():
-    """Test the tensor_to_model_matrix method of ModelBasedObjective."""
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
-        outputs=[ContinuousOutput(key="y")],
-    )
-
-    # Test with linear formula
-    formula = get_formula_from_string("linear", inputs=domain.inputs)
-    d_optimality = DOptimality(
-        domain=domain,
-        formula=formula,
-        n_experiments=2,
-    )
-
-    # Create a test design matrix tensor
-    D = torch.tensor([[0.5, 0.3, 0.7], [0.2, 0.8, 0.4]], dtype=torch.float64)
-
-    # Get model matrix using our method
-    X = d_optimality.tensor_to_model_matrix(D)
-
-    # Verify the shape - should be [n_experiments, n_model_terms]
-    # Linear formula with 3 inputs: 1 + x1 + x2 + x3 = 4 terms
-    assert X.shape == (2, 4)
-
-    # Verify the first column is all ones (intercept)
-    assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))
-
-    # Verify the other columns match the design matrix
-    assert torch.allclose(X[:, 1], D[:, 0])  # x1
-    assert torch.allclose(X[:, 2], D[:, 1])  # x2
-    assert torch.allclose(X[:, 3], D[:, 2])  # x3
-
-    # Test with quadratic formula
-    formula = Formula("x1 + x2 + {x1**2} + x1:x2")
-    d_optimality = DOptimality(
-        domain=domain,
-        formula=formula,
-        n_experiments=2,
-    )
-
-    X = d_optimality.tensor_to_model_matrix(D)
-
-    # Should have 5 terms: 1 + x1 + x2 + x1^2 + x1:x2
-    assert X.shape == (2, 5)
-    assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))  # intercept
-    assert torch.allclose(X[:, 1], D[:, 0])  # x1
-    assert torch.allclose(X[:, 2], D[:, 1])  # x2
-    assert torch.allclose(X[:, 3], D[:, 0] ** 2)  # x1^2
-    assert torch.allclose(X[:, 4], D[:, 0] * D[:, 1])  # x1:x2
-
-
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_IOptimality_instantiation():
     # no constraints
@@ -639,3 +596,318 @@ def test_IOptimality_instantiation():
     )
 
     assert np.allclose(domain.constraints(i_optimality.Y), 0.0)
+
+
+def test_tensor_to_model_matrix():
+    """Test the tensor_to_model_matrix method of ModelBasedObjective."""
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test with linear formula
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
+    d_optimality = DOptimality(
+        domain=domain,
+        formula=formula,
+        n_experiments=2,
+    )
+
+    # Create a test design matrix tensor
+    D = torch.tensor([[0.5, 0.3, 0.7], [0.2, 0.8, 0.4]], dtype=torch.float64)
+
+    # Get model matrix using our method
+    X = d_optimality.tensor_to_model_matrix(D)
+
+    # Verify the shape - should be [n_experiments, n_model_terms]
+    # Linear formula with 3 inputs: 1 + x1 + x2 + x3 = 4 terms
+    assert X.shape == (2, 4)
+
+    # Verify the first column is all ones (intercept)
+    assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))
+
+    # Verify the other columns match the design matrix
+    assert torch.allclose(X[:, 1], D[:, 0])  # x1
+    assert torch.allclose(X[:, 2], D[:, 1])  # x2
+    assert torch.allclose(X[:, 3], D[:, 2])  # x3
+
+    # Test with quadratic formula
+    formula = Formula("x1 + x2 + {x1**2} + x1:x2")
+    d_optimality = DOptimality(
+        domain=domain,
+        formula=formula,
+        n_experiments=2,
+    )
+
+    X = d_optimality.tensor_to_model_matrix(D)
+
+    # Should have 5 terms: 1 + x1 + x2 + x1^2 + x1:x2
+    assert X.shape == (2, 5)
+    assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))  # intercept
+    assert torch.allclose(X[:, 1], D[:, 0])  # x1
+    assert torch.allclose(X[:, 2], D[:, 1])  # x2
+    assert torch.allclose(X[:, 3], D[:, 0] ** 2)  # x1^2
+    assert torch.allclose(X[:, 4], D[:, 0] * D[:, 1])  # x1:x2
+
+
+def test_get_candidate_fim_rank():
+    """Test the get_candidate_fim_rank method of DoEStrategy."""
+    # Create a simple domain with 3 continuous inputs
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_fim_rank() == 0
+
+    # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
+    candidates_full_rank = pd.DataFrame(
+        {
+            "x1": [1.0, 0.0, 0.0, 0.5],
+            "x2": [0.0, 1.0, 0.0, 0.5],
+            "x3": [0.0, 0.0, 1.0, 0.5],
+        }
+    )
+    strategy.set_candidates(candidates_full_rank)
+    rank = strategy.get_candidate_fim_rank()
+    assert rank == 4  # Intercept + 3 variables = 4 estimable parameters
+
+    # Test 3: Rank-deficient Fisher Information Matrix (linearly dependent design points)
+    candidates_rank_deficient = pd.DataFrame(
+        {
+            "x1": [
+                1.0,
+                1.0,
+                0.0,
+                0.0,
+            ],  # Two pairs of identical rows creates linear dependence in design matrix
+            "x2": [0.0, 0.0, 1.0, 1.0],
+            "x3": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],  # Constant, provides no information beyond intercept
+        }
+    )
+    strategy.set_candidates(candidates_rank_deficient)
+    rank = strategy.get_candidate_fim_rank()
+    assert (
+        rank == 2
+    )  # Only 2 linearly independent design points: spans intercept + 1 direction
+
+    # Test 4: Test with quadratic formula
+    data_model_quad = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
+    )
+    strategy_quad = DoEStrategy(data_model_quad)
+    strategy_quad.set_candidates(candidates_full_rank)
+    rank_quad = strategy_quad.get_candidate_fim_rank()
+    # Fully quadratic has 10 terms (excluding intercept), with 4 candidates rank is 4
+    assert rank_quad == 4
+
+    # Test 5: SpaceFilling criterion should raise error
+    data_model_space = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_space = DoEStrategy(data_model_space)
+    strategy_space.set_candidates(candidates_full_rank)
+
+    with pytest.raises(
+        ValueError,
+        match="get_candidate_fim_rank\\(\\) only works with DoEOptimalityCriterion",
+    ):
+        strategy_space.get_candidate_fim_rank()
+
+
+def test_get_candidate_fim_rank_categorical_discrete():
+    """Test the get_candidate_fim_rank method with categorical and discrete inputs."""
+    # Create a domain with mixed input types
+    mixed_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+            CategoricalInput(key="x3", categories=["A", "B", "C"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_fim_rank() == 0
+
+    # Test 2: Mixed input candidates
+    candidates_mixed = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.5],  # Discrete values
+            "x3": ["A", "B", "C", "A"],  # Categorical values
+        }
+    )
+    strategy.set_candidates(candidates_mixed)
+    rank = strategy.get_candidate_fim_rank()
+    # Actual rank depends on linear independence in the transformed design matrix
+    assert rank == 3
+
+    # Test 3: Test with interactions formula for mixed types
+    data_model_interactions = data_models.DoEStrategy(
+        domain=mixed_domain,
+        criterion=DOptimalityCriterion(formula="linear-and-interactions"),
+    )
+    strategy_interactions = DoEStrategy(data_model_interactions)
+    strategy_interactions.set_candidates(candidates_mixed)
+    rank_interactions = strategy_interactions.get_candidate_fim_rank()
+    # With interactions, rank is 4 (limited by number of candidates)
+    assert rank_interactions == 4
+
+    # Test 4: Rank-deficient case with repeated categorical/discrete values
+    candidates_repeated = pd.DataFrame(
+        {
+            "x1": [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
+            "x2": [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
+            "x3": ["A", "A", "B", "B"],  # Repeated categorical values
+        }
+    )
+    strategy.set_candidates(candidates_repeated)
+    rank_repeated = strategy.get_candidate_fim_rank()
+    assert (
+        rank_repeated == 2
+    )  # Only 2 unique design points: intercept + 1 independent direction
+
+    # Test 5: Single categorical level (should reduce rank)
+    candidates_single_cat = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.1],
+            "x3": ["A", "A", "A", "A"],  # All same category
+        }
+    )
+    strategy.set_candidates(candidates_single_cat)
+    rank_single = strategy.get_candidate_fim_rank()
+    # Intercept + x1 + x2 (x3 categorical doesn't vary, contributes no information)
+    assert rank_single == 3
+
+
+def test_get_candidate_fim_rank_vs_required_experiments():
+    """Test that Fisher Information Matrix rank is at most the required number of experiments.
+    Also tests the get_additional_experiments_needed method."""
+    # Test with continuous inputs only
+    continuous_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for formula in ["linear", "linear-and-interactions", "fully-quadratic"]:
+        data_model = data_models.DoEStrategy(
+            domain=continuous_domain, criterion=DOptimalityCriterion(formula=formula)
+        )
+        strategy = DoEStrategy(data_model=data_model)
+
+        required_experiments = strategy.get_required_number_of_experiments()
+
+        # Create candidates with more experiments than required
+        n_candidates = required_experiments + 5 if required_experiments else 10
+        candidates = pd.DataFrame(
+            {
+                "x1": np.random.uniform(0, 1, n_candidates),
+                "x2": np.random.uniform(0, 1, n_candidates),
+                "x3": np.random.uniform(0, 1, n_candidates),
+            }
+        )
+
+        strategy.set_candidates(candidates)
+        fim_rank = strategy.get_candidate_fim_rank()
+
+        # Fisher Information Matrix rank should be at most the required number of experiments
+        if required_experiments is not None:
+            assert (
+                fim_rank <= required_experiments
+            ), f"FIM rank ({fim_rank}) exceeds required experiments ({required_experiments}) for {formula}"
+
+        # Also should be at most the number of candidates
+        assert (
+            fim_rank <= n_candidates
+        ), f"FIM rank ({fim_rank}) exceeds number of candidates ({n_candidates}) for {formula}"
+
+        # Test the new get_additional_experiments_needed method
+        if required_experiments is not None:
+            # With default epsilon=3
+            additional_needed = strategy.get_additional_experiments_needed()
+            difference = required_experiments - fim_rank
+            expected_additional = 3 if difference == 0 else difference
+            assert (
+                additional_needed == expected_additional
+            ), f"Additional experiments mismatch for {formula}: got {additional_needed}, expected {expected_additional}"
+
+            # With custom epsilon=5
+            additional_needed_custom = strategy.get_additional_experiments_needed(
+                epsilon=5
+            )
+            expected_additional_custom = 5 if difference == 0 else difference
+            assert (
+                additional_needed_custom == expected_additional_custom
+            ), f"Additional experiments (epsilon=5) mismatch for {formula}: got {additional_needed_custom}, expected {expected_additional_custom}"
+
+    # Test with mixed input types
+    mixed_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+            CategoricalInput(key="x3", categories=["A", "B"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    required_experiments = strategy.get_required_number_of_experiments()
+
+    candidates_mixed = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2, 0.8, 0.3],
+            "x2": [0.1, 0.5, 1.0, 0.5, 0.1, 1.0],
+            "x3": ["A", "B", "A", "B", "A", "B"],
+        }
+    )
+
+    strategy.set_candidates(candidates_mixed)
+    fim_rank = strategy.get_candidate_fim_rank()
+
+    if required_experiments is not None:
+        assert (
+            fim_rank <= required_experiments
+        ), f"Mixed domain: FIM rank ({fim_rank}) exceeds required experiments ({required_experiments})"
+
+        # Test get_additional_experiments_needed with mixed inputs
+        additional_needed = strategy.get_additional_experiments_needed()
+        difference = required_experiments - fim_rank
+        expected_additional = 3 if difference == 0 else difference
+        assert (
+            additional_needed == expected_additional
+        ), f"Mixed domain: Additional experiments mismatch: got {additional_needed}, expected {expected_additional}"
+
+        # Test with epsilon=0 (no buffer)
+        additional_no_buffer = strategy.get_additional_experiments_needed(epsilon=0)
+        expected_no_buffer = 0 if difference == 0 else difference
+        assert (
+            additional_no_buffer == expected_no_buffer
+        ), f"Mixed domain: Additional experiments (no buffer) mismatch: got {additional_no_buffer}, expected {expected_no_buffer}"
