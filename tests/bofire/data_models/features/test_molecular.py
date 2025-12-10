@@ -16,10 +16,12 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.molfeatures import names
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
+
+if RDKIT_AVAILABLE:
+    from bofire.data_models.molfeatures import names
 
 smiles = [
     "CC(=O)Oc1ccccc1C(=O)O",

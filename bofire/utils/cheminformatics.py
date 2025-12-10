@@ -136,7 +136,7 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     """
     mols = [smiles2mol(smi) for smi in smiles]
 
-    calc = Calculator(descriptors, ignore_3D=True)  # type: ignore
+    calc = Calculator(descriptors, ignore_3D=False)  # type: ignore
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
     descriptors_temp_df = calc.pandas(mols)
