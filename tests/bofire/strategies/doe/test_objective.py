@@ -2,6 +2,7 @@ import importlib
 
 import numpy as np
 import pytest
+import torch
 from formulaic import Formula
 
 from bofire.data_models.constraints.linear import (
@@ -525,6 +526,58 @@ def test_MinMaxTransform():
                 domain=domain,
                 n_experiments=4,
             )
+
+
+def test_tensor_to_model_matrix():
+    """Test the tensor_to_model_matrix method of ModelBasedObjective."""
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test with linear formula
+    formula = get_formula_from_string("linear", inputs=domain.inputs)
+    d_optimality = DOptimality(
+        domain=domain,
+        formula=formula,
+        n_experiments=2,
+    )
+
+    # Create a test design matrix tensor
+    D = torch.tensor([[0.5, 0.3, 0.7], [0.2, 0.8, 0.4]], dtype=torch.float64)
+
+    # Get model matrix using our method
+    X = d_optimality.tensor_to_model_matrix(D)
+
+    # Verify the shape - should be [n_experiments, n_model_terms]
+    # Linear formula with 3 inputs: 1 + x1 + x2 + x3 = 4 terms
+    assert X.shape == (2, 4)
+
+    # Verify the first column is all ones (intercept)
+    assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))
+
+    # Verify the other columns match the design matrix
+    assert torch.allclose(X[:, 1], D[:, 0])  # x1
+    assert torch.allclose(X[:, 2], D[:, 1])  # x2
+    assert torch.allclose(X[:, 3], D[:, 2])  # x3
+
+    # Test with quadratic formula
+    formula = Formula("x1 + x2 + {x1**2} + x1:x2")
+    d_optimality = DOptimality(
+        domain=domain,
+        formula=formula,
+        n_experiments=2,
+    )
+
+    X = d_optimality.tensor_to_model_matrix(D)
+
+    # Should have 5 terms: 1 + x1 + x2 + x1^2 + x1:x2
+    assert X.shape == (2, 5)
+    assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))  # intercept
+    assert torch.allclose(X[:, 1], D[:, 0])  # x1
+    assert torch.allclose(X[:, 2], D[:, 1])  # x2
+    assert torch.allclose(X[:, 3], D[:, 0] ** 2)  # x1^2
+    assert torch.allclose(X[:, 4], D[:, 0] * D[:, 1])  # x1:x2
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
