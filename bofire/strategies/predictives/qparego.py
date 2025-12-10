@@ -4,7 +4,6 @@ import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import GenericMCObjective
-from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
 from pydantic import PositiveInt
@@ -147,7 +146,7 @@ class QparegoStrategy(BotorchStrategy):
                 eta=torch.tensor(etas).to(**tkwargs),
                 mc_samples=self.acquisition_function.n_mc_samples,
                 prune_baseline=True,
-                cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+                cache_root=None,
             )
             acqfs.append(acqf)
         return acqfs
