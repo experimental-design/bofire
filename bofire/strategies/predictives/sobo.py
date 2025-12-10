@@ -27,7 +27,6 @@ from botorch.acquisition.objective import (
     GenericMCObjective,
     IdentityMCObjective,
 )
-from botorch.models.gpytorch import GPyTorchModel
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
@@ -104,7 +103,7 @@ class SoboStrategy(BotorchStrategy):
                 else 1e-3
             ),
             eta=torch.tensor(etas).to(**tkwargs),
-            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            cache_root=None,
             prune_baseline=(
                 self.acquisition_function.prune_baseline
                 if isinstance(self.acquisition_function, (qNEI, qLogNEI))
