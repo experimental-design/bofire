@@ -171,10 +171,10 @@ class DoEStrategy(Strategy):
                 f"Only {AnyDoEOptimalityCriterion} type have required number of experiments."
             )
 
-    def get_candidate_fim_rank(self) -> int:
-        """Get the rank of the Fisher Information Matrix (X.T @ X) for the current candidates.
+    def get_candidate_rank(self) -> int:
+        """Get the rank of the model matrix with the current candidates.
         Returns:
-            int: The rank of the Fisher Information Matrix. Returns 0 if no candidates are set.
+            int: The rank. Returns 0 if no candidates are set.
         """
         if self.candidates is None:
             return 0
@@ -182,7 +182,7 @@ class DoEStrategy(Strategy):
         # Only works for DoEOptimalityCriterion (model-based criteria), not SpaceFilling
         if not isinstance(self._data_model.criterion, DoEOptimalityCriterion):
             raise ValueError(
-                "get_candidate_fim_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion"
+                "get_candidate_rank() only works with DoEOptimalityCriterion, not SpaceFillingCriterion"
             )
 
         # Step 1: get_relaxed_domain(original_domain)
@@ -229,9 +229,7 @@ class DoEStrategy(Strategy):
             )
 
             # Get Fisher Information Matrix rank (X.T @ X rank)
-            return objective_function.get_fisher_information_matrix_rank(
-                candidates_tensor
-            )
+            return objective_function.model_matrix_rank(candidates_tensor)
         else:
             raise ValueError(
                 "Only ModelBasedObjective supports Fisher Information Matrix rank calculation"

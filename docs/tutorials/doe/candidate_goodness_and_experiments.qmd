@@ -75,7 +75,7 @@ candidates_partial = pd.DataFrame({
 })
 
 strategy.set_candidates(candidates_partial)
-rank = strategy.get_candidate_fim_rank()
+rank = strategy.get_candidate_rank()
 additional = strategy.get_additional_experiments_needed()
 
 print(f"FIM rank of current design: {rank}")
@@ -96,7 +96,7 @@ print(full_doe.round(3))
 # Evaluate the design quality
 strategy_fresh = DoEStrategy(data_model=data_model)
 strategy_fresh.set_candidates(full_doe)
-rank_full = strategy_fresh.get_candidate_fim_rank()
+rank_full = strategy_fresh.get_candidate_rank()
 additional_full = strategy_fresh.get_additional_experiments_needed()
 
 print(f"\nFIM rank: {rank_full}")
@@ -114,7 +114,7 @@ Notice that even though we generated 7 experiments, the FIM rank is 4 (the numbe
 When planning experiments:
 
 1. **Check requirements**: Use `get_required_number_of_experiments()` to see the recommended count
-2. **Evaluate existing data**: Use `get_candidate_fim_rank()` to assess your candidates, if you have any that you want to incorporate
+2. **Evaluate existing data**: Use `get_candidate_rank()` to assess your candidates, if you have any that you want to incorporate
 3. **Plan additions**: Use `get_additional_experiments_needed()` to determine how many more experiments to run
 4. **Generate design**: Use `ask()` to get the additional experiments, which will be optimized to complement your existing data
 

@@ -106,7 +106,7 @@ class ModelBasedObjective(Objective):
         var_dict["torch"] = torch  # type: ignore
         return eval(str(self.model_terms_string_expression), {}, var_dict)
 
-    def get_fisher_information_matrix_rank(self, D: Tensor) -> int:
+    def model_matrix_rank(self, D: Tensor) -> int:
         """Get the rank of the Fisher Information Matrix (X.T @ X) from the design matrix tensor.
         Standard practice in experimental design is to include the intercept when calculating
         FIM rank, as it represents a real model parameter that needs to be estimated.
@@ -116,8 +116,7 @@ class ModelBasedObjective(Objective):
             int: The rank of the Fisher Information Matrix (includes intercept if present).
         """
         X = self.tensor_to_model_matrix(D)
-        XTX = X.T @ X
-        return torch.linalg.matrix_rank(XTX).item()
+        return torch.linalg.matrix_rank(X).item()
 
     def _evaluate_tensor(self, D: Tensor) -> Tensor:
         """Evaluate the objective function on the design matrix as a tensor."""
