@@ -885,8 +885,8 @@ def one_cont_3_cat():
     assert n_successfull_runs == 9
 
 
-def test_get_candidate_fim_rank():
-    """Test the get_candidate_fim_rank method of DoEStrategy."""
+def test_get_candidate_rank():
+    """Test the get_candidate_rank method of DoEStrategy."""
     # Create a simple domain with 3 continuous inputs
     simple_domain = Domain.from_lists(
         inputs=[
@@ -902,7 +902,7 @@ def test_get_candidate_fim_rank():
         domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
     )
     strategy = DoEStrategy(data_model=data_model)
-    assert strategy.get_candidate_fim_rank() == 0
+    assert strategy.get_candidate_rank() == 0
 
     # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
     candidates_full_rank = pd.DataFrame(
@@ -913,7 +913,7 @@ def test_get_candidate_fim_rank():
         }
     )
     strategy.set_candidates(candidates_full_rank)
-    rank = strategy.get_candidate_fim_rank()
+    rank = strategy.get_candidate_rank()
     assert rank == 4  # Intercept + 3 variables = 4 estimable parameters
 
     # Test 3: Rank-deficient Fisher Information Matrix (linearly dependent design points)
@@ -935,7 +935,7 @@ def test_get_candidate_fim_rank():
         }
     )
     strategy.set_candidates(candidates_rank_deficient)
-    rank = strategy.get_candidate_fim_rank()
+    rank = strategy.get_candidate_rank()
     assert (
         rank == 2
     )  # Only 2 linearly independent design points: spans intercept + 1 direction
@@ -946,7 +946,7 @@ def test_get_candidate_fim_rank():
     )
     strategy_quad = DoEStrategy(data_model_quad)
     strategy_quad.set_candidates(candidates_full_rank)
-    rank_quad = strategy_quad.get_candidate_fim_rank()
+    rank_quad = strategy_quad.get_candidate_rank()
     # Fully quadratic has 10 terms (excluding intercept), with 4 candidates rank is 4
     assert rank_quad == 4
 
@@ -959,13 +959,13 @@ def test_get_candidate_fim_rank():
 
     with pytest.raises(
         ValueError,
-        match="get_candidate_fim_rank\\(\\) only works with DoEOptimalityCriterion",
+        match="get_candidate_rank\\(\\) only works with DoEOptimalityCriterion",
     ):
-        strategy_space.get_candidate_fim_rank()
+        strategy_space.get_candidate_rank()
 
 
-def test_get_candidate_fim_rank_categorical_discrete():
-    """Test the get_candidate_fim_rank method with categorical and discrete inputs."""
+def test_get_candidate_rank_categorical_discrete():
+    """Test the get_candidate_rank method with categorical and discrete inputs."""
     # Create a domain with mixed input types
     mixed_domain = Domain.from_lists(
         inputs=[
@@ -981,7 +981,7 @@ def test_get_candidate_fim_rank_categorical_discrete():
         domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
     )
     strategy = DoEStrategy(data_model=data_model)
-    assert strategy.get_candidate_fim_rank() == 0
+    assert strategy.get_candidate_rank() == 0
 
     # Test 2: Mixed input candidates
     candidates_mixed = pd.DataFrame(
@@ -992,7 +992,7 @@ def test_get_candidate_fim_rank_categorical_discrete():
         }
     )
     strategy.set_candidates(candidates_mixed)
-    rank = strategy.get_candidate_fim_rank()
+    rank = strategy.get_candidate_rank()
     # Actual rank depends on linear independence in the transformed design matrix
     assert rank == 3
 
@@ -1003,7 +1003,7 @@ def test_get_candidate_fim_rank_categorical_discrete():
     )
     strategy_interactions = DoEStrategy(data_model_interactions)
     strategy_interactions.set_candidates(candidates_mixed)
-    rank_interactions = strategy_interactions.get_candidate_fim_rank()
+    rank_interactions = strategy_interactions.get_candidate_rank()
     # With interactions, rank is 4 (limited by number of candidates)
     assert rank_interactions == 4
 
@@ -1016,7 +1016,7 @@ def test_get_candidate_fim_rank_categorical_discrete():
         }
     )
     strategy.set_candidates(candidates_repeated)
-    rank_repeated = strategy.get_candidate_fim_rank()
+    rank_repeated = strategy.get_candidate_rank()
     assert (
         rank_repeated == 2
     )  # Only 2 unique design points: intercept + 1 independent direction
@@ -1030,7 +1030,7 @@ def test_get_candidate_fim_rank_categorical_discrete():
         }
     )
     strategy.set_candidates(candidates_single_cat)
-    rank_single = strategy.get_candidate_fim_rank()
+    rank_single = strategy.get_candidate_rank()
     # Intercept + x1 + x2 (x3 categorical doesn't vary, contributes no information)
     assert rank_single == 3
 
@@ -1061,34 +1061,27 @@ def test_get_additional_experiments_needed():
         {"x1": [0.0, 1.0], "x2": [0.0, 0.0], "x3": [0.0, 0.0]}
     )
     strategy.set_candidates(candidates_partial)
-    rank = strategy.get_candidate_fim_rank()
+    rank = strategy.get_candidate_rank()
     assert strategy.get_additional_experiments_needed() == required - rank
     assert rank < required
     additional_needed = strategy.get_additional_experiments_needed()
     assert additional_needed is not None
     assert additional_needed > 0
 
-    # Test 3: Verify DoE behavior with recommended number of experiments
-    # For a linear model, required = len(model_terms) + 3 (buffer for error estimation)
-    # But the FIM rank is limited by the model dimensionality (number of parameters)
+    # Test 3: Generate a full DoE from scratch and verify it has full rank
+    # Using the same domain and criterion as Test 1 and 2
     full_doe = strategy.ask(candidate_count=required)
 
     # Create a fresh strategy instance and set the full DoE as candidates
     strategy_fresh = DoEStrategy(data_model=data_model)
     strategy_fresh.set_candidates(full_doe)
-    rank_full_doe = strategy_fresh.get_candidate_fim_rank()
+    rank_full_doe = strategy_fresh.get_candidate_rank()
 
-    # The FIM rank equals the number of model parameters (4 for linear model with 3 inputs)
-    # This is less than 'required' which includes a +3 buffer for practical purposes
-    n_model_params = 4  # intercept + 3 linear terms
+    # A properly generated D-optimal DoE should have full rank
     assert (
-        rank_full_doe == n_model_params
-    ), f"Expected rank {n_model_params}, got {rank_full_doe}"
-
-    # Additional experiments needed should be the difference
-    assert (
-        strategy_fresh.get_additional_experiments_needed() == required - n_model_params
-    )
+        rank_full_doe == required
+    ), f"Expected DoE to have rank {required}, but got {rank_full_doe}"
+    assert strategy_fresh.get_additional_experiments_needed() == 0
 
     # Test 4: SpaceFilling criterion should return None
     data_model_sf = data_models.DoEStrategy(
