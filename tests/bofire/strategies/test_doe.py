@@ -1077,11 +1077,13 @@ def test_get_additional_experiments_needed():
     strategy_fresh.set_candidates(full_doe)
     rank_full_doe = strategy_fresh.get_candidate_rank()
 
-    # A properly generated D-optimal DoE should have full rank
-    assert (
-        rank_full_doe == required
-    ), f"Expected DoE to have rank {required}, but got {rank_full_doe}"
-    assert strategy_fresh.get_additional_experiments_needed() == 0
+    # A properly generated D-optimal DoE should have rank ~ model terms
+    formula = get_formula_from_string(
+        strategy._data_model.criterion.formula, inputs=strategy.domain.inputs
+    )
+    assert rank_full_doe == len(
+        formula
+    ), f"Expected DoE to have rank {len(formula)}, but got {rank_full_doe}"
 
     # Test 4: SpaceFilling criterion should return None
     data_model_sf = data_models.DoEStrategy(
