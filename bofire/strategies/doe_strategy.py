@@ -237,12 +237,10 @@ class DoEStrategy(Strategy):
                 "Only ModelBasedObjective supports Fisher Information Matrix rank calculation"
             )
 
-    def get_additional_experiments_needed(self, epsilon: int = 3) -> Optional[int]:
+    def get_additional_experiments_needed(self) -> Optional[int]:
         """Calculate the additional number of experiments needed beyond current candidates.
         This method computes: get_required_number_of_experiments() - get_candidate_fim_rank()
-        The epsilon buffer is only added when the difference is exactly 0 to handle numerical issues.
-        Args:
-            epsilon (int): Additional buffer experiments to add only when difference is 0. Defaults to 3.
+
         Returns:
             Optional[int]: Number of additional experiments needed, or None if required number
                           cannot be calculated (e.g., for SpaceFillingCriterion).
@@ -253,12 +251,7 @@ class DoEStrategy(Strategy):
 
         candidate_rank = self.get_candidate_fim_rank()
         difference = required_experiments - candidate_rank
-
-        # Only add epsilon buffer when difference is exactly 0
-        if difference == 0:
-            return epsilon
-        else:
-            return difference
+        return difference
 
     def has_sufficient_experiments(
         self,

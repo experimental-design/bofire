@@ -1033,3 +1033,66 @@ def test_get_candidate_fim_rank_categorical_discrete():
     rank_single = strategy.get_candidate_fim_rank()
     # Intercept + x1 + x2 (x3 categorical doesn't vary, contributes no information)
     assert rank_single == 3
+
+
+def test_get_additional_experiments_needed():
+    """Test the get_additional_experiments_needed method."""
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    # Test 1: No candidates - should return full required number
+    required = strategy.get_required_number_of_experiments()
+    assert required is not None
+    assert strategy.get_additional_experiments_needed() == required
+
+    # Test 2: Partial rank - should return the difference
+    candidates_partial = pd.DataFrame(
+        {"x1": [0.0, 1.0], "x2": [0.0, 0.0], "x3": [0.0, 0.0]}
+    )
+    strategy.set_candidates(candidates_partial)
+    rank = strategy.get_candidate_fim_rank()
+    assert strategy.get_additional_experiments_needed() == required - rank
+    assert rank < required
+    additional_needed = strategy.get_additional_experiments_needed()
+    assert additional_needed is not None
+    assert additional_needed > 0
+
+    # Test 3: Verify DoE behavior with recommended number of experiments
+    # For a linear model, required = len(model_terms) + 3 (buffer for error estimation)
+    # But the FIM rank is limited by the model dimensionality (number of parameters)
+    full_doe = strategy.ask(candidate_count=required)
+
+    # Create a fresh strategy instance and set the full DoE as candidates
+    strategy_fresh = DoEStrategy(data_model=data_model)
+    strategy_fresh.set_candidates(full_doe)
+    rank_full_doe = strategy_fresh.get_candidate_fim_rank()
+
+    # The FIM rank equals the number of model parameters (4 for linear model with 3 inputs)
+    # This is less than 'required' which includes a +3 buffer for practical purposes
+    n_model_params = 4  # intercept + 3 linear terms
+    assert (
+        rank_full_doe == n_model_params
+    ), f"Expected rank {n_model_params}, got {rank_full_doe}"
+
+    # Additional experiments needed should be the difference
+    assert (
+        strategy_fresh.get_additional_experiments_needed() == required - n_model_params
+    )
+
+    # Test 4: SpaceFilling criterion should return None
+    data_model_sf = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_sf = DoEStrategy(data_model=data_model_sf)
+    assert strategy_sf.get_additional_experiments_needed() is None
