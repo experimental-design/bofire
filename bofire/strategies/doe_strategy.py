@@ -49,6 +49,8 @@ class DoEStrategy(Strategy):
         self._return_fixed_candidates = (
             data_model.return_fixed_candidates
         )  # this defaults to False in the data model
+        # DoE optimization has larger numerical errors (~1e-4) due to SCIP solver precision
+        self._validation_tol = 1e-4
 
     def set_candidates(self, candidates: pd.DataFrame):
         original_columns = self.domain.inputs.get_keys(includes=Input)

@@ -38,6 +38,8 @@ class Strategy(ABC):
         self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
+        # Default validation tolerance - subclasses can override this
+        self._validation_tol = 1e-5
 
     @property
     def domain(self) -> Domain:
@@ -159,6 +161,7 @@ class Strategy(ABC):
         self.domain.validate_candidates(
             candidates=candidates,
             only_inputs=True,
+            tol=self._validation_tol,
             raise_validation_error=raise_validation_error,
         )
 
