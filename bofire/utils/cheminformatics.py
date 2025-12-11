@@ -123,12 +123,15 @@ def smiles2fragments(
 #     return cv.fit_transform(smiles).toarray()
 
 
-def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray:
+def smiles2mordred(
+    smiles: List[str], descriptors_list: List[str], ignore_3D: bool = False
+) -> np.ndarray:
     """Transforms list of smiles to mordred moelcular descriptors.
 
     Args:
         smiles (List[str]): List of smiles
         descriptors_list (List[str]): List of desired mordred descriptors
+        ignore_3D (bool, optional): Whether to ignore 3D descriptors. Defaults to False.
 
     Returns:
         np.ndarray: Array holding the mordred moelcular descriptors.
@@ -136,7 +139,7 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     """
     mols = [smiles2mol(smi) for smi in smiles]
 
-    calc = Calculator(descriptors, ignore_3D=False)  # type: ignore
+    calc = Calculator(descriptors, ignore_3D=ignore_3D)  # type: ignore
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
     descriptors_temp_df = calc.pandas(mols)

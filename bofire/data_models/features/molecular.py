@@ -255,7 +255,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
 
         """  # noqa: W293
         # Get unique SMILES to avoid redundant calculations
-        unique_smiles = pd.Series(self.get_allowed_categories()).drop_duplicates()
+        unique_smiles = pd.Series(self.get_allowed_categories())
 
         # Get descriptor values for all SMILES
         descriptor_values = transform_type.get_descriptor_values(unique_smiles)

@@ -122,6 +122,7 @@ class FingerprintsFragments(Fingerprints, Fragments):
 class MordredDescriptors(MolFeatures):
     type: Literal["MordredDescriptors"] = "MordredDescriptors"
     descriptors: Annotated[List[str], Field(min_length=1)]
+    ignore_3D: bool = False
 
     @field_validator("descriptors")
     @classmethod
@@ -153,7 +154,9 @@ class MordredDescriptors(MolFeatures):
 
     def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
-            data=smiles2mordred(values.to_list(), self.descriptors),
+            data=smiles2mordred(
+                values.to_list(), self.descriptors, ignore_3D=self.ignore_3D
+            ),
             columns=self.descriptors,
             index=values.index,
         )
