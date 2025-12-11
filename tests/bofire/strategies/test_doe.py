@@ -229,7 +229,10 @@ def test_categorical_discrete_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
+        scip_params={
+            "parallel/maxnthreads": 1,
+            "numerics/feastol": 1e-5,
+        },  # loosening to match validation logic in strategy.domain.validate_candidates()
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)
