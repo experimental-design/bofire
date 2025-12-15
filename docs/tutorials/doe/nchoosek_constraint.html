@@ -741,7 +741,7 @@ x_3 + x_4 \geq 0.1
 <p>Therefore one has to be very careful when imposing linear constraints upon decision variables that already show up in an NChooseK constraint.</p>
 <p>For practical reasons it necessary that two NChooseK constraints of the same problem must not share any variables.</p>
 <p>You can find an example for a problem with NChooseK constraints and additional linear constraints imposed on the same variables.</p>
-<div id="ac8b8227" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="51301a15" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -815,12 +815,12 @@ x_3 + x_4 \geq 0.1
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
 <td>0.000</td>
-<td>0.0</td>
 <td>0.7</td>
+<td>0.0</td>
 <td>0.000</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.300</td>
+<td>0.3</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
@@ -829,32 +829,32 @@ x_3 + x_4 \geq 0.1
 <td>0.0</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.499</td>
 <td>0.000</td>
-<td>0.501</td>
-<td>0.000</td>
+<td>0.497</td>
+<td>0.0</td>
+<td>0.503</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.000</td>
-<td>0.7</td>
-<td>0.0</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.300</td>
-<td>0.000</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
 <td>0.700</td>
 <td>0.0</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.200</td>
 <td>0.000</td>
+<td>0.000</td>
+<td>0.3</td>
+<td>0.000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>0.000</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.100</td>
 <td>0.000</td>
+<td>0.000</td>
+<td>0.0</td>
+<td>0.900</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
@@ -862,53 +862,53 @@ x_3 + x_4 \geq 0.1
 <td>0.0</td>
 <td>0.0</td>
 <td>0.000</td>
+<td>0.000</td>
 <td>0.900</td>
+<td>0.1</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.100</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>0.000</td>
 <td>0.0</td>
+<td>0.7</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.200</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.498</td>
-<td>0.000</td>
-<td>0.502</td>
+<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>0.000</td>
 <td>0.0</td>
 <td>0.0</td>
+<td>0.000</td>
 <td>0.900</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.100</td>
+<td>0.1</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>0.100</td>
+<td>0.000</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
 <td>0.900</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.1</td>
+<td>0.000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
 <td>0.000</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.000</td>
 <td>0.100</td>
-<td>0.900</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.9</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
@@ -916,32 +916,32 @@ x_3 + x_4 \geq 0.1
 <td>0.000</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.100</td>
 <td>0.000</td>
+<td>0.498</td>
 <td>0.000</td>
-<td>0.450</td>
-<td>0.450</td>
+<td>0.0</td>
+<td>0.502</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>0.000</td>
 <td>0.0</td>
 <td>0.0</td>
+<td>0.450</td>
+<td>0.450</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.900</td>
-<td>0.100</td>
+<td>0.1</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
-<td>0.456</td>
+<td>0.519</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.444</td>
+<td>0.381</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.000</td>
+<td>0.0</td>
 <td>0.100</td>
 </tr>
 </tbody>

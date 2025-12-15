@@ -426,7 +426,7 @@ window.Quarto = {
 
 
 
-<div id="7495f895" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.980124,&quot;end_time&quot;:&quot;2024-10-10T20:34:18.797038&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:15.816914&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="fbb1b402" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.980124,&quot;end_time&quot;:&quot;2024-10-10T20:34:18.797038&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:15.816914&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -440,11 +440,11 @@ window.Quarto = {
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> TaskInput</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates, MultiTaskGPSurrogate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="8852b173" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.262804,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.062415&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:18.799611&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="8eaacbf3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.262804,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.062415&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:18.799611&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.axes <span class="im">import</span> Axes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2b0467c2" class="cell" data-execution_count="3">
+<div id="aff505ba" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>NUM_INIT_HF <span class="op">=</span> <span class="dv">4</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>NUM_INIT_LF <span class="op">=</span> <span class="dv">10</span></span>
@@ -466,7 +466,7 @@ window.Quarto = {
 <p>We use the same problem as the transfer learning notebook; optimizing the Branin benchmark, with a low-fidelity function biased by the Ackley function (with fewer initial points, to demonstrate the strength of being able to query low fidelities). Below, we define the problem domain, and the strategies we will use to optimize.</p>
 <p>As a baseline, we use the <code>SoboStrategy</code> with the <code>MultiTaskSurrogate</code>, as in the previous notebook. We also introduce the <code>MultiFidelityStrategy</code> here, which uses the same surrogate, but is able to query the lower fidelity functions using a variance-based acquisition function [Kandasamy et al.&nbsp;2016, Folch et al.&nbsp;2023].</p>
 <p>Both strategies first select a design point <span class="math inline">\(x\)</span> by optimizing the target fidelity. The <code>MultiFidelityStrategy</code> then selects the fidelity, <span class="math inline">\(m\)</span>, by selecting the lowest fidelity that has a variance over a fixed threshold. This means that the strategy will explore the cheapest fidelities first, and only query the expensive fidelities when there is no information to be gained by the cheap approximations.</p>
-<div id="dabddb8d" class="cell" data-execution_count="4">
+<div id="e54f527e" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BraninMultiTask(Benchmark):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, low_fidelity_allowed<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
@@ -501,7 +501,7 @@ window.Quarto = {
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>mf_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>tl_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="5a480f94" class="cell" data-execution_count="5">
+<div id="53f345f6" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_data_set(seed: <span class="bu">int</span>):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># use the tl_benchmark to sample without the low fidelity</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> tl_benchmark.domain.inputs.sample(</span>
@@ -650,7 +650,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="05840eb0" class="cell" data-execution_count="6">
+<div id="c6b9eaf1" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> MultiFidelityStrategy</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -667,7 +667,7 @@ window.Quarto = {
 <pre><code>Inputs(type='Inputs', features=[ContinuousInput(type='ContinuousInput', key='x_1', unit=None, bounds=[-5.0, 10.0], local_relative_bounds=None, stepsize=None, allow_zero=False), ContinuousInput(type='ContinuousInput', key='x_2', unit=None, bounds=[0.0, 15.0], local_relative_bounds=None, stepsize=None, allow_zero=False), TaskInput(type='TaskInput', key='task', categories=['task_hf', 'task_lf'], allowed=[True, True], fidelities=[0, 1])])</code></pre>
 </div>
 </div>
-<div id="b6aa8bdb" class="cell" data-execution_count="7">
+<div id="2050e658" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -691,7 +691,7 @@ window.Quarto = {
 <section id="multi-fidelity-bayesian-optimisation" class="level1">
 <h1>Multi-fidelity Bayesian Optimisation</h1>
 <p>We first optimize only on the target fidelity (the “Transfer Learning” baseline). This uses the <code>SoboStrategy</code> defined above.</p>
-<div id="45877471" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="cfd0abff" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>tl_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
@@ -722,15 +722,15 @@ window.Quarto = {
 
 torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Please use torch.sparse_coo_tensor(indices, values, shape, dtype=, device=). (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:654.)
 
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.47s/it, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.47s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.42s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.43s/it, Regret=0.9919]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=2.7376]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.04s/it, Regret=2.7376]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.04s/it, Regret=1.5839]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.18s/it, Regret=1.5839]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.16s/it, Regret=1.5839]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.15s/it, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:04&lt;00:02,  2.15s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.16s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.16s/it, Regret=1.9016]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.0541]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.97s/it, Regret=1.0541]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.97s/it, Regret=1.0541]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.98s/it, Regret=1.0541]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.98s/it, Regret=1.0541]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=6.1438]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.05s/it, Regret=6.1438]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:02,  2.05s/it, Regret=4.6445]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.70s/it, Regret=4.6445]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.75s/it, Regret=4.6445]</code></pre>
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.78s/it, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.78s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.67s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.69s/it, Regret=0.9919]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=2.7279]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.37s/it, Regret=2.7279]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.37s/it, Regret=1.5875]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.41s/it, Regret=1.5875]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.40s/it, Regret=1.5875]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.74s/it, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.74s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.38s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.44s/it, Regret=1.9016]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=1.0645]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.67s/it, Regret=1.0645]Optimizing:  50%|█████     | 1/2 [00:05&lt;00:02,  2.67s/it, Regret=1.0645]Optimizing: 100%|██████████| 2/2 [00:05&lt;00:00,  2.66s/it, Regret=1.0645]Optimizing: 100%|██████████| 2/2 [00:05&lt;00:00,  2.67s/it, Regret=1.0645]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=6.2020]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.39s/it, Regret=6.2020]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:02,  2.39s/it, Regret=4.6506]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.87s/it, Regret=4.6506]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.95s/it, Regret=4.6506]</code></pre>
 </div>
 </div>
 <p>We now repeat the experiment using multi-fidelity BO, allowing the strategy to query the low fidelity function as well as the high fidelity function:</p>
-<div id="dc6b3d95" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="72be7bfc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mf_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
@@ -761,52 +761,52 @@ Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          |
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.28s/it, Regret=0.9919]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
+Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.37s/it, Regret=0.9919]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.28s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.72s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.65s/it, Regret=0.9919]
+Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.37s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.25s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.27s/it, Regret=0.9919]
 Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=48.0924]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.07s/it, Regret=48.0924]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
+Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=48.0924]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.34s/it, Regret=48.0924]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.07s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.08s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.08s/it, Regret=48.0924]
+Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.34s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.07s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.11s/it, Regret=48.0924]
 Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.04s/it, Regret=1.9016]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
+Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.38s/it, Regret=1.9016]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:  50%|█████     | 1/2 [00:03&lt;00:02,  2.04s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.97s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.98s/it, Regret=1.9016]
+Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.38s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.60s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.57s/it, Regret=1.9016]
 Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=23.7592]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.19s/it, Regret=23.7592]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
+Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=23.7592]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.39s/it, Regret=23.7592]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:  50%|█████     | 1/2 [00:04&lt;00:02,  2.19s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.01s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.04s/it, Regret=23.7592]
+Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.39s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.35s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.36s/it, Regret=23.7592]
 Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=21.4244]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.73s/it, Regret=21.4244]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
+Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=21.4244]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.40s/it, Regret=21.4244]/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/data_models/features/categorical.py:286: FutureWarning:
 
 Series.__getitem__ treating keys as positions is deprecated. In a future version, integer keys will always be treated as labels (consistent with DataFrame behavior). To access a value by position, use `ser.iloc[pos]`
 
-Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.73s/it, Regret=21.4244]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.53s/it, Regret=21.4244]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.56s/it, Regret=21.4244]</code></pre>
+Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.40s/it, Regret=21.4244]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.63s/it, Regret=21.4244]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.59s/it, Regret=21.4244]</code></pre>
 </div>
 </div>
 <p>When evaluating the performance, we need to consider how cheap the low-fidelity (LF) is to query. When the LF has the same cost as the target fidelity, then we gain very little from the multi-fidelity approach. However, if the LF is cheaper than the target (in the example below, 3x cheaper) then we observe an improvement in BO performance.</p>
 <p>Specifically, although both strategies have a budget of 10 function queries, the MF approach uses some of them on</p>
-<div id="41c6343f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="60fdf6db" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_regret(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    ax: Axes, bo_results: pd.DataFrame, fidelity_cost_ratio: <span class="bu">float</span>, <span class="op">**</span>plot_kwargs</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>):</span>
@@ -881,7 +881,7 @@ Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.73s/it, Regret=21
 </div>
 </div>
 <p>We can see that allowing the lower fidelities to be queries leads to stronger optimization performance. We can also see below that the MF approach only samples the target fidelity in later iterations, once the variance of the LF has been sufficiently reduced.</p>
-<div id="7f72b829" class="cell" data-execution_count="11">
+<div id="f89fa69f" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>(mf_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>)[<span class="op">-</span>num_iters:].mean(axis<span class="op">=</span><span class="dv">1</span>)  <span class="co"># type: ignore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>14    0.0
