@@ -40,3 +40,6 @@ Tanaka multi-objective test function.
 
 ### [011 - Active Learning](011-ActiveLearning.qmd)
 Active learning strategies for experimental design.
+
+### [012 - Active Learning](012-engineered_features.qmd)
+Active learning strategies for experimental design.
