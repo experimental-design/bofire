@@ -197,8 +197,6 @@ class Domain(BaseModel):
             if used_features not in used_features_list_no_dup:
                 used_features_list_no_dup.append(used_features)
 
-        # print(f"duplicates dropped: {len(used_features_list_sorted)-len(used_features_list_no_dup)}")
-
         # remove combinations not fulfilling constraints
         used_features_list_final = []
         for combo in used_features_list_no_dup:
@@ -220,8 +218,6 @@ class Domain(BaseModel):
                     fulfil_constraints.append(False)
             if np.all(fulfil_constraints):
                 used_features_list_final.append(combo)
-
-        # print(f"violators dropped: {len(used_features_list_no_dup)-len(used_features_list_final)}")
 
         # features unused
         features_in_cc = []
