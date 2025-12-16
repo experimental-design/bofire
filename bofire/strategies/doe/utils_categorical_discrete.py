@@ -415,3 +415,55 @@ def project_candidates_into_domain(
         ),
         columns=columns,
     )
+
+
+def encode_candidates_to_relaxed_domain(
+    candidates: pd.DataFrame,
+    mappings_categorical_var_key_to_aux_var_key_state_pairs: Dict[str, Dict[str, str]],
+    mapping_discrete_input_to_discrete_aux: Dict[str, List[str]],
+    domain: Domain,
+) -> pd.DataFrame:
+    """
+    Encode candidates from the original domain to the relaxed domain with proper auxiliary variable values.
+
+    For categorical inputs, creates one-hot encoding with aux_{key}_{category} naming.
+    For discrete inputs, creates auxiliary variables with values based on the discrete input value.
+    Continuous inputs are kept as-is.
+
+    Args:
+        candidates: DataFrame with candidates in original domain (e.g., x1=5, cat='A')
+        mappings_categorical_var_key_to_aux_var_key_state_pairs: Mapping from categorical keys to
+            their auxiliary variable names and category values
+        mapping_discrete_input_to_discrete_aux: Mapping from discrete input keys to their
+            auxiliary variable names
+        domain: The original (non-relaxed) domain
+
+    Returns:
+        DataFrame with candidates in relaxed domain (e.g., x1=5, aux_cat_A=1, aux_cat_B=0)
+    """
+    encoded = candidates.copy()
+
+    # Encode categorical inputs
+    for (
+        cat_key,
+        aux_mapping,
+    ) in mappings_categorical_var_key_to_aux_var_key_state_pairs.items():
+        if cat_key in encoded.columns:
+            # For each category, create a column with 1 if that category is active, 0 otherwise
+            for aux_key, category_value in aux_mapping.items():
+                encoded[aux_key] = (encoded[cat_key] == category_value).astype(float)
+
+    # Encode discrete inputs
+    for discrete_key, aux_keys in mapping_discrete_input_to_discrete_aux.items():
+        if discrete_key in encoded.columns:
+            discrete_input = domain.inputs.get_by_key(discrete_key)
+            assert isinstance(discrete_input, DiscreteInput)
+
+            # For each allowed discrete value, create an auxiliary variable
+            for aux_key, discrete_value in zip(aux_keys, discrete_input.values):
+                # Set to 1 if the discrete input equals this value, 0 otherwise
+                encoded[aux_key] = (encoded[discrete_key] == discrete_value).astype(
+                    float
+                )
+
+    return encoded

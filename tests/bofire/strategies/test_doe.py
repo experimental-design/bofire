@@ -993,8 +993,8 @@ def test_get_candidate_rank_categorical_discrete():
     )
     strategy.set_candidates(candidates_mixed)
     rank = strategy.get_candidate_rank()
-    # Actual rank depends on linear independence in the transformed design matrix
-    assert rank == 3
+    # With proper encoding, all 4 candidates are linearly independent
+    assert rank == 4
 
     # Test 3: Test with interactions formula for mixed types
     data_model_interactions = data_models.DoEStrategy(
@@ -1004,7 +1004,7 @@ def test_get_candidate_rank_categorical_discrete():
     strategy_interactions = DoEStrategy(data_model_interactions)
     strategy_interactions.set_candidates(candidates_mixed)
     rank_interactions = strategy_interactions.get_candidate_rank()
-    # With interactions, rank is 4 (limited by number of candidates)
+    # With interactions, rank is still 4 (limited by number of candidates)
     assert rank_interactions == 4
 
     # Test 4: Rank-deficient case with repeated categorical/discrete values
