@@ -650,9 +650,9 @@ def test_tensor_to_model_matrix():
 
 def test_tensor_to_model_matrix_categorical_discrete():
     """Test tensor_to_model_matrix with categorical and discrete inputs.
-    
+
     This test verifies that when using categorical/discrete inputs, the model matrix
-    is built correctly using the relaxed domain with auxiliary variables, but the 
+    is built correctly using the relaxed domain with auxiliary variables, but the
     formula is based on the original domain inputs.
     """
     # Create original domain with mixed input types
@@ -664,35 +664,35 @@ def test_tensor_to_model_matrix_categorical_discrete():
         ],
         outputs=[ContinuousOutput(key="y")],
     )
-    
+
     # Create relaxed domain with auxiliary variables
-    relaxed_domain,*_ = create_continuous_domain(domain=original_domain)
-    
+    relaxed_domain, *_ = create_continuous_domain(domain=original_domain)
+
     # Verify that relaxed domain has more inputs than original
     # Original: x1, x2, x3 (3 inputs)
     # Relaxed: x1, x2, x3_A, x3_B, x3_C, aux vars for discrete (more inputs)
     assert len(relaxed_domain.inputs) > len(original_domain.inputs)
-    
+
     # Test 1: Linear formula based on ORIGINAL domain inputs
     formula_original = get_formula_from_string("linear", inputs=original_domain.inputs)
-    
+
     # Create objective using RELAXED domain but formula from ORIGINAL inputs
     d_optimality = DOptimality(
         domain=relaxed_domain,
         formula=formula_original,
         n_experiments=2,
     )
-    
+
     # Create a relaxed design tensor (includes all auxiliary variables)
     # Order in relaxed domain: x2, x3_A, x3_B, x3_C, x1, aux_vars
     n_relaxed_inputs = len(relaxed_domain.inputs)
     D_relaxed = torch.zeros((2, n_relaxed_inputs), dtype=torch.float64)
-    
+
     # Set values for the relaxed variables
     # For simplicity, let's set:
     # Row 1: x1=0.3, x2=0.5, x3="A" (x3_A=1, x3_B=0, x3_C=0)
     # Row 2: x1=0.7, x2=1.0, x3="B" (x3_A=0, x3_B=1, x3_C=0)
-    
+
     # Find indices in relaxed domain
     relaxed_keys = relaxed_domain.inputs.get_keys()
     idx_x1 = relaxed_keys.index("x1")
@@ -700,100 +700,99 @@ def test_tensor_to_model_matrix_categorical_discrete():
     idx_aux_x3_A = relaxed_keys.index("aux_x3_A")
     idx_aux_x3_B = relaxed_keys.index("aux_x3_B")
     idx_aux_x3_C = relaxed_keys.index("aux_x3_C")
-    
+
     # Row 1: x1=0.3, x2=0.5, x3="A" (aux_x3_A=1, aux_x3_B=0, aux_x3_C=0)
     D_relaxed[0, idx_x1] = 0.3
     D_relaxed[0, idx_x2] = 0.5
     D_relaxed[0, idx_aux_x3_A] = 1.0
     D_relaxed[0, idx_aux_x3_B] = 0.0
     D_relaxed[0, idx_aux_x3_C] = 0.0
-    
+
     # Row 2: x1=0.7, x2=1.0, x3="B" (aux_x3_A=0, aux_x3_B=1, aux_x3_C=0)
     D_relaxed[1, idx_x1] = 0.7
     D_relaxed[1, idx_x2] = 1.0
     D_relaxed[1, idx_aux_x3_A] = 0.0
     D_relaxed[1, idx_aux_x3_B] = 1.0
     D_relaxed[1, idx_aux_x3_C] = 0.0
-    
+
     # Get model matrix
     X = d_optimality.tensor_to_model_matrix(D_relaxed)
-    
+
     # For linear formula with 3 original inputs (x1, x2, x3):
     # Expected terms: 1 + x1 + x2 + x3[T.B] + x3[T.C]
     # (categorical x3 with 3 levels uses 2 dummy variables)
     # So we expect 5 columns
     assert X.shape[0] == 2  # 2 experiments
     assert X.shape[1] == 5  # intercept + x1 + x2 + 2 categorical dummies
-    
+
     # Check intercept
     assert torch.allclose(X[:, 0], torch.ones(2, dtype=torch.float64))
-    
+
     # Check x1 values
     assert torch.allclose(X[:, 1], torch.tensor([0.3, 0.7], dtype=torch.float64))
-    
-    # Check x2 values  
+
+    # Check x2 values
     assert torch.allclose(X[:, 2], torch.tensor([0.5, 1.0], dtype=torch.float64))
-    
+
     # Check categorical dummies (aux_x3_A and aux_x3_B, with C as reference)
     # Row 1: x3="A" -> aux_x3_A=1, aux_x3_B=0
     # Row 2: x3="B" -> aux_x3_A=0, aux_x3_B=1
-    assert torch.allclose(X[:, 3], torch.tensor([1.0, 0.0], dtype=torch.float64))  # aux_x3_A
-    assert torch.allclose(X[:, 4], torch.tensor([0.0, 1.0], dtype=torch.float64))  # aux_x3_B
-    
+    assert torch.allclose(
+        X[:, 3], torch.tensor([1.0, 0.0], dtype=torch.float64)
+    )  # aux_x3_A
+    assert torch.allclose(
+        X[:, 4], torch.tensor([0.0, 1.0], dtype=torch.float64)
+    )  # aux_x3_B
+
     # Test 2: Linear + interactions formula
     formula_interactions = get_formula_from_string(
         "linear-and-interactions", inputs=original_domain.inputs
     )
-    
+
     d_optimality_interactions = DOptimality(
         domain=relaxed_domain,
         formula=formula_interactions,
         n_experiments=2,
     )
-    
+
     X_interactions = d_optimality_interactions.tensor_to_model_matrix(D_relaxed)
-    
+
     # With interactions, we should have more columns than the linear model
     # Base terms: 1 + x1 + x2 + aux_x3_A + aux_x3_B = 5
     # Interactions: x1:aux_x3_A, x2:aux_x3_A, x1:aux_x3_B, x2:aux_x3_B, x1:x2 = 5 more
     # Total = 10 columns
     assert X_interactions.shape[0] == 2
     assert X_interactions.shape[1] == 10
-    
+
     # Verify that the first 5 columns (base terms) match the linear model
     assert torch.allclose(X_interactions[:, :5], X)
-    
+
     # Verify the exact ordering of interaction terms (columns 5-9)
     # Row 1: x1=0.3, x2=0.5, aux_x3_A=1.0, aux_x3_B=0.0
     # Row 2: x1=0.7, x2=1.0, aux_x3_A=0.0, aux_x3_B=1.0
-    
+
     # Actual order based on formula generation:
     # Column 5: x1:aux_x3_A
     assert torch.allclose(
-        X_interactions[:, 5],
-        torch.tensor([0.3 * 1.0, 0.7 * 0.0], dtype=torch.float64)
+        X_interactions[:, 5], torch.tensor([0.3 * 1.0, 0.7 * 0.0], dtype=torch.float64)
     )
-    
+
     # Column 6: x2:aux_x3_A
     assert torch.allclose(
-        X_interactions[:, 6],
-        torch.tensor([0.5 * 1.0, 1.0 * 0.0], dtype=torch.float64)
+        X_interactions[:, 6], torch.tensor([0.5 * 1.0, 1.0 * 0.0], dtype=torch.float64)
     )
-    
+
     # Column 7: x1:aux_x3_B
     assert torch.allclose(
-        X_interactions[:, 7],
-        torch.tensor([0.3 * 0.0, 0.7 * 1.0], dtype=torch.float64)
+        X_interactions[:, 7], torch.tensor([0.3 * 0.0, 0.7 * 1.0], dtype=torch.float64)
     )
-    
+
     # Column 8: x2:aux_x3_B
     assert torch.allclose(
-        X_interactions[:, 8],
-        torch.tensor([0.5 * 0.0, 1.0 * 1.0], dtype=torch.float64)
+        X_interactions[:, 8], torch.tensor([0.5 * 0.0, 1.0 * 1.0], dtype=torch.float64)
     )
-    
+
     # Column 9: x1:x2
     assert torch.allclose(
-        X_interactions[:, 9],
-        torch.tensor([0.3 * 0.5, 0.7 * 1.0], dtype=torch.float64)
+        X_interactions[:, 9], torch.tensor([0.3 * 0.5, 0.7 * 1.0], dtype=torch.float64)
     )
