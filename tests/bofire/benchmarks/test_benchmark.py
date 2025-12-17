@@ -14,6 +14,8 @@ from bofire.benchmarks.api import (
 )
 from bofire.benchmarks.multi import ZDT1
 from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.constraints.api import LinearInequalityConstraint
+from bofire.data_models.features.api import ContinuousDescriptorInput
 from bofire.data_models.objectives.api import MinimizeObjective
 from bofire.data_models.strategies.api import RandomStrategy
 
@@ -63,6 +65,7 @@ def test_SyntheticBoTorch():
 def test_FormulationWrapper():
     benchmark = Himmelblau()
     wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2)
+    assert len(wrapped.domain.inputs.get(ContinuousDescriptorInput)) == 0
     assert len(wrapped.domain.inputs) == len(benchmark.domain.inputs) + 2
     assert_array_equal(
         wrapped._mins, np.array([benchmark.domain.inputs[0].bounds[0]] * 2)
@@ -81,10 +84,10 @@ def test_FormulationWrapper():
 
     candidates = pd.DataFrame(
         {
-            "x_1": [0.0, 0.5, 0.25],
-            "x_2": [0.0, 0.5, 0.5],
-            "x_spurious_0": [1, 0.5, 0.3],
-            "x_spurious_1": [0.2, 0.4, 0.3],
+            "x_1_0": [0.0, 0.5, 0.25],
+            "x_2_0": [0.0, 0.5, 0.5],
+            "x_filler_0": [1, 0.5, 0.3],
+            "x_filler_1": [0.2, 0.4, 0.3],
         }
     )
     transformed = wrapped._transform(candidates)
@@ -100,10 +103,62 @@ def test_FormulationWrapper():
     wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2, max_count=2)
     assert len(wrapped.domain.constraints) == 2
     nkc = wrapped.domain.constraints[1]
-    assert nkc.features == wrapped._benchmark.domain.inputs.get_keys()
+    assert nkc.features == ["x_1_0", "x_2_0"]
     assert nkc.max_count == 2
     assert nkc.min_count == 0
     assert nkc.none_also_valid is True
+
+
+def test_formulation_wrapper_latent():
+    benchmark = Himmelblau()
+    wrapped = FormulationWrapper(
+        benchmark=benchmark, n_filler_features=1, n_features_per_original_feature=3
+    )
+    assert len(wrapped.domain.inputs) == 7
+    assert_array_equal(
+        wrapped._mins, np.array([benchmark.domain.inputs[0].bounds[0]] * 2)
+    )
+    assert_array_equal(
+        wrapped._scales, np.array([benchmark.domain.inputs[0].bounds[1] * 2] * 2)
+    )
+    assert_array_equal(wrapped._scales_new, np.array([0.5, 0.5]))
+    # now we test the transform method
+
+    # Test the descriptors
+    descriptor_vals = [[1, 0], [0, 1]]
+    for i in range(2):
+        for j in range(3):
+            feat = wrapped.domain.inputs.get_by_key(f"x_{i+1}_{j}")
+            assert feat.descriptors == benchmark.domain.inputs.get_keys()
+            assert feat.values == [
+                1 if k == i else 0 for k in range(len(benchmark.domain.inputs))
+            ]
+            assert feat.values == descriptor_vals[i]
+
+    assert len(wrapped.domain.constraints) == 3
+    ineqs = wrapped.domain.constraints.get(LinearInequalityConstraint)
+    for constraint in ineqs:
+        assert len(constraint.features) == 3
+        assert constraint.rhs == 0.5
+        assert constraint.coefficients == [1.0] * 3
+
+    candidates = pd.DataFrame(
+        {
+            "x_1_0": [0.0, 0.5, 0.0],
+            "x_1_1": [0.0, 0.0, 0.25],
+            "x_1_2": [0.0, 0.0, 0.0],
+            "x_2_0": [0.0, 0.0, 0.25],
+            "x_2_1": [0.0, 0.0, 0.25],
+            "x_2_2": [0.0, 0.5, 0.0],
+            "x_filler_0": [1, 0, 0.5],
+        }
+    )
+    transformed = wrapped._transform(candidates)
+    assert transformed.shape == (3, 2)
+    assert_frame_equal(
+        transformed,
+        pd.DataFrame({"x_1": [-6.0, 6.0, 0], "x_2": [-6.0, 6.0, 6.0]}),
+    )
 
 
 def test_SpuriousFeaturesWrapper():

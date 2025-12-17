@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import ClassVar, List, Optional, Tuple, Union
+from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
 class Feature(BaseModel):
     """The base class for all features."""
 
-    type: str
+    type: Any
     key: str
     order_id: ClassVar[int] = -1
 

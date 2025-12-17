@@ -132,6 +132,7 @@ max-complexity = 19
 "bofire/data_models/strategies/api.py" = ["F401"]
 "bofire/data_models/dataframes/api.py" = ["F401"]
 "bofire/plot/api.py" = ["F401"]
+"bofire/data_models/domain/api.py" = ["F401"]
 
 [tool.pyright]
 include = ["bofire"]
