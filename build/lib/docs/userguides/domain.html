@@ -453,7 +453,7 @@ window.Quarto = {
 <p>The BoFire domain contains all information about the optimization problem. In general, the domain is defined by <strong>inputs</strong>, <strong>outputs</strong>, <strong>objectives</strong> and <strong>constraints</strong>. Different types for each of these elements are implemented in the BoFire framework. A brief description of the usage of domains and the individual elements is given in the following.</p>
 <p>A basic example of a domain consists of two continuous inputs <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span> and a continuous output <span class="math inline">\(y\)</span>. If no objective is given, a maximization objective for the output is assumed. If no constraints are defined, an empty set of constraints is assumed.</p>
 <p>A continuous input can be defined using the <code>ContinuousInput</code> class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume <span class="math inline">\(x_1, x_2 \in [0,1]\)</span>.</p>
-<div id="129d4dfb" class="cell" data-execution_count="1">
+<div id="5929a961" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Inputs</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -464,7 +464,7 @@ window.Quarto = {
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Analogously, the continuous output is defined using the <code>ContinuousOutput</code> class.</p>
-<div id="b2545ed8" class="cell" data-execution_count="2">
+<div id="8981e550" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousOutput</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Outputs</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -474,7 +474,7 @@ window.Quarto = {
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In this case, the domain definition is as follows</p>
-<div id="c38e72c0" class="cell" data-execution_count="3">
+<div id="8a4bf066" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
@@ -483,7 +483,7 @@ window.Quarto = {
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Domains can also be created more concisely using the <code>from_lists</code> method of the <code>Domain</code> class. This is especially useful if you want to define a domain without having to create separate lists for inputs and outputs. The following code achieves the same result as above:</p>
-<div id="fb1af372" class="cell" data-execution_count="4">
+<div id="10b2d374" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain.from_lists(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>[<span class="dv">0</span>,<span class="dv">1</span>]),</span>
@@ -496,7 +496,7 @@ window.Quarto = {
 </div>
 <p>There are applications of domains, where no optimization of an objective is involved (e.g.&nbsp;randomly sampling from the design space). In such cases, we do not require to provide an output definition.</p>
 <p>Let us now assume, we have an additional linear equality constraint and we want to use a custom objective, e.g.&nbsp;a minimization objective for <span class="math inline">\(y\)</span>. The linear constraint can be defined using the <code>LinearEqualityConstraint</code> class</p>
-<div id="9cd8d695" class="cell" data-execution_count="5">
+<div id="c61c8597" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> LinearEqualityConstraint</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> [LinearEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>], coefficients<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">1</span>], rhs<span class="op">=</span><span class="dv">1</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -506,13 +506,13 @@ window.Quarto = {
 x_1 + x_2 = 1.
 \]</span></p>
 <p>In BoFire, the minimization objective can be selected by setting the objective-attribute of an output to an instance of <code>MinimizeObjective</code></p>
-<div id="5d0a9b89" class="cell" data-execution_count="6">
+<div id="fecbfc66" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.objectives.api <span class="im">import</span> MinimizeObjective</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> [ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>, objective<span class="op">=</span>MinimizeObjective())]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The modified domain in this case becomes</p>
-<div id="e75cd979" class="cell" data-execution_count="7">
+<div id="79d68192" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
@@ -532,7 +532,7 @@ x_1 + x_2 = 1.
 <li><code>TaskInput</code> <!-- - `ContinuousDescriptorInput` not used atm --></li>
 </ul>
 <p>Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the <code>is_feature_implemented()</code> function of a given strategy and input class to check whether the input is supported by the strategy. For example, the following code checks whether the <code>ContinuousInput</code> is supported by the <code>RandomSearch</code> strategy. <!-- link to strategy docu shall be added once it is there --></p>
-<div id="7d339a65" class="cell" data-execution_count="8">
+<div id="e814c2ce" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> RandomStrategy</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>RandomStrategy.is_feature_implemented(ContinuousInput)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -550,7 +550,7 @@ x_1 + x_2 = 1.
 <section id="discrete-inputs" class="level4">
 <h4 class="anchored" data-anchor-id="discrete-inputs">Discrete inputs</h4>
 <p>For discrete inputs, only a finite set of values is allowed. The <code>DiscreteInput</code> class requires a list of permissible values as input. For example, the following code defines a new discrete input variable <span class="math inline">\(x_3\)</span> with values <span class="math inline">\(0, 0.1, 0.2\)</span>.</p>
-<div id="62771546" class="cell" data-execution_count="9">
+<div id="ce3883be" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> DiscreteInput</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>DiscreteInput(key<span class="op">=</span><span class="st">"x3"</span>, values<span class="op">=</span>[<span class="dv">0</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -562,7 +562,7 @@ x_1 + x_2 = 1.
 <section id="categorical-inputs" class="level4">
 <h4 class="anchored" data-anchor-id="categorical-inputs">Categorical inputs</h4>
 <p>This class of inputs is similar to the discrete inputs, but takes a list of strings as input. The following code defines a new categorical input variable <span class="math inline">\(x_4\)</span> with categories “A”, “B”, “C”.</p>
-<div id="92e8a196" class="cell" data-execution_count="10">
+<div id="173d1c87" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> CategoricalInput</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>CategoricalInput(key<span class="op">=</span><span class="st">"x4"</span>, categories<span class="op">=</span>[<span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -574,7 +574,7 @@ x_1 + x_2 = 1.
 <section id="molecular-inputs" class="level4">
 <h4 class="anchored" data-anchor-id="molecular-inputs">Molecular inputs</h4>
 <p>Molecular inputs are used to define molecular structures. This requires the optional cheminfo dependencies installed. The <code>MolecularInput</code> class operates on SMILES strings. For example, the following code defines a new molecular input variable <span class="math inline">\(x_5\)</span>.</p>
-<div id="3f5933f9" class="cell" data-execution_count="11">
+<div id="eba85e8d" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> MolecularInput</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>MolecularInput(key<span class="op">=</span><span class="st">"x5"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -589,7 +589,7 @@ x_1 + x_2 = 1.
 <h4 class="anchored" data-anchor-id="categorical-descriptor-inputs">Categorical descriptor inputs</h4>
 <p>Via the <code>CategoricalDescriptorInput</code> one can provide continuous encodings for the different categories via so called descriptors. Imagine, for example, having a categorial input with different categories, where each category corresponds to a specific material. Such descriptors could be e.g., density and hardness. Every material/category would get assigned a number for density and hardness in the hope that these two properties describe the material properly. In the context of fitting a GP, one can then use just these two dimensional vector for describing the material instead of a ten dimensional one-hot encoding, which results in a dimensionality reduction. Of course, this makes sense under the assumption that the descriptors actually correlate with the desired quantities.</p>
 <p>The <code>CategoricalDescriptorInput</code> class requires a list of permissible values as input. For example, the following code defines a new categorical descriptor input variable <span class="math inline">\(x_6\)</span> with values “A”, “B”, “C”.</p>
-<div id="eb526cb1" class="cell" data-execution_count="12">
+<div id="a5eff7e9" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> CategoricalDescriptorInput</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>CategoricalDescriptorInput(</span>
@@ -606,7 +606,7 @@ x_1 + x_2 = 1.
 <section id="categorical-molecular-inputs" class="level4">
 <h4 class="anchored" data-anchor-id="categorical-molecular-inputs">Categorical molecular inputs</h4>
 <p>Categorical molecular inputs inherit from both molecular and categorical inputs. In addition to the ‘MolecularInput’ the user can provide a list of allowed SMILES strings via the <code>categories</code> attribute. The following code defines a new categorical molecular input variable <span class="math inline">\(x_7\)</span> where only the values “C1CCCCC1”, “O1CCOCC1” are allowed.</p>
-<div id="e9e9ed4a" class="cell" data-execution_count="13">
+<div id="3dfd9d79" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> CategoricalMolecularInput</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>CategoricalMolecularInput(key<span class="op">=</span><span class="st">"x7"</span>, categories<span class="op">=</span>[<span class="st">"C1CCCCC1"</span>, <span class="st">"O1CCOCC1"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -621,7 +621,7 @@ x_1 + x_2 = 1.
 <section id="inputs-class" class="level3">
 <h3 class="anchored" data-anchor-id="inputs-class">Inputs class</h3>
 <p>The <code>Inputs</code> class is used to collect multiple input variables. It is used to define the inputs of a domain. The following code defines a new input class with the above described input variables <span class="math inline">\(x_1, x_2, x_3, x_4, x_5, x_6, x_7\)</span>.</p>
-<div id="179ee219" class="cell" data-execution_count="14">
+<div id="00957595" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.api <span class="im">import</span> Inputs</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
@@ -638,7 +638,7 @@ x_1 + x_2 = 1.
 <section id="outputs" class="level2">
 <h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
 <p>At the moment only continuous and categorical outputs are supported. Those are similar to the continuous and categorical inputs, but they additionaly contain the <code>objective</code> attribute. The <code>objective</code> attribute is used to define the optimization objective for the output variable. Similar to the inputs the outputs can be also collected in an <code>Outputs</code> object. An example with a continuous and a categorical output is given below.</p>
-<div id="2895ad0b" class="cell" data-execution_count="15">
+<div id="1e7a308f" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.api <span class="im">import</span> Outputs</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.objectives.api <span class="im">import</span> ConstrainedCategoricalObjective</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousOutput, CategoricalOutput</span>
@@ -681,7 +681,7 @@ x_1 + x_2 = 1.
 <p>Equalities can be defined using the <code>LinearEqualityConstraint</code> class. The <code>features</code> attribute is used to define the input variables, the <code>coefficients</code> attribute is used to define the coefficients of the linear equation and the <code>rhs</code> attribute is used to define the right-hand side of the equation.</p>
 <p>Inequalities can be defined using the <code>LinearInequalityConstraint</code> class. The attributes are defined in the same way as for the <code>LinearEqualityConstraint</code> class.</p>
 <p>The following code defines a new linear equality constraint <span class="math inline">\(x_1 + x_2 = 1\)</span> and an inequality constraint <span class="math inline">\(x_1 - x_3 \leq 1\)</span>.</p>
-<div id="5489f6b7" class="cell" data-execution_count="16">
+<div id="588edae5" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> LinearEqualityConstraint, LinearInequalityConstraint</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> [LinearEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>], coefficients<span class="op">=</span>[<span class="dv">1</span>,<span class="dv">1</span>], rhs<span class="op">=</span><span class="dv">1</span>),</span>
@@ -697,7 +697,7 @@ c(\mathbf{x}) = 0 \quad \text{and} \quad c(\mathbf{x}) \leq 0,
 \]</span></p>
 <p>where <span class="math inline">\(c(\mathbf{x})\)</span> can be an any differentiable function of the inputs <strong>x</strong> represented by a string attribute <code>expression</code> that can be evaluated via the <code>eval()</code> method of pandas dataframe. If <code>sympy</code> is installed, the derivate expressions are automatically calculated from the <code>expression</code> attribute. Otherwise, the user can provide additional expressions for the derivatives using the <code>jacobian_expressions</code> attribute. The <code>features</code> attrribute should contain the names of the input variables used in the <code>expression</code> attribute.</p>
 <p>The following code defines a new non-linear inequality constraint <span class="math inline">\(x1^2 + x2^2 - x3 \leq 0\)</span>.</p>
-<div id="84fc0194" class="cell" data-execution_count="17">
+<div id="f5ff5206" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> NonlinearInequalityConstraint</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>NonlinearInequalityConstraint(expression<span class="op">=</span><span class="st">"x1**2 + x2**2 - x3"</span>, features<span class="op">=</span>[<span class="st">"x1"</span>,<span class="st">"x2"</span>,<span class="st">"x3"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -709,7 +709,7 @@ c(\mathbf{x}) = 0 \quad \text{and} \quad c(\mathbf{x}) \leq 0,
 <section id="n-choose-k-constraints" class="level3">
 <h3 class="anchored" data-anchor-id="n-choose-k-constraints">N choose k constraints</h3>
 <p>Given a list of N features and attributes <code>min_count</code>, <code>max_count</code>, the <code>NChooseKConstraint</code> class is used to define constraints that require a minimum and maximum number of features to be nonzero. Note that one can put min_count==max_count. The following code defines a new <code>NChooseKConstraint</code> that requires at least 2 and at most 3 features to be selected from the list [“x1”, “x2”, “x3”, “x4”].</p>
-<div id="10894ae5" class="cell" data-execution_count="18">
+<div id="f20f06e1" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> NChooseKConstraint</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>NChooseKConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>, <span class="st">"x4"</span>], min_count<span class="op">=</span><span class="dv">2</span>, max_count<span class="op">=</span><span class="dv">3</span>, none_also_valid<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -721,7 +721,7 @@ c(\mathbf{x}) = 0 \quad \text{and} \quad c(\mathbf{x}) \leq 0,
 <section id="interpoint-constraints" class="level3">
 <h3 class="anchored" data-anchor-id="interpoint-constraints">Interpoint constraints</h3>
 <p>The <code>InterpointEqualityConstraint</code> forces that values of a certain feature of a set/batch of candidates should have the same value. The set is defined using the <code>multiplicity</code> attribute. The following code defines a new <code>InterpointEqualityConstraint</code> that forces the values of the feature “x1” to be the same for every 3 subsequent candidates.</p>
-<div id="84421f04" class="cell" data-execution_count="19">
+<div id="2579a322" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> InterpointEqualityConstraint</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>InterpointEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>], multiplicity<span class="op">=</span><span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

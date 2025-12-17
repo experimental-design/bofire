@@ -708,7 +708,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="9c499ded" class="cell" data-tags="[]" data-execution_count="1">
+<div id="c9f19606" class="cell" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -736,7 +736,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="random-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="random-strategy">Random Strategy</h2>
-<div id="a9aca02e" class="cell" data-tags="[]" data-execution_count="2">
+<div id="eefcc3c1" class="cell" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    datamodel <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>datamodel)</span>
@@ -764,7 +764,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=4573.235]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 42.12it/s, Current Best:=4573.235]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=4569.493]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 42.62it/s, Current Best:=4569.493]</code></pre>
 </div>
 </div>
 </section>
@@ -772,7 +772,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="mobo-strategy">MOBO Strategy</h2>
 <section id="without-constraints" class="level3">
 <h3 class="anchored" data-anchor-id="without-constraints">Without Constraints</h3>
-<div id="31550b1f" class="cell" data-tags="[]" data-execution_count="3">
+<div id="f755875c" class="cell" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_factory(domain: Domain):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    data_model <span class="op">=</span> MoboStrategy(domain<span class="op">=</span>domain, ref_point<span class="op">=</span>{<span class="st">"f1"</span>: <span class="dv">140</span>, <span class="st">"f2"</span>: <span class="dv">50</span>})</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategies.<span class="bu">map</span>(data_model)</span>
@@ -788,7 +788,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s, Current Best:=4566.744]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.11s/it, Current Best:=4566.744]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.11s/it, Current Best:=4566.744]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s, Current Best:=4764.819]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.53s/it, Current Best:=4764.819]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.53s/it, Current Best:=4764.819]</code></pre>
 </div>
 </div>
 </section>
@@ -796,7 +796,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="with-constraints">With Constraints</h3>
 <section id="manual-setup-of-the-domain" class="level4">
 <h4 class="anchored" data-anchor-id="manual-setup-of-the-domain">Manual Setup of the Domain</h4>
-<div id="f746151b" class="cell" data-tags="[]" data-execution_count="4">
+<div id="6a45e489" class="cell" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>Inputs(</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
@@ -825,13 +825,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>One can visualize the objectives in the following way:</p>
-<div id="fb725e18" class="cell" data-tags="[]" data-execution_count="5">
+<div id="054912c8" class="cell" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>feat <span class="op">=</span> domain.outputs.get_by_key(<span class="st">"c1"</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST:</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    plot_objective_plotly(feat, lower<span class="op">=</span><span class="dv">20</span>, upper<span class="op">=</span><span class="dv">30</span>)  <span class="co"># type: ignore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="c541c97f" class="cell" data-tags="[]" data-execution_count="6">
+<div id="8bfc81e3" class="cell" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>feat <span class="op">=</span> domain.outputs.get_by_key(<span class="st">"c2"</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST:</span>
@@ -841,7 +841,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="run-tbe-optimization" class="level4">
 <h4 class="anchored" data-anchor-id="run-tbe-optimization">Run tbe optimization</h4>
 <p>The warnings can be ignored. They are stemming just from an internal postprocessing step and will be removed soon.</p>
-<div id="5047f033" class="cell" data-tags="[]" data-execution_count="7">
+<div id="179c7722" class="cell" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>c_results <span class="op">=</span> run(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    BNH(constraints<span class="op">=</span><span class="va">True</span>),</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    strategy_factory<span class="op">=</span>strategy_factory,</span>
@@ -856,10 +856,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 overflow encountered in exp
 
-Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s, Current Best:=4631.313]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.69s/it, Current Best:=4631.313]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.69s/it, Current Best:=4631.313]</code></pre>
+Run 0:   0%|          | 0/1 [00:02&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:02&lt;?, ?it/s, Current Best:=4666.298]Run 0: 100%|██████████| 1/1 [00:02&lt;00:00,  2.84s/it, Current Best:=4666.298]Run 0: 100%|██████████| 1/1 [00:02&lt;00:00,  2.84s/it, Current Best:=4666.298]</code></pre>
 </div>
 </div>
-<div id="c81415a6" class="cell" data-tags="[]" data-execution_count="8">
+<div id="2786324e" class="cell" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST:</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    ax.plot(results[<span class="dv">0</span>][<span class="dv">1</span>], label<span class="op">=</span><span class="st">"without constraints"</span>)</span>
