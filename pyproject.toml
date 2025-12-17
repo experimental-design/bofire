@@ -51,7 +51,7 @@ entmoot = [
     "pyomo<=6.9.4",
     "entmoot>=2.0.6",
 ] # we pin the pyomo version here due to compatibility issues
-cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordred>=1.2.0"]
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
