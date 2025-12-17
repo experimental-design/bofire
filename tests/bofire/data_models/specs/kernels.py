@@ -12,6 +12,30 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
+    kernels.IndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "features": None,
+    },
+)
+
+specs.add_valid(
+    kernels.IndexKernel,
+    lambda: {
+        "num_categories": 10,
+        "rank": 3,
+        "prior": priors.valid(GammaPrior).obj().model_dump(),
+        "var_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "features": None,
+    },
+)
+
+specs.add_valid(
     kernels.HammingDistanceKernel,
     lambda: {
         "ard": True,

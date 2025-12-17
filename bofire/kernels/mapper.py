@@ -4,6 +4,7 @@ import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
+from gpytorch.kernels import IndexKernel
 from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
@@ -234,6 +235,27 @@ def map_HammingDistanceKernel(
     )
 
 
+def map_IndexKernel(
+    data_model: data_models.IndexKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> GpytorchKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return IndexKernel(
+        batch_shape=batch_shape,
+        num_tasks=data_model.num_categories,
+        rank=data_model.rank,
+        active_dims=active_dims,  # type: ignore
+        prior=(priors.map(data_model.prior) if data_model.prior is not None else None),
+        var_constraint=(
+            priors.map(data_model.var_constraint)
+            if data_model.var_constraint is not None
+            else None
+        ),
+    )
+
+
 def map_WassersteinKernel(
     data_model: data_models.WassersteinKernel,
     batch_shape: torch.Size,
@@ -337,6 +359,7 @@ KERNEL_MAP = {
     data_models.ScaleKernel: map_ScaleKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
+    data_models.IndexKernel: map_IndexKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,

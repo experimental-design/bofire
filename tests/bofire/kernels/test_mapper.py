@@ -7,6 +7,7 @@ from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.utils.constraints import (
     LogTransformedInterval as BotorchLogTransformedInterval,
 )
+from gpytorch.kernels import IndexKernel as GpytorchIndexKernel
 
 import bofire
 import bofire.kernels.aggregation as aggregationKernels
@@ -18,6 +19,7 @@ from bofire.data_models.kernels.api import (
     AdditiveKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
+    IndexKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
@@ -48,6 +50,7 @@ EQUIVALENTS = {
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
     HammingDistanceKernel: CategoricalKernel,
+    IndexKernel: GpytorchIndexKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
@@ -270,6 +273,23 @@ def test_map_HammingDistanceKernel_to_categorical_with_ard():
     assert k_mapped.lengthscale.shape == (1, 5)
 
 
+def test_map_IndexKernel():
+    k_mapped = kernels.map(
+        IndexKernel(
+            num_categories=10,
+            rank=3,
+        ),
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+
+    assert isinstance(k_mapped, GpytorchIndexKernel)
+    assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
+    assert k_mapped.covar_factor.shape[0] == 10
+    assert k_mapped.covar_factor.shape[1] == 3
+
+
 def test_map_multiple_kernels_on_feature_subsets():
     fmap = {
         "x_1": [0],
@@ -406,3 +426,45 @@ def test_map_WedgeKernel():
 
     assert isinstance(k, conditionalKernels.WedgeKernel)
     assert k.base_kernel.active_dims.tolist() == [0, 1, 2, 4]
+
+
+"""Test suite for IndexKernel validation."""
+
+
+def test_index_kernel_valid_rank():
+    """Test IndexKernel with valid rank."""
+    kernel = IndexKernel(num_categories=5, rank=3)
+    assert kernel.rank == 3
+    assert kernel.num_categories == 5
+
+
+def test_index_kernel_rank_equals_num_categories():
+    """Test IndexKernel with rank equal to num_categories."""
+    kernel = IndexKernel(num_categories=5, rank=5)
+    assert kernel.rank == 5
+
+
+def test_index_kernel_rank_greater_than_num_categories_raises_error():
+    """Test that ValueError is raised when rank > num_categories."""
+    with pytest.raises(
+        ValueError, match="rank must be less than or equal to num_categories"
+    ):
+        IndexKernel(num_categories=5, rank=6)
+
+
+def test_index_kernel_rank_one():
+    """Test IndexKernel with rank=1 (default)."""
+    kernel = IndexKernel(num_categories=10)
+    assert kernel.rank == 1
+
+
+def test_index_kernel_min_categories():
+    """Test IndexKernel with minimum categories (2)."""
+    kernel = IndexKernel(num_categories=2, rank=1)
+    assert kernel.num_categories == 2
+
+
+def test_index_kernel_invalid_num_categories_raises_error():
+    """Test that validation error is raised for num_categories < 2."""
+    with pytest.raises(Exception):  # Pydantic validation error
+        IndexKernel(num_categories=1, rank=1)
