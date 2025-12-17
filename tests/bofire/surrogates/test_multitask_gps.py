@@ -1,5 +1,6 @@
 import importlib
 
+import pandas as pd
 import pytest
 import torch
 from botorch.models import MultiTaskGP
@@ -110,7 +111,14 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     benchmark = MultiTaskHimmelblau()
     inputs = benchmark.domain.inputs
     outputs = benchmark.domain.outputs
-    experiments = benchmark.f(inputs.sample(10), return_complete=True)
+    # Sample both tasks to ensure both are present in training data
+    experiments_task1 = benchmark.f(
+        inputs.sample(5, seed=42).assign(task_id="task_1"), return_complete=True
+    )
+    experiments_task2 = benchmark.f(
+        inputs.sample(5, seed=43).assign(task_id="task_2"), return_complete=True
+    )
+    experiments = pd.concat([experiments_task1, experiments_task2], ignore_index=True)
 
     model = MultiTaskGPSurrogate(
         inputs=inputs,
