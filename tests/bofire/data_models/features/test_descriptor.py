@@ -179,7 +179,7 @@ def test_categorical_descriptor_feature_get_bounds(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(200)]),
             True,
         ),
         (
@@ -187,7 +187,7 @@ def test_categorical_descriptor_feature_get_bounds(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(200)]),
             False,
         ),
         (
@@ -217,9 +217,7 @@ def test_categorical_descriptor_feature_get_bounds(
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
-            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
-            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            pd.Series([random.choice([1, 2, 3]) for _ in range(200)]),
             False,
         ),
     ],

@@ -21,13 +21,14 @@ from torch.nn import Module
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Hartmann, Himmelblau
-from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
+    SumFeature,
 )
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
@@ -144,6 +145,55 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
+def test_SingleTaskGPModel_with_engineered_features():
+    bench = Himmelblau()
+    experiments = bench.f(bench.domain.inputs.sample(20), return_complete=True)
+
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
+        engineered_features=EngineeredFeatures(
+            features=[
+                SumFeature(key="sum", features=["x_1", "x_2"], keep_features=True)
+            ]
+        ),
+    )
+
+    surrogate = surrogates.map(surrogate_data)
+
+    with pytest.raises(KeyError, match="Feature with key 'sum123' not found."):
+        surrogate.get_feature_indices(["sum123", "x_1", "x_2"])
+
+    surrogate.engineered_features[0].keep_features = False
+    with pytest.raises(
+        NotImplementedError,
+        match="Cannot get feature indices if original features are filtered.",
+    ):
+        surrogate.get_feature_indices(["sum", "x_1", "x_2"])
+
+    surrogate.engineered_features[0].keep_features = True
+
+    assert surrogate.get_feature_indices(["sum", "x_1", "x_2"]) == [0, 1, 2]
+    assert surrogate.get_feature_indices(["sum", "x_2"]) == [1, 2]
+
+    surrogate.fit(experiments)
+    assert surrogate.model.covar_module.active_dims.tolist() == [0, 1, 2]
+
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
+        engineered_features=EngineeredFeatures(
+            features=[
+                SumFeature(key="sum", features=["x_1", "x_2"], keep_features=True)
+            ]
+        ),
+        kernel=RBFKernel(ard=True, features=["x_1", "sum"]),
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    assert surrogate.model.covar_module.active_dims.tolist() == [0, 2]
+
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
@@ -216,10 +266,10 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, Normalize)
+        assert isinstance(model.model.input_transform.scaler, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, InputStandardize)
+        assert isinstance(model.model.input_transform.scaler, InputStandardize)
     else:
         assert isinstance(model.model.input_transform, NumericToCategoricalEncoding)
     assert model.is_compatibilized is False
@@ -577,10 +627,6 @@ def test_MixedSingletaskGPModel_with_botorch():
         is True
     )
     assert torch.allclose(model.model.input_transform.indices, torch.tensor([0, 1]))
-    assert torch.allclose(
-        model.model.input_transform.bounds,
-        torch.tensor([(-4, -4), (4, 4)]).to(**tkwargs),
-    )
 
 
 @pytest.mark.parametrize(
@@ -729,20 +775,20 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
 
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, Normalize)
+        assert isinstance(model.model.input_transform.scaler, Normalize)
         assert torch.eq(
-            model.model.input_transform.tf2.indices,
+            model.model.input_transform.scaler.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-        assert isinstance(model.model.input_transform.tf1, NumericToCategoricalEncoding)
+        assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, InputStandardize)
+        assert isinstance(model.model.input_transform.scaler, InputStandardize)
         assert torch.eq(
-            model.model.input_transform.tf2.indices,
+            model.model.input_transform.scaler.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-        assert isinstance(model.model.input_transform.tf1, NumericToCategoricalEncoding)
+        assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     else:
         assert isinstance(model.model.input_transform, NumericToCategoricalEncoding)
 

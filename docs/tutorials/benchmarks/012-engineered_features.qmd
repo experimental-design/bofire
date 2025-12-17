@@ -1,0 +1,176 @@
+---
+title: Optimization with `ContinuousDescriptorInput`s and engineered Features
+jupyter: python3
+---
+
+
+Continuous descriptor inputs can be used in combination with engineered features to incorporate more domain knowledge into an optimization. Example could be a solvent of formulation optimization where per continuous input feature additional information about its properties is available.
+
+For examples in the literature have a look at this [paper](https://arxiv.org/abs/2506.07619).
+
+
+## Imports
+
+```{python}
+import pandas as pd
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+
+from bofire.data_models.features.api import ContinuousInput, ContinuousDescriptorInput, SumFeature, WeightedSumFeature, ContinuousOutput
+from bofire.data_models.domain.api import Inputs, EngineeredFeatures, Outputs, Domain, Constraints
+from bofire.benchmarks.api import Himmelblau, FormulationWrapper
+from bofire.runners.api import run
+from bofire.strategies.api import RandomStrategy, SoboStrategy
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+import bofire.surrogates.api as surrogates
+from bofire.data_models.surrogates.api import BotorchSurrogates
+from typing import Optional
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+## Problem Setup
+
+For demo purposes, the formulation wrapper is used around the two dimensional `Himmelblau` Benchmark to wrap it as a formulation problem with 7 features in total. Per original feature, three new features are introduced and one filler feature. The sum of each feature group is used as (normalized) input for the evaluation of the original `Himmelblau` function. A seventh feature is introduced as filler to always reach a total of 1 to fulfill the formulation/equality constraint. For more information on this setup have a look at the docstring of `FormulationWrapper`.
+
+```{python}
+bench = FormulationWrapper(benchmark=Himmelblau(), n_features_per_original_feature=3, n_filler_features=1)
+```
+
+The continuos descriptor features have the following descriptor values for the descriptors `x_1` and `x_2`:
+
+```{python}
+pd.concat([feat.to_df() for feat in bench.domain.inputs.get(ContinuousDescriptorInput)])
+```
+
+## Benchmarks
+
+### Random Strategy
+
+As baseline, we run the random strategy on the problem.
+
+```{python}
+def sample(domain):
+    strategy = RandomStrategy.make(domain=domain)
+    return strategy.ask(10)
+
+
+def best(domain: Domain, experiments: pd.DataFrame) -> float:
+    return experiments.y.min()
+
+random_results = []
+for _ in range(15 if not SMOKE_TEST else 1):
+    results = run(
+        benchmark=bench,
+        strategy_factory=lambda domain: RandomStrategy.make(domain=domain),
+        n_iterations=40 if not SMOKE_TEST else 2,
+        metric=best,
+        initial_sampler=sample,
+        n_runs=1,
+        n_procs=1,
+    )
+    random_results.append(results[0][0])
+```
+
+### Sobo Strategy
+
+Next we run the `SoboStrategy` on the problem.
+
+```{python}
+def sample(domain):
+    return initial_experiments[domain.inputs.get_keys()].copy()
+
+def best(domain: Domain, experiments: pd.DataFrame) -> float:
+    return experiments.y.min()
+
+sobo_results = []
+for i in range(15 if not SMOKE_TEST else 1):
+    initial_experiments = random_results[i][:10].copy()
+    results = run(
+        benchmark=bench,
+        strategy_factory=lambda domain: SoboStrategy.make(domain=domain),
+        n_iterations=40 if not SMOKE_TEST else 2,
+        metric=best,
+        initial_sampler=sample,
+        n_runs=1,
+        n_procs=1,
+    )
+    sobo_results.append(results[0][0])
+```
+
+Now we run the `SoboStrategy` again, but with an engineered feature as additional input. The `WeightedSumFeature` computes the sum over the specified descriptors weighted by the values of the involved original features.
+
+```{python}
+def create_strategy(domain):
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=domain.inputs,
+        outputs=domain.outputs,
+        engineered_features=EngineeredFeatures(
+            features=[
+                WeightedSumFeature(
+                    key="WeightedSum",
+                    features=bench.domain.inputs.get_keys(ContinuousDescriptorInput),
+                    descriptors=["x_1", "x_2"]
+                    )]),
+        #kernel=RBFKernel(features=["x_1", "x_2"], lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR())
+    )
+    return SoboStrategy.make(domain=domain, surrogate_specs=BotorchSurrogates(surrogates=[surrogate_data]))
+
+sobo_engineered_results_all = []
+for i in range(15 if not SMOKE_TEST else 1):
+    initial_experiments = random_results[i][:10].copy()
+    results = run(
+        benchmark=bench,
+        strategy_factory=create_strategy,
+        n_iterations=40,
+        metric=best,
+        initial_sampler=sample,
+        n_runs=1,
+        n_procs=1,
+    )
+    sobo_engineered_results_all.append(results[0][0])
+```
+
+### Plot the performance
+
+Next we plot the performance. Using the engineered features shows a clear benefit. Using a SAAS model on it would lead to even better results, as only two features are needed and SAAS models are very good in figuring out the features of interest.
+
+```{python}
+def get_padded_trajectories(dfs: list[pd.DataFrame]) -> np.ndarray:
+    trajectories = []
+    for df in dfs:
+        y_values = [df.y[:10].max()] + df.y[10:].tolist()
+        cummin = np.minimum.accumulate(np.log10(y_values))
+        trajectories.append(np.array(cummin))
+    max_len = max(len(t) for t in trajectories)
+    return [np.pad(traj, (0, max_len-len(traj)), mode='edge') for traj in trajectories]
+
+fig, ax = plt.subplots()
+
+random_trajectories = get_padded_trajectories(random_results)
+std_random = np.std(random_trajectories, axis=0)
+mean_random = np.mean(random_trajectories, axis=0)
+sem_random = std_random / np.sqrt(len(random_trajectories))
+ax.plot(mean_random, label='Random', color='blue')
+ax.fill_between(range(len(mean_random)), mean_random - sem_random, mean_random + sem_random, color='blue', alpha=0.2)
+
+
+sobo_trajectories = get_padded_trajectories(sobo_results)
+std_sobo = np.std(sobo_trajectories, axis=0)
+mean_sobo = np.mean(sobo_trajectories, axis=0)
+sem_sobo = std_sobo / np.sqrt(len(sobo_trajectories))
+ax.plot(mean_sobo, label='SOBO', color='green')
+ax.fill_between(range(len(mean_sobo)), mean_sobo - sem_sobo, mean_sobo + sem_sobo, color='green', alpha=0.2)
+
+sobo_engineered_trajectories = get_padded_trajectories(sobo_engineered_results_all)
+std_sobo_engineered = np.std(sobo_engineered_trajectories, axis=0)
+mean_sobo_engineered = np.mean(sobo_engineered_trajectories, axis=0)
+sem_sobo_engineered = std_sobo_engineered / np.sqrt(len(sobo_engineered_trajectories))
+ax.plot(mean_sobo_engineered, label='SOBO Engineered', color='red')
+ax.fill_between(range(len(mean_sobo_engineered)), mean_sobo_engineered - sem_sobo_engineered, mean_sobo_engineered + sem_sobo_engineered, color='red', alpha=0.2)
+
+ax.set_title('Optimization Performance')
+ax.legend()
+plt.show()
+```

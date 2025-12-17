@@ -102,6 +102,14 @@ def test_inputs_should_be_serializable(inputs_spec: Spec):
     assert obj.model_dump() == spec
 
 
+def test_engineered_features_should_be_serializable(
+    engineered_features_spec: Spec,
+):
+    spec = engineered_features_spec.typed_spec()
+    obj = engineered_features_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
 def test_outputs_should_be_serializable(outputs_spec: Spec):
     spec = outputs_spec.typed_spec()
     obj = outputs_spec.cls(**spec)

@@ -84,7 +84,7 @@ def get_proposals(domain, n: int = 10) -> pd.DataFrame:
     strategy = strategies.map(strategy)
     strategy.tell(experiments)
     t0 = time()
-    proposals = strategy.ask(n)
+    proposals = strategy.ask(n, raise_validation_error=False)
     print(f"Generated {len(proposals)} experiments, Time taken: {time() - t0:.2f}s")
     return proposals
 ```

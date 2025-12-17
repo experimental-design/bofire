@@ -219,17 +219,15 @@ website:
             - docs/tutorials/benchmarks/index.qmd
             - docs/tutorials/benchmarks/001-Himmelblau.qmd
             - docs/tutorials/benchmarks/002-DTLZ2.qmd
-            - docs/tutorials/benchmarks/004-Aspen_benchmark.qmd
-            - docs/tutorials/benchmarks/005-Hartmann_with_nchoosek.qmd
-            - docs/tutorials/benchmarks/006-30dimBranin.qmd
-            - docs/tutorials/benchmarks/007-Benchmark_outlier_detection.qmd
-            - docs/tutorials/benchmarks/008-Himmelblau_with_outliers.qmd
-            - docs/tutorials/benchmarks/009-Bayesian_optimization_over_molecules.qmd
-            - docs/tutorials/benchmarks/010-LSRBO.qmd
-            - docs/tutorials/benchmarks/011-ZDT1.qmd
-            - docs/tutorials/benchmarks/012-BNH.qmd
-            - docs/tutorials/benchmarks/013-TNK.qmd
-            - docs/tutorials/benchmarks/014-ActiveLearning.qmd
+            - docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.qmd
+            - docs/tutorials/benchmarks/004-30dimBranin.qmd
+            - docs/tutorials/benchmarks/005-Himmelblau_with_outliers.qmd
+            - docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.qmd
+            - docs/tutorials/benchmarks/007-LSRBO.qmd
+            - docs/tutorials/benchmarks/008-ZDT1.qmd
+            - docs/tutorials/benchmarks/009-BNH.qmd
+            - docs/tutorials/benchmarks/010-TNK.qmd
+            - docs/tutorials/benchmarks/011-ActiveLearning.qmd
         - section: "Design of Experiments"
           contents:
             - docs/tutorials/doe/index.qmd
