@@ -19,6 +19,7 @@ from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
     IndexKernel,
     MaternKernel,
+    PositiveIndexKernel,
     RBFKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints
@@ -240,7 +241,9 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
                             f"The feature '{feature_key}' is categorical and must be mapped to a categorical kernel."
                         )
                     # if the kernel is IndexKernel then check if num_categories matches
-                    if isinstance(kernel, IndexKernel):
+                    if isinstance(kernel, IndexKernel) or isinstance(
+                        kernel, PositiveIndexKernel
+                    ):
                         num_categories = len(
                             self.inputs.get_by_key(feature_key).categories
                         )

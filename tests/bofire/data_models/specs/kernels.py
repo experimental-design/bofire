@@ -12,6 +12,40 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": False,
+        "target_task_index": 0,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
+)
+
+specs.add_valid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 10,
+        "rank": 3,
+        "prior": priors.valid(GammaPrior).obj().model_dump(),
+        "var_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "task_prior": priors.valid(LogNormalPrior).obj().model_dump(),
+        "diag_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "normalize_covar_matrix": True,
+        "target_task_index": 0,
+        "unit_scale_for_target": False,
+        "features": None,
+    },
+)
+
+specs.add_valid(
     kernels.IndexKernel,
     lambda: {
         "num_categories": 5,

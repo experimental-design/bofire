@@ -1,7 +1,11 @@
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
-from bofire.data_models.kernels.categorical import HammingDistanceKernel, IndexKernel
+from bofire.data_models.kernels.categorical import (
+    HammingDistanceKernel,
+    IndexKernel,
+    PositiveIndexKernel,
+)
 from bofire.data_models.kernels.continuous import (
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -41,6 +45,7 @@ class MultiplicativeKernel(AggregationKernel):
             LinearKernel,
             HammingDistanceKernel,
             IndexKernel,
+            PositiveIndexKernel,
             AdditiveKernel,
             TanimotoKernel,
             "MultiplicativeKernel",
@@ -57,6 +62,7 @@ class ScaleKernel(AggregationKernel):
         LinearKernel,
         HammingDistanceKernel,
         IndexKernel,
+        PositiveIndexKernel,
         AdditiveKernel,
         MultiplicativeKernel,
         TanimotoKernel,

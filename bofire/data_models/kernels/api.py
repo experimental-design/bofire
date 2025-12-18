@@ -10,6 +10,7 @@ from bofire.data_models.kernels.categorical import (
     CategoricalKernel,
     HammingDistanceKernel,
     IndexKernel,
+    PositiveIndexKernel,
 )
 from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
@@ -49,6 +50,7 @@ AnyContinuousKernel = Union[
 AnyCategoricalKernel = Union[
     HammingDistanceKernel,
     IndexKernel,
+    PositiveIndexKernel,
 ]
 
 AnyMolecularKernel = TanimotoKernel
@@ -60,6 +62,7 @@ AnyKernel = Union[
     ScaleKernel,
     HammingDistanceKernel,
     IndexKernel,
+    PositiveIndexKernel,
     LinearKernel,
     PolynomialKernel,
     MaternKernel,

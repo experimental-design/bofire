@@ -15,6 +15,7 @@ from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
     IndexKernel,
     MaternKernel,
+    PositiveIndexKernel,
     RBFKernel,
 )
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate
@@ -258,7 +259,7 @@ def test_kernel_dict_multiple_continuous_features():
             "x1": RBFKernel(ard=True),
             "x2": MaternKernel(ard=True, nu=2.5),
             "x3": MaternKernel(ard=True, nu=1.5),
-            "cat1": HammingDistanceKernel(ard=True),
+            "cat1": PositiveIndexKernel(num_categories=2, rank=1),
         },
     )
     assert len(surrogate.kernel_dict) == 4

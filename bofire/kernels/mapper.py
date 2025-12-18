@@ -4,6 +4,7 @@ import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
+from botorch.models.kernels.positive_index import PositiveIndexKernel
 from gpytorch.kernels import IndexKernel
 from gpytorch.kernels import Kernel as GpytorchKernel
 
@@ -256,6 +257,39 @@ def map_IndexKernel(
     )
 
 
+def map_PositiveIndexKernel(
+    data_model: data_models.PositiveIndexKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> GpytorchKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return PositiveIndexKernel(
+        batch_shape=batch_shape,
+        num_tasks=data_model.num_categories,
+        rank=data_model.rank,
+        active_dims=active_dims,  # type: ignore
+        task_prior=(
+            priors.map(data_model.task_prior)
+            if data_model.task_prior is not None
+            else None
+        ),
+        diag_prior=(
+            priors.map(data_model.diag_prior)
+            if data_model.diag_prior is not None
+            else None
+        ),
+        normalize_covar_matrix=data_model.normalize_covar_matrix,
+        var_constraint=(
+            priors.map(data_model.var_constraint)
+            if data_model.var_constraint is not None
+            else None
+        ),
+        target_task_index=data_model.target_task_index,
+        unit_scale_for_target=data_model.unit_scale_for_target,
+    )
+
+
 def map_WassersteinKernel(
     data_model: data_models.WassersteinKernel,
     batch_shape: torch.Size,
@@ -360,6 +394,7 @@ KERNEL_MAP = {
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
     data_models.IndexKernel: map_IndexKernel,
+    data_models.PositiveIndexKernel: map_PositiveIndexKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,

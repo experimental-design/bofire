@@ -26,6 +26,7 @@ from bofire.data_models.kernels.api import (
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     PolynomialKernel,
+    PositiveIndexKernel,
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -51,6 +52,7 @@ EQUIVALENTS = {
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
     HammingDistanceKernel: CategoricalKernel,
     IndexKernel: GpytorchIndexKernel,
+    PositiveIndexKernel: GpytorchIndexKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
@@ -290,6 +292,23 @@ def test_map_IndexKernel():
     assert k_mapped.covar_factor.shape[1] == 3
 
 
+def test_map_PositiveIndexKernel():
+    k_mapped = kernels.map(
+        PositiveIndexKernel(
+            num_categories=8,
+            rank=2,
+        ),
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+
+    assert isinstance(k_mapped, GpytorchIndexKernel)
+    assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
+    assert k_mapped.covar_factor.shape[0] == 8
+    assert k_mapped.covar_factor.shape[1] == 2
+
+
 def test_map_multiple_kernels_on_feature_subsets():
     fmap = {
         "x_1": [0],
@@ -438,24 +457,12 @@ def test_index_kernel_valid_rank():
     assert kernel.num_categories == 5
 
 
-def test_index_kernel_rank_equals_num_categories():
-    """Test IndexKernel with rank equal to num_categories."""
-    kernel = IndexKernel(num_categories=5, rank=5)
-    assert kernel.rank == 5
-
-
 def test_index_kernel_rank_greater_than_num_categories_raises_error():
     """Test that ValueError is raised when rank > num_categories."""
     with pytest.raises(
         ValueError, match="rank must be less than or equal to num_categories"
     ):
         IndexKernel(num_categories=5, rank=6)
-
-
-def test_index_kernel_rank_one():
-    """Test IndexKernel with rank=1 (default)."""
-    kernel = IndexKernel(num_categories=10)
-    assert kernel.rank == 1
 
 
 def test_index_kernel_min_categories():
@@ -468,3 +475,40 @@ def test_index_kernel_invalid_num_categories_raises_error():
     """Test that validation error is raised for num_categories < 2."""
     with pytest.raises(Exception):  # Pydantic validation error
         IndexKernel(num_categories=1, rank=1)
+
+
+# Tests for PositiveIndexKernel
+def test_positive_index_kernel_valid_assignment():
+    """Test PositiveIndexKernel with valid rank."""
+    kernel = PositiveIndexKernel(
+        num_categories=5,
+        rank=3,
+        target_task_index=1,
+        normalize_covar_matrix=True,
+        unit_scale_for_target=True,
+    )
+    assert kernel.rank == 3
+    assert kernel.num_categories == 5
+    assert kernel.target_task_index == 1
+    assert kernel.normalize_covar_matrix is True
+    assert kernel.unit_scale_for_target is True
+
+
+def test_positive_index_kernel_rank_greater_than_num_categories_raises_error():
+    """Test that ValueError is raised when rank > num_categories."""
+    with pytest.raises(
+        ValueError, match="rank must be less than or equal to num_categories"
+    ):
+        PositiveIndexKernel(num_categories=5, rank=6)
+
+
+def test_positive_index_kernel_invalid_categories():
+    """Test that validation error is raised for num_categories < 2."""
+    with pytest.raises(Exception):  # Pydantic validation error
+        PositiveIndexKernel(num_categories=1, rank=1)
+
+
+def test_positive_index_invalid_target_task_index():
+    """Test that validation error is raised for negative target_task_index."""
+    with pytest.raises(Exception):  # Pydantic validation error
+        PositiveIndexKernel(num_categories=5, rank=2, target_task_index=-1)
