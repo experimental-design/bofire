@@ -245,7 +245,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
                         kernel, PositiveIndexKernel
                     ):
                         num_categories = len(
-                            self.inputs.get_by_key(feature_key).categories
+                            self.inputs.get_by_key(feature_key).categories  # type: ignore
                         )
                         if kernel.num_categories != num_categories:
                             raise ValueError(
