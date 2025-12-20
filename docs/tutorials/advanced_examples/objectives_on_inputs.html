@@ -707,7 +707,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This notebook demonstrates how to put objectives on input features or a combination of input features. Possible usecases are favoring lower or higher amounts of an ingredient or to take into account a known (linear) cost function. In case of categorical inputs it can be used to penalize the optimizer for choosing specific categories.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="1681dbc4" class="cell" data-execution_count="1">
+<div id="9f280a03" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -729,7 +729,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-an-example" class="level2">
 <h2 class="anchored" data-anchor-id="setup-an-example">Setup an Example</h2>
 <p>We use Himmelblau as example with an additional objective on <code>x_2</code> which pushes it to be larger 3 during the optimization. In addition, we introduce a categorical feature called <code>x_cat</code> which is mapped by an <code>CategoricalDeterministicSurrogate</code> to a continuous output called <code>y_cat</code>.</p>
-<div id="7e4c16d7" class="cell" data-execution_count="2">
+<div id="12fba2d0" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bench <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> bench.f(bench.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -752,7 +752,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>experiments[<span class="st">"x_cat"</span>] <span class="op">=</span> np.random.choice([<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>], size<span class="op">=</span>experiments.shape[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The <code>LinearDeterministicSurrogate</code> can be used to model that <code>y_x2 = x_2</code>.</p>
-<div id="7e2c1413" class="cell" data-execution_count="3">
+<div id="f9cafbaf" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> LinearDeterministicSurrogate(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domain.inputs.get_by_keys([<span class="st">"x_2"</span>]),</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>domain.outputs.get_by_keys([<span class="st">"y_x2"</span>]),</span>
@@ -776,52 +776,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.695489</td>
+<td>0.777684</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>4.764572</td>
+<td>-5.264267</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>4.411169</td>
+<td>-3.892196</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>2.306213</td>
+<td>1.079292</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>-1.791217</td>
+<td>1.997584</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>0.026270</td>
+<td>-0.408902</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>-2.714499</td>
+<td>-2.133831</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>3.803608</td>
+<td>5.104313</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>-5.427121</td>
+<td>-0.712582</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>2.826261</td>
+<td>-0.791119</td>
 <td>0.0</td>
 </tr>
 </tbody>
@@ -831,7 +831,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The <code>CategoricalDeterministicSurrogate</code> can be used to map categories to specific continuous values.</p>
-<div id="e97f9765" class="cell" data-execution_count="4">
+<div id="d4c9b2b5" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>categorical_surrogate_data <span class="op">=</span> CategoricalDeterministicSurrogate(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domain.inputs.get_by_keys([<span class="st">"x_cat"</span>]),</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>domain.outputs.get_by_keys([<span class="st">"y_cat"</span>]),</span>
@@ -867,103 +867,103 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>5.811694</td>
-<td>0.695489</td>
-<td>551.397434</td>
+<td>3.207353</td>
+<td>0.777684</td>
+<td>10.166615</td>
 <td>1</td>
-<td>0.695489</td>
-<td>c</td>
-<td>0.3</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
-<td>-0.952167</td>
-<td>4.764572</td>
-<td>245.928482</td>
-<td>1</td>
-<td>4.764572</td>
+<td>0.777684</td>
 <td>a</td>
 <td>1.0</td>
 </tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>-4.662027</td>
-<td>4.411169</td>
-<td>290.174801</td>
-<td>1</td>
-<td>4.411169</td>
-<td>b</td>
-<td>0.2</td>
-</tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>-1.164741</td>
-<td>2.306213</td>
-<td>61.934398</td>
+<th data-quarto-table-cell-role="th">1</th>
+<td>2.413806</td>
+<td>-5.264267</td>
+<td>643.774280</td>
 <td>1</td>
-<td>2.306213</td>
+<td>-5.264267</td>
 <td>c</td>
 <td>0.3</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>-4.993514</td>
-<td>-1.791217</td>
-<td>224.653164</td>
+<th data-quarto-table-cell-role="th">2</th>
+<td>3.200035</td>
+<td>-3.892196</td>
+<td>150.445731</td>
 <td>1</td>
-<td>-1.791217</td>
+<td>-3.892196</td>
+<td>a</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>-2.833312</td>
+<td>1.079292</td>
+<td>78.725514</td>
+<td>1</td>
+<td>1.079292</td>
+<td>b</td>
+<td>0.2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>1.527391</td>
+<td>1.997584</td>
+<td>46.679243</td>
+<td>1</td>
+<td>1.997584</td>
 <td>a</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>-2.404478</td>
-<td>0.026270</td>
-<td>115.390327</td>
+<td>2.965306</td>
+<td>-0.408902</td>
+<td>21.800229</td>
 <td>1</td>
-<td>0.026270</td>
+<td>-0.408902</td>
+<td>c</td>
+<td>0.3</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>2.996105</td>
+<td>-2.133831</td>
+<td>17.583945</td>
+<td>1</td>
+<td>-2.133831</td>
+<td>a</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>3.857990</td>
+<td>5.104313</td>
+<td>605.751211</td>
+<td>1</td>
+<td>5.104313</td>
 <td>a</td>
 <td>1.0</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>-5.465350</td>
-<td>-2.714499</td>
-<td>286.979571</td>
+<th data-quarto-table-cell-role="th">8</th>
+<td>-1.058725</td>
+<td>-0.712582</td>
+<td>169.200627</td>
 <td>1</td>
-<td>-2.714499</td>
+<td>-0.712582</td>
 <td>b</td>
 <td>0.2</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>2.311281</td>
-<td>3.803608</td>
-<td>99.062010</td>
-<td>1</td>
-<td>3.803608</td>
-<td>c</td>
-<td>0.3</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>-5.218332</td>
-<td>-5.427121</td>
-<td>413.779531</td>
-<td>1</td>
-<td>-5.427121</td>
-<td>c</td>
-<td>0.3</td>
-</tr>
-<tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>5.309411</td>
-<td>2.826261</td>
-<td>440.298589</td>
+<td>-0.981539</td>
+<td>-0.791119</td>
+<td>171.344976</td>
 <td>1</td>
-<td>2.826261</td>
-<td>c</td>
-<td>0.3</td>
+<td>-0.791119</td>
+<td>b</td>
+<td>0.2</td>
 </tr>
 </tbody>
 </table>
@@ -972,7 +972,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Next we setup a <code>SoboStrategy</code> using the custom surrogates for outputs <code>y_x2</code> and <code>y_cat</code> and ask for a candidate. Note that the surrogate specs for output <code>y</code> is automatically generated and defaulted to be a <code>SingleTaskGPSurrogate</code>.</p>
-<div id="3092e8e4" class="cell" data-execution_count="5">
+<div id="fb243b96" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> MultiplicativeSoboStrategy(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>BotorchSurrogates(</span>
@@ -1007,62 +1007,62 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.911166</td>
-<td>3.052294</td>
+<td>-5.487722</td>
+<td>3.350382</td>
 <td>a</td>
-<td>39.301660</td>
+<td>160.302549</td>
 <td>1.0</td>
-<td>3.052294</td>
-<td>37.607068</td>
+<td>3.350382</td>
+<td>223.267039</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-39.301660</td>
-<td>0.627834</td>
+<td>-160.302549</td>
+<td>0.970796</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>3.130724</td>
-<td>6.000000</td>
-<td>a</td>
-<td>208.225384</td>
-<td>1.0</td>
-<td>6.000000</td>
-<td>98.177388</td>
+<td>-1.906095</td>
+<td>3.259792</td>
+<td>c</td>
+<td>131.510929</td>
+<td>0.3</td>
+<td>3.259792</td>
+<td>198.720149</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-208.225384</td>
-<td>1.000000</td>
-<td>1.0</td>
+<td>-131.510929</td>
+<td>0.930728</td>
+<td>0.3</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>4.072583</td>
-<td>6.000000</td>
+<td>-3.244571</td>
+<td>3.260790</td>
 <td>a</td>
-<td>248.867932</td>
+<td>113.772450</td>
 <td>1.0</td>
-<td>6.000000</td>
-<td>108.042585</td>
+<td>3.260790</td>
+<td>172.523627</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-248.867932</td>
-<td>1.000000</td>
+<td>-113.772450</td>
+<td>0.931369</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>0.924431</td>
-<td>2.852127</td>
+<td>-6.000000</td>
+<td>6.000000</td>
 <td>a</td>
-<td>33.512857</td>
+<td>343.398044</td>
 <td>1.0</td>
-<td>2.852127</td>
-<td>41.343417</td>
+<td>6.000000</td>
+<td>276.267469</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-33.512857</td>
-<td>0.185620</td>
+<td>-343.398044</td>
+<td>1.000000</td>
 <td>1.0</td>
 </tr>
 </tbody>
