@@ -4,7 +4,12 @@ from pydantic import field_validator
 
 from bofire.data_models.constraints.condition import Condition
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
-from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
+from bofire.data_models.kernels.continuous import (
+    LinearKernel,
+    MaternKernel,
+    RBFKernel,
+    SphericalLinearKernel,
+)
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
@@ -38,6 +43,7 @@ class ConditionalEmbeddingKernel(Kernel):
 
     base_kernel: Union[
         RBFKernel,
+        SphericalLinearKernel,
         MaternKernel,
         LinearKernel,
         HammingDistanceKernel,

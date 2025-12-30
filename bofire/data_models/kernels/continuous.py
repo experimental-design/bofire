@@ -1,9 +1,14 @@
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
-from pydantic import PositiveInt, field_validator
+from pydantic import Field, PositiveInt, field_validator, model_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior, AnyPriorConstraint
+from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    AnyGeneralPrior,
+    AnyPrior,
+    AnyPriorConstraint,
+)
 
 
 class ContinuousKernel(FeatureSpecificKernel):
@@ -46,3 +51,21 @@ class InfiniteWidthBNNKernel(ContinuousKernel):
     features: Optional[List[str]] = None
     type: Literal["InfiniteWidthBNNKernel"] = "InfiniteWidthBNNKernel"
     depth: PositiveInt = 3
+
+
+class SphericalLinearKernel(ContinuousKernel):
+    type: Literal["SphericalLinearKernel"] = "SphericalLinearKernel"
+    ard: bool = True
+    lengthscale_prior: Optional[AnyPrior] = Field(
+        default_factory=HVARFNER_LENGTHSCALE_PRIOR
+    )
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None
+    bounds: Union[tuple[float, float], List[tuple[float, float]]] = (0.0, 1.0)
+
+    @model_validator(mode="after")
+    def validate_ard_bounds(self):
+        if not self.ard and not isinstance(self.bounds, list):
+            raise ValueError(
+                "Cannot determine number of dimensions. If ard=False then list of bounds should have length equal to the input dimension."
+            )
+        return self

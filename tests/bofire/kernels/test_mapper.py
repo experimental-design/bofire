@@ -26,6 +26,7 @@ from bofire.data_models.kernels.api import (
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
     WassersteinKernel,
     WedgeKernel,
@@ -52,6 +53,7 @@ EQUIVALENTS = {
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
     WedgeKernel: conditionalKernels.WedgeKernel,
+    SphericalLinearKernel: bofire.kernels.spherical_kernels.SphericalLinearKernel,
 }
 
 
@@ -406,3 +408,26 @@ def test_map_WedgeKernel():
 
     assert isinstance(k, conditionalKernels.WedgeKernel)
     assert k.base_kernel.active_dims.tolist() == [0, 1, 2, 4]
+
+
+def test_map_spherical_linear_kernel():
+    kernel = SphericalLinearKernel(ard=True)
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+    assert isinstance(k, EQUIVALENTS[kernel.__class__])
+    assert k.ard_num_dims == 5
+    # Test lengthscale prior if configured
+    kernel_with_prior = SphericalLinearKernel(
+        ard=True, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)
+    )
+    k_with_prior = kernels.map(
+        kernel_with_prior,
+        batch_shape=torch.Size(),
+        active_dims=list(range(3)),
+        features_to_idx_mapper=None,
+    )
+    assert hasattr(k_with_prior, "lengthscale_prior")
