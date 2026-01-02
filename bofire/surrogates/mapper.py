@@ -28,6 +28,7 @@ def map_MixedSingleTaskGPSurrogate(
     if (
         data_model.continuous_kernel.features is None
         or len(data_model.continuous_kernel.features) == 0
+        and data_model.kernel_dict is None
     ):
         # model is purely categorical
         kernel = ScaleKernel(base_kernel=data_model.categorical_kernel)
