@@ -377,6 +377,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
         seed: Optional[int] = None,
+        sampler_kwargs: Optional[Dict] = None,
     ) -> pd.DataFrame:
         """Draw sobol samples
 
@@ -387,6 +388,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 methods are `UNIFORM`, `SOBOL` and `LHS`. Defaults to `UNIFORM`.
             reference_value
             seed (int, optional): random seed. Defaults to None.
+            sampler_kwargs (Dict, optional): Additional arguments for the sampler. Defaults to None.
 
         Returns:
             pd.DataFrame: Dataframe containing the samples.
@@ -394,6 +396,9 @@ class Inputs(_BaseFeatures[AnyInput]):
         """
         if len(self) == 0:
             return pd.DataFrame()
+
+        if sampler_kwargs is None:
+            sampler_kwargs = {}
 
         if method == SamplingMethodEnum.UNIFORM:
             # we cannot just propagate the provided seed to the sample methods
@@ -414,9 +419,11 @@ class Inputs(_BaseFeatures[AnyInput]):
         if method == SamplingMethodEnum.SOBOL:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                X = Sobol(len(free_features), seed=seed).random(n)
+                X = Sobol(len(free_features), seed=seed, **sampler_kwargs).random(n)
         else:
-            X = LatinHypercube(len(free_features), seed=seed).random(n)
+            X = LatinHypercube(len(free_features), seed=seed, **sampler_kwargs).random(
+                n
+            )
 
         res = []
         for i, feat in enumerate(free_features):

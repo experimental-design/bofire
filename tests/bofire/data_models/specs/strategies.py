@@ -1,5 +1,8 @@
+import pytest
+
 import bofire.data_models.strategies.api as strategies
 import bofire.data_models.strategies.predictives.acqf_optimization
+import bofire.strategies.api as actual_strategies
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
@@ -35,6 +38,7 @@ from bofire.data_models.strategies.api import (
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
 )
+from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -268,6 +272,7 @@ specs.add_valid(
         "kappa_fantasy": 10.0,
     },
 )
+
 specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
@@ -278,8 +283,30 @@ specs.add_valid(
         "n_burnin": 1000,
         "n_thinning": 32,
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
+        "sampler_kwargs": {},
     },
 )
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampling_method": SamplingMethodEnum.SOBOL,
+        "sampler_kwargs": {"scramble": True},
+    },
+)
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampling_method": SamplingMethodEnum.LHS,
+        "sampler_kwargs": {"scramble": True, "strength": 2},
+    },
+)
+
 for criterion in [
     strategies.AOptimalityCriterion,
     strategies.DOptimalityCriterion,
@@ -981,3 +1008,37 @@ specs.add_invalid(
     error=ValueError,
     message="Only one task can be the target fidelity",
 )
+
+
+@pytest.mark.parametrize(
+    "method,kwargs,n_samples",
+    [
+        (SamplingMethodEnum.SOBOL, {"scramble": True}, 10),
+        (SamplingMethodEnum.SOBOL, {"scramble": False}, 10),
+        (SamplingMethodEnum.LHS, {"scramble": True, "strength": 1}, 10),
+        (
+            SamplingMethodEnum.LHS,
+            {"strength": 2},
+            9,
+        ),  # strength=2 requires n to be square of prime
+        (SamplingMethodEnum.UNIFORM, {}, 10),
+    ],
+)
+def test_sampler_kwargs_various_methods(method, kwargs, n_samples):
+    """Test sampler_kwargs with various sampling methods."""
+    test_domain = Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 2)),
+                ContinuousInput(key="x3", bounds=(0, 3)),
+            ]
+        ),
+        outputs=Outputs(features=[ContinuousOutput(key="y")]),
+    )
+    data_model = RandomStrategy(
+        domain=test_domain, fallback_sampling_method=method, sampler_kwargs=kwargs
+    )
+    strategy = actual_strategies.map(data_model=data_model)
+    candidates = strategy.ask(n_samples)
+    assert len(candidates) == n_samples

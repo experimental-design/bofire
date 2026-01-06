@@ -306,9 +306,9 @@ class Domain(BaseModel):
         experiments = self.coerce_invalids(experiments)
 
         # group and aggregate
-        agg: Dict[str, Any] = {
-            feat: method for feat in self.outputs.get_keys(ContinuousOutput)
-        }
+        agg: Dict[str, Any] = dict.fromkeys(
+            self.outputs.get_keys(ContinuousOutput), method
+        )
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1
