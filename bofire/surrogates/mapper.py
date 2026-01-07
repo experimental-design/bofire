@@ -20,7 +20,6 @@ from bofire.surrogates.robust_single_task_gp import RobustSingleTaskGPSurrogate
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
-from bofire.surrogates.xgb import XGBoostSurrogate
 
 
 def map_MixedSingleTaskGPSurrogate(
@@ -76,7 +75,6 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.RegressionMLPEnsemble: RegressionMLPEnsemble,
     data_models.ClassificationMLPEnsemble: ClassificationMLPEnsemble,
     data_models.FullyBayesianSingleTaskGPSurrogate: FullyBayesianSingleTaskGPSurrogate,
-    data_models.XGBoostSurrogate: XGBoostSurrogate,
     data_models.LinearSurrogate: SingleTaskGPSurrogate,
     data_models.PolynomialSurrogate: SingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: SingleTaskGPSurrogate,

@@ -14,6 +14,35 @@ from tests.bofire.data_models.specs.specs import Specs
 
 specs = Specs([])
 
+
+specs.add_valid(
+    features.SumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "keep_features": True,
+    },
+)
+
+specs.add_valid(
+    features.MeanFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "keep_features": False,
+    },
+)
+
+specs.add_valid(
+    features.WeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "descriptors": ["alpha", "beta"],
+        "keep_features": True,
+    },
+)
+
 specs.add_valid(
     features.DiscreteInput,
     lambda: {

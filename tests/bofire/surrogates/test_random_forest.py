@@ -129,10 +129,10 @@ def test_random_forest(scaler, output_scaler):
     rf.fit(experiments=experiments)
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(rf.model.input_transform, ChainedInputTransform)
-        assert isinstance(rf.model.input_transform.tf2, Normalize)
+        assert isinstance(rf.model.input_transform.scaler, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(rf.model.input_transform, ChainedInputTransform)
-        assert isinstance(rf.model.input_transform.tf2, InputStandardize)
+        assert isinstance(rf.model.input_transform.scaler, InputStandardize)
     else:
         assert isinstance(rf.model.input_transform, NumericToCategoricalEncoding)
 
@@ -156,10 +156,10 @@ def test_random_forest(scaler, output_scaler):
     assert_frame_equal(preds, preds2)
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(rf2.model.input_transform, ChainedInputTransform)
-        assert isinstance(rf2.model.input_transform.tf2, Normalize)
+        assert isinstance(rf2.model.input_transform.scaler, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(rf2.model.input_transform, ChainedInputTransform)
-        assert isinstance(rf2.model.input_transform.tf2, InputStandardize)
+        assert isinstance(rf2.model.input_transform.scaler, InputStandardize)
     else:
         assert isinstance(rf2.model.input_transform, NumericToCategoricalEncoding)
 

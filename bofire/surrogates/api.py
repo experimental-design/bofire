@@ -15,4 +15,3 @@ from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.surrogates.values import PredictedValue
-from bofire.surrogates.xgb import XGBoostSurrogate

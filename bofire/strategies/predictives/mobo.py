@@ -7,7 +7,6 @@ from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
-from botorch.models.gpytorch import GPyTorchModel
 from pydantic import PositiveInt
 from typing_extensions import Self
 
@@ -88,7 +87,7 @@ class MoboStrategy(BotorchStrategy):
             constraints=constraints,
             eta=etas,
             mc_samples=self.acquisition_function.n_mc_samples,
-            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            cache_root=None,
             alpha=self.acquisition_function.alpha,
             prune_baseline=(
                 self.acquisition_function.prune_baseline

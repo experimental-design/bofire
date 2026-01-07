@@ -1,0 +1,40 @@
+/*-- scss:defaults --*/
+
+// Color palette
+$primary: #2c7fb8;
+$secondary: #41b6c4;
+$success: #41ab5d;
+$info: #6baed6;
+$warning: #feb24c;
+$danger: #e34a33;
+
+// Typography
+$font-family-sans-serif: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+$font-family-monospace: "Source Code Pro", Consolas, Monaco, monospace;
+
+// Code
+$code-bg: #f8f9fa;
+$code-color: #e83e8c;
+
+/*-- scss:rules --*/
+
+.navbar {
+  font-weight: 500;
+}
+
+code {
+  background-color: $code-bg;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a.active {
+  border-left: 2px solid $primary;
+  font-weight: 600;
+}

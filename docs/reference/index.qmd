@@ -1,0 +1,60 @@
+# API Reference {.doc .doc-index}
+
+## Data Models - Domain
+
+Domain configuration data models
+
+| | |
+| --- | --- |
+| [data_models.domain.domain.Domain](data_models.domain.domain.Domain.qmd#bofire.data_models.domain.domain.Domain) |  |
+| [data_models.domain.features.Inputs](data_models.domain.features.Inputs.qmd#bofire.data_models.domain.features.Inputs) | Container of input features, only input features are allowed. |
+| [data_models.domain.features.Outputs](data_models.domain.features.Outputs.qmd#bofire.data_models.domain.features.Outputs) | Container of output features, only output features are allowed. |
+| [data_models.domain.constraints.Constraints](data_models.domain.constraints.Constraints.qmd#bofire.data_models.domain.constraints.Constraints) |  |
+
+## Data Models - Features
+
+Feature data models
+
+| | |
+| --- | --- |
+| [data_models.features.api](data_models.features.api.qmd#bofire.data_models.features.api) |  |
+
+## Data Models - Strategies
+
+Strategy configuration data models
+
+| | |
+| --- | --- |
+| [data_models.strategies.api](data_models.strategies.api.qmd#bofire.data_models.strategies.api) |  |
+
+## Data Models - Kernels
+
+Kernel configuration data models
+
+| | |
+| --- | --- |
+| [data_models.kernels.api](data_models.kernels.api.qmd#bofire.data_models.kernels.api) |  |
+
+## Data Models - Surrogates
+
+Surrogate model configuration data models
+
+| | |
+| --- | --- |
+| [data_models.surrogates.api](data_models.surrogates.api.qmd#bofire.data_models.surrogates.api) |  |
+
+## Strategies
+
+Strategy implementations
+
+| | |
+| --- | --- |
+| [strategies.api](strategies.api.qmd#bofire.strategies.api) |  |
+
+## Surrogates
+
+Surrogate model implementations
+
+| | |
+| --- | --- |
+| [surrogates.api](surrogates.api.qmd#bofire.surrogates.api) |  |

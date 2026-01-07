@@ -46,5 +46,6 @@ if RDKIT_AVAILABLE:
             molfeatures.MordredDescriptors,
             lambda: {
                 "descriptors": random.sample(names.mordred, k=random.randrange(1, 10)),
+                "ignore_3D": False,
             },
         )
