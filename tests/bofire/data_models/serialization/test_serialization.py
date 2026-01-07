@@ -67,7 +67,8 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
     # TODO: can we unhide the comparison of surrogate_specs?
     data = {k: v for k, v in obj.model_dump().items() if k != "surrogate_specs"}
     for k, v in data.items():
-        if v is not None:
+        # Only check keys that were in the original spec (not default values)
+        if k in spec and v is not None:
             if hasattr(
                 spec[k], "model_dump"
             ):  # works now for 1-time nested objects. Should be written recursively

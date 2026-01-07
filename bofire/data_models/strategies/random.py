@@ -25,6 +25,7 @@ class RandomStrategy(Strategy):
     n_thinning: Annotated[int, Field(ge=1)] = 32
     num_base_samples: Optional[Annotated[int, Field(gt=0)]] = None
     max_iters: Annotated[int, Field(gt=0)] = 1000
+    sampler_kwargs: Optional[dict] = None
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [

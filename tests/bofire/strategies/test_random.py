@@ -16,7 +16,8 @@ from bofire.data_models.constraints.api import (
     SelectionCondition,
     ThresholdCondition,
 )
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -262,3 +263,37 @@ def test_sample_from_polytope():
     assert_frame_equal(samples2, samples3)
     with pytest.raises(AssertionError):
         assert_frame_equal(samples2, samples)
+
+
+@pytest.mark.parametrize(
+    "method,kwargs,n_samples",
+    [
+        (SamplingMethodEnum.SOBOL, {"scramble": True}, 10),
+        (SamplingMethodEnum.SOBOL, {"scramble": False}, 10),
+        (SamplingMethodEnum.LHS, {"scramble": True, "strength": 1}, 10),
+        (
+            SamplingMethodEnum.LHS,
+            {"strength": 2},
+            9,
+        ),  # strength=2 requires n to be square of prime
+        (SamplingMethodEnum.UNIFORM, {}, 10),
+    ],
+)
+def test_sampler_kwargs_various_methods(method, kwargs, n_samples):
+    """Test sampler_kwargs with various sampling methods."""
+    test_domain = Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 2)),
+                ContinuousInput(key="x3", bounds=(0, 3)),
+            ]
+        ),
+        outputs=Outputs(features=[ContinuousOutput(key="y")]),
+    )
+    sampler_data_model = data_models.RandomStrategy(
+        domain=test_domain, fallback_sampling_method=method, sampler_kwargs=kwargs
+    )
+    sampler_strategy = strategies.RandomStrategy(data_model=sampler_data_model)
+    candidates = sampler_strategy.ask(n_samples)
+    assert len(candidates) == n_samples

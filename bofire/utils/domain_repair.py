@@ -24,10 +24,9 @@ def default_input_preprocessing_specs(
     domain: Domain,
 ) -> InputTransformSpecs:
     """Default input preprocessing specs for the GA optimizer: If none given, will use Ordinal encoding for all categorical inputs"""
-    return {
-        key: CategoricalEncodingEnum.ORDINAL
-        for key in domain.inputs.get_keys(CategoricalInput)
-    }
+    return dict.fromkeys(
+        domain.inputs.get_keys(CategoricalInput), CategoricalEncodingEnum.ORDINAL
+    )
 
 
 class DomainRepair:
