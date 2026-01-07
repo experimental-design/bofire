@@ -214,7 +214,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ],
         ).model_dump(),
-        "aggregations": None,
+        "engineered_features": EngineeredFeatures().model_dump(),
         "n_taus": 4,
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
