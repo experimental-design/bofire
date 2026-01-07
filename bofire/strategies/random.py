@@ -189,7 +189,7 @@ class RandomStrategy(Strategy):
         n_burnin: int = 1000,
         n_thinning: int = 32,
         seed: Optional[int] = None,
-        sampler_kwargs: Optional[Dict] = None,
+        sampler_kwargs: Optional[dict] = None,
     ) -> pd.DataFrame:
         """Sample points from a polytope defined by the given domain.
 
@@ -363,7 +363,7 @@ class RandomStrategy(Strategy):
         num_base_samples: int | None = None,
         max_iters: int | None = None,
         seed: int | None = None,
-        sampler_kwargs: Optional[Dict] = None,
+        sampler_kwargs: Optional[dict] = None,
     ) -> Self:
         """Create a new instance of the RandomStrategy class.
         Args:
