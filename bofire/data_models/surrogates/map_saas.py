@@ -20,7 +20,7 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
     """
 
-    type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (
+    type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (  # type: ignore
         "AdditiveMapSaasSingleTaskGPSurrogate"
     )
     n_taus: PositiveInt = 4
@@ -45,7 +45,7 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
     """
 
-    type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (
+    type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (  # type: ignore
         "EnsembleMapSaasSingleTaskGPSurrogate"
     )
     n_taus: PositiveInt = 4

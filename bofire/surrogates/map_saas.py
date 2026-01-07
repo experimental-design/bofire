@@ -16,7 +16,7 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import (
     AdditiveMapSaasSingleTaskGPSurrogate as DataModel,
 )
-from bofire.surrogates.botorch import BotorchSurrogate, TrainableBotorchSurrogate
+from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.utils.torch_tools import tkwargs
 
 
