@@ -28,33 +28,25 @@ def map_MixedSingleTaskGPSurrogate(
     if (
         data_model.continuous_kernel.features is None
         or len(data_model.continuous_kernel.features) == 0
-        and data_model.kernel_dict is None
     ):
         # model is purely categorical
         kernel = ScaleKernel(base_kernel=data_model.categorical_kernel)
     else:
-        sum_kernel_list = []
-        product_kernel_list = []
-        if data_model.kernel_dict is None:
-            sum_kernel_list = [
-                data_model.continuous_kernel,  # type: ignore
-                ScaleKernel(base_kernel=data_model.categorical_kernel),
-            ]
-            product_kernel_list = [
-                data_model.continuous_kernel,  # type: ignore
-                data_model.categorical_kernel,
-            ]
-        else:
-            for feature_key, kernel in data_model.kernel_dict.items():
-                kernel.features = [feature_key]
-                if feature_key in data_model.continuous_kernel.features:  # type: ignore
-                    sum_kernel_list += [kernel]  # type: ignore
-                else:
-                    sum_kernel_list += [ScaleKernel(base_kernel=kernel)]
-                product_kernel_list += [kernel]
-        sum_kernel = ScaleKernel(base_kernel=AdditiveKernel(kernels=sum_kernel_list))
+        sum_kernel = ScaleKernel(
+            base_kernel=AdditiveKernel(
+                kernels=[
+                    data_model.continuous_kernel,  # type: ignore
+                    ScaleKernel(base_kernel=data_model.categorical_kernel),
+                ]
+            )
+        )
         product_kernel = ScaleKernel(
-            base_kernel=MultiplicativeKernel(kernels=product_kernel_list)
+            base_kernel=MultiplicativeKernel(
+                kernels=[
+                    data_model.continuous_kernel,  # type: ignore
+                    data_model.categorical_kernel,
+                ]
+            )
         )
         kernel = AdditiveKernel(
             kernels=[

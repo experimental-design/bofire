@@ -203,6 +203,7 @@ website:
             - docs/tutorials/basic_examples/Model_Fitting_and_analysis.qmd
             - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.qmd
             - docs/tutorials/basic_examples/Unknown_Constraint_Classification.qmd
+            - docs/tutorials/basic_examples/index_kernel.qmd
         - section: "Advanced Examples"
           contents:
             - docs/tutorials/advanced_examples/index.qmd

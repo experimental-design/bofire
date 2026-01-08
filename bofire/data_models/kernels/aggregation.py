@@ -27,6 +27,8 @@ class AdditiveKernel(AggregationKernel):
             MaternKernel,
             LinearKernel,
             HammingDistanceKernel,
+            IndexKernel,
+            PositiveIndexKernel,
             TanimotoKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
