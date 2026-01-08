@@ -33,7 +33,6 @@ class IndexKernel(CategoricalKernel):
     where $B$ is a low-rank matrix, and $\mathbf v$ is a  non-negative vector.
 
     Attributes:
-        type (Literal["IndexKernel"]): Identifier for the kernel type.
         num_categories (int): Number of categorical values, must be ≥ 2.
         rank (int): Rank of the kernel approximation, must be ≥ 1 and ≤ num_categories.
                     Lower rank provides more regularization.
@@ -73,8 +72,8 @@ class PositiveIndexKernel(CategoricalKernel):
 
     NOTE: This kernel should only be used when the correlation between different categories
     is expected to be positive.
+
     Attributes:
-        type (Literal["PositiveIndexKernel"]): Identifier for the kernel type.
         num_categories (int): Number of categorical values, must be ≥ 2.
         rank (int): Rank of the kernel approximation, must be ≥ 1 and ≤ num_categories.
                     Lower rank provides more regularization.
@@ -106,4 +105,13 @@ class PositiveIndexKernel(CategoricalKernel):
     def validate_rank_vs_categories(self):
         if self.rank is not None and self.rank > self.num_categories:
             raise ValueError("rank must be less than or equal to num_categories")
+        return self
+
+    @model_validator(mode="after")
+    def validate_target_task_index(self):
+        if (
+            self.target_task_index is not None
+            and self.target_task_index >= self.num_categories - 1
+        ):
+            raise ValueError("target_task_index must be less than num_categories-1")
         return self
