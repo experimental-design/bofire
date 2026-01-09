@@ -2,438 +2,446 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/surrogates.api.html</loc>
-    <lastmod>2026-01-07T17:19:10.453Z</lastmod>
+    <lastmod>2026-01-09T10:11:33.041Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/index.html</loc>
-    <lastmod>2026-01-07T17:19:09.690Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.281Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.strategies.api.html</loc>
-    <lastmod>2026-01-07T17:19:10.118Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.708Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.features.api.html</loc>
-    <lastmod>2026-01-07T17:19:10.056Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.646Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.domain.features.Inputs.html</loc>
-    <lastmod>2026-01-07T17:19:09.813Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.404Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.domain.constraints.Constraints.html</loc>
-    <lastmod>2026-01-07T17:19:09.861Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.452Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/strategies.api.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.surrogates.api.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.kernels.api.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.domain.features.Outputs.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.domain.domain.Domain.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/userguides/surrogates.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/userguides/domain.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/userguides/surrogates.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/userguides/domain.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/serialization/strategies_serial.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/serialization/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/nchoosek_constraint.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/fractional_factorial.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/candidate_goodness_and_experiments.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/011-ActiveLearning.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/009-BNH.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/007-LSRBO.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/005-Himmelblau_with_outliers.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/001-Himmelblau.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/basic_terminology.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Reaction_Optimization_Example.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Model_Fitting_and_analysis.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/random_forest_in_bofire.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/multifidelity_bo.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/desirability_objectives.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/serialization/strategies_serial.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/serialization/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/nchoosek_constraint.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/fractional_factorial.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/candidate_goodness_and_experiments.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/011-ActiveLearning.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/009-BNH.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/007-LSRBO.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/005-Himmelblau_with_outliers.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/001-Himmelblau.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/basic_terminology.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Reaction_Optimization_Example.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Model_Fitting_and_analysis.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/random_forest_in_bofire.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/multifidelity_bo.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/desirability_objectives.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/getting_started.html</loc>
-    <lastmod>2026-01-07T17:17:31.210Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.217Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/install.html</loc>
-    <lastmod>2026-01-07T17:17:31.217Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/custom_sobo.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/genetic_algorithm.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/merging_objectives.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/objectives_on_inputs.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/transfer_learning_bo.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Unknown_Constraint_Classification.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/002-DTLZ2.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/004-30dimBranin.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/008-ZDT1.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/010-TNK.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/012-engineered_features.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/basic_examples.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/design_with_explicit_formula.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/optimality_criteria.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/serialization/models_serial.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/custom_sobo.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/genetic_algorithm.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/merging_objectives.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/objectives_on_inputs.html</loc>
-    <lastmod>2026-01-07T17:17:31.207Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/transfer_learning_bo.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
-  </url>
-  <url>
-    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Unknown_Constraint_Classification.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Unknown_Constraint_Classification.html</loc>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html</loc>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/transfer_learning_bo.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/objectives_on_inputs.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/merging_objectives.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/genetic_algorithm.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/custom_sobo.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/serialization/models_serial.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/optimality_criteria.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/design_with_explicit_formula.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/basic_examples.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/012-engineered_features.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/010-TNK.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/008-ZDT1.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/004-30dimBranin.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/002-DTLZ2.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/index_kernel.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/basic_terminology.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Reaction_Optimization_Example.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Model_Fitting_and_analysis.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/random_forest_in_bofire.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/multifidelity_bo.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/desirability_objectives.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/getting_started.html</loc>
+    <lastmod>2026-01-09T10:09:48.147Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.154Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/install.html</loc>
+    <lastmod>2026-01-09T10:09:48.154Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/custom_sobo.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/genetic_algorithm.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/merging_objectives.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/objectives_on_inputs.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/advanced_examples/transfer_learning_bo.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/Unknown_Constraint_Classification.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/basic_examples/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/001-Himmelblau.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/005-Himmelblau_with_outliers.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/007-LSRBO.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/009-BNH.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/011-ActiveLearning.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/benchmarks/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/candidate_goodness_and_experiments.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/fractional_factorial.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/doe/nchoosek_constraint.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/serialization/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/build/lib/docs/tutorials/serialization/strategies_serial.html</loc>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/desirability_objectives.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/index.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/multifidelity_bo.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/advanced_examples/random_forest_in_bofire.html</loc>
+    <lastmod>2026-01-09T10:09:48.144Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Model_Fitting_and_analysis.html</loc>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/Reaction_Optimization_Example.html</loc>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/basic_terminology.html</loc>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
+  </url>
+  <url>
+    <loc>https://experimental-design.github.io/bofire/docs/tutorials/basic_examples/index_kernel.html</loc>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/002-DTLZ2.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/004-30dimBranin.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/008-ZDT1.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/010-TNK.html</loc>
-    <lastmod>2026-01-07T17:17:31.208Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.145Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/benchmarks/012-engineered_features.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/basic_examples.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/design_with_explicit_formula.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/doe/optimality_criteria.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/tutorials/serialization/models_serial.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/userguides/data_models_functionals.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/userguides/strategies.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/userguides/data_models_functionals.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/userguides/strategies.html</loc>
-    <lastmod>2026-01-07T17:17:31.209Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.146Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.domain.constraints.Constraints.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.domain.features.Inputs.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.features.api.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/data_models.strategies.api.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/index.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/build/lib/docs/reference/surrogates.api.html</loc>
-    <lastmod>2026-01-07T17:17:31.000Z</lastmod>
+    <lastmod>2026-01-09T10:09:48.000Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.domain.domain.Domain.html</loc>
-    <lastmod>2026-01-07T17:19:09.763Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.354Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.domain.features.Outputs.html</loc>
-    <lastmod>2026-01-07T17:19:09.843Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.434Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.kernels.api.html</loc>
-    <lastmod>2026-01-07T17:19:10.139Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.728Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/data_models.surrogates.api.html</loc>
-    <lastmod>2026-01-07T17:19:10.189Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.777Z</lastmod>
   </url>
   <url>
     <loc>https://experimental-design.github.io/bofire/docs/reference/strategies.api.html</loc>
-    <lastmod>2026-01-07T17:19:10.405Z</lastmod>
+    <lastmod>2026-01-09T10:11:32.993Z</lastmod>
   </url>
 </urlset>
