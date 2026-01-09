@@ -29,3 +29,6 @@ Techniques for detecting outliers and building robust Gaussian Process models.
 
 ### [Unknown Constraint Classification](Unknown_Constraint_Classification.qmd)
 Handling and classifying unknown constraints in optimization problems.
+
+### [Index Kernel and Positive Index Kernel](index_kernel.qmd)
+Learn how to use Index Kernel and Positive Index Kernel for categorical variables.

@@ -7,6 +7,7 @@ from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.utils.constraints import (
     LogTransformedInterval as BotorchLogTransformedInterval,
 )
+from gpytorch.kernels import IndexKernel as GpytorchIndexKernel
 
 import bofire
 import bofire.kernels.aggregation as aggregationKernels
@@ -18,12 +19,14 @@ from bofire.data_models.kernels.api import (
     AdditiveKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
+    IndexKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     PolynomialKernel,
+    PositiveIndexKernel,
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -48,6 +51,8 @@ EQUIVALENTS = {
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
     HammingDistanceKernel: CategoricalKernel,
+    IndexKernel: GpytorchIndexKernel,
+    PositiveIndexKernel: GpytorchIndexKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
@@ -268,6 +273,40 @@ def test_map_HammingDistanceKernel_to_categorical_with_ard():
     assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
     assert k_mapped.ard_num_dims == 5
     assert k_mapped.lengthscale.shape == (1, 5)
+
+
+def test_map_IndexKernel():
+    k_mapped = kernels.map(
+        IndexKernel(
+            num_categories=10,
+            rank=3,
+        ),
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+
+    assert isinstance(k_mapped, GpytorchIndexKernel)
+    assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
+    assert k_mapped.covar_factor.shape[0] == 10
+    assert k_mapped.covar_factor.shape[1] == 3
+
+
+def test_map_PositiveIndexKernel():
+    k_mapped = kernels.map(
+        PositiveIndexKernel(
+            num_categories=8,
+            rank=2,
+        ),
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+
+    assert isinstance(k_mapped, GpytorchIndexKernel)
+    assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
+    assert k_mapped.covar_factor.shape[0] == 8
+    assert k_mapped.covar_factor.shape[1] == 2
 
 
 def test_map_multiple_kernels_on_feature_subsets():
