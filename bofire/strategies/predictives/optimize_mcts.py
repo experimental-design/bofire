@@ -1,11 +1,13 @@
-"""MCTS-based acquisition function optimization for NChooseK constraints.
+"""MCTS-based acquisition function optimization for NChooseK and categorical constraints.
 
-Uses Monte Carlo Tree Search to select which features are active (non-zero),
-then runs BoTorch acquisition function optimization with inactive features fixed to zero.
+Uses Monte Carlo Tree Search to select which features are active (non-zero) and
+categorical values, then runs BoTorch acquisition function optimization with
+inactive features fixed to zero and categoricals fixed to selected values.
 """
 
 import math
 import random
+from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Callable, Optional, Union
@@ -18,8 +20,35 @@ from torch import Tensor
 STOP = None  # Sentinel for stopping selection in a group
 
 
+# =============================================================================
+# Group abstractions for MCTS
+# =============================================================================
+
+
+class Group(ABC):
+    """Abstract base class for MCTS groups (NChooseK or Categorical)."""
+
+    @property
+    @abstractmethod
+    def n_options(self) -> int:
+        """Number of options/actions available in this group."""
+        pass
+
+    @abstractmethod
+    def legal_actions(
+        self, partial: tuple[int, ...], stopped: bool
+    ) -> list[Union[int, None]]:
+        """Return legal actions given current partial selection."""
+        pass
+
+    @abstractmethod
+    def is_complete(self, partial: tuple[int, ...], stopped: bool) -> bool:
+        """Check if selection for this group is complete."""
+        pass
+
+
 @dataclass(frozen=True)
-class NChooseK:
+class NChooseK(Group):
     """NChooseK constraint specifying feature selection bounds.
 
     Args:
@@ -41,25 +70,136 @@ class NChooseK:
             )
 
     @property
+    def n_options(self) -> int:
+        return len(self.features)
+
+    @property
     def n_features(self) -> int:
         return len(self.features)
+
+    def legal_actions(
+        self, partial: tuple[int, ...], stopped: bool
+    ) -> list[Union[int, None]]:
+        """Compute legal actions within this NChooseK group.
+
+        Actions are indices into self.features (not the actual feature indices).
+        Enforces strictly increasing selection order (combinations, not permutations).
+        STOP is legal iff len(partial) >= min_count and not already stopped.
+        """
+        n = self.n_features
+        m = len(partial)
+
+        if stopped or m >= self.max_count:
+            return []
+
+        actions: list[Union[int, None]] = []
+        last = partial[-1] if partial else -1
+
+        # Remaining picks needed after this action to satisfy min_count
+        r_min_needed = max(0, self.min_count - (m + 1))
+        # After picking index i, n - (i+1) items remain; require n - (i+1) >= r_min_needed
+        end_inclusive = n - r_min_needed - 1
+        start = last + 1
+
+        if start <= end_inclusive:
+            actions.extend(range(start, end_inclusive + 1))
+
+        if m >= self.min_count:
+            actions.append(STOP)
+
+        return actions
+
+    def is_complete(self, partial: tuple[int, ...], stopped: bool) -> bool:
+        """NChooseK is complete when stopped or max_count reached."""
+        return stopped or len(partial) >= self.max_count
+
+
+@dataclass(frozen=True)
+class CategoricalGroup(Group):
+    """Categorical dimension with allowed values.
+
+    Args:
+        dim: The dimension index in the input space
+        values: Sequence of allowed values for this dimension
+    """
+
+    dim: int
+    values: Sequence[float]
+
+    def __post_init__(self):
+        if len(self.values) < 1:
+            raise ValueError(
+                f"CategoricalGroup requires at least one value, got {len(self.values)}"
+            )
+
+    @property
+    def n_options(self) -> int:
+        return len(self.values)
+
+    @property
+    def n_values(self) -> int:
+        return len(self.values)
+
+    def legal_actions(
+        self, partial: tuple[int, ...], stopped: bool
+    ) -> list[Union[int, None]]:
+        """Categorical must select exactly one value. No STOP action."""
+        if len(partial) >= 1:
+            # Already selected
+            return []
+        # All value indices are legal
+        return list(range(self.n_values))
+
+    def is_complete(self, partial: tuple[int, ...], stopped: bool) -> bool:
+        """Categorical is complete when one value is selected."""
+        return len(partial) >= 1
+
+
+# =============================================================================
+# Combined constraints container
+# =============================================================================
 
 
 @dataclass(frozen=True)
 class Constraints:
-    """Collection of NChooseK constraints."""
+    """Collection of NChooseK constraints and categorical groups."""
 
-    constraints: list[NChooseK]
-
-    def __len__(self) -> int:
-        return len(self.constraints)
+    nchooseks: list[NChooseK]
+    categoricals: list[CategoricalGroup]
 
     @property
-    def all_features(self) -> list[int]:
+    def groups(self) -> list[Group]:
+        """All groups in order: NChooseK first, then categoricals."""
+        return list(self.nchooseks) + list(self.categoricals)
+
+    def __len__(self) -> int:
+        return len(self.nchooseks) + len(self.categoricals)
+
+    @property
+    def n_nchoosek_groups(self) -> int:
+        return len(self.nchooseks)
+
+    @property
+    def n_categorical_groups(self) -> int:
+        return len(self.categoricals)
+
+    @property
+    def all_nchoosek_features(self) -> list[int]:
+        """All feature indices covered by NChooseK constraints."""
         all_feats = []
-        for c in self.constraints:
+        for c in self.nchooseks:
             all_feats.extend(c.features)
         return all_feats
+
+    @property
+    def all_categorical_dims(self) -> list[int]:
+        """All dimension indices that are categorical."""
+        return [c.dim for c in self.categoricals]
+
+
+# =============================================================================
+# MCTS Node
+# =============================================================================
 
 
 @dataclass
@@ -67,8 +207,8 @@ class Node:
     """MCTS tree node.
 
     Args:
-        partial_by_group: Partial selection per group (indices into group's feature list)
-        stopped_by_group: Whether each group has stopped selecting
+        partial_by_group: Partial selection per group (indices into group's options)
+        stopped_by_group: Whether each group has stopped selecting (for NChooseK)
         group_idx: Current group being filled
         n_visits: Visit count for this node
         w_total: Total accumulated reward
@@ -91,57 +231,21 @@ class Node:
         return self.w_total / self.n_visits if self.n_visits > 0 else 0.0
 
 
-def legal_actions_group(
-    constraint: NChooseK, partial: tuple[int, ...], stopped: bool
-) -> list[Union[int, None]]:
-    """Compute legal actions within a single NChooseK group.
-
-    Actions are indices into constraint.features (not the actual feature indices).
-    Enforces strictly increasing selection order (combinations, not permutations).
-    STOP is legal iff len(partial) >= min_count and not already stopped.
-
-    Args:
-        constraint: The NChooseK constraint for this group
-        partial: Current partial selection (indices into constraint.features)
-        stopped: Whether this group has already stopped
-
-    Returns:
-        List of legal actions (int indices or STOP sentinel)
-    """
-    n = constraint.n_features
-    m = len(partial)
-
-    if stopped or m >= constraint.max_count:
-        return []
-
-    actions: list[Union[int, None]] = []
-    last = partial[-1] if partial else -1
-
-    # Remaining picks needed after this action to satisfy min_count
-    r_min_needed = max(0, constraint.min_count - (m + 1))
-    # After picking index i, n - (i+1) items remain; require n - (i+1) >= r_min_needed
-    end_inclusive = n - r_min_needed - 1
-    start = last + 1
-
-    if start <= end_inclusive:
-        actions.extend(range(start, end_inclusive + 1))
-
-    if m >= constraint.min_count:
-        actions.append(STOP)
-
-    return actions
+# =============================================================================
+# MCTS Implementation
+# =============================================================================
 
 
 class MCTS:
-    """Monte Carlo Tree Search for NChooseK constraint optimization.
+    """Monte Carlo Tree Search for NChooseK and categorical optimization.
 
     Uses UCT selection, RAVE action value estimation, and progressive widening.
-    Selects which features are active via tree search, evaluating terminals
-    with a provided reward function.
+    Selects which features are active and categorical values via tree search,
+    evaluating terminals with a provided reward function.
 
     Args:
-        constraints: Collection of NChooseK constraints
-        reward_fn: Function mapping selected feature indices to reward value
+        constraints: Collection of NChooseK and categorical constraints
+        reward_fn: Function mapping (selected_features, categorical_selections) to reward
         c_uct: UCT exploration constant (default 1.0)
         k_rave: RAVE blending decay parameter (default 300.0)
         p_stop_rollout: Probability of early stop during rollout (default 0.35)
@@ -153,7 +257,7 @@ class MCTS:
     def __init__(
         self,
         constraints: Constraints,
-        reward_fn: Callable[[tuple[int, ...]], float],
+        reward_fn: Callable[[tuple[int, ...], dict[int, float]], float],
         c_uct: float = 1.0,
         k_rave: float = 300.0,
         p_stop_rollout: float = 0.35,
@@ -179,11 +283,12 @@ class MCTS:
         )
 
         # Best found so far
-        self.best_features: Optional[tuple[int, ...]] = None
+        self.best_selection: Optional[tuple[tuple[int, ...], dict[int, float]]] = None
         self.best_value: float = float("-inf")
 
         # Cache for terminal evaluations
-        self.value_cache: dict[tuple[int, ...], float] = {}
+        # Key: (selected_features_tuple, frozenset of categorical items)
+        self.value_cache: dict[tuple, float] = {}
         self.cache_hits = 0
         self.cache_misses = 0
 
@@ -195,22 +300,31 @@ class MCTS:
         """Compute offset for each group to create global action IDs."""
         offsets = []
         acc = 0
-        for c in self.constraints.constraints:
+        for group in self.constraints.groups:
             offsets.append(acc)
-            acc += c.n_features
+            acc += group.n_options
         return offsets
 
     def _global_action_id(self, group_idx: int, local_idx: int) -> int:
         """Convert (group, local_index) to global action ID for RAVE."""
         return self.global_offsets[group_idx] + local_idx
 
-    def _cached_reward(self, features: tuple[int, ...]) -> float:
+    def _make_cache_key(
+        self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
+    ) -> tuple:
+        """Create hashable cache key from selection."""
+        return (selected_features, frozenset(cat_selections.items()))
+
+    def _cached_reward(
+        self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
+    ) -> float:
         """Get cached reward or compute and cache it."""
-        if features in self.value_cache:
+        key = self._make_cache_key(selected_features, cat_selections)
+        if key in self.value_cache:
             self.cache_hits += 1
-            return self.value_cache[features]
-        val = self.reward_fn(features)
-        self.value_cache[features] = val
+            return self.value_cache[key]
+        val = self.reward_fn(selected_features, cat_selections)
+        self.value_cache[key] = val
         self.cache_misses += 1
         return val
 
@@ -223,14 +337,15 @@ class MCTS:
         if node.is_terminal(self.constraints):
             return []
         g = node.group_idx
-        constraint = self.constraints.constraints[g]
+        group = self.constraints.groups[g]
         partial = node.partial_by_group[g]
         stopped = node.stopped_by_group[g]
-        return legal_actions_group(constraint, partial, stopped)
+        return group.legal_actions(partial, stopped)
 
     def _apply_action(self, node: Node, action: Union[int, None]) -> Node:
         """Create child node by applying action to current node."""
         g = node.group_idx
+        group = self.constraints.groups[g]
 
         partials = list(node.partial_by_group)
         stoppeds = list(node.stopped_by_group)
@@ -241,9 +356,11 @@ class MCTS:
         else:
             new_partial = partials[g] + (action,)
             partials[g] = new_partial
-            constraint = self.constraints.constraints[g]
-            # Auto-advance if max_count reached
-            next_g = g + 1 if len(new_partial) >= constraint.max_count else g
+            # Check if group is complete
+            if group.is_complete(new_partial, stoppeds[g]):
+                next_g = g + 1
+            else:
+                next_g = g
 
         return Node(
             partial_by_group=tuple(partials),
@@ -251,13 +368,26 @@ class MCTS:
             group_idx=next_g,
         )
 
-    def _get_selected_features(self, node: Node) -> tuple[int, ...]:
-        """Convert node's partial selections to actual feature indices."""
-        features = []
-        for g, constraint in enumerate(self.constraints.constraints):
+    def _get_selection(self, node: Node) -> tuple[tuple[int, ...], dict[int, float]]:
+        """Convert node's partial selections to (selected_features, cat_selections)."""
+        # Extract NChooseK selections
+        selected_features = []
+        for g, nchoosek in enumerate(self.constraints.nchooseks):
             for local_idx in node.partial_by_group[g]:
-                features.append(constraint.features[local_idx])
-        return tuple(sorted(features))
+                selected_features.append(nchoosek.features[local_idx])
+        selected_features_tuple = tuple(sorted(selected_features))
+
+        # Extract categorical selections
+        cat_selections: dict[int, float] = {}
+        n_nchoosek = self.constraints.n_nchoosek_groups
+        for i, cat_group in enumerate(self.constraints.categoricals):
+            g = n_nchoosek + i
+            partial = node.partial_by_group[g]
+            if partial:
+                # partial[0] is the index into cat_group.values
+                cat_selections[cat_group.dim] = cat_group.values[partial[0]]
+
+        return selected_features_tuple, cat_selections
 
     def _select_and_expand(self) -> tuple[Node, list[Node]]:
         """Select path through tree and expand one new node."""
@@ -311,8 +441,8 @@ class MCTS:
 
         return node, path
 
-    def _rollout(self, node: Node) -> tuple[int, ...]:
-        """Random rollout to terminal state, return selected feature indices."""
+    def _rollout(self, node: Node) -> tuple[tuple[int, ...], dict[int, float]]:
+        """Random rollout to terminal state, return selection."""
         curr = Node(
             partial_by_group=tuple(node.partial_by_group),
             stopped_by_group=tuple(node.stopped_by_group),
@@ -322,7 +452,7 @@ class MCTS:
         while not curr.is_terminal(self.constraints):
             legal = self._legal_actions(curr)
             if not legal:
-                # No legal actions, advance group (happens when max_count reached)
+                # No legal actions, advance group (group is complete)
                 curr = Node(
                     partial_by_group=curr.partial_by_group,
                     stopped_by_group=curr.stopped_by_group,
@@ -330,8 +460,14 @@ class MCTS:
                 )
                 continue
 
-            # Prefer STOP with some probability
-            if STOP in legal and self.rng.random() < self.p_stop_rollout:
+            # For NChooseK groups, prefer STOP with some probability
+            g = curr.group_idx
+            is_nchoosek = g < self.constraints.n_nchoosek_groups
+            if (
+                is_nchoosek
+                and STOP in legal
+                and self.rng.random() < self.p_stop_rollout
+            ):
                 curr = self._apply_action(curr, STOP)
                 continue
 
@@ -344,51 +480,70 @@ class MCTS:
             action = self.rng.choice(choices)
             curr = self._apply_action(curr, action)
 
-        return self._get_selected_features(curr)
+        return self._get_selection(curr)
 
     def _backpropagate(
-        self, path: list[Node], reward: float, selected_features: tuple[int, ...]
+        self,
+        path: list[Node],
+        reward: float,
+        selected_features: tuple[int, ...],
+        cat_selections: dict[int, float],
     ) -> None:
         """Backpropagate reward through path and update RAVE statistics."""
         for n in path:
             n.n_visits += 1
             n.w_total += reward
 
-        # Update RAVE stats for all selected features
+        # Update RAVE stats for NChooseK selections
         selected_set = set(selected_features)
-        for g, constraint in enumerate(self.constraints.constraints):
-            for local_idx, feat_idx in enumerate(constraint.features):
+        for g, nchoosek in enumerate(self.constraints.nchooseks):
+            for local_idx, feat_idx in enumerate(nchoosek.features):
                 if feat_idx in selected_set:
                     glob_id = self._global_action_id(g, local_idx)
                     v, tot = self.rave_stats.get(glob_id, (0, 0.0))
                     self.rave_stats[glob_id] = (v + 1, tot + reward)
 
-    def run(self, n_iterations: int) -> tuple[tuple[int, ...], float]:
+        # Update RAVE stats for categorical selections
+        n_nchoosek = self.constraints.n_nchoosek_groups
+        for i, cat_group in enumerate(self.constraints.categoricals):
+            g = n_nchoosek + i
+            if cat_group.dim in cat_selections:
+                selected_value = cat_selections[cat_group.dim]
+                for local_idx, value in enumerate(cat_group.values):
+                    if value == selected_value:
+                        glob_id = self._global_action_id(g, local_idx)
+                        v, tot = self.rave_stats.get(glob_id, (0, 0.0))
+                        self.rave_stats[glob_id] = (v + 1, tot + reward)
+                        break
+
+    def run(self, n_iterations: int) -> tuple[tuple[int, ...], dict[int, float], float]:
         """Run MCTS for specified number of iterations.
 
         Args:
             n_iterations: Number of MCTS iterations to run
 
         Returns:
-            Tuple of (best_features, best_value) found during search
+            Tuple of (selected_features, cat_selections, best_value)
         """
         for _ in range(n_iterations):
             leaf, path = self._select_and_expand()
 
             if leaf.is_terminal(self.constraints):
-                selected_features = self._get_selected_features(leaf)
+                selected_features, cat_selections = self._get_selection(leaf)
             else:
-                selected_features = self._rollout(leaf)
+                selected_features, cat_selections = self._rollout(leaf)
 
-            reward = self._cached_reward(selected_features)
+            reward = self._cached_reward(selected_features, cat_selections)
 
             if reward > self.best_value:
                 self.best_value = reward
-                self.best_features = selected_features
+                self.best_selection = (selected_features, cat_selections)
 
-            self._backpropagate(path, reward, selected_features)
+            self._backpropagate(path, reward, selected_features, cat_selections)
 
-        return (self.best_features or ()), self.best_value
+        if self.best_selection is None:
+            return (), {}, self.best_value
+        return self.best_selection[0], self.best_selection[1], self.best_value
 
     def cache_stats(self) -> dict[str, int]:
         """Return cache statistics."""
@@ -399,10 +554,15 @@ class MCTS:
         }
 
 
+# =============================================================================
+# Main optimization function
+# =============================================================================
+
+
 def optimize_acqf_mcts(
     acq_function,
     bounds: Tensor,
-    nchooseks: Sequence[NChooseK],
+    nchooseks: Sequence[NChooseK] | None = None,
     cat_dims: Mapping[int, Sequence[float]] | None = None,
     # MCTS parameters
     c_uct: float = 1.0,
@@ -420,26 +580,28 @@ def optimize_acqf_mcts(
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None = None,
     seed: int | None = None,
 ) -> tuple[Tensor, float]:
-    """Optimize acquisition function with NChooseK constraints using MCTS.
+    """Optimize acquisition function with NChooseK and categorical constraints using MCTS.
 
-    Uses MCTS to select which features are active (non-zero), then runs BoTorch
-    optimization with inactive features fixed to zero.
+    Uses MCTS to select which features are active (non-zero) and categorical values,
+    then runs BoTorch optimization with inactive features fixed to zero and
+    categoricals fixed to their selected values.
 
     Args:
         acq_function: BoTorch acquisition function to optimize
         bounds: 2 x d tensor of (lower, upper) bounds for each dimension
         nchooseks: Sequence of NChooseK constraints defining feature groups
-        cat_dims: Categorical dimensions mapping (ignored for now)
+        cat_dims: Dictionary mapping categorical dimension indices to allowed values
+            (same signature as botorch.optim.optimize_acqf_mixed_alternating)
         c_uct: UCT exploration constant
         k_rave: RAVE blending decay parameter
-        p_stop_rollout: Probability of early stop during rollout
+        p_stop_rollout: Probability of early stop during NChooseK rollout
         num_iterations: Number of MCTS iterations
         pw_k0: Progressive widening base constant
         pw_alpha: Progressive widening exponent
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
-        fixed_features: Additional fixed features (combined with inactive ones)
+        fixed_features: Additional fixed features (combined with MCTS selections)
         inequality_constraints: Inequality constraints for BoTorch optimization
         equality_constraints: Equality constraints for BoTorch optimization
         seed: Random seed for reproducibility
@@ -449,30 +611,48 @@ def optimize_acqf_mcts(
         q x d tensor of optimal points and best_acq_value is the acquisition value
     """
     d = bounds.shape[1]
-    constraints = Constraints(constraints=list(nchooseks))
+
+    # Build constraints
+    nchoosek_list = list(nchooseks) if nchooseks else []
+    categorical_list = (
+        [
+            CategoricalGroup(dim=dim, values=list(values))
+            for dim, values in cat_dims.items()
+        ]
+        if cat_dims
+        else []
+    )
+    constraints = Constraints(nchooseks=nchoosek_list, categoricals=categorical_list)
 
     # All feature indices covered by NChooseK constraints
-    nchoosek_features = set(constraints.all_features)
+    nchoosek_features = set(constraints.all_nchoosek_features)
 
     # Storage for best result across all MCTS evaluations
     best_candidates: Optional[Tensor] = None
     best_acq_value: float = float("-inf")
 
-    def reward_fn(selected_features: tuple[int, ...]) -> float:
+    def reward_fn(
+        selected_features: tuple[int, ...], cat_selections: dict[int, float]
+    ) -> float:
         nonlocal best_candidates, best_acq_value
 
         selected_set = set(selected_features)
 
-        # Build fixed_features dict: inactive NChooseK features fixed to 0
-        inactive_features = nchoosek_features - selected_set
-
+        # Build fixed_features dict
         combined_fixed: dict[int, float] = {}
+
         # First add user-provided fixed features
         if fixed_features is not None:
             combined_fixed.update(fixed_features)
-        # Then fix inactive features to 0
+
+        # Fix inactive NChooseK features to 0
+        inactive_features = nchoosek_features - selected_set
         for idx in inactive_features:
             combined_fixed[idx] = 0.0
+
+        # Fix categorical dimensions to selected values
+        for dim, value in cat_selections.items():
+            combined_fixed[dim] = value
 
         # Run BoTorch optimization
         try:
