@@ -284,10 +284,7 @@ class MCTS:
         """Compute offset for each group to create global action IDs."""
         offsets = []
         acc = 0
-        print("Groups:")
-        print(self.groups)
         for group in self.groups.groups:
-            print(group)
             offsets.append(acc)
             acc += group.n_options
         return offsets
@@ -547,7 +544,7 @@ class MCTS:
 def optimize_acqf_mcts(
     acq_function,
     bounds: Tensor,
-    nchooseks: list[NChooseK] | None = None,
+    nchooseks: list[tuple[list[int], int, int]] | None = None,
     cat_dims: Mapping[int, Sequence[float]] | None = None,
     # MCTS parameters
     c_uct: float = 1.0,
@@ -574,7 +571,8 @@ def optimize_acqf_mcts(
     Args:
         acq_function: BoTorch acquisition function to optimize
         bounds: 2 x d tensor of (lower, upper) bounds for each dimension
-        nchooseks: Sequence of NChooseK constraints defining feature groups
+        nchooseks: List of NChooseK constraints as tuples of (features, min_count, max_count)
+            where features is a list of feature indices
         cat_dims: Dictionary mapping categorical dimension indices to allowed values
             (same signature as botorch.optim.optimize_acqf_mixed_alternating)
         c_uct: UCT exploration constant
@@ -597,14 +595,23 @@ def optimize_acqf_mcts(
     """
     d = bounds.shape[1]
 
-    # Build constraints
+    # Build NChooseK groups from tuples
+    nchoosek_list = []
+    if nchooseks:
+        for features, min_count, max_count in nchooseks:
+            nchoosek_list.append(
+                NChooseK(features=features, min_count=min_count, max_count=max_count)
+            )
+
+    # Build categorical groups
     categorical_list = (
         [Categorical(dim=dim, values=list(values)) for dim, values in cat_dims.items()]
         if cat_dims
         else []
     )
-    nchooseks = nchooseks or []
-    all_groups = nchooseks + categorical_list
+
+    # Combine all groups
+    all_groups = nchoosek_list + categorical_list
     groups = Groups(groups=all_groups)
 
     # All feature indices covered by NChooseK constraints
