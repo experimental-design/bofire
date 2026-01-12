@@ -36,7 +36,11 @@ class SVM(Benchmark):
         super().__init__(**kwargs)
 
         self.dim = 388
-        self.seed = 388  # from https://github.com/hvarfner/vanilla_bo_in_highdim/blob/8174f6322d12154b4f84448a0bb54b71e56ffede/BenchSuite/benchsuite/svm.py#L30
+        """
+        seed from url=("https://github.com/hvarfner/vanilla_bo_in_highdim/blob/
+        8174f6322d12154b4f84448a0bb54b71e56ffede/BenchSuite/benchsuite/svm.py#L30")
+        """
+        self.seed = 388
         np.random.seed(self.seed)
 
         # Define domain with continuous inputs for all hyperparameters
@@ -65,20 +69,26 @@ class SVM(Benchmark):
         self._y_test = y[idxs[half:]]
 
     def get_data(self):
-        url_X = "https://github.com/LeoIV/BenchSuite/raw/73de8c581aacf2dc99120d9cf65b79cbfe2aaf4e/data/svm/CT_slice_X.npy.gz"
-        url_y = "https://github.com/LeoIV/BenchSuite/raw/73de8c581aacf2dc99120d9cf65b79cbfe2aaf4e/data/svm/CT_slice_y.npy.gz"
+        url_X = (
+            "https://github.com/LeoIV/BenchSuite/raw/"
+            "73de8c581aacf2dc99120d9cf65b79cbfe2aaf4e/data/svm/CT_slice_X.npy.gz"
+        )
+        url_y = (
+            "https://github.com/LeoIV/BenchSuite/raw/"
+            "73de8c581aacf2dc99120d9cf65b79cbfe2aaf4e/data/svm/CT_slice_y.npy.gz"
+        )
         print("Downloading SVM data...")
         try:
-            with urllib.request.urlopen(url_X) as response:
+            with urllib.request.urlopen(url_X) as response:  # type: ignore
                 with gzip.GzipFile(fileobj=response) as f:
                     X_np = np.load(f)
-            with urllib.request.urlopen(url_y) as response:
+            with urllib.request.urlopen(url_y) as response:  # type: ignore
                 with gzip.GzipFile(fileobj=response) as f:
                     y_np = np.load(f)
             print("Download complete.")
             return X_np, y_np
         except Exception as e:
-            logging.error(f"Error downloading or loading data: {e}")
+            logging.error("Error downloading or loading data: %s", e)
             raise e
 
     def _evaluate_single(self, hypers) -> float:
@@ -122,3 +132,15 @@ class SVM(Benchmark):
 
         # Return as DataFrame
         return pd.DataFrame({"y": errors, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        """Get the optima for the SVM benchmark.
+
+        Returns:
+            DataFrame with optimal hyperparameters and corresponding error.
+            For this benchmark, the true optimum is not known, so this raises
+            NotImplementedError.
+        """
+        raise NotImplementedError(
+            "The true optimum for the SVM benchmark is not known."
+        )
