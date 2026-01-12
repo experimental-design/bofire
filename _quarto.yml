@@ -228,6 +228,8 @@ website:
             - docs/tutorials/benchmarks/009-BNH.qmd
             - docs/tutorials/benchmarks/010-TNK.qmd
             - docs/tutorials/benchmarks/011-ActiveLearning.qmd
+            - docs/tutorials/benchmarks/012-engineered_features.qmd
+            - docs/tutorials/benchmarks/013-spherical_kernel.qmd
         - section: "Design of Experiments"
           contents:
             - docs/tutorials/doe/index.qmd

@@ -1,14 +1,9 @@
 from typing import List, Literal, Optional, Union
 
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import PositiveInt, field_validator, model_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    AnyGeneralPrior,
-    AnyPrior,
-    AnyPriorConstraint,
-)
+from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior, AnyPriorConstraint
 
 
 class ContinuousKernel(FeatureSpecificKernel):
@@ -54,11 +49,22 @@ class InfiniteWidthBNNKernel(ContinuousKernel):
 
 
 class SphericalLinearKernel(ContinuousKernel):
+    """Spherical linear kernel for continuous inputs.
+    This kernel projects the inputs onto a unit sphere and computes the linear kernel in this space.
+    Attributes:
+        ard: Whether to use Automatic Relevance Determination. If True, separate lengthscales
+            are learned for each input dimension. Defaults to True.
+        lengthscale_prior: Optional prior distribution for the lengthscale parameter(s).
+        lengthscale_constraint: Optional constraint on the lengthscale parameter(s).
+        bounds: Bounds for the input features. Can be a single tuple for all dimensions
+            or a list of tuples for per-dimension bounds. Defaults to (0.0, 1.0).
+    Raises:
+        ValueError: If ard is False and bounds is not a list with length equal to input dimension.
+    """
+
     type: Literal["SphericalLinearKernel"] = "SphericalLinearKernel"
     ard: bool = True
-    lengthscale_prior: Optional[AnyPrior] = Field(
-        default_factory=HVARFNER_LENGTHSCALE_PRIOR
-    )
+    lengthscale_prior: Optional[AnyPrior] = None
     lengthscale_constraint: Optional[AnyPriorConstraint] = None
     bounds: Union[tuple[float, float], List[tuple[float, float]]] = (0.0, 1.0)
 
