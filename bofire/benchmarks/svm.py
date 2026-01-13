@@ -7,6 +7,7 @@ Adapted from https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py
 import gzip
 import logging
 import urllib
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -68,7 +69,7 @@ class SVM(Benchmark):
         self._y_train = y[idxs[:half]]
         self._y_test = y[idxs[half:]]
 
-    def get_data(self):
+    def get_data(self) -> Tuple[np.ndarray, np.ndarray]:
         url_X = (
             "https://github.com/LeoIV/BenchSuite/raw/"
             "73de8c581aacf2dc99120d9cf65b79cbfe2aaf4e/data/svm/CT_slice_X.npy.gz"
@@ -91,7 +92,7 @@ class SVM(Benchmark):
             logging.error("Error downloading or loading data: %s", e)
             raise e
 
-    def _evaluate_single(self, hypers) -> float:
+    def _evaluate_single(self, hypers: np.ndarray) -> float:
         """
         Evaluate SVM error for one set of hyperparameters.
 

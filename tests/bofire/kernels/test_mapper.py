@@ -431,3 +431,26 @@ def test_map_spherical_linear_kernel():
         features_to_idx_mapper=None,
     )
     assert hasattr(k_with_prior, "lengthscale_prior")
+
+
+def test_spherical_linear_kernel_bounds():
+    """Test SphericalLinearKernel with bounds (-1, 1) to verify buffer values."""
+    input_dim = 5
+    kernel = SphericalLinearKernel(ard=True, bounds=(-1.0, 1.0))
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(input_dim)),
+        features_to_idx_mapper=None,
+    )
+    # Check that _mins is a tensor of -1 with size input_dim
+    assert torch.allclose(k.get_buffer("_mins"), torch.tensor([-1.0] * input_dim))
+    assert k.get_buffer("_mins").shape == torch.Size([input_dim])
+
+    # Check that _maxs is a tensor of 1 with size input_dim
+    assert torch.allclose(k.get_buffer("_maxs"), torch.tensor([1.0] * input_dim))
+    assert k.get_buffer("_maxs").shape == torch.Size([input_dim])
+
+    # Check that _centers is a tensor of 0 with size input_dim
+    assert torch.allclose(k.get_buffer("_centers"), torch.tensor([0.0] * input_dim))
+    assert k.get_buffer("_centers").shape == torch.Size([input_dim])
