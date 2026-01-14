@@ -43,3 +43,6 @@ Active learning strategies for experimental design.
 
 ### [012 - Active Learning](012-engineered_features.qmd)
 Active learning strategies for experimental design.
+
+### [013 - Spherical linear kernels for high dimensional BO](013-spherical_kernel.qmd)
+High-dimensional Bayesian optimization using spherical linear kernels.

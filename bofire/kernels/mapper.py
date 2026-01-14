@@ -18,6 +18,7 @@ from bofire.kernels.conditional import (
 )
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
+from bofire.kernels.spherical_kernels import SphericalLinearKernel
 
 
 def _compute_active_dims(
@@ -382,6 +383,31 @@ def map_WedgeKernel(
     )
 
 
+def map_SphericalLinearKernel(
+    data_model: data_models.SphericalLinearKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> SphericalLinearKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return SphericalLinearKernel(
+        batch_shape=batch_shape,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
+        active_dims=active_dims,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
+            else None
+        ),
+        bounds=data_model.bounds,
+    )
+
+
 KERNEL_MAP = {
     data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
@@ -391,6 +417,7 @@ KERNEL_MAP = {
     data_models.AdditiveKernel: map_AdditiveKernel,
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
+    data_models.SphericalLinearKernel: map_SphericalLinearKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
     data_models.IndexKernel: map_IndexKernel,

@@ -36,6 +36,7 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
     ScaleKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints, MordredDescriptors
@@ -982,3 +983,45 @@ def test_RobustSingleTaskGPHyperconfig():
                 surrogate_data.kernel.base_kernel.lengthscale_prior
                 == HVARFNER_LENGTHSCALE_PRIOR()
             )
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        SphericalLinearKernel(ard=True),
+        SphericalLinearKernel(
+            ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(), bounds=(0, 1)
+        ),
+        SphericalLinearKernel(ard=False, bounds=[(0, 1), (0, 1), (0, 1)]),
+    ],
+)
+def test_gp_with_spherical_kernel(kernel):
+    """Test GP training with SphericalLinearKernel"""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(0, 1),
+            )
+            for i in range(3)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments["y"] = experiments["x_1"] + experiments["x_2"] + experiments["x_3"]
+
+    data_model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=ScaleKernel(base_kernel=kernel),
+    )
+    model = surrogates.map(data_model)
+    model.fit(experiments)
+
+    # Verify the model is fitted
+    assert hasattr(model, "model")
+
+    # Make predictions
+    samples = inputs.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)

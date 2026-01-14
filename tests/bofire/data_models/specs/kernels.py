@@ -248,6 +248,32 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    kernels.SphericalLinearKernel,
+    lambda: {
+        "ard": True,
+        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "features": None,
+        "bounds": (0.0, 1.0),
+    },
+)
+specs.add_invalid(
+    kernels.SphericalLinearKernel,
+    lambda: {
+        "ard": False,
+        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "features": None,
+        "bounds": (0.0, 1.0),
+    },
+    error=ValueError,
+    message="Cannot determine number of dimensions. If ard=False then list of bounds should have length equal to the input dimension.",
+)
+specs.add_valid(
     kernels.ScaleKernel,
     lambda: {
         "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
