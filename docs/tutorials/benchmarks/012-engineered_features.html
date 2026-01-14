@@ -65,6 +65,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../../">
+<link href="../../../docs/tutorials/benchmarks/013-spherical_kernel.html" rel="next">
+<link href="../../../docs/tutorials/benchmarks/011-ActiveLearning.html" rel="prev">
 <script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -115,7 +117,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="../../../styles.css">
 </head>
 
-<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -297,7 +299,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../../../index.html"> 
+    <a class="nav-link active" href="../../../index.html" aria-current="page"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
@@ -372,10 +374,320 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
       </div> <!-- /container-fluid -->
     </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../docs/tutorials/benchmarks/index.html">Benchmarks</a></li><li class="breadcrumb-item"><a href="../../../docs/tutorials/benchmarks/012-engineered_features.html">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
 </header>
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
+      <a href="../../../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Basic Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/basic_terminology.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic terminology</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Reaction_Optimization_Example.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Getting started by Example: Optimization of Reaction Conditions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Model_Fitting_and_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Building with BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Outlier Detection and Robust GP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classification Surrogate Tests</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/index_kernel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction to index kernel and positive index kernel.</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Advanced Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Advanced Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Custom Sobo Strategy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/desirability_objectives.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Desirability Functions for Multi-Objective Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">For optimizations in the bofire domain, a GA optimizer is available</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/merging_objectives.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Merging multiple objectives to a scalar target for single-target BO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-fidelity Bayesian Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Input Features as Output Objectives</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/random_forest_in_bofire.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Random Forest in BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Benchmarks</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Benchmark Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/001-Himmelblau.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/002-DTLZ2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DTLZ2 Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/004-30dimBranin.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">30dim Branin Benchmark with SAASBO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/005-Himmelblau_with_outliers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark with outliers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bayesian Optimisation Over Molecules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/007-LSRBO.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Local Search Region Bayesian Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/008-ZDT1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ZDT1</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/009-BNH.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">BNH Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/010-TNK.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TNK Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/011-ActiveLearning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Active Learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/013-spherical_kernel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spherical linear kernels for high dimensional BO</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Design of Experiments</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design of Experiments (DOE)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/basic_examples.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic Examples for the DoE Subpackage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/design_with_explicit_formula.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design with explicit Formula</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/fractional_factorial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Full and Fractional Factorial Designs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/nchoosek_constraint.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design with NChooseK constraint</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/optimality_criteria.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DoE Optimality Criteria in BoFire</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Serialization</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Serialization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/models_serial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Building with BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/strategies_serial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Strategy Serialization with BoFire</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
@@ -397,7 +709,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <main class="content" id="quarto-document-content">
 
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../docs/tutorials/benchmarks/index.html">Benchmarks</a></li><li class="breadcrumb-item"><a href="../../../docs/tutorials/benchmarks/012-engineered_features.html">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</a></li></ol></nav>
 <div class="quarto-title">
 <div class="quarto-title-block"><div><h1 class="title">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
@@ -420,7 +732,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>For examples in the literature have a look at this <a href="https://arxiv.org/abs/2506.07619">paper</a>.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="ae6b41ca" class="cell" data-execution_count="1">
+<div id="29257f2b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -442,11 +754,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="problem-setup" class="level2">
 <h2 class="anchored" data-anchor-id="problem-setup">Problem Setup</h2>
 <p>For demo purposes, the formulation wrapper is used around the two dimensional <code>Himmelblau</code> Benchmark to wrap it as a formulation problem with 7 features in total. Per original feature, three new features are introduced and one filler feature. The sum of each feature group is used as (normalized) input for the evaluation of the original <code>Himmelblau</code> function. A seventh feature is introduced as filler to always reach a total of 1 to fulfill the formulation/equality constraint. For more information on this setup have a look at the docstring of <code>FormulationWrapper</code>.</p>
-<div id="8671a263" class="cell" data-execution_count="2">
+<div id="54680fc5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bench <span class="op">=</span> FormulationWrapper(benchmark<span class="op">=</span>Himmelblau(), n_features_per_original_feature<span class="op">=</span><span class="dv">3</span>, n_filler_features<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The continuos descriptor features have the following descriptor values for the descriptors <code>x_1</code> and <code>x_2</code>:</p>
-<div id="3845e7d4" class="cell" data-execution_count="3">
+<div id="a257f0a8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pd.concat([feat.to_df() <span class="cf">for</span> feat <span class="kw">in</span> bench.domain.inputs.get(ContinuousDescriptorInput)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="3">
 <div>
@@ -503,7 +815,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="random-strategy" class="level3">
 <h3 class="anchored" data-anchor-id="random-strategy">Random Strategy</h3>
 <p>As baseline, we run the random strategy on the problem.</p>
-<div id="9167767e" class="cell" data-execution_count="4">
+<div id="1dc4571a" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> RandomStrategy.make(domain<span class="op">=</span>domain)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategy.ask(<span class="dv">10</span>)</span>
@@ -525,14 +837,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    random_results.append(results[<span class="dv">0</span>][<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/2 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:00&lt;?, ?it/s, Current Best:=16.625]Run 0:  50%|█████     | 1/2 [00:00&lt;00:00,  8.60it/s, Current Best:=16.625]Run 0:  50%|█████     | 1/2 [00:00&lt;00:00,  8.60it/s, Current Best:=16.625]Run 0:  50%|█████     | 1/2 [00:00&lt;00:00,  8.60it/s, Current Best:=16.625]Run 0: 100%|██████████| 2/2 [00:00&lt;00:00,  8.53it/s, Current Best:=16.625]Run 0: 100%|██████████| 2/2 [00:00&lt;00:00,  8.52it/s, Current Best:=16.625]</code></pre>
+<pre><code>  0%|          | 0/2 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:00&lt;?, ?it/s, Current Best:=5.338]Run 0:  50%|█████     | 1/2 [00:00&lt;00:00,  9.93it/s, Current Best:=5.338]Run 0:  50%|█████     | 1/2 [00:00&lt;00:00,  9.93it/s, Current Best:=5.338]Run 0:  50%|█████     | 1/2 [00:00&lt;00:00,  9.93it/s, Current Best:=5.338]Run 0: 100%|██████████| 2/2 [00:00&lt;00:00,  9.95it/s, Current Best:=5.338]Run 0: 100%|██████████| 2/2 [00:00&lt;00:00,  9.92it/s, Current Best:=5.338]</code></pre>
 </div>
 </div>
 </section>
 <section id="sobo-strategy" class="level3">
 <h3 class="anchored" data-anchor-id="sobo-strategy">Sobo Strategy</h3>
 <p>Next we run the <code>SoboStrategy</code> on the problem.</p>
-<div id="2831acc9" class="cell" data-execution_count="5">
+<div id="f88f6330" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> initial_experiments[domain.inputs.get_keys()].copy()</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -553,11 +865,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    sobo_results.append(results[<span class="dv">0</span>][<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/2 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:05&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:05&lt;?, ?it/s, Current Best:=16.625]Run 0:  50%|█████     | 1/2 [00:05&lt;00:05,  5.33s/it, Current Best:=16.625]Run 0:  50%|█████     | 1/2 [00:11&lt;00:05,  5.33s/it, Current Best:=16.625]Run 0:  50%|█████     | 1/2 [00:11&lt;00:05,  5.33s/it, Current Best:=16.625]Run 0: 100%|██████████| 2/2 [00:11&lt;00:00,  5.60s/it, Current Best:=16.625]Run 0: 100%|██████████| 2/2 [00:11&lt;00:00,  5.56s/it, Current Best:=16.625]</code></pre>
+<pre><code>  0%|          | 0/2 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:05&lt;?, ?it/s]Run 0:   0%|          | 0/2 [00:05&lt;?, ?it/s, Current Best:=5.338]Run 0:  50%|█████     | 1/2 [00:05&lt;00:05,  5.53s/it, Current Best:=5.338]Run 0:  50%|█████     | 1/2 [00:09&lt;00:05,  5.53s/it, Current Best:=5.338]Run 0:  50%|█████     | 1/2 [00:09&lt;00:05,  5.53s/it, Current Best:=5.338]Run 0: 100%|██████████| 2/2 [00:09&lt;00:00,  4.82s/it, Current Best:=5.338]Run 0: 100%|██████████| 2/2 [00:09&lt;00:00,  4.93s/it, Current Best:=5.338]</code></pre>
 </div>
 </div>
 <p>Now we run the <code>SoboStrategy</code> again, but with an engineered feature as additional input. The <code>WeightedSumFeature</code> computes the sum over the specified descriptors weighted by the values of the involved original features.</p>
-<div id="bd751b6b" class="cell" data-execution_count="6">
+<div id="50ce68bb" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_strategy(domain):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        inputs<span class="op">=</span>domain.inputs,</span>
@@ -591,14 +903,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
 
-  0%|          | 0/40 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/40 [00:04&lt;?, ?it/s]Run 0:   0%|          | 0/40 [00:04&lt;?, ?it/s, Current Best:=16.625]Run 0:   2%|▎         | 1/40 [00:04&lt;03:10,  4.87s/it, Current Best:=16.625]Run 0:   2%|▎         | 1/40 [00:09&lt;03:10,  4.87s/it, Current Best:=16.625]Run 0:   2%|▎         | 1/40 [00:09&lt;03:10,  4.87s/it, Current Best:=16.625]Run 0:   5%|▌         | 2/40 [00:09&lt;03:08,  4.96s/it, Current Best:=16.625]Run 0:   5%|▌         | 2/40 [00:16&lt;03:08,  4.96s/it, Current Best:=16.625]Run 0:   5%|▌         | 2/40 [00:16&lt;03:08,  4.96s/it, Current Best:=16.625]Run 0:   8%|▊         | 3/40 [00:16&lt;03:25,  5.56s/it, Current Best:=16.625]Run 0:   8%|▊         | 3/40 [00:21&lt;03:25,  5.56s/it, Current Best:=16.625]Run 0:   8%|▊         | 3/40 [00:21&lt;03:25,  5.56s/it, Current Best:=16.625]Run 0:  10%|█         | 4/40 [00:21&lt;03:23,  5.65s/it, Current Best:=16.625]Run 0:  10%|█         | 4/40 [00:27&lt;03:23,  5.65s/it, Current Best:=16.625]Run 0:  10%|█         | 4/40 [00:27&lt;03:23,  5.65s/it, Current Best:=11.984]Run 0:  12%|█▎        | 5/40 [00:27&lt;03:13,  5.52s/it, Current Best:=11.984]Run 0:  12%|█▎        | 5/40 [00:32&lt;03:13,  5.52s/it, Current Best:=11.984]Run 0:  12%|█▎        | 5/40 [00:32&lt;03:13,  5.52s/it, Current Best:=11.984]Run 0:  15%|█▌        | 6/40 [00:32&lt;03:06,  5.49s/it, Current Best:=11.984]Run 0:  15%|█▌        | 6/40 [00:39&lt;03:06,  5.49s/it, Current Best:=11.984]Run 0:  15%|█▌        | 6/40 [00:39&lt;03:06,  5.49s/it, Current Best:=11.984]Run 0:  18%|█▊        | 7/40 [00:39&lt;03:10,  5.79s/it, Current Best:=11.984]Run 0:  18%|█▊        | 7/40 [00:45&lt;03:10,  5.79s/it, Current Best:=11.984]Run 0:  18%|█▊        | 7/40 [00:45&lt;03:10,  5.79s/it, Current Best:=11.984]Run 0:  20%|██        | 8/40 [00:45&lt;03:10,  5.94s/it, Current Best:=11.984]Run 0:  20%|██        | 8/40 [00:51&lt;03:10,  5.94s/it, Current Best:=11.984]Run 0:  20%|██        | 8/40 [00:51&lt;03:10,  5.94s/it, Current Best:=11.984]Run 0:  22%|██▎       | 9/40 [00:51&lt;03:03,  5.93s/it, Current Best:=11.984]Run 0:  22%|██▎       | 9/40 [00:57&lt;03:03,  5.93s/it, Current Best:=11.984]Run 0:  22%|██▎       | 9/40 [00:57&lt;03:03,  5.93s/it, Current Best:=11.984]Run 0:  25%|██▌       | 10/40 [00:57&lt;02:58,  5.96s/it, Current Best:=11.984]Run 0:  25%|██▌       | 10/40 [01:03&lt;02:58,  5.96s/it, Current Best:=11.984]Run 0:  25%|██▌       | 10/40 [01:03&lt;02:58,  5.96s/it, Current Best:=11.984]Run 0:  28%|██▊       | 11/40 [01:03&lt;02:51,  5.90s/it, Current Best:=11.984]Run 0:  28%|██▊       | 11/40 [01:08&lt;02:51,  5.90s/it, Current Best:=11.984]Run 0:  28%|██▊       | 11/40 [01:08&lt;02:51,  5.90s/it, Current Best:=11.984]Run 0:  30%|███       | 12/40 [01:08&lt;02:40,  5.72s/it, Current Best:=11.984]Run 0:  30%|███       | 12/40 [01:14&lt;02:40,  5.72s/it, Current Best:=11.984]Run 0:  30%|███       | 12/40 [01:14&lt;02:40,  5.72s/it, Current Best:=11.984]Run 0:  32%|███▎      | 13/40 [01:14&lt;02:41,  5.97s/it, Current Best:=11.984]Run 0:  32%|███▎      | 13/40 [01:21&lt;02:41,  5.97s/it, Current Best:=11.984]Run 0:  32%|███▎      | 13/40 [01:21&lt;02:41,  5.97s/it, Current Best:=11.984]Run 0:  35%|███▌      | 14/40 [01:21&lt;02:37,  6.06s/it, Current Best:=11.984]Run 0:  35%|███▌      | 14/40 [01:27&lt;02:37,  6.06s/it, Current Best:=11.984]Run 0:  35%|███▌      | 14/40 [01:27&lt;02:37,  6.06s/it, Current Best:=2.299] Run 0:  38%|███▊      | 15/40 [01:27&lt;02:31,  6.07s/it, Current Best:=2.299]Run 0:  38%|███▊      | 15/40 [01:34&lt;02:31,  6.07s/it, Current Best:=2.299]Run 0:  38%|███▊      | 15/40 [01:34&lt;02:31,  6.07s/it, Current Best:=2.299]Run 0:  40%|████      | 16/40 [01:34&lt;02:33,  6.40s/it, Current Best:=2.299]Run 0:  40%|████      | 16/40 [01:40&lt;02:33,  6.40s/it, Current Best:=2.299]Run 0:  40%|████      | 16/40 [01:40&lt;02:33,  6.40s/it, Current Best:=2.299]Run 0:  42%|████▎     | 17/40 [01:40&lt;02:22,  6.21s/it, Current Best:=2.299]Run 0:  42%|████▎     | 17/40 [01:46&lt;02:22,  6.21s/it, Current Best:=2.299]Run 0:  42%|████▎     | 17/40 [01:46&lt;02:22,  6.21s/it, Current Best:=0.182]Run 0:  45%|████▌     | 18/40 [01:46&lt;02:14,  6.11s/it, Current Best:=0.182]Run 0:  45%|████▌     | 18/40 [01:51&lt;02:14,  6.11s/it, Current Best:=0.182]Run 0:  45%|████▌     | 18/40 [01:51&lt;02:14,  6.11s/it, Current Best:=0.182]Run 0:  48%|████▊     | 19/40 [01:51&lt;02:05,  6.00s/it, Current Best:=0.182]Run 0:  48%|████▊     | 19/40 [01:58&lt;02:05,  6.00s/it, Current Best:=0.182]Run 0:  48%|████▊     | 19/40 [01:58&lt;02:05,  6.00s/it, Current Best:=0.182]Run 0:  50%|█████     | 20/40 [01:58&lt;02:05,  6.28s/it, Current Best:=0.182]Run 0:  50%|█████     | 20/40 [02:05&lt;02:05,  6.28s/it, Current Best:=0.182]Run 0:  50%|█████     | 20/40 [02:05&lt;02:05,  6.28s/it, Current Best:=0.182]Run 0:  52%|█████▎    | 21/40 [02:05&lt;02:01,  6.42s/it, Current Best:=0.182]Run 0:  52%|█████▎    | 21/40 [02:12&lt;02:01,  6.42s/it, Current Best:=0.182]Run 0:  52%|█████▎    | 21/40 [02:12&lt;02:01,  6.42s/it, Current Best:=0.182]Run 0:  55%|█████▌    | 22/40 [02:12&lt;01:57,  6.51s/it, Current Best:=0.182]Run 0:  55%|█████▌    | 22/40 [02:18&lt;01:57,  6.51s/it, Current Best:=0.182]Run 0:  55%|█████▌    | 22/40 [02:18&lt;01:57,  6.51s/it, Current Best:=0.182]Run 0:  57%|█████▊    | 23/40 [02:18&lt;01:52,  6.59s/it, Current Best:=0.182]Run 0:  57%|█████▊    | 23/40 [02:26&lt;01:52,  6.59s/it, Current Best:=0.182]Run 0:  57%|█████▊    | 23/40 [02:26&lt;01:52,  6.59s/it, Current Best:=0.182]Run 0:  60%|██████    | 24/40 [02:26&lt;01:51,  6.99s/it, Current Best:=0.182]Run 0:  60%|██████    | 24/40 [02:34&lt;01:51,  6.99s/it, Current Best:=0.182]Run 0:  60%|██████    | 24/40 [02:34&lt;01:51,  6.99s/it, Current Best:=0.182]Run 0:  62%|██████▎   | 25/40 [02:34&lt;01:46,  7.08s/it, Current Best:=0.182]Run 0:  62%|██████▎   | 25/40 [02:41&lt;01:46,  7.08s/it, Current Best:=0.182]Run 0:  62%|██████▎   | 25/40 [02:41&lt;01:46,  7.08s/it, Current Best:=0.182]Run 0:  65%|██████▌   | 26/40 [02:41&lt;01:38,  7.04s/it, Current Best:=0.182]Run 0:  65%|██████▌   | 26/40 [02:48&lt;01:38,  7.04s/it, Current Best:=0.182]Run 0:  65%|██████▌   | 26/40 [02:48&lt;01:38,  7.04s/it, Current Best:=0.182]Run 0:  68%|██████▊   | 27/40 [02:48&lt;01:31,  7.01s/it, Current Best:=0.182]Run 0:  68%|██████▊   | 27/40 [02:55&lt;01:31,  7.01s/it, Current Best:=0.182]Run 0:  68%|██████▊   | 27/40 [02:55&lt;01:31,  7.01s/it, Current Best:=0.182]Run 0:  70%|███████   | 28/40 [02:55&lt;01:24,  7.04s/it, Current Best:=0.182]Run 0:  70%|███████   | 28/40 [03:02&lt;01:24,  7.04s/it, Current Best:=0.182]Run 0:  70%|███████   | 28/40 [03:02&lt;01:24,  7.04s/it, Current Best:=0.182]Run 0:  72%|███████▎  | 29/40 [03:02&lt;01:19,  7.26s/it, Current Best:=0.182]Run 0:  72%|███████▎  | 29/40 [03:08&lt;01:19,  7.26s/it, Current Best:=0.182]Run 0:  72%|███████▎  | 29/40 [03:08&lt;01:19,  7.26s/it, Current Best:=0.182]Run 0:  75%|███████▌  | 30/40 [03:08&lt;01:08,  6.86s/it, Current Best:=0.182]Run 0:  75%|███████▌  | 30/40 [03:13&lt;01:08,  6.86s/it, Current Best:=0.182]Run 0:  75%|███████▌  | 30/40 [03:13&lt;01:08,  6.86s/it, Current Best:=0.182]Run 0:  78%|███████▊  | 31/40 [03:13&lt;00:56,  6.31s/it, Current Best:=0.182]Run 0:  78%|███████▊  | 31/40 [03:20&lt;00:56,  6.31s/it, Current Best:=0.182]Run 0:  78%|███████▊  | 31/40 [03:20&lt;00:56,  6.31s/it, Current Best:=0.182]Run 0:  80%|████████  | 32/40 [03:20&lt;00:50,  6.30s/it, Current Best:=0.182]Run 0:  80%|████████  | 32/40 [03:25&lt;00:50,  6.30s/it, Current Best:=0.182]Run 0:  80%|████████  | 32/40 [03:25&lt;00:50,  6.30s/it, Current Best:=0.182]Run 0:  82%|████████▎ | 33/40 [03:25&lt;00:42,  6.13s/it, Current Best:=0.182]Run 0:  82%|████████▎ | 33/40 [03:31&lt;00:42,  6.13s/it, Current Best:=0.182]Run 0:  82%|████████▎ | 33/40 [03:31&lt;00:42,  6.13s/it, Current Best:=0.182]Run 0:  85%|████████▌ | 34/40 [03:31&lt;00:36,  6.09s/it, Current Best:=0.182]Run 0:  85%|████████▌ | 34/40 [03:37&lt;00:36,  6.09s/it, Current Best:=0.182]Run 0:  85%|████████▌ | 34/40 [03:37&lt;00:36,  6.09s/it, Current Best:=0.182]Run 0:  88%|████████▊ | 35/40 [03:37&lt;00:30,  6.03s/it, Current Best:=0.182]Run 0:  88%|████████▊ | 35/40 [03:44&lt;00:30,  6.03s/it, Current Best:=0.182]Run 0:  88%|████████▊ | 35/40 [03:44&lt;00:30,  6.03s/it, Current Best:=0.182]Run 0:  90%|█████████ | 36/40 [03:44&lt;00:24,  6.11s/it, Current Best:=0.182]Run 0:  90%|█████████ | 36/40 [03:50&lt;00:24,  6.11s/it, Current Best:=0.182]Run 0:  90%|█████████ | 36/40 [03:50&lt;00:24,  6.11s/it, Current Best:=0.182]Run 0:  92%|█████████▎| 37/40 [03:50&lt;00:18,  6.14s/it, Current Best:=0.182]Run 0:  92%|█████████▎| 37/40 [03:56&lt;00:18,  6.14s/it, Current Best:=0.182]Run 0:  92%|█████████▎| 37/40 [03:56&lt;00:18,  6.14s/it, Current Best:=0.182]Run 0:  95%|█████████▌| 38/40 [03:56&lt;00:12,  6.26s/it, Current Best:=0.182]Run 0:  95%|█████████▌| 38/40 [04:03&lt;00:12,  6.26s/it, Current Best:=0.182]Run 0:  95%|█████████▌| 38/40 [04:03&lt;00:12,  6.26s/it, Current Best:=0.182]Run 0:  98%|█████████▊| 39/40 [04:03&lt;00:06,  6.25s/it, Current Best:=0.182]Run 0:  98%|█████████▊| 39/40 [04:09&lt;00:06,  6.25s/it, Current Best:=0.182]Run 0:  98%|█████████▊| 39/40 [04:09&lt;00:06,  6.25s/it, Current Best:=0.182]Run 0: 100%|██████████| 40/40 [04:09&lt;00:00,  6.31s/it, Current Best:=0.182]Run 0: 100%|██████████| 40/40 [04:09&lt;00:00,  6.24s/it, Current Best:=0.182]</code></pre>
+  0%|          | 0/40 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/40 [00:05&lt;?, ?it/s]Run 0:   0%|          | 0/40 [00:05&lt;?, ?it/s, Current Best:=5.338]Run 0:   2%|▎         | 1/40 [00:05&lt;03:48,  5.87s/it, Current Best:=5.338]Run 0:   2%|▎         | 1/40 [00:13&lt;03:48,  5.87s/it, Current Best:=5.338]Run 0:   2%|▎         | 1/40 [00:13&lt;03:48,  5.87s/it, Current Best:=5.338]Run 0:   5%|▌         | 2/40 [00:13&lt;04:17,  6.76s/it, Current Best:=5.338]Run 0:   5%|▌         | 2/40 [00:18&lt;04:17,  6.76s/it, Current Best:=5.338]Run 0:   5%|▌         | 2/40 [00:18&lt;04:17,  6.76s/it, Current Best:=5.338]Run 0:   8%|▊         | 3/40 [00:18&lt;03:50,  6.23s/it, Current Best:=5.338]Run 0:   8%|▊         | 3/40 [00:22&lt;03:50,  6.23s/it, Current Best:=5.338]Run 0:   8%|▊         | 3/40 [00:22&lt;03:50,  6.23s/it, Current Best:=5.338]Run 0:  10%|█         | 4/40 [00:22&lt;03:14,  5.40s/it, Current Best:=5.338]Run 0:  10%|█         | 4/40 [00:29&lt;03:14,  5.40s/it, Current Best:=5.338]Run 0:  10%|█         | 4/40 [00:29&lt;03:14,  5.40s/it, Current Best:=5.338]Run 0:  12%|█▎        | 5/40 [00:29&lt;03:18,  5.68s/it, Current Best:=5.338]Run 0:  12%|█▎        | 5/40 [00:36&lt;03:18,  5.68s/it, Current Best:=5.338]Run 0:  12%|█▎        | 5/40 [00:36&lt;03:18,  5.68s/it, Current Best:=2.308]Run 0:  15%|█▌        | 6/40 [00:36&lt;03:30,  6.20s/it, Current Best:=2.308]Run 0:  15%|█▌        | 6/40 [00:42&lt;03:30,  6.20s/it, Current Best:=2.308]Run 0:  15%|█▌        | 6/40 [00:42&lt;03:30,  6.20s/it, Current Best:=2.308]Run 0:  18%|█▊        | 7/40 [00:42&lt;03:22,  6.12s/it, Current Best:=2.308]Run 0:  18%|█▊        | 7/40 [00:48&lt;03:22,  6.12s/it, Current Best:=2.308]Run 0:  18%|█▊        | 7/40 [00:48&lt;03:22,  6.12s/it, Current Best:=2.308]Run 0:  20%|██        | 8/40 [00:48&lt;03:13,  6.06s/it, Current Best:=2.308]Run 0:  20%|██        | 8/40 [00:53&lt;03:13,  6.06s/it, Current Best:=2.308]Run 0:  20%|██        | 8/40 [00:53&lt;03:13,  6.06s/it, Current Best:=2.308]Run 0:  22%|██▎       | 9/40 [00:53&lt;03:01,  5.87s/it, Current Best:=2.308]Run 0:  22%|██▎       | 9/40 [00:59&lt;03:01,  5.87s/it, Current Best:=2.308]Run 0:  22%|██▎       | 9/40 [00:59&lt;03:01,  5.87s/it, Current Best:=2.308]Run 0:  25%|██▌       | 10/40 [00:59&lt;02:56,  5.87s/it, Current Best:=2.308]Run 0:  25%|██▌       | 10/40 [01:05&lt;02:56,  5.87s/it, Current Best:=2.308]Run 0:  25%|██▌       | 10/40 [01:05&lt;02:56,  5.87s/it, Current Best:=2.308]Run 0:  28%|██▊       | 11/40 [01:05&lt;02:46,  5.74s/it, Current Best:=2.308]Run 0:  28%|██▊       | 11/40 [01:10&lt;02:46,  5.74s/it, Current Best:=2.308]Run 0:  28%|██▊       | 11/40 [01:10&lt;02:46,  5.74s/it, Current Best:=2.308]Run 0:  30%|███       | 12/40 [01:10&lt;02:36,  5.59s/it, Current Best:=2.308]Run 0:  30%|███       | 12/40 [01:16&lt;02:36,  5.59s/it, Current Best:=2.308]Run 0:  30%|███       | 12/40 [01:16&lt;02:36,  5.59s/it, Current Best:=2.308]Run 0:  32%|███▎      | 13/40 [01:16&lt;02:35,  5.78s/it, Current Best:=2.308]Run 0:  32%|███▎      | 13/40 [01:22&lt;02:35,  5.78s/it, Current Best:=2.308]Run 0:  32%|███▎      | 13/40 [01:22&lt;02:35,  5.78s/it, Current Best:=2.308]Run 0:  35%|███▌      | 14/40 [01:22&lt;02:32,  5.87s/it, Current Best:=2.308]Run 0:  35%|███▌      | 14/40 [01:27&lt;02:32,  5.87s/it, Current Best:=2.308]Run 0:  35%|███▌      | 14/40 [01:27&lt;02:32,  5.87s/it, Current Best:=2.308]Run 0:  38%|███▊      | 15/40 [01:27&lt;02:22,  5.70s/it, Current Best:=2.308]Run 0:  38%|███▊      | 15/40 [01:34&lt;02:22,  5.70s/it, Current Best:=2.308]Run 0:  38%|███▊      | 15/40 [01:34&lt;02:22,  5.70s/it, Current Best:=2.308]Run 0:  40%|████      | 16/40 [01:34&lt;02:22,  5.94s/it, Current Best:=2.308]Run 0:  40%|████      | 16/40 [01:40&lt;02:22,  5.94s/it, Current Best:=2.308]Run 0:  40%|████      | 16/40 [01:40&lt;02:22,  5.94s/it, Current Best:=2.308]Run 0:  42%|████▎     | 17/40 [01:40&lt;02:16,  5.92s/it, Current Best:=2.308]Run 0:  42%|████▎     | 17/40 [01:45&lt;02:16,  5.92s/it, Current Best:=2.308]Run 0:  42%|████▎     | 17/40 [01:45&lt;02:16,  5.92s/it, Current Best:=2.308]Run 0:  45%|████▌     | 18/40 [01:45&lt;02:06,  5.76s/it, Current Best:=2.308]Run 0:  45%|████▌     | 18/40 [01:51&lt;02:06,  5.76s/it, Current Best:=2.308]Run 0:  45%|████▌     | 18/40 [01:51&lt;02:06,  5.76s/it, Current Best:=2.308]Run 0:  48%|████▊     | 19/40 [01:51&lt;02:03,  5.88s/it, Current Best:=2.308]Run 0:  48%|████▊     | 19/40 [01:58&lt;02:03,  5.88s/it, Current Best:=2.308]Run 0:  48%|████▊     | 19/40 [01:58&lt;02:03,  5.88s/it, Current Best:=2.308]Run 0:  50%|█████     | 20/40 [01:58&lt;01:59,  5.99s/it, Current Best:=2.308]Run 0:  50%|█████     | 20/40 [02:04&lt;01:59,  5.99s/it, Current Best:=2.308]Run 0:  50%|█████     | 20/40 [02:04&lt;01:59,  5.99s/it, Current Best:=2.308]Run 0:  52%|█████▎    | 21/40 [02:04&lt;01:57,  6.16s/it, Current Best:=2.308]Run 0:  52%|█████▎    | 21/40 [02:10&lt;01:57,  6.16s/it, Current Best:=2.308]Run 0:  52%|█████▎    | 21/40 [02:10&lt;01:57,  6.16s/it, Current Best:=2.308]Run 0:  55%|█████▌    | 22/40 [02:10&lt;01:48,  6.04s/it, Current Best:=2.308]Run 0:  55%|█████▌    | 22/40 [02:16&lt;01:48,  6.04s/it, Current Best:=2.308]Run 0:  55%|█████▌    | 22/40 [02:16&lt;01:48,  6.04s/it, Current Best:=2.308]Run 0:  57%|█████▊    | 23/40 [02:16&lt;01:42,  6.04s/it, Current Best:=2.308]Run 0:  57%|█████▊    | 23/40 [02:23&lt;01:42,  6.04s/it, Current Best:=2.308]Run 0:  57%|█████▊    | 23/40 [02:23&lt;01:42,  6.04s/it, Current Best:=2.308]Run 0:  60%|██████    | 24/40 [02:23&lt;01:39,  6.24s/it, Current Best:=2.308]Run 0:  60%|██████    | 24/40 [02:29&lt;01:39,  6.24s/it, Current Best:=2.308]Run 0:  60%|██████    | 24/40 [02:29&lt;01:39,  6.24s/it, Current Best:=2.308]Run 0:  62%|██████▎   | 25/40 [02:29&lt;01:35,  6.35s/it, Current Best:=2.308]Run 0:  62%|██████▎   | 25/40 [02:35&lt;01:35,  6.35s/it, Current Best:=2.308]Run 0:  62%|██████▎   | 25/40 [02:35&lt;01:35,  6.35s/it, Current Best:=2.308]Run 0:  65%|██████▌   | 26/40 [02:35&lt;01:26,  6.21s/it, Current Best:=2.308]Run 0:  65%|██████▌   | 26/40 [02:41&lt;01:26,  6.21s/it, Current Best:=2.308]Run 0:  65%|██████▌   | 26/40 [02:41&lt;01:26,  6.21s/it, Current Best:=2.308]Run 0:  68%|██████▊   | 27/40 [02:41&lt;01:18,  6.05s/it, Current Best:=2.308]Run 0:  68%|██████▊   | 27/40 [02:47&lt;01:18,  6.05s/it, Current Best:=2.308]Run 0:  68%|██████▊   | 27/40 [02:47&lt;01:18,  6.05s/it, Current Best:=2.308]Run 0:  70%|███████   | 28/40 [02:47&lt;01:12,  6.02s/it, Current Best:=2.308]Run 0:  70%|███████   | 28/40 [02:53&lt;01:12,  6.02s/it, Current Best:=2.308]Run 0:  70%|███████   | 28/40 [02:53&lt;01:12,  6.02s/it, Current Best:=2.308]Run 0:  72%|███████▎  | 29/40 [02:53&lt;01:07,  6.13s/it, Current Best:=2.308]Run 0:  72%|███████▎  | 29/40 [02:59&lt;01:07,  6.13s/it, Current Best:=2.308]Run 0:  72%|███████▎  | 29/40 [02:59&lt;01:07,  6.13s/it, Current Best:=2.308]Run 0:  75%|███████▌  | 30/40 [02:59&lt;01:00,  6.02s/it, Current Best:=2.308]Run 0:  75%|███████▌  | 30/40 [03:06&lt;01:00,  6.02s/it, Current Best:=2.308]Run 0:  75%|███████▌  | 30/40 [03:06&lt;01:00,  6.02s/it, Current Best:=2.308]Run 0:  78%|███████▊  | 31/40 [03:06&lt;00:57,  6.36s/it, Current Best:=2.308]Run 0:  78%|███████▊  | 31/40 [03:12&lt;00:57,  6.36s/it, Current Best:=2.308]Run 0:  78%|███████▊  | 31/40 [03:12&lt;00:57,  6.36s/it, Current Best:=2.308]Run 0:  80%|████████  | 32/40 [03:12&lt;00:49,  6.13s/it, Current Best:=2.308]Run 0:  80%|████████  | 32/40 [03:18&lt;00:49,  6.13s/it, Current Best:=2.308]Run 0:  80%|████████  | 32/40 [03:18&lt;00:49,  6.13s/it, Current Best:=2.308]Run 0:  82%|████████▎ | 33/40 [03:18&lt;00:42,  6.09s/it, Current Best:=2.308]Run 0:  82%|████████▎ | 33/40 [03:24&lt;00:42,  6.09s/it, Current Best:=2.308]Run 0:  82%|████████▎ | 33/40 [03:24&lt;00:42,  6.09s/it, Current Best:=2.009]Run 0:  85%|████████▌ | 34/40 [03:24&lt;00:36,  6.10s/it, Current Best:=2.009]Run 0:  85%|████████▌ | 34/40 [03:31&lt;00:36,  6.10s/it, Current Best:=2.009]Run 0:  85%|████████▌ | 34/40 [03:31&lt;00:36,  6.10s/it, Current Best:=2.009]Run 0:  88%|████████▊ | 35/40 [03:31&lt;00:32,  6.48s/it, Current Best:=2.009]Run 0:  88%|████████▊ | 35/40 [03:36&lt;00:32,  6.48s/it, Current Best:=2.009]Run 0:  88%|████████▊ | 35/40 [03:36&lt;00:32,  6.48s/it, Current Best:=2.009]Run 0:  90%|█████████ | 36/40 [03:36&lt;00:24,  6.15s/it, Current Best:=2.009]Run 0:  90%|█████████ | 36/40 [03:43&lt;00:24,  6.15s/it, Current Best:=2.009]Run 0:  90%|█████████ | 36/40 [03:43&lt;00:24,  6.15s/it, Current Best:=2.009]Run 0:  92%|█████████▎| 37/40 [03:43&lt;00:18,  6.27s/it, Current Best:=2.009]Run 0:  92%|█████████▎| 37/40 [03:49&lt;00:18,  6.27s/it, Current Best:=2.009]Run 0:  92%|█████████▎| 37/40 [03:49&lt;00:18,  6.27s/it, Current Best:=2.009]Run 0:  95%|█████████▌| 38/40 [03:49&lt;00:12,  6.17s/it, Current Best:=2.009]Run 0:  95%|█████████▌| 38/40 [03:55&lt;00:12,  6.17s/it, Current Best:=2.009]Run 0:  95%|█████████▌| 38/40 [03:55&lt;00:12,  6.17s/it, Current Best:=2.009]Run 0:  98%|█████████▊| 39/40 [03:55&lt;00:06,  6.06s/it, Current Best:=2.009]Run 0:  98%|█████████▊| 39/40 [04:01&lt;00:06,  6.06s/it, Current Best:=2.009]Run 0:  98%|█████████▊| 39/40 [04:01&lt;00:06,  6.06s/it, Current Best:=2.009]Run 0: 100%|██████████| 40/40 [04:01&lt;00:00,  5.98s/it, Current Best:=2.009]Run 0: 100%|██████████| 40/40 [04:01&lt;00:00,  6.03s/it, Current Best:=2.009]</code></pre>
 </div>
 </div>
 </section>
 <section id="plot-the-performance" class="level3">
 <h3 class="anchored" data-anchor-id="plot-the-performance">Plot the performance</h3>
 <p>Next we plot the performance. Using the engineered features shows a clear benefit. Using a SAAS model on it would lead to even better results, as only two features are needed and SAAS models are very good in figuring out the features of interest.</p>
-<div id="003b4aff" class="cell" data-execution_count="7">
+<div id="e1ed3e2e" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_padded_trajectories(dfs: <span class="bu">list</span>[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    trajectories <span class="op">=</span> []</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> df <span class="kw">in</span> dfs:</span>
@@ -638,7 +950,7 @@ Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consid
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="012-engineered_features_files/figure-html/cell-8-output-1.png" width="582" height="431" class="figure-img"></p>
+<p><img src="012-engineered_features_files/figure-html/cell-8-output-1.png" width="571" height="431" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1118,7 +1430,19 @@ Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consid
       }
     }
   });
-  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../../docs/tutorials/benchmarks/011-ActiveLearning.html" class="pagination-link" aria-label="Active Learning">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Active Learning</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../../docs/tutorials/benchmarks/013-spherical_kernel.html" class="pagination-link" aria-label="Spherical linear kernels for high dimensional BO">
+        <span class="nav-page-text">Spherical linear kernels for high dimensional BO</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Optimization with `ContinuousDescriptorInput`s and engineered Features</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>

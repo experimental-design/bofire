@@ -591,6 +591,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Active Learning</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/013-spherical_kernel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spherical linear kernels for high dimensional BO</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -712,7 +724,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="4953c77b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.323246,&quot;end_time&quot;:&quot;2024-10-10T20:35:37.465135&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:34.141889&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="ead6010b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.323246,&quot;end_time&quot;:&quot;2024-10-10T20:35:37.465135&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:34.141889&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -747,7 +759,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="random-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="random-optimization">Random Optimization</h2>
-<div id="0951ff0a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.18909,&quot;end_time&quot;:&quot;2024-10-10T20:35:37.658331&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:37.469241&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="9bbb89d7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.18909,&quot;end_time&quot;:&quot;2024-10-10T20:35:37.658331&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:37.469241&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    datamodel <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>datamodel)</span>
@@ -769,13 +781,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=1.144]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 15.01it/s, Current Best:=1.144]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=1.168]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 18.88it/s, Current Best:=1.168]</code></pre>
 </div>
 </div>
 </section>
 <section id="optimization-with-hvarfner-priors" class="level2">
 <h2 class="anchored" data-anchor-id="optimization-with-hvarfner-priors">Optimization with Hvarfner priors</h2>
-<div id="4620be65" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="b23f9ae0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> ZDT1(n_inputs<span class="op">=</span><span class="dv">30</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -821,13 +833,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:04&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:04&lt;?, ?it/s, Current Best:=1.096]Run 0: 100%|██████████| 1/1 [00:04&lt;00:00,  4.51s/it, Current Best:=1.096]Run 0: 100%|██████████| 1/1 [00:04&lt;00:00,  4.51s/it, Current Best:=1.096]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:04&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:04&lt;?, ?it/s, Current Best:=1.186]Run 0: 100%|██████████| 1/1 [00:04&lt;00:00,  4.83s/it, Current Best:=1.186]Run 0: 100%|██████████| 1/1 [00:04&lt;00:00,  4.83s/it, Current Best:=1.186]</code></pre>
 </div>
 </div>
 </section>
 <section id="optimization-with-default-priors" class="level2">
 <h2 class="anchored" data-anchor-id="optimization-with-default-priors">Optimization with default priors</h2>
-<div id="192631b6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="83bdef51" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> ZDT1(n_inputs<span class="op">=</span><span class="dv">30</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -849,13 +861,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:07&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:07&lt;?, ?it/s, Current Best:=1.189]Run 0: 100%|██████████| 1/1 [00:07&lt;00:00,  7.36s/it, Current Best:=1.189]Run 0: 100%|██████████| 1/1 [00:07&lt;00:00,  7.36s/it, Current Best:=1.189]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:07&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:07&lt;?, ?it/s, Current Best:=1.386]Run 0: 100%|██████████| 1/1 [00:07&lt;00:00,  7.56s/it, Current Best:=1.386]Run 0: 100%|██████████| 1/1 [00:07&lt;00:00,  7.56s/it, Current Best:=1.386]</code></pre>
 </div>
 </div>
 </section>
 <section id="saasbo-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="saasbo-optimization">SAASBO Optimization</h2>
-<div id="65b1d860" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="7e2d7de8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> ZDT1(n_inputs<span class="op">=</span><span class="dv">30</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -899,11 +911,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:15&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:15&lt;?, ?it/s, Current Best:=1.040]Run 0: 100%|██████████| 1/1 [00:15&lt;00:00, 15.58s/it, Current Best:=1.040]Run 0: 100%|██████████| 1/1 [00:15&lt;00:00, 15.58s/it, Current Best:=1.040]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:57&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:57&lt;?, ?it/s, Current Best:=1.290]Run 0: 100%|██████████| 1/1 [00:57&lt;00:00, 57.93s/it, Current Best:=1.290]Run 0: 100%|██████████| 1/1 [00:57&lt;00:00, 57.93s/it, Current Best:=1.290]</code></pre>
 </div>
 </div>
 <p>Plot the pareto front.</p>
-<div id="6661ffd9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="3debc46b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>theoretical_front <span class="op">=</span> benchmark.get_optima()</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>front <span class="op">=</span> get_pareto_front(domain<span class="op">=</span>benchmark.domain, experiments<span class="op">=</span>results[<span class="dv">0</span>][<span class="dv">0</span>])</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -927,7 +939,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Show the performance of the optimizer.</p>
-<div id="86630fca" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="8da5f1a1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ax.plot(results[<span class="dv">0</span>][<span class="dv">1</span>], label<span class="op">=</span><span class="st">"Mobo, refpoint=(1, 5)"</span>)</span>
@@ -939,7 +951,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="008-ZDT1_files/figure-html/cell-8-output-1.png" width="597" height="429" class="figure-img"></p>
+<p><img src="008-ZDT1_files/figure-html/cell-8-output-1.png" width="597" height="432" class="figure-img"></p>
 </figure>
 </div>
 </div>
