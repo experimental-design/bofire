@@ -503,7 +503,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
     def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
         # Check if we have NChooseK constraints - if so, use MCTS optimizer
-        if len(domain.constraints.get([NChooseKConstraint])) > 0:
+        if len(domain.constraints.get([NChooseKConstraint])) > 0 or any(
+            isinstance(feat, ContinuousInput) and feat.allow_zero
+            for feat in domain.inputs.get(ContinuousInput)
+        ):
             return OptimizerEnum.OPTIMIZE_ACQF_MCTS
         if n_acqfs > 1:
             return OptimizerEnum.OPTIMIZE_ACQF_LIST
@@ -653,6 +656,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 nchooseks_list.append(
                     (feature_indices, constraint.min_count, constraint.max_count)
                 )
+            # for OPTIMIZE_ACQF_MCTS, continuous features with allow_zero=True are treated
+            # as NChooseK constraints where min_count=0 and max_count=1
+            for feat in domain.inputs.get(ContinuousInput):
+                assert isinstance(feat, ContinuousInput)
+                if feat.allow_zero:
+                    feature_index = features2idx[feat.key][0]
+                    nchooseks_list.append(([feature_index], 0, 1))
 
             # Get categorical dimensions (same as mixed_alternating)
             fixed_keys = domain.inputs.get_fixed().get_keys()
