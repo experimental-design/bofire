@@ -22,9 +22,13 @@ class BotorchSurrogates(ABC):
     def __init__(
         self,
         data_model: DataModel,
+        re_init_kwargs: list[dict] = None,
         **kwargs,
     ):
-        self.surrogates = [map_surrogate(model) for model in data_model.surrogates]  # type: ignore
+        if re_init_kwargs is None:
+            re_init_kwargs = [{} for _ in data_model.surrogates]
+        self.surrogates = [map_surrogate(model, **kwargs_) \
+                           for (model, kwargs_) in zip(data_model.surrogates, re_init_kwargs)]  # type: ignore
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
@@ -48,6 +52,16 @@ class BotorchSurrogates(ABC):
                 ),
             ),
         )
+
+    @property
+    def re_init_kwargs(self) -> list[dict]:
+        re_init_kwargs = []
+        for model in self.surrogates:
+            if hasattr(model, "re_init_kwargs"):
+                re_init_kwargs.append(model.re_init_kwargs)
+            else:
+                re_init_kwargs.append({})
+        return re_init_kwargs
 
     # TODO: is this really needed here, code duplication with functional model
     def _check_compability(self, inputs: Inputs, outputs: Outputs):

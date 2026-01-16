@@ -92,9 +92,9 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
 }
 
 
-def map(data_model: data_models.Surrogate) -> Surrogate:
+def map(data_model: data_models.Surrogate, **kwargs) -> Surrogate:
     new_data_model = data_model
     if isinstance(data_model, data_models.MixedSingleTaskGPSurrogate):
         new_data_model = map_MixedSingleTaskGPSurrogate(data_model)
     cls = SURROGATE_MAP[new_data_model.__class__]
-    return cls(data_model=new_data_model)
+    return cls(data_model=new_data_model, **kwargs)
