@@ -42,7 +42,6 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Feature,
     Input,
-    MolecularInput,
     Output,
     TaskInput,
 )
@@ -657,7 +656,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 )
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, MolecularInput)
+                assert isinstance(feat, CategoricalMolecularInput)
                 descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist(),
@@ -706,7 +705,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.to_descriptor_encoding(s))
             elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, MolecularInput)
+                assert isinstance(feat, CategoricalMolecularInput)
                 transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))  # type: ignore
         return pd.concat(transformed, axis=1)
 

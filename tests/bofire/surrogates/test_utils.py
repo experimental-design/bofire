@@ -16,10 +16,10 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousDescriptorInput,
     ContinuousInput,
     MeanFeature,
-    MolecularInput,
     SumFeature,
     WeightedSumFeature,
 )
@@ -251,7 +251,17 @@ def test_get_scaler_molecular(
             )
             for i in range(2)
         ]
-        + [MolecularInput(key="x_mol")],
+        + [
+            CategoricalMolecularInput(
+                key="x_mol",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            )
+        ],
     )
     experiments = [
         [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O"],
@@ -393,7 +403,15 @@ def test_get_feature_keys(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(
+                key="x4",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            ),
         ],
     )
     molecular_feature_keys = get_molecular_feature_keys(specs)

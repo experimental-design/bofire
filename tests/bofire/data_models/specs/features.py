@@ -182,12 +182,7 @@ specs.add_valid(
         ).model_dump(),
     },
 )
-specs.add_valid(
-    features.MolecularInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-    },
-)
+
 
 specs.add_valid(
     features.CategoricalMolecularInput,

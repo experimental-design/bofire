@@ -15,7 +15,6 @@
 | [DiscreteInput](#bofire.data_models.features.api.DiscreteInput) | Feature with discretized ordinal values allowed in the optimization. |
 | [ContinuousDescriptorInput](#bofire.data_models.features.api.ContinuousDescriptorInput) | Class for continuous input features with descriptors |
 | [CategoricalDescriptorInput](#bofire.data_models.features.api.CategoricalDescriptorInput) | Class for categorical input features with descriptors |
-| [MolecularInput](#bofire.data_models.features.api.MolecularInput) |  |
 | [CategoricalMolecularInput](#bofire.data_models.features.api.CategoricalMolecularInput) |  |
 | [TaskInput](#bofire.data_models.features.api.TaskInput) |  |
 
@@ -930,75 +929,7 @@ Validates the compatibility of passed values for the descriptors and the defined
 |--------|--------|-------------------------------------------------------|
 |        |        | List[List[float]]: Nested list with descriptor values |
 
-### MolecularInput { #bofire.data_models.features.api.MolecularInput }
 
-```python
-data_models.features.api.MolecularInput()
-```
-
-
-
-#### Methods
-
-| Name | Description |
-| --- | --- |
-| [get_bounds](#bofire.data_models.features.api.MolecularInput.get_bounds) | Calculates the lower and upper bounds for the feature based on the given transform type and values. |
-| [to_descriptor_encoding](#bofire.data_models.features.api.MolecularInput.to_descriptor_encoding) | Converts values to descriptor encoding. |
-
-##### get_bounds { #bofire.data_models.features.api.MolecularInput.get_bounds }
-
-```python
-data_models.features.api.MolecularInput.get_bounds(
-    transform_type,
-    values,
-    reference_value=None,
-)
-```
-
-Calculates the lower and upper bounds for the feature based on the given transform type and values.
-
-###### Parameters {.doc-section .doc-section-parameters}
-
-| Name            | Type            | Description                                                                  | Default    |
-|-----------------|-----------------|------------------------------------------------------------------------------|------------|
-| transform_type  | AnyMolFeatures  | The type of transformation to apply to the data.                             | _required_ |
-| values          | pd.Series       | The actual data over which the lower and upper bounds are calculated.        | _required_ |
-| reference_value | Optional\[str\] | The reference value for the transformation. Not used here. Defaults to None. | `None`     |
-
-###### Returns {.doc-section .doc-section-returns}
-
-| Name   | Type                                  | Description                                                                                             |
-|--------|---------------------------------------|---------------------------------------------------------------------------------------------------------|
-|        | Tuple\[List\[float\], List\[float\]\] | Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data. |
-
-###### Raises {.doc-section .doc-section-raises}
-
-| Name   | Type                | Description                                                                     |
-|--------|---------------------|---------------------------------------------------------------------------------|
-|        | NotImplementedError | Raised when `values` is None, as it is currently required for `MolecularInput`. |
-
-##### to_descriptor_encoding { #bofire.data_models.features.api.MolecularInput.to_descriptor_encoding }
-
-```python
-data_models.features.api.MolecularInput.to_descriptor_encoding(
-    transform_type,
-    values,
-)
-```
-
-Converts values to descriptor encoding.
-
-###### Parameters {.doc-section .doc-section-parameters}
-
-| Name   | Type      | Description          | Default    |
-|--------|-----------|----------------------|------------|
-| values | pd.Series | Values to transform. | _required_ |
-
-###### Returns {.doc-section .doc-section-returns}
-
-| Name   | Type         | Description                                 |
-|--------|--------------|---------------------------------------------|
-|        | pd.DataFrame | pd.DataFrame: Descriptor encoded dataframe. |
 
 ### CategoricalMolecularInput { #bofire.data_models.features.api.CategoricalMolecularInput }
 

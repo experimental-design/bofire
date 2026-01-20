@@ -47,7 +47,7 @@ quartodoc:
             - DiscreteInput
             - ContinuousDescriptorInput
             - CategoricalDescriptorInput
-            - MolecularInput
+            - ContinuousMolecularInput
             - CategoricalMolecularInput
             - TaskInput
     - title: Data Models - Strategies

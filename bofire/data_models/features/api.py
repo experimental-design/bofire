@@ -14,10 +14,7 @@ from bofire.data_models.features.engineered_feature import (
     WeightedSumFeature,
 )
 from bofire.data_models.features.feature import Feature, Input, Output
-from bofire.data_models.features.molecular import (
-    CategoricalMolecularInput,
-    MolecularInput,
-)
+from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.features.task import TaskInput
 
@@ -38,7 +35,6 @@ AnyFeature = Union[
     ContinuousInput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
-    MolecularInput,
     CategoricalMolecularInput,
     TaskInput,
     SumFeature,
@@ -52,7 +48,6 @@ AnyInput = Union[
     ContinuousInput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
-    MolecularInput,
     CategoricalMolecularInput,
     TaskInput,
 ]
