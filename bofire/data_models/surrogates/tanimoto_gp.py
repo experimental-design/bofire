@@ -47,6 +47,10 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                     includes=CategoricalMolecularInput,
                     exact=False,
                 )
+                for inp_ in molecular_inputs:
+                    if inp_.key in list(self.categorical_encodings):
+                        self.categorical_encodings.pop(inp_.key)  # remove categorical encodings
+
                 base_kernel._molecular_inputs = molecular_inputs
                 base_kernel.pre_compute_distances = True  # this triggers computation in the kernel data-model
 
@@ -68,13 +72,14 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     @model_validator(mode="after")
     def validate_moleculars(self):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
-        if not any(
-            isinstance(value, Fingerprints)
-            or isinstance(value, Fragments)
-            or isinstance(value, FingerprintsFragments)
-            for value in self.categorical_encodings.values()
-        ):
-            raise ValueError(
-                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
-            )
+        if not self.pre_compute_distances:
+            if not any(
+                isinstance(value, Fingerprints)
+                or isinstance(value, Fragments)
+                or isinstance(value, FingerprintsFragments)
+                for value in self.categorical_encodings.values()
+            ):
+                raise ValueError(
+                    "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
+                )
         return self

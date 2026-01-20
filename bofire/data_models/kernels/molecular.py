@@ -26,4 +26,5 @@ class TanimotoKernel(MolecularKernel):
 
         self._computed_mutual_distances = {}
         for inp in self._molecular_inputs:
+            print(f"computing tanimoto distances for input {inp.key:}")
             self._computed_mutual_distances[inp.key] = mutual_tanimoto_distances(inp.categories)

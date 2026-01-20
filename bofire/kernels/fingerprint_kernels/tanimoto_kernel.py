@@ -95,6 +95,14 @@ class TanimotoKernel(BitKernel):
         return D
 
     def forward(self, x1, x2, diag=False, **params):
+        if self.pre_compute_distances:
+            cov = torch.zeros((x1.shape[0], x2.shape[0]))
+            for idx, inp_ in enumerate(self._molecular_inputs):
+                D = self.pre_compute_distances[inp_.key]
+                x1_, x2_ = [x[:, idx].to(torch.long).to(D.device) for x in (x1, x2)]
+                D_sub = D[x1_][:, x2_]
+                cov += D_sub
+            return cov
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(

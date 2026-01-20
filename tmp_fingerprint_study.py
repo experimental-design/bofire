@@ -76,7 +76,7 @@ for _ in range(n_iter):
         n_procs=1,
     )
 
-    specs = {Benchmark.domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
+    specs = {}#{Benchmark.domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
     surrogate = TanimotoGPSurrogate(
         inputs=Benchmark.domain.inputs,
         outputs=Benchmark.domain.outputs,
