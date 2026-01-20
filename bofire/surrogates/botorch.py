@@ -99,7 +99,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     def __init__(
         self,
         data_model: TrainableDataModel,
-        input_transform = None,
+        input_transform=None,
         **kwargs,
     ):
         self.scaler = data_model.scaler
@@ -108,7 +108,6 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         self._input_transform: Optional[InputTransform] = None
         super().__init__(data_model=data_model, **kwargs)
 
-    @property
     def re_init_kwargs(self) -> dict:
         return {"input_transform": self._input_transform}
 

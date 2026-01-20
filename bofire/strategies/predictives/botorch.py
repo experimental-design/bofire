@@ -107,8 +107,12 @@ class BotorchStrategy(PredictiveStrategy):
 
         # map the surrogate spec, we keep it here as attribute to be able to save/dump
         # the surrogate
-        re_init_kwargs = self.surrogates.re_init_kwargs if self.surrogates is not None else None
-        self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs, re_init_kwargs=re_init_kwargs)  # type: ignore
+        re_init_kwargs = (
+            self.surrogates.re_init_kwargs() if self.surrogates is not None else None
+        )
+        self.surrogates = BotorchSurrogates(
+            data_model=self.surrogate_specs, re_init_kwargs=re_init_kwargs
+        )  # type: ignore
 
         self.surrogates.fit(experiments)
         self.model = self.surrogates.compatibilize(  # type: ignore

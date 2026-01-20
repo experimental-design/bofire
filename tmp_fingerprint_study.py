@@ -3,7 +3,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
 
 import bofire.strategies.api as strategies
 from bofire.benchmarks.data.photoswitches import EXPERIMENTS
@@ -45,6 +44,7 @@ inputs = Inputs(features=[input_feature])
 output_feature = ContinuousOutput(key=benchmark["output"], objective=objective)
 outputs = Outputs(features=[output_feature])
 domain = Domain(inputs=inputs, outputs=outputs)
+
 
 def sample(domain):
     datamodel = RandomStrategy(domain=domain)
