@@ -1,0 +1,511 @@
+---
+---
+title: "Reaction Optimization with EntingStrategy"
+author: "Kateryna Morozovska"
+date: "2026-01-19"
+format:
+  html:
+    code-fold: false
+    toc: true
+    toc-depth: 3
+jupyter: python3
+execute:
+  eval: false
+  warning: false
+---
+
+# Suzuki-Miyaura Reaction Optimization
+
+## Overview
+
+This tutorial demonstrates how to use BoFire's `EntingStrategy` for optimizing chemical reactions with categorical variables. EntingStrategy uses tree-based models (LightGBM) which excel at:
+
+- Handling categorical features
+- Capturing non-smooth responses
+- Modeling feature interactions
+- No need for gradient information
+
+==================================================
+Problem: Optimize Suzuki-Miyaura coupling reaction yield
+
+Variables:
+  - Solvent: DMF, DMSO, THF, Toluene (categorical)
+  - Base: K2CO3, Cs2CO3, Et3N, NaOtBu (categorical)
+  - Temperature: 20-100°C (continuous)
+  - Reaction time: 1-24 hours (continuous)
+  - Catalyst loading: 1-10 mol% (continuous)
+
+Goal: Maximize reaction yield (%)
+
+## Installation
+
+```{python}
+# Create environment
+# conda create -n bofire_enting python=3.11 -y
+# conda activate bofire_enting
+
+# Install BoFire with all dependencies (IMPORTANT!)
+# pip install "bofire[all]"
+---
+
+import os
+os.environ['PYOMO_AUTOLOAD_SOLVERS'] = 'false'
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from typing import Dict
+
+# BoFire imports
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import (
+    ContinuousInput, 
+    CategoricalInput, 
+    ContinuousOutput
+)
+# Import BOTH the data model and strategy class
+from bofire.data_models.strategies.api import EntingStrategy as EntingStrategyDataModel
+from bofire.strategies.predictives.enting import EntingStrategy
+
+print("Reaction Optimization with EntingStrategy")
+print("=" * 80)
+```
+
+### STEP 1: Define the Chemical Reaction Space
+
+```{python}
+print("\n📐 STEP 1: Define Reaction Parameter Space")
+print("-" * 80)
+
+inputs = Inputs(features=[
+    # Categorical variables
+    CategoricalInput(
+        key="solvent",
+        categories=["DMF", "DMSO", "THF", "Toluene"]
+    ),
+    CategoricalInput(
+        key="base",
+        categories=["K2CO3", "Cs2CO3", "Et3N", "NaOtBu"]
+    ),
+    
+    # Continuous variables
+    ContinuousInput(
+        key="temperature",
+        bounds=(20, 100),  # °C
+    ),
+    ContinuousInput(
+        key="time",
+        bounds=(1, 24),  # hours
+    ),
+    ContinuousInput(
+        key="catalyst_loading",
+        bounds=(1, 10),  # mol%
+    ),
+])
+
+outputs = Outputs(features=[
+    ContinuousOutput(key="yield"),  # %
+])
+
+domain = Domain(inputs=inputs, outputs=outputs)
+
+print("✅ Reaction space defined:")
+# Access features by iterating through them
+for feature in inputs.features:
+    if feature.key == "solvent":
+        print(f"   Solvents: {feature.categories}")
+    elif feature.key == "base":
+        print(f"   Bases: {feature.categories}")
+    elif feature.key == "temperature":
+        print(f"   Temperature: {feature.bounds[0]}-{feature.bounds[1]}°C")
+    elif feature.key == "time":
+        print(f"   Time: {feature.bounds[0]}-{feature.bounds[1]} hours")
+    elif feature.key == "catalyst_loading":
+        print(f"   Catalyst: {feature.bounds[0]}-{feature.bounds[1]} mol%")
+```
+
+### STEP 2: Simulate Realistic Reaction Response
+
+```{python}
+print("\n🔬 STEP 2: Define Reaction Response Function")
+print("-" * 80)
+
+def suzuki_reaction_simulator(params: pd.Series) -> float:
+    """
+    Simulates a Suzuki coupling reaction with realistic behavior.
+    
+    Real chemistry insights:
+    - Polar aprotic solvents (DMF, DMSO) generally better
+    - Strong bases (Cs2CO3, NaOtBu) more effective
+    - Optimal temperature ~80°C (too low = slow, too high = decomposition)
+    - Diminishing returns after ~12 hours
+    - Higher catalyst helps, but plateaus
+    """
+    
+    # Solvent effects (polarity and coordination)
+    solvent_scores = {
+        "DMF": 0.85,
+        "DMSO": 0.90,
+        "THF": 0.65,
+        "Toluene": 0.45
+    }
+    
+    # Base strength and solubility
+    base_scores = {
+        "K2CO3": 0.70,
+        "Cs2CO3": 0.90,
+        "Et3N": 0.50,
+        "NaOtBu": 0.85
+    }
+    
+    solvent_effect = solvent_scores[params["solvent"]]
+    base_effect = base_scores[params["base"]]
+    
+    # Temperature effect (optimal around 80°C)
+    #Gaussian (bell-shaped) response curve centered at 80°C that mimics real reaction kinetics where there's an optimal temperature
+        # 80 = Optimal temperature (°C) where the reaction is most efficient
+            # Below 80°C: Reaction too slow (insufficient activation energy)
+            # Above 80°C: Side reactions, degradation, or catalyst deactivation
+    
+        # 500 = Width parameter (variance) controlling how "forgiving" the optimum is
+            # Smaller value = sharper peak (very sensitive to temperature)
+            # Larger value = broader peak (more tolerant)
+            # At 80±22°C, you still get ~82% of maximum effect
+    temp = params["temperature"]
+    temp_effect = np.exp(-((temp - 80) ** 2) / 500) 
+        
+    # Time effect (logarithmic saturation) with asymptotic approach to equilibrium - common in chemical kinetics
+    # Rapid initial progress that slows down as equilibrium is approached
+    # Here:
+        # 0.3 = Baseline/minimum yield at time = 0
+            # Even at t=0, you get 30% of the effect (instantaneous mixing, fast initial reaction)
+        # 0.7 = Additional yield available through reaction time
+            # Maximum effect = 0.3 + 0.7 = 1.0 (100%)
+        # 8 = Time constant (hours) - controls how fast you approach maximum
+            # At 8 hours: you reach ~63% of the additional 0.7 → total effect = 0.74
+            # At 16 hours: you reach ~86% of the additional 0.7 → total effect = 0.90
+            # At 24 hours: you reach ~95% of maximum → total effect = 0.97
+            
+    time = params["time"]
+    time_effect = 0.3 + 0.7 * (1 - np.exp(-time / 8))
+    
+    # Catalyst effect (diminishing returns)  - we model saturation kinetics that mimics catalyst saturation where active sites become fully occupied
+        # 0.5 = Baseline effect (even with 0% catalyst, you get 50% efficiency) -  represents background/uncatalyzed reaction
+        # 0.5 = Additional benefit from catalyst => Maximum effect = 0.5 + 0.5 = 1.0 (100%)
+        # 3 = Saturation constant (mol%)
+            # At 3 mol%: reaches ~63% of the additional 0.5 → total effect = 0.82
+            # At 6 mol%: reaches ~86% of the additional 0.5 → total effect = 0.93
+            # At 10 mol%: reaches ~96% of maximum → total effect = 0.98
+    cat = params["catalyst_loading"]
+    cat_effect = 0.5 + 0.5 * (1 - np.exp(-cat / 3))
+    
+    # Synergistic interactions (realistic chemistry!) - Combinatorial effects between reaction components
+    # Some combinations work better (or worse) than the sum of individual parts
+    # DMSO + strong base = synergy
+    synergy = 1.0
+    if params["solvent"] == "DMSO" and params["base"] in ["Cs2CO3", "NaOtBu"]:
+        synergy = 1.15 #Positive Synergy (+15%) "DMSO + Strong Bases (Cs₂CO₃ or NaOtBu)" => 1.15 = 15% yield boost
+    
+    # Toluene + weak base = poor
+    if params["solvent"] == "Toluene" and params["base"] == "Et3N":
+        synergy = 0.80 #Negative Synergy (-20%) "Toluene + Weak Base (Et₃N)" => 0.80 = 20% yield penalty
+    
+    # Calculate base yield
+    # Multiplicative model: All effects must be favorable for high yield If ANY factor is poor (e.g., temp_effect = 0.4), overall yield suffers
+
+    base_yield = 100 * solvent_effect * base_effect * temp_effect * time_effect * cat_effect * synergy #100 = Scale to percentage (0-100%)
+    
+    # Add realistic experimental noise (±5%)
+    noise = np.random.normal(0, 3) # noise = 3%: Standard deviation of experimental error ±3% is typical for well-controlled lab experiments
+    # ~68% of results within ±3%, ~95% within ±6%
+
+    # Cap at 0-100%
+    final_yield = np.clip(base_yield + noise, 0, 100) # np.clip: Ensures physically meaningful yields (0-100%)
+    
+    return final_yield
+
+print("✅ Reaction simulator ready")
+print("   Includes: solvent effects, base strength, temperature optimum,")
+print("   time saturation, catalyst loading, synergistic interactions, and noise")
+```
+
+### STEP 3: Generate Initial Screening Experiments
+
+```{python}
+print("\n🌱 STEP 3: Initial Random Screening (Design of Experiments)")
+print("-" * 80)
+
+np.random.seed(42)  # For reproducibility
+
+n_initial = 12  # Typical initial screen size
+initial_experiments = domain.inputs.sample(n_initial)
+
+# "Run" the initial experiments
+initial_experiments["yield"] = initial_experiments.apply(
+    suzuki_reaction_simulator, axis=1
+)
+
+print(f"✅ Completed {n_initial} initial screening experiments")
+print(f"\n📊 Initial screening results:")
+print(initial_experiments.to_string(index=False))
+print(f"\n   Best initial yield: {initial_experiments['yield'].max():.1f}%")
+print(f"   Average yield: {initial_experiments['yield'].mean():.1f}%")
+```
+
+### STEP 4: Initialize EntingStrategy
+
+```{python}
+print("\n🤖 STEP 4: Initialize EntingStrategy")
+print("-" * 80)
+
+# Import the strategy data model
+from bofire.data_models.strategies.api import EntingStrategy as EntingStrategyDataModel
+
+# Create the strategy configuration (data model)
+strategy_data_model = EntingStrategyDataModel(
+    domain=domain,
+    seed=42  # For reproducibility
+)
+
+# Initialize the strategy with the data model
+strategy = EntingStrategy(data_model=strategy_data_model)
+
+# Tell the strategy about initial experiments
+strategy.tell(initial_experiments)
+
+print(f"✅ Strategy initialized with {len(strategy.experiments)} experiments")
+print("   EntingStrategy uses tree-based models (LightGBM)")
+print("   Perfect for: categorical variables, non-smooth responses, interactions")
+```
+
+### STEP 5: Optimization Campaign
+
+```{python}
+print("\n🔄 STEP 5: Run Optimization Campaign")
+print("=" * 80)
+print(f"{'Iter':<6} {'Solvent':<10} {'Base':<10} {'Temp':<8} {'Time':<8} {'Cat%':<8} {'Yield':<8} {'Best':<8}")
+print("-" * 80)
+
+n_iterations = 20
+history = []
+
+for i in range(n_iterations):
+    # Ask for next experiment
+    candidate = strategy.ask(candidate_count=1)
+    
+    # "Run" the experiment
+    candidate["yield"] = candidate.apply(suzuki_reaction_simulator, axis=1)
+    
+    # Tell the result to the strategy
+    strategy.tell(candidate)
+    
+    # Track progress
+    current_best = strategy.experiments["yield"].max()
+    best_idx = strategy.experiments["yield"].idxmax()
+    best_exp = strategy.experiments.loc[best_idx]
+    
+    # Display current experiment
+    curr = candidate.iloc[0]
+    print(f"{i+1:<6} {curr['solvent']:<10} {curr['base']:<10} "
+          f"{curr['temperature']:<8.1f} {curr['time']:<8.1f} "
+          f"{curr['catalyst_loading']:<8.1f} {curr['yield']:<8.1f} {current_best:<8.1f}")
+    
+    history.append({
+        'iteration': i + 1,
+        'yield': curr['yield'],
+        'best_yield': current_best,
+        'solvent': curr['solvent'],
+        'base': curr['base'],
+        'temperature': curr['temperature'],
+        'time': curr['time'],
+        'catalyst_loading': curr['catalyst_loading']
+    })
+```
+
+### STEP 6: Final Results
+
+```{python}
+print("\n" + "=" * 80)
+print("🎉 OPTIMIZATION COMPLETE!")
+print("=" * 80)
+
+best_idx = strategy.experiments["yield"].idxmax()
+best_result = strategy.experiments.loc[best_idx]
+
+print(f"\n🏆 OPTIMIZED REACTION CONDITIONS:")
+print("-" * 80)
+print(f"   Solvent:          {best_result['solvent']}")
+print(f"   Base:             {best_result['base']}")
+print(f"   Temperature:      {best_result['temperature']:.1f}°C")
+print(f"   Reaction time:    {best_result['time']:.1f} hours")
+print(f"   Catalyst loading: {best_result['catalyst_loading']:.1f} mol%")
+print(f"\n   ✨ YIELD: {best_result['yield']:.1f}%")
+print(f"\n   Total experiments: {len(strategy.experiments)}")
+print(f"   Improvement: {best_result['yield'] - initial_experiments['yield'].max():.1f}% over initial screen")
+```
+
+### STEP 7: Visualizations
+
+```{python}
+print("\n📈 STEP 7: Generating Visualizations...")
+print("-" * 80)
+
+history_df = pd.DataFrame(history)
+all_experiments = strategy.experiments.copy()
+
+# Create figure with multiple subplots
+fig = plt.figure(figsize=(16, 10))
+gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
+
+# Plot 1: Convergence curve
+ax1 = fig.add_subplot(gs[0, :2])
+ax1.plot(history_df['iteration'], history_df['best_yield'], 
+         'b-o', linewidth=2, markersize=6, label='Best yield')
+ax1.fill_between(history_df['iteration'], 
+                  history_df['yield'], 
+                  alpha=0.3, label='Individual experiments')
+ax1.axhline(y=initial_experiments['yield'].max(), 
+            color='gray', linestyle='--', alpha=0.7, label='Initial best')
+ax1.set_xlabel('Iteration', fontsize=11, fontweight='bold')
+ax1.set_ylabel('Yield (%)', fontsize=11, fontweight='bold')
+ax1.set_title('Optimization Progress', fontsize=13, fontweight='bold', pad=15)
+ax1.grid(True, alpha=0.3)
+ax1.legend()
+ax1.set_ylim(bottom=0)
+
+# Plot 2: Yield distribution
+ax2 = fig.add_subplot(gs[0, 2])
+ax2.hist(all_experiments['yield'], bins=15, color='skyblue', edgecolor='black', alpha=0.7)
+ax2.axvline(best_result['yield'], color='red', linestyle='--', linewidth=2, label='Best')
+ax2.set_xlabel('Yield (%)', fontsize=10, fontweight='bold')
+ax2.set_ylabel('Frequency', fontsize=10, fontweight='bold')
+ax2.set_title('Yield Distribution', fontsize=12, fontweight='bold')
+ax2.legend()
+
+# Plot 3: Solvent effect
+ax3 = fig.add_subplot(gs[1, 0])
+solvent_avg = all_experiments.groupby('solvent')['yield'].mean().sort_values(ascending=False)
+colors_solvent = ['green' if x == best_result['solvent'] else 'lightblue' for x in solvent_avg.index]
+ax3.barh(solvent_avg.index, solvent_avg.values, color=colors_solvent, edgecolor='black')
+ax3.set_xlabel('Avg Yield (%)', fontsize=10, fontweight='bold')
+ax3.set_title('Solvent Effect', fontsize=12, fontweight='bold')
+ax3.grid(axis='x', alpha=0.3)
+
+# Plot 4: Base effect
+ax4 = fig.add_subplot(gs[1, 1])
+base_avg = all_experiments.groupby('base')['yield'].mean().sort_values(ascending=False)
+colors_base = ['green' if x == best_result['base'] else 'lightcoral' for x in base_avg.index]
+ax4.barh(base_avg.index, base_avg.values, color=colors_base, edgecolor='black')
+ax4.set_xlabel('Avg Yield (%)', fontsize=10, fontweight='bold')
+ax4.set_title('Base Effect', fontsize=12, fontweight='bold')
+ax4.grid(axis='x', alpha=0.3)
+
+# Plot 5: Temperature vs Yield
+ax5 = fig.add_subplot(gs[1, 2])
+scatter1 = ax5.scatter(all_experiments['temperature'], all_experiments['yield'],
+                       c=all_experiments['yield'], cmap='RdYlGn', 
+                       s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
+ax5.scatter(best_result['temperature'], best_result['yield'], 
+            color='red', s=200, marker='*', edgecolors='black', linewidth=2, 
+            label='Best', zorder=5)
+ax5.set_xlabel('Temperature (°C)', fontsize=10, fontweight='bold')
+ax5.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
+ax5.set_title('Temperature Effect', fontsize=12, fontweight='bold')
+ax5.legend()
+ax5.grid(True, alpha=0.3)
+
+# Plot 6: Time vs Yield
+ax6 = fig.add_subplot(gs[2, 0])
+scatter2 = ax6.scatter(all_experiments['time'], all_experiments['yield'],
+                       c=all_experiments['yield'], cmap='RdYlGn', 
+                       s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
+ax6.scatter(best_result['time'], best_result['yield'], 
+            color='red', s=200, marker='*', edgecolors='black', linewidth=2, 
+            label='Best', zorder=5)
+ax6.set_xlabel('Time (hours)', fontsize=10, fontweight='bold')
+ax6.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
+ax6.set_title('Time Effect', fontsize=12, fontweight='bold')
+ax6.legend()
+ax6.grid(True, alpha=0.3)
+
+# Plot 7: Catalyst loading vs Yield
+ax7 = fig.add_subplot(gs[2, 1])
+scatter3 = ax7.scatter(all_experiments['catalyst_loading'], all_experiments['yield'],
+                       c=all_experiments['yield'], cmap='RdYlGn', 
+                       s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
+ax7.scatter(best_result['catalyst_loading'], best_result['yield'], 
+            color='red', s=200, marker='*', edgecolors='black', linewidth=2, 
+            label='Best', zorder=5)
+ax7.set_xlabel('Catalyst Loading (mol%)', fontsize=10, fontweight='bold')
+ax7.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
+ax7.set_title('Catalyst Effect', fontsize=12, fontweight='bold')
+ax7.legend()
+ax7.grid(True, alpha=0.3)
+
+# Plot 8: Summary statistics
+ax8 = fig.add_subplot(gs[2, 2])
+ax8.axis('off')
+summary_text = f"""
+EXPERIMENT SUMMARY
+
+Total runs: {len(all_experiments)}
+Initial screen: {n_initial}
+Optimization: {n_iterations}
+
+Best yield: {best_result['yield']:.1f}%
+Worst yield: {all_experiments['yield'].min():.1f}%
+Average: {all_experiments['yield'].mean():.1f}%
+Std dev: {all_experiments['yield'].std():.1f}%
+
+Improvement: 
+{best_result['yield'] - initial_experiments['yield'].max():.1f}% absolute
+{((best_result['yield'] / initial_experiments['yield'].max() - 1) * 100):.1f}% relative
+"""
+ax8.text(0.1, 0.5, summary_text, fontsize=10, family='monospace',
+         verticalalignment='center', bbox=dict(boxstyle='round', 
+         facecolor='wheat', alpha=0.5))
+
+plt.suptitle('Suzuki-Miyaura Reaction Optimization Dashboard', 
+             fontsize=16, fontweight='bold', y=0.98)
+
+plt.savefig('reaction_optimization_results.png', dpi=300, bbox_inches='tight')
+print("✅ Saved: reaction_optimization_results.png")
+plt.show()
+```
+
+### STEP 8: Export Results
+
+```{python}
+print("\n💾 STEP 8: Exporting Results")
+print("-" * 80)
+
+# Save all experiments to CSV
+all_experiments.to_csv('optimization_experiments.csv', index=False)
+print("✅ Saved: optimization_experiments.csv")
+
+# Save best conditions
+with open('best_conditions.txt', 'w') as f:
+    f.write("OPTIMIZED SUZUKI-MIYAURA COUPLING CONDITIONS\n")
+    f.write("=" * 50 + "\n\n")
+    f.write(f"Solvent:          {best_result['solvent']}\n")
+    f.write(f"Base:             {best_result['base']}\n")
+    f.write(f"Temperature:      {best_result['temperature']:.1f}°C\n")
+    f.write(f"Reaction time:    {best_result['time']:.1f} hours\n")
+    f.write(f"Catalyst loading: {best_result['catalyst_loading']:.1f} mol%\n")
+    f.write(f"\nYield: {best_result['yield']:.1f}%\n")
+    f.write(f"\nTotal experiments: {len(all_experiments)}\n")
+
+print("✅ Saved: best_conditions.txt")
+
+print("\n📖 Next steps:")
+print("   1. Review the optimization_experiments.csv file")
+print("   2. Check the visualization dashboard")
+print("   3. Adapt this code for YOUR reaction!")
+print("\n💡 To use for your own reaction:")
+print("   - Modify the categorical options (solvents, bases, etc.)")
+print("   - Adjust continuous ranges (temp, time, etc.)")
+print("   - Replace the simulator with your actual lab experiments")
+print("   - Run the same workflow!")
+```
+
