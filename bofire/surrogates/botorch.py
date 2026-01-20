@@ -105,6 +105,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.output_scaler = data_model.output_scaler
         self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
+        self._input_transform: Optional[InputTransform] = None
 
     def get_feature_indices(
         self,
@@ -148,12 +149,13 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         return indices
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
-        input_transform = get_input_transform(
-            inputs=self.inputs,
-            engineered_features=self.engineered_features,
-            scaler_type=self.scaler,
-            categorical_encodings=self.categorical_encodings,
-        )
+        if self._input_transform is None:
+            self._input_transform = get_input_transform(
+                inputs=self.inputs,
+                engineered_features=self.engineered_features,
+                scaler_type=self.scaler,
+                categorical_encodings=self.categorical_encodings,
+            )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         # in case of classification we need to convert y from str to int
         if isinstance(self.outputs[0], CategoricalOutput):
@@ -171,7 +173,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             if self.output_scaler == ScalerEnum.STANDARDIZE
             else None
         )
-        self._fit_botorch(tX, tY, input_transform, outcome_transform, **kwargs)
+        self._fit_botorch(tX, tY, self._input_transform, outcome_transform, **kwargs)
 
     @abstractmethod
     def _fit_botorch(
