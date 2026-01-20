@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
+from bofire.data_models.features.molecular import ContinuousMolecularInput
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.types import Descriptors, FeatureKeys
 
 
@@ -107,4 +109,33 @@ class WeightedSumFeature(EngineeredFeature):
             if len(set(self.descriptors) - set(feature.descriptors)) > 0:  # type: ignore
                 raise ValueError(
                     f"Not all descriptors {self.descriptors} are present in feature '{feature_key}'",
+                )
+
+
+class MolecularWeightedSumFeature(EngineeredFeature):
+    """Molecular weighted sum feature, which computes the sum over the specified
+    molecular descriptors weighted by the involved feature values.
+
+    Args:
+        features: The molecular features to be used to compute the weighted sum.
+        molfeatures: The molecular feature descriptor specification.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
+    type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
+    molfeatures: MordredDescriptors
+    order_id: ClassVar[int] = 3
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return len(self.molfeatures.get_descriptor_names())
+
+    def validate_features(self, inputs: "Inputs"):
+        super().validate_features(inputs)
+        for feature_key in self.features:
+            feature = inputs.get_by_key(feature_key)
+            if not isinstance(feature, ContinuousMolecularInput):
+                raise ValueError(
+                    f"Feature '{feature_key}' is not a ContinuousMolecularInput",
                 )
