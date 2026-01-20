@@ -2,7 +2,7 @@ from typing import Literal, Type
 
 from pydantic import Field, model_validator
 
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput, CategoricalMolecularInput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
@@ -21,6 +21,7 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
+    pre_compute_distances: bool = False
 
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
@@ -32,6 +33,27 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
+
+    @model_validator(mode="after")
+    def pre_compute_distances(self):
+        if not self.pre_compute_distances:
+            return self
+
+        # settings
+        if isinstance(self.kernel, ScaleKernel):
+            base_kernel = self.kernel.base_kernel
+            if isinstance(base_kernel, TanimotoKernel):
+                molecular_inputs = self.inputs.get(
+                    includes=CategoricalMolecularInput,
+                    exact=False,
+                )
+                base_kernel._molecular_inputs = molecular_inputs
+                base_kernel.pre_compute_distances = True  # this triggers computation in the kernel data-model
+
+                return self
+
+        raise NotImplementedError("no supperted kernel-architecture for pre-computed tanimoto distances")
+
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

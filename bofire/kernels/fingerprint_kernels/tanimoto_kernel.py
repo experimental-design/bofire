@@ -27,8 +27,9 @@ SOFTWARE.
 
 import torch
 
+from bofire.data_models.features.api import CategoricalMolecularInput
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
-
+from bofire.utils.torch_tools import tkwargs
 
 class TanimotoKernel(BitKernel):
     r"""Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
@@ -61,9 +62,37 @@ class TanimotoKernel(BitKernel):
     is_stationary = False
     has_lengthscale = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, pre_compute_distances: bool = False, molecular_inputs: list[CategoricalMolecularInput] = None,
+                 computed_mutual_distances: dict[str, list[float]] = None,
+                 **kwargs):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
+
+        self.pre_compute_distances = pre_compute_distances
+
+        if self.pre_compute_distances:
+            self._molecular_inputs = molecular_inputs
+            self.pre_compute_distances = {
+                input_.key: self.distance_matrix(input_, computed_mutual_distances[input_.key]) \
+                for input_ in molecular_inputs
+            }
+
+    def distance_matrix(self, input: CategoricalMolecularInput, distances: list[float]) -> torch.Tensor:
+        n = len(input.categories)
+        m = n * (n - 1) // 2
+        if len(distances) != m:
+            raise ValueError(
+                f"Expected {m} distances for n={n}, but got {len(distances)}. "
+                "Ensure you used itertools.combinations in the same order."
+            )
+
+        D = torch.zeros((n, n), **tkwargs)
+        rows, cols = torch.triu_indices(n, n, offset=1)  # indices where i < j
+        D[rows, cols] = torch.tensor(distances, **tkwargs)
+        # Mirror to lower triangle
+        D[cols, rows] = D[rows, cols]
+        # Diagonal remains 0 (distance of a point to itself)
+        return D
 
     def forward(self, x1, x2, diag=False, **params):
         if diag:
