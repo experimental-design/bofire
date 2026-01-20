@@ -19,7 +19,7 @@ class TanimotoKernel(MolecularKernel):
     @model_validator(mode="after")
     def compute_mutual_tanimoto_distances(self):
 
-        if not self.pre_compute_distances:
+        if not self.pre_compute_distances or (self._computed_mutual_distances is not None):
             return self
 
         assert self._molecular_inputs is not None, "need molecular inputs ofr pre-computed distances"

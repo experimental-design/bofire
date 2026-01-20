@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from time import time
 
 import bofire.strategies.api as strategies
 from bofire.benchmarks.data.photoswitches import EXPERIMENTS
@@ -61,11 +62,13 @@ n_iter = 5 if not SMOKE_TEST else 1
 bo_results_set = []
 random_results_set = []
 n_iterations = 49 if not SMOKE_TEST else 1
+t_random = 0
 
 for _ in range(n_iter):
     Benchmark = LookupTableBenchmark(domain=domain, lookup_table=main_file)
     sampled = sample(Benchmark.domain)
     sampled_xy = Benchmark.f(sampled, return_complete=True)
+    t0 = time()
     random_results = run(
         Benchmark,
         strategy_factory=lambda domain: strategies.map(RandomStrategy(domain=domain)),
@@ -75,6 +78,7 @@ for _ in range(n_iter):
         n_runs=1,
         n_procs=1,
     )
+    t_random += time() - t0
 
     specs = {}#{Benchmark.domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
     surrogate = TanimotoGPSurrogate(
@@ -115,3 +119,5 @@ for _ in range(n_iter):
     )
     random_results_set.append(random_results_new)
     bo_results_set.append(bo_results_new)
+
+print(t_random)
