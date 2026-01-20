@@ -1,6 +1,6 @@
 import itertools
 from abc import ABC
-from typing import List, Optional
+from typing import Optional
 
 import botorch
 import pandas as pd
@@ -17,7 +17,6 @@ from bofire.surrogates.trainable import TrainableSurrogate
 
 
 class BotorchSurrogates(ABC):
-    surrogates: List[BotorchSurrogate]
 
     def __init__(
         self,
@@ -27,7 +26,7 @@ class BotorchSurrogates(ABC):
     ):
         if re_init_kwargs is None:
             re_init_kwargs = [{} for _ in data_model.surrogates]
-        self.surrogates = [
+        self.surrogates: list[BotorchSurrogate] = [
             map_surrogate(model, **kwargs_)
             for (model, kwargs_) in zip(data_model.surrogates, re_init_kwargs)
         ]  # type: ignore
