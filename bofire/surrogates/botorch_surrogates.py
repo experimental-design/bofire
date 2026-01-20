@@ -1,6 +1,6 @@
 import itertools
 from abc import ABC
-from typing import List
+from typing import List, Optional
 
 import botorch
 import pandas as pd
@@ -22,7 +22,7 @@ class BotorchSurrogates(ABC):
     def __init__(
         self,
         data_model: DataModel,
-        re_init_kwargs: list[dict] = None,
+        re_init_kwargs: Optional[list[dict]] = None,
         **kwargs,
     ):
         if re_init_kwargs is None:
