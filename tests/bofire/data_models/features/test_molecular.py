@@ -6,7 +6,10 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.molecular import CategoricalMolecularInput
+from bofire.data_models.features.molecular import (
+    CategoricalMolecularInput,
+    ContinuousMolecularInput,
+)
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
     FingerprintsFragments,
@@ -157,6 +160,12 @@ def test_categorical_molecular_input_invalid_smiles():
             key="a",
             categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"],
         )
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_continous_molecular_input_valid_smiles():
+    with pytest.raises(ValueError, match="abc is not a valid smiles string"):
+        ContinuousMolecularInput(key="a", bounds=[0, 1], molecule="abc")
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")

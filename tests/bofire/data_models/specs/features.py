@@ -212,21 +212,6 @@ specs.add_valid(
     },
 )
 
-specs.add_invalid(
-    features.CategoricalMolecularInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "categories": [
-            "CC(=O)Oc1ccccc1C(=O)O",
-            "c",
-            "[CH3][CH2][OH]",
-            "N[C@](C)(F)C(=O)O",
-        ],
-        "allowed": [True, True, True, True],
-    },
-    error=ValueError,
-    message="c is not a valid smiles string",
-)
 
 specs.add_valid(
     features.ContinuousMolecularInput,
@@ -239,13 +224,6 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
     },
-)
-
-specs.add_invalid(
-    features.ContinuousMolecularInput,
-    lambda: {"key": str(uuid.uuid4()), "molecule": "c", "bounds": [0.0, 1.0]},
-    error=ValueError,
-    message="c is not a valid smiles string",
 )
 
 
