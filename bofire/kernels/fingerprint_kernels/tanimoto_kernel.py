@@ -86,7 +86,7 @@ class TanimotoKernel(BitKernel):
                 "Ensure you used itertools.combinations in the same order."
             )
 
-        D = torch.zeros((n, n), **tkwargs)
+        D = torch.ones((n, n), **tkwargs)
         rows, cols = torch.triu_indices(n, n, offset=1)  # indices where i < j
         D[rows, cols] = torch.tensor(distances, **tkwargs)
         # Mirror to lower triangle
@@ -96,13 +96,35 @@ class TanimotoKernel(BitKernel):
 
     def forward(self, x1, x2, diag=False, **params):
         if self.pre_compute_distances:
-            cov = torch.zeros((x1.shape[0], x2.shape[0]))
+
+            # Infer shapes
+            batch_shape = x1.shape[:-2]
+            n1, d = x1.shape[-2], x1.shape[-1]
+            n2 = x2.shape[-2]
+            assert d == len(self._molecular_inputs), \
+                f"Last dim d={d} must match number of molecular inputs={len(self._molecular_inputs)}"
+
+            cov = torch.zeros((*batch_shape, n1, n2), **tkwargs)
+
+            # Sum contributions for each feature index along the last dim
             for idx, inp_ in enumerate(self._molecular_inputs):
-                D = self.pre_compute_distances[inp_.key]
-                x1_, x2_ = [x[:, idx].to(torch.long).to(D.device) for x in (x1, x2)]
-                D_sub = D[x1_][:, x2_]
-                cov += D_sub
+                D = self.pre_compute_distances[inp_.key]  # [Ni, Ni], precomputed distances for feature idx
+
+                # Gather integer indices for this feature from x1 and x2 (keep batch dims)
+                x1_idx = x1[..., idx].to(torch.long).to(D.device)  # shape: batch_shape × n1
+                x2_idx = x2[..., idx].to(torch.long).to(D.device)  # shape: batch_shape × n2
+
+                # Build submatrix via broadcasting advanced indexing:
+                # Result shape: batch_shape × n1 × n2
+                D_sub = D[x1_idx.unsqueeze(-1), x2_idx.unsqueeze(-2)]
+
+                cov = cov + D_sub
+
+            if diag:
+                # Return diagonal along the last two dims: shape batch_shape × n1
+                return cov.diagonal(dim1=-2, dim2=-1)
             return cov
+
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(

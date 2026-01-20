@@ -178,4 +178,4 @@ def mutual_tanimoto_distances(smiles: list[str], bond_radius: int = 5, n_bits: i
 
     fp_pairs = combinations(fingerprints, 2)
 
-    return [1 - FingerprintSimilarity(*fp) for fp in tqdm(fp_pairs)]
+    return [FingerprintSimilarity(*fp) for fp in tqdm(fp_pairs)]
