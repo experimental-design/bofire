@@ -1,5 +1,5 @@
 import itertools
-from typing import Optional, Any
+from typing import Any, Optional
 
 import botorch
 import pandas as pd
@@ -10,7 +10,6 @@ from botorch.models.transforms.input import ChainedInputTransform, FilterFeature
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.surrogates.api import BotorchSurrogates as DataModel
 from bofire.data_models.types import InputTransformSpecs
-from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.mapper import map as map_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 
