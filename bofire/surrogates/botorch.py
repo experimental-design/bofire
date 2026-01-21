@@ -1,7 +1,7 @@
 import base64
 import io
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -12,7 +12,6 @@ from botorch.models.transforms.input import (
     InputTransform,
 )
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
-
 from bofire.data_models.features.categorical import CategoricalOutput
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
 from bofire.data_models.surrogates.api import (
@@ -99,13 +98,13 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     def __init__(
         self,
         data_model: TrainableDataModel,
-        input_transform=None,
+        input_transform: Optional[Union[InputTransform, None]] = None,
         **kwargs,
     ):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.engineered_features = data_model.engineered_features
-        self._input_transform: Optional[InputTransform] = None
+        self._input_transform: Union[InputTransform, None] = input_transform
         super().__init__(data_model=data_model, **kwargs)
 
     def re_init_kwargs(self) -> dict:
