@@ -1,5 +1,4 @@
 import itertools
-from abc import ABC
 from typing import Optional
 
 import botorch
@@ -17,7 +16,6 @@ from bofire.surrogates.trainable import TrainableSurrogate
 
 
 class BotorchSurrogates:
-
     surrogates: list[BotorchSurrogate]
 
     def __init__(
