@@ -4,14 +4,17 @@ from pydantic import model_validator
 
 from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.utils.cheminformatics import mutual_tanimoto_distances
 
 class MolecularKernel(FeatureSpecificKernel):
-    pre_compute_similarities: bool = False
+    pass
 
 class TanimotoKernel(MolecularKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
     ard: bool = True
+    pre_compute_similarities: bool = False
+    _fingerprint_settings_for_similarities: Fingerprints = Fingerprints()  # private: will be overridden by tanimoto_gp
     _molecular_inputs: list[CategoricalMolecularInput] = None  # needed for pre-computation of tanimoto distances
     _computed_mutual_similarities: dict[str, list[float]] = None
 
@@ -27,4 +30,7 @@ class TanimotoKernel(MolecularKernel):
         self._computed_mutual_similarities = {}
         for inp in self._molecular_inputs:
             print(f"computing tanimoto distances for input {inp.key:}")
-            self._computed_mutual_similarities[inp.key] = mutual_tanimoto_distances(inp.categories)
+            self._computed_mutual_similarities[inp.key] = mutual_tanimoto_distances(
+                inp.categories,
+                **self._fingerprint_settings_for_similarities.model_dump(exclude=["type", ])
+            )

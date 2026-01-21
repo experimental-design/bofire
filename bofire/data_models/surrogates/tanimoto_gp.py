@@ -22,6 +22,7 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
     pre_compute_similarities: bool = False
+    fingerprint_settings_for_similarities: Fingerprints = Fingerprints()
 
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
@@ -52,11 +53,12 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                         self.categorical_encodings.pop(inp_.key)  # remove categorical encodings
 
                 base_kernel._molecular_inputs = molecular_inputs
+                base_kernel._fingerprint_settings_for_similarities = self.fingerprint_settings_for_similarities
                 base_kernel.pre_compute_similarities = True  # this triggers computation in the kernel data-model
 
                 return self
 
-        raise NotImplementedError("no supperted kernel-architecture for pre-computed tanimoto distances")
+        raise NotImplementedError("no supperted kernel-architecture for pre-computed tanimoto similarities")
 
 
     @classmethod
