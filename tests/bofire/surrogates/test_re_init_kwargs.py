@@ -1,3 +1,5 @@
+import importlib
+
 import pandas as pd
 import pytest
 
@@ -7,6 +9,7 @@ from bofire.data_models.molfeatures.api import FingerprintsFragments
 from bofire.data_models.surrogates.api import TanimotoGPSurrogate
 from bofire.surrogates.api import map
 
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 @pytest.fixture
 def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]:
@@ -27,6 +30,7 @@ def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]
     return domain, X, Y
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_re_init_kwargs_fingerprints(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
 ):
