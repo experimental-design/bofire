@@ -8,7 +8,9 @@ from bofire.data_models.molfeatures.api import FingerprintsFragments
 from bofire.data_models.surrogates.api import TanimotoGPSurrogate
 from bofire.surrogates.api import map
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
+
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_re_init_kwargs_fingerprints(

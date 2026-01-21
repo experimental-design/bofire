@@ -1,10 +1,9 @@
 import os
 import warnings
+from time import time
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
-from time import time
 
 import bofire.strategies.api as strategies
 from bofire.benchmarks.data.photoswitches import EXPERIMENTS
@@ -12,7 +11,6 @@ from bofire.benchmarks.LookupTableBenchmark import LookupTableBenchmark
 from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import CategoricalMolecularInput, ContinuousOutput
-from bofire.data_models.molfeatures.api import FingerprintsFragments
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -47,6 +45,7 @@ output_feature = ContinuousOutput(key=benchmark["output"], objective=objective)
 outputs = Outputs(features=[output_feature])
 domain = Domain(inputs=inputs, outputs=outputs)
 
+
 def sample(domain):
     datamodel = RandomStrategy(domain=domain)
     sampler = strategies.map(data_model=datamodel)
@@ -80,7 +79,7 @@ for _ in range(n_iter):
     )
     t_random += time() - t0
 
-    specs = {}#{Benchmark.domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
+    specs = {}  # {Benchmark.domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
     surrogate = TanimotoGPSurrogate(
         inputs=Benchmark.domain.inputs,
         outputs=Benchmark.domain.outputs,

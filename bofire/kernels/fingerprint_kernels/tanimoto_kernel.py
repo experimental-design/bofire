@@ -31,6 +31,7 @@ from bofire.data_models.features.api import CategoricalMolecularInput
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 from bofire.utils.torch_tools import tkwargs
 
+
 class TanimotoKernel(BitKernel):
     r"""Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
 
@@ -62,9 +63,13 @@ class TanimotoKernel(BitKernel):
     is_stationary = False
     has_lengthscale = False
 
-    def __init__(self, pre_compute_similarities: bool = False, molecular_inputs: list[CategoricalMolecularInput] = None,
-                 computed_mutual_similarities: dict[str, list[float]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        pre_compute_similarities: bool = False,
+        molecular_inputs: list[CategoricalMolecularInput] = None,
+        computed_mutual_similarities: dict[str, list[float]] = None,
+        **kwargs,
+    ):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
@@ -73,11 +78,15 @@ class TanimotoKernel(BitKernel):
         if self.pre_compute_similarities:
             self._molecular_inputs = molecular_inputs
             self.pre_compute_similarities = {
-                input_.key: self.distance_matrix(input_, computed_mutual_similarities[input_.key]) \
+                input_.key: self.distance_matrix(
+                    input_, computed_mutual_similarities[input_.key]
+                )
                 for input_ in molecular_inputs
             }
 
-    def distance_matrix(self, input: CategoricalMolecularInput, distances: list[float]) -> torch.Tensor:
+    def distance_matrix(
+        self, input: CategoricalMolecularInput, distances: list[float]
+    ) -> torch.Tensor:
         n = len(input.categories)
         m = n * (n - 1) // 2
         if len(distances) != m:
@@ -96,23 +105,29 @@ class TanimotoKernel(BitKernel):
 
     def forward(self, x1, x2, diag=False, **params):
         if self.pre_compute_similarities:
-
             # Infer shapes
             batch_shape = x1.shape[:-2]
             n1, d = x1.shape[-2], x1.shape[-1]
             n2 = x2.shape[-2]
-            assert d == len(self._molecular_inputs), \
-                f"Last dim d={d} must match number of molecular inputs={len(self._molecular_inputs)}"
+            assert (
+                d == len(self._molecular_inputs)
+            ), f"Last dim d={d} must match number of molecular inputs={len(self._molecular_inputs)}"
 
             cov = torch.zeros((*batch_shape, n1, n2), **tkwargs)
 
             # Sum contributions for each feature index along the last dim
             for idx, inp_ in enumerate(self._molecular_inputs):
-                D = self.pre_compute_similarities[inp_.key]  # [Ni, Ni], precomputed distances for feature idx
+                D = self.pre_compute_similarities[
+                    inp_.key
+                ]  # [Ni, Ni], precomputed distances for feature idx
 
                 # Gather integer indices for this feature from x1 and x2 (keep batch dims)
-                x1_idx = x1[..., idx].to(torch.long).to(D.device)  # shape: batch_shape × n1
-                x2_idx = x2[..., idx].to(torch.long).to(D.device)  # shape: batch_shape × n2
+                x1_idx = (
+                    x1[..., idx].to(torch.long).to(D.device)
+                )  # shape: batch_shape × n1
+                x2_idx = (
+                    x2[..., idx].to(torch.long).to(D.device)
+                )  # shape: batch_shape × n2
 
                 # Build submatrix via broadcasting advanced indexing:
                 # Result shape: batch_shape × n1 × n2

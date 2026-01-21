@@ -2,7 +2,11 @@ from typing import Literal, Type
 
 from pydantic import Field, model_validator
 
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput, CategoricalMolecularInput
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalMolecularInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
@@ -36,7 +40,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     @model_validator(mode="after")
-    def pre_compute_similarities(self):
+    def check_and_pre_compute_similarities(self):
         if not self.pre_compute_similarities:
             return self
 
@@ -50,16 +54,23 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 )
                 for inp_ in molecular_inputs:
                     if inp_.key in list(self.categorical_encodings):
-                        self.categorical_encodings.pop(inp_.key)  # remove categorical encodings
+                        self.categorical_encodings.pop(
+                            inp_.key
+                        )  # remove categorical encodings
 
                 base_kernel._molecular_inputs = molecular_inputs
-                base_kernel._fingerprint_settings_for_similarities = self.fingerprint_settings_for_similarities
-                base_kernel.pre_compute_similarities = True  # this triggers computation in the kernel data-model
+                base_kernel._fingerprint_settings_for_similarities = (
+                    self.fingerprint_settings_for_similarities
+                )
+                base_kernel.pre_compute_similarities = (
+                    True  # this triggers computation in the kernel data-model
+                )
 
                 return self
 
-        raise NotImplementedError("no supperted kernel-architecture for pre-computed tanimoto similarities")
-
+        raise NotImplementedError(
+            "no supperted kernel-architecture for pre-computed tanimoto similarities"
+        )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

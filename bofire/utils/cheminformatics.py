@@ -1,10 +1,10 @@
 import warnings
-from typing import List, Optional
 from itertools import combinations
-from tqdm import tqdm
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 
 try:
@@ -172,9 +172,12 @@ def smiles2fragments_fingerprints(
     return np.hstack((fingerprints, fragments))
 
 
-def mutual_tanimoto_distances(smiles: list[str], bond_radius: int = 5, n_bits: int = 2048) -> list[float]:
-
-    fingerprints = smiles2fingerprints(smiles, bond_radius, n_bits, output_as_rdkit_bitvector=True)
+def mutual_tanimoto_distances(
+    smiles: list[str], bond_radius: int = 5, n_bits: int = 2048
+) -> list[float]:
+    fingerprints = smiles2fingerprints(
+        smiles, bond_radius, n_bits, output_as_rdkit_bitvector=True
+    )
 
     fp_pairs = combinations(fingerprints, 2)
 
