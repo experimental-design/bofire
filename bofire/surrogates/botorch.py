@@ -1,7 +1,7 @@
 import base64
 import io
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -99,18 +99,17 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     def __init__(
         self,
         data_model: TrainableDataModel,
-        input_transform = None,
+        input_transform: Optional[Union[InputTransform, None]] = None,
         **kwargs,
     ):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.engineered_features = data_model.engineered_features
-        self.input_transform = input_transform
+        self._input_transform: Union[InputTransform, None] = input_transform
         super().__init__(data_model=data_model, **kwargs)
 
-    @property
     def re_init_kwargs(self) -> dict:
-        return {"input_transform": self.input_transform}
+        return {"input_transform": self._input_transform}
 
     def get_feature_indices(
         self,
@@ -154,8 +153,8 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         return indices
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
-        if self.input_transform is None:
-            self.input_transform = get_input_transform(
+        if self._input_transform is None:
+            self._input_transform = get_input_transform(
                 inputs=self.inputs,
                 engineered_features=self.engineered_features,
                 scaler_type=self.scaler,
@@ -178,7 +177,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             if self.output_scaler == ScalerEnum.STANDARDIZE
             else None
         )
-        self._fit_botorch(tX, tY, self.input_transform, outcome_transform, **kwargs)
+        self._fit_botorch(tX, tY, self._input_transform, outcome_transform, **kwargs)
 
     @abstractmethod
     def _fit_botorch(
