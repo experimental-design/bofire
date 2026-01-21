@@ -12,6 +12,7 @@ from botorch.models.transforms.input import (
     InputTransform,
 )
 from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+
 from bofire.data_models.features.categorical import CategoricalOutput
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
 from bofire.data_models.surrogates.api import (
