@@ -39,12 +39,22 @@ def test_tanimoto_calculation(chem_domain_simple: tuple[domain_api.Domain, pd.Da
     surrogate1._fit(X, Y)
     surrogate2._fit(X, Y)
 
-    # prediction: training data index
-    x = torch.from_numpy(np.arange(3)).to(**tkwargs).reshape((-1, 1))
+    # prediction: take molecules indeces 0, 2
+    x = torch.from_numpy(np.array([0., 1.])).to(**tkwargs).reshape((-1, 1))
 
     #surrogate1.inputs.transform(X, specs=surrogate1.input_preprocessing_specs)
-    surrogate1.model.forward(x)
-    surrogate1.model.forward(surrogate1.model.input_transform(x))
+    fingerprints = surrogate1.model.input_transform(x)
+    pred1 = surrogate1.model(fingerprints)
+    pred2 = surrogate2.model(x)
+    assert np.allclose(pred1.mean.detach().numpy(), pred2.mean.detach().numpy(), rtol=1e-3, atol=1e-3)
+    assert np.allclose(pred1.variance.detach().numpy(), pred2.variance.detach().numpy(), rtol = 1e-3, atol = 1e-3)
 
-    surrogate2.inputs.transform(X, specs=surrogate2.input_preprocessing_specs)
-    surrogate2.model(x).mean
+    # compare mean
+    mean1 = surrogate1.model.mean_module(fingerprints).detach().numpy()
+    mean2 = surrogate2.model.mean_module(x).detach().numpy()
+    assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
+
+    # compare covariance calculations
+    cov1 = surrogate1.model.covar_module(fingerprints).detach().numpy()
+    cov2 = surrogate2.model.covar_module(x).detach().numpy()
+    assert np.allclose(cov1, cov2, rtol=1e-3, atol=1e-3)
