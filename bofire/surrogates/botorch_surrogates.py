@@ -26,10 +26,10 @@ class BotorchSurrogates:
     ):
         if re_init_kwargs is None:
             re_init_kwargs = [{} for _ in data_model.surrogates]
-        self.surrogates: list[BotorchSurrogate] = [
+        self.surrogates = [
             map_surrogate(model, **kwargs_)
             for (model, kwargs_) in zip(data_model.surrogates, re_init_kwargs)
-        ]  # type: ignore
+        ]  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
