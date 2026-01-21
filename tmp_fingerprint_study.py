@@ -85,7 +85,7 @@ for _ in range(n_iter):
         inputs=Benchmark.domain.inputs,
         outputs=Benchmark.domain.outputs,
         categorical_encodings=specs,
-        pre_compute_distances=True,
+        pre_compute_similarities=True,
     )
 
     def sobo_factory(domain: Domain, surrogate=surrogate):

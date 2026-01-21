@@ -21,7 +21,7 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
-    pre_compute_distances: bool = False
+    pre_compute_similarities: bool = False
 
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
@@ -35,8 +35,8 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     @model_validator(mode="after")
-    def pre_compute_distances(self):
-        if not self.pre_compute_distances:
+    def pre_compute_similarities(self):
+        if not self.pre_compute_similarities:
             return self
 
         # settings
@@ -52,7 +52,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                         self.categorical_encodings.pop(inp_.key)  # remove categorical encodings
 
                 base_kernel._molecular_inputs = molecular_inputs
-                base_kernel.pre_compute_distances = True  # this triggers computation in the kernel data-model
+                base_kernel.pre_compute_similarities = True  # this triggers computation in the kernel data-model
 
                 return self
 
@@ -72,7 +72,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     @model_validator(mode="after")
     def validate_moleculars(self):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
-        if not self.pre_compute_distances:
+        if not self.pre_compute_similarities:
             if not any(
                 isinstance(value, Fingerprints)
                 or isinstance(value, Fragments)
