@@ -16,7 +16,6 @@ from bofire.surrogates.trainable import TrainableSurrogate
 
 
 class BotorchSurrogates:
-
     def __init__(
         self,
         data_model: DataModel,
