@@ -16,7 +16,7 @@ from bofire.surrogates.mapper import map as map_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 
 
-class BotorchSurrogates(ABC):
+class BotorchSurrogates:
     def __init__(
         self,
         data_model: DataModel,
