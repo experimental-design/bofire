@@ -60,8 +60,8 @@ from typing import Dict
 # BoFire imports
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
-    ContinuousInput, 
-    CategoricalInput, 
+    ContinuousInput,
+    CategoricalInput,
     ContinuousOutput
 )
 # Import BOTH the data model and strategy class
@@ -88,7 +88,7 @@ inputs = Inputs(features=[
         key="base",
         categories=["K2CO3", "Cs2CO3", "Et3N", "NaOtBu"]
     ),
-    
+
     # Continuous variables
     ContinuousInput(
         key="temperature",
@@ -134,7 +134,7 @@ print("-" * 80)
 def suzuki_reaction_simulator(params: pd.Series) -> float:
     """
     Simulates a Suzuki coupling reaction with realistic behavior.
-    
+
     Real chemistry insights:
     - Polar aprotic solvents (DMF, DMSO) generally better
     - Strong bases (Cs2CO3, NaOtBu) more effective
@@ -142,7 +142,7 @@ def suzuki_reaction_simulator(params: pd.Series) -> float:
     - Diminishing returns after ~12 hours
     - Higher catalyst helps, but plateaus
     """
-    
+
     # Solvent effects (polarity and coordination)
     solvent_scores = {
         "DMF": 0.85,
@@ -150,7 +150,7 @@ def suzuki_reaction_simulator(params: pd.Series) -> float:
         "THF": 0.65,
         "Toluene": 0.45
     }
-    
+
     # Base strength and solubility
     base_scores = {
         "K2CO3": 0.70,
@@ -158,23 +158,23 @@ def suzuki_reaction_simulator(params: pd.Series) -> float:
         "Et3N": 0.50,
         "NaOtBu": 0.85
     }
-    
+
     solvent_effect = solvent_scores[params["solvent"]]
     base_effect = base_scores[params["base"]]
-    
+
     # Temperature effect (optimal around 80°C)
     #Gaussian (bell-shaped) response curve centered at 80°C that mimics real reaction kinetics where there's an optimal temperature
         # 80 = Optimal temperature (°C) where the reaction is most efficient
             # Below 80°C: Reaction too slow (insufficient activation energy)
             # Above 80°C: Side reactions, degradation, or catalyst deactivation
-    
+
         # 500 = Width parameter (variance) controlling how "forgiving" the optimum is
             # Smaller value = sharper peak (very sensitive to temperature)
             # Larger value = broader peak (more tolerant)
             # At 80±22°C, you still get ~82% of maximum effect
     temp = params["temperature"]
-    temp_effect = np.exp(-((temp - 80) ** 2) / 500) 
-        
+    temp_effect = np.exp(-((temp - 80) ** 2) / 500)
+
     # Time effect (logarithmic saturation) with asymptotic approach to equilibrium - common in chemical kinetics
     # Rapid initial progress that slows down as equilibrium is approached
     # Here:
@@ -186,10 +186,10 @@ def suzuki_reaction_simulator(params: pd.Series) -> float:
             # At 8 hours: you reach ~63% of the additional 0.7 → total effect = 0.74
             # At 16 hours: you reach ~86% of the additional 0.7 → total effect = 0.90
             # At 24 hours: you reach ~95% of maximum → total effect = 0.97
-            
+
     time = params["time"]
     time_effect = 0.3 + 0.7 * (1 - np.exp(-time / 8))
-    
+
     # Catalyst effect (diminishing returns)  - we model saturation kinetics that mimics catalyst saturation where active sites become fully occupied
         # 0.5 = Baseline effect (even with 0% catalyst, you get 50% efficiency) -  represents background/uncatalyzed reaction
         # 0.5 = Additional benefit from catalyst => Maximum effect = 0.5 + 0.5 = 1.0 (100%)
@@ -199,30 +199,30 @@ def suzuki_reaction_simulator(params: pd.Series) -> float:
             # At 10 mol%: reaches ~96% of maximum → total effect = 0.98
     cat = params["catalyst_loading"]
     cat_effect = 0.5 + 0.5 * (1 - np.exp(-cat / 3))
-    
+
     # Synergistic interactions (realistic chemistry!) - Combinatorial effects between reaction components
     # Some combinations work better (or worse) than the sum of individual parts
     # DMSO + strong base = synergy
     synergy = 1.0
     if params["solvent"] == "DMSO" and params["base"] in ["Cs2CO3", "NaOtBu"]:
         synergy = 1.15 #Positive Synergy (+15%) "DMSO + Strong Bases (Cs₂CO₃ or NaOtBu)" => 1.15 = 15% yield boost
-    
+
     # Toluene + weak base = poor
     if params["solvent"] == "Toluene" and params["base"] == "Et3N":
         synergy = 0.80 #Negative Synergy (-20%) "Toluene + Weak Base (Et₃N)" => 0.80 = 20% yield penalty
-    
+
     # Calculate base yield
     # Multiplicative model: All effects must be favorable for high yield If ANY factor is poor (e.g., temp_effect = 0.4), overall yield suffers
 
     base_yield = 100 * solvent_effect * base_effect * temp_effect * time_effect * cat_effect * synergy #100 = Scale to percentage (0-100%)
-    
+
     # Add realistic experimental noise (±5%)
     noise = np.random.normal(0, 3) # noise = 3%: Standard deviation of experimental error ±3% is typical for well-controlled lab experiments
     # ~68% of results within ±3%, ~95% within ±6%
 
     # Cap at 0-100%
     final_yield = np.clip(base_yield + noise, 0, 100) # np.clip: Ensures physically meaningful yields (0-100%)
-    
+
     return final_yield
 
 print("✅ Reaction simulator ready")
@@ -293,24 +293,24 @@ history = []
 for i in range(n_iterations):
     # Ask for next experiment
     candidate = strategy.ask(candidate_count=1)
-    
+
     # "Run" the experiment
     candidate["yield"] = candidate.apply(suzuki_reaction_simulator, axis=1)
-    
+
     # Tell the result to the strategy
     strategy.tell(candidate)
-    
+
     # Track progress
     current_best = strategy.experiments["yield"].max()
     best_idx = strategy.experiments["yield"].idxmax()
     best_exp = strategy.experiments.loc[best_idx]
-    
+
     # Display current experiment
     curr = candidate.iloc[0]
     print(f"{i+1:<6} {curr['solvent']:<10} {curr['base']:<10} "
           f"{curr['temperature']:<8.1f} {curr['time']:<8.1f} "
           f"{curr['catalyst_loading']:<8.1f} {curr['yield']:<8.1f} {current_best:<8.1f}")
-    
+
     history.append({
         'iteration': i + 1,
         'yield': curr['yield'],
@@ -360,12 +360,12 @@ gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
 
 # Plot 1: Convergence curve
 ax1 = fig.add_subplot(gs[0, :2])
-ax1.plot(history_df['iteration'], history_df['best_yield'], 
+ax1.plot(history_df['iteration'], history_df['best_yield'],
          'b-o', linewidth=2, markersize=6, label='Best yield')
-ax1.fill_between(history_df['iteration'], 
-                  history_df['yield'], 
+ax1.fill_between(history_df['iteration'],
+                  history_df['yield'],
                   alpha=0.3, label='Individual experiments')
-ax1.axhline(y=initial_experiments['yield'].max(), 
+ax1.axhline(y=initial_experiments['yield'].max(),
             color='gray', linestyle='--', alpha=0.7, label='Initial best')
 ax1.set_xlabel('Iteration', fontsize=11, fontweight='bold')
 ax1.set_ylabel('Yield (%)', fontsize=11, fontweight='bold')
@@ -404,10 +404,10 @@ ax4.grid(axis='x', alpha=0.3)
 # Plot 5: Temperature vs Yield
 ax5 = fig.add_subplot(gs[1, 2])
 scatter1 = ax5.scatter(all_experiments['temperature'], all_experiments['yield'],
-                       c=all_experiments['yield'], cmap='RdYlGn', 
+                       c=all_experiments['yield'], cmap='RdYlGn',
                        s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
-ax5.scatter(best_result['temperature'], best_result['yield'], 
-            color='red', s=200, marker='*', edgecolors='black', linewidth=2, 
+ax5.scatter(best_result['temperature'], best_result['yield'],
+            color='red', s=200, marker='*', edgecolors='black', linewidth=2,
             label='Best', zorder=5)
 ax5.set_xlabel('Temperature (°C)', fontsize=10, fontweight='bold')
 ax5.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
@@ -418,10 +418,10 @@ ax5.grid(True, alpha=0.3)
 # Plot 6: Time vs Yield
 ax6 = fig.add_subplot(gs[2, 0])
 scatter2 = ax6.scatter(all_experiments['time'], all_experiments['yield'],
-                       c=all_experiments['yield'], cmap='RdYlGn', 
+                       c=all_experiments['yield'], cmap='RdYlGn',
                        s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
-ax6.scatter(best_result['time'], best_result['yield'], 
-            color='red', s=200, marker='*', edgecolors='black', linewidth=2, 
+ax6.scatter(best_result['time'], best_result['yield'],
+            color='red', s=200, marker='*', edgecolors='black', linewidth=2,
             label='Best', zorder=5)
 ax6.set_xlabel('Time (hours)', fontsize=10, fontweight='bold')
 ax6.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
@@ -432,10 +432,10 @@ ax6.grid(True, alpha=0.3)
 # Plot 7: Catalyst loading vs Yield
 ax7 = fig.add_subplot(gs[2, 1])
 scatter3 = ax7.scatter(all_experiments['catalyst_loading'], all_experiments['yield'],
-                       c=all_experiments['yield'], cmap='RdYlGn', 
+                       c=all_experiments['yield'], cmap='RdYlGn',
                        s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
-ax7.scatter(best_result['catalyst_loading'], best_result['yield'], 
-            color='red', s=200, marker='*', edgecolors='black', linewidth=2, 
+ax7.scatter(best_result['catalyst_loading'], best_result['yield'],
+            color='red', s=200, marker='*', edgecolors='black', linewidth=2,
             label='Best', zorder=5)
 ax7.set_xlabel('Catalyst Loading (mol%)', fontsize=10, fontweight='bold')
 ax7.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
@@ -458,15 +458,15 @@ Worst yield: {all_experiments['yield'].min():.1f}%
 Average: {all_experiments['yield'].mean():.1f}%
 Std dev: {all_experiments['yield'].std():.1f}%
 
-Improvement: 
+Improvement:
 {best_result['yield'] - initial_experiments['yield'].max():.1f}% absolute
 {((best_result['yield'] / initial_experiments['yield'].max() - 1) * 100):.1f}% relative
 """
 ax8.text(0.1, 0.5, summary_text, fontsize=10, family='monospace',
-         verticalalignment='center', bbox=dict(boxstyle='round', 
+         verticalalignment='center', bbox=dict(boxstyle='round',
          facecolor='wheat', alpha=0.5))
 
-plt.suptitle('Suzuki-Miyaura Reaction Optimization Dashboard', 
+plt.suptitle('Suzuki-Miyaura Reaction Optimization Dashboard',
              fontsize=16, fontweight='bold', y=0.98)
 
 plt.savefig('reaction_optimization_results.png', dpi=300, bbox_inches='tight')
@@ -508,4 +508,3 @@ print("   - Adjust continuous ranges (temp, time, etc.)")
 print("   - Replace the simulator with your actual lab experiments")
 print("   - Run the same workflow!")
 ```
-
