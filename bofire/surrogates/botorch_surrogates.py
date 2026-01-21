@@ -1,5 +1,5 @@
 import itertools
-from typing import Optional
+from typing import Optional, Any
 
 import botorch
 import pandas as pd
@@ -16,7 +16,7 @@ from bofire.surrogates.trainable import TrainableSurrogate
 
 
 class BotorchSurrogates:
-    surrogates: list[BotorchSurrogate]  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
+    surrogates: Any  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
 
     def __init__(
         self,
