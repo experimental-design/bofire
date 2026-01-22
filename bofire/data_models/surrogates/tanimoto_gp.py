@@ -57,7 +57,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 base_kernel._fingerprint_settings_for_similarities = {}
                 for inp_ in molecular_inputs:
                     if inp_.key in list(self.categorical_encodings):
-                        assert isinstance(self.categorical_encodings, Fingerprints),\
+                        assert isinstance(self.categorical_encodings[inp_.key], Fingerprints),\
                             (f"Categorical encoding for input {inp_.key} must be a Fingerprint. "
                              f"Found {type(self.categorical_encodings[inp_.key])}")
                         base_kernel._fingerprint_settings_for_similarities[inp_.key] = \

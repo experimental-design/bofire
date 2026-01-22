@@ -19,7 +19,7 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 def fingerprint_data_model(request) -> Fingerprints:
     return Fingerprints(bond_radius=3, n_bits=request.param)
 
-
+@pytest.mark.parametrize('chem_domain_simple', [False, True], indirect=True)  # multi-component
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_tanimoto_calculation(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
@@ -44,31 +44,33 @@ def test_tanimoto_calculation(
         map(surrogate_data_model_no_pre_computation),
         map(surrogate_data_model_with_pre_computation),
     )
-    surrogate1._fit(X, Y)
     surrogate2._fit(X, Y)
 
     # prediction: take molecules indeces 0, 2
-    x = torch.from_numpy(np.array([0.0, 1.0])).to(**tkwargs).reshape((-1, 1))
+    x = torch.from_numpy(
+        surrogate2.inputs.transform(X, specs=surrogate2.input_preprocessing_specs).values).to(**tkwargs)
 
-    fingerprints = surrogate1.model.input_transform(x)
-    pred1 = surrogate1.model(fingerprints)
+    # test predictions
     pred2 = surrogate2.model(x)
-    assert np.allclose(
-        pred1.mean.detach().numpy(), pred2.mean.detach().numpy(), rtol=1e-3, atol=1e-3
-    )
-    assert np.allclose(
-        pred1.variance.detach().numpy(),
-        pred2.variance.detach().numpy(),
-        rtol=1e-3,
-        atol=1e-3,
-    )
-
-    # compare mean
-    mean1 = surrogate1.model.mean_module(fingerprints).detach().numpy()
     mean2 = surrogate2.model.mean_module(x).detach().numpy()
-    assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
-
-    # compare covariance calculations
-    cov1 = surrogate1.model.covar_module(fingerprints).detach().numpy()
     cov2 = surrogate2.model.covar_module(x).detach().numpy()
-    assert np.allclose(cov1, cov2, rtol=1e-3, atol=1e-3)
+
+    if len(X.columns) == 1:  # for the single-input case, we can compare with the ad-hoc calculated similarities
+
+        surrogate1._fit(X, Y)
+        fingerprints = surrogate1.model.input_transform(x)
+        pred1 = surrogate1.model(fingerprints)
+        mean1 = surrogate1.model.mean_module(fingerprints).detach().numpy()
+        cov1 = surrogate1.model.covar_module(fingerprints).detach().numpy()
+
+        assert np.allclose(
+            pred1.mean.detach().numpy(), pred2.mean.detach().numpy(), rtol=1e-3, atol=1e-3
+        )
+        assert np.allclose(
+            pred1.variance.detach().numpy(),
+            pred2.variance.detach().numpy(),
+            rtol=1e-3,
+            atol=1e-3,
+        )
+        assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
+        assert np.allclose(cov1, cov2, rtol=1e-3, atol=1e-3)
