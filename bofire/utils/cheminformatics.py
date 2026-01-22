@@ -172,7 +172,7 @@ def smiles2fragments_fingerprints(
     return np.hstack((fingerprints, fragments))
 
 
-def mutual_tanimoto_distances(
+def mutual_tanimoto_similarities(
     smiles: list[str], bond_radius: int = 5, n_bits: int = 2048
 ) -> list[float]:
     fingerprints = smiles2fingerprints(

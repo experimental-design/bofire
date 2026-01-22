@@ -28,6 +28,8 @@ SOFTWARE.
 import torch
 
 from bofire.data_models.features.api import CategoricalMolecularInput
+from bofire.data_models.molfeatures.api import Fingerprints
+from bofire.utils.cheminformatics import mutual_tanimoto_similarities
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 from bofire.utils.torch_tools import tkwargs
 
@@ -63,30 +65,51 @@ class TanimotoKernel(BitKernel):
     is_stationary = False
     has_lengthscale = False
 
+    def compute_mutual_similarities(self):
+        self._computed_mutual_similarities = {}
+        for inp in self._molecular_inputs:
+            print(f"computing tanimoto distances for input {inp.key:}")
+            self._computed_mutual_similarities[inp.key] = mutual_tanimoto_similarities(
+                inp.categories,
+                **self._fingerprint_settings_for_similarities[inp.key].model_dump(
+                    exclude=[
+                        "type",
+                    ]
+                ),
+            )
+
     def __init__(
         self,
         pre_compute_similarities: bool = False,
         molecular_inputs: list[CategoricalMolecularInput] = None,
-        computed_mutual_similarities: dict[str, list[float]] = None,
+        fingerprint_settings: dict[str, Fingerprints] = None,
+        computed_mutual_similarities: dict[str, torch.Tensor] = None,
         **kwargs,
     ):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
         self.pre_compute_similarities = pre_compute_similarities
+        self.fingerprint_settings = fingerprint_settings if fingerprint_settings else {}
+        self.molecular_inputs = molecular_inputs if molecular_inputs else []
+        self.sim_matrices = computed_mutual_similarities if computed_mutual_similarities else {}
 
         if self.pre_compute_similarities:
-            self._molecular_inputs = molecular_inputs
-            self.pre_compute_similarities = {
-                input_.key: self.distance_matrix(
-                    input_, computed_mutual_similarities[input_.key]
-                )
-                for input_ in molecular_inputs
-            }
+            for inp_ in self.molecular_inputs:
+                key = inp_.key
+                if key not in list(self.sim_matrices):
+                    fingerprint = self.fingerprint_settings[key] if key in list(self.fingerprint_settings) \
+                        else Fingerprints()
+                    self.sim_matrices[key] = self.compute_sim_matrix(inp_, fingerprint)
 
-    def distance_matrix(
-        self, input: CategoricalMolecularInput, distances: list[float]
+    @staticmethod
+    def compute_sim_matrix(
+        input: CategoricalMolecularInput, fingerprint: Fingerprints,
     ) -> torch.Tensor:
+        """ loop over combinations of molecules, and put this in a torch 2D array"""
+
+        distances = mutual_tanimoto_similarities(input.categories, **fingerprint.model_dump(exclude=["type"]))
+
         n = len(input.categories)
         m = n * (n - 1) // 2
         if len(distances) != m:
@@ -117,7 +140,7 @@ class TanimotoKernel(BitKernel):
 
             # Sum contributions for each feature index along the last dim
             for idx, inp_ in enumerate(self._molecular_inputs):
-                D = self.pre_compute_similarities[
+                D = self.sim_matrices[
                     inp_.key
                 ]  # [Ni, Ni], precomputed distances for feature idx
 
