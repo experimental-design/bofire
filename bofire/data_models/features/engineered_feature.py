@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.features.molecular import ContinuousMolecularInput
-from bofire.data_models.molfeatures.api import MordredDescriptors
+from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.types import Descriptors, FeatureKeys
 
 
@@ -124,7 +124,7 @@ class MolecularWeightedSumFeature(EngineeredFeature):
     """
 
     type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
-    molfeatures: MordredDescriptors
+    molfeatures: AnyMolFeatures
     order_id: ClassVar[int] = 3
 
     @property
