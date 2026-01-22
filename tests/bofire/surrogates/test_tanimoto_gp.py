@@ -19,7 +19,10 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 def fingerprint_data_model(request) -> Fingerprints:
     return Fingerprints(bond_radius=3, n_bits=request.param)
 
-@pytest.mark.parametrize('chem_domain_simple', [False, True], indirect=True)  # multi-component
+
+@pytest.mark.parametrize(
+    "chem_domain_simple", [False, True], indirect=True
+)  # multi-component
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_tanimoto_calculation(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
@@ -48,15 +51,19 @@ def test_tanimoto_calculation(
 
     # prediction: take molecules indeces 0, 2
     x = torch.from_numpy(
-        surrogate2.inputs.transform(X, specs=surrogate2.input_preprocessing_specs).values).to(**tkwargs)
+        surrogate2.inputs.transform(
+            X, specs=surrogate2.input_preprocessing_specs
+        ).values
+    ).to(**tkwargs)
 
     # test predictions
     pred2 = surrogate2.model(x)
     mean2 = surrogate2.model.mean_module(x).detach().numpy()
     cov2 = surrogate2.model.covar_module(x).detach().numpy()
 
-    if len(X.columns) == 1:  # for the single-input case, we can compare with the ad-hoc calculated similarities
-
+    if (
+        len(X.columns) == 1
+    ):  # for the single-input case, we can compare with the ad-hoc calculated similarities
         surrogate1._fit(X, Y)
         fingerprints = surrogate1.model.input_transform(x)
         pred1 = surrogate1.model(fingerprints)
@@ -64,7 +71,10 @@ def test_tanimoto_calculation(
         cov1 = surrogate1.model.covar_module(fingerprints).detach().numpy()
 
         assert np.allclose(
-            pred1.mean.detach().numpy(), pred2.mean.detach().numpy(), rtol=1e-3, atol=1e-3
+            pred1.mean.detach().numpy(),
+            pred2.mean.detach().numpy(),
+            rtol=1e-3,
+            atol=1e-3,
         )
         assert np.allclose(
             pred1.variance.detach().numpy(),
