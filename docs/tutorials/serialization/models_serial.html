@@ -735,7 +735,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="9f16d0ac" class="cell" data-execution_count="1">
+<div id="8e367232" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
@@ -756,7 +756,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="problem-setup" class="level2">
 <h2 class="anchored" data-anchor-id="problem-setup">Problem Setup</h2>
 <p>For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.</p>
-<div id="8e72dd94" class="cell" data-execution_count="2">
+<div id="447cc23b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -779,72 +779,72 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.325362</td>
-<td>-5.138614</td>
-<td>646.350312</td>
+<td>2.903805</td>
+<td>1.133061</td>
+<td>9.968226</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>4.485024</td>
-<td>-1.680572</td>
-<td>55.372925</td>
+<td>-5.252763</td>
+<td>2.665997</td>
+<td>397.325419</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>1.175491</td>
-<td>-1.855996</td>
-<td>137.321024</td>
+<td>-1.618759</td>
+<td>5.974074</td>
+<td>738.614840</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>-0.795356</td>
-<td>-4.640879</td>
-<td>414.102186</td>
+<td>5.483129</td>
+<td>2.867542</td>
+<td>525.992904</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>-2.935796</td>
-<td>-3.336843</td>
-<td>34.131813</td>
+<td>2.172124</td>
+<td>5.818739</td>
+<td>842.946825</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>-3.493644</td>
-<td>-2.322972</td>
-<td>27.232602</td>
+<td>-0.831559</td>
+<td>4.574509</td>
+<td>204.346663</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>2.468777</td>
-<td>-3.201830</td>
-<td>98.447036</td>
+<td>0.256929</td>
+<td>1.491735</td>
+<td>109.566617</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>-1.398555</td>
-<td>-5.268000</td>
-<td>579.383720</td>
+<td>5.118489</td>
+<td>-1.415159</td>
+<td>190.006882</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>5.904571</td>
-<td>-2.727167</td>
-<td>486.985041</td>
+<td>2.837433</td>
+<td>1.636493</td>
+<td>3.926211</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>-4.477901</td>
-<td>4.064954</td>
-<td>197.505585</td>
+<td>-2.795862</td>
+<td>1.337489</td>
+<td>67.518293</td>
 <td>1</td>
 </tr>
 </tbody>
@@ -856,17 +856,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="model-fitting" class="level2">
 <h2 class="anchored" data-anchor-id="model-fitting">Model Fitting</h2>
-<div id="2971de6b" class="cell" data-execution_count="3">
+<div id="29a5539e" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> benchmark.domain.inputs</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>output_features <span class="op">=</span> benchmark.domain.outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0503f2ba" class="cell" data-execution_count="4">
+<div id="1a6234c9" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>input_features.model_dump_json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>'{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]}'</code></pre>
 </div>
 </div>
-<div id="6e4bcfbf" class="cell" data-execution_count="5">
+<div id="d45d05f3" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>output_features.model_dump_json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>'{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]}'</code></pre>
@@ -875,7 +875,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="single-task-gp" class="level3">
 <h3 class="anchored" data-anchor-id="single-task-gp">Single Task GP</h3>
 <p>Generate the json spec</p>
-<div id="2609da7f" class="cell" data-execution_count="6">
+<div id="cf406272" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(inputs<span class="op">=</span>input_features, outputs<span class="op">=</span>output_features)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -888,31 +888,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Load it from the spec</p>
-<div id="c5d5753f" class="cell" data-execution_count="7">
+<div id="0bf68feb" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Map it</p>
-<div id="6ba6193f" class="cell" data-execution_count="8">
+<div id="fa6650c2" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Fit it. This is not 100% finished. In the future we will call here hyperfit which will return the CV results etc. This has to be finished. So ignore this for now and just call fit.</p>
-<div id="739a497d" class="cell" data-execution_count="9">
+<div id="617ce5fe" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Dump it.</p>
-<div id="b8dbbdf4" class="cell" data-execution_count="10">
+<div id="10623147" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Make predictions.</p>
-<div id="ab04ebcc" class="cell" data-execution_count="11">
+<div id="1df7ba13" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Load again from spec and dump and make predictions.</p>
-<div id="349bc2b6" class="cell" data-execution_count="12">
+<div id="3906130d" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
@@ -932,7 +932,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="random-forest" class="level3">
 <h3 class="anchored" data-anchor-id="random-forest">Random Forest</h3>
 <p>Generate the json spec</p>
-<div id="ef65330f" class="cell" data-execution_count="13">
+<div id="e90c682b" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RandomForestSurrogate(</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
@@ -948,7 +948,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>'{"hyperconfig":null,"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"RandomForestSurrogate","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{},"dump":null,"categorical_encodings":{},"scaler":"NORMALIZE","output_scaler":"STANDARDIZE","n_estimators":100,"criterion":"squared_error","max_depth":null,"min_samples_split":2,"min_samples_leaf":1,"min_weight_fraction_leaf":0.0,"max_features":1.0,"max_leaf_nodes":null,"min_impurity_decrease":0.0,"bootstrap":true,"oob_score":false,"random_state":42,"ccp_alpha":0.0,"max_samples":null}'</code></pre>
 </div>
 </div>
-<div id="14e8e92a" class="cell" data-execution_count="14">
+<div id="b5df9d2b" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
@@ -966,7 +966,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2910: RuntimeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2916: RuntimeWarning:
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
@@ -974,13 +974,13 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2910: RuntimeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2916: RuntimeWarning:
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 </code></pre>
 </div>
 </div>
-<div id="536592be" class="cell" data-execution_count="15">
+<div id="51ea1c5b" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
@@ -997,7 +997,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2910: RuntimeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2916: RuntimeWarning:
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
@@ -1005,7 +1005,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2910: RuntimeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/torch/nn/modules/module.py:2916: RuntimeWarning:
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 </code></pre>
@@ -1018,7 +1018,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <section id="mlp-ensemble" class="level3">
 <h3 class="anchored" data-anchor-id="mlp-ensemble">MLP Ensemble</h3>
 <p>Generate the json spec</p>
-<div id="a942bf81" class="cell" data-execution_count="16">
+<div id="349eb42b" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RegressionMLPEnsemble(</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
@@ -1034,7 +1034,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <pre><code>'{"hyperconfig":null,"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"RegressionMLPEnsemble","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{},"dump":null,"categorical_encodings":{},"scaler":"IDENTITY","output_scaler":"IDENTITY","n_estimators":2,"hidden_layer_sizes":[100],"activation":"relu","dropout":0.0,"batch_size":10,"n_epochs":200,"lr":0.0001,"weight_decay":0.0,"subsample_fraction":1.0,"shuffle":true,"final_activation":"identity"}'</code></pre>
 </div>
 </div>
-<div id="99c40ad7" class="cell" data-execution_count="17">
+<div id="ea8aa056" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
@@ -1048,7 +1048,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
 <span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="33f35b10" class="cell" data-execution_count="18">
+<div id="d7efab74" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
@@ -1069,7 +1069,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <section id="empirical-surrogate" class="level2">
 <h2 class="anchored" data-anchor-id="empirical-surrogate">Empirical Surrogate</h2>
 <p>The empirical model is special as it has per default no fit and you need cloudpickle. There can be empirical models which implement a fit, but for this they also have to inherit from <code>Trainable</code>. The current example is the default without any fit functionality.</p>
-<div id="278c16b2" class="cell" data-execution_count="19">
+<div id="ae2df489" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> botorch.models.deterministic <span class="im">import</span> DeterministicModel</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> Tensor</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1085,7 +1085,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>            <span class="op">+</span> (X[..., <span class="dv">0</span>] <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">7.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
 <span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="3df3e4b8" class="cell" data-execution_count="20">
+<div id="413eece8" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> EmpiricalSurrogate(</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
@@ -1100,7 +1100,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <pre><code>'{"type":"EmpiricalSurrogate","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{},"dump":null,"categorical_encodings":{}}'</code></pre>
 </div>
 </div>
-<div id="75b027e3" class="cell" data-execution_count="21">
+<div id="ae213bb1" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
@@ -1114,7 +1114,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
 <span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0d18334a" class="cell" data-execution_count="22">
+<div id="176c7165" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
@@ -1133,7 +1133,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <section id="mixed-gp" class="level3">
 <h3 class="anchored" data-anchor-id="mixed-gp">Mixed GP</h3>
 <p>Generate data for a mixed problem.</p>
-<div id="e3aa1ead" class="cell" data-execution_count="23">
+<div id="8f2d9d65" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> CrossCoupling()</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -1161,121 +1161,121 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>1.055912</td>
-<td>1455.657569</td>
-<td>53.448716</td>
-<td>BTMG</td>
+<td>1.463056</td>
+<td>1067.321838</td>
+<td>51.219378</td>
+<td>TEA</td>
 <td>AlPhos</td>
-<td>0.967899</td>
-<td>0.465133</td>
+<td>0.089545</td>
+<td>0.419544</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.811655</td>
-<td>579.483749</td>
-<td>53.918030</td>
-<td>TEA</td>
-<td>tBuBrettPhos</td>
-<td>-0.004457</td>
-<td>0.278930</td>
+<td>1.499442</td>
+<td>1509.847301</td>
+<td>47.231639</td>
+<td>DBU</td>
+<td>AlPhos</td>
+<td>0.801270</td>
+<td>0.420648</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>1.586623</td>
-<td>1311.511411</td>
-<td>75.346660</td>
-<td>DBU</td>
-<td>tBuBrettPhos</td>
-<td>0.939932</td>
-<td>0.280003</td>
+<td>1.988366</td>
+<td>376.099272</td>
+<td>36.525459</td>
+<td>TEA</td>
+<td>tBuXPhos</td>
+<td>0.003763</td>
+<td>0.248963</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>2.366445</td>
-<td>655.947421</td>
-<td>84.933365</td>
+<td>2.015243</td>
+<td>1661.608034</td>
+<td>39.341922</td>
 <td>TEA</td>
-<td>tBuBrettPhos</td>
-<td>0.065886</td>
-<td>0.279132</td>
+<td>AlPhos</td>
+<td>0.126568</td>
+<td>0.419745</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>1.234153</td>
-<td>98.647017</td>
-<td>79.679622</td>
+<td>1.015058</td>
+<td>1228.891172</td>
+<td>36.708573</td>
 <td>TMG</td>
 <td>AlPhos</td>
-<td>0.588647</td>
-<td>0.419056</td>
+<td>0.143406</td>
+<td>0.419048</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>1.020035</td>
-<td>275.189174</td>
-<td>46.800348</td>
-<td>BTMG</td>
+<td>2.050553</td>
+<td>1365.714349</td>
+<td>81.971346</td>
+<td>TEA</td>
 <td>AlPhos</td>
-<td>0.947568</td>
-<td>0.463566</td>
+<td>0.149473</td>
+<td>0.419757</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>1.820271</td>
-<td>1196.087927</td>
-<td>86.242155</td>
-<td>BTMG</td>
-<td>tBuXPhos</td>
-<td>1.006039</td>
-<td>0.327749</td>
+<td>1.109405</td>
+<td>364.482403</td>
+<td>65.259500</td>
+<td>DBU</td>
+<td>AlPhos</td>
+<td>0.675769</td>
+<td>0.420222</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>2.272131</td>
-<td>534.641854</td>
-<td>98.481624</td>
+<td>1.960652</td>
+<td>1253.446428</td>
+<td>84.567555</td>
 <td>BTMG</td>
 <td>tBuBrettPhos</td>
-<td>1.024569</td>
-<td>0.377517</td>
+<td>1.037269</td>
+<td>0.363912</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>1.510923</td>
-<td>665.875178</td>
-<td>89.127328</td>
-<td>TMG</td>
+<td>1.406747</td>
+<td>232.283022</td>
+<td>98.806904</td>
+<td>TEA</td>
 <td>tBuBrettPhos</td>
-<td>0.743957</td>
-<td>0.278325</td>
+<td>0.028683</td>
+<td>0.278782</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>2.326506</td>
-<td>1602.407481</td>
-<td>77.202186</td>
+<td>1.195631</td>
+<td>1056.616290</td>
+<td>65.311998</td>
 <td>DBU</td>
-<td>tBuBrettPhos</td>
-<td>1.129334</td>
-<td>0.280811</td>
+<td>tBuXPhos</td>
+<td>0.534638</td>
+<td>0.249545</td>
 <td>1</td>
 <td>1</td>
 </tr>
@@ -1285,7 +1285,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 </div>
 </div>
 </div>
-<div id="19051896" class="cell" data-execution_count="24">
+<div id="00007975" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> MixedSingleTaskGPSurrogate(</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs,</span>
@@ -1298,10 +1298,10 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="24">
-<pre><code>'{"hyperconfig":{"type":"MixedSingleTaskGPHyperconfig","hyperstrategy":"FractionalFactorialStrategy","inputs":{"type":"Inputs","features":[{"type":"CategoricalInput","key":"continuous_kernel","categories":["rbf","matern_1.5","matern_2.5"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"prior","categories":["mbo","threesix","hvarfner"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"ard","categories":["True","False"],"allowed":[true,true]}]},"n_iterations":null,"target_metric":"MAE"},"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"MixedSingleTaskGPSurrogate","inputs":{"type":"Inputs","features":[{"type":"CategoricalDescriptorInput","key":"catalyst","categories":["tBuXPhos","tBuBrettPhos","AlPhos"],"allowed":[true,true,true],"descriptors":["area_cat","M2_cat"],"values":[[460.7543,67.2057],[518.8408,89.8738],[819.933,129.0808]]},{"type":"CategoricalDescriptorInput","key":"base","categories":["TEA","TMG","BTMG","DBU"],"allowed":[true,true,true,true],"descriptors":["area","M2"],"values":[[162.2992,25.8165],[165.5447,81.4847],[227.3523,30.554],[192.4693,59.8367]]},{"type":"ContinuousInput","key":"base_eq","unit":null,"bounds":[1.0,2.5],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"temperature","unit":null,"bounds":[30.0,100.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"t_res","unit":null,"bounds":[60.0,1800.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"yield","unit":null,"objective":{"type":"MaximizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{"base":"ORDINAL","catalyst":"ORDINAL"},"dump":null,"categorical_encodings":{"catalyst":"ORDINAL","base":"DESCRIPTOR"},"scaler":"NORMALIZE","output_scaler":"STANDARDIZE","continuous_kernel":{"type":"RBFKernel","features":["base","t_res","base_eq","temperature"],"ard":true,"lengthscale_prior":{"type":"DimensionalityScaledLogNormalPrior","loc":1.4142135623730951,"loc_scaling":0.5,"scale":1.7320508075688772,"scale_scaling":0.0},"lengthscale_constraint":{"type":"GreaterThan","lower_bound":0.025}},"categorical_kernel":{"type":"HammingDistanceKernel","features":["catalyst"],"ard":true,"lengthscale_prior":null,"lengthscale_constraint":{"type":"GreaterThan","lower_bound":1e-6}},"noise_prior":{"type":"LogNormalPrior","loc":-4.0,"scale":1.0}}'</code></pre>
+<pre><code>'{"hyperconfig":{"type":"MixedSingleTaskGPHyperconfig","hyperstrategy":"FractionalFactorialStrategy","inputs":{"type":"Inputs","features":[{"type":"CategoricalInput","key":"continuous_kernel","categories":["rbf","matern_1.5","matern_2.5"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"prior","categories":["mbo","threesix","hvarfner"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"ard","categories":["True","False"],"allowed":[true,true]}]},"n_iterations":null,"target_metric":"MAE"},"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"MixedSingleTaskGPSurrogate","inputs":{"type":"Inputs","features":[{"type":"CategoricalDescriptorInput","key":"catalyst","categories":["tBuXPhos","tBuBrettPhos","AlPhos"],"allowed":[true,true,true],"descriptors":["area_cat","M2_cat"],"values":[[460.7543,67.2057],[518.8408,89.8738],[819.933,129.0808]]},{"type":"CategoricalDescriptorInput","key":"base","categories":["TEA","TMG","BTMG","DBU"],"allowed":[true,true,true,true],"descriptors":["area","M2"],"values":[[162.2992,25.8165],[165.5447,81.4847],[227.3523,30.554],[192.4693,59.8367]]},{"type":"ContinuousInput","key":"base_eq","unit":null,"bounds":[1.0,2.5],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"temperature","unit":null,"bounds":[30.0,100.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"t_res","unit":null,"bounds":[60.0,1800.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"yield","unit":null,"objective":{"type":"MaximizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{"base":"ORDINAL","catalyst":"ORDINAL"},"dump":null,"categorical_encodings":{"catalyst":"ORDINAL","base":"DESCRIPTOR"},"scaler":"NORMALIZE","output_scaler":"STANDARDIZE","continuous_kernel":{"type":"RBFKernel","features":["temperature","base_eq","base","t_res"],"ard":true,"lengthscale_prior":{"type":"DimensionalityScaledLogNormalPrior","loc":1.4142135623730951,"loc_scaling":0.5,"scale":1.7320508075688772,"scale_scaling":0.0},"lengthscale_constraint":{"type":"GreaterThan","lower_bound":0.025}},"categorical_kernel":{"type":"HammingDistanceKernel","features":["catalyst"],"ard":true,"lengthscale_prior":null,"lengthscale_constraint":{"type":"GreaterThan","lower_bound":1e-6}},"noise_prior":{"type":"LogNormalPrior","loc":-4.0,"scale":1.0}}'</code></pre>
 </div>
 </div>
-<div id="4d069ef3" class="cell" data-execution_count="25">
+<div id="e05b5ffa" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
@@ -1315,7 +1315,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
 <span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f9c5d12a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="26">
+<div id="d3913d61" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
