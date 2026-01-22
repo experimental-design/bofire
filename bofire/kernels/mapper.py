@@ -204,12 +204,14 @@ def map_TanimotoKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    computed_mutual_similarities: Optional[dict] = None,
 ) -> TanimotoKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return TanimotoKernel(
         pre_compute_similarities=data_model.pre_compute_similarities,
         molecular_inputs=data_model._molecular_inputs,
-        computed_mutual_similarities=data_model._computed_mutual_similarities,
+        fingerprint_settings=data_model._fingerprint_settings_for_similarities,
+        computed_mutual_similarities=computed_mutual_similarities,
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,

@@ -23,9 +23,7 @@ class TanimotoKernel(MolecularKernel):
 
     @model_validator(mode="after")
     def compute_mutual_tanimoto_distances(self):
-        if not self.pre_compute_similarities or (
-            self._computed_mutual_similarities is not None
-        ):
+        if not self.pre_compute_similarities:
             return self
 
         assert (

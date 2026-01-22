@@ -133,13 +133,13 @@ class TanimotoKernel(BitKernel):
             n1, d = x1.shape[-2], x1.shape[-1]
             n2 = x2.shape[-2]
             assert (
-                d == len(self._molecular_inputs)
-            ), f"Last dim d={d} must match number of molecular inputs={len(self._molecular_inputs)}"
+                d == len(self.molecular_inputs)
+            ), f"Last dim d={d} must match number of molecular inputs={len(self.molecular_inputs)}"
 
             cov = torch.zeros((*batch_shape, n1, n2), **tkwargs)
 
             # Sum contributions for each feature index along the last dim
-            for idx, inp_ in enumerate(self._molecular_inputs):
+            for idx, inp_ in enumerate(self.molecular_inputs):
                 D = self.sim_matrices[
                     inp_.key
                 ]  # [Ni, Ni], precomputed distances for feature idx

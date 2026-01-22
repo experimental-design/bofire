@@ -39,7 +39,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     @model_validator(mode="after")
-    def check_and_pre_compute_similarities(self):
+    def provide_info_for_pre_compute_similarities(self):
         if not self.pre_compute_similarities:
             return self
 
