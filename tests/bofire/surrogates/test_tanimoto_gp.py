@@ -37,6 +37,7 @@ def test_tanimoto_calculation(
         inputs=domain.inputs,
         outputs=domain.outputs,
         pre_compute_similarities=True,
+        categorical_encodings={domain.inputs.get_keys()[0]: fingerprint_data_model},
     )
 
     surrogate1, surrogate2 = (

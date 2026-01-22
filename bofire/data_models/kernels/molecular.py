@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Literal, Optional
 
-from pydantic import model_validator
+from pydantic import model_validator, field_validator
 
 from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
@@ -16,11 +16,11 @@ class TanimotoKernel(MolecularKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
     ard: bool = True
     pre_compute_similarities: bool = False
-    _fingerprint_settings_for_similarities: Fingerprints = (
-        Fingerprints()
-    )  # private: will be overridden by tanimoto_gp
+
+    # private attributes, for pre-computation of similarities: will be overridden by tanimoto_gp, or auto-computed
+    _fingerprint_settings_for_similarities: Optional[dict[str, Fingerprints]] = None
     _molecular_inputs: list[CategoricalMolecularInput] = (
-        None  # needed for pre-computation of tanimoto distances
+        None
     )
     _computed_mutual_similarities: dict[str, list[float]] = None
 
@@ -35,12 +35,19 @@ class TanimotoKernel(MolecularKernel):
             self._molecular_inputs is not None
         ), "need molecular inputs ofr pre-computed distances"
 
+        # fill fingerprint settings
+        if self._fingerprint_settings_for_similarities is None:
+            self._fingerprint_settings_for_similarities = {}
+        for inp_ in self._molecular_inputs:
+            if inp_.key not in list(self._fingerprint_settings_for_similarities):
+                self._fingerprint_settings_for_similarities[inp_.key] =  Fingerprints()
+
         self._computed_mutual_similarities = {}
         for inp in self._molecular_inputs:
             print(f"computing tanimoto distances for input {inp.key:}")
             self._computed_mutual_similarities[inp.key] = mutual_tanimoto_distances(
                 inp.categories,
-                **self._fingerprint_settings_for_similarities.model_dump(
+                **self._fingerprint_settings_for_similarities[inp.key].model_dump(
                     exclude=[
                         "type",
                     ]

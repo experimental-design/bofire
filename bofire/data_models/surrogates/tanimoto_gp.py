@@ -26,7 +26,6 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
     pre_compute_similarities: bool = False
-    fingerprint_settings_for_similarities: Fingerprints = Fingerprints()
 
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
@@ -52,16 +51,17 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                     includes=CategoricalMolecularInput,
                     exact=False,
                 )
+                base_kernel._molecular_inputs = molecular_inputs
+
+                # move fingerprint data model fro categorical encodings to kernel-specs
+                base_kernel._fingerprint_settings_for_similarities = {}
                 for inp_ in molecular_inputs:
                     if inp_.key in list(self.categorical_encodings):
-                        self.categorical_encodings.pop(
+                        base_kernel._fingerprint_settings_for_similarities[inp_.key] = \
+                            self.categorical_encodings.pop(
                             inp_.key
                         )  # remove categorical encodings
 
-                base_kernel._molecular_inputs = molecular_inputs
-                base_kernel._fingerprint_settings_for_similarities = (
-                    self.fingerprint_settings_for_similarities
-                )
                 base_kernel.pre_compute_similarities = (
                     True  # this triggers computation in the kernel data-model
                 )
