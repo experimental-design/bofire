@@ -18,7 +18,7 @@ class TanimotoKernel(MolecularKernel):
 
     # private attributes, for pre-computation of similarities: will be overridden by tanimoto_gp, or auto-computed
     _fingerprint_settings_for_similarities: Optional[dict[str, Fingerprints]] = None
-    _molecular_inputs: list[CategoricalMolecularInput] = None
+    _molecular_inputs: Optional[list[CategoricalMolecularInput]] = None
 
     @model_validator(mode="after")
     def compute_mutual_tanimoto_distances(self):
@@ -35,3 +35,5 @@ class TanimotoKernel(MolecularKernel):
         for inp_ in self._molecular_inputs:
             if inp_.key not in list(self._fingerprint_settings_for_similarities):
                 self._fingerprint_settings_for_similarities[inp_.key] = Fingerprints()
+
+        return self

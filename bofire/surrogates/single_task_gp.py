@@ -36,7 +36,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         tY: torch.Tensor,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
-        kernel_kwargs: Optional[list] = None,
+        kernel_kwargs: Optional[dict] = None,
         **kwargs,
     ):
         if input_transform is not None:

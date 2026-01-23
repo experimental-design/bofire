@@ -10,6 +10,7 @@ try:
     from rdkit import RDLogger
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
     from rdkit.DataStructs import FingerprintSimilarity
+    from rdkit.DataStructs.cDataStructs import ExplicitBitVect
 
     lg = RDLogger.logger()
     lg.setLevel(RDLogger.CRITICAL)
@@ -56,7 +57,7 @@ def smiles2fingerprints(
     bond_radius: int = 5,
     n_bits: int = 2048,
     output_as_rdkit_bitvector: bool = False,
-) -> np.ndarray:
+) -> np.ndarray | ExplicitBitVect:
     """Transforms a list of smiles to an array of morgan fingerprints.
 
     Args:

@@ -47,11 +47,11 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         if isinstance(self.kernel, ScaleKernel):
             base_kernel = self.kernel.base_kernel
             if isinstance(base_kernel, TanimotoKernel):
-                molecular_inputs = self.inputs.get(
+                molecular_inputs: list[CategoricalMolecularInput] = self.inputs.get(
                     includes=CategoricalMolecularInput,
                     exact=False,
                 )
-                base_kernel._molecular_inputs = molecular_inputs
+                base_kernel._molecular_inputs = molecular_inputs.features
 
                 # move fingerprint data model fro categorical encodings to kernel-specs
                 base_kernel._fingerprint_settings_for_similarities = {}
@@ -63,9 +63,8 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                             f"Categorical encoding for input {inp_.key} must be a Fingerprint. "
                             f"Found {type(self.categorical_encodings[inp_.key])}"
                         )
-                        base_kernel._fingerprint_settings_for_similarities[inp_.key] = (
-                            self.categorical_encodings.pop(inp_.key)
-                        )  # remove categorical encodings
+                        fingerprint: Fingerprints = self.categorical_encodings.pop(inp_.key)
+                        base_kernel._fingerprint_settings_for_similarities[inp_.key] = fingerprint
 
                 base_kernel._pre_compute_similarities = True
 
