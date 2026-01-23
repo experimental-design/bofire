@@ -1,6 +1,6 @@
 import warnings
 from itertools import combinations
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,6 @@ try:
     from rdkit import RDLogger
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
     from rdkit.DataStructs import FingerprintSimilarity
-    from rdkit.DataStructs.cDataStructs import ExplicitBitVect
 
     lg = RDLogger.logger()
     lg.setLevel(RDLogger.CRITICAL)
@@ -57,7 +56,7 @@ def smiles2fingerprints(
     bond_radius: int = 5,
     n_bits: int = 2048,
     output_as_rdkit_bitvector: bool = False,
-) -> np.ndarray | ExplicitBitVect:
+) -> np.ndarray | Any:
     """Transforms a list of smiles to an array of morgan fingerprints.
 
     Args:
