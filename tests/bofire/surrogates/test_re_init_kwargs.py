@@ -24,6 +24,7 @@ def test_re_init_kwargs_fingerprints(
         inputs=domain.inputs,
         outputs=domain.outputs,
         categorical_encodings=specs,
+        pre_compute_similarities=False,
     )
 
     surrogate = map(surrogate_data_model)

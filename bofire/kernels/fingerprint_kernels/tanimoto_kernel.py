@@ -104,7 +104,9 @@ class TanimotoKernel(BitKernel):
         """loop over combinations of molecules, and put this in a torch 2D array"""
 
         distances = mutual_tanimoto_similarities(
-            input.categories, **fingerprint.model_dump(exclude=["type"])
+            smiles=input.categories,
+            bond_radius=fingerprint.bond_radius,
+            n_bits=fingerprint.n_bits,
         )
 
         n = len(input.categories)
