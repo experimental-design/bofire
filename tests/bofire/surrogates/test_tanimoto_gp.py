@@ -84,3 +84,8 @@ def test_tanimoto_calculation(
         )
         assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
         assert np.allclose(cov1, cov2, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_recomputation_pass_of_tanimoto_sim_matrices(
+        chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]):

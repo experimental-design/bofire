@@ -17,7 +17,8 @@ def chem_domain_simple(request) -> tuple[domain_api.Domain, pd.DataFrame, pd.Dat
         "C1=CC=C(C=C1)CC(C(=O)O)N",
         "C1=CC=C2C(=C1)C(=CN2)CC(C(=O)O)N",
     ]
-    multi_input: bool = request.param
+
+    multi_input: bool = request.param if hasattr(request, "param") else False
 
     domain = domain_api.Domain(
         inputs=domain_api.Inputs(
