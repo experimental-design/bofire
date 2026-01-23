@@ -63,8 +63,12 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                             f"Categorical encoding for input {inp_.key} must be a Fingerprint. "
                             f"Found {type(self.categorical_encodings[inp_.key])}"
                         )
-                        fingerprint: Fingerprints = self.categorical_encodings.pop(inp_.key)
-                        base_kernel._fingerprint_settings_for_similarities[inp_.key] = fingerprint
+                        fingerprint: Fingerprints = self.categorical_encodings.pop(
+                            inp_.key
+                        )
+                        base_kernel._fingerprint_settings_for_similarities[inp_.key] = (
+                            fingerprint
+                        )
 
                 base_kernel._pre_compute_similarities = True
 
