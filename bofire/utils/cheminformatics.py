@@ -4,7 +4,6 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 
 
 try:
@@ -176,19 +175,10 @@ def mutual_tanimoto_similarities(
     smiles: list[str],
     bond_radius: int = 5,
     n_bits: int = 2048,
-    verbose: bool = False,
 ) -> list[float]:
     fingerprints = smiles2fingerprints(
         smiles, bond_radius, n_bits, output_as_rdkit_bitvector=True
     )
 
     fp_pairs = list(combinations(fingerprints, 2))
-    iterator = (
-        tqdm(
-            fp_pairs, total=len(fp_pairs), desc="Computing mutual tanimoto similarities"
-        )
-        if verbose
-        else fp_pairs
-    )
-
-    return [FingerprintSimilarity(*fp) for fp in iterator]
+    return [FingerprintSimilarity(*fp) for fp in fp_pairs]
