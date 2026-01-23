@@ -3,11 +3,11 @@ from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalMolecularInput,
     CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
-    CategoricalMolecularInput,
     SumFeature,
     TaskInput,
 )
