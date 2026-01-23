@@ -67,7 +67,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                             self.categorical_encodings.pop(inp_.key)
                         )  # remove categorical encodings
 
-                base_kernel.pre_compute_similarities = True
+                base_kernel._pre_compute_similarities = True
 
                 return self
 

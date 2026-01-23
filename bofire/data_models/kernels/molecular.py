@@ -14,7 +14,7 @@ class MolecularKernel(FeatureSpecificKernel):
 class TanimotoKernel(MolecularKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
     ard: bool = True
-    pre_compute_similarities: bool = False
+    _pre_compute_similarities: bool = False
 
     # private attributes, for pre-computation of similarities: will be overridden by tanimoto_gp, or auto-computed
     _fingerprint_settings_for_similarities: Optional[dict[str, Fingerprints]] = None
@@ -22,7 +22,7 @@ class TanimotoKernel(MolecularKernel):
 
     @model_validator(mode="after")
     def compute_mutual_tanimoto_distances(self):
-        if not self.pre_compute_similarities:
+        if not self._pre_compute_similarities:
             return self
 
         assert (

@@ -7,7 +7,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
-    MolecularInput,
+    CategoricalMolecularInput,
     SumFeature,
     TaskInput,
 )
@@ -611,7 +611,7 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                MolecularInput(key="mol1"),
+                CategoricalMolecularInput(key="mol1", categories=["C", "O", "N"]),
             ],
         ).model_dump(),
         "outputs": Outputs(
@@ -630,9 +630,7 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
-        },
+        "categorical_encodings": {},  # will be removed in favor of pre_compute_similarities
         "pre_compute_similarities": True,
         "dump": None,
         "hyperconfig": None,
@@ -645,7 +643,7 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                MolecularInput(key="mol1"),
+                CategoricalMolecularInput(key="mol1"),
             ],
         ).model_dump(),
         "outputs": Outputs(

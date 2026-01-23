@@ -218,7 +218,7 @@ def map_TanimotoKernel(
 ) -> TanimotoKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return TanimotoKernel(
-        pre_compute_similarities=data_model.pre_compute_similarities,
+        pre_compute_similarities=data_model._pre_compute_similarities,
         molecular_inputs=data_model._molecular_inputs,
         fingerprint_settings=data_model._fingerprint_settings_for_similarities,
         computed_mutual_similarities=computed_mutual_similarities,

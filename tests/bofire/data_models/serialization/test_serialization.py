@@ -53,6 +53,12 @@ def test_surrogate_should_be_serializable(surrogate_spec: Spec):
     spec = surrogate_spec.typed_spec()
     obj = surrogate_spec.cls(**spec)
     assert obj.model_dump() == spec
+    spec2 = obj.model_dump()
+    for key, val in spec2.items():
+        if val != spec[key]:
+            print(key)
+            print(val)
+            print(spec[key])
 
 
 def test_acquisition_function_should_be_serializable(acquisition_function_spec: Spec):
