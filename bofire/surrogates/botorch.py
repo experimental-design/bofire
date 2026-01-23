@@ -108,6 +108,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         self._input_transform: Union[InputTransform, None] = input_transform
         super().__init__(data_model=data_model, **kwargs)
 
+    @property
     def re_init_kwargs(self) -> dict:
         return {"input_transform": self._input_transform}
 

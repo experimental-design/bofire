@@ -53,10 +53,11 @@ class BotorchSurrogates:
             ),
         )
 
+    @property
     def re_init_kwargs(self) -> list[dict]:
         re_init_kwargs = []
         for model in self.surrogates:
-            re_init_kwargs.append(model.re_init_kwargs())
+            re_init_kwargs.append(model.re_init_kwargs)
         return re_init_kwargs
 
     # TODO: is this really needed here, code duplication with functional model
