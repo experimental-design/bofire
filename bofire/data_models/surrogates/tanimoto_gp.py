@@ -67,8 +67,8 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                             inp_.key
                         )  # type: ignore
                         base_kernel._fingerprint_settings_for_similarities[inp_.key] = (
-                            fingerprint
-                        )  # type: ignore
+                            fingerprint  # type: ignore
+                        )
 
                 base_kernel._pre_compute_similarities = True
 
