@@ -14,7 +14,7 @@ class MolecularKernel(FeatureSpecificKernel):
 class TanimotoKernel(MolecularKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
     ard: bool = True
-    pre_compute_similarities: bool = True
+    pre_compute_similarities: bool = False
 
     # private attributes, for pre-computation of similarities: will be overridden by tanimoto_gp, or auto-computed
     _fingerprint_settings_for_similarities: Optional[dict[str, Fingerprints]] = None

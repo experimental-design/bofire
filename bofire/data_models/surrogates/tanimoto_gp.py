@@ -25,7 +25,7 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
-    pre_compute_similarities: bool = False
+    pre_compute_similarities: bool = True
 
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
@@ -67,9 +67,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                             self.categorical_encodings.pop(inp_.key)
                         )  # remove categorical encodings
 
-                base_kernel.pre_compute_similarities = (
-                    True  # this triggers computation in the kernel data-model
-                )
+                base_kernel.pre_compute_similarities = True
 
                 return self
 

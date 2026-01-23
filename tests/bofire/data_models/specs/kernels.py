@@ -306,6 +306,7 @@ specs.add_valid(
     lambda: {
         "ard": True,
         "features": None,
+        "pre_compute_similarities": False,
     },
 )
 specs.add_valid(

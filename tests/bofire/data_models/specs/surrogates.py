@@ -606,37 +606,39 @@ specs.add_invalid(
     error=ValueError,
 )
 
-specs.add_valid(
-    models.TanimotoGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                MolecularInput(key="mol1"),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "kernel": ScaleKernel(
-            base_kernel=TanimotoKernel(
-                ard=True,
-            ),
-            outputscale_prior=THREESIX_SCALE_PRIOR(),
-        ).model_dump(),
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "scaler": ScalerEnum.IDENTITY,
-        "output_scaler": ScalerEnum.IDENTITY,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+for pre_compute_similarities in (True, False):
+    specs.add_valid(
+        models.TanimotoGPSurrogate,
+        lambda: {
+            "inputs": Inputs(
+                features=[
+                    MolecularInput(key="mol1"),
+                ],
+            ).model_dump(),
+            "outputs": Outputs(
+                features=[
+                    features.valid(ContinuousOutput).obj(),
+                ],
+            ).model_dump(),
+            "kernel": ScaleKernel(
+                base_kernel=TanimotoKernel(
+                    ard=True,
+                ),
+                outputscale_prior=THREESIX_SCALE_PRIOR(),
+            ).model_dump(),
+            "engineered_features": EngineeredFeatures().model_dump(),
+            "scaler": ScalerEnum.IDENTITY,
+            "output_scaler": ScalerEnum.IDENTITY,
+            "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+            "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
+            "categorical_encodings": {
+                "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            },
+            "pre_compute_similarities": pre_compute_similarities,
+            "dump": None,
+            "hyperconfig": None,
         },
-        "dump": None,
-        "hyperconfig": None,
-    },
-)
+    )
 
 
 specs.add_valid(
