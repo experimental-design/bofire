@@ -438,10 +438,16 @@ def map(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> GpytorchKernel:
-    return KERNEL_MAP[data_model.__class__](
+
+    kernel_factory = KERNEL_MAP[data_model.__class__]
+    kwargs_to_factory = {key: val for (key, val) in kwargs.items() if key in kernel_factory.__code__.co_varnames}
+
+    return kernel_factory(
         data_model,
         batch_shape,
         active_dims,
         features_to_idx_mapper,
+        **kwargs_to_factory,
     )

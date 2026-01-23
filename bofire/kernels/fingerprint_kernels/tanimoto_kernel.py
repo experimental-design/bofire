@@ -24,6 +24,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from typing import Optional
 
 import torch
 
@@ -65,25 +66,12 @@ class TanimotoKernel(BitKernel):
     is_stationary = False
     has_lengthscale = False
 
-    def compute_mutual_similarities(self):
-        self._computed_mutual_similarities = {}
-        for inp in self._molecular_inputs:
-            print(f"computing tanimoto distances for input {inp.key:}")
-            self._computed_mutual_similarities[inp.key] = mutual_tanimoto_similarities(
-                inp.categories,
-                **self._fingerprint_settings_for_similarities[inp.key].model_dump(
-                    exclude=[
-                        "type",
-                    ]
-                ),
-            )
-
     def __init__(
         self,
         pre_compute_similarities: bool = False,
-        molecular_inputs: list[CategoricalMolecularInput] = None,
-        fingerprint_settings: dict[str, Fingerprints] = None,
-        computed_mutual_similarities: dict[str, torch.Tensor] = None,
+        molecular_inputs: Optional[list[CategoricalMolecularInput]] = None,
+        fingerprint_settings: Optional[dict[str, Fingerprints]] = None,
+        computed_mutual_similarities: Optional[dict[str, torch.Tensor]] = None,
         **kwargs,
     ):
         super(TanimotoKernel, self).__init__(**kwargs)
@@ -125,6 +113,13 @@ class TanimotoKernel(BitKernel):
         D[cols, rows] = D[rows, cols]
         # Diagonal remains 0 (distance of a point to itself)
         return D
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        if not self.pre_compute_similarities:
+            return {}
+        return {"computed_mutual_similarities": self.sim_matrices}
+
 
     def forward(self, x1, x2, diag=False, **params):
         if self.pre_compute_similarities:
