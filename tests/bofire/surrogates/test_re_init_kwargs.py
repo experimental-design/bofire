@@ -51,7 +51,7 @@ def test_re_init_kwargs_fingerprints(
     surrogate._fit(X=X, Y=Y)  # fitting triggers fingerprint computation
     encodings = surrogate._input_transform.encoders[0].encoding
 
-    re_init_kwargs = surrogate.re_init_kwargs()  # includes the molecular fingerprints
+    re_init_kwargs = surrogate.re_init_kwargs  # includes the molecular fingerprints
     surrogate_re_init = map(surrogate_data_model, **re_init_kwargs)
     encodings_re_init = surrogate_re_init._input_transform.encoders[0].encoding
     assert (encodings == encodings_re_init).all()
