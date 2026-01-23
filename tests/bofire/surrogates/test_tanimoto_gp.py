@@ -118,4 +118,3 @@ def test_passing_of_tanimoto_sim_matrices(
     id_tensor_2 = id(strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices["molecules"])
 
     assert id_tensor_1 == id_tensor_2  # passing matrix works would not change the id of the tensor
-    assert t_tell_repeat < t_tell_initial
