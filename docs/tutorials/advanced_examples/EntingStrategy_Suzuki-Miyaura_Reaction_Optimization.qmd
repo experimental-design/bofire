@@ -112,7 +112,7 @@ domain = Domain(inputs=inputs, outputs=outputs)
 
 print("✅ Reaction space defined:")
 # Access features by iterating through them
-for feature in inputs.features:
+for feature in inputs.get()
     if feature.key == "solvent":
         print(f"   Solvents: {feature.categories}")
     elif feature.key == "base":
