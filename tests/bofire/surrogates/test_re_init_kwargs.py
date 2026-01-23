@@ -14,6 +14,9 @@ from bofire.surrogates.api import map
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
+@pytest.mark.parametrize(
+    "chem_domain_simple", [False], indirect=True
+)  # multi-component
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_re_init_kwargs_fingerprints(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
