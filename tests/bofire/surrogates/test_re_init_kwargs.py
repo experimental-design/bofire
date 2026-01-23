@@ -1,14 +1,14 @@
 import importlib
 
 import pandas as pd
-import torch
 import pytest
+import torch
 
 from bofire.benchmarks.api import Himmelblau
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.features import api as features_api
 from bofire.data_models.molfeatures.api import FingerprintsFragments
-from bofire.data_models.surrogates.api import TanimotoGPSurrogate, SingleTaskGPSurrogate
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, TanimotoGPSurrogate
 from bofire.surrogates.api import map
 
 
