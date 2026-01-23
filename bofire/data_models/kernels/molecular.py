@@ -5,7 +5,6 @@ from pydantic import model_validator
 from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 from bofire.data_models.molfeatures.api import Fingerprints
-from bofire.utils.cheminformatics import mutual_tanimoto_similarities
 
 
 class MolecularKernel(FeatureSpecificKernel):

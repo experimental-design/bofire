@@ -1,5 +1,4 @@
 import importlib
-from time import time
 
 import numpy as np
 import pandas as pd
@@ -7,9 +6,9 @@ import pytest
 import torch
 
 from bofire.data_models.domain import api as domain_api
-from bofire.data_models.strategies import api as strategies_api
 from bofire.data_models.molfeatures.api import Fingerprints
-from bofire.data_models.surrogates.api import TanimotoGPSurrogate, BotorchSurrogates
+from bofire.data_models.strategies import api as strategies_api
+from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
 from bofire.strategies.api import map as map_strategy
 from bofire.surrogates.api import map
 from bofire.utils.torch_tools import tkwargs
@@ -91,7 +90,8 @@ def test_tanimoto_calculation(
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_passing_of_tanimoto_sim_matrices(
-        chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]):
+    chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
+):
     domain, X, Y = chem_domain_simple
 
     surrogate_data_model = TanimotoGPSurrogate(
@@ -107,14 +107,24 @@ def test_passing_of_tanimoto_sim_matrices(
 
     strategy = map_strategy(strategy_data_model)
 
-    t0 = time()
-    strategy.tell(pd.concat((X, Y), axis=1))  # computation of tanimoto distances happens here
-    t_tell_initial = time() - t0
-    id_tensor_1 = id(strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices["molecules"])
+    strategy.tell(
+        pd.concat((X, Y), axis=1)
+    )  # computation of tanimoto distances happens here
+    id_tensor_1 = id(
+        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices[
+            "molecules"
+        ]
+    )
 
-    t0 = time()
-    strategy.tell(pd.concat((X, Y), axis=1))  # computation of tanimoto distances happens here
-    t_tell_repeat = time() - t0
-    id_tensor_2 = id(strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices["molecules"])
+    strategy.tell(
+        pd.concat((X, Y), axis=1)
+    )  # computation of tanimoto distances happens here
+    id_tensor_2 = id(
+        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices[
+            "molecules"
+        ]
+    )
 
-    assert id_tensor_1 == id_tensor_2  # passing matrix works would not change the id of the tensor
+    assert (
+        id_tensor_1 == id_tensor_2
+    )  # passing matrix works would not change the id of the tensor

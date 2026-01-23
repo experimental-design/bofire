@@ -457,7 +457,6 @@ def map(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
     **kwargs,
 ) -> GpytorchKernel:
-
     kernel_factory = KERNEL_MAP[data_model.__class__]
 
     return kernel_factory(

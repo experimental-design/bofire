@@ -24,14 +24,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
 from typing import Optional
 
 import torch
 
 from bofire.data_models.features.api import CategoricalMolecularInput
 from bofire.data_models.molfeatures.api import Fingerprints
-from bofire.utils.cheminformatics import mutual_tanimoto_similarities
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
+from bofire.utils.cheminformatics import mutual_tanimoto_similarities
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -80,23 +81,31 @@ class TanimotoKernel(BitKernel):
         self.pre_compute_similarities = pre_compute_similarities
         self.fingerprint_settings = fingerprint_settings if fingerprint_settings else {}
         self.molecular_inputs = molecular_inputs if molecular_inputs else []
-        self.sim_matrices = computed_mutual_similarities if computed_mutual_similarities else {}
+        self.sim_matrices = (
+            computed_mutual_similarities if computed_mutual_similarities else {}
+        )
 
         if self.pre_compute_similarities:
             for inp_ in self.molecular_inputs:
                 key = inp_.key
                 if key not in list(self.sim_matrices):
-                    fingerprint = self.fingerprint_settings[key] if key in list(self.fingerprint_settings) \
+                    fingerprint = (
+                        self.fingerprint_settings[key]
+                        if key in list(self.fingerprint_settings)
                         else Fingerprints()
+                    )
                     self.sim_matrices[key] = self.compute_sim_matrix(inp_, fingerprint)
 
     @staticmethod
     def compute_sim_matrix(
-        input: CategoricalMolecularInput, fingerprint: Fingerprints,
+        input: CategoricalMolecularInput,
+        fingerprint: Fingerprints,
     ) -> torch.Tensor:
-        """ loop over combinations of molecules, and put this in a torch 2D array"""
+        """loop over combinations of molecules, and put this in a torch 2D array"""
 
-        distances = mutual_tanimoto_similarities(input.categories, **fingerprint.model_dump(exclude=["type"]))
+        distances = mutual_tanimoto_similarities(
+            input.categories, **fingerprint.model_dump(exclude=["type"])
+        )
 
         n = len(input.categories)
         m = n * (n - 1) // 2
@@ -119,7 +128,6 @@ class TanimotoKernel(BitKernel):
         if not self.pre_compute_similarities:
             return {}
         return {"computed_mutual_similarities": self.sim_matrices}
-
 
     def forward(self, x1, x2, diag=False, **params):
         if self.pre_compute_similarities:
