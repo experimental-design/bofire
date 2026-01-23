@@ -26,7 +26,7 @@ readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10.0"
 dependencies = [
     "numpy",
-    "pandas",
+    "pandas<=2.3.3",
     "pydantic>=2.5",
     "scipy>=1.7",
     "typing-extensions",
