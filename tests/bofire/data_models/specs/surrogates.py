@@ -643,7 +643,7 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                CategoricalMolecularInput(key="mol1"),
+                CategoricalMolecularInput(key="mol1", categories=["C", "O", "N"]),
             ],
         ).model_dump(),
         "outputs": Outputs(
