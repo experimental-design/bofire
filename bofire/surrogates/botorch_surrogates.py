@@ -1,6 +1,5 @@
 import itertools
-from abc import ABC
-from typing import List
+from typing import Any, Optional
 
 import botorch
 import pandas as pd
@@ -11,20 +10,25 @@ from botorch.models.transforms.input import ChainedInputTransform, FilterFeature
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.surrogates.api import BotorchSurrogates as DataModel
 from bofire.data_models.types import InputTransformSpecs
-from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.mapper import map as map_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 
 
-class BotorchSurrogates(ABC):
-    surrogates: List[BotorchSurrogate]
+class BotorchSurrogates:
+    surrogates: Any  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
 
     def __init__(
         self,
         data_model: DataModel,
+        re_init_kwargs: Optional[list[dict]] = None,
         **kwargs,
     ):
-        self.surrogates = [map_surrogate(model) for model in data_model.surrogates]  # type: ignore
+        if re_init_kwargs is None:
+            re_init_kwargs = [{} for _ in data_model.surrogates]
+        self.surrogates = [
+            map_surrogate(model, **kwargs_)
+            for (model, kwargs_) in zip(data_model.surrogates, re_init_kwargs)
+        ]  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
@@ -48,6 +52,13 @@ class BotorchSurrogates(ABC):
                 ),
             ),
         )
+
+    @property
+    def re_init_kwargs(self) -> list[dict]:
+        re_init_kwargs = []
+        for model in self.surrogates:
+            re_init_kwargs.append(model.re_init_kwargs)
+        return re_init_kwargs
 
     # TODO: is this really needed here, code duplication with functional model
     def _check_compability(self, inputs: Inputs, outputs: Outputs):
