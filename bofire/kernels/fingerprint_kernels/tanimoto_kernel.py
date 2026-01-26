@@ -25,9 +25,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Optional
+
 import torch
 
+from bofire.data_models.features.api import CategoricalMolecularInput
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
+from bofire.utils.cheminformatics import mutual_tanimoto_similarities
+from bofire.utils.torch_tools import tkwargs
 
 
 class TanimotoKernel(BitKernel):
@@ -61,11 +67,107 @@ class TanimotoKernel(BitKernel):
     is_stationary = False
     has_lengthscale = False
 
-    def __init__(self, **kwargs):
+    def __init__(
+        self,
+        pre_compute_similarities: bool = False,
+        molecular_inputs: Optional[list[CategoricalMolecularInput]] = None,
+        fingerprint_settings: Optional[dict[str, Fingerprints]] = None,
+        computed_mutual_similarities: Optional[dict[str, torch.Tensor]] = None,
+        **kwargs,
+    ):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
+        self.pre_compute_similarities = pre_compute_similarities
+        self.fingerprint_settings = fingerprint_settings if fingerprint_settings else {}
+        self.molecular_inputs = molecular_inputs if molecular_inputs else []
+        self.sim_matrices = (
+            computed_mutual_similarities if computed_mutual_similarities else {}
+        )
+
+        if self.pre_compute_similarities:
+            for inp_ in self.molecular_inputs:
+                key = inp_.key
+                if key not in list(self.sim_matrices):
+                    fingerprint = (
+                        self.fingerprint_settings[key]
+                        if key in list(self.fingerprint_settings)
+                        else Fingerprints()
+                    )
+                    self.sim_matrices[key] = self.compute_sim_matrix(inp_, fingerprint)
+
+    @staticmethod
+    def compute_sim_matrix(
+        input: CategoricalMolecularInput,
+        fingerprint: Fingerprints,
+    ) -> torch.Tensor:
+        """loop over combinations of molecules, and put this in a torch 2D array"""
+
+        distances = mutual_tanimoto_similarities(
+            smiles=input.categories,
+            bond_radius=fingerprint.bond_radius,
+            n_bits=fingerprint.n_bits,
+        )
+
+        n = len(input.categories)
+        m = n * (n - 1) // 2
+        if len(distances) != m:
+            raise ValueError(
+                f"Expected {m} distances for n={n}, but got {len(distances)}. "
+                "Ensure you used itertools.combinations in the same order."
+            )
+
+        D = torch.ones((n, n), **tkwargs)
+        rows, cols = torch.triu_indices(n, n, offset=1)  # indices where i < j
+        D[rows, cols] = torch.tensor(distances, **tkwargs)
+        # Mirror to lower triangle
+        D[cols, rows] = D[rows, cols]
+        # Diagonal remains 0 (distance of a point to itself)
+        return D
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        if not self.pre_compute_similarities:
+            return {}
+        return {"computed_mutual_similarities": self.sim_matrices}
+
     def forward(self, x1, x2, diag=False, **params):
+        if self.pre_compute_similarities:
+            # Infer shapes
+            batch_shape = x1.shape[:-2]
+            n1, d = x1.shape[-2], x1.shape[-1]
+            n2 = x2.shape[-2]
+            assert (
+                d == len(self.molecular_inputs)
+            ), f"Last dim d={d} must match number of molecular inputs={len(self.molecular_inputs)}"
+
+            cov = torch.zeros((*batch_shape, n1, n2), **tkwargs)
+
+            # Sum contributions for each feature index along the last dim
+            for idx, inp_ in enumerate(self.molecular_inputs):
+                D = self.sim_matrices[
+                    inp_.key
+                ]  # [Ni, Ni], precomputed distances for feature idx
+
+                # Gather integer indices for this feature from x1 and x2 (keep batch dims)
+                x1_idx = (
+                    x1[..., idx].to(torch.long).to(D.device)
+                )  # shape: batch_shape × n1
+                x2_idx = (
+                    x2[..., idx].to(torch.long).to(D.device)
+                )  # shape: batch_shape × n2
+
+                # Build submatrix via broadcasting advanced indexing:
+                # Result shape: batch_shape × n1 × n2
+                D_sub = D[x1_idx.unsqueeze(-1), x2_idx.unsqueeze(-2)]
+
+                cov = cov + D_sub
+
+            if diag:
+                # Return diagonal along the last two dims: shape batch_shape × n1
+                return cov.diagonal(dim1=-2, dim2=-1)
+            return cov
+
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(

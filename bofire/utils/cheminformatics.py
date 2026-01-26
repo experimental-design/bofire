@@ -1,5 +1,6 @@
 import warnings
-from typing import List, Optional
+from itertools import combinations
+from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -8,6 +9,7 @@ import pandas as pd
 try:
     from rdkit import RDLogger
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
+    from rdkit.DataStructs import FingerprintSimilarity
 
     lg = RDLogger.logger()
     lg.setLevel(RDLogger.CRITICAL)
@@ -53,7 +55,8 @@ def smiles2fingerprints(
     smiles: List[str],
     bond_radius: int = 5,
     n_bits: int = 2048,
-) -> np.ndarray:
+    output_as_rdkit_bitvector: bool = False,
+) -> np.ndarray | Any:
     """Transforms a list of smiles to an array of morgan fingerprints.
 
     Args:
@@ -71,7 +74,7 @@ def smiles2fingerprints(
         for mol in rdkit_mols
     ]
 
-    return np.asarray(fps)
+    return fps if output_as_rdkit_bitvector else np.asarray(fps)
 
 
 def smiles2fragments(
@@ -166,3 +169,16 @@ def smiles2fragments_fingerprints(
     fragments = smiles2fragments(smiles, fragments_list=fragments_list)
 
     return np.hstack((fingerprints, fragments))
+
+
+def mutual_tanimoto_similarities(
+    smiles: list[str],
+    bond_radius: int = 5,
+    n_bits: int = 2048,
+) -> list[float]:
+    fingerprints = smiles2fingerprints(
+        smiles, bond_radius, n_bits, output_as_rdkit_bitvector=True
+    )
+
+    fp_pairs = list(combinations(fingerprints, 2))
+    return [FingerprintSimilarity(*fp) for fp in fp_pairs]

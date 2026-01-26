@@ -36,12 +36,15 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         tY: torch.Tensor,
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
+        kernel_kwargs: Optional[dict] = None,
         **kwargs,
     ):
         if input_transform is not None:
             n_dim = input_transform(tX).shape[-1]
         else:
             n_dim = tX.shape[-1]
+
+        kernel_kwargs = kernel_kwargs if kernel_kwargs else {}
 
         self.model = botorch.models.SingleTaskGP(
             train_X=tX,
@@ -51,6 +54,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
                 features_to_idx_mapper=self.get_feature_indices,
+                **kernel_kwargs,
             ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
