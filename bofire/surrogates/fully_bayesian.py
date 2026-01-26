@@ -53,6 +53,7 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         disable_progbar: bool = True,
+        **kwargs,
     ):
         self.model = _model_mapper[self.model_type](
             train_X=tX,
