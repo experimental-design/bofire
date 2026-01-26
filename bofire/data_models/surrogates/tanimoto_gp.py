@@ -50,7 +50,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 molecular_inputs: list[CategoricalMolecularInput] = self.inputs.get(
                     includes=CategoricalMolecularInput,
                     exact=False,
-                ).fefatures
+                ).features
                 base_kernel._molecular_inputs = molecular_inputs  # type: ignore
 
                 # move fingerprint data model fro categorical encodings to kernel-specs
