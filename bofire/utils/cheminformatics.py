@@ -107,22 +107,6 @@ def smiles2fragments(
     return frags
 
 
-# def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
-#     """Transforms list of smiles to bag of characters.
-#
-#     Args:
-#         smiles (List[str]): List of smiles
-#         max_ngram (int, optional): Maximal ngram value. Defaults to 5.
-#
-#     Returns:
-#         np.ndarray: Array holding the bag of characters.
-#     """
-#     for smi in smiles:
-#         smiles2mol(smi)
-#     cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
-#     return cv.fit_transform(smiles).toarray()
-
-
 def smiles2mordred(
     smiles: List[str], descriptors_list: List[str], ignore_3D: bool = False
 ) -> np.ndarray:

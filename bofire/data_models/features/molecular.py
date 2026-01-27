@@ -12,8 +12,8 @@ from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.molfeatures.api import (
     AnyMolFeatures,
+    CompositeMolFeatures,
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
@@ -80,7 +80,7 @@ class CategoricalMolecularInput(CategoricalInput):  # type: ignore
     def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:  # type: ignore
         return CategoricalInput.valid_transform_types() + [  # type: ignore
             Fingerprints,
-            FingerprintsFragments,
+            CompositeMolFeatures,
             Fragments,
             MordredDescriptors,
         ]

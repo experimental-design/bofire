@@ -16,6 +16,7 @@ specs.add_valid(
     lambda: {
         "bond_radius": random.randrange(1, 6),
         "n_bits": random.randrange(32, 2048),
+        "correlation_cutoff": 0.9,
     },
 )
 
@@ -23,6 +24,7 @@ if RDKIT_AVAILABLE:
     specs.add_valid(
         molfeatures.Fragments,
         lambda: {
+            "correlation_cutoff": 0.9,
             "fragments": random.sample(
                 names.fragments,
                 k=random.randrange(1, len(names.fragments)),
@@ -30,14 +32,21 @@ if RDKIT_AVAILABLE:
         },
     )
     specs.add_valid(
-        molfeatures.FingerprintsFragments,
+        molfeatures.CompositeMolFeatures,
         lambda: {
-            "bond_radius": random.randrange(1, 6),
-            "n_bits": random.randrange(32, 2048),
-            "fragments": random.sample(
-                names.fragments,
-                k=random.randrange(1, len(names.fragments)),
-            ),
+            "correlation_cutoff": 0.9,
+            "features": [
+                molfeatures.Fingerprints(
+                    bond_radius=random.randrange(1, 6),
+                    n_bits=random.randrange(32, 2048),
+                ).model_dump(),
+                molfeatures.Fragments(
+                    fragments=random.sample(
+                        names.fragments,
+                        k=random.randrange(1, len(names.fragments)),
+                    ),
+                ).model_dump(),
+            ],
         },
     )
 
@@ -45,6 +54,7 @@ if RDKIT_AVAILABLE:
         specs.add_valid(
             molfeatures.MordredDescriptors,
             lambda: {
+                "correlation_cutoff": 0.9,
                 "descriptors": random.sample(names.mordred, k=random.randrange(1, 10)),
                 "ignore_3D": False,
             },
