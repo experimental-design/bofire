@@ -81,7 +81,7 @@ def test_get_uncorrelated_descriptors(molfeatures):
     initial_descriptor_values = molfeatures.get_descriptor_values(pd.Series(molecules))
 
     # Run select_mordred_descriptors
-    molfeatures._update_uncorrelated_descriptors(molecules=molecules)
+    new_names = molfeatures._update_uncorrelated_descriptors(molecules=molecules)
 
     # Check that the number of descriptors has decreased
     final_descriptor_count = len(molfeatures.get_descriptor_names())
@@ -100,6 +100,8 @@ def test_get_uncorrelated_descriptors(molfeatures):
         initial_descriptor_values[molfeatures.get_descriptor_names()],
         final_descriptor_values,
     )
+
+    assert molfeatures.get_descriptor_names() == new_names
 
     # Verify that the descriptor count is positive
     assert (

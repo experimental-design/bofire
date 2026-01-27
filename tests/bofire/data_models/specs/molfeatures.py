@@ -17,6 +17,7 @@ specs.add_valid(
         "bond_radius": random.randrange(1, 6),
         "n_bits": random.randrange(32, 2048),
         "correlation_cutoff": 0.9,
+        "filter_descriptors": True,
     },
 )
 
@@ -29,6 +30,7 @@ if RDKIT_AVAILABLE:
                 names.fragments,
                 k=random.randrange(1, len(names.fragments)),
             ),
+            "filter_descriptors": True,
         },
     )
     specs.add_valid(
@@ -47,6 +49,7 @@ if RDKIT_AVAILABLE:
                     ),
                 ).model_dump(),
             ],
+            "filter_descriptors": True,
         },
     )
 
@@ -57,5 +60,6 @@ if RDKIT_AVAILABLE:
                 "correlation_cutoff": 0.9,
                 "descriptors": random.sample(names.mordred, k=random.randrange(1, 10)),
                 "ignore_3D": False,
+                "filter_descriptors": True,
             },
         )

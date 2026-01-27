@@ -18,6 +18,7 @@ class MolFeatures(BaseModel):
     """Base class for all molecular features"""
 
     type: str
+    filter_descriptors: bool = True
     correlation_cutoff: float = 0.95
     _descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = PrivateAttr(
         None
@@ -92,7 +93,9 @@ class MolFeatures(BaseModel):
             remaining_descriptors -= to_remove
 
         # Update the transform_type.descriptors with the filtered list
-        self._descriptors = selected_descriptors
+        if self.filter_descriptors is True:
+            self._descriptors = selected_descriptors
+        return selected_descriptors
 
 
 class Fingerprints(MolFeatures):
