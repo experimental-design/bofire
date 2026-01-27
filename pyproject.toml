@@ -88,6 +88,9 @@ all = [
 [tool.setuptools.packages]
 find = {}
 
+[tool.setuptools.package-data]
+"bofire.benchmarks.data" = ["octane.csv"]
+
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
