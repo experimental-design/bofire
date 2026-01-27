@@ -215,6 +215,7 @@ website:
             - docs/tutorials/advanced_examples/objectives_on_inputs.qmd
             - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
             - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
+            - docs/tutorials/advanced_examples/octane_number.qmd
         - section: "Benchmarks"
           contents:
             - docs/tutorials/benchmarks/index.qmd

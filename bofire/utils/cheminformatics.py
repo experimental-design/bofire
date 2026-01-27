@@ -126,7 +126,7 @@ def smiles2mordred(
     calc = Calculator(descriptors, ignore_3D=ignore_3D)  # type: ignore
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
-    descriptors_temp_df = calc.pandas(mols)
+    descriptors_temp_df = calc.pandas(mols, quiet=True)
     descriptors_df = descriptors_temp_df.astype(float).fillna(0)
     nan_list = [
         pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()  # type: ignore
