@@ -120,3 +120,12 @@ class Surrogate(ABC):
     @abstractmethod
     def loads(self, data: str):
         """Loads the actual model from a string and writes it to the `model` attribute."""
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        """this method will return properties of the class, which are constructed during initialization, and can be
+        added as keyword argument to the __init__ function of the class. Expensive to calculate properties can be
+        passed upon re-training a strategy to the new surrogates, given, that these do not depend on the current
+        training data but only on the domain
+        """
+        return {}

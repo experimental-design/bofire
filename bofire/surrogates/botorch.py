@@ -1,7 +1,7 @@
 import base64
 import io
 from abc import abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -99,13 +99,19 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     def __init__(
         self,
         data_model: TrainableDataModel,
+        input_transform: Optional[Union[InputTransform, None]] = None,
         **kwargs,
     ):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.engineered_features = data_model.engineered_features
+        self._input_transform: Union[InputTransform, None] = input_transform
         super().__init__(data_model=data_model, **kwargs)
         self._input_transform: Optional[InputTransform] = None
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        return {"input_transform": self._input_transform}
 
     def get_feature_indices(
         self,
