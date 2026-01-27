@@ -243,6 +243,7 @@ def FingerprintsFragments(
     bond_radius: int = 5,
     n_bits: int = 2048,
     correlation_cutoff: float = 0.95,
+    filter_descriptors: bool = True,
 ) -> CompositeMolFeatures:
     """Factory function to create a FingerprintsFragments MolFeatures object.
 
@@ -260,4 +261,5 @@ def FingerprintsFragments(
             Fingerprints(bond_radius=bond_radius, n_bits=n_bits),
             Fragments(fragments=fragments),
         ],
+        filter_descriptors=filter_descriptors,
     )
