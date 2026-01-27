@@ -55,7 +55,7 @@ class MolFeatures(BaseModel):
 
         if len(non_zero_var_descriptors) == 0:
             raise ValueError(
-                f"No descriptors with non-zero variance found for feature '{self.key}'. "
+                "No descriptors with non-zero variance found. "
                 "Cannot perform correlation-based filtering."
             )
 
@@ -64,7 +64,7 @@ class MolFeatures(BaseModel):
         # Handle edge case: only one descriptor left
         if descriptor_values.shape[1] == 1:
             warnings.warn(
-                f"Only one descriptor with non-zero variance found for feature '{self.key}'. "
+                "Only one descriptor with non-zero variance found for feature. "
                 "No correlation filtering needed."
             )
             self._descriptors = non_zero_var_descriptors

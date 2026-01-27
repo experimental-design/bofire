@@ -481,21 +481,24 @@ def test_SingleTaskGPModel_mixed_features():
         categorical_encodings={
             "x_cat_1": CategoricalEncodingEnum.ORDINAL,
             "x_cat_2": CategoricalEncodingEnum.ORDINAL,
-            "x_mol": Fingerprints(n_bits=2048),
+            "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
         },
     )
 
     gp_mapped = surrogates.map(gp_data)
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
+    n_descriptors_after_filtering = len(
+        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+    )
     assert pred.shape == (4, 2)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
-        2050,
-        2051,
+        2 + n_descriptors_after_filtering,
+        3 + n_descriptors_after_filtering,
     ]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
     assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
-        range(2, 2050)
+        range(2, 2 + n_descriptors_after_filtering)
     )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
