@@ -3,11 +3,11 @@ from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalMolecularInput,
     CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
-    MolecularInput,
     SumFeature,
     TaskInput,
 )
@@ -611,7 +611,7 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                MolecularInput(key="mol1"),
+                CategoricalMolecularInput(key="mol1", categories=["C", "CC", "CCC"]),
             ],
         ).model_dump(),
         "outputs": Outputs(

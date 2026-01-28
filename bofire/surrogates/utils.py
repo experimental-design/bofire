@@ -11,41 +11,11 @@ from botorch.models.transforms.input import (
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.molfeatures.api import (
-    Fingerprints,
-    FingerprintsFragments,
-    Fragments,
-    MordredDescriptors,
-)
+from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform
-
-
-def get_molecular_feature_keys(
-    specs: InputTransformSpecs,
-) -> List[str]:
-    """Returns a list of molecular feature keys in the input data.
-    These features are features with transform type Fingerprints, Fragments,
-    or FingerprintsFragments in `specs`.
-
-    Args:
-        specs (InputTransformSpecs): Dictionary specifying which
-            input feature is transformed by which encoder.
-
-    Returns:
-        List[str]: The list of molecular feature keys.
-
-    """
-    molecular_feature_key_list = [
-        key
-        for key, value in specs.items()
-        if isinstance(value, Fingerprints)
-        or isinstance(value, Fragments)
-        or isinstance(value, FingerprintsFragments)
-    ]
-    return sorted(molecular_feature_key_list)
 
 
 def get_continuous_feature_keys(
@@ -70,6 +40,13 @@ def get_continuous_feature_keys(
         for key, value in specs.items()
         if value != CategoricalEncodingEnum.DESCRIPTOR
         and not isinstance(value, MordredDescriptors)
+        and not (
+            isinstance(value, CompositeMolFeatures)
+            and any(
+                isinstance(molfeature, MordredDescriptors)
+                for molfeature in value.features
+            )
+        )
     ]
     continuous_feature_key_list = [
         feat.key
@@ -77,33 +54,6 @@ def get_continuous_feature_keys(
         if feat.key not in non_continuous_feature_key_list
     ]
     return sorted(continuous_feature_key_list)
-
-
-def get_categorical_feature_keys(
-    specs: InputTransformSpecs,
-) -> List[str]:
-    """Returns a list of categorical feature keys in the input data.
-    These features are not descriptor-based and are not of type Fingerprints, Fragments, FingerprintsFragments,
-    or MordredDescriptors.
-
-    Args:
-        specs (InputTransformSpecs): Dictionary specifying which
-            input feature is transformed by which encoder.
-
-    Returns:
-        List[str]: The list of categorical feature keys.
-
-    """
-    categorical_feature_key_list = [
-        key
-        for key, value in specs.items()
-        if value != CategoricalEncodingEnum.DESCRIPTOR
-        and not isinstance(value, Fingerprints)
-        and not isinstance(value, Fragments)
-        and not isinstance(value, FingerprintsFragments)
-        and not isinstance(value, MordredDescriptors)
-    ]
-    return sorted(categorical_feature_key_list)
 
 
 def get_scaler(
@@ -176,7 +126,7 @@ def get_input_transform(
     inputs: Inputs,
     engineered_features: EngineeredFeatures,
     scaler_type: ScalerEnum,
-    categorical_encodings,  # TODO: specify type
+    categorical_encodings: InputTransformSpecs,
 ) -> Union[InputTransform, None]:
     """Creates the botorch input transform on the basis of
     the specified inputs, engineered features and categorical

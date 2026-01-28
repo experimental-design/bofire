@@ -11,7 +11,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
-    MolecularInput,
 )
 
 
@@ -20,9 +19,7 @@ from bofire.data_models.features.api import (
     [
         (spec, n)
         for spec in specs.features.valids
-        if (spec.cls != ContinuousOutput)
-        and (spec.cls != MolecularInput)
-        and (spec.cls != CategoricalOutput)
+        if (spec.cls != ContinuousOutput) and (spec.cls != CategoricalOutput)
         for n in [1, 5]
     ],
 )

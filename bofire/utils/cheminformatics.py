@@ -107,22 +107,6 @@ def smiles2fragments(
     return frags
 
 
-# def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
-#     """Transforms list of smiles to bag of characters.
-#
-#     Args:
-#         smiles (List[str]): List of smiles
-#         max_ngram (int, optional): Maximal ngram value. Defaults to 5.
-#
-#     Returns:
-#         np.ndarray: Array holding the bag of characters.
-#     """
-#     for smi in smiles:
-#         smiles2mol(smi)
-#     cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
-#     return cv.fit_transform(smiles).toarray()
-
-
 def smiles2mordred(
     smiles: List[str], descriptors_list: List[str], ignore_3D: bool = False
 ) -> np.ndarray:
@@ -142,7 +126,7 @@ def smiles2mordred(
     calc = Calculator(descriptors, ignore_3D=ignore_3D)  # type: ignore
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
-    descriptors_temp_df = calc.pandas(mols)
+    descriptors_temp_df = calc.pandas(mols, quiet=True)
     descriptors_df = descriptors_temp_df.astype(float).fillna(0)
     nan_list = [
         pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()  # type: ignore

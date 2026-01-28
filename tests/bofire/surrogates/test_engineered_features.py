@@ -1,19 +1,31 @@
+import importlib
+
+import pandas as pd
+import pytest
 import torch
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     ContinuousDescriptorInput,
     ContinuousInput,
+    ContinuousMolecularInput,
     MeanFeature,
+    MolecularWeightedSumFeature,
     SumFeature,
     WeightedSumFeature,
 )
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.surrogates.engineered_features import (
     map_mean_feature,
+    map_molecular_weighted_sum_feature,
     map_sum_feature,
     map_weighted_sum_feature,
 )
 from bofire.utils.torch_tools import tkwargs
+
+
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
+MORDRED_AVAILABLE = importlib.util.find_spec("mordred") is not None
 
 
 def test_get_sum_feature():
@@ -116,3 +128,46 @@ def test_map_weighted_sum_feature():
     assert torch.allclose(
         result[:, :-2], torch.tensor([[0.1, 0.2, 0.7], [0.4, 0.1, 0.5]]).to(**tkwargs)
     )
+
+
+@pytest.mark.skipif(
+    not (RDKIT_AVAILABLE and MORDRED_AVAILABLE),
+    reason="requires rdkit and mordred",
+)
+def test_map_molecular_weighted_sum_feature():
+    inputs = Inputs(
+        features=[
+            ContinuousMolecularInput(key="m1", bounds=[0, 1], molecule="C"),
+            ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
+        ]
+    )
+    molfeatures = MordredDescriptors(
+        descriptors=["NssCH2", "ATSC2d"], ignore_3D=True, correlation_cutoff=1.0
+    )
+    aggregation = MolecularWeightedSumFeature(
+        key="agg1",
+        features=["m1", "m2"],
+        molfeatures=molfeatures,
+    )
+
+    assert aggregation.n_transformed_inputs == 2
+
+    aggregator = map_molecular_weighted_sum_feature(
+        inputs=inputs, transform_specs={}, feature=aggregation
+    )
+
+    # one is filtered out due to zero variance
+    assert aggregation.n_transformed_inputs == 1
+
+    orig = torch.tensor([[0.1, 0.2], [0.4, 0.1]]).to(**tkwargs)
+    result = aggregator(orig)
+
+    descriptors_df = molfeatures.get_descriptor_values(pd.Series(["C", "CC"]))
+    descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
+    expected_weighted = torch.matmul(orig, descriptors)
+
+    assert result.shape[0] == 2
+    assert result.shape[1] == 3
+
+    assert torch.allclose(result[:, :-1], orig)
+    assert torch.allclose(result[:, -1:], expected_weighted)
