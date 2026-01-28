@@ -69,7 +69,7 @@ def formula_to_fully_continuous(
     formula_string = str(formula)
     for cat_input in inputs.get([CategoricalInput]):
         _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
-            categorical_inputs=[cat_input]
+            categorical_inputs=[cat_input]  # type: ignore
         )
         one_hot_terms = " + ".join(
             [var.key for var in categorical_one_hot_variabes[:-1]]
