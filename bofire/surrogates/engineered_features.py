@@ -97,7 +97,7 @@ def map_molecular_weighted_sum_feature(
 
     molecules = [inputs.get_by_key(key).molecule for key in feature.features]  # type: ignore
     # filter out the highly-correlated descriptors
-    feature.molfeatures._update_uncorrelated_descriptors(molecules)
+    feature.molfeatures.remove_correlated_descriptors(molecules)
     descriptors_df = feature.molfeatures.get_descriptor_values(pd.Series(molecules))
     descriptors = torch.tensor(descriptors_df.values, dtype=torch.double)
 

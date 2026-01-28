@@ -1122,7 +1122,7 @@ def get_categorical_encoder(
     if isinstance(transform, AnyMolFeatures):
         assert isinstance(feature, CategoricalMolecularInput)
         # filter out the highly-correlated descriptors
-        transform._update_uncorrelated_descriptors(feature.categories)
+        transform.remove_correlated_descriptors(feature.categories)
         encodings = torch.from_numpy(
             feature.to_descriptor_encoding(
                 transform, pd.Series(feature.categories)

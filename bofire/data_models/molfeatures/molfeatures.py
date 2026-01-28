@@ -43,7 +43,7 @@ class MolFeatures(BaseModel):
     def _get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         pass
 
-    def _update_uncorrelated_descriptors(self, molecules: List[str]):
+    def remove_correlated_descriptors(self, molecules: List[str]):
         # Get unique SMILES to avoid redundant calculations
         unique_smiles = pd.Series(molecules)
 
