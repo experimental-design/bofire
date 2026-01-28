@@ -59,9 +59,28 @@ def represent_categories_as_by_their_states(
     return numerical_inputs, all_but_one_categoricals
 
 
+def formula_to_fully_continuous(
+    formula: str,
+    inputs: Inputs,
+) -> Formula:
+    """Converts a formula with categorical variables to a formula with only continuous variables byy identifying the categorical variables and replacing them with their one-hot encoded counterparts.
+    E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
+    """
+    for cat_input in inputs.get([CategoricalInput]):
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=[cat_input]  # type: ignore
+        )
+        one_hot_terms = " + ".join(
+            [var.key for var in categorical_one_hot_variabes[:-1]]
+        )
+        formula = formula.replace(cat_input.key, "(" + f"{one_hot_terms}" + ")")
+
+    return Formula(formula)
+
+
 def get_formula_from_string(
     model_type: str | Formula = "linear",
-    inputs: Optional[Inputs] = None,
+    inputs: Optional[Inputs,] = None,
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
@@ -82,8 +101,6 @@ def get_formula_from_string(
 
     if isinstance(model_type, Formula):
         return model_type
-        # build model if a keyword and a problem are given.
-    # linear model#
 
     if model_type in [
         "linear",
@@ -138,7 +155,13 @@ def get_formula_from_string(
             )
 
     else:
-        formula = model_type + "   "
+        if inputs is not None:
+            if inputs.get([CategoricalInput]) is not None:
+                model_type = formula_to_fully_continuous(
+                    formula=model_type,
+                    inputs=inputs,
+                )
+        formula = str(model_type) + "   "
 
     formula = Formula(formula[:-3])
 

@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 import pytest
+from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
@@ -13,9 +14,10 @@ from bofire.data_models.constraints.api import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -27,6 +29,7 @@ from bofire.strategies.doe.utils import (
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
     convert_formula_to_string,
+    formula_to_fully_continuous,
     get_formula_from_string,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
@@ -772,5 +775,75 @@ def test_formula_discrete_handled_like_continuous():
         assert formula_w_discrete == formula_wo_discrete
 
 
+def test_formula_to_fully_continuous():
+    # Create a small example problem with categorical, continuous, and discrete variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[1.0, 2.0, 3.0, 5.0, 10.0],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    # This includes interaction between color and material
+    custom_formula = Formula(
+        "color + material + temperature + pressure + color:material"
+    )
+
+    # Convert to fully continuous representation
+    continuous_formula = formula_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+
+    # Assert the expected formula explicitly
+    expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = Formula("color + temperature + pressure")
+    continuous_formula = formula_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_color_red + aux_color_blue + temperature + pressure"
+
+    custom_formula = Formula("material + temperature + pressure")
+    continuous_formula = formula_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_material_plastic + temperature + pressure"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = Formula("temperature:material + pressure:color")
+
+    continuous_formula = formula_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
 if __name__ == "__main__":
-    get_formula_from_string_recursion_limit()
+    test_formula_to_fully_continuous()
