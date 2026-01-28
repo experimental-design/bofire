@@ -390,7 +390,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#bofire.data_models.features.api.DiscreteInput" id="toc-bofire.data_models.features.api.DiscreteInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.DiscreteInput">DiscreteInput</a></li>
   <li><a href="#bofire.data_models.features.api.ContinuousDescriptorInput" id="toc-bofire.data_models.features.api.ContinuousDescriptorInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.ContinuousDescriptorInput">ContinuousDescriptorInput</a></li>
   <li><a href="#bofire.data_models.features.api.CategoricalDescriptorInput" id="toc-bofire.data_models.features.api.CategoricalDescriptorInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.CategoricalDescriptorInput">CategoricalDescriptorInput</a></li>
-  <li><a href="#bofire.data_models.features.api.MolecularInput" id="toc-bofire.data_models.features.api.MolecularInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.MolecularInput">MolecularInput</a></li>
+  <li><a href="#bofire.data_models.features.api.ContinuousMolecularInput" id="toc-bofire.data_models.features.api.ContinuousMolecularInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.ContinuousMolecularInput">ContinuousMolecularInput</a></li>
   <li><a href="#bofire.data_models.features.api.CategoricalMolecularInput" id="toc-bofire.data_models.features.api.CategoricalMolecularInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.CategoricalMolecularInput">CategoricalMolecularInput</a></li>
   <li><a href="#bofire.data_models.features.api.TaskInput" id="toc-bofire.data_models.features.api.TaskInput" class="nav-link" data-scroll-target="#bofire.data_models.features.api.TaskInput">TaskInput</a></li>
   </ul></li>
@@ -447,7 +447,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Class for categorical input features with descriptors</td>
 </tr>
 <tr class="even">
-<td><a href="#bofire.data_models.features.api.MolecularInput">MolecularInput</a></td>
+<td><a href="#bofire.data_models.features.api.ContinuousMolecularInput">ContinuousMolecularInput</a></td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -2766,9 +2766,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 </section>
 </section>
-<section id="bofire.data_models.features.api.MolecularInput" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.features.api.MolecularInput">MolecularInput</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.MolecularInput()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="bofire.data_models.features.api.ContinuousMolecularInput" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.features.api.ContinuousMolecularInput">ContinuousMolecularInput</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.ContinuousMolecularInput()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="methods-6" class="level4">
 <h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
 <table class="caption-top table">
@@ -2780,31 +2780,158 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#bofire.data_models.features.api.MolecularInput.get_bounds">get_bounds</a></td>
-<td>Calculates the lower and upper bounds for the feature based on the given transform type and values.</td>
-</tr>
-<tr class="even">
-<td><a href="#bofire.data_models.features.api.MolecularInput.to_descriptor_encoding">to_descriptor_encoding</a></td>
-<td>Converts values to descriptor encoding.</td>
+<td><a href="#bofire.data_models.features.api.ContinuousMolecularInput.validate_smiles">validate_smiles</a></td>
+<td>Validates that molecule is a valid smiles. Note that this check can only</td>
 </tr>
 </tbody>
 </table>
-<section id="bofire.data_models.features.api.MolecularInput.get_bounds" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.MolecularInput.get_bounds">get_bounds</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.MolecularInput.get_bounds(</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    values,</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    reference_value<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Calculates the lower and upper bounds for the feature based on the given transform type and values.</p>
+<section id="bofire.data_models.features.api.ContinuousMolecularInput.validate_smiles" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.ContinuousMolecularInput.validate_smiles">validate_smiles</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.ContinuousMolecularInput.validate_smiles(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Validates that molecule is a valid smiles. Note that this check can only be executed when rdkit is available.</p>
 <section id="parameters-26" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-26">Parameters</h6>
 <table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>v</td>
+<td>str</td>
+<td>smiles</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="bofire.data_models.features.api.CategoricalMolecularInput" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput">CategoricalMolecularInput</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="methods-7" class="level4">
+<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding">from_descriptor_encoding</a></td>
+<td>Converts values back from descriptor encoding.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors">select_mordred_descriptors</a></td>
+<td>Filter Mordred descriptors by removing highly correlated ones.</td>
+</tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding">to_descriptor_encoding</a></td>
+<td>Converts values to descriptor encoding.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles">validate_smiles</a></td>
+<td>Validates that categories are valid smiles. Note that this check can only</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding">from_descriptor_encoding</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding(</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    values,</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Converts values back from descriptor encoding.</p>
+<section id="parameters-27" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-27">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>values</td>
+<td>pd.DataFrame</td>
+<td>Descriptor encoded dataframe.</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises-12" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-12">Raises</h6>
+<table class="caption-top table">
 <colgroup>
-<col style="width: 13%">
-<col style="width: 13%">
-<col style="width: 62%">
-<col style="width: 9%">
+<col style="width: 11%">
+<col style="width: 16%">
+<col style="width: 71%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>If descriptor columns not found in the dataframe.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-34" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-34">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>pd.Series</td>
+<td>pd.Series: Series with categorical values.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors">select_mordred_descriptors</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors(</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    cutoff<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Filter Mordred descriptors by removing highly correlated ones.</p>
+<p>This function removes descriptors with zero variance and then iteratively filters out descriptors that are highly correlated with already selected ones. Uses a greedy algorithm that iteratively selects descriptors and removes those that are highly correlated with the selected ones.</p>
+<section id="parameters-28" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-28">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 23%">
+<col style="width: 61%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2817,32 +2944,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>transform_type</td>
-<td>AnyMolFeatures</td>
-<td>The type of transformation to apply to the data.</td>
+<td>MordredDescriptors</td>
+<td>MordredDescriptors object containing the initial list of descriptors</td>
 <td><em>required</em></td>
 </tr>
 <tr class="even">
-<td>values</td>
-<td>pd.Series</td>
-<td>The actual data over which the lower and upper bounds are calculated.</td>
-<td><em>required</em></td>
-</tr>
-<tr class="odd">
-<td>reference_value</td>
-<td>Optional[str]</td>
-<td>The reference value for the transformation. Not used here. Defaults to None.</td>
-<td><code>None</code></td>
+<td>cutoff</td>
+<td>Annotated[float, Field(ge=0.0, le=1.0)]</td>
+<td>Absolute correlation threshold above which descriptors are considered redundant. Range: [0.0, 1.0]. Default: 0.95</td>
+<td><code>0.95</code></td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="returns-34" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-34">Returns</h6>
+<section id="raises-13" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-13">Raises</h6>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 5%">
-<col style="width: 25%">
-<col style="width: 69%">
+<col style="width: 11%">
+<col style="width: 16%">
+<col style="width: 72%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2854,46 +2975,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td></td>
-<td>Tuple[List[float], List[float]]</td>
-<td>Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="raises-12" class="level6 doc-section doc-section-raises">
-<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-12">Raises</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 7%">
-<col style="width: 19%">
-<col style="width: 73%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>NotImplementedError</td>
-<td>Raised when <code>values</code> is None, as it is currently required for <code>MolecularInput</code>.</td>
+<td>ValueError</td>
+<td>If no descriptors with non-zero variance are found</td>
 </tr>
 </tbody>
 </table>
 </section>
 </section>
-<section id="bofire.data_models.features.api.MolecularInput.to_descriptor_encoding" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.MolecularInput.to_descriptor_encoding">to_descriptor_encoding</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.MolecularInput.to_descriptor_encoding(</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    values,</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="bofire.data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding">to_descriptor_encoding</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding(</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    values,</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Converts values to descriptor encoding.</p>
-<section id="parameters-27" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-27">Parameters</h6>
+<section id="parameters-29" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-29">Parameters</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -2933,173 +3030,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 </section>
 </section>
-</section>
-</section>
-<section id="bofire.data_models.features.api.CategoricalMolecularInput" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput">CategoricalMolecularInput</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-7" class="level4">
-<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding">from_descriptor_encoding</a></td>
-<td>Converts values back from descriptor encoding.</td>
-</tr>
-<tr class="even">
-<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors">select_mordred_descriptors</a></td>
-<td>Filter Mordred descriptors by removing highly correlated ones.</td>
-</tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles">validate_smiles</a></td>
-<td>Validates that categories are valid smiles. Note that this check can only</td>
-</tr>
-</tbody>
-</table>
-<section id="bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding">from_descriptor_encoding</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding(</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    values,</span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Converts values back from descriptor encoding.</p>
-<section id="parameters-28" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-28">Parameters</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>values</td>
-<td>pd.DataFrame</td>
-<td>Descriptor encoded dataframe.</td>
-<td><em>required</em></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="raises-13" class="level6 doc-section doc-section-raises">
-<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-13">Raises</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 11%">
-<col style="width: 16%">
-<col style="width: 71%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>ValueError</td>
-<td>If descriptor columns not found in the dataframe.</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="returns-36" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-36">Returns</h6>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>pd.Series</td>
-<td>pd.Series: Series with categorical values.</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors">select_mordred_descriptors</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors(</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    cutoff<span class="op">=</span><span class="fl">0.95</span>,</span>
-<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Filter Mordred descriptors by removing highly correlated ones.</p>
-<p>This function removes descriptors with zero variance and then iteratively filters out descriptors that are highly correlated with already selected ones. Uses a greedy algorithm that iteratively selects descriptors and removes those that are highly correlated with the selected ones.</p>
-<section id="parameters-29" class="level6 doc-section doc-section-parameters">
-<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-29">Parameters</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 8%">
-<col style="width: 23%">
-<col style="width: 61%">
-<col style="width: 6%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>transform_type</td>
-<td>MordredDescriptors</td>
-<td>MordredDescriptors object containing the initial list of descriptors</td>
-<td><em>required</em></td>
-</tr>
-<tr class="even">
-<td>cutoff</td>
-<td>Annotated[float, Field(ge=0.0, le=1.0)]</td>
-<td>Absolute correlation threshold above which descriptors are considered redundant. Range: [0.0, 1.0]. Default: 0.95</td>
-<td><code>0.95</code></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="raises-14" class="level6 doc-section doc-section-raises">
-<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-14">Raises</h6>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 11%">
-<col style="width: 16%">
-<col style="width: 72%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td></td>
-<td>ValueError</td>
-<td>If no descriptors with non-zero variance are found</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
 <section id="bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles">validate_smiles</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.validate_smiles(categories)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -3125,8 +3055,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="raises-15" class="level6 doc-section doc-section-raises">
-<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-15">Raises</h6>
+<section id="raises-14" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-14">Raises</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -3144,8 +3074,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </section>
-<section id="returns-37" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-37">Returns</h6>
+<section id="returns-36" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-36">Returns</h6>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -3663,7 +3593,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">DiscreteInput</span><span class="co">](#bofire.data_models.features.api.DiscreteInput)</span> <span class="pp">|</span> Feature with discretized ordinal values allowed in the optimization. <span class="pp">|</span></span>
 <span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ContinuousDescriptorInput</span><span class="co">](#bofire.data_models.features.api.ContinuousDescriptorInput)</span> <span class="pp">|</span> Class for continuous input features with descriptors <span class="pp">|</span></span>
 <span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CategoricalDescriptorInput</span><span class="co">](#bofire.data_models.features.api.CategoricalDescriptorInput)</span> <span class="pp">|</span> Class for categorical input features with descriptors <span class="pp">|</span></span>
-<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MolecularInput</span><span class="co">](#bofire.data_models.features.api.MolecularInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ContinuousMolecularInput</span><span class="co">](#bofire.data_models.features.api.ContinuousMolecularInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CategoricalMolecularInput</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TaskInput</span><span class="co">](#bofire.data_models.features.api.TaskInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a></span>
@@ -4578,10 +4508,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb51-930"><a href="#cb51-930" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-------------------------------------------------------|</span></span>
 <span id="cb51-931"><a href="#cb51-931" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> List<span class="co">[</span><span class="ot">List[float]</span><span class="co">]</span>: Nested list with descriptor values <span class="pp">|</span></span>
 <span id="cb51-932"><a href="#cb51-932" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-933"><a href="#cb51-933" aria-hidden="true" tabindex="-1"></a><span class="fu">### MolecularInput { #bofire.data_models.features.api.MolecularInput }</span></span>
+<span id="cb51-933"><a href="#cb51-933" aria-hidden="true" tabindex="-1"></a><span class="fu">### ContinuousMolecularInput { #bofire.data_models.features.api.ContinuousMolecularInput }</span></span>
 <span id="cb51-934"><a href="#cb51-934" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb51-935"><a href="#cb51-935" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-936"><a href="#cb51-936" aria-hidden="true" tabindex="-1"></a>data_models.features.api.MolecularInput()</span>
+<span id="cb51-936"><a href="#cb51-936" aria-hidden="true" tabindex="-1"></a>data_models.features.api.ContinuousMolecularInput()</span>
 <span id="cb51-937"><a href="#cb51-937" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb51-938"><a href="#cb51-938" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb51-939"><a href="#cb51-939" aria-hidden="true" tabindex="-1"></a></span>
@@ -4590,170 +4520,153 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb51-942"><a href="#cb51-942" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb51-943"><a href="#cb51-943" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb51-944"><a href="#cb51-944" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb51-945"><a href="#cb51-945" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">get_bounds</span><span class="co">](#bofire.data_models.features.api.MolecularInput.get_bounds)</span> <span class="pp">|</span> Calculates the lower and upper bounds for the feature based on the given transform type and values. <span class="pp">|</span></span>
-<span id="cb51-946"><a href="#cb51-946" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">to_descriptor_encoding</span><span class="co">](#bofire.data_models.features.api.MolecularInput.to_descriptor_encoding)</span> <span class="pp">|</span> Converts values to descriptor encoding. <span class="pp">|</span></span>
-<span id="cb51-947"><a href="#cb51-947" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-948"><a href="#cb51-948" aria-hidden="true" tabindex="-1"></a><span class="fu">##### get_bounds { #bofire.data_models.features.api.MolecularInput.get_bounds }</span></span>
-<span id="cb51-949"><a href="#cb51-949" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-950"><a href="#cb51-950" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-951"><a href="#cb51-951" aria-hidden="true" tabindex="-1"></a>data_models.features.api.MolecularInput.get_bounds(</span>
-<span id="cb51-952"><a href="#cb51-952" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb51-953"><a href="#cb51-953" aria-hidden="true" tabindex="-1"></a>    values,</span>
-<span id="cb51-954"><a href="#cb51-954" aria-hidden="true" tabindex="-1"></a>    reference_value<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb51-955"><a href="#cb51-955" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb51-956"><a href="#cb51-956" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb51-945"><a href="#cb51-945" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_smiles</span><span class="co">](#bofire.data_models.features.api.ContinuousMolecularInput.validate_smiles)</span> <span class="pp">|</span> Validates that molecule is a valid smiles. Note that this check can only <span class="pp">|</span></span>
+<span id="cb51-946"><a href="#cb51-946" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-947"><a href="#cb51-947" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_smiles { #bofire.data_models.features.api.ContinuousMolecularInput.validate_smiles }</span></span>
+<span id="cb51-948"><a href="#cb51-948" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-949"><a href="#cb51-949" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-950"><a href="#cb51-950" aria-hidden="true" tabindex="-1"></a>data_models.features.api.ContinuousMolecularInput.validate_smiles(v)</span>
+<span id="cb51-951"><a href="#cb51-951" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb51-952"><a href="#cb51-952" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-953"><a href="#cb51-953" aria-hidden="true" tabindex="-1"></a>Validates that molecule is a valid smiles. Note that this check can only</span>
+<span id="cb51-954"><a href="#cb51-954" aria-hidden="true" tabindex="-1"></a>be executed when rdkit is available.</span>
+<span id="cb51-955"><a href="#cb51-955" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-956"><a href="#cb51-956" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb51-957"><a href="#cb51-957" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-958"><a href="#cb51-958" aria-hidden="true" tabindex="-1"></a>Calculates the lower and upper bounds for the feature based on the given transform type and values.</span>
-<span id="cb51-959"><a href="#cb51-959" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-960"><a href="#cb51-960" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb51-958"><a href="#cb51-958" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description   <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb51-959"><a href="#cb51-959" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|---------------|------------|</span></span>
+<span id="cb51-960"><a href="#cb51-960" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> v      <span class="pp">|</span> str    <span class="pp">|</span> smiles        <span class="pp">|</span> _required_ <span class="pp">|</span></span>
 <span id="cb51-961"><a href="#cb51-961" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-962"><a href="#cb51-962" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name            <span class="pp">|</span> Type            <span class="pp">|</span> Description                                                                  <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb51-963"><a href="#cb51-963" aria-hidden="true" tabindex="-1"></a><span class="pp">|-----------------|-----------------|------------------------------------------------------------------------------|------------|</span></span>
-<span id="cb51-964"><a href="#cb51-964" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> transform_type  <span class="pp">|</span> AnyMolFeatures  <span class="pp">|</span> The type of transformation to apply to the data.                             <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb51-965"><a href="#cb51-965" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> values          <span class="pp">|</span> pd.Series       <span class="pp">|</span> The actual data over which the lower and upper bounds are calculated.        <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb51-966"><a href="#cb51-966" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> reference_value <span class="pp">|</span> Optional<span class="sc">\[</span>str<span class="sc">\]</span> <span class="pp">|</span> The reference value for the transformation. Not used here. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb51-962"><a href="#cb51-962" aria-hidden="true" tabindex="-1"></a><span class="fu">### CategoricalMolecularInput { #bofire.data_models.features.api.CategoricalMolecularInput }</span></span>
+<span id="cb51-963"><a href="#cb51-963" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-964"><a href="#cb51-964" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-965"><a href="#cb51-965" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput()</span>
+<span id="cb51-966"><a href="#cb51-966" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb51-967"><a href="#cb51-967" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-968"><a href="#cb51-968" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb51-968"><a href="#cb51-968" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb51-969"><a href="#cb51-969" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-970"><a href="#cb51-970" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                  <span class="pp">|</span> Description                                                                                             <span class="pp">|</span></span>
-<span id="cb51-971"><a href="#cb51-971" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------------------------------------|---------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb51-972"><a href="#cb51-972" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> Tuple<span class="sc">\[</span>List<span class="sc">\[</span>float<span class="sc">\]</span>, List<span class="sc">\[</span>float<span class="sc">\]\]</span> <span class="pp">|</span> Tuple<span class="co">[</span><span class="ot">List[float], List[float]</span><span class="co">]</span>: A tuple containing the lower and upper bounds of the transformed data. <span class="pp">|</span></span>
-<span id="cb51-973"><a href="#cb51-973" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-974"><a href="#cb51-974" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb51-975"><a href="#cb51-975" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-976"><a href="#cb51-976" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                     <span class="pp">|</span></span>
-<span id="cb51-977"><a href="#cb51-977" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------------------|---------------------------------------------------------------------------------|</span></span>
-<span id="cb51-978"><a href="#cb51-978" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> NotImplementedError <span class="pp">|</span> Raised when <span class="in">`values`</span> is None, as it is currently required for <span class="in">`MolecularInput`</span>. <span class="pp">|</span></span>
-<span id="cb51-979"><a href="#cb51-979" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-980"><a href="#cb51-980" aria-hidden="true" tabindex="-1"></a><span class="fu">##### to_descriptor_encoding { #bofire.data_models.features.api.MolecularInput.to_descriptor_encoding }</span></span>
-<span id="cb51-981"><a href="#cb51-981" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-982"><a href="#cb51-982" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-983"><a href="#cb51-983" aria-hidden="true" tabindex="-1"></a>data_models.features.api.MolecularInput.to_descriptor_encoding(</span>
-<span id="cb51-984"><a href="#cb51-984" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb51-985"><a href="#cb51-985" aria-hidden="true" tabindex="-1"></a>    values,</span>
-<span id="cb51-986"><a href="#cb51-986" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb51-987"><a href="#cb51-987" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb51-988"><a href="#cb51-988" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-989"><a href="#cb51-989" aria-hidden="true" tabindex="-1"></a>Converts values to descriptor encoding.</span>
-<span id="cb51-990"><a href="#cb51-990" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-991"><a href="#cb51-991" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb51-992"><a href="#cb51-992" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-993"><a href="#cb51-993" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type      <span class="pp">|</span> Description          <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb51-994"><a href="#cb51-994" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------|----------------------|------------|</span></span>
-<span id="cb51-995"><a href="#cb51-995" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> values <span class="pp">|</span> pd.Series <span class="pp">|</span> Values to transform. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb51-996"><a href="#cb51-996" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-997"><a href="#cb51-997" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb51-998"><a href="#cb51-998" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-999"><a href="#cb51-999" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                 <span class="pp">|</span></span>
-<span id="cb51-1000"><a href="#cb51-1000" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|---------------------------------------------|</span></span>
-<span id="cb51-1001"><a href="#cb51-1001" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Descriptor encoded dataframe. <span class="pp">|</span></span>
-<span id="cb51-1002"><a href="#cb51-1002" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1003"><a href="#cb51-1003" aria-hidden="true" tabindex="-1"></a><span class="fu">### CategoricalMolecularInput { #bofire.data_models.features.api.CategoricalMolecularInput }</span></span>
-<span id="cb51-1004"><a href="#cb51-1004" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1005"><a href="#cb51-1005" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-1006"><a href="#cb51-1006" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput()</span>
-<span id="cb51-1007"><a href="#cb51-1007" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb51-1008"><a href="#cb51-1008" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-970"><a href="#cb51-970" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb51-971"><a href="#cb51-971" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-972"><a href="#cb51-972" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb51-973"><a href="#cb51-973" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb51-974"><a href="#cb51-974" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">from_descriptor_encoding</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding)</span> <span class="pp">|</span> Converts values back from descriptor encoding. <span class="pp">|</span></span>
+<span id="cb51-975"><a href="#cb51-975" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">select_mordred_descriptors</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors)</span> <span class="pp">|</span> Filter Mordred descriptors by removing highly correlated ones. <span class="pp">|</span></span>
+<span id="cb51-976"><a href="#cb51-976" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">to_descriptor_encoding</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding)</span> <span class="pp">|</span> Converts values to descriptor encoding. <span class="pp">|</span></span>
+<span id="cb51-977"><a href="#cb51-977" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_smiles</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles)</span> <span class="pp">|</span> Validates that categories are valid smiles. Note that this check can only <span class="pp">|</span></span>
+<span id="cb51-978"><a href="#cb51-978" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-979"><a href="#cb51-979" aria-hidden="true" tabindex="-1"></a><span class="fu">##### from_descriptor_encoding { #bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding }</span></span>
+<span id="cb51-980"><a href="#cb51-980" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-981"><a href="#cb51-981" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-982"><a href="#cb51-982" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding(</span>
+<span id="cb51-983"><a href="#cb51-983" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
+<span id="cb51-984"><a href="#cb51-984" aria-hidden="true" tabindex="-1"></a>    values,</span>
+<span id="cb51-985"><a href="#cb51-985" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-986"><a href="#cb51-986" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb51-987"><a href="#cb51-987" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-988"><a href="#cb51-988" aria-hidden="true" tabindex="-1"></a>Converts values back from descriptor encoding.</span>
+<span id="cb51-989"><a href="#cb51-989" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-990"><a href="#cb51-990" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb51-991"><a href="#cb51-991" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-992"><a href="#cb51-992" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                   <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb51-993"><a href="#cb51-993" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-------------------------------|------------|</span></span>
+<span id="cb51-994"><a href="#cb51-994" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> values <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> Descriptor encoded dataframe. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb51-995"><a href="#cb51-995" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-996"><a href="#cb51-996" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb51-997"><a href="#cb51-997" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-998"><a href="#cb51-998" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                       <span class="pp">|</span></span>
+<span id="cb51-999"><a href="#cb51-999" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|---------------------------------------------------|</span></span>
+<span id="cb51-1000"><a href="#cb51-1000" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If descriptor columns not found in the dataframe. <span class="pp">|</span></span>
+<span id="cb51-1001"><a href="#cb51-1001" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1002"><a href="#cb51-1002" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb51-1003"><a href="#cb51-1003" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1004"><a href="#cb51-1004" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type      <span class="pp">|</span> Description                                <span class="pp">|</span></span>
+<span id="cb51-1005"><a href="#cb51-1005" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------|--------------------------------------------|</span></span>
+<span id="cb51-1006"><a href="#cb51-1006" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.Series <span class="pp">|</span> pd.Series: Series with categorical values. <span class="pp">|</span></span>
+<span id="cb51-1007"><a href="#cb51-1007" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1008"><a href="#cb51-1008" aria-hidden="true" tabindex="-1"></a><span class="fu">##### select_mordred_descriptors { #bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors }</span></span>
 <span id="cb51-1009"><a href="#cb51-1009" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1010"><a href="#cb51-1010" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1011"><a href="#cb51-1011" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb51-1012"><a href="#cb51-1012" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1013"><a href="#cb51-1013" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb51-1014"><a href="#cb51-1014" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb51-1015"><a href="#cb51-1015" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">from_descriptor_encoding</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding)</span> <span class="pp">|</span> Converts values back from descriptor encoding. <span class="pp">|</span></span>
-<span id="cb51-1016"><a href="#cb51-1016" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">select_mordred_descriptors</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors)</span> <span class="pp">|</span> Filter Mordred descriptors by removing highly correlated ones. <span class="pp">|</span></span>
-<span id="cb51-1017"><a href="#cb51-1017" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_smiles</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles)</span> <span class="pp">|</span> Validates that categories are valid smiles. Note that this check can only <span class="pp">|</span></span>
+<span id="cb51-1010"><a href="#cb51-1010" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-1011"><a href="#cb51-1011" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors(</span>
+<span id="cb51-1012"><a href="#cb51-1012" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
+<span id="cb51-1013"><a href="#cb51-1013" aria-hidden="true" tabindex="-1"></a>    cutoff<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span id="cb51-1014"><a href="#cb51-1014" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-1015"><a href="#cb51-1015" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb51-1016"><a href="#cb51-1016" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1017"><a href="#cb51-1017" aria-hidden="true" tabindex="-1"></a>Filter Mordred descriptors by removing highly correlated ones.</span>
 <span id="cb51-1018"><a href="#cb51-1018" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1019"><a href="#cb51-1019" aria-hidden="true" tabindex="-1"></a><span class="fu">##### from_descriptor_encoding { #bofire.data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding }</span></span>
-<span id="cb51-1020"><a href="#cb51-1020" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1021"><a href="#cb51-1021" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-1022"><a href="#cb51-1022" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.from_descriptor_encoding(</span>
-<span id="cb51-1023"><a href="#cb51-1023" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb51-1024"><a href="#cb51-1024" aria-hidden="true" tabindex="-1"></a>    values,</span>
-<span id="cb51-1025"><a href="#cb51-1025" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb51-1026"><a href="#cb51-1026" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb51-1027"><a href="#cb51-1027" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1028"><a href="#cb51-1028" aria-hidden="true" tabindex="-1"></a>Converts values back from descriptor encoding.</span>
-<span id="cb51-1029"><a href="#cb51-1029" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1030"><a href="#cb51-1030" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb51-1031"><a href="#cb51-1031" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1032"><a href="#cb51-1032" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                   <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb51-1033"><a href="#cb51-1033" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-------------------------------|------------|</span></span>
-<span id="cb51-1034"><a href="#cb51-1034" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> values <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> Descriptor encoded dataframe. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb51-1035"><a href="#cb51-1035" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1036"><a href="#cb51-1036" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb51-1037"><a href="#cb51-1037" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1038"><a href="#cb51-1038" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                       <span class="pp">|</span></span>
-<span id="cb51-1039"><a href="#cb51-1039" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|---------------------------------------------------|</span></span>
-<span id="cb51-1040"><a href="#cb51-1040" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If descriptor columns not found in the dataframe. <span class="pp">|</span></span>
-<span id="cb51-1041"><a href="#cb51-1041" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1042"><a href="#cb51-1042" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb51-1043"><a href="#cb51-1043" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1044"><a href="#cb51-1044" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type      <span class="pp">|</span> Description                                <span class="pp">|</span></span>
-<span id="cb51-1045"><a href="#cb51-1045" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------|--------------------------------------------|</span></span>
-<span id="cb51-1046"><a href="#cb51-1046" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.Series <span class="pp">|</span> pd.Series: Series with categorical values. <span class="pp">|</span></span>
+<span id="cb51-1019"><a href="#cb51-1019" aria-hidden="true" tabindex="-1"></a>This function removes descriptors with zero variance and then iteratively</span>
+<span id="cb51-1020"><a href="#cb51-1020" aria-hidden="true" tabindex="-1"></a>filters out descriptors that are highly correlated with already selected ones.</span>
+<span id="cb51-1021"><a href="#cb51-1021" aria-hidden="true" tabindex="-1"></a>Uses a greedy algorithm that iteratively selects descriptors and removes those</span>
+<span id="cb51-1022"><a href="#cb51-1022" aria-hidden="true" tabindex="-1"></a>that are highly correlated with the selected ones.</span>
+<span id="cb51-1023"><a href="#cb51-1023" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1024"><a href="#cb51-1024" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb51-1025"><a href="#cb51-1025" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1026"><a href="#cb51-1026" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name           <span class="pp">|</span> Type                                      <span class="pp">|</span> Description                                                                                                       <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb51-1027"><a href="#cb51-1027" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb51-1028"><a href="#cb51-1028" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> transform_type <span class="pp">|</span> MordredDescriptors                        <span class="pp">|</span> MordredDescriptors object containing the initial list of descriptors                                              <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb51-1029"><a href="#cb51-1029" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> cutoff         <span class="pp">|</span> Annotated<span class="sc">\[</span>float, Field(ge=0.0, le=1.0)<span class="sc">\]</span> <span class="pp">|</span> Absolute correlation threshold above which descriptors are considered redundant. Range: <span class="co">[</span><span class="ot">0.0, 1.0</span><span class="co">]</span>. Default: 0.95 <span class="pp">|</span> <span class="in">`0.95`</span>     <span class="pp">|</span></span>
+<span id="cb51-1030"><a href="#cb51-1030" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1031"><a href="#cb51-1031" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb51-1032"><a href="#cb51-1032" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1033"><a href="#cb51-1033" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                        <span class="pp">|</span></span>
+<span id="cb51-1034"><a href="#cb51-1034" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|----------------------------------------------------|</span></span>
+<span id="cb51-1035"><a href="#cb51-1035" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If no descriptors with non-zero variance are found <span class="pp">|</span></span>
+<span id="cb51-1036"><a href="#cb51-1036" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1037"><a href="#cb51-1037" aria-hidden="true" tabindex="-1"></a><span class="fu">##### to_descriptor_encoding { #bofire.data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding }</span></span>
+<span id="cb51-1038"><a href="#cb51-1038" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1039"><a href="#cb51-1039" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-1040"><a href="#cb51-1040" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.to_descriptor_encoding(</span>
+<span id="cb51-1041"><a href="#cb51-1041" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
+<span id="cb51-1042"><a href="#cb51-1042" aria-hidden="true" tabindex="-1"></a>    values,</span>
+<span id="cb51-1043"><a href="#cb51-1043" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb51-1044"><a href="#cb51-1044" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb51-1045"><a href="#cb51-1045" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1046"><a href="#cb51-1046" aria-hidden="true" tabindex="-1"></a>Converts values to descriptor encoding.</span>
 <span id="cb51-1047"><a href="#cb51-1047" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1048"><a href="#cb51-1048" aria-hidden="true" tabindex="-1"></a><span class="fu">##### select_mordred_descriptors { #bofire.data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors }</span></span>
+<span id="cb51-1048"><a href="#cb51-1048" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb51-1049"><a href="#cb51-1049" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1050"><a href="#cb51-1050" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-1051"><a href="#cb51-1051" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.select_mordred_descriptors(</span>
-<span id="cb51-1052"><a href="#cb51-1052" aria-hidden="true" tabindex="-1"></a>    transform_type,</span>
-<span id="cb51-1053"><a href="#cb51-1053" aria-hidden="true" tabindex="-1"></a>    cutoff<span class="op">=</span><span class="fl">0.95</span>,</span>
-<span id="cb51-1054"><a href="#cb51-1054" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb51-1055"><a href="#cb51-1055" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb51-1056"><a href="#cb51-1056" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1057"><a href="#cb51-1057" aria-hidden="true" tabindex="-1"></a>Filter Mordred descriptors by removing highly correlated ones.</span>
-<span id="cb51-1058"><a href="#cb51-1058" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1059"><a href="#cb51-1059" aria-hidden="true" tabindex="-1"></a>This function removes descriptors with zero variance and then iteratively</span>
-<span id="cb51-1060"><a href="#cb51-1060" aria-hidden="true" tabindex="-1"></a>filters out descriptors that are highly correlated with already selected ones.</span>
-<span id="cb51-1061"><a href="#cb51-1061" aria-hidden="true" tabindex="-1"></a>Uses a greedy algorithm that iteratively selects descriptors and removes those</span>
-<span id="cb51-1062"><a href="#cb51-1062" aria-hidden="true" tabindex="-1"></a>that are highly correlated with the selected ones.</span>
-<span id="cb51-1063"><a href="#cb51-1063" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1064"><a href="#cb51-1064" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb51-1050"><a href="#cb51-1050" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type      <span class="pp">|</span> Description          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb51-1051"><a href="#cb51-1051" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------|----------------------|------------|</span></span>
+<span id="cb51-1052"><a href="#cb51-1052" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> values <span class="pp">|</span> pd.Series <span class="pp">|</span> Values to transform. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb51-1053"><a href="#cb51-1053" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1054"><a href="#cb51-1054" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb51-1055"><a href="#cb51-1055" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1056"><a href="#cb51-1056" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                 <span class="pp">|</span></span>
+<span id="cb51-1057"><a href="#cb51-1057" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|---------------------------------------------|</span></span>
+<span id="cb51-1058"><a href="#cb51-1058" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Descriptor encoded dataframe. <span class="pp">|</span></span>
+<span id="cb51-1059"><a href="#cb51-1059" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1060"><a href="#cb51-1060" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_smiles { #bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles }</span></span>
+<span id="cb51-1061"><a href="#cb51-1061" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1062"><a href="#cb51-1062" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-1063"><a href="#cb51-1063" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.validate_smiles(categories)</span>
+<span id="cb51-1064"><a href="#cb51-1064" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb51-1065"><a href="#cb51-1065" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1066"><a href="#cb51-1066" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name           <span class="pp">|</span> Type                                      <span class="pp">|</span> Description                                                                                                       <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb51-1067"><a href="#cb51-1067" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------|-------------------------------------------|-------------------------------------------------------------------------------------------------------------------|------------|</span></span>
-<span id="cb51-1068"><a href="#cb51-1068" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> transform_type <span class="pp">|</span> MordredDescriptors                        <span class="pp">|</span> MordredDescriptors object containing the initial list of descriptors                                              <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb51-1069"><a href="#cb51-1069" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> cutoff         <span class="pp">|</span> Annotated<span class="sc">\[</span>float, Field(ge=0.0, le=1.0)<span class="sc">\]</span> <span class="pp">|</span> Absolute correlation threshold above which descriptors are considered redundant. Range: <span class="co">[</span><span class="ot">0.0, 1.0</span><span class="co">]</span>. Default: 0.95 <span class="pp">|</span> <span class="in">`0.95`</span>     <span class="pp">|</span></span>
+<span id="cb51-1066"><a href="#cb51-1066" aria-hidden="true" tabindex="-1"></a>Validates that categories are valid smiles. Note that this check can only</span>
+<span id="cb51-1067"><a href="#cb51-1067" aria-hidden="true" tabindex="-1"></a>be executed when rdkit is available.</span>
+<span id="cb51-1068"><a href="#cb51-1068" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1069"><a href="#cb51-1069" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb51-1070"><a href="#cb51-1070" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1071"><a href="#cb51-1071" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb51-1072"><a href="#cb51-1072" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1073"><a href="#cb51-1073" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                        <span class="pp">|</span></span>
-<span id="cb51-1074"><a href="#cb51-1074" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|----------------------------------------------------|</span></span>
-<span id="cb51-1075"><a href="#cb51-1075" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If no descriptors with non-zero variance are found <span class="pp">|</span></span>
+<span id="cb51-1071"><a href="#cb51-1071" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type        <span class="pp">|</span> Description    <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb51-1072"><a href="#cb51-1072" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-------------|----------------|------------|</span></span>
+<span id="cb51-1073"><a href="#cb51-1073" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> categories <span class="pp">|</span> List<span class="sc">\[</span>str<span class="sc">\]</span> <span class="pp">|</span> List of smiles <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb51-1074"><a href="#cb51-1074" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1075"><a href="#cb51-1075" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
 <span id="cb51-1076"><a href="#cb51-1076" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1077"><a href="#cb51-1077" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_smiles { #bofire.data_models.features.api.CategoricalMolecularInput.validate_smiles }</span></span>
-<span id="cb51-1078"><a href="#cb51-1078" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1079"><a href="#cb51-1079" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-1080"><a href="#cb51-1080" aria-hidden="true" tabindex="-1"></a>data_models.features.api.CategoricalMolecularInput.validate_smiles(categories)</span>
-<span id="cb51-1081"><a href="#cb51-1081" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb51-1077"><a href="#cb51-1077" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                 <span class="pp">|</span></span>
+<span id="cb51-1078"><a href="#cb51-1078" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-----------------------------|</span></span>
+<span id="cb51-1079"><a href="#cb51-1079" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> when string is not a smiles <span class="pp">|</span></span>
+<span id="cb51-1080"><a href="#cb51-1080" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1081"><a href="#cb51-1081" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb51-1082"><a href="#cb51-1082" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1083"><a href="#cb51-1083" aria-hidden="true" tabindex="-1"></a>Validates that categories are valid smiles. Note that this check can only</span>
-<span id="cb51-1084"><a href="#cb51-1084" aria-hidden="true" tabindex="-1"></a>be executed when rdkit is available.</span>
-<span id="cb51-1085"><a href="#cb51-1085" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1086"><a href="#cb51-1086" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb51-1087"><a href="#cb51-1087" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1088"><a href="#cb51-1088" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type        <span class="pp">|</span> Description    <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb51-1089"><a href="#cb51-1089" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-------------|----------------|------------|</span></span>
-<span id="cb51-1090"><a href="#cb51-1090" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> categories <span class="pp">|</span> List<span class="sc">\[</span>str<span class="sc">\]</span> <span class="pp">|</span> List of smiles <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb51-1091"><a href="#cb51-1091" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1092"><a href="#cb51-1092" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb51-1093"><a href="#cb51-1093" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1094"><a href="#cb51-1094" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                 <span class="pp">|</span></span>
-<span id="cb51-1095"><a href="#cb51-1095" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-----------------------------|</span></span>
-<span id="cb51-1096"><a href="#cb51-1096" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> when string is not a smiles <span class="pp">|</span></span>
-<span id="cb51-1097"><a href="#cb51-1097" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1098"><a href="#cb51-1098" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb51-1099"><a href="#cb51-1099" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1100"><a href="#cb51-1100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                   <span class="pp">|</span></span>
-<span id="cb51-1101"><a href="#cb51-1101" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-------------------------------|</span></span>
-<span id="cb51-1102"><a href="#cb51-1102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> List<span class="co">[</span><span class="ot">str</span><span class="co">]</span>: List of the smiles <span class="pp">|</span></span>
-<span id="cb51-1103"><a href="#cb51-1103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1104"><a href="#cb51-1104" aria-hidden="true" tabindex="-1"></a><span class="fu">### TaskInput { #bofire.data_models.features.api.TaskInput }</span></span>
-<span id="cb51-1105"><a href="#cb51-1105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-1106"><a href="#cb51-1106" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb51-1107"><a href="#cb51-1107" aria-hidden="true" tabindex="-1"></a>data_models.features.api.TaskInput()</span>
-<span id="cb51-1108"><a href="#cb51-1108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb51-1083"><a href="#cb51-1083" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                   <span class="pp">|</span></span>
+<span id="cb51-1084"><a href="#cb51-1084" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-------------------------------|</span></span>
+<span id="cb51-1085"><a href="#cb51-1085" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> List<span class="co">[</span><span class="ot">str</span><span class="co">]</span>: List of the smiles <span class="pp">|</span></span>
+<span id="cb51-1086"><a href="#cb51-1086" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1087"><a href="#cb51-1087" aria-hidden="true" tabindex="-1"></a><span class="fu">### TaskInput { #bofire.data_models.features.api.TaskInput }</span></span>
+<span id="cb51-1088"><a href="#cb51-1088" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-1089"><a href="#cb51-1089" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb51-1090"><a href="#cb51-1090" aria-hidden="true" tabindex="-1"></a>data_models.features.api.TaskInput()</span>
+<span id="cb51-1091"><a href="#cb51-1091" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

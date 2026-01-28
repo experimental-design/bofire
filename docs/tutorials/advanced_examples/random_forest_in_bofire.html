@@ -511,6 +511,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/octane_number.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Predict Motor Octane Number of Hydrocarbon Mixtures</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -725,7 +731,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="f6512270" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:26.862628,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.573982&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:33:46.711354&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="6e407a37" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:26.862628,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.573982&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:33:46.711354&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.multi <span class="im">import</span> DTLZ2</span>
@@ -736,7 +742,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="setup-a-rf" class="level2">
 <h2 class="anchored" data-anchor-id="setup-a-rf">Setup a RF</h2>
-<div id="3e1ab9bc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.249081,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.826056&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:13.576975&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="b0a5c910" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.249081,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.826056&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:13.576975&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">20</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -1415,13 +1421,13 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.145373</td>
-<td>0.030479</td>
-<td>0.866418</td>
-<td>0.409615</td>
-<td>0.934705</td>
-<td>0.906767</td>
-<td>0.000005</td>
+<td>0.153096</td>
+<td>0.048347</td>
+<td>0.580671</td>
+<td>1.100844</td>
+<td>0.784367</td>
+<td>0.815038</td>
+<td>0.000547</td>
 </tr>
 </tbody>
 </table>
@@ -1432,7 +1438,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 </section>
 <section id="setup-an-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="setup-an-optimization">Setup an optimization</h2>
-<div id="b711366d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="de1f0045" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> MoboStrategy(</span>

@@ -442,7 +442,7 @@ window.Quarto = {
 </header>
 
 
-<div id="a254d6d5" class="cell" data-execution_count="1">
+<div id="323b7d2d" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
@@ -455,7 +455,7 @@ window.Quarto = {
 <section id="benchmark-problem" class="level2">
 <h2 class="anchored" data-anchor-id="benchmark-problem">Benchmark Problem</h2>
 <p>Only used for domain definition</p>
-<div id="8d590f2c" class="cell" data-execution_count="2">
+<div id="fbf8f78f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bench <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">2</span>, num_objectives<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> bench.f(bench.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -463,7 +463,7 @@ window.Quarto = {
 </div>
 <section id="change-the-objectives-multiplication-only-reasonable-for-objectives-0" class="level3">
 <h3 class="anchored" data-anchor-id="change-the-objectives-multiplication-only-reasonable-for-objectives-0">Change the objectives: Multiplication, only reasonable for objectives &gt; 0</h3>
-<div id="5d7c1a0e" class="cell" data-execution_count="3">
+<div id="88e03f7a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> domain.outputs.get_by_objective()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>outputs[<span class="dv">0</span>].objective <span class="op">=</span> objectives_data_model.MaximizeObjective(w<span class="op">=</span><span class="fl">1.0</span>, bounds<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">5.0</span>))</span>
@@ -475,7 +475,7 @@ window.Quarto = {
 <section id="select-strategies" class="level2">
 <h2 class="anchored" data-anchor-id="select-strategies">Select Strategies</h2>
 <p>We will use pure multiplicative and additive Sobo strategies, as well as a mixed one for this example: - Multiplicative: <span class="math inline">\(f = f_0^{w_0} \cdot f_1^{w_1}\)</span> - Additive: <span class="math inline">\(f = f_0 \cdot w_0 + f_1 \cdot w_1\)</span> - Mixed (with f1 being the additive objective): <span class="math inline">\(f = f_0^{w_0} \cdot (1 + w_1 \cdot f_1)\)</span></p>
-<div id="4190aa16" class="cell" data-execution_count="4">
+<div id="4474f51e" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy_data_model <span class="op">=</span> {</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"multiplicative"</span>: strategies_data_model.MultiplicativeSoboStrategy(domain<span class="op">=</span>domain),</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"additive"</span>: strategies_data_model.AdditiveSoboStrategy(domain<span class="op">=</span>domain),</span>
@@ -488,45 +488,45 @@ window.Quarto = {
 <h3 class="anchored" data-anchor-id="we-will-now-create-the-strategies-and-evaluate-them-on-a-grid-to-visualize-the-objectives.">We will now create the strategies and evaluate them on a grid to visualize the objectives.</h3>
 <p>We see the following: - Multiplicative: The objective is a product of the objectives: If either <span class="math inline">\(f_0\)</span> or <span class="math inline">\(f_1\)</span> is low, the objective is low. - Additive: The objective is a sum of the objectives: We see a linear increase in the objective with increasing <span class="math inline">\(f_0\)</span> and <span class="math inline">\(f_1\)</span>. This is useful for complementary objectives. - Mixed: The objective is more strict w.r.t. <span class="math inline">\(f_0\)</span> than the additive objective <span class="math inline">\(f_1\)</span>. The overall desirability can also be high, if <span class="math inline">\(f_1\)</span> is low.</p>
 <p>Changing the weights <span class="math inline">\(w_i\)</span> in the objectives above will further change the preference of <span class="math inline">\(f_0\)</span> and <span class="math inline">\(f_1\)</span>.</p>
-<div id="6084a54d" class="cell" data-execution_count="5">
+<div id="5f596ecc" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># map from the strategy data-model to the actual strategy object instances</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> {</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    key: strategies.<span class="bu">map</span>(strategy_data_model)</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (key, strategy_data_model) <span class="kw">in</span> strategy_data_model.items()</span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="d9d81c4f" class="cell" data-execution_count="6">
+<div id="6a071ecd" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># tell the strategies about the experiments. This is required to set up the models, but not for the objective evaluation</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _, strat <span class="kw">in</span> strategy.items():</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    strat.tell(experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="5f9b94cf" class="cell" data-execution_count="7">
+<div id="30208425" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get the objectives for evaluation as a torch executable</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>objectives <span class="op">=</span> {</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    key: strategy._get_objective_and_constraints()[<span class="dv">0</span>]</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (key, strategy) <span class="kw">in</span> strategy.items()</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="7b8c3471" class="cell" data-execution_count="8">
+<div id="00ecaf0a" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># f_0 / f_1 coordinates for objctive evaluation</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>mesh <span class="op">=</span> np.meshgrid(np.linspace(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">100</span>), np.linspace(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">100</span>))</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to matrix-form torch tensor</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>mesh_tensor <span class="op">=</span> torch.tensor([m.flatten() <span class="cf">for</span> m <span class="kw">in</span> mesh]).T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2803/1215888523.py:4: UserWarning:
+<pre><code>/tmp/ipykernel_2801/1215888523.py:4: UserWarning:
 
 Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor. (Triggered internally at /pytorch/torch/csrc/utils/tensor_new.cpp:253.)
 </code></pre>
 </div>
 </div>
-<div id="03c2e86d" class="cell" data-execution_count="9">
+<div id="ef33f4a8" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># evaluate objectives</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>objectives_eval <span class="op">=</span> {</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    key: obj(mesh_tensor).detach().numpy().reshape(mesh[<span class="dv">0</span>].shape)</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (key, obj) <span class="kw">in</span> objectives.items()</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2b14d30e" class="cell" data-execution_count="10">
+<div id="c8dd61e4" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the objectives as contour plots</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key, obj <span class="kw">in</span> objectives_eval.items():</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    plt.figure()</span>
@@ -539,7 +539,7 @@ Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consid
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2803/261754645.py:4: UserWarning:
+<pre><code>/tmp/ipykernel_2801/261754645.py:4: UserWarning:
 
 The following kwargs were not used by contour: 'label'
 </code></pre>
