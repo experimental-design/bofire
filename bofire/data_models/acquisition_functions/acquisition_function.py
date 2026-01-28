@@ -83,6 +83,14 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     n_mc_samples: IntPowerOfTwo = 512
 
 
+class qMFHVKG(MultiObjectiveAcquisitionFunction):
+    type: Literal["qMFHVKG"] = "qMFHVKG"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    num_fantasies: int = 8
+    num_pareto: int = 10
+    n_mc_samples: IntPowerOfTwo = 512
+
+
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
     type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
     n_mc_samples: IntPowerOfTwo = 512

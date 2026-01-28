@@ -22,9 +22,9 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
-    TaskInput,
 )
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.api import BotorchSurrogates
@@ -918,7 +918,9 @@ def test_empirical_model_io():
 def test_multitask_valid_processing():
     inputs = Inputs(
         features=[
-            TaskInput(key="task", categories=["task1", "task2"], allowed=[True, False]),
+            CategoricalTaskInput(
+                key="task", categories=["task1", "task2"], allowed=[True, False]
+            ),
             ContinuousInput(key="x", bounds=(-1, 1)),
         ],
     )

@@ -5,7 +5,11 @@ import pytest
 import bofire.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
+from bofire.data_models.features.api import (
+    CategoricalTaskInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
@@ -37,8 +41,16 @@ def _domain(task_input):
 @pytest.mark.parametrize(
     "task_input",
     [
-        (TaskInput(key="task", categories=["task_1", "task_2"], allowed=[False, True])),
-        (TaskInput(key="task", categories=["task_1", "task_2"], allowed=[True, False])),
+        (
+            CategoricalTaskInput(
+                key="task", categories=["task_1", "task_2"], allowed=[False, True]
+            )
+        ),
+        (
+            CategoricalTaskInput(
+                key="task", categories=["task_1", "task_2"], allowed=[True, False]
+            )
+        ),
     ],
 )
 def test_sobo_with_multitask(task_input):
@@ -84,7 +96,7 @@ def test_sobo_with_multitask(task_input):
 
 def test_nosurrogate_multitask():
     def test(strat_data_model, **kwargs):
-        task_input = TaskInput(
+        task_input = CategoricalTaskInput(
             key="task",
             categories=["task_1", "task_2"],
             allowed=[False, True],

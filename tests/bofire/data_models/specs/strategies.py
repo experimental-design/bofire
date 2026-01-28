@@ -19,10 +19,10 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    TaskInput,
 )
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
@@ -916,7 +916,7 @@ specs.add_invalid(
         "domain": Domain(
             inputs=Inputs(
                 features=[
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task",
                         categories=["task_1", "task_2"],
                         allowed=[True, True],
@@ -931,7 +931,7 @@ specs.add_invalid(
                 MultiTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
-                            TaskInput(
+                            CategoricalTaskInput(
                                 key="task",
                                 categories=["task_1", "task_2"],
                                 allowed=[True, True],
@@ -955,7 +955,7 @@ specs.add_valid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
                     ),
                 ]
@@ -990,7 +990,7 @@ specs.add_invalid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 0]
                     ),
                 ]

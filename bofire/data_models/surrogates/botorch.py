@@ -8,8 +8,8 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalMolecularInput,
+    CategoricalTaskInput,
     NumericalInput,
-    TaskInput,
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.surrogates.surrogate import Surrogate
@@ -72,7 +72,7 @@ class BotorchSurrogate(Surrogate):
             CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
             CategoricalMolecularInput: Fingerprints(),
             CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
-            TaskInput: CategoricalEncodingEnum.ONE_HOT,
+            CategoricalTaskInput: CategoricalEncodingEnum.ONE_HOT,
         }
 
     @classmethod

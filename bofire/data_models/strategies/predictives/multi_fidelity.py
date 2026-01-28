@@ -1,9 +1,11 @@
 from typing import List, Literal, Union
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
+from bofire.data_models.acquisition_functions.acquisition_function import qMFHVKG
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import TaskInput
+from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _ForbidPFMixin
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 
@@ -94,3 +96,8 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
         surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
+
+
+class MultiFidelityHVKGStrategy(MoboStrategy, _ForbidPFMixin):
+    type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"
+    acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())  # type: ignore
