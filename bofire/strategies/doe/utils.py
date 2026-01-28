@@ -24,7 +24,6 @@ from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.features.api import CategoricalInput, NumericalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import PREDEFINED_MODEL_TYPES
 from bofire.strategies.doe.doe_problem import (
     FirstOrderDoEProblem,
     SecondOrderDoEProblem,
@@ -80,8 +79,8 @@ def formula_to_fully_continuous(
 
 
 def get_formula_from_string(
-    model_type: PREDEFINED_MODEL_TYPES | Formula | str = "linear",
-    inputs: Optional[Inputs] = None,
+    model_type: str | Formula = "linear",
+    inputs: Optional[Inputs,] = None,
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
@@ -100,10 +99,15 @@ def get_formula_from_string(
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(2000)
 
-    if (model_type not in PREDEFINED_MODEL_TYPES) and inputs is not None:
-        return formula_to_fully_continuous(formula=Formula(model_type), inputs=inputs)
+    if isinstance(model_type, Formula):
+        return model_type
 
-    if model_type in PREDEFINED_MODEL_TYPES:
+    if model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
         if inputs is None:
             raise AssertionError(
                 "Inputs must be provided if only a model type is given.",
@@ -151,6 +155,12 @@ def get_formula_from_string(
             )
 
     else:
+        if inputs is not None:
+            if inputs.get([CategoricalInput]) is not None:
+                model_type = formula_to_fully_continuous(
+                    formula=model_type,
+                    inputs=inputs,
+                )
         formula = model_type + "   "
 
     formula = Formula(formula[:-3])
