@@ -1137,7 +1137,7 @@ def test_custom_formula_with_categorical_and_discrete():
     # Create DoE strategy with the custom formula
     data_model = data_models.DoEStrategy(
         domain=domain,
-        criterion=DOptimalityCriterion(formula=custom_formula),
+        criterion=DOptimalityCriterion(formula=str(custom_formula)),
         verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
