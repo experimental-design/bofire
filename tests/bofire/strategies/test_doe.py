@@ -1091,3 +1091,78 @@ def test_get_additional_experiments_needed():
     )
     strategy_sf = DoEStrategy(data_model=data_model_sf)
     assert strategy_sf.get_additional_experiments_needed() is None
+
+
+def test_custom_formula_with_categorical_and_discrete():
+    """Test DoE strategy with custom formula containing categorical interactions."""
+    from formulaic import Formula
+
+    from bofire.data_models.domain.api import Inputs
+
+    np.random.seed(42)
+    torch.manual_seed(42)
+
+    # Create a domain with categorical, continuous, and discrete variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[1.0, 2.0, 3.0, 5.0, 10.0],
+            ),
+        ]
+    )
+
+    domain = Domain(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    custom_formula = Formula(
+        "color + material + temperature + pressure + color:material"
+    )
+
+    # Create DoE strategy with the custom formula
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula=custom_formula),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    # Get required number of experiments
+    n_exp = strategy.get_required_number_of_experiments()
+    assert n_exp is not None
+    # Formula has: 1 (intercept) + 2 (color) + 1 (material) + 1 (temp) + 1 (pressure) + 2 (color:material) = 8 terms
+    assert n_exp == 8
+
+    # Generate candidates
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 4)
+
+    # Verify all categorical values are valid
+    assert all(candidates["color"].isin(["red", "blue", "green"]))
+    assert all(candidates["material"].isin(["plastic", "metal"]))
+
+    # Verify continuous and discrete values are within bounds
+    assert all(
+        (candidates["temperature"] >= 20.0) & (candidates["temperature"] <= 100.0)
+    )
+    assert all(candidates["pressure"].isin([1.0, 2.0, 3.0, 5.0, 10.0]))
+
+
+if __name__ == "__main__":
+    test_custom_formula_with_categorical_and_discrete()

@@ -59,6 +59,28 @@ def represent_categories_as_by_their_states(
     return numerical_inputs, all_but_one_categoricals
 
 
+def formula_to_fully_continuous(
+    formula: Formula,
+    inputs: Inputs,
+) -> Formula:
+    """Converts a formula with categorical variables to a formula with only continuous variables byy identifying the categorical variables and replacing them with their one-hot encoded counterparts.
+    E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
+    """
+    formula_string = str(formula)
+    for cat_input in inputs.get([CategoricalInput]):
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=[cat_input]
+        )
+        one_hot_terms = " + ".join(
+            [var.key for var in categorical_one_hot_variabes[:-1]]
+        )
+        formula_string = formula_string.replace(
+            cat_input.key, "(" + f"{one_hot_terms}" + ")"
+        )
+
+    return Formula(formula_string)
+
+
 def get_formula_from_string(
     model_type: str | Formula = "linear",
     inputs: Optional[Inputs] = None,
@@ -80,10 +102,8 @@ def get_formula_from_string(
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(2000)
 
-    if isinstance(model_type, Formula):
-        return model_type
-        # build model if a keyword and a problem are given.
-    # linear model#
+    if isinstance(model_type, Formula) and inputs is not None:
+        return formula_to_fully_continuous(formula=model_type, inputs=inputs)
 
     if model_type in [
         "linear",
