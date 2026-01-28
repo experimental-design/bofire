@@ -31,3 +31,6 @@ Using Random Forest as a surrogate model instead of Gaussian Processes.
 
 ### [Transfer Learning BO](transfer_learning_bo.qmd)
 Applying transfer learning techniques to Bayesian optimization.
+
+### [Conditional Features BO](conditional_features_bo.qmd)
+Define input features that are conditionally active.
