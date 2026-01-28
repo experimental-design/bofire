@@ -291,6 +291,23 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
+def test_SingleTaskGP_bound_relearning():
+    bench = Himmelblau()
+    experiments = bench.f(
+        pd.DataFrame({"x_1": [0.0, 0.1], "x_2": [0.0, 0.1]}), return_complete=True
+    )
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs, outputs=bench.domain.outputs
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    bounds1 = surrogate.model.input_transform.bounds.clone()
+    experiments2 = bench.f(bench.domain.inputs.sample(10), return_complete=True)
+    surrogate.fit(experiments2)
+    bounds2 = surrogate.model.input_transform.bounds.clone()
+    assert not torch.equal(bounds1, bounds2)
+
+
 @pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
 def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
     # we test here also the abstract methods from the corresponding base class
@@ -464,21 +481,24 @@ def test_SingleTaskGPModel_mixed_features():
         categorical_encodings={
             "x_cat_1": CategoricalEncodingEnum.ORDINAL,
             "x_cat_2": CategoricalEncodingEnum.ORDINAL,
-            "x_mol": Fingerprints(n_bits=2048),
+            "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
         },
     )
 
     gp_mapped = surrogates.map(gp_data)
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
+    n_descriptors_after_filtering = len(
+        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+    )
     assert pred.shape == (4, 2)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
-        2050,
-        2051,
+        2 + n_descriptors_after_filtering,
+        3 + n_descriptors_after_filtering,
     ]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
     assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
-        range(2, 2050)
+        range(2, 2 + n_descriptors_after_filtering)
     )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
