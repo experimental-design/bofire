@@ -1095,7 +1095,6 @@ def test_get_additional_experiments_needed():
 
 def test_custom_formula_with_categorical_and_discrete():
     """Test DoE strategy with custom formula containing categorical interactions."""
-    from formulaic import Formula
 
     from bofire.data_models.domain.api import Inputs
 
@@ -1130,9 +1129,7 @@ def test_custom_formula_with_categorical_and_discrete():
     )
 
     # Define a custom formula with interactions among categorical variables
-    custom_formula = Formula(
-        "color + material + temperature + pressure + color:material"
-    )
+    custom_formula = "color + material + temperature + pressure + color:material"
 
     # Create DoE strategy with the custom formula
     data_model = data_models.DoEStrategy(

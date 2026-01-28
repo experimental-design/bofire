@@ -33,7 +33,7 @@ class SpaceFillingCriterion(OptimalityCriterion):
 
 class DoEOptimalityCriterion(OptimalityCriterion):
     type: str
-    formula: Union[PREDEFINED_MODEL_TYPES, str, Formula]
+    formula: Union[PREDEFINED_MODEL_TYPES, str]
     """
     model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
     are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".

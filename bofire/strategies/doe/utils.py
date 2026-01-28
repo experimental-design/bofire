@@ -24,6 +24,7 @@ from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.features.api import CategoricalInput, NumericalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.doe import PREDEFINED_MODEL_TYPES
 from bofire.strategies.doe.doe_problem import (
     FirstOrderDoEProblem,
     SecondOrderDoEProblem,
@@ -60,13 +61,12 @@ def represent_categories_as_by_their_states(
 
 
 def formula_to_fully_continuous(
-    formula: Formula,
+    formula: str,
     inputs: Inputs,
 ) -> Formula:
     """Converts a formula with categorical variables to a formula with only continuous variables byy identifying the categorical variables and replacing them with their one-hot encoded counterparts.
     E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
     """
-    formula_string = str(formula)
     for cat_input in inputs.get([CategoricalInput]):
         _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
             categorical_inputs=[cat_input]  # type: ignore
@@ -74,15 +74,13 @@ def formula_to_fully_continuous(
         one_hot_terms = " + ".join(
             [var.key for var in categorical_one_hot_variabes[:-1]]
         )
-        formula_string = formula_string.replace(
-            cat_input.key, "(" + f"{one_hot_terms}" + ")"
-        )
+        formula = formula.replace(cat_input.key, "(" + f"{one_hot_terms}" + ")")
 
-    return Formula(formula_string)
+    return Formula(formula)
 
 
 def get_formula_from_string(
-    model_type: str | Formula = "linear",
+    model_type: PREDEFINED_MODEL_TYPES | Formula | str = "linear",
     inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:
@@ -102,15 +100,10 @@ def get_formula_from_string(
     recursion_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(2000)
 
-    if isinstance(model_type, Formula) and inputs is not None:
-        return formula_to_fully_continuous(formula=model_type, inputs=inputs)
+    if (model_type not in PREDEFINED_MODEL_TYPES) and inputs is not None:
+        return formula_to_fully_continuous(formula=Formula(model_type), inputs=inputs)
 
-    if model_type in [
-        "linear",
-        "linear-and-quadratic",
-        "linear-and-interactions",
-        "fully-quadratic",
-    ]:
+    if model_type in PREDEFINED_MODEL_TYPES:
         if inputs is None:
             raise AssertionError(
                 "Inputs must be provided if only a model type is given.",
