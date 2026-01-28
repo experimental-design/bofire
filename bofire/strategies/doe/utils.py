@@ -161,7 +161,7 @@ def get_formula_from_string(
                     formula=model_type,
                     inputs=inputs,
                 )
-        formula = model_type + "   "
+        formula = str(model_type) + "   "
 
     formula = Formula(formula[:-3])
 
