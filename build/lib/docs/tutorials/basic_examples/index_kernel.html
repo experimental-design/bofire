@@ -403,7 +403,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The Index kernel models categorical variables by assigning each category an index and learning a low-rank representation of the kernel matrix. This is particularly useful for ordered categorical variables or when categories have some inherent structure. Unlike Hamming distance kernel which assumes binary correlation (same or different), Index kernels try to learn the correlation between the categories while fitting GP.</p>
 <p>In this tutorial, we show the steps to create a GP surrogate using Index and Positive Index kernels. One can extend the steps to incorporate the shown feature for Bayesian optimization.</p>
 <p>We use the <strong><em>aniline_cn_crosscoupling</em></strong> data-set.</p>
-<div id="29c74813" class="cell" data-execution_count="1">
+<div id="63de2ee2" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import basic python libraries</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -422,7 +422,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.data.aniline_cn_crosscoupling <span class="im">import</span> EXPERIMENTS</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Load the data, get the basic properties out of the data and perform the train-test split</p>
-<div id="c87c7188" class="cell" data-execution_count="2">
+<div id="c2c0c49f" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_df <span class="op">=</span> pd.DataFrame(json.loads(EXPERIMENTS))</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>categories_catalyst <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"catalyst"</span>].unique())</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>categories_base <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"base"</span>].unique())</span>
@@ -435,7 +435,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> data_df.drop(train_data.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Define the input and output bofire variables</p>
-<div id="2bc56de8" class="cell" data-execution_count="3">
+<div id="b2b83dc3" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"temperature"</span>, bounds<span class="op">=</span>bounds_temperature),</span>
@@ -448,7 +448,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"yld"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In this example, we will use RBF kernel for the continuous variables and Index Kernel for the categorical variables. The final kernel will be linear combination of each kernel. Users are free to combine the kernels according to their choice.</p>
-<div id="6bb6fa2a" class="cell" data-execution_count="4">
+<div id="a161543c" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>kernel_list_index <span class="op">=</span> [</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>RBFKernel(ard<span class="op">=</span><span class="va">True</span>, lengthscale_constraint<span class="op">=</span>GreaterThan(lower_bound<span class="op">=</span><span class="fl">2.500e-02</span>), features<span class="op">=</span>[<span class="st">'temperature'</span>, <span class="st">'t_res'</span>, <span class="st">'base_equivalents'</span>])),</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>IndexKernel(num_categories<span class="op">=</span><span class="bu">len</span>(categories_catalyst), rank<span class="op">=</span><span class="dv">1</span>, features<span class="op">=</span>[<span class="st">'catalyst'</span>])),</span>
@@ -464,7 +464,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>surrogate_index.fit(train_data)</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"MAE:"</span>, diagnostics.mean_absolute_error(surrogate_index.predict(test_data)[<span class="st">"yld_pred"</span>], test_data[<span class="st">"yld"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>MAE: 0.2970052094655049</code></pre>
+<pre><code>MAE: 0.2970059309541343</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/linear_operator/utils/interpolation.py:71: UserWarning:
