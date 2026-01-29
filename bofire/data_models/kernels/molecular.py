@@ -4,7 +4,7 @@ from pydantic import model_validator
 
 from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.molfeatures.api import Fingerprints, MolFeatures
+from bofire.data_models.molfeatures.api import Fingerprints, AnyMolFeatures
 
 
 class MolecularKernel(FeatureSpecificKernel):
@@ -17,7 +17,7 @@ class TanimotoKernel(MolecularKernel):
     _pre_compute_similarities: bool = False
 
     # private attributes, for pre-computation of similarities: will be overridden by tanimoto_gp, or auto-computed
-    _fingerprint_settings_for_similarities: Optional[dict[str, MolFeatures]] = None
+    _fingerprint_settings_for_similarities: Optional[dict[str, AnyMolFeatures]] = None
     _molecular_inputs: Optional[list[CategoricalMolecularInput]] = None
 
     @model_validator(mode="after")
