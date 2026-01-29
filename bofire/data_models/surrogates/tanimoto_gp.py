@@ -10,6 +10,7 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
+    MolFeatures,
     CompositeMolFeatures,
     Fingerprints,
     Fragments,
@@ -58,16 +59,16 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 for inp_ in molecular_inputs:
                     if inp_.key in list(self.categorical_encodings):
                         assert isinstance(
-                            self.categorical_encodings[inp_.key], Fingerprints
+                            self.categorical_encodings[inp_.key], MolFeatures
                         ), (
-                            f"Categorical encoding for input {inp_.key} must be a Fingerprint. "
+                            f"Categorical encoding for input {inp_.key} must be a MolFeatures. "
                             f"Found {type(self.categorical_encodings[inp_.key])}"
                         )
-                        fingerprint: Fingerprints = self.categorical_encodings.pop(
+                        molfeature: MolFeatures = self.categorical_encodings.pop(
                             inp_.key
                         )  # type: ignore
                         base_kernel._fingerprint_settings_for_similarities[inp_.key] = (
-                            fingerprint  # type: ignore
+                            molfeature  # type: ignore
                         )
 
                 base_kernel._pre_compute_similarities = True

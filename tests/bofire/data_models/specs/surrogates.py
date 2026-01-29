@@ -630,13 +630,12 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {},  # will be removed in favor of pre_compute_similarities
+        "categorical_encodings": {},
         "pre_compute_similarities": True,
         "dump": None,
         "hyperconfig": None,
     },
 )
-
 
 specs.add_valid(
     models.TanimotoGPSurrogate,
