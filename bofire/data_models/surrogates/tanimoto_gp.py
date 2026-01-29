@@ -107,4 +107,4 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 raise ValueError(
                     "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or composite molfeatures containing only fingerprints or fragments are present.",
                 )
-            return self
+        return self
