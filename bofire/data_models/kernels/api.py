@@ -22,6 +22,7 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
+from bofire.data_models.kernels.fidelity import DownsamplingKernel, FidelityKernel
 from bofire.data_models.kernels.kernel import (
     AggregationKernel,
     FeatureSpecificKernel,
@@ -38,6 +39,7 @@ AbstractKernel = Union[
     MolecularKernel,
     FeatureSpecificKernel,
     AggregationKernel,
+    FidelityKernel,
 ]
 
 AnyContinuousKernel = Union[
@@ -74,4 +76,5 @@ AnyKernel = Union[
     InfiniteWidthBNNKernel,
     WassersteinKernel,
     WedgeKernel,
+    DownsamplingKernel,
 ]

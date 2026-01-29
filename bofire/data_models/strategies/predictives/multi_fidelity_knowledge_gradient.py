@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional, Union
+from typing import Dict, Generator, Literal, Optional, Union
 
 from pydantic import Field, model_validator
 
@@ -8,12 +8,33 @@ from bofire.data_models.acquisition_functions.cost_aware_utility import (
     InverseCostWeightedUtility,
 )
 from bofire.data_models.domain.api import Domain, Outputs
+from bofire.data_models.features.task import ContinuousTaskInput
+from bofire.data_models.kernels.api import (
+    AdditiveKernel,
+    AnyKernel,
+    FidelityKernel,
+    MultiplicativeKernel,
+    PolynomialFeatureInteractionKernel,
+    ScaleKernel,
+)
 from bofire.data_models.strategies.predictives.mobo import ExplicitReferencePoint
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
 from bofire.data_models.strategies.predictives.sobo import _ForbidPFMixin
 from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
+
+
+def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
+    yield kernel
+    if isinstance(kernel, ScaleKernel):
+        yield from _traverse_kernels(kernel.base_kernel)
+    if isinstance(
+        kernel,
+        (AdditiveKernel, MultiplicativeKernel, PolynomialFeatureInteractionKernel),
+    ):
+        for base_kernel in kernel.kernels:
+            yield from _traverse_kernels(base_kernel)
 
 
 class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
@@ -31,19 +52,33 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
 
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
-        """Ensures that a multi-task model is specified for each output feature"""
+        """Ensures that a single-task multi-fidelity model is specified for each output feature"""
         MultiFidelityHVKGStrategy._generate_surrogate_specs(
             self.domain,
             self.surrogate_specs,
         )
 
-        if not all(
-            isinstance(m, SingleTaskGPSurrogate)
-            for m in self.surrogate_specs.surrogates
-        ):
-            raise ValueError(f"Must use a SingleTaskGPSurrogate with {self.type}.")
+        for m in self.surrogate_specs.surrogates:
+            if not isinstance(m, SingleTaskGPSurrogate):
+                raise ValueError(f"Must use a SingleTaskGPSurrogate with {self.type}.")
 
-        # TODO: check that a downsampling kernel is used
+            all_fidelity_kernels = [
+                k for k in _traverse_kernels(m.kernel) if isinstance(k, FidelityKernel)
+            ]
+            if not all_fidelity_kernels:
+                raise ValueError(
+                    f"Must provide at least one fidelity kernel when using {self.type}."
+                )
+
+            for kernel in all_fidelity_kernels:
+                assert kernel.features is not None
+                task_features = self.domain.inputs.get_by_keys(kernel.features)
+                if not all(
+                    isinstance(tf, ContinuousTaskInput) for tf in task_features.get()
+                ):
+                    raise ValueError(
+                        "Fidelity kernel can only operate on task features."
+                    )
 
         self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
