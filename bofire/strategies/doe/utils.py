@@ -80,7 +80,7 @@ def formula_to_fully_continuous(
 
 def get_formula_from_string(
     model_type: str | Formula = "linear",
-    inputs: Optional[Inputs,] = None,
+    inputs: Optional[Inputs] = None,
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
