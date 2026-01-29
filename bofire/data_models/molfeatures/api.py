@@ -1,6 +1,7 @@
 from typing import Union
 
 from bofire.data_models.molfeatures.molfeatures import (
+    CompositeMolFeatures,
     Fingerprints,
     FingerprintsFragments,
     Fragments,
@@ -12,8 +13,8 @@ from bofire.data_models.molfeatures.molfeatures import (
 AbstractMolFeatures = MolFeatures
 
 AnyMolFeatures = Union[
+    CompositeMolFeatures,
     Fingerprints,
     Fragments,
-    FingerprintsFragments,
     MordredDescriptors,
 ]

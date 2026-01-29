@@ -88,6 +88,9 @@ all = [
 [tool.setuptools.packages]
 find = {}
 
+[tool.setuptools.package-data]
+"bofire.benchmarks.data" = ["octane.csv"]
+
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
@@ -116,6 +119,7 @@ max-complexity = 19
 
 [tool.ruff.lint.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
+"bofire/data_models/molfeatures/api.py" = ["F401"]
 "bofire/data_models/priors/api.py" = ["F401"]
 "bofire/priors/api.py" = ["F401"]
 "bofire/utils/annotated.py" = ["F401"]

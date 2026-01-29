@@ -4,9 +4,12 @@ from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     ContinuousDescriptorInput,
     ContinuousInput,
+    ContinuousMolecularInput,
+    MolecularWeightedSumFeature,
     SumFeature,
     WeightedSumFeature,
 )
+from bofire.data_models.molfeatures.api import MordredDescriptors
 
 
 def test_engineered_feature_validation():
@@ -61,3 +64,29 @@ def test_weighted_sum_feature_validation():
     )
     with pytest.raises(ValueError, match="Not all descriptors"):
         weighted_sum_feature.validate_features(inputs)
+
+
+def test_molecular_weighted_sum_feature_validation():
+    mol_feature = MolecularWeightedSumFeature(
+        key="mw_sum1",
+        features=["m1", "m2"],
+        molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+    )
+    inputs = Inputs(
+        features=[
+            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
+            ContinuousInput(key="m2", bounds=(0, 1)),
+        ]
+    )
+    with pytest.raises(
+        ValueError, match="Feature 'm2' is not a ContinuousMolecularInput"
+    ):
+        mol_feature.validate_features(inputs)
+
+    inputs = Inputs(
+        features=[
+            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
+            ContinuousMolecularInput(key="m2", bounds=(0, 1), molecule="CC"),
+        ]
+    )
+    mol_feature.validate_features(inputs)

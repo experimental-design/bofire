@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
-from bofire.data_models.features.api import Feature, MolecularInput
+from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds
@@ -130,8 +130,6 @@ class DoEStrategy(Strategy):
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        if my_type in [MolecularInput]:
-            return False
         return True
 
     @classmethod

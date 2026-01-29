@@ -16,14 +16,15 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousDescriptorInput,
     ContinuousInput,
     MeanFeature,
-    MolecularInput,
     SumFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.molfeatures.api import (
+    CompositeMolFeatures,
     Fingerprints,
     FingerprintsFragments,
     Fragments,
@@ -31,10 +32,8 @@ from bofire.data_models.molfeatures.api import (
 )
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.utils import (
-    get_categorical_feature_keys,
     get_continuous_feature_keys,
     get_input_transform,
-    get_molecular_feature_keys,
     get_scaler,
 )
 
@@ -251,7 +250,17 @@ def test_get_scaler_molecular(
             )
             for i in range(2)
         ]
-        + [MolecularInput(key="x_mol")],
+        + [
+            CategoricalMolecularInput(
+                key="x_mol",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            )
+        ],
     )
     experiments = [
         [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O"],
@@ -313,7 +322,7 @@ def test_get_scaler_engineered_features():
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "specs, expected_continuous_keys, expected_categorical_keys, expected_molecular_keys",
+    "specs, expected_continuous_keys",
     [
         (
             {
@@ -322,8 +331,6 @@ def test_get_scaler_engineered_features():
                 "x4": Fingerprints(n_bits=2),
             },
             ["x1"],
-            ["x2", "x3"],
-            ["x4"],
         ),
         (
             {
@@ -332,8 +339,6 @@ def test_get_scaler_engineered_features():
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
             ["x1"],
-            ["x2", "x3"],
-            ["x4"],
         ),
         (
             {
@@ -342,8 +347,6 @@ def test_get_scaler_engineered_features():
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             ["x1", "x4"],
-            ["x2", "x3"],
-            [],
         ),
         (
             {
@@ -352,8 +355,6 @@ def test_get_scaler_engineered_features():
                 "x4": Fingerprints(n_bits=2),
             },
             ["x1", "x3"],
-            ["x2"],
-            ["x4"],
         ),
         (
             {
@@ -362,8 +363,16 @@ def test_get_scaler_engineered_features():
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
             ["x1", "x3"],
-            ["x2"],
-            ["x4"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": FingerprintsFragments(
+                    fragments=["fr_unbrch_alkane", "fr_thiocyan"], n_bits=32
+                ),
+            },
+            ["x1", "x3"],
         ),
         (
             {
@@ -372,16 +381,25 @@ def test_get_scaler_engineered_features():
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             ["x1", "x3", "x4"],
-            ["x2"],
-            [],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": CompositeMolFeatures(
+                    features=[
+                        MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                        Fingerprints(n_bits=128),
+                    ]
+                ),
+            },
+            ["x1", "x3", "x4"],
         ),
     ],
 )
 def test_get_feature_keys(
     specs,
     expected_continuous_keys,
-    expected_categorical_keys,
-    expected_molecular_keys,
 ):
     inps = Inputs(
         features=[
@@ -393,16 +411,20 @@ def test_get_feature_keys(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(
+                key="x4",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            ),
         ],
     )
-    molecular_feature_keys = get_molecular_feature_keys(specs)
     continuous_feature_keys = get_continuous_feature_keys(inps, specs)
-    categorical_feature_keys = get_categorical_feature_keys(specs)
 
-    assert molecular_feature_keys == expected_molecular_keys
     assert continuous_feature_keys == expected_continuous_keys
-    assert categorical_feature_keys == expected_categorical_keys
 
 
 def test_get_input_transform():

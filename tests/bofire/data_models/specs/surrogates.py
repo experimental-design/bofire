@@ -671,6 +671,7 @@ specs.add_valid(
     },
 )
 
+
 specs.add_valid(
     models.CategoricalDeterministicSurrogate,
     lambda: {

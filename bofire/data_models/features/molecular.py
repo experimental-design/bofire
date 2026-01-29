@@ -8,115 +8,43 @@ from pydantic import Field, field_validator, validate_call
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
-from bofire.data_models.features.feature import Input, get_encoded_name
+from bofire.data_models.features.continuous import ContinuousInput
+from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.molfeatures.api import (
     AnyMolFeatures,
+    CompositeMolFeatures,
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
 from bofire.utils.cheminformatics import smiles2mol
 
 
-class MolecularInput(Input):
-    type: Literal["MolecularInput"] = "MolecularInput"  # type: ignore
-    # order_id: ClassVar[int] = 6
+class ContinuousMolecularInput(ContinuousInput):
+    type: Literal["ContinuousMolecularInput"] = "ContinuousMolecularInput"  # type: ignore
     order_id: ClassVar[int] = 4
+    molecule: str
 
-    @staticmethod
-    def valid_transform_types() -> List[AnyMolFeatures]:  # type: ignore
-        return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]  # type: ignore
-
-    def validate_experimental(
-        self,
-        values: pd.Series,
-        strict: bool = False,
-    ) -> pd.Series:
-        values = values.map(str)
-        for smi in values:
-            smiles2mol(smi)
-
-        return values
-
-    def is_fulfilled(self, values: pd.Series) -> pd.Series:
-        raise NotImplementedError(
-            "`is_fulfilled` is not implemented for `MolecularInput`. "
-            "Please use `CategoricalMolecularInput` instead of `MolecularInput`.",
-        )
-
-    def validate_candidental(self, values: pd.Series) -> pd.Series:
-        values = values.map(str)
-        for smi in values:
-            smiles2mol(smi)
-        return values
-
-    def is_fixed(self) -> bool:
-        return False
-
-    def fixed_value(self, transform_type: Optional[AnyMolFeatures] = None) -> None:  # type: ignore
-        return None
-
-    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
-        raise ValueError("Sampling not supported for `MolecularInput`")
-
-    def get_bounds(  # type: ignore
-        self,
-        transform_type: AnyMolFeatures,
-        values: pd.Series,
-        reference_value: Optional[str] = None,
-    ) -> Tuple[List[float], List[float]]:
-        """Calculates the lower and upper bounds for the feature based on the given transform type and values.
+    @field_validator("molecule")
+    @classmethod
+    def validate_smiles(cls, v: str) -> str:
+        """Validates that molecule is a valid smiles. Note that this check can only
+        be executed when rdkit is available.
 
         Args:
-            transform_type (AnyMolFeatures): The type of transformation to apply to the data.
-            values (pd.Series): The actual data over which the lower and upper bounds are calculated.
-            reference_value (Optional[str], optional): The reference value for the transformation. Not used here.
-                Defaults to None.
-
-        Returns:
-            Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.
-
-        Raises:
-            NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.
-
+            v (str): smiles
         """
-        if values is None:
-            raise NotImplementedError(
-                "`values` is currently required for `MolecularInput`",
-            )
-        data = self.to_descriptor_encoding(transform_type, values)
-
-        lower = data.min(axis=0).values.tolist()
-        upper = data.max(axis=0).values.tolist()
-
-        return lower, upper
-
-    def to_descriptor_encoding(
-        self,
-        transform_type: AnyMolFeatures,
-        values: pd.Series,
-    ) -> pd.DataFrame:
-        """Converts values to descriptor encoding.
-
-        Args:
-            values (pd.Series): Values to transform.
-
-        Returns:
-            pd.DataFrame: Descriptor encoded dataframe.
-
-        """
-        descriptor_values = transform_type.get_descriptor_values(values)
-
-        descriptor_values.columns = [
-            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
-        ]
-        descriptor_values.index = values.index
-
-        return descriptor_values
+        # check on rdkit availability:
+        try:
+            smiles2mol(v)
+        except NameError:
+            warnings.warn("rdkit not installed, molecule cannot be validated.")
+            return v
+        smiles2mol(v)
+        return v
 
 
-class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: ignore
+class CategoricalMolecularInput(CategoricalInput):  # type: ignore
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"  # type: ignore
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
@@ -152,7 +80,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
     def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:  # type: ignore
         return CategoricalInput.valid_transform_types() + [  # type: ignore
             Fingerprints,
-            FingerprintsFragments,
+            CompositeMolFeatures,
             Fragments,
             MordredDescriptors,
         ]
@@ -183,6 +111,29 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
         return lower, upper
+
+    def to_descriptor_encoding(
+        self,
+        transform_type: AnyMolFeatures,
+        values: pd.Series,
+    ) -> pd.DataFrame:
+        """Converts values to descriptor encoding.
+
+        Args:
+            values (pd.Series): Values to transform.
+
+        Returns:
+            pd.DataFrame: Descriptor encoded dataframe.
+
+        """
+        descriptor_values = transform_type.get_descriptor_values(values)
+
+        descriptor_values.columns = [
+            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
+        ]
+        descriptor_values.index = values.index
+
+        return descriptor_values
 
     def from_descriptor_encoding(
         self,
