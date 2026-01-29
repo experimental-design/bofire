@@ -6,7 +6,7 @@ import pytest
 import torch
 
 from bofire.data_models.domain import api as domain_api
-from bofire.data_models.molfeatures.api import Fingerprints, CompositeMolFeatures, MordredDescriptors, MolFeatures
+from bofire.data_models.molfeatures.api import Fingerprints, CompositeMolFeatures, Fragments, MolFeatures
 from bofire.data_models.strategies import api as strategies_api
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
 from bofire.strategies.api import map as map_strategy
@@ -16,19 +16,21 @@ from bofire.utils.torch_tools import tkwargs
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
-@pytest.fixture(params=[1024, 2048])
+@pytest.fixture(params=[24, 48])
 def n_bits(request) -> int:
     return request.param
 
-@pytest.fixture(params=["Figerprints", "Composite"])
+@pytest.fixture(params=["Figerprints", "Fragments", "Composite"])
 def mol_feature_data_model(request, n_bits) -> MolFeatures:
     if request.param == "Figerprints":
         return Fingerprints(bond_radius=3, n_bits=n_bits)
+    elif request.param == "Fragments":
+        return Fragments()
     elif request.param == "Composite":
         return CompositeMolFeatures(
             features=[
                 Fingerprints(bond_radius=2, n_bits=n_bits),
-                MordredDescriptors(ignore_3D=True),
+                Fragments(),
             ]
         )
 

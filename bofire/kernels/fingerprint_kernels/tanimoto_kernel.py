@@ -30,10 +30,10 @@ from typing import Optional
 import torch
 
 from bofire.data_models.features.api import CategoricalMolecularInput
-from bofire.data_models.molfeatures.api import Fingerprints
+from bofire.data_models.molfeatures.api import AnyMolFeatures, Fingerprints
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 from bofire.utils.cheminformatics import mutual_tanimoto_similarities
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import tkwargs, get_categorical_encoder, get_NumericToCategorical_input_transform
 
 
 class TanimotoKernel(BitKernel):
@@ -71,7 +71,7 @@ class TanimotoKernel(BitKernel):
         self,
         pre_compute_similarities: bool = False,
         molecular_inputs: Optional[list[CategoricalMolecularInput]] = None,
-        fingerprint_settings: Optional[dict[str, Fingerprints]] = None,
+        fingerprint_settings: Optional[dict[str, AnyMolFeatures]] = None,
         computed_mutual_similarities: Optional[dict[str, torch.Tensor]] = None,
         **kwargs,
     ):
@@ -96,34 +96,18 @@ class TanimotoKernel(BitKernel):
                     )
                     self.sim_matrices[key] = self.compute_sim_matrix(inp_, fingerprint)
 
-    @staticmethod
     def compute_sim_matrix(
-        input: CategoricalMolecularInput,
-        fingerprint: Fingerprints,
+            self,
+            input: CategoricalMolecularInput,
+            fingerprint: AnyMolFeatures,
     ) -> torch.Tensor:
         """loop over combinations of molecules, and put this in a torch 2D array"""
 
-        distances = mutual_tanimoto_similarities(
-            smiles=input.categories,
-            bond_radius=fingerprint.bond_radius,
-            n_bits=fingerprint.n_bits,
-        )
+        encoder = get_categorical_encoder(input, fingerprint)
+        x_cats = torch.arange(len(input.categories)).to(**tkwargs)
+        fingerprints = encoder(x_cats.to(torch.long))
 
-        n = len(input.categories)
-        m = n * (n - 1) // 2
-        if len(distances) != m:
-            raise ValueError(
-                f"Expected {m} distances for n={n}, but got {len(distances)}. "
-                "Ensure you used itertools.combinations in the same order."
-            )
-
-        D = torch.ones((n, n), **tkwargs)
-        rows, cols = torch.triu_indices(n, n, offset=1)  # indices where i < j
-        D[rows, cols] = torch.tensor(distances, **tkwargs)
-        # Mirror to lower triangle
-        D[cols, rows] = D[rows, cols]
-        # Diagonal remains 0 (distance of a point to itself)
-        return D
+        return self.covar_dist(fingerprints, fingerprints)  # all mutual fingerprint distances
 
     @property
     def re_init_kwargs(self) -> dict:
