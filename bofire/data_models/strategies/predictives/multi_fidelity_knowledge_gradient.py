@@ -1,45 +1,28 @@
-from typing import List, Literal, Union
+from typing import Dict, Literal, Optional, Union
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
+from bofire.data_models.acquisition_functions.acquisition_function import qMFHVKG
+from bofire.data_models.acquisition_functions.cost_aware_utility import (
+    CostAwareUtility,
+    InverseCostWeightedUtility,
+)
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import TaskInput
-from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _ForbidPFMixin
-from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
+from bofire.data_models.strategies.predictives.mobo import ExplicitReferencePoint
+from bofire.data_models.strategies.predictives.multiobjective import (
+    MultiobjectiveStrategy,
+)
+from bofire.data_models.strategies.predictives.sobo import _ForbidPFMixin
+from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
 
 
-class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
-    type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
-
-    fidelity_thresholds: Union[List[float], float] = 0.1
-
-    @model_validator(mode="after")
-    def validate_tasks_and_fidelity_thresholds(self):
-        """Ensures that there is one threshold per fidelity"""
-        task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
-        num_tasks = len(task_input.categories)  # type: ignore
-
-        if (
-            isinstance(self.fidelity_thresholds, list)
-            and len(self.fidelity_thresholds) != num_tasks
-        ):
-            raise ValueError(
-                f"The number of tasks should be equal to the number of fidelity thresholds (got {num_tasks} tasks, {len(self.fidelity_thresholds)} thresholds)."
-            )
-
-        return self
-
-    @model_validator(mode="after")
-    def validate_only_one_target_fidelity(self):
-        """Ensures that there is only one target fidelity (task where fidelity==0)."""
-        task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
-        num_target = sum(t == 0 for t in task_input.fidelities)  # type: ignore
-        if num_target != 1:
-            raise ValueError(
-                f"Only one task can be the target fidelity (got {num_target})."
-            )
-
-        return self
+class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
+    type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
+    ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
+    acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
+    cost_aware_utility: CostAwareUtility = Field(
+        default_factory=lambda: InverseCostWeightedUtility()
+    )
 
     @model_validator(mode="after")
     def validate_multitask_allowed(self):
@@ -49,15 +32,18 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
         """Ensures that a multi-task model is specified for each output feature"""
-        MultiFidelityStrategy._generate_surrogate_specs(
+        MultiFidelityHVKGStrategy._generate_surrogate_specs(
             self.domain,
             self.surrogate_specs,
         )
 
         if not all(
-            isinstance(m, MultiTaskGPSurrogate) for m in self.surrogate_specs.surrogates
+            isinstance(m, SingleTaskGPSurrogate)
+            for m in self.surrogate_specs.surrogates
         ):
-            raise ValueError(f"Must use a MultiTaskGPSurrogate with {self.type}.")
+            raise ValueError(f"Must use a SingleTaskGPSurrogate with {self.type}.")
+
+        # TODO: check that a downsampling kernel is used
 
         self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
@@ -84,11 +70,12 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
         _surrogate_specs = surrogate_specs.surrogates
         for output_feature in non_exisiting_keys:
             _surrogate_specs.append(
-                MultiTaskGPSurrogate(
+                SingleTaskGPSurrogate(
                     inputs=domain.inputs,
                     outputs=Outputs(
                         features=[domain.outputs.get_by_key(output_feature)]
                     ),
+                    # TODO: build proper kernel
                 )
             )
         surrogate_specs.surrogates = _surrogate_specs

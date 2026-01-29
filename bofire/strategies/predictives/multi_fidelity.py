@@ -9,17 +9,13 @@ from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
 )
 from bofire.data_models.api import Domain
-from bofire.data_models.features.api import CategoricalTaskInput, ContinuousTaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityHVKGStrategy as MultiFidelityHVKGStrategyDataModel,
-)
-from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityStrategy as MultiFidelityStrategyDataModel,
+    MultiFidelityStrategy as DataModel,
 )
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-from bofire.strategies.predictives.mobo import MoboStrategy
 from bofire.strategies.predictives.sobo import SoboStrategy
 from bofire.strategies.strategy import make_strategy
 from bofire.utils.naming_conventions import get_column_names
@@ -27,7 +23,7 @@ from bofire.utils.naming_conventions import get_column_names
 
 class MultiFidelityStrategy(SoboStrategy):
     # TODO: rename this to "MultiFidelityVarianceBasedStrategy"
-    def __init__(self, data_model: MultiFidelityStrategyDataModel, **kwargs):
+    def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self.task_feature_key = self.domain.inputs.get_keys(CategoricalTaskInput)[0]
 
@@ -172,16 +168,4 @@ class MultiFidelityStrategy(SoboStrategy):
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
         """
-        return cast(Self, make_strategy(cls, MultiFidelityStrategyDataModel, locals()))
-
-
-class MultiFidelityHVKGStrategy(MoboStrategy):
-    """Use the MFHVKG AF for a multi-objective, multi-fidelity problem.
-
-    The acquisition function is not well supported in BoTorch (eg. cannot be constructed
-    in `get_acquisition_function`), so we provide a unique class to support this
-    use-case."""
-
-    def __init__(self, data_model: MultiFidelityHVKGStrategyDataModel, **kwargs):
-        super().__init__(data_model=data_model, **kwargs)
-        self.task_feature_key = self.domain.inputs.get_keys(ContinuousTaskInput)[0]
+        return cast(Self, make_strategy(cls, DataModel, locals()))

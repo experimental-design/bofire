@@ -40,6 +40,9 @@ from bofire.data_models.strategies.predictives.mobo import (
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy,
 )
+from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
+    MultiFidelityHVKGStrategy,
+)
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )

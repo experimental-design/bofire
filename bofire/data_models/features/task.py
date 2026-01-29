@@ -43,26 +43,13 @@ class CostModel(BaseModel):
 
 class AffineFidelityCostModel(CostModel):
     type: Literal["AffineFidelityCostModel"] = "AffineFidelityCostModel"
-    fidelity_weight: float
+    weight: float
     fixed_cost: float
-
-
-class CostAwareUtility(BaseModel):
-    """Function mapping the cost of an experiment to its utility."""
-
-    type: Any
-    cost_model: CostModel
-
-
-class InverseCostWeightedUtility(CostAwareUtility):
-    type: Literal["InverseCostWeightedUtility"] = "InverseCostWeightedUtility"
 
 
 class ContinuousTaskInput(TaskInput, ContinuousInput):
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
-    cost_aware_utility: CostAwareUtility = Field(
-        default_factory=lambda: InverseCostWeightedUtility(
-            cost_model=AffineFidelityCostModel(fidelity_weight=1.0, fixed_cost=0.0)
-        )
+    fidelity_cost: AffineFidelityCostModel = Field(
+        default_factory=lambda: AffineFidelityCostModel(weight=1.0, fixed_cost=1.0)
     )
