@@ -10,10 +10,10 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
-    MolFeatures,
     CompositeMolFeatures,
     Fingerprints,
     Fragments,
+    MolFeatures,
 )
 from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
@@ -54,11 +54,9 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         return isinstance(feature, (Fingerprints, Fragments)) or (
             isinstance(feature, CompositeMolFeatures)
             and all(
-                TanimotoGPSurrogate.validate_molfeatures(f)
-                for f in feature.features
+                TanimotoGPSurrogate.validate_molfeatures(f) for f in feature.features
             )
         )
-
 
     @model_validator(mode="after")
     def validate_moleculars(self):

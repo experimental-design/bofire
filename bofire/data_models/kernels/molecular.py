@@ -4,7 +4,7 @@ from pydantic import model_validator
 
 from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.molfeatures.api import MolFeatures, Fingerprints
+from bofire.data_models.molfeatures.api import Fingerprints, MolFeatures
 
 
 class MolecularKernel(FeatureSpecificKernel):

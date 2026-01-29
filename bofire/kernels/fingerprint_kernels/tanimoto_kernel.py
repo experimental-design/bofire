@@ -32,8 +32,7 @@ import torch
 from bofire.data_models.features.api import CategoricalMolecularInput
 from bofire.data_models.molfeatures.api import AnyMolFeatures, Fingerprints
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
-from bofire.utils.cheminformatics import mutual_tanimoto_similarities
-from bofire.utils.torch_tools import tkwargs, get_categorical_encoder, get_NumericToCategorical_input_transform
+from bofire.utils.torch_tools import get_categorical_encoder, tkwargs
 
 
 class TanimotoKernel(BitKernel):
@@ -97,9 +96,9 @@ class TanimotoKernel(BitKernel):
                     self.sim_matrices[key] = self.compute_sim_matrix(inp_, fingerprint)
 
     def compute_sim_matrix(
-            self,
-            input: CategoricalMolecularInput,
-            fingerprint: AnyMolFeatures,
+        self,
+        input: CategoricalMolecularInput,
+        fingerprint: AnyMolFeatures,
     ) -> torch.Tensor:
         """loop over combinations of molecules, and put this in a torch 2D array"""
 
@@ -107,7 +106,9 @@ class TanimotoKernel(BitKernel):
         x_cats = torch.arange(len(input.categories)).to(**tkwargs)
         fingerprints = encoder(x_cats.to(torch.long))
 
-        return self.covar_dist(fingerprints, fingerprints)  # all mutual fingerprint distances
+        return self.covar_dist(
+            fingerprints, fingerprints
+        )  # all mutual fingerprint distances
 
     @property
     def re_init_kwargs(self) -> dict:
