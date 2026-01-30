@@ -118,6 +118,7 @@ def test_passing_of_tanimoto_sim_matrices(
         inputs=domain.inputs,
         outputs=domain.outputs,
         pre_compute_similarities=True,
+        categorical_encodings={domain.inputs.get_keys()[0]: Fingerprints()},
     )
 
     strategy_data_model = strategies_api.SoboStrategy(

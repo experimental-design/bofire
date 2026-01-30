@@ -39,6 +39,11 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
+    _skip_encodings_validation: bool = (
+        False  # helper-function to skip validatio of categorical encodings,
+    )
+    # after moving molfeatures to kernel for pre-computed similarities
+
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
         """Abstract method to check output type for surrogate models
@@ -58,9 +63,8 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             )
         )
 
-    @model_validator(mode="after")
-    def validate_moleculars(self):
-        """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
+    @staticmethod
+    def validate_fingerprints(categorical_encodings: dict[str, AnyMolFeatures]):
         if not any(
             isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
@@ -71,11 +75,21 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                     for feature in value.features
                 )
             )
-            for value in self.categorical_encodings.values()
+            for value in categorical_encodings.values()
         ):
             raise ValueError(
                 "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or composite molfeatures containing only fingerprints or fragments are present.",
             )
+
+    @model_validator(mode="after")
+    def validate_moleculars(self):
+        """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
+        if self.pre_compute_similarities:
+            return (
+                self  # will be checked in "provide_info_for_pre_compute_similarities"
+            )
+
+        self.validate_fingerprints(self.categorical_encodings)
         return self
 
     @model_validator(mode="after")
@@ -95,6 +109,10 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
 
                 # move fingerprint data model fro categorical encodings to kernel-specs
                 base_kernel._fingerprint_settings_for_similarities = {}
+
+                if not self._skip_encodings_validation:
+                    self.validate_fingerprints(self.categorical_encodings)
+
                 for inp_ in molecular_inputs:
                     if inp_.key in list(self.categorical_encodings):
                         molfeature: AnyMolFeatures = self.categorical_encodings.pop(
@@ -104,6 +122,8 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                             molfeature  # type: ignore
                         )
 
+                self._skip_encodings_validation = True  # skip validation in next step,
+                # as we removed molfeatures from categorical encodings
                 base_kernel._pre_compute_similarities = True
 
                 return self
