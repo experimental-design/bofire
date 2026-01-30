@@ -59,10 +59,10 @@ def represent_categories_as_by_their_states(
     return numerical_inputs, all_but_one_categoricals
 
 
-def formula_to_fully_continuous(
+def formula_str_to_fully_continuous(
     formula: str,
     inputs: Inputs,
-) -> Formula:
+) -> str:
     """Converts a formula with categorical variables to a formula with only continuous variables byy identifying the categorical variables and replacing them with their one-hot encoded counterparts.
     E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
     """
@@ -75,7 +75,7 @@ def formula_to_fully_continuous(
         )
         formula = formula.replace(cat_input.key, "(" + f"{one_hot_terms}" + ")")
 
-    return Formula(formula)
+    return formula
 
 
 def get_formula_from_string(
@@ -156,8 +156,8 @@ def get_formula_from_string(
 
     else:
         if inputs is not None:
-            if inputs.get([CategoricalInput]) is not None:
-                model_type = formula_to_fully_continuous(
+            if len(inputs.get([CategoricalInput])) > 0:
+                model_type = formula_str_to_fully_continuous(
                     formula=model_type,
                     inputs=inputs,
                 )
