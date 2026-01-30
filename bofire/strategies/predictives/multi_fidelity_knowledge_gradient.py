@@ -21,14 +21,21 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.sampling.get_sampler import get_sampler
 from pydantic import PositiveInt
 from torch import Tensor
+from typing_extensions import Self
 
+from bofire.data_models.acquisition_functions.api import qMFHVKG
+from bofire.data_models.api import Domain
 from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy as DataModel,
 )
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.strategies.strategy import make_strategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
@@ -54,8 +61,9 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         self.acquisition_function = data_model.acquisition_function
         self.cost_aware_utility = data_model.cost_aware_utility
 
-        assert isinstance(data_model.ref_point, ExplicitReferencePoint)
-        self.ref_point: ExplicitReferencePoint = data_model.ref_point
+        # assert isinstance(data_model.ref_point, ExplicitReferencePoint)
+        assert not isinstance(data_model.ref_point, dict)
+        self.ref_point: ExplicitReferencePoint | None = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
 
     def _get_acqfs(self, n: PositiveInt) -> List[AcquisitionFunction]:
@@ -152,7 +160,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         assert self.model is not None
         curr_val_acqf = _get_hv_value_function(
             model=self.model,
-            ref_point=torch.as_tensor(self.get_adjusted_refpoint()),
+            ref_point=torch.as_tensor(self.get_adjusted_refpoint(), **tkwargs),
             use_posterior_mean=True,
         )
 
@@ -189,6 +197,25 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
         task_feature.bounds = prev_bounds
         return val
+
+    @classmethod
+    def make(  # type: ignore
+        cls,
+        domain: Domain,
+        ref_point: ExplicitReferencePoint | dict[str, float] | None = None,
+        cost_aware_utility: CostAwareUtility | None = None,
+        acquisition_function: qMFHVKG | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
+    ) -> Self:
+        return make_strategy(cls, DataModel, locals())
 
 
 def get_project(target_fidelities: dict[int, float]) -> Callable[[Tensor], Tensor]:

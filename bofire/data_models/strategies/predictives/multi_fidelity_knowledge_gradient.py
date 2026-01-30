@@ -1,4 +1,4 @@
-from typing import Dict, Generator, Literal, Optional, Union
+from typing import Dict, Generator, Literal, Optional, Type, Union, final
 
 from pydantic import Field, model_validator
 
@@ -8,6 +8,7 @@ from bofire.data_models.acquisition_functions.cost_aware_utility import (
     InverseCostWeightedUtility,
 )
 from bofire.data_models.domain.api import Domain, Outputs
+from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.features.task import ContinuousTaskInput, TaskInput
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
@@ -18,6 +19,15 @@ from bofire.data_models.kernels.api import (
     PolynomialFeatureInteractionKernel,
     RBFKernel,
     ScaleKernel,
+)
+from bofire.data_models.objectives.api import (
+    CloseToTargetObjective,
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+    MinimizeSigmoidObjective,
+    Objective,
+    TargetObjective,
 )
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
@@ -43,6 +53,7 @@ def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
             yield from _traverse_kernels(base_kernel)
 
 
+@final
 class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
@@ -141,3 +152,38 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
         surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
+
+    @classmethod
+    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+        """Method to check if a specific feature type is implemented for the strategy
+
+        Args:
+            my_type (Type[Feature]): Feature class
+
+        Returns:
+            bool: True if the feature type is valid for the strategy chosen, False otherwise
+
+        """
+        if my_type not in [CategoricalOutput]:
+            return True
+        return False
+
+    @classmethod
+    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
+        """Method to check if a objective type is implemented for the strategy
+
+        Args:
+            my_type (Type[Objective]): Objective class
+
+        Returns:
+            bool: True if the objective type is valid for the strategy chosen, False otherwise
+
+        """
+        return my_type in [
+            MaximizeObjective,
+            MinimizeObjective,
+            MinimizeSigmoidObjective,
+            MaximizeSigmoidObjective,
+            TargetObjective,
+            CloseToTargetObjective,
+        ]
