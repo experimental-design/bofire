@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import field_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
@@ -11,6 +13,7 @@ class FidelityKernel(FeatureSpecificKernel):
 
 
 class DownsamplingKernel(FidelityKernel):
+    type: Literal["DownsamplingKernel"] = "DownsamplingKernel"
     offset_prior: AnyPrior | None = None
     offset_constraint: AnyPriorConstraint | None = None
     power_prior: AnyPrior | None = None

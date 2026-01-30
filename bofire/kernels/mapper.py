@@ -416,7 +416,30 @@ def map_DownsamplingKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> DownsamplingKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    return DownsamplingKernel(batch_shape=batch_shape, offset_prior=priors.map())
+    return DownsamplingKernel(
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+        offset_prior=(
+            priors.map(data_model.offset_prior, d=len(active_dims))
+            if data_model.offset_prior is not None
+            else None
+        ),
+        offset_constraint=(
+            priors.map(data_model.offset_constraint)
+            if data_model.offset_constraint is not None
+            else None
+        ),
+        power_prior=(
+            priors.map(data_model.power_prior, d=len(active_dims))
+            if data_model.power_prior is not None
+            else None
+        ),
+        power_constraint=(
+            priors.map(data_model.power_constraint)
+            if data_model.power_constraint is not None
+            else None
+        ),
+    )
 
 
 KERNEL_MAP = {

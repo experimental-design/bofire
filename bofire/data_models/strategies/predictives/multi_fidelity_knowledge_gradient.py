@@ -8,14 +8,20 @@ from bofire.data_models.acquisition_functions.cost_aware_utility import (
     InverseCostWeightedUtility,
 )
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.task import ContinuousTaskInput
+from bofire.data_models.features.task import ContinuousTaskInput, TaskInput
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     AnyKernel,
+    DownsamplingKernel,
     FidelityKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
+    RBFKernel,
     ScaleKernel,
+)
+from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
 )
 from bofire.data_models.strategies.predictives.mobo import ExplicitReferencePoint
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -93,16 +99,20 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
         As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
         Args:
             domain (Domain): The domain defining the problem to be optimized with the strategy
-            surrogate_specs (List[ModelSpec], optional): List of model specification classes specifying the models to be used in the strategy. Defaults to None.
+            surrogate_specs (BotorchSurrogates, optional): List of model specification classes specifying the models to be used in the strategy. Defaults to None.
         Raises:
             KeyError: if there is a model spec for an unknown output feature
             KeyError: if a model spec has an unknown input feature
         Returns:
-            List[ModelSpec]: List of model specification classes
+            BotorchSurrogates: List of model specification classes
         """
         existing_keys = surrogate_specs.outputs.get_keys()
         non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
         _surrogate_specs = surrogate_specs.surrogates
+
+        task_keys = domain.inputs.get_keys(includes=TaskInput)
+        non_task_keys = domain.inputs.get_keys(excludes=TaskInput)
+
         for output_feature in non_exisiting_keys:
             _surrogate_specs.append(
                 SingleTaskGPSurrogate(
@@ -110,7 +120,22 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
                     outputs=Outputs(
                         features=[domain.outputs.get_by_key(output_feature)]
                     ),
-                    # TODO: build proper kernel
+                    kernel=ScaleKernel(
+                        base_kernel=MultiplicativeKernel(
+                            kernels=[
+                                RBFKernel(
+                                    features=non_task_keys,
+                                    ard=True,
+                                    lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                                ),
+                                DownsamplingKernel(
+                                    features=task_keys,
+                                    offset_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                                    power_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                                ),
+                            ]
+                        )
+                    ),
                 )
             )
         surrogate_specs.surrogates = _surrogate_specs
