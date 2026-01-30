@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, List, Literal
 
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
@@ -139,3 +139,23 @@ class MolecularWeightedSumFeature(EngineeredFeature):
                 raise ValueError(
                     f"Feature '{feature_key}' is not a ContinuousMolecularInput",
                 )
+
+
+class ProductFeature(EngineeredFeature):
+    """Product feature, which compute the sum over the specified features.
+
+    Args:
+        features: The features to be used to compute the product.
+            It is allowed to state a feature more than once to for example
+            an quadratic term.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
+    type: Literal["ProductFeature"] = "ProductFeature"
+    order_id: ClassVar[int] = 4
+    features: List[str]
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return 1

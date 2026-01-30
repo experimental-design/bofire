@@ -1,3 +1,6 @@
+from functools import partial
+from typing import Callable
+
 import pandas as pd
 import torch
 from botorch.models.transforms.input import AppendFeatures
@@ -7,6 +10,7 @@ from bofire.data_models.features.api import (
     EngineeredFeature,
     MeanFeature,
     MolecularWeightedSumFeature,
+    ProductFeature,
     SumFeature,
     WeightedSumFeature,
 )
@@ -25,40 +29,33 @@ def _weighted_sum_features(
     return result.expand(*result.shape[:-2], 1, -1)
 
 
-def map_sum_feature(
-    inputs: Inputs, transform_specs: InputTransformSpecs, feature: SumFeature
+def _map_reduction_feature(
+    inputs: Inputs,
+    transform_specs: InputTransformSpecs,
+    feature: EngineeredFeature,
+    reducer: Callable,
 ) -> AppendFeatures:
-    # Get indices of features to be summed
     features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]
+    indices = [features2idx[key][0] for key in feature.features]  # type: ignore
 
-    def sum_features(X: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
-        result = torch.sum(X[..., indices], dim=-1, keepdim=True).unsqueeze(-2)
+    def reduce_features(
+        X: torch.Tensor,
+        indices: torch.Tensor,
+        reducer: Callable,
+    ) -> torch.Tensor:
+        result = reducer(X[..., indices], dim=-1, keepdim=True).unsqueeze(-2)
         return result.expand(*result.shape[:-2], 1, -1)
 
     return AppendFeatures(
-        f=sum_features,  # type: ignore
-        fkwargs={"indices": indices},
+        f=reduce_features,  # type: ignore
+        fkwargs={"indices": indices, "reducer": reducer},
         transform_on_train=True,
     )
 
 
-def map_mean_feature(
-    inputs: Inputs, transform_specs: InputTransformSpecs, feature: MeanFeature
-) -> AppendFeatures:
-    # Get indices of features to be summed
-    features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]
-
-    def average_features(X: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
-        result = torch.mean(X[..., indices], dim=-1, keepdim=True).unsqueeze(-2)
-        return result.expand(*result.shape[:-2], 1, -1)
-
-    return AppendFeatures(
-        f=average_features,  # type: ignore
-        fkwargs={"indices": indices},
-        transform_on_train=True,
-    )
+map_sum_feature = partial(_map_reduction_feature, reducer=torch.sum)
+map_product_feature = partial(_map_reduction_feature, reducer=torch.prod)
+map_mean_feature = partial(_map_reduction_feature, reducer=torch.mean)
 
 
 def map_weighted_sum_feature(
@@ -110,6 +107,7 @@ def map_molecular_weighted_sum_feature(
 
 AGGREGATE_MAP = {
     SumFeature: map_sum_feature,
+    ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
     WeightedSumFeature: map_weighted_sum_feature,
     MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
