@@ -29,7 +29,7 @@ from bofire.strategies.doe.utils import (
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
     convert_formula_to_string,
-    formula_to_fully_continuous,
+    formula_str_to_fully_continuous,
     get_formula_from_string,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
@@ -775,7 +775,7 @@ def test_formula_discrete_handled_like_continuous():
         assert formula_w_discrete == formula_wo_discrete
 
 
-def test_formula_to_fully_continuous():
+def test_formula_str_to_fully_continuous():
     # Create a small example problem with categorical, continuous, and discrete variables
     inputs = Inputs(
         features=[
@@ -805,7 +805,7 @@ def test_formula_to_fully_continuous():
     )
 
     # Convert to fully continuous representation
-    continuous_formula = formula_to_fully_continuous(
+    continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
@@ -817,14 +817,14 @@ def test_formula_to_fully_continuous():
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
     custom_formula = Formula("color + temperature + pressure")
-    continuous_formula = formula_to_fully_continuous(
+    continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_color_red + aux_color_blue + temperature + pressure"
 
     custom_formula = Formula("material + temperature + pressure")
-    continuous_formula = formula_to_fully_continuous(
+    continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
@@ -835,7 +835,7 @@ def test_formula_to_fully_continuous():
 
     custom_formula = Formula("temperature:material + pressure:color")
 
-    continuous_formula = formula_to_fully_continuous(
+    continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
@@ -846,4 +846,4 @@ def test_formula_to_fully_continuous():
 
 
 if __name__ == "__main__":
-    test_formula_to_fully_continuous()
+    test_formula_str_to_fully_continuous()
