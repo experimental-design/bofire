@@ -1143,8 +1143,8 @@ def test_custom_formula_with_categorical_and_discrete():
     # Get required number of experiments
     n_exp = strategy.get_required_number_of_experiments()
     assert n_exp is not None
-    # Formula has: 1 (intercept) + 2 (color) + 1 (material) + 1 (temp) + 1 (pressure) + 2 (color:material) = 8 terms
-    assert n_exp == 8
+    # Formula has: 1 (intercept) + 2 (color) + 1 (material) + 1 (temp) + 1 (pressure) + 2 (color:material) = 8 terms + 3 replicates
+    assert n_exp == 11
 
     # Generate candidates
     candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
