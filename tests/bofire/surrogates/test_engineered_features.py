@@ -11,6 +11,7 @@ from bofire.data_models.features.api import (
     ContinuousMolecularInput,
     MeanFeature,
     MolecularWeightedSumFeature,
+    ProductFeature,
     SumFeature,
     WeightedSumFeature,
 )
@@ -18,6 +19,7 @@ from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.surrogates.engineered_features import (
     map_mean_feature,
     map_molecular_weighted_sum_feature,
+    map_product_feature,
     map_sum_feature,
     map_weighted_sum_feature,
 )
@@ -71,6 +73,38 @@ def test_map_mean_feature():
 
     assert torch.allclose(result[:, :-1], orig)
     assert torch.allclose(result[:, -1], orig[:, 1:4].mean(dim=1))
+
+
+@pytest.mark.parametrize(
+    "features, expected_idx",
+    [
+        (["x1", "x3"], [0, 2]),
+        (["x2", "x2"], [1, 1]),
+    ],
+)
+def test_map_product_feature(features, expected_idx):
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[0, 1]),
+        ]
+    )
+    aggregation = ProductFeature(key="agg1", features=features)
+
+    aggregator = map_product_feature(
+        inputs=inputs, transform_specs={}, feature=aggregation
+    )
+
+    orig = torch.tensor([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]).to(**tkwargs)
+    result = aggregator(orig)
+    assert result.shape[0] == 2
+    assert result.shape[1] == 4
+
+    assert torch.allclose(result[:, :-1], orig)
+    assert torch.allclose(
+        result[:, -1], orig[:, expected_idx[0]] * orig[:, expected_idx[1]]
+    )
 
 
 def test_map_weighted_sum_feature():

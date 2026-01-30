@@ -1,5 +1,7 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, ClassVar, List, Literal
+from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
+
+from pydantic import Field
 
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
@@ -154,7 +156,7 @@ class ProductFeature(EngineeredFeature):
 
     type: Literal["ProductFeature"] = "ProductFeature"
     order_id: ClassVar[int] = 4
-    features: List[str]
+    features: Annotated[List[str], Field(min_length=2)]
 
     @property
     def n_transformed_inputs(self) -> int:
