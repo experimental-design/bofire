@@ -6,8 +6,8 @@ from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
+    CompositeMolFeatures,
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
 )
 from bofire.data_models.priors.api import (
@@ -49,10 +49,16 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         if not any(
             isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
-            or isinstance(value, FingerprintsFragments)
+            or (
+                isinstance(value, CompositeMolFeatures)
+                and all(
+                    isinstance(feature, (Fingerprints, Fragments))
+                    for feature in value.features
+                )
+            )
             for value in self.categorical_encodings.values()
         ):
             raise ValueError(
-                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
+                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or composite molfeatures containing only fingerprints or fragments are present.",
             )
         return self

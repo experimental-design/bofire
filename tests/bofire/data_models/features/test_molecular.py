@@ -3,12 +3,12 @@ import importlib
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal, assert_series_equal
+from pandas.testing import assert_frame_equal
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
-    MolecularInput,
+    ContinuousMolecularInput,
 )
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
@@ -32,216 +32,6 @@ smiles = [
 VALID_SMILES = pd.Series(smiles)
 VALID_SMILES.name = "molecule"
 INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molecular_input_validate_experimental():
-    m = MolecularInput(key="molecule")
-    vals = m.validate_experimental(VALID_SMILES)
-    assert_series_equal(vals, VALID_SMILES)
-    with pytest.raises(ValueError):
-        m.validate_experimental(INVALID_SMILES)
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molecular_input_validate_candidental():
-    m = MolecularInput(key="molecule")
-    vals = m.validate_candidental(VALID_SMILES)
-    assert_series_equal(vals, VALID_SMILES)
-    with pytest.raises(ValueError):
-        m.validate_candidental(INVALID_SMILES)
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molecular_input_fixed():
-    m = MolecularInput(key="molecule")
-    assert m.fixed_value() is None
-    assert m.is_fixed() is False
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "expected, transform_type",
-    [
-        (
-            (
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                ],
-            ),
-            Fingerprints(n_bits=32),
-        ),
-        (
-            (
-                [0.0, 0.0, 0.0, 0.0],
-                [1.0, 1.0, 2.0, 1.0],
-            ),
-            Fragments(fragments=["fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO"]),
-        ),
-        (
-            (
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    2.0,
-                    1.0,
-                ],
-            ),
-            FingerprintsFragments(
-                n_bits=32,
-                fragments=["fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO"],
-            ),
-        ),
-        (
-            ([-8.34319526627219, 0.0], [0.5963718820861676, 1.0]),
-            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-        ),
-    ],
-)
-def test_molecular_feature_get_bounds(expected, transform_type):
-    input_feature = MolecularInput(key="molecule")
-    lower, upper = input_feature.get_bounds(
-        transform_type=transform_type,
-        values=VALID_SMILES,
-        reference_value=None,
-    )
-    assert np.allclose(lower, expected[0])
-    assert np.allclose(upper, expected[1])
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -352,8 +142,10 @@ def test_molecular_feature_get_bounds(expected, transform_type):
         ),
     ],
 )
-def test_molecular_input_to_descriptor_encoding(key, transform_type, values):
-    input_feature = MolecularInput(key=key)
+def test_categorical_molecular_input_to_descriptor_encoding(
+    key, transform_type, values
+):
+    input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
     encoded = input_feature.to_descriptor_encoding(transform_type, VALID_SMILES)
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
@@ -361,7 +153,6 @@ def test_molecular_input_to_descriptor_encoding(key, transform_type, values):
     assert_frame_equal(encoded, pd.DataFrame.from_dict(values))
 
 
-### tests for CategoricalMolecularInput
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_categorical_molecular_input_invalid_smiles():
     with pytest.raises(ValueError, match="abcd is not a valid smiles string."):
@@ -369,6 +160,12 @@ def test_categorical_molecular_input_invalid_smiles():
             key="a",
             categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"],
         )
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_continous_molecular_input_valid_smiles():
+    with pytest.raises(ValueError, match="abc is not a valid smiles string"):
+        ContinuousMolecularInput(key="a", bounds=[0, 1], molecule="abc")
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")

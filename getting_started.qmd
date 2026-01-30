@@ -17,7 +17,7 @@ as well as optionally including constraints.
 Input features can be continuous, discrete, categorical.
 
 We also support a range of specialized inputs that make defining your experiments easier, such as:
-- `MolecularInput` allows transformations of molecules to featurizations (`Fingerprints`, `Fragments` and more).
+- `CategoricalMolecularInput` allows transformations of molecules to featurizations (`Fingerprints`, `Fragments` and more).
 - `TaskInput` enables transfer learning and multi-fidelity methods, where you have access to similar experiments that can inform your optimization.
 - `*DescriptorInput` gives additional information about its value, combining the data with its significance.
 
