@@ -3,7 +3,6 @@ import sys
 
 import numpy as np
 import pytest
-from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
@@ -800,9 +799,7 @@ def test_formula_str_to_fully_continuous():
 
     # Define a custom formula with interactions among categorical variables
     # This includes interaction between color and material
-    custom_formula = Formula(
-        "color + material + temperature + pressure + color:material"
-    )
+    custom_formula = "color + material + temperature + pressure + color:material"
 
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
@@ -816,14 +813,14 @@ def test_formula_str_to_fully_continuous():
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
-    custom_formula = Formula("color + temperature + pressure")
+    custom_formula = "color + temperature + pressure"
     continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_color_red + aux_color_blue + temperature + pressure"
 
-    custom_formula = Formula("material + temperature + pressure")
+    custom_formula = "material + temperature + pressure"
     continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
@@ -833,7 +830,7 @@ def test_formula_str_to_fully_continuous():
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
-    custom_formula = Formula("temperature:material + pressure:color")
+    custom_formula = "temperature:material + pressure:color"
 
     continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
