@@ -470,7 +470,7 @@ class ConstraintWrapper:
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Call constraint with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        violation = self.constraint(x).to_numpy()  # type: ignore
+        violation = self.constraint(x).to_numpy(copy=True)  # type: ignore
         violation[np.abs(violation) < 0] = 0
         return violation
 
