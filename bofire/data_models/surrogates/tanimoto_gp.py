@@ -89,7 +89,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 self  # will be checked in "provide_info_for_pre_compute_similarities"
             )
 
-        self.validate_fingerprints(self.categorical_encodings)
+        self.validate_fingerprints(self.categorical_encodings)  # type: ignore
         return self
 
     @model_validator(mode="after")
@@ -111,7 +111,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 base_kernel._fingerprint_settings_for_similarities = {}
 
                 if not self._skip_encodings_validation:
-                    self.validate_fingerprints(self.categorical_encodings)
+                    self.validate_fingerprints(self.categorical_encodings)  # type: ignore
 
                 for inp_ in molecular_inputs:
                     if inp_.key in list(self.categorical_encodings):
