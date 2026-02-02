@@ -1108,6 +1108,10 @@ def test_custom_formula_with_categorical_and_discrete():
                 key="color",
                 categories=["red", "blue", "green"],
             ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
             CategoricalInput(
                 key="material",
                 categories=["plastic", "metal"],
@@ -1148,7 +1152,7 @@ def test_custom_formula_with_categorical_and_discrete():
 
     # Generate candidates
     candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
-    assert candidates.shape == (n_exp, 4)
+    assert candidates.shape == (n_exp, 5)
 
     # Verify all categorical values are valid
     assert all(candidates["color"].isin(["red", "blue", "green"]))
@@ -1157,6 +1161,9 @@ def test_custom_formula_with_categorical_and_discrete():
     # Verify continuous and discrete values are within bounds
     assert all(
         (candidates["temperature"] >= 20.0) & (candidates["temperature"] <= 100.0)
+    )
+    assert all(
+        (candidates["color_intensity"] >= 0.0) & (candidates["color_intensity"] <= 1.0)
     )
     assert all(candidates["pressure"].isin([1.0, 2.0, 3.0, 5.0, 10.0]))
 

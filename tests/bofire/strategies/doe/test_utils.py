@@ -782,6 +782,10 @@ def test_formula_str_to_fully_continuous():
                 key="color",
                 categories=["red", "blue", "green"],
             ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
             CategoricalInput(
                 key="material",
                 categories=["plastic", "metal"],
@@ -799,7 +803,9 @@ def test_formula_str_to_fully_continuous():
 
     # Define a custom formula with interactions among categorical variables
     # This includes interaction between color and material
-    custom_formula = "color + material + temperature + pressure + color:material"
+    custom_formula = (
+        "color + material + temperature + pressure + color:material + color_intensity"
+    )
 
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
@@ -808,17 +814,22 @@ def test_formula_str_to_fully_continuous():
     )
 
     # Assert the expected formula explicitly
-    expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic"
+    expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + color_intensity + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic"
     assert (
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
-    custom_formula = "color + temperature + pressure"
+    custom_formula = "color + temperature + pressure + color_intensity"
     continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
-    expected_formula = "1 + aux_color_red + aux_color_blue + temperature + pressure"
+    expected_formula = (
+        "1 + aux_color_red + aux_color_blue + temperature + pressure + color_intensity"
+    )
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
     custom_formula = "material + temperature + pressure"
     continuous_formula = formula_str_to_fully_continuous(
@@ -830,13 +841,23 @@ def test_formula_str_to_fully_continuous():
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
-    custom_formula = "temperature:material + pressure:color"
+    custom_formula = "temperature:material + color_intensity + pressure:color"
 
     continuous_formula = formula_str_to_fully_continuous(
         formula=custom_formula,
         inputs=inputs,
     )
-    expected_formula = "1 + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
+    expected_formula = "1 + color_intensity + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "1 + color + material + temperature + pressure + color:material + temperature:material + pressure:color + color_intensity"
+    continuous_formula = formula_str_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + color_intensity + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
     assert (
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"

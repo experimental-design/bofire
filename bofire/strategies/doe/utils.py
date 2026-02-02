@@ -1,4 +1,5 @@
 import importlib.util
+import re
 import sys
 from copy import copy
 from itertools import combinations
@@ -73,7 +74,9 @@ def formula_str_to_fully_continuous(
         one_hot_terms = " + ".join(
             [var.key for var in categorical_one_hot_variabes[:-1]]
         )
-        formula = formula.replace(cat_input.key, "(" + f"{one_hot_terms}" + ")")
+        # Use word boundaries to match only complete variable names
+        pattern = r"\b" + re.escape(cat_input.key) + r"\b"
+        formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
 
     return str(
         Formula(formula)
