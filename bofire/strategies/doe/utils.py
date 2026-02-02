@@ -64,7 +64,7 @@ def formula_str_to_fully_continuous(
     formula: str,
     inputs: Inputs,
 ) -> str:
-    """Converts a formula with categorical variables to a formula with only continuous variables byy identifying the categorical variables and replacing them with their one-hot encoded counterparts.
+    """Converts a formula with categorical variables to a formula with only continuous variables by identifying the categorical variables and replacing them with their one-hot encoded counterparts.
     E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
     """
     for cat_input in inputs.get([CategoricalInput]):
