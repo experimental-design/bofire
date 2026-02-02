@@ -75,7 +75,9 @@ def formula_str_to_fully_continuous(
         )
         formula = formula.replace(cat_input.key, "(" + f"{one_hot_terms}" + ")")
 
-    return formula
+    return str(
+        Formula(formula)
+    )  # formula casting for expansion of terms like (a+b)*(c+d)
 
 
 def get_formula_from_string(
