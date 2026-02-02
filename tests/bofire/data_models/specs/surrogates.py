@@ -717,6 +717,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ],
         ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0},
         "input_preprocessing_specs": {},
@@ -747,6 +748,7 @@ specs.add_invalid(
     error=ValueError,
     message="coefficient keys do not match input feature keys.",
 )
+
 
 specs.add_invalid(
     models.LinearDeterministicSurrogate,

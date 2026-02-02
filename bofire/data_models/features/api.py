@@ -11,6 +11,7 @@ from bofire.data_models.features.engineered_feature import (
     EngineeredFeature,
     MeanFeature,
     MolecularWeightedSumFeature,
+    ProductFeature,
     SumFeature,
     WeightedSumFeature,
 )
@@ -46,6 +47,7 @@ AnyFeature = Union[
     WeightedSumFeature,
     MolecularWeightedSumFeature,
     ContinuousMolecularInput,
+    ProductFeature,
 ]
 
 AnyInput = Union[
@@ -66,4 +68,5 @@ AnyEngineeredFeature = Union[
     MeanFeature,
     WeightedSumFeature,
     MolecularWeightedSumFeature,
+    ProductFeature,
 ]
