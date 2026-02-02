@@ -863,5 +863,89 @@ def test_formula_str_to_fully_continuous():
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
 
+def test_formula_str_to_fully_continuous_only_categoricals():
+    # Create a small example problem with only categorical variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            CategoricalInput(
+                key="material_shape",
+                categories=["circle", "square"],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    custom_formula = "color + material + color:material + material:material_shape"
+    # Convert to fully continuous representation
+    continuous_formula = formula_str_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+    # Assert the expected formula explicitly
+    expected_formula = (
+        "1 + aux_color_red + aux_color_blue + aux_material_plastic"
+        + " + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic"
+        + " + aux_material_plastic:aux_material_shape_circle"
+    )
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "material:color + material_shape"
+    continuous_formula = formula_str_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_material_shape_circle + aux_material_plastic:aux_color_red + aux_material_plastic:aux_color_blue"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
+def only_continuous_inputs_formula_str_to_fully_continuous():
+    # Create a small example problem with only continuous and discrete variables
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="length",
+                bounds=(0.0, 10.0),
+            ),
+            DiscreteInput(
+                key="width",
+                values=[1.0, 2.0, 3.0],
+            ),
+            ContinuousInput(
+                key="height",
+                bounds=(5.0, 15.0),
+            ),
+        ]
+    )
+
+    # Define a custom formula
+    custom_formula = "length + width + height + length:height"
+
+    # Convert to fully continuous representation
+    continuous_formula = formula_str_to_fully_continuous(
+        formula=custom_formula,
+        inputs=inputs,
+    )
+
+    # Assert the expected formula explicitly
+    expected_formula = "1 + length + width + height + length:height"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
 if __name__ == "__main__":
     test_formula_str_to_fully_continuous()
+    test_formula_str_to_fully_continuous_only_categoricals()
+    only_continuous_inputs_formula_str_to_fully_continuous()
