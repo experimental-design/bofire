@@ -480,7 +480,9 @@ class Domain(BaseModel):
         from bofire.utils.timeseries import infer_trajectory_id
 
         experiments = experiments.copy()
-        experiments["_trajectory_id"] = infer_trajectory_id(experiments, self, eps=eps)
+        experiments["_trajectory_id"] = infer_trajectory_id(
+            experiments, self.inputs, eps=eps
+        )
         return experiments
 
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:

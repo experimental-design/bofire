@@ -7,12 +7,12 @@ import pandas as pd
 
 
 if TYPE_CHECKING:
-    from bofire.data_models.domain.domain import Domain
+    from bofire.data_models.domain.features import Inputs
 
 
 def infer_trajectory_id(
     experiments: pd.DataFrame,
-    domain: "Domain",
+    inputs: "Inputs",
     eps: float = 1e-6,
 ) -> pd.Series:
     """
@@ -30,8 +30,8 @@ def infer_trajectory_id(
 
     Args:
         experiments: DataFrame with experimental data. Must contain columns for
-            all input features defined in the domain.
-        domain: Domain object that defines the input features and identifies
+            all input features defined in inputs.
+        inputs: Inputs object that defines the input features and identifies
             which feature (if any) is marked as timeseries.
         eps: Tolerance for comparing continuous values. Two continuous values
             are considered equal if their absolute difference is less than eps.
@@ -44,33 +44,30 @@ def infer_trajectory_id(
             to the same experimental run/trajectory.
 
     Raises:
-        ValueError: If no timeseries feature is found in the domain.
+        ValueError: If no timeseries feature is found in inputs.
         ValueError: If required input feature columns are missing from experiments.
+        ValueError: If no valid trajectories are found (each row is its own trajectory).
 
     Example:
-        >>> from bofire.data_models.domain.api import Domain, Inputs, Outputs
-        >>> from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+        >>> from bofire.data_models.domain.api import Inputs
+        >>> from bofire.data_models.features.api import ContinuousInput
         >>> from bofire.utils.timeseries import infer_trajectory_id
         >>> import pandas as pd
         >>>
-        >>> # Define domain with timeseries
+        >>> # Define inputs with timeseries
         >>> inputs = Inputs(features=[
         ...     ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
         ...     ContinuousInput(key="temperature", bounds=(20, 80)),
         ... ])
-        >>> outputs = Outputs(features=[ContinuousOutput(key="yield")])
-        >>> domain = Domain(inputs=inputs, outputs=outputs)
         >>>
         >>> # Create experiments (3 trajectories, temperature varies between them)
         >>> experiments = pd.DataFrame({
         ...     'time': [0, 10, 20, 0, 10, 20, 0, 10, 20],
         ...     'temperature': [25, 25, 25, 30, 30, 30, 25, 25, 25],
-        ...     'yield': [0.1, 0.2, 0.3, 0.2, 0.3, 0.4, 0.1, 0.2, 0.3],
-        ...     'valid_yield': [1] * 9,
         ... })
         >>>
         >>> # Infer trajectory IDs
-        >>> experiments['_trajectory_id'] = infer_trajectory_id(experiments, domain)
+        >>> experiments['_trajectory_id'] = infer_trajectory_id(experiments, inputs)
         >>> print(experiments['_trajectory_id'].tolist())
         [0, 0, 0, 1, 1, 1, 0, 0, 0]  # Rows with temp=25 get same ID
     """
@@ -82,7 +79,7 @@ def infer_trajectory_id(
     # Identify timeseries feature
     timeseries_features = [
         f
-        for f in domain.inputs
+        for f in inputs
         if isinstance(f, NumericalInput) and getattr(f, "is_timeseries", False)
     ]
 
@@ -95,7 +92,7 @@ def infer_trajectory_id(
     timeseries_key = timeseries_features[0].key
 
     # Get all non-timeseries input features
-    grouping_features = [f for f in domain.inputs if f.key != timeseries_key]
+    grouping_features = [f for f in inputs if f.key != timeseries_key]
 
     if len(grouping_features) == 0:
         # Special case: only timeseries feature exists
@@ -147,6 +144,21 @@ def infer_trajectory_id(
     key_to_id = {key: idx for idx, key in enumerate(unique_keys)}
 
     # Assign trajectory IDs
-    trajectory_ids = grouping_keys.map(key_to_id)
+    trajectory_ids = pd.Series(
+        [key_to_id[key] for key in grouping_keys],
+        index=experiments.index,
+    )
+
+    # Validate that actual trajectories were found (not every row is its own trajectory)
+    n_trajectories = len(unique_keys)
+    n_rows = len(experiments)
+    if n_trajectories == n_rows:
+        raise ValueError(
+            f"No valid timeseries trajectories found. Each row was assigned its own trajectory ID "
+            f"({n_trajectories} trajectories for {n_rows} rows), indicating that all "
+            f"non-timeseries input features have unique values. For timeseries cross-validation, "
+            f"multiple rows must share the same trajectory. Ensure that non-timeseries input "
+            f"features have repeated values across time points within each trajectory."
+        )
 
     return trajectory_ids

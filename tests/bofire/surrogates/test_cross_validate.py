@@ -1035,8 +1035,8 @@ def test_model_cross_validate_groupkfold_exhaustive():
     assert all(count == 1 for count in trajectory_test_counts.values())
 
 
-def test_model_cross_validate_timeseries_missing_column():
-    """Test that error is raised when _trajectory_id column is missing with timeseries feature."""
+def test_model_cross_validate_timeseries_auto_infer_no_trajectories():
+    """Test that error is raised when auto-inference finds no valid trajectories."""
     # Create inputs with a timeseries feature
     inputs = Inputs(
         features=[
@@ -1054,10 +1054,11 @@ def test_model_cross_validate_timeseries_missing_column():
     outputs = Outputs(features=[ContinuousOutput(key="y")])
 
     # Create experiments WITHOUT the _trajectory_id column
+    # All x values are unique, so no trajectories can be inferred
     experiments = pd.DataFrame(
         {
             "time": [0, 5, 10, 15],
-            "x": [-4, -3, -2, -1],
+            "x": [-4, -3, -2, -1],  # All unique - no valid trajectories
             "y": [1, 2, 3, 4],
             "valid_y": [1] * 4,
         }
@@ -1069,13 +1070,111 @@ def test_model_cross_validate_timeseries_missing_column():
     )
     model = surrogates.map(model)
 
-    # Should raise error about missing _trajectory_id column
+    # Should raise error about no valid trajectories found
     with pytest.raises(
         ValueError,
-        match="Timeseries feature 'time' detected, but required column '_trajectory_id' is not present",
+        match="No valid timeseries trajectories found",
     ):
         model.cross_validate(
             experiments,
             folds=2,
-            # No group_split_column specified - should error on missing _trajectory_id
         )
+
+
+def test_model_cross_validate_timeseries_auto_infer_success():
+    """Test that trajectory IDs are auto-inferred when _trajectory_id column is missing."""
+    # Create inputs with a timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="time",
+                bounds=(0, 100),
+                is_timeseries=True,
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20, 80),
+            ),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments WITHOUT the _trajectory_id column
+    # Temperature has repeated values, so trajectories can be inferred
+    experiments = pd.DataFrame(
+        {
+            "time": [0, 5, 10, 0, 5, 10, 0, 5, 10],
+            "temperature": [25, 25, 25, 30, 30, 30, 35, 35, 35],  # 3 trajectories
+            "y": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "valid_y": [1] * 9,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Should warn about auto-inference and succeed
+    with pytest.warns(
+        UserWarning,
+        match="Timeseries feature 'time' detected but '_trajectory_id' column is missing",
+    ):
+        train_cv, test_cv, _ = model.cross_validate(
+            experiments,
+            folds=3,
+        )
+
+    # Verify results
+    assert len(train_cv.results) == 3
+    assert len(test_cv.results) == 3
+
+    # Verify trajectories are kept together (each fold tests one temperature group)
+    for cv_result in test_cv.results:
+        test_indices = cv_result.observed.index
+        test_temps = experiments.loc[test_indices, "temperature"].unique()
+        # Each fold should test exactly one temperature group
+        assert len(test_temps) == 1
+
+
+def test_model_cross_validate_trajectory_id_without_timeseries():
+    """Test that _trajectory_id column triggers group split even without is_timeseries feature."""
+    # Create inputs WITHOUT any timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(-10, 10)),
+            ContinuousInput(key="x2", bounds=(-10, 10)),
+        ]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments with _trajectory_id column
+    experiments = pd.DataFrame(
+        {
+            "_trajectory_id": [0, 0, 0, 1, 1, 1, 2, 2, 2],
+            "x1": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "x2": [9, 8, 7, 6, 5, 4, 3, 2, 1],
+            "y": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "valid_y": [1] * 9,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Cross-validate without specifying group_split_column
+    # Should automatically use _trajectory_id
+    _, test_cv, _ = model.cross_validate(experiments, folds=3)
+
+    # Verify groups are kept together
+    for cv_result in test_cv.results:
+        test_indices = cv_result.observed.index
+        test_trajectories = experiments.loc[test_indices, "_trajectory_id"].unique()
+        # Each fold should test exactly one trajectory
+        assert (
+            len(test_trajectories) == 1
+        ), f"Expected 1 trajectory per fold, got {len(test_trajectories)}: {test_trajectories}"

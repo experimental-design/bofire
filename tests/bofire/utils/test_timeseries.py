@@ -16,7 +16,6 @@ from bofire.utils.timeseries import infer_trajectory_id
 
 def test_infer_trajectory_id_continuous_only():
     """Test trajectory ID inference with continuous features only."""
-    # Create domain with timeseries
     inputs = Inputs(
         features=[
             ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
@@ -24,8 +23,6 @@ def test_infer_trajectory_id_continuous_only():
             ContinuousInput(key="pressure", bounds=(1, 5)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     # Create experiments with 3 distinct trajectories
     experiments = pd.DataFrame(
@@ -38,7 +35,7 @@ def test_infer_trajectory_id_continuous_only():
         }
     )
 
-    trajectory_ids = infer_trajectory_id(experiments, domain)
+    trajectory_ids = infer_trajectory_id(experiments, inputs)
 
     # Check that we have 3 trajectories
     assert len(trajectory_ids.unique()) == 3
@@ -64,8 +61,6 @@ def test_infer_trajectory_id_with_categorical():
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -77,7 +72,7 @@ def test_infer_trajectory_id_with_categorical():
         }
     )
 
-    trajectory_ids = infer_trajectory_id(experiments, domain)
+    trajectory_ids = infer_trajectory_id(experiments, inputs)
 
     # Should have 3 trajectories: (A, 25), (B, 25), (A, 30)
     assert len(trajectory_ids.unique()) == 3
@@ -107,8 +102,6 @@ def test_infer_trajectory_id_with_discrete():
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -120,7 +113,7 @@ def test_infer_trajectory_id_with_discrete():
         }
     )
 
-    trajectory_ids = infer_trajectory_id(experiments, domain)
+    trajectory_ids = infer_trajectory_id(experiments, inputs)
 
     # Should have 2 trajectories: n_cycles=2 and n_cycles=3
     assert len(trajectory_ids.unique()) == 2
@@ -147,8 +140,6 @@ def test_infer_trajectory_id_mixed_features():
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -171,7 +162,7 @@ def test_infer_trajectory_id_mixed_features():
         }
     )
 
-    trajectory_ids = infer_trajectory_id(experiments, domain)
+    trajectory_ids = infer_trajectory_id(experiments, inputs)
 
     # Should have 3 trajectories
     assert len(trajectory_ids.unique()) == 3
@@ -190,8 +181,6 @@ def test_infer_trajectory_id_with_eps():
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     # Create experiments with small differences in temperature
     experiments = pd.DataFrame(
@@ -204,11 +193,11 @@ def test_infer_trajectory_id_with_eps():
     )
 
     # With default eps=1e-6, should group together
-    trajectory_ids_tight = infer_trajectory_id(experiments, domain, eps=1e-6)
+    trajectory_ids_tight = infer_trajectory_id(experiments, inputs, eps=1e-6)
     assert len(trajectory_ids_tight.unique()) == 1
 
     # With stricter eps, should be separate
-    trajectory_ids_strict = infer_trajectory_id(experiments, domain, eps=1e-8)
+    trajectory_ids_strict = infer_trajectory_id(experiments, inputs, eps=1e-8)
     assert len(trajectory_ids_strict.unique()) == 2
 
 
@@ -219,8 +208,6 @@ def test_infer_trajectory_id_only_timeseries():
             ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -230,7 +217,7 @@ def test_infer_trajectory_id_only_timeseries():
         }
     )
 
-    trajectory_ids = infer_trajectory_id(experiments, domain)
+    trajectory_ids = infer_trajectory_id(experiments, inputs)
 
     # All rows should have same trajectory ID (only one trajectory)
     assert len(trajectory_ids.unique()) == 1
@@ -245,8 +232,6 @@ def test_infer_trajectory_id_no_timeseries_error():
             ContinuousInput(key="pressure", bounds=(1, 5)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -258,7 +243,7 @@ def test_infer_trajectory_id_no_timeseries_error():
     )
 
     with pytest.raises(ValueError, match="No timeseries feature found"):
-        infer_trajectory_id(experiments, domain)
+        infer_trajectory_id(experiments, inputs)
 
 
 def test_infer_trajectory_id_missing_columns_error():
@@ -269,8 +254,6 @@ def test_infer_trajectory_id_missing_columns_error():
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -282,7 +265,7 @@ def test_infer_trajectory_id_missing_columns_error():
     )
 
     with pytest.raises(ValueError, match="Required input feature columns missing"):
-        infer_trajectory_id(experiments, domain)
+        infer_trajectory_id(experiments, inputs)
 
 
 def test_domain_add_trajectory_id():
@@ -330,8 +313,6 @@ def test_infer_trajectory_id_with_molecular():
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="yield")])
-    domain = Domain(inputs=inputs, outputs=outputs)
 
     experiments = pd.DataFrame(
         {
@@ -353,7 +334,7 @@ def test_infer_trajectory_id_with_molecular():
         }
     )
 
-    trajectory_ids = infer_trajectory_id(experiments, domain)
+    trajectory_ids = infer_trajectory_id(experiments, inputs)
 
     # Should have 3 trajectories: (water, 25), (ethanol, 25), (water, 30)
     assert len(trajectory_ids.unique()) == 3
