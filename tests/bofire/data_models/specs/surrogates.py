@@ -5,11 +5,11 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
     SumFeature,
-    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
@@ -780,7 +780,7 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])],
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
@@ -816,7 +816,7 @@ specs.add_invalid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])],
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
@@ -883,7 +883,7 @@ specs.add_invalid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])],
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[

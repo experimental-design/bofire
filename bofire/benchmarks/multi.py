@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
+    ContinuousTaskInput,
     Input,
 )
 from bofire.data_models.objectives.api import (
@@ -689,3 +690,63 @@ class CrossCoupling(Benchmark):
             "TEA": 0.01,
         }
         return float(base_prices[base] * mmol_base)
+
+
+class MOMFBraninCurrin(Benchmark):
+    def __init__(self, **kwargs):
+        inputs = Inputs(
+            features=[
+                *(ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(2)),
+                ContinuousTaskInput(key="fidelity", bounds=(0.0, 1.0)),
+            ]
+        )
+
+        outputs = Outputs(
+            features=[
+                ContinuousOutput(key="branin", objective=MinimizeObjective()),
+                ContinuousOutput(key="currin", objective=MinimizeObjective()),
+            ]
+        )
+
+        self._domain = Domain(
+            inputs=inputs,
+            outputs=outputs,
+        )
+
+        super().__init__(**kwargs)
+
+    def _branin(self, X: np.ndarray) -> np.ndarray:
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        s = X[..., 2]
+
+        x11 = 15 * x1 - 5
+        x22 = 15 * x2
+        b = 5.1 / (4 * math.pi**2) - 0.01 * (1 - s)
+        c = 5 / math.pi - 0.1 * (1 - s)
+        r = 6
+        t = 1 / (8 * math.pi) + 0.05 * (1 - s)
+        y = (x22 - b * x11**2 + c * x11 - r) ** 2 + 10 * (1 - t) * np.cos(x11) + 10
+        B = 21 - y
+        return B / 22
+
+    def _currin(self, X: np.ndarray) -> np.ndarray:
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        s = X[..., 2]
+        A = 2300 * x1**3 + 1900 * x1**2 + 2092 * x1 + 60
+        B = 100 * x1**3 + 500 * x1**2 + 4 * x1 + 20
+        y = (1 - 0.1 * (1 - s) * np.exp(-1 / (2 * x2))) * A / B
+        C = -y + 14
+        return C / 15
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        X = candidates.to_numpy()
+        return pd.DataFrame(
+            {
+                "branin": self._branin(X),
+                "valid_branin": 1,
+                "currin": self._currin(X),
+                "valid_currin": 1,
+            }
+        )

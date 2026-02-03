@@ -9,7 +9,7 @@ from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
 )
 from bofire.data_models.api import Domain
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity import (
@@ -22,9 +22,10 @@ from bofire.utils.naming_conventions import get_column_names
 
 
 class MultiFidelityStrategy(SoboStrategy):
+    # TODO: rename this to "MultiFidelityVarianceBasedStrategy"
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
-        self.task_feature_key = self.domain.inputs.get_keys(TaskInput)[0]
+        self.task_feature_key = self.domain.inputs.get_keys(CategoricalTaskInput)[0]
 
         ft = data_model.fidelity_thresholds
         M = len(self.domain.inputs.get_by_key(self.task_feature_key).fidelities)  # type: ignore
@@ -49,7 +50,9 @@ class MultiFidelityStrategy(SoboStrategy):
 
         self._verify_all_fidelities_observed()
 
-        task_feature: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
+        task_feature: CategoricalTaskInput = self.domain.inputs.get_by_key(
+            self.task_feature_key
+        )  # type: ignore
         # only optimize the input x on the target fidelity
         # we fix the fidelity by setting all other fidelities to 'not allowed'
         prev_allowed = task_feature.allowed
@@ -73,7 +76,9 @@ class MultiFidelityStrategy(SoboStrategy):
         Returns:
             pd.DataFrame: selected fidelity and prediction
         """
-        fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
+        fidelity_input: CategoricalTaskInput = self.domain.inputs.get_by_key(
+            self.task_feature_key
+        )  # type: ignore
         assert self.model is not None and self.experiments is not None
         assert fidelity_input.allowed is not None
 
