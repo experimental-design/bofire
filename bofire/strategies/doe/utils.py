@@ -1,4 +1,5 @@
 import importlib.util
+import re
 import sys
 from copy import copy
 from itertools import combinations
@@ -59,6 +60,29 @@ def represent_categories_as_by_their_states(
     return numerical_inputs, all_but_one_categoricals
 
 
+def formula_str_to_fully_continuous(
+    formula: str,
+    inputs: Inputs,
+) -> str:
+    """Converts a formula with categorical variables to a formula with only continuous variables by identifying the categorical variables and replacing them with their one-hot encoded counterparts.
+    E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
+    """
+    for cat_input in inputs.get([CategoricalInput]):
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=[cat_input]  # type: ignore
+        )
+        one_hot_terms = " + ".join(
+            [var.key for var in categorical_one_hot_variabes[:-1]]
+        )
+        # Use word boundaries to match only complete variable names
+        pattern = r"\b" + re.escape(cat_input.key) + r"\b"
+        formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
+
+    return str(
+        Formula(formula)
+    )  # formula casting for expansion of terms like (a+b)*(c+d)
+
+
 def get_formula_from_string(
     model_type: str | Formula = "linear",
     inputs: Optional[Inputs] = None,
@@ -82,8 +106,6 @@ def get_formula_from_string(
 
     if isinstance(model_type, Formula):
         return model_type
-        # build model if a keyword and a problem are given.
-    # linear model#
 
     if model_type in [
         "linear",
@@ -138,6 +160,12 @@ def get_formula_from_string(
             )
 
     else:
+        if inputs is not None:
+            if len(inputs.get([CategoricalInput])) > 0:
+                model_type = formula_str_to_fully_continuous(
+                    formula=model_type,
+                    inputs=inputs,
+                )
         formula = model_type + "   "
 
     formula = Formula(formula[:-3])
