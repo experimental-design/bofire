@@ -93,10 +93,8 @@ class MultiFidelityStrategy(SoboStrategy):
             fidelity_threshold = self.fidelity_thresholds[m] * fidelity_threshold_scale
 
             X_fid = X.assign(**{self.task_feature_key: fidelity_name})
-            transformed = self.domain.inputs.transform(
-                experiments=X_fid, specs=self.input_preprocessing_specs
-            )
-            pred = self.predict(transformed)
+
+            pred = self.predict(X_fid)
 
             if (pred[sd_cols] > fidelity_threshold).all().all() or m == target_fidelity:
                 pred[self.task_feature_key] = fidelity_name
