@@ -100,17 +100,36 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         self,
         data_model: TrainableDataModel,
         input_transform: Optional[Union[InputTransform, None]] = None,
+        kernel_kwargs: Optional[dict] = None,
         **kwargs,
     ):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.engineered_features = data_model.engineered_features
         self._input_transform: Union[InputTransform, None] = input_transform
+        self.kernel_kwargs = kernel_kwargs
         super().__init__(data_model=data_model, **kwargs)
 
     @property
     def re_init_kwargs(self) -> dict:
-        return {"input_transform": self._input_transform}
+        return {
+            "input_transform": self._input_transform,
+            "kernel_kwargs": self._kernel_re_init_kwargs,
+        }
+
+    @property
+    def _kernel_re_init_kwargs(self) -> dict[type, dict]:
+        re_init_kwargs = {}
+        has_base_kernel = True
+        kernel = self.model.covar_module
+        while has_base_kernel:
+            if hasattr(kernel, "re_init_kwargs"):
+                re_init_kwargs = {**re_init_kwargs, **kernel.re_init_kwargs}
+            if hasattr(kernel, "base_kernel"):
+                kernel = kernel.base_kernel
+            else:
+                has_base_kernel = False
+        return re_init_kwargs
 
     def get_feature_indices(
         self,
@@ -178,6 +197,10 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             if self.output_scaler == ScalerEnum.STANDARDIZE
             else None
         )
+
+        if self.kernel_kwargs is not None:
+            kwargs = {**kwargs, "kernel_kwargs": self.kernel_kwargs}
+
         self._fit_botorch(tX, tY, self._input_transform, outcome_transform, **kwargs)
 
     @abstractmethod
