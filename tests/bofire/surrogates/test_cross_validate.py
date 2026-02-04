@@ -1024,7 +1024,7 @@ def test_model_cross_validate_groupkfold_exhaustive():
     assert tested_trajectories == set(range(n_trajectories))
 
     # Check that no trajectory appears in multiple test sets
-    trajectory_test_counts = {i: 0 for i in range(n_trajectories)}
+    trajectory_test_counts = dict.fromkeys(range(n_trajectories), 0)
     for cv_result in test_cv.results:
         test_indices = cv_result.observed.index
         test_data = experiments.iloc[test_indices]

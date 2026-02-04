@@ -6,10 +6,10 @@ import pytest
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    MolecularInput,
 )
 from bofire.utils.timeseries import infer_trajectory_id
 
@@ -309,7 +309,7 @@ def test_infer_trajectory_id_with_molecular():
     inputs = Inputs(
         features=[
             ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
-            MolecularInput(key="solvent"),
+            CategoricalMolecularInput(key="solvent", categories=["O", "CCO"]),
             ContinuousInput(key="temperature", bounds=(20, 80)),
         ]
     )

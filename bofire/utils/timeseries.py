@@ -73,7 +73,10 @@ def infer_trajectory_id(
     """
     from bofire.data_models.features.categorical import CategoricalInput
     from bofire.data_models.features.discrete import DiscreteInput
-    from bofire.data_models.features.molecular import MolecularInput
+    from bofire.data_models.features.molecular import (
+        CategoricalMolecularInput,
+        ContinuousMolecularInput,
+    )
     from bofire.data_models.features.numerical import NumericalInput
 
     # Identify timeseries feature
@@ -117,7 +120,15 @@ def infer_trajectory_id(
         for feature in grouping_features:
             value = row[feature.key]
 
-            if isinstance(feature, (CategoricalInput, DiscreteInput, MolecularInput)):
+            if isinstance(
+                feature,
+                (
+                    CategoricalInput,
+                    DiscreteInput,
+                    CategoricalMolecularInput,
+                    ContinuousMolecularInput,
+                ),
+            ):
                 # Categorical, discrete, and molecular features: use exact value
                 key_parts.append(value)
             elif isinstance(feature, NumericalInput):
