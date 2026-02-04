@@ -4,7 +4,12 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    StratifiedKFold,
+)
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import (
@@ -85,6 +90,7 @@ class TrainableSurrogate(ABC):
         random_state: Optional[int] = None,
         stratified_feature: Optional[str] = None,
         group_split_column: Optional[str] = None,
+        use_shuffle_split: bool = False,
         hooks: Optional[
             Dict[
                 str,
@@ -118,6 +124,9 @@ class TrainableSurrogate(ABC):
                 training and testing sets. This is useful in scenarios where data points are related or dependent on each
                 other, and splitting them into different sets would violate the assumption of independence. The number of
                 unique groups must be greater than or equal to the number of folds. Defaults to None.
+            use_shuffle_split (bool, optional): When group_split_column is provided, use GroupShuffleSplit
+                instead of GroupKFold. GroupKFold (default) ensures each group is tested exactly once,
+                while GroupShuffleSplit allows flexible test_size but may not test all groups. Defaults to False.
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.
@@ -156,6 +165,36 @@ class TrainableSurrogate(ABC):
                     "The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput",
                 )
 
+        # Auto-detect group split column
+        if group_split_column is None:
+            trajectory_col = "_trajectory_id"
+            # If _trajectory_id column is present, use it for group split
+            if trajectory_col in experiments.columns:
+                group_split_column = trajectory_col
+            else:
+                # Check if any input feature is marked as timeseries
+                timeseries_features = [
+                    feat
+                    for feat in self.inputs.get()  # type: ignore
+                    if hasattr(feat, "is_timeseries") and feat.is_timeseries
+                ]
+                if len(timeseries_features) > 0:
+                    # Auto-infer trajectory IDs from non-timeseries input features
+                    from bofire.utils.timeseries import infer_trajectory_id
+
+                    warnings.warn(
+                        f"Timeseries feature '{timeseries_features[0].key}' detected but '{trajectory_col}' column "
+                        f"is missing. Automatically inferring trajectory IDs from non-timeseries input features.",
+                        UserWarning,
+                    )
+
+                    trajectory_ids = infer_trajectory_id(experiments, self.inputs)  # type: ignore
+
+                    # Add trajectory IDs to experiments
+                    experiments = experiments.copy()
+                    experiments[trajectory_col] = trajectory_ids
+                    group_split_column = trajectory_col
+
         if group_split_column is not None:
             # check if the group split column is present in the experiments
             if group_split_column not in experiments.columns:
@@ -187,6 +226,7 @@ class TrainableSurrogate(ABC):
             stratified_feature=stratified_feature,
             group_split_column=group_split_column,
             random_state=random_state,
+            use_shuffle_split=use_shuffle_split,
         )
 
         key = self.outputs.get_keys()[0]  # type: ignore
@@ -301,8 +341,9 @@ class TrainableSurrogate(ABC):
         stratified_feature: Optional[str] = None,
         group_split_column: Optional[str] = None,
         random_state: Optional[int] = None,
+        use_shuffle_split: bool = False,
     ) -> Tuple[
-        Union[KFold, StratifiedKFold, GroupShuffleSplit],
+        Union[KFold, StratifiedKFold, GroupKFold, GroupShuffleSplit],
         Generator[Tuple[np.ndarray, np.ndarray], None, None],
     ]:
         """
@@ -321,7 +362,12 @@ class TrainableSurrogate(ABC):
         if stratified_feature is None:
             if group_split_column is not None:
                 # GROUP SPLIT FUNCTIONALITY
-                cv = GroupShuffleSplit(n_splits=folds, random_state=random_state)
+                if use_shuffle_split:
+                    # Use GroupShuffleSplit for flexible test_size
+                    cv = GroupShuffleSplit(n_splits=folds, random_state=random_state)
+                else:
+                    # Use GroupKFold for exhaustive testing (default)
+                    cv = GroupKFold(n_splits=folds)
                 cv_func = cv.split(experiments, groups=experiments[group_split_column])
             else:
                 cv = KFold(n_splits=folds, shuffle=True, random_state=random_state)

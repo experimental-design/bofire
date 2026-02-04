@@ -83,6 +83,7 @@ specs.add_valid(
         "values": [random.random(), random.random() + 3],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "rtol": 1e-7,
+        "is_timeseries": False,
     },
 )
 
@@ -107,6 +108,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "is_timeseries": False,
         "allow_zero": False,
     },
 )
@@ -131,6 +133,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "bounds": [3, 5.3],
         "descriptors": ["d1", "d2"],
+        "is_timeseries": False,
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
@@ -242,6 +245,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "is_timeseries": False,
     },
 )
 

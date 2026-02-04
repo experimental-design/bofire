@@ -1,6 +1,11 @@
 import pandas as pd
 import pytest
-from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    KFold,
+    StratifiedKFold,
+)
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -645,13 +650,26 @@ def test_make_cv_split():
     assert isinstance(cv, StratifiedKFold)
     assert len(list(cv_func)) == 5
 
-    # Test GroupShuffleSplit split
+    # Test GroupKFold split (default for group_split_column)
     cv, cv_func = model._make_cv_split(
         experiments,
         folds=2,
         random_state=1,
         stratified_feature=None,
         group_split_column="group",
+        use_shuffle_split=False,  # Use GroupKFold (default)
+    )
+    assert isinstance(cv, GroupKFold)
+    assert len(list(cv_func)) == 2
+
+    # Test GroupShuffleSplit split (optional)
+    cv, cv_func = model._make_cv_split(
+        experiments,
+        folds=2,
+        random_state=1,
+        stratified_feature=None,
+        group_split_column="group",
+        use_shuffle_split=True,  # Use GroupShuffleSplit
     )
     assert isinstance(cv, GroupShuffleSplit)
     assert len(list(cv_func)) == 2
@@ -691,3 +709,472 @@ def test_check_valid_nfolds():
         model._check_valid_nfolds(1, 10)
     with pytest.raises(ValueError, match="Experiments is empty."):
         model._check_valid_nfolds(5, 0)
+
+
+def test_model_cross_validate_timeseries():
+    """Test cross-validation with timeseries data using GroupKFold."""
+    # Create inputs with a timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="time",
+                bounds=(0, 100),
+                is_timeseries=True,  # Mark as timeseries
+            ),
+            ContinuousInput(
+                key="x",
+                bounds=(-4, 4),
+            ),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments with overlapping time values across trajectories with realistic noise
+    # This reflects realistic timeseries where different experiments run over similar time ranges
+    # with slight measurement variations
+    experiments = pd.DataFrame(
+        {
+            "time": [
+                0.0,
+                4.95,
+                10.1,
+                14.9,  # trajectory 0
+                0.05,
+                5.02,
+                9.98,
+                15.05,  # trajectory 1
+                0.0,
+                5.1,
+                10.03,
+                15.01,  # trajectory 2
+                0.02,
+                4.99,
+                9.95,
+                14.98,  # trajectory 3
+            ],
+            "x": [-4, -3, -2, -1, 0, 1, 2, 3, -4, -3, -2, -1, 0, 1, 2, 3],
+            "y": [1, 2, 3, 4, 5, 6, 7, 8, 2, 3, 4, 5, 6, 7, 8, 9],
+            "_trajectory_id": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                2,
+                2,
+                2,
+                2,
+                3,
+                3,
+                3,
+                3,
+            ],  # Trajectory/experiment groups
+            "valid_y": [1] * 16,
+        }
+    )
+
+    # Initialize model
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Test with automatic group_split_column for timeseries data
+    # Since we have a timeseries feature and _trajectory_id column exists,
+    # it should be used automatically
+    train_cv, test_cv, _ = model.cross_validate(
+        experiments,
+        folds=4,
+        # No group_split_column specified - should auto-use _trajectory_id
+    )
+
+    # Verify that groups are kept together
+    test_indices = []
+    train_indices = []
+    for cvresults in test_cv.results:
+        test_indices.append(list(cvresults.observed.index))
+
+    for cvresults in train_cv.results:
+        train_indices.append(list(cvresults.observed.index))
+
+    # Get indices for each experiment group
+    exp0_indices = experiments[experiments["_trajectory_id"] == 0].index.tolist()
+    exp1_indices = experiments[experiments["_trajectory_id"] == 1].index.tolist()
+    exp2_indices = experiments[experiments["_trajectory_id"] == 2].index.tolist()
+    exp3_indices = experiments[experiments["_trajectory_id"] == 3].index.tolist()
+
+    all_exp_indices = [exp0_indices, exp1_indices, exp2_indices, exp3_indices]
+
+    # Verify that each experiment group is entirely in either train or test set
+    for test_index, train_index in zip(test_indices, train_indices):
+        for exp_indices in all_exp_indices:
+            test_set = set(test_index)
+            train_set = set(train_index)
+            # Each experiment should be entirely in either test or train set
+            assert test_set.issuperset(exp_indices) or train_set.issuperset(exp_indices)
+
+
+def test_model_cross_validate_groupkfold_vs_shufflesplit():
+    """Test that GroupKFold is default and GroupShuffleSplit can be enabled with flag."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="time",
+                bounds=(0, 100),
+                is_timeseries=True,  # Timeseries feature
+            ),
+            ContinuousInput(key="x", bounds=(-4, 4)),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    experiments = pd.DataFrame(
+        {
+            "time": [0, 5, 10, 15],
+            "x": [-4, -3, -2, -1],
+            "y": [1, 2, 3, 4],
+            "group": [0, 0, 1, 1],
+            "valid_y": [1] * 4,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)
+    model = surrogates.map(model)
+
+    # Test 1: Default behavior - should use GroupKFold
+    cv_default, _ = model._make_cv_split(
+        experiments,
+        folds=2,
+        group_split_column="group",
+    )
+    assert isinstance(cv_default, GroupKFold)
+
+    # Test 2: With use_shuffle_split=True - should use GroupShuffleSplit
+    cv_shuffle, _ = model._make_cv_split(
+        experiments,
+        folds=2,
+        group_split_column="group",
+        use_shuffle_split=True,
+        random_state=42,
+    )
+    assert isinstance(cv_shuffle, GroupShuffleSplit)
+
+
+def test_model_cross_validate_timeseries_automatic_trajectory_id():
+    """Test that cross_validate automatically uses _trajectory_id column for timeseries."""
+    # Create inputs with a timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="time",
+                bounds=(0, 100),
+                is_timeseries=True,
+            ),
+            ContinuousInput(
+                key="x",
+                bounds=(-4, 4),
+            ),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments WITH a _trajectory_id column
+    experiments = pd.DataFrame(
+        {
+            "_trajectory_id": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
+            "time": [0, 5, 10, 0, 5, 10, 0, 5, 10, 0, 5, 10],
+            "x": [-4, -3, -2, -1, 0, 1, 2, 3, 4, -4, -3, -2],
+            "y": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+            "valid_y": [1] * 12,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # This should automatically use _trajectory_id as group_split_column
+    cv_train, cv_test, _ = model.cross_validate(
+        experiments,
+        folds=2,
+        include_X=True,  # Include X to check trajectory groups
+        # No group_split_column specified - should auto-use _trajectory_id
+    )
+
+    # Check that results are returned
+    assert len(cv_train.results) == 2
+    assert len(cv_test.results) == 2
+
+    # CRITICAL: Verify that trajectory groups are never split between train and test
+    for fold_idx in range(2):
+        train_data = cv_train.results[fold_idx].X
+        test_data = cv_test.results[fold_idx].X
+
+        # Get the trajectory IDs from the original experiments
+        train_indices = train_data.index
+        test_indices = test_data.index
+
+        train_trajectories = set(experiments.loc[train_indices, "_trajectory_id"])
+        test_trajectories = set(experiments.loc[test_indices, "_trajectory_id"])
+
+        # Ensure no overlap between train and test trajectory groups
+        assert (
+            len(train_trajectories.intersection(test_trajectories)) == 0
+        ), f"Fold {fold_idx}: Trajectory groups are mixed between train and test!"
+
+        # Ensure all trajectories are accounted for
+        assert train_trajectories.union(test_trajectories) == {
+            0,
+            1,
+            2,
+            3,
+        }, f"Fold {fold_idx}: Not all trajectories are covered!"
+
+
+def test_model_cross_validate_timeseries_use_shuffle_split():
+    """Test that use_shuffle_split parameter works correctly with timeseries data."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
+            ContinuousInput(key="x", bounds=(-4, 4)),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments with 4 trajectories
+    experiments = pd.DataFrame(
+        {
+            "_trajectory_id": [0, 0, 1, 1, 2, 2, 3, 3],
+            "time": [0, 10, 0, 10, 0, 10, 0, 10],
+            "x": [-4, -3, -2, -1, 0, 1, 2, 3],
+            "y": [1, 2, 3, 4, 5, 6, 7, 8],
+            "valid_y": [1] * 8,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)
+    model = surrogates.map(model)
+
+    # Test with GroupKFold (default) - should use all trajectories
+    train_cv_kfold, test_cv_kfold, _ = model.cross_validate(
+        experiments,
+        folds=2,
+    )
+
+    # Test with GroupShuffleSplit - may not use all trajectories
+    train_cv_shuffle, test_cv_shuffle, _ = model.cross_validate(
+        experiments,
+        folds=2,
+        use_shuffle_split=True,
+        random_state=42,
+    )
+
+    # Both should return results
+    assert len(train_cv_kfold.results) == 2
+    assert len(test_cv_kfold.results) == 2
+    assert len(train_cv_shuffle.results) == 2
+    assert len(test_cv_shuffle.results) == 2
+
+
+def test_model_cross_validate_groupkfold_exhaustive():
+    """Test that GroupKFold ensures every trajectory is tested exactly once."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="time", bounds=(0, 100), is_timeseries=True),
+            ContinuousInput(key="x", bounds=(-4, 4)),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments with 6 trajectories
+    n_trajectories = 6
+    experiments = pd.DataFrame(
+        {
+            "_trajectory_id": [i for i in range(n_trajectories) for _ in range(3)],
+            "time": [0, 5, 10] * n_trajectories,
+            "x": list(range(18)),
+            "y": list(range(18)),
+            "valid_y": [1] * 18,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)
+    model = surrogates.map(model)
+
+    # Use 3 folds - each trajectory should appear in exactly one test fold
+    train_cv, test_cv, _ = model.cross_validate(
+        experiments,
+        folds=3,
+    )
+
+    # Collect all tested trajectory IDs across folds
+    tested_trajectories = set()
+    for cv_result in test_cv.results:
+        test_indices = cv_result.observed.index
+        test_data = experiments.iloc[test_indices]
+        tested_trajectories.update(test_data["_trajectory_id"].unique())
+
+    # Every trajectory should be tested exactly once
+    assert tested_trajectories == set(range(n_trajectories))
+
+    # Check that no trajectory appears in multiple test sets
+    trajectory_test_counts = dict.fromkeys(range(n_trajectories), 0)
+    for cv_result in test_cv.results:
+        test_indices = cv_result.observed.index
+        test_data = experiments.iloc[test_indices]
+        for traj_id in test_data["_trajectory_id"].unique():
+            trajectory_test_counts[traj_id] += 1
+
+    # Each trajectory should be tested exactly once
+    assert all(count == 1 for count in trajectory_test_counts.values())
+
+
+def test_model_cross_validate_timeseries_auto_infer_no_trajectories():
+    """Test that error is raised when auto-inference finds no valid trajectories."""
+    # Create inputs with a timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="time",
+                bounds=(0, 100),
+                is_timeseries=True,
+            ),
+            ContinuousInput(
+                key="x",
+                bounds=(-4, 4),
+            ),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments WITHOUT the _trajectory_id column
+    # All x values are unique, so no trajectories can be inferred
+    experiments = pd.DataFrame(
+        {
+            "time": [0, 5, 10, 15],
+            "x": [-4, -3, -2, -1],  # All unique - no valid trajectories
+            "y": [1, 2, 3, 4],
+            "valid_y": [1] * 4,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Should raise error about no valid trajectories found
+    with pytest.raises(
+        ValueError,
+        match="No valid timeseries trajectories found",
+    ):
+        model.cross_validate(
+            experiments,
+            folds=2,
+        )
+
+
+def test_model_cross_validate_timeseries_auto_infer_success():
+    """Test that trajectory IDs are auto-inferred when _trajectory_id column is missing."""
+    # Create inputs with a timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="time",
+                bounds=(0, 100),
+                is_timeseries=True,
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20, 80),
+            ),
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments WITHOUT the _trajectory_id column
+    # Temperature has repeated values, so trajectories can be inferred
+    experiments = pd.DataFrame(
+        {
+            "time": [0, 5, 10, 0, 5, 10, 0, 5, 10],
+            "temperature": [25, 25, 25, 30, 30, 30, 35, 35, 35],  # 3 trajectories
+            "y": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "valid_y": [1] * 9,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Should warn about auto-inference and succeed
+    with pytest.warns(
+        UserWarning,
+        match="Timeseries feature 'time' detected but '_trajectory_id' column is missing",
+    ):
+        train_cv, test_cv, _ = model.cross_validate(
+            experiments,
+            folds=3,
+        )
+
+    # Verify results
+    assert len(train_cv.results) == 3
+    assert len(test_cv.results) == 3
+
+    # Verify trajectories are kept together (each fold tests one temperature group)
+    for cv_result in test_cv.results:
+        test_indices = cv_result.observed.index
+        test_temps = experiments.loc[test_indices, "temperature"].unique()
+        # Each fold should test exactly one temperature group
+        assert len(test_temps) == 1
+
+
+def test_model_cross_validate_trajectory_id_without_timeseries():
+    """Test that _trajectory_id column triggers group split even without is_timeseries feature."""
+    # Create inputs WITHOUT any timeseries feature
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(-10, 10)),
+            ContinuousInput(key="x2", bounds=(-10, 10)),
+        ]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments with _trajectory_id column
+    experiments = pd.DataFrame(
+        {
+            "_trajectory_id": [0, 0, 0, 1, 1, 1, 2, 2, 2],
+            "x1": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "x2": [9, 8, 7, 6, 5, 4, 3, 2, 1],
+            "y": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+            "valid_y": [1] * 9,
+        }
+    )
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # Cross-validate without specifying group_split_column
+    # Should automatically use _trajectory_id
+    _, test_cv, _ = model.cross_validate(experiments, folds=3)
+
+    # Verify groups are kept together
+    for cv_result in test_cv.results:
+        test_indices = cv_result.observed.index
+        test_trajectories = experiments.loc[test_indices, "_trajectory_id"].unique()
+        # Each fold should test exactly one trajectory
+        assert (
+            len(test_trajectories) == 1
+        ), f"Expected 1 trajectory per fold, got {len(test_trajectories)}: {test_trajectories}"

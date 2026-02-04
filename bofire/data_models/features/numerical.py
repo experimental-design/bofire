@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import Field
 
 from bofire.data_models.features.feature import Input, TTransform
 
@@ -11,6 +12,10 @@ class NumericalInput(Input):
     """Abstract base class for all numerical (ordinal) input features."""
 
     unit: Optional[str] = None
+    is_timeseries: bool = Field(
+        default=False,
+        description="Field to mark if this feature represents time in a timeseries",
+    )
 
     @staticmethod
     def valid_transform_types() -> List:
