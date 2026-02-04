@@ -1,3 +1,5 @@
+from pydantic import ValidationError
+
 import bofire.data_models.kernels.api as kernels
 from bofire.data_models.priors.api import (
     GammaPrior,
@@ -10,6 +12,162 @@ from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
+
+specs.add_valid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": False,
+        "target_task_index": 0,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
+)
+
+specs.add_valid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 10,
+        "rank": 3,
+        "prior": priors.valid(GammaPrior).obj().model_dump(),
+        "var_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "task_prior": priors.valid(LogNormalPrior).obj().model_dump(),
+        "diag_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "normalize_covar_matrix": True,
+        "target_task_index": 0,
+        "unit_scale_for_target": False,
+        "features": None,
+    },
+)
+
+specs.add_invalid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 6,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": False,
+        "target_task_index": 0,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
+    error=ValueError,
+    message="rank must be less than or equal to num_categories",
+)
+
+specs.add_invalid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 1,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": False,
+        "target_task_index": 0,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
+    error=ValidationError,
+    message="Input should be greater than or equal to 2",
+)
+
+specs.add_invalid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 3,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": False,
+        "target_task_index": -1,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
+    error=ValidationError,
+    message="Input should be greater than or equal to 0",
+)
+
+specs.add_invalid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 3,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": False,
+        "target_task_index": 5,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
+    error=ValidationError,
+    message="target_task_index must be less than num_categories-1",
+)
+
+specs.add_valid(
+    kernels.IndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "features": None,
+    },
+)
+
+specs.add_valid(
+    kernels.IndexKernel,
+    lambda: {
+        "num_categories": 10,
+        "rank": 3,
+        "prior": priors.valid(GammaPrior).obj().model_dump(),
+        "var_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "features": None,
+    },
+)
+
+specs.add_invalid(
+    kernels.IndexKernel,
+    lambda: {
+        "num_categories": 5,
+        "rank": 6,
+        "prior": None,
+        "var_constraint": None,
+        "features": None,
+    },
+    error=ValueError,
+    message="rank must be less than or equal to num_categories",
+)
+
+specs.add_invalid(
+    kernels.IndexKernel,
+    lambda: {
+        "num_categories": 1,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "features": None,
+    },
+    error=ValidationError,
+    message="Input should be greater than or equal to 2",
+)
 
 specs.add_valid(
     kernels.HammingDistanceKernel,
@@ -88,6 +246,32 @@ specs.add_valid(
         .model_dump(),
         "features": None,
     },
+)
+specs.add_valid(
+    kernels.SphericalLinearKernel,
+    lambda: {
+        "ard": True,
+        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "features": None,
+        "bounds": (0.0, 1.0),
+    },
+)
+specs.add_invalid(
+    kernels.SphericalLinearKernel,
+    lambda: {
+        "ard": False,
+        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "features": None,
+        "bounds": (0.0, 1.0),
+    },
+    error=ValueError,
+    message="Cannot determine number of dimensions. If ard=False then list of bounds should have length equal to the input dimension.",
 )
 specs.add_valid(
     kernels.ScaleKernel,

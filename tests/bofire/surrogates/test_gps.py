@@ -21,13 +21,14 @@ from torch.nn import Module
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Hartmann, Himmelblau
-from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
+    SumFeature,
 )
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
@@ -35,6 +36,7 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
     ScaleKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints, MordredDescriptors
@@ -144,6 +146,55 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
+def test_SingleTaskGPModel_with_engineered_features():
+    bench = Himmelblau()
+    experiments = bench.f(bench.domain.inputs.sample(20), return_complete=True)
+
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
+        engineered_features=EngineeredFeatures(
+            features=[
+                SumFeature(key="sum", features=["x_1", "x_2"], keep_features=True)
+            ]
+        ),
+    )
+
+    surrogate = surrogates.map(surrogate_data)
+
+    with pytest.raises(KeyError, match="Feature with key 'sum123' not found."):
+        surrogate.get_feature_indices(["sum123", "x_1", "x_2"])
+
+    surrogate.engineered_features[0].keep_features = False
+    with pytest.raises(
+        NotImplementedError,
+        match="Cannot get feature indices if original features are filtered.",
+    ):
+        surrogate.get_feature_indices(["sum", "x_1", "x_2"])
+
+    surrogate.engineered_features[0].keep_features = True
+
+    assert surrogate.get_feature_indices(["sum", "x_1", "x_2"]) == [0, 1, 2]
+    assert surrogate.get_feature_indices(["sum", "x_2"]) == [1, 2]
+
+    surrogate.fit(experiments)
+    assert surrogate.model.covar_module.active_dims.tolist() == [0, 1, 2]
+
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
+        engineered_features=EngineeredFeatures(
+            features=[
+                SumFeature(key="sum", features=["x_1", "x_2"], keep_features=True)
+            ]
+        ),
+        kernel=RBFKernel(ard=True, features=["x_1", "sum"]),
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    assert surrogate.model.covar_module.active_dims.tolist() == [0, 2]
+
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
@@ -216,10 +267,10 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, Normalize)
+        assert isinstance(model.model.input_transform.scaler, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, InputStandardize)
+        assert isinstance(model.model.input_transform.scaler, InputStandardize)
     else:
         assert isinstance(model.model.input_transform, NumericToCategoricalEncoding)
     assert model.is_compatibilized is False
@@ -238,6 +289,23 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     model2.loads(dump)
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
+
+
+def test_SingleTaskGP_bound_relearning():
+    bench = Himmelblau()
+    experiments = bench.f(
+        pd.DataFrame({"x_1": [0.0, 0.1], "x_2": [0.0, 0.1]}), return_complete=True
+    )
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs, outputs=bench.domain.outputs
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    bounds1 = surrogate.model.input_transform.bounds.clone()
+    experiments2 = bench.f(bench.domain.inputs.sample(10), return_complete=True)
+    surrogate.fit(experiments2)
+    bounds2 = surrogate.model.input_transform.bounds.clone()
+    assert not torch.equal(bounds1, bounds2)
 
 
 @pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
@@ -413,21 +481,24 @@ def test_SingleTaskGPModel_mixed_features():
         categorical_encodings={
             "x_cat_1": CategoricalEncodingEnum.ORDINAL,
             "x_cat_2": CategoricalEncodingEnum.ORDINAL,
-            "x_mol": Fingerprints(n_bits=2048),
+            "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
         },
     )
 
     gp_mapped = surrogates.map(gp_data)
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
+    n_descriptors_after_filtering = len(
+        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+    )
     assert pred.shape == (4, 2)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
-        2050,
-        2051,
+        2 + n_descriptors_after_filtering,
+        3 + n_descriptors_after_filtering,
     ]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
     assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
-        range(2, 2050)
+        range(2, 2 + n_descriptors_after_filtering)
     )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
@@ -577,10 +648,6 @@ def test_MixedSingletaskGPModel_with_botorch():
         is True
     )
     assert torch.allclose(model.model.input_transform.indices, torch.tensor([0, 1]))
-    assert torch.allclose(
-        model.model.input_transform.bounds,
-        torch.tensor([(-4, -4), (4, 4)]).to(**tkwargs),
-    )
 
 
 @pytest.mark.parametrize(
@@ -729,20 +796,20 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
 
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, Normalize)
+        assert isinstance(model.model.input_transform.scaler, Normalize)
         assert torch.eq(
-            model.model.input_transform.tf2.indices,
+            model.model.input_transform.scaler.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-        assert isinstance(model.model.input_transform.tf1, NumericToCategoricalEncoding)
+        assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf2, InputStandardize)
+        assert isinstance(model.model.input_transform.scaler, InputStandardize)
         assert torch.eq(
-            model.model.input_transform.tf2.indices,
+            model.model.input_transform.scaler.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-        assert isinstance(model.model.input_transform.tf1, NumericToCategoricalEncoding)
+        assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     else:
         assert isinstance(model.model.input_transform, NumericToCategoricalEncoding)
 
@@ -936,3 +1003,45 @@ def test_RobustSingleTaskGPHyperconfig():
                 surrogate_data.kernel.base_kernel.lengthscale_prior
                 == HVARFNER_LENGTHSCALE_PRIOR()
             )
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        SphericalLinearKernel(ard=True),
+        SphericalLinearKernel(
+            ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(), bounds=(0, 1)
+        ),
+        SphericalLinearKernel(ard=False, bounds=[(0, 1), (0, 1), (0, 1)]),
+    ],
+)
+def test_gp_with_spherical_kernel(kernel):
+    """Test GP training with SphericalLinearKernel"""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(0, 1),
+            )
+            for i in range(3)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments["y"] = experiments["x_1"] + experiments["x_2"] + experiments["x_3"]
+
+    data_model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=ScaleKernel(base_kernel=kernel),
+    )
+    model = surrogates.map(data_model)
+    model.fit(experiments)
+
+    # Verify the model is fitted
+    assert hasattr(model, "model")
+
+    # Make predictions
+    samples = inputs.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)

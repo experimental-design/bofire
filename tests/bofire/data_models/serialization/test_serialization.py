@@ -67,7 +67,8 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
     # TODO: can we unhide the comparison of surrogate_specs?
     data = {k: v for k, v in obj.model_dump().items() if k != "surrogate_specs"}
     for k, v in data.items():
-        if v is not None:
+        # Only check keys that were in the original spec (not default values)
+        if k in spec and v is not None:
             if hasattr(
                 spec[k], "model_dump"
             ):  # works now for 1-time nested objects. Should be written recursively
@@ -99,6 +100,14 @@ def test_molfeatures_should_be_serializable(molfeatures_spec: Spec):
 def test_inputs_should_be_serializable(inputs_spec: Spec):
     spec = inputs_spec.typed_spec()
     obj = inputs_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
+def test_engineered_features_should_be_serializable(
+    engineered_features_spec: Spec,
+):
+    spec = engineered_features_spec.typed_spec()
+    obj = engineered_features_spec.cls(**spec)
     assert obj.model_dump() == spec
 
 

@@ -1,0 +1,283 @@
+# data_models.domain.features.Inputs { #bofire.data_models.domain.features.Inputs }
+
+```python
+data_models.domain.features.Inputs()
+```
+
+Container of input features, only input features are allowed.
+
+## Attributes {.doc-section .doc-section-attributes}
+
+| Name     | Type        | Description           |
+|----------|-------------|-----------------------|
+| features | List(Inputs | list of the features. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [get_bounds](#bofire.data_models.domain.features.Inputs.get_bounds) | Returns the boundaries of the optimization problem based on the transformations |
+| [get_categorical_combinations](#bofire.data_models.domain.features.Inputs.get_categorical_combinations) | Get a list of tuples pairing the feature keys with a list of valid categories |
+| [get_feature_indices](#bofire.data_models.domain.features.Inputs.get_feature_indices) | Returns a list of indices of the given feature key list. |
+| [get_fixed](#bofire.data_models.domain.features.Inputs.get_fixed) | Gets all features in `self` that are fixed and returns them as new |
+| [get_free](#bofire.data_models.domain.features.Inputs.get_free) | Gets all features in `self` that are not fixed and returns them as |
+| [get_number_of_categorical_combinations](#bofire.data_models.domain.features.Inputs.get_number_of_categorical_combinations) | Get the total number of unique categorical combinations. |
+| [inverse_transform](#bofire.data_models.domain.features.Inputs.inverse_transform) | Transform a dataframe back to the original representations. |
+| [is_fulfilled](#bofire.data_models.domain.features.Inputs.is_fulfilled) | Check if the provided experiments fulfill all constraints defined on the |
+| [sample](#bofire.data_models.domain.features.Inputs.sample) | Draw sobol samples |
+| [transform](#bofire.data_models.domain.features.Inputs.transform) | Transform a dataframe to the representation specified in `specs`. |
+| [validate_candidates](#bofire.data_models.domain.features.Inputs.validate_candidates) | Validate a pandas dataframe with input feature values. |
+
+### get_bounds { #bofire.data_models.domain.features.Inputs.get_bounds }
+
+```python
+data_models.domain.features.Inputs.get_bounds(
+    specs,
+    experiments=None,
+    reference_experiment=None,
+)
+```
+
+Returns the boundaries of the optimization problem based on the transformations
+defined in the  `specs` dictionary.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name                 | Type                     | Description                                                                                                                                                                      | Default    |
+|----------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| specs                | InputTransformSpecs      | Dictionary specifying which input feature is transformed by which encoder.                                                                                                       | _required_ |
+| experiments          | Optional\[pd.DataFrame\] | Dataframe with input features. If provided the real feature bounds are returned based on both the opt. feature bounds and the extreme points in the dataframe. Defaults to None, | `None`     |
+| reference_experiment | Optional\[pd.Series\]    | If a reference experiment provided,                                                                                                                                              | `None`     |
+
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                 |
+|--------|------------|-------------------------------------------------------------|
+|        | ValueError | If a feature type is not known.                             |
+|        | ValueError | If no transformation is provided for a categorical feature. |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                  | Description                                                                      |
+|--------|---------------------------------------|----------------------------------------------------------------------------------|
+|        | Tuple\[List\[float\], List\[float\]\] | Tuple[List[float], List[float]]: list with lower bounds, list with upper bounds. |
+
+### get_categorical_combinations { #bofire.data_models.domain.features.Inputs.get_categorical_combinations }
+
+```python
+data_models.domain.features.Inputs.get_categorical_combinations(
+    include=Input,
+    exclude=None,
+)
+```
+
+Get a list of tuples pairing the feature keys with a list of valid categories
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type    | Description                                                                          | Default   |
+|---------|---------|--------------------------------------------------------------------------------------|-----------|
+| include | Feature | Features to be included. Defaults to Input.                                          | `Input`   |
+| exclude | Feature | Features to be excluded, e.g. subclasses of the included features. Defaults to None. | `None`    |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                                           | Description                                                                                                     |
+|--------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
+|        | list\[tuple\[tuple\[str, float\] \| tuple\[str, str\], ...\]\] | List[(str, List[str])]: Returns a list of tuples pairing the feature keys with a list of valid categories (str) |
+
+### get_feature_indices { #bofire.data_models.domain.features.Inputs.get_feature_indices }
+
+```python
+data_models.domain.features.Inputs.get_feature_indices(specs, feature_keys)
+```
+
+Returns a list of indices of the given feature key list.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name         | Type                | Description                                                                | Default    |
+|--------------|---------------------|----------------------------------------------------------------------------|------------|
+| specs        | InputTransformSpecs | Dictionary specifying which input feature is transformed by which encoder. | _required_ |
+| feature_keys | List\[str\]         | List of feature keys.                                                      | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type        | Description                     |
+|--------|-------------|---------------------------------|
+|        | List\[int\] | List[int]: The list of indices. |
+
+### get_fixed { #bofire.data_models.domain.features.Inputs.get_fixed }
+
+```python
+data_models.domain.features.Inputs.get_fixed()
+```
+
+Gets all features in `self` that are fixed and returns them as new
+`Inputs` object.
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                           |
+|--------|--------|-------------------------------------------------------|
+| Inputs | Inputs | Input features object containing only fixed features. |
+
+### get_free { #bofire.data_models.domain.features.Inputs.get_free }
+
+```python
+data_models.domain.features.Inputs.get_free()
+```
+
+Gets all features in `self` that are not fixed and returns them as
+new `Inputs` object.
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                               |
+|--------|--------|-----------------------------------------------------------|
+| Inputs | Inputs | Input features object containing only non-fixed features. |
+
+### get_number_of_categorical_combinations { #bofire.data_models.domain.features.Inputs.get_number_of_categorical_combinations }
+
+```python
+data_models.domain.features.Inputs.get_number_of_categorical_combinations(
+    include=Input,
+    exclude=None,
+)
+```
+
+Get the total number of unique categorical combinations.
+
+This is used before generating all of the categorical combinations, which may
+cause memory issues if there are too many.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type    | Description                                                                          | Default   |
+|---------|---------|--------------------------------------------------------------------------------------|-----------|
+| include | Feature | Features to be included. Defaults to Input.                                          | `Input`   |
+| exclude | Feature | Features to be excluded, e.g. subclasses of the included features. Defaults to None. | `None`    |
+
+Returns:
+    int: Returns the number of unique combinations of discrete and categorical
+        features.
+
+### inverse_transform { #bofire.data_models.domain.features.Inputs.inverse_transform }
+
+```python
+data_models.domain.features.Inputs.inverse_transform(experiments, specs)
+```
+
+Transform a dataframe back to the original representations.
+
+The original applied transformation has to be provided via the specs dictionary.
+Currently only input categoricals are supported.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type                | Description                                                                | Default    |
+|-------------|---------------------|----------------------------------------------------------------------------|------------|
+| experiments | pd.DataFrame        | Transformed data dataframe.                                                | _required_ |
+| specs       | InputTransformSpecs | Dictionary specifying which input feature is transformed by which encoder. | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                                 |
+|--------|--------------|-----------------------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Back transformed dataframe. Only input features are included. |
+
+### is_fulfilled { #bofire.data_models.domain.features.Inputs.is_fulfilled }
+
+```python
+data_models.domain.features.Inputs.is_fulfilled(experiments)
+```
+
+Check if the provided experiments fulfill all constraints defined on the
+input features itself like the bounds or the allowed categories.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                    | Default    |
+|-------------|--------------|--------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with input features. | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type      | Description                                                                                             |
+|--------|-----------|---------------------------------------------------------------------------------------------------------|
+|        | pd.Series | Series with boolean values indicating if the experiments fulfill the constraints on the input features. |
+
+### sample { #bofire.data_models.domain.features.Inputs.sample }
+
+```python
+data_models.domain.features.Inputs.sample(
+    n=1,
+    method=SamplingMethodEnum.UNIFORM,
+    seed=None,
+)
+```
+
+Draw sobol samples
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name   | Type               | Description                                                                                 | Default                      |
+|--------|--------------------|---------------------------------------------------------------------------------------------|------------------------------|
+| n      | int                | Number of samples, has to be larger than 0. Defaults to 1.                                  | `1`                          |
+| method | SamplingMethodEnum | Method to use, implemented methods are `UNIFORM`, `SOBOL` and `LHS`. Defaults to `UNIFORM`. | `SamplingMethodEnum.UNIFORM` |
+| seed   | int                | random seed. Defaults to None.                                                              | `None`                       |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                     |
+|--------|--------------|-------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dataframe containing the samples. |
+
+### transform { #bofire.data_models.domain.features.Inputs.transform }
+
+```python
+data_models.domain.features.Inputs.transform(experiments, specs)
+```
+
+Transform a dataframe to the representation specified in `specs`.
+
+Currently only input categoricals are supported.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type                | Description                                                                | Default    |
+|-------------|---------------------|----------------------------------------------------------------------------|------------|
+| experiments | pd.DataFrame        | Data dataframe to be transformed.                                          | _required_ |
+| specs       | InputTransformSpecs | Dictionary specifying which input feature is transformed by which encoder. | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                            |
+|--------|--------------|------------------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Transformed dataframe. Only input features are included. |
+
+### validate_candidates { #bofire.data_models.domain.features.Inputs.validate_candidates }
+
+```python
+data_models.domain.features.Inputs.validate_candidates(candidates)
+```
+
+Validate a pandas dataframe with input feature values.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name       | Type         | Description         | Default    |
+|------------|--------------|---------------------|------------|
+| candidates | pd.Dataframe | Inputs to validate. | _required_ |
+
+#### Raises {.doc-section .doc-section-raises}
+
+| Name   | Type       | Description                                                            |
+|--------|------------|------------------------------------------------------------------------|
+|        | ValueError | Raises a Valueerror if a feature based validation raises an exception. |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                       |
+|--------|--------------|-----------------------------------|
+|        | pd.DataFrame | pd.Dataframe: Validated dataframe |

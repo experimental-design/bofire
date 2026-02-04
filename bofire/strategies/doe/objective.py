@@ -100,12 +100,15 @@ class ModelBasedObjective(Objective):
             .numpy()
         )
 
-    def _evaluate_tensor(self, D: Tensor) -> Tensor:
-        """Evaluate the objective function on the design matrix as a tensor."""
+    def tensor_to_model_matrix(self, D: Tensor) -> Tensor:
+        """Evaluate the model matrix of the design matrix as a tensor."""
         var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
         var_dict["torch"] = torch  # type: ignore
-        X = eval(str(self.model_terms_string_expression), {}, var_dict)
-        return self._criterion(X)
+        return eval(str(self.model_terms_string_expression), {}, var_dict)
+
+    def _evaluate_tensor(self, D: Tensor) -> Tensor:
+        """Evaluate the objective function on the design matrix as a tensor."""
+        return self._criterion(self.tensor_to_model_matrix(D))
 
     @abstractmethod
     def _criterion(self, X: Tensor) -> Tensor:

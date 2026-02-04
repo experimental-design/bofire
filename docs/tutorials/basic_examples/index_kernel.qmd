@@ -1,0 +1,81 @@
+---
+title: Introduction to index kernel and positive index kernel.
+jupyter: python3
+---
+
+The Index kernel models categorical variables by assigning each category an index and learning a low-rank representation of the kernel matrix. This is particularly useful for ordered categorical variables or when categories have some inherent structure. Unlike Hamming distance kernel which assumes binary correlation (same or different), Index kernels try to learn the correlation between the categories while fitting GP.
+
+In this tutorial, we show the steps to create a GP surrogate using Index and Positive Index kernels. One can extend the steps to incorporate the shown feature for Bayesian optimization.
+
+We use the ***aniline_cn_crosscoupling*** data-set.
+
+```{python}
+# import basic python libraries
+import numpy as np
+import pandas as pd
+import json
+
+# import bofire components
+from bofire.data_models.kernels.api import IndexKernel, RBFKernel, PositiveIndexKernel, AdditiveKernel, ScaleKernel
+import bofire.surrogates.api as surrogates
+from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, CategoricalInput
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+import bofire.surrogates.diagnostics as diagnostics
+from bofire.data_models.priors.api import GreaterThan
+
+# import data
+from bofire.benchmarks.data.aniline_cn_crosscoupling import EXPERIMENTS
+```
+
+Load the data, get the basic properties out of the data and perform the train-test split
+```{python}
+data_df = pd.DataFrame(json.loads(EXPERIMENTS))
+categories_catalyst = list(data_df["catalyst"].unique())
+categories_base = list(data_df["base"].unique())
+bounds_temperature = (data_df["temperature"].min(), data_df["temperature"].max())
+bounds_t_res = (data_df["t_res"].min(), data_df["t_res"].max())
+bounds_base_equivalents = (data_df["base_equivalents"].min(), data_df["base_equivalents"].max())
+
+test_size = 0.3
+train_data = data_df.sample(frac=1 - test_size, random_state=42)
+test_data = data_df.drop(train_data.index)
+```
+
+Define the input and output bofire variables
+```{python}
+inputs = Inputs(
+        features=[
+            ContinuousInput(key="temperature", bounds=bounds_temperature),
+            ContinuousInput(key="t_res", bounds=bounds_t_res),
+            ContinuousInput(key="base_equivalents", bounds=bounds_base_equivalents),
+            CategoricalInput(key='catalyst', categories=categories_catalyst),
+            CategoricalInput(key='base', categories=categories_base)
+        ]
+    )
+outputs = Outputs(features=[ContinuousOutput(key="yld")])
+```
+
+In this example, we will use RBF kernel for the continuous variables and Index Kernel for the categorical variables. The final kernel will be linear combination of each kernel. Users are free to combine the kernels according to their choice.
+```{python}
+kernel_list_index = [
+    ScaleKernel(base_kernel=RBFKernel(ard=True, lengthscale_constraint=GreaterThan(lower_bound=2.500e-02), features=['temperature', 't_res', 'base_equivalents'])),
+    ScaleKernel(base_kernel=IndexKernel(num_categories=len(categories_catalyst), rank=1, features=['catalyst'])),
+    ScaleKernel(base_kernel=IndexKernel(num_categories=len(categories_base), rank=1, features=['base']))
+]
+final_kernel_index = AdditiveKernel(kernels=kernel_list_index)
+data_model_index = SingleTaskGPSurrogate(
+    inputs=inputs,
+    outputs=outputs,
+    kernel=final_kernel_index,
+    )
+surrogate_index = surrogates.map(data_model_index)
+surrogate_index.fit(train_data)
+print("MAE:", diagnostics.mean_absolute_error(surrogate_index.predict(test_data)["yld_pred"], test_data["yld"]))
+```
+
+Many a times the Index Kernel do not generate positive definite correlations matrices. Positive Index Kernel kernel addresses this by using Cholesky decomposition with positive elements only. So, off diagonal elements are always positive and the diagonal elements are normalized to 1 for a target task.
+
+**NOTE:** This kernel should only be used when the correlation between different categories is expected to be positive.
+
+One can replace ```IndexKernel``` with ```PositiveIndexKernel``` to make use of Positive Index Kernels.

@@ -12,7 +12,10 @@ from bofire.surrogates.deterministic import (
 )
 from bofire.surrogates.empirical import EmpiricalSurrogate
 from bofire.surrogates.fully_bayesian import FullyBayesianSingleTaskGPSurrogate
-from bofire.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate
+from bofire.surrogates.map_saas import (
+    AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
+)
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
@@ -20,7 +23,6 @@ from bofire.surrogates.robust_single_task_gp import RobustSingleTaskGPSurrogate
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
-from bofire.surrogates.xgb import XGBoostSurrogate
 
 
 def map_MixedSingleTaskGPSurrogate(
@@ -77,7 +79,6 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.RegressionMLPEnsemble: RegressionMLPEnsemble,
     data_models.ClassificationMLPEnsemble: ClassificationMLPEnsemble,
     data_models.FullyBayesianSingleTaskGPSurrogate: FullyBayesianSingleTaskGPSurrogate,
-    data_models.XGBoostSurrogate: XGBoostSurrogate,
     data_models.LinearSurrogate: SingleTaskGPSurrogate,
     data_models.PolynomialSurrogate: SingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: SingleTaskGPSurrogate,
@@ -87,12 +88,13 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.PiecewiseLinearGPSurrogate: PiecewiseLinearGPSurrogate,
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
     data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
+    data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,
 }
 
 
-def map(data_model: data_models.Surrogate) -> Surrogate:
+def map(data_model: data_models.Surrogate, **kwargs) -> Surrogate:
     new_data_model = data_model
     if isinstance(data_model, data_models.MixedSingleTaskGPSurrogate):
         new_data_model = map_MixedSingleTaskGPSurrogate(data_model)
     cls = SURROGATE_MAP[new_data_model.__class__]
-    return cls(data_model=new_data_model)
+    return cls(data_model=new_data_model, **kwargs)

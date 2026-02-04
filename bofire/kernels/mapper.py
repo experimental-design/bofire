@@ -4,6 +4,8 @@ import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
+from botorch.models.kernels.positive_index import PositiveIndexKernel
+from gpytorch.kernels import IndexKernel
 from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
@@ -16,6 +18,7 @@ from bofire.kernels.conditional import (
 )
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
+from bofire.kernels.spherical_kernels import SphericalLinearKernel
 
 
 def _compute_active_dims(
@@ -234,6 +237,60 @@ def map_HammingDistanceKernel(
     )
 
 
+def map_IndexKernel(
+    data_model: data_models.IndexKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> GpytorchKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return IndexKernel(
+        batch_shape=batch_shape,
+        num_tasks=data_model.num_categories,
+        rank=data_model.rank,
+        active_dims=active_dims,  # type: ignore
+        prior=(priors.map(data_model.prior) if data_model.prior is not None else None),
+        var_constraint=(
+            priors.map(data_model.var_constraint)
+            if data_model.var_constraint is not None
+            else None
+        ),
+    )
+
+
+def map_PositiveIndexKernel(
+    data_model: data_models.PositiveIndexKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> GpytorchKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return PositiveIndexKernel(
+        batch_shape=batch_shape,
+        num_tasks=data_model.num_categories,
+        rank=data_model.rank,
+        active_dims=active_dims,  # type: ignore
+        task_prior=(
+            priors.map(data_model.task_prior)
+            if data_model.task_prior is not None
+            else None
+        ),
+        diag_prior=(
+            priors.map(data_model.diag_prior)
+            if data_model.diag_prior is not None
+            else None
+        ),
+        normalize_covar_matrix=data_model.normalize_covar_matrix,
+        var_constraint=(
+            priors.map(data_model.var_constraint)
+            if data_model.var_constraint is not None
+            else None
+        ),
+        target_task_index=data_model.target_task_index,
+        unit_scale_for_target=data_model.unit_scale_for_target,
+    )
+
+
 def map_WassersteinKernel(
     data_model: data_models.WassersteinKernel,
     batch_shape: torch.Size,
@@ -326,6 +383,31 @@ def map_WedgeKernel(
     )
 
 
+def map_SphericalLinearKernel(
+    data_model: data_models.SphericalLinearKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> SphericalLinearKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return SphericalLinearKernel(
+        batch_shape=batch_shape,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
+        active_dims=active_dims,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
+            else None
+        ),
+        bounds=data_model.bounds,
+    )
+
+
 KERNEL_MAP = {
     data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
@@ -335,8 +417,11 @@ KERNEL_MAP = {
     data_models.AdditiveKernel: map_AdditiveKernel,
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
+    data_models.SphericalLinearKernel: map_SphericalLinearKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
+    data_models.IndexKernel: map_IndexKernel,
+    data_models.PositiveIndexKernel: map_PositiveIndexKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,

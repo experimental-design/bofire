@@ -885,7 +885,288 @@ def one_cont_3_cat():
     assert n_successfull_runs == 9
 
 
+def test_get_candidate_rank():
+    """Test the get_candidate_rank method of DoEStrategy."""
+    # Create a simple domain with 3 continuous inputs
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_rank() == 0
+
+    # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
+    candidates_full_rank = pd.DataFrame(
+        {
+            "x1": [1.0, 0.0, 0.0, 0.5],
+            "x2": [0.0, 1.0, 0.0, 0.5],
+            "x3": [0.0, 0.0, 1.0, 0.5],
+        }
+    )
+    strategy.set_candidates(candidates_full_rank)
+    rank = strategy.get_candidate_rank()
+    assert rank == 4  # Intercept + 3 variables = 4 estimable parameters
+
+    # Test 3: Rank-deficient Fisher Information Matrix (linearly dependent design points)
+    candidates_rank_deficient = pd.DataFrame(
+        {
+            "x1": [
+                1.0,
+                1.0,
+                0.0,
+                0.0,
+            ],  # Two pairs of identical rows creates linear dependence in design matrix
+            "x2": [0.0, 0.0, 1.0, 1.0],
+            "x3": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],  # Constant, provides no information beyond intercept
+        }
+    )
+    strategy.set_candidates(candidates_rank_deficient)
+    rank = strategy.get_candidate_rank()
+    assert (
+        rank == 2
+    )  # Only 2 linearly independent design points: spans intercept + 1 direction
+
+    # Test 4: Test with quadratic formula
+    data_model_quad = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
+    )
+    strategy_quad = DoEStrategy(data_model_quad)
+    strategy_quad.set_candidates(candidates_full_rank)
+    rank_quad = strategy_quad.get_candidate_rank()
+    # Fully quadratic has 10 terms (excluding intercept), with 4 candidates rank is 4
+    assert rank_quad == 4
+
+    # Test 5: SpaceFilling criterion should raise error
+    data_model_space = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_space = DoEStrategy(data_model_space)
+    strategy_space.set_candidates(candidates_full_rank)
+
+    with pytest.raises(
+        ValueError,
+        match="get_candidate_rank\\(\\) only works with DoEOptimalityCriterion",
+    ):
+        strategy_space.get_candidate_rank()
+
+
+def test_get_candidate_rank_categorical_discrete():
+    """Test the get_candidate_rank method with categorical and discrete inputs."""
+    # Create a domain with mixed input types
+    mixed_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+            CategoricalInput(key="x3", categories=["A", "B", "C"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_rank() == 0
+
+    # Test 2: Mixed input candidates
+    candidates_mixed = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.5],  # Discrete values
+            "x3": ["A", "B", "C", "A"],  # Categorical values
+        }
+    )
+    strategy.set_candidates(candidates_mixed)
+    rank = strategy.get_candidate_rank()
+    # With proper encoding, all 4 candidates are linearly independent
+    assert rank == 4
+
+    # Test 3: Test with interactions formula for mixed types
+    data_model_interactions = data_models.DoEStrategy(
+        domain=mixed_domain,
+        criterion=DOptimalityCriterion(formula="linear-and-interactions"),
+    )
+    strategy_interactions = DoEStrategy(data_model_interactions)
+    strategy_interactions.set_candidates(candidates_mixed)
+    rank_interactions = strategy_interactions.get_candidate_rank()
+    # With interactions, rank is still 4 (limited by number of candidates)
+    assert rank_interactions == 4
+
+    # Test 4: Rank-deficient case with repeated categorical/discrete values
+    candidates_repeated = pd.DataFrame(
+        {
+            "x1": [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
+            "x2": [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
+            "x3": ["A", "A", "B", "B"],  # Repeated categorical values
+        }
+    )
+    strategy.set_candidates(candidates_repeated)
+    rank_repeated = strategy.get_candidate_rank()
+    assert (
+        rank_repeated == 2
+    )  # Only 2 unique design points: intercept + 1 independent direction
+
+    # Test 5: Single categorical level (should reduce rank)
+    candidates_single_cat = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.1],
+            "x3": ["A", "A", "A", "A"],  # All same category
+        }
+    )
+    strategy.set_candidates(candidates_single_cat)
+    rank_single = strategy.get_candidate_rank()
+    # Intercept + x1 + x2 (x3 categorical doesn't vary, contributes no information)
+    assert rank_single == 3
+
+
+def test_get_additional_experiments_needed():
+    """Test the get_additional_experiments_needed method."""
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    # Test 1: No candidates - should return full required number
+    required = strategy.get_required_number_of_experiments()
+    assert required is not None
+    assert strategy.get_additional_experiments_needed() == required
+
+    # Test 2: Partial rank - should return the difference
+    candidates_partial = pd.DataFrame(
+        {"x1": [0.0, 1.0], "x2": [0.0, 0.0], "x3": [0.0, 0.0]}
+    )
+    strategy.set_candidates(candidates_partial)
+    rank = strategy.get_candidate_rank()
+    assert strategy.get_additional_experiments_needed() == required - rank
+    assert rank < required
+    additional_needed = strategy.get_additional_experiments_needed()
+    assert additional_needed is not None
+    assert additional_needed > 0
+
+    # Test 3: Generate a full DoE from scratch and verify it has full rank
+    # Using the same domain and criterion as Test 1 and 2
+    full_doe = strategy.ask(candidate_count=required)
+
+    # Create a fresh strategy instance and set the full DoE as candidates
+    strategy_fresh = DoEStrategy(data_model=data_model)
+    strategy_fresh.set_candidates(full_doe)
+    rank_full_doe = strategy_fresh.get_candidate_rank()
+
+    # A properly generated D-optimal DoE should have rank ~ model terms
+    formula = get_formula_from_string(
+        strategy._data_model.criterion.formula, inputs=strategy.domain.inputs
+    )
+    assert rank_full_doe == len(
+        formula
+    ), f"Expected DoE to have rank {len(formula)}, but got {rank_full_doe}"
+
+    # Test 4: SpaceFilling criterion should return None
+    data_model_sf = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_sf = DoEStrategy(data_model=data_model_sf)
+    assert strategy_sf.get_additional_experiments_needed() is None
+
+
+def test_custom_formula_with_categorical_and_discrete():
+    """Test DoE strategy with custom formula containing categorical interactions."""
+
+    from bofire.data_models.domain.api import Inputs
+
+    np.random.seed(42)
+    torch.manual_seed(42)
+
+    # Create a domain with categorical, continuous, and discrete variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[1.0, 2.0, 3.0, 5.0, 10.0],
+            ),
+        ]
+    )
+
+    domain = Domain(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    custom_formula = "color + material + temperature + pressure + color:material"
+
+    # Create DoE strategy with the custom formula
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula=custom_formula),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    # Get required number of experiments
+    n_exp = strategy.get_required_number_of_experiments()
+    assert n_exp is not None
+    # Formula has: 1 (intercept) + 2 (color) + 1 (material) + 1 (temp) + 1 (pressure) + 2 (color:material) = 8 terms + 3 replicates
+    assert n_exp == 11
+
+    # Generate candidates
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 5)
+
+    # Verify all categorical values are valid
+    assert all(candidates["color"].isin(["red", "blue", "green"]))
+    assert all(candidates["material"].isin(["plastic", "metal"]))
+
+    # Verify continuous and discrete values are within bounds
+    assert all(
+        (candidates["temperature"] >= 20.0) & (candidates["temperature"] <= 100.0)
+    )
+    assert all(
+        (candidates["color_intensity"] >= 0.0) & (candidates["color_intensity"] <= 1.0)
+    )
+    assert all(candidates["pressure"].isin([1.0, 2.0, 3.0, 5.0, 10.0]))
+
+
 if __name__ == "__main__":
-    test_discrete_and_categorical_doe_w_constraints_num_of_experiments()
-    test_purely_categorical_doe()
-    one_cont_3_cat()
+    test_custom_formula_with_categorical_and_discrete()

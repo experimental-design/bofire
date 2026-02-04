@@ -7,6 +7,7 @@ from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.utils.constraints import (
     LogTransformedInterval as BotorchLogTransformedInterval,
 )
+from gpytorch.kernels import IndexKernel as GpytorchIndexKernel
 
 import bofire
 import bofire.kernels.aggregation as aggregationKernels
@@ -18,14 +19,17 @@ from bofire.data_models.kernels.api import (
     AdditiveKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
+    IndexKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     PolynomialKernel,
+    PositiveIndexKernel,
     RBFKernel,
     ScaleKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
     WassersteinKernel,
     WedgeKernel,
@@ -48,10 +52,13 @@ EQUIVALENTS = {
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
     HammingDistanceKernel: CategoricalKernel,
+    IndexKernel: GpytorchIndexKernel,
+    PositiveIndexKernel: GpytorchIndexKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
     WedgeKernel: conditionalKernels.WedgeKernel,
+    SphericalLinearKernel: bofire.kernels.spherical_kernels.SphericalLinearKernel,
 }
 
 
@@ -270,6 +277,40 @@ def test_map_HammingDistanceKernel_to_categorical_with_ard():
     assert k_mapped.lengthscale.shape == (1, 5)
 
 
+def test_map_IndexKernel():
+    k_mapped = kernels.map(
+        IndexKernel(
+            num_categories=10,
+            rank=3,
+        ),
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+
+    assert isinstance(k_mapped, GpytorchIndexKernel)
+    assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
+    assert k_mapped.covar_factor.shape[0] == 10
+    assert k_mapped.covar_factor.shape[1] == 3
+
+
+def test_map_PositiveIndexKernel():
+    k_mapped = kernels.map(
+        PositiveIndexKernel(
+            num_categories=8,
+            rank=2,
+        ),
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+
+    assert isinstance(k_mapped, GpytorchIndexKernel)
+    assert k_mapped.active_dims.tolist() == [0, 1, 2, 3, 4]
+    assert k_mapped.covar_factor.shape[0] == 8
+    assert k_mapped.covar_factor.shape[1] == 2
+
+
 def test_map_multiple_kernels_on_feature_subsets():
     fmap = {
         "x_1": [0],
@@ -406,3 +447,49 @@ def test_map_WedgeKernel():
 
     assert isinstance(k, conditionalKernels.WedgeKernel)
     assert k.base_kernel.active_dims.tolist() == [0, 1, 2, 4]
+
+
+def test_map_spherical_linear_kernel():
+    kernel = SphericalLinearKernel(ard=True)
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+    assert isinstance(k, EQUIVALENTS[kernel.__class__])
+    assert k.ard_num_dims == 5
+    # Test lengthscale prior if configured
+    kernel_with_prior = SphericalLinearKernel(
+        ard=True, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)
+    )
+    k_with_prior = kernels.map(
+        kernel_with_prior,
+        batch_shape=torch.Size(),
+        active_dims=list(range(3)),
+        features_to_idx_mapper=None,
+    )
+    assert hasattr(k_with_prior, "lengthscale_prior")
+
+
+def test_spherical_linear_kernel_bounds():
+    """Test SphericalLinearKernel with bounds (-1, 1) to verify buffer values."""
+    input_dim = 5
+    kernel = SphericalLinearKernel(ard=True, bounds=(-1.0, 1.0))
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(input_dim)),
+        features_to_idx_mapper=None,
+    )
+    # Check that _mins is a tensor of -1 with size input_dim
+    assert torch.allclose(k.get_buffer("_mins"), torch.tensor([-1.0] * input_dim))
+    assert k.get_buffer("_mins").shape == torch.Size([input_dim])
+
+    # Check that _maxs is a tensor of 1 with size input_dim
+    assert torch.allclose(k.get_buffer("_maxs"), torch.tensor([1.0] * input_dim))
+    assert k.get_buffer("_maxs").shape == torch.Size([input_dim])
+
+    # Check that _centers is a tensor of 0 with size input_dim
+    assert torch.allclose(k.get_buffer("_centers"), torch.tensor([0.0] * input_dim))
+    assert k.get_buffer("_centers").shape == torch.Size([input_dim])

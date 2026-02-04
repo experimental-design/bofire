@@ -65,9 +65,7 @@ class DTLZ2(Benchmark):
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=outputs),
         )
-        self.ref_point = {
-            feat: 1.1 for feat in domain.outputs.get_keys(ContinuousOutput)
-        }
+        self.ref_point = dict.fromkeys(domain.outputs.get_keys(ContinuousOutput), 1.1)
         self._domain = domain
 
     @field_validator("dim")

@@ -9,6 +9,8 @@ from bofire.data_models.kernels.aggregation import (
 from bofire.data_models.kernels.categorical import (
     CategoricalKernel,
     HammingDistanceKernel,
+    IndexKernel,
+    PositiveIndexKernel,
 )
 from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
@@ -18,6 +20,7 @@ from bofire.data_models.kernels.continuous import (
     MaternKernel,
     PolynomialKernel,
     RBFKernel,
+    SphericalLinearKernel,
 )
 from bofire.data_models.kernels.kernel import (
     AggregationKernel,
@@ -42,10 +45,15 @@ AnyContinuousKernel = Union[
     LinearKernel,
     PolynomialKernel,
     RBFKernel,
+    SphericalLinearKernel,
     InfiniteWidthBNNKernel,
 ]
 
-AnyCategoricalKernel = HammingDistanceKernel
+AnyCategoricalKernel = Union[
+    HammingDistanceKernel,
+    IndexKernel,
+    PositiveIndexKernel,
+]
 
 AnyMolecularKernel = TanimotoKernel
 
@@ -55,10 +63,13 @@ AnyKernel = Union[
     PolynomialFeatureInteractionKernel,
     ScaleKernel,
     HammingDistanceKernel,
+    IndexKernel,
+    PositiveIndexKernel,
     LinearKernel,
     PolynomialKernel,
     MaternKernel,
     RBFKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
     InfiniteWidthBNNKernel,
     WassersteinKernel,

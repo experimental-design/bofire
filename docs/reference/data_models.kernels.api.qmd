@@ -1,0 +1,124 @@
+# data_models.kernels.api { #bofire.data_models.kernels.api }
+
+`data_models.kernels.api`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [Kernel](#bofire.data_models.kernels.api.Kernel) |  |
+| [AdditiveKernel](#bofire.data_models.kernels.api.AdditiveKernel) |  |
+| [MultiplicativeKernel](#bofire.data_models.kernels.api.MultiplicativeKernel) |  |
+| [ScaleKernel](#bofire.data_models.kernels.api.ScaleKernel) |  |
+| [MaternKernel](#bofire.data_models.kernels.api.MaternKernel) |  |
+| [RBFKernel](#bofire.data_models.kernels.api.RBFKernel) |  |
+| [LinearKernel](#bofire.data_models.kernels.api.LinearKernel) |  |
+| [PolynomialKernel](#bofire.data_models.kernels.api.PolynomialKernel) |  |
+| [HammingDistanceKernel](#bofire.data_models.kernels.api.HammingDistanceKernel) |  |
+| [TanimotoKernel](#bofire.data_models.kernels.api.TanimotoKernel) |  |
+| [WassersteinKernel](#bofire.data_models.kernels.api.WassersteinKernel) | Kernel based on the Wasserstein distance. |
+
+### Kernel { #bofire.data_models.kernels.api.Kernel }
+
+```python
+data_models.kernels.api.Kernel()
+```
+
+
+
+### AdditiveKernel { #bofire.data_models.kernels.api.AdditiveKernel }
+
+```python
+data_models.kernels.api.AdditiveKernel()
+```
+
+
+
+### MultiplicativeKernel { #bofire.data_models.kernels.api.MultiplicativeKernel }
+
+```python
+data_models.kernels.api.MultiplicativeKernel()
+```
+
+
+
+### ScaleKernel { #bofire.data_models.kernels.api.ScaleKernel }
+
+```python
+data_models.kernels.api.ScaleKernel()
+```
+
+
+
+### MaternKernel { #bofire.data_models.kernels.api.MaternKernel }
+
+```python
+data_models.kernels.api.MaternKernel()
+```
+
+
+
+### RBFKernel { #bofire.data_models.kernels.api.RBFKernel }
+
+```python
+data_models.kernels.api.RBFKernel()
+```
+
+
+
+### LinearKernel { #bofire.data_models.kernels.api.LinearKernel }
+
+```python
+data_models.kernels.api.LinearKernel()
+```
+
+
+
+### PolynomialKernel { #bofire.data_models.kernels.api.PolynomialKernel }
+
+```python
+data_models.kernels.api.PolynomialKernel()
+```
+
+
+
+### HammingDistanceKernel { #bofire.data_models.kernels.api.HammingDistanceKernel }
+
+```python
+data_models.kernels.api.HammingDistanceKernel()
+```
+
+
+
+### TanimotoKernel { #bofire.data_models.kernels.api.TanimotoKernel }
+
+```python
+data_models.kernels.api.TanimotoKernel()
+```
+
+
+
+### WassersteinKernel { #bofire.data_models.kernels.api.WassersteinKernel }
+
+```python
+data_models.kernels.api.WassersteinKernel()
+```
+
+Kernel based on the Wasserstein distance.
+
+It only works for 1D data that is monotonically increasing, as it is just
+calculating the integral of the absolute difference between two shapes.
+Only when both shapes are monotonically increasing, this integral is also
+a Wasserstein distance (https://arxiv.org/abs/2002.01878).
+
+The shape are assumed to be discretized as a set of points. Make sure that
+the discretization is fine enough to capture the shape of the data.
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name              | Type                 | Description                                                                                                                                                                                                                                                    |
+|-------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| squared           | bool                 | If True, the squared exponential Wasserstein distance is used. Note that the squared exponential Wasserstein distance kernel is not positive definite for all lengthscales. For this reason, as default the absolute exponential Wasserstein distance is used. |
+| lengthscale_prior | Optional\[AnyPrior\] | Prior for the lengthscale of the kernel.                                                                                                                                                                                                                       |

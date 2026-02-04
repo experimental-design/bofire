@@ -20,8 +20,33 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
     """
 
-    type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (
+    type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (  # type: ignore
         "AdditiveMapSaasSingleTaskGPSurrogate"
+    )
+    n_taus: PositiveInt = 4
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))
+
+
+class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+    """Ensemble MAP SAAS single-task GP
+
+    Batched ensemble of ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior.
+
+    Attributes:
+        n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
+    """
+
+    type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (  # type: ignore
+        "EnsembleMapSaasSingleTaskGPSurrogate"
     )
     n_taus: PositiveInt = 4
 

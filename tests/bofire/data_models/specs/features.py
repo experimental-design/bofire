@@ -2,6 +2,7 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     MaximizeObjective,
@@ -13,6 +14,67 @@ from tests.bofire.data_models.specs.specs import Specs
 # RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 specs = Specs([])
+
+
+specs.add_valid(
+    features.SumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "keep_features": True,
+    },
+)
+
+
+specs.add_valid(
+    features.ProductFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "keep_features": True,
+    },
+)
+
+specs.add_valid(
+    features.ProductFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "a"],
+        "keep_features": True,
+    },
+)
+
+specs.add_valid(
+    features.MeanFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "keep_features": False,
+    },
+)
+
+specs.add_valid(
+    features.WeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "descriptors": ["alpha", "beta"],
+        "keep_features": True,
+    },
+)
+
+specs.add_valid(
+    features.MolecularWeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "molfeatures": MordredDescriptors(
+            descriptors=["NssCH2", "ATSC2d"],
+            ignore_3D=True,
+        ).model_dump(),
+        "keep_features": True,
+    },
+)
 
 specs.add_valid(
     features.DiscreteInput,
@@ -156,12 +218,7 @@ specs.add_valid(
         ).model_dump(),
     },
 )
-specs.add_valid(
-    features.MolecularInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-    },
-)
+
 
 specs.add_valid(
     features.CategoricalMolecularInput,
@@ -174,6 +231,20 @@ specs.add_valid(
             "N[C@](C)(F)C(=O)O",
         ],
         "allowed": [True, True, True, True],
+    },
+)
+
+
+specs.add_valid(
+    features.ContinuousMolecularInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "molecule": "CC",
+        "bounds": [0.0, 1.0],
+        "allow_zero": False,
+        "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "local_relative_bounds": None,
+        "stepsize": None,
     },
 )
 

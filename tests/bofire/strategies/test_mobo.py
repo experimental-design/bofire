@@ -4,11 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from botorch.acquisition.multi_objective import (
-    qExpectedHypervolumeImprovement,
-    qLogExpectedHypervolumeImprovement,
-    qNoisyExpectedHypervolumeImprovement,
-)
+from botorch.acquisition.multi_objective import qLogExpectedHypervolumeImprovement
 from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
 )
@@ -165,9 +161,7 @@ def test_mobo_get_adjusted_refpoint(domain, ref_point, experiments, expected):
         (data_models.MoboStrategy, use_ref_point, acqf)
         for use_ref_point in [True, False]
         for acqf in [
-            acquisitions.qEHVI,
             acquisitions.qLogEHVI,
-            acquisitions.qNEHVI,
             acquisitions.qLogNEHVI,
         ]
     ],
@@ -194,11 +188,7 @@ def test_mobo(strategy, use_ref_point, acqf):
     bacqf = my_strategy._get_acqfs(2)[0]
 
     assert isinstance(bacqf.objective, GenericMCMultiOutputObjective)
-    if isinstance(acqf, acquisitions.qEHVI):
-        assert isinstance(bacqf, qExpectedHypervolumeImprovement)
-    elif isinstance(acqf, acquisitions.qNEHVI):
-        assert isinstance(bacqf, qNoisyExpectedHypervolumeImprovement)
-    elif isinstance(acqf, acquisitions.qLogNEHVI):
+    if isinstance(acqf, acquisitions.qLogNEHVI):
         assert isinstance(bacqf, qLogNoisyExpectedHypervolumeImprovement)
     elif isinstance(acqf, acquisitions.qLogEHVI):
         assert isinstance(bacqf, qLogExpectedHypervolumeImprovement)
@@ -207,9 +197,7 @@ def test_mobo(strategy, use_ref_point, acqf):
 @pytest.mark.parametrize(
     "acqf",
     [
-        acquisitions.qEHVI,
         acquisitions.qLogEHVI,
-        acquisitions.qNEHVI,
         acquisitions.qLogNEHVI,
     ],
 )
@@ -228,11 +216,7 @@ def test_mobo_constraints(acqf):
     my_strategy.tell(experiments)
     bacqf = my_strategy._get_acqfs(2)[0]
     assert isinstance(bacqf.objective, GenericMCMultiOutputObjective)
-    if isinstance(acqf, acquisitions.qEHVI):
-        assert isinstance(bacqf, qExpectedHypervolumeImprovement)
-    elif isinstance(acqf, acquisitions.qNEHVI):
-        assert isinstance(bacqf, qNoisyExpectedHypervolumeImprovement)
-    elif isinstance(acqf, acquisitions.qLogNEHVI):
+    if isinstance(acqf, acquisitions.qLogNEHVI):
         assert isinstance(bacqf, qLogNoisyExpectedHypervolumeImprovement)
     elif isinstance(acqf, acquisitions.qLogEHVI):
         assert isinstance(bacqf, qLogExpectedHypervolumeImprovement)
@@ -306,9 +290,8 @@ def test_no_objective():
 @pytest.mark.parametrize(
     "acqf, target_task",
     [
-        (acquisitions.qEHVI, "task_1"),
-        (acquisitions.qLogEHVI, "task_2"),
-        (acquisitions.qNEHVI, "task_1"),
+        (acquisitions.qLogEHVI, "task_1"),
+        (acquisitions.qLogNEHVI, "task_1"),
         (acquisitions.qLogNEHVI, "task_2"),
     ],
 )

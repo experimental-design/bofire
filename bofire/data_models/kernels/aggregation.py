@@ -1,13 +1,18 @@
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
-from bofire.data_models.kernels.categorical import HammingDistanceKernel
+from bofire.data_models.kernels.categorical import (
+    HammingDistanceKernel,
+    IndexKernel,
+    PositiveIndexKernel,
+)
 from bofire.data_models.kernels.continuous import (
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
     PolynomialKernel,
     RBFKernel,
+    SphericalLinearKernel,
 )
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
@@ -20,9 +25,12 @@ class AdditiveKernel(AggregationKernel):
     kernels: Sequence[
         Union[
             RBFKernel,
+            SphericalLinearKernel,
             MaternKernel,
             LinearKernel,
             HammingDistanceKernel,
+            IndexKernel,
+            PositiveIndexKernel,
             TanimotoKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
@@ -37,9 +45,12 @@ class MultiplicativeKernel(AggregationKernel):
     kernels: Sequence[
         Union[
             RBFKernel,
+            SphericalLinearKernel,
             MaternKernel,
             LinearKernel,
             HammingDistanceKernel,
+            IndexKernel,
+            PositiveIndexKernel,
             AdditiveKernel,
             TanimotoKernel,
             "MultiplicativeKernel",
@@ -52,9 +63,12 @@ class ScaleKernel(AggregationKernel):
     type: Literal["ScaleKernel"] = "ScaleKernel"
     base_kernel: Union[
         RBFKernel,
+        SphericalLinearKernel,
         MaternKernel,
         LinearKernel,
         HammingDistanceKernel,
+        IndexKernel,
+        PositiveIndexKernel,
         AdditiveKernel,
         MultiplicativeKernel,
         TanimotoKernel,
@@ -118,6 +132,7 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             PolynomialKernel,
             MaternKernel,
             RBFKernel,
+            SphericalLinearKernel,
             TanimotoKernel,
             InfiniteWidthBNNKernel,
             WassersteinKernel,

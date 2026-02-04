@@ -1,0 +1,341 @@
+# data_models.strategies.api { #bofire.data_models.strategies.api }
+
+`data_models.strategies.api`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [DoEStrategy](#bofire.data_models.strategies.api.DoEStrategy) |  |
+| [FactorialStrategy](#bofire.data_models.strategies.api.FactorialStrategy) | Factorial design strategy. |
+| [FractionalFactorialStrategy](#bofire.data_models.strategies.api.FractionalFactorialStrategy) | Fractional factorial design strategy. |
+| [ActiveLearningStrategy](#bofire.data_models.strategies.api.ActiveLearningStrategy) | Datamodel for an ActiveLearningStrategy that focusses on pure exploration of the input space. |
+| [BotorchStrategy](#bofire.data_models.strategies.api.BotorchStrategy) |  |
+| [EntingStrategy](#bofire.data_models.strategies.api.EntingStrategy) |  |
+| [MoboStrategy](#bofire.data_models.strategies.api.MoboStrategy) |  |
+| [MultiFidelityStrategy](#bofire.data_models.strategies.api.MultiFidelityStrategy) |  |
+| [MultiobjectiveStrategy](#bofire.data_models.strategies.api.MultiobjectiveStrategy) |  |
+| [AdditiveSoboStrategy](#bofire.data_models.strategies.api.AdditiveSoboStrategy) |  |
+| [CustomSoboStrategy](#bofire.data_models.strategies.api.CustomSoboStrategy) |  |
+
+### DoEStrategy { #bofire.data_models.strategies.api.DoEStrategy }
+
+```python
+data_models.strategies.api.DoEStrategy()
+```
+
+
+
+#### Attributes
+
+| Name | Description |
+| --- | --- |
+| [return_fixed_candidates](#bofire.data_models.strategies.api.DoEStrategy.return_fixed_candidates) | Datamodel for strategy for design of experiments. This strategy is used to generate a set of |
+
+### FactorialStrategy { #bofire.data_models.strategies.api.FactorialStrategy }
+
+```python
+data_models.strategies.api.FactorialStrategy()
+```
+
+Factorial design strategy.
+
+This strategy is deprecated, please use FractionalFactorialStrategy instead.
+
+### FractionalFactorialStrategy { #bofire.data_models.strategies.api.FractionalFactorialStrategy }
+
+```python
+data_models.strategies.api.FractionalFactorialStrategy()
+```
+
+Fractional factorial design strategy.
+
+This strategy generates a fractional factorial two level design for the continuous
+part of the domain, which is then combined with the categorical part of the domain.
+For every categorical combination, the continuous part of the design is repeated.
+
+### ActiveLearningStrategy { #bofire.data_models.strategies.api.ActiveLearningStrategy }
+
+```python
+data_models.strategies.api.ActiveLearningStrategy()
+```
+
+Datamodel for an ActiveLearningStrategy that focusses on pure exploration of the input space.
+This type of strategy chooses new candidate points in order to minimize the uncertainty.
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_feature_implemented](#bofire.data_models.strategies.api.ActiveLearningStrategy.is_feature_implemented) | Method to check if a specific feature type is implemented for the strategy |
+| [is_objective_implemented](#bofire.data_models.strategies.api.ActiveLearningStrategy.is_objective_implemented) | Method to check if a objective type is implemented for the strategy |
+
+##### is_feature_implemented { #bofire.data_models.strategies.api.ActiveLearningStrategy.is_feature_implemented }
+
+```python
+data_models.strategies.api.ActiveLearningStrategy.is_feature_implemented(
+    my_type,
+)
+```
+
+Method to check if a specific feature type is implemented for the strategy
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type            | Description   | Default    |
+|---------|-----------------|---------------|------------|
+| my_type | Type\[Feature\] | Feature class | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                                |
+|--------|--------|----------------------------------------------------------------------------|
+| bool   | bool   | True if the feature type is valid for the strategy chosen, False otherwise |
+
+##### is_objective_implemented { #bofire.data_models.strategies.api.ActiveLearningStrategy.is_objective_implemented }
+
+```python
+data_models.strategies.api.ActiveLearningStrategy.is_objective_implemented(
+    my_type,
+)
+```
+
+Method to check if a objective type is implemented for the strategy
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type              | Description     | Default    |
+|---------|-------------------|-----------------|------------|
+| my_type | Type\[Objective\] | Objective class | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                                  |
+|--------|--------|------------------------------------------------------------------------------|
+| bool   | bool   | True if the objective type is valid for the strategy chosen, False otherwise |
+
+### BotorchStrategy { #bofire.data_models.strategies.api.BotorchStrategy }
+
+```python
+data_models.strategies.api.BotorchStrategy()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_constraint_implemented](#bofire.data_models.strategies.api.BotorchStrategy.is_constraint_implemented) | Method to check if a specific constraint type is implemented for the strategy. For optimizer-specific |
+| [validate_multitask_allowed](#bofire.data_models.strategies.api.BotorchStrategy.validate_multitask_allowed) | Ensures that if a multitask model is used there is only a single allowed task category |
+| [validate_outlier_detection_specs_for_domain](#bofire.data_models.strategies.api.BotorchStrategy.validate_outlier_detection_specs_for_domain) | Ensures that a outlier_detection model is specified for each output feature |
+| [validate_surrogate_specs](#bofire.data_models.strategies.api.BotorchStrategy.validate_surrogate_specs) | Ensures that a prediction model is specified for each output feature |
+
+##### is_constraint_implemented { #bofire.data_models.strategies.api.BotorchStrategy.is_constraint_implemented }
+
+```python
+data_models.strategies.api.BotorchStrategy.is_constraint_implemented(my_type)
+```
+
+Method to check if a specific constraint type is implemented for the strategy. For optimizer-specific
+strategies, this is passed to the optimizer check.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type               | Description      | Default    |
+|---------|--------------------|------------------|------------|
+| my_type | Type\[Constraint\] | Constraint class | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                                   |
+|--------|--------|-------------------------------------------------------------------------------|
+| bool   | bool   | True if the constraint type is valid for the strategy chosen, False otherwise |
+
+##### validate_multitask_allowed { #bofire.data_models.strategies.api.BotorchStrategy.validate_multitask_allowed }
+
+```python
+data_models.strategies.api.BotorchStrategy.validate_multitask_allowed()
+```
+
+Ensures that if a multitask model is used there is only a single allowed task category
+
+##### validate_outlier_detection_specs_for_domain { #bofire.data_models.strategies.api.BotorchStrategy.validate_outlier_detection_specs_for_domain }
+
+```python
+data_models.strategies.api.BotorchStrategy.validate_outlier_detection_specs_for_domain(
+)
+```
+
+Ensures that a outlier_detection model is specified for each output feature
+
+##### validate_surrogate_specs { #bofire.data_models.strategies.api.BotorchStrategy.validate_surrogate_specs }
+
+```python
+data_models.strategies.api.BotorchStrategy.validate_surrogate_specs()
+```
+
+Ensures that a prediction model is specified for each output feature
+
+### EntingStrategy { #bofire.data_models.strategies.api.EntingStrategy }
+
+```python
+data_models.strategies.api.EntingStrategy()
+```
+
+
+
+### MoboStrategy { #bofire.data_models.strategies.api.MoboStrategy }
+
+```python
+data_models.strategies.api.MoboStrategy()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [is_feature_implemented](#bofire.data_models.strategies.api.MoboStrategy.is_feature_implemented) | Method to check if a specific feature type is implemented for the strategy |
+| [is_objective_implemented](#bofire.data_models.strategies.api.MoboStrategy.is_objective_implemented) | Method to check if a objective type is implemented for the strategy |
+| [validate_ref_point](#bofire.data_models.strategies.api.MoboStrategy.validate_ref_point) | Validate that the provided refpoint matches the provided domain. |
+
+##### is_feature_implemented { #bofire.data_models.strategies.api.MoboStrategy.is_feature_implemented }
+
+```python
+data_models.strategies.api.MoboStrategy.is_feature_implemented(my_type)
+```
+
+Method to check if a specific feature type is implemented for the strategy
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type            | Description   | Default    |
+|---------|-----------------|---------------|------------|
+| my_type | Type\[Feature\] | Feature class | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                                |
+|--------|--------|----------------------------------------------------------------------------|
+| bool   | bool   | True if the feature type is valid for the strategy chosen, False otherwise |
+
+##### is_objective_implemented { #bofire.data_models.strategies.api.MoboStrategy.is_objective_implemented }
+
+```python
+data_models.strategies.api.MoboStrategy.is_objective_implemented(my_type)
+```
+
+Method to check if a objective type is implemented for the strategy
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name    | Type              | Description     | Default    |
+|---------|-------------------|-----------------|------------|
+| my_type | Type\[Objective\] | Objective class | _required_ |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                                  |
+|--------|--------|------------------------------------------------------------------------------|
+| bool   | bool   | True if the objective type is valid for the strategy chosen, False otherwise |
+
+##### validate_ref_point { #bofire.data_models.strategies.api.MoboStrategy.validate_ref_point }
+
+```python
+data_models.strategies.api.MoboStrategy.validate_ref_point()
+```
+
+Validate that the provided refpoint matches the provided domain.
+
+### MultiFidelityStrategy { #bofire.data_models.strategies.api.MultiFidelityStrategy }
+
+```python
+data_models.strategies.api.MultiFidelityStrategy()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [validate_multitask_allowed](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed) | Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed. |
+| [validate_only_one_target_fidelity](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity) | Ensures that there is only one target fidelity (task where fidelity==0). |
+| [validate_surrogate_specs](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs) | Ensures that a multi-task model is specified for each output feature |
+| [validate_tasks_and_fidelity_thresholds](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds) | Ensures that there is one threshold per fidelity |
+
+##### validate_multitask_allowed { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed }
+
+```python
+data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed()
+```
+
+Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed.
+
+##### validate_only_one_target_fidelity { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity }
+
+```python
+data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity(
+)
+```
+
+Ensures that there is only one target fidelity (task where fidelity==0).
+
+##### validate_surrogate_specs { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs }
+
+```python
+data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs()
+```
+
+Ensures that a multi-task model is specified for each output feature
+
+##### validate_tasks_and_fidelity_thresholds { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds }
+
+```python
+data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds(
+)
+```
+
+Ensures that there is one threshold per fidelity
+
+### MultiobjectiveStrategy { #bofire.data_models.strategies.api.MultiobjectiveStrategy }
+
+```python
+data_models.strategies.api.MultiobjectiveStrategy()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [validate_domain_is_multiobjective](#bofire.data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective) | Validate that the domain is multiobjective. |
+
+##### validate_domain_is_multiobjective { #bofire.data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective }
+
+```python
+data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective(
+    v,
+)
+```
+
+Validate that the domain is multiobjective.
+
+### AdditiveSoboStrategy { #bofire.data_models.strategies.api.AdditiveSoboStrategy }
+
+```python
+data_models.strategies.api.AdditiveSoboStrategy()
+```
+
+
+
+### CustomSoboStrategy { #bofire.data_models.strategies.api.CustomSoboStrategy }
+
+```python
+data_models.strategies.api.CustomSoboStrategy()
+```

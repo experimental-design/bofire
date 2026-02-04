@@ -159,10 +159,9 @@ class AcquisitionOptimizer(ABC):
     def _input_preprocessing_specs(
         domain: Domain,
     ) -> InputTransformSpecs:
-        return {
-            key: CategoricalEncodingEnum.ORDINAL
-            for key in domain.inputs.get_keys(CategoricalInput)
-        }
+        return dict.fromkeys(
+            domain.inputs.get_keys(CategoricalInput), CategoricalEncodingEnum.ORDINAL
+        )
 
     @staticmethod
     def _candidates_tensor_to_dataframe(

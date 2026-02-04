@@ -1,6 +1,5 @@
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
-import cvxpy as cp
 import numpy as np
 import pandas as pd
 import torch
@@ -15,7 +14,6 @@ from pymoo.core.problem import Problem as PymooProblem
 from pymoo.core.repair import Repair as PymooRepair
 from pymoo.optimize import minimize as pymoo_minimize
 from pymoo.termination import default as pymoo_default_termination
-from scipy import sparse
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -28,7 +26,6 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -38,21 +35,11 @@ from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
 from bofire.data_models.types import InputTransformSpecs
-from bofire.utils.torch_tools import (
-    get_linear_constraints,
-    get_nonlinear_constraints,
-    tkwargs,
+from bofire.utils.domain_repair import (
+    LinearProjection,
+    default_input_preprocessing_specs,
 )
-
-
-def _default_input_preprocessing_specs(
-    domain: Domain,
-) -> InputTransformSpecs:
-    """Default input preprocessing specs for the GA optimizer: If none given, will use Ordinal encoding for all categorical inputs"""
-    return {
-        key: CategoricalEncodingEnum.ORDINAL
-        for key in domain.inputs.get_keys(CategoricalInput)
-    }
+from bofire.utils.torch_tools import get_nonlinear_constraints, tkwargs
 
 
 class GaMixedDomainHandler:
@@ -98,7 +85,7 @@ class GaMixedDomainHandler:
         self.q = q
 
         if input_preprocessing_specs is None:
-            input_preprocessing_specs = _default_input_preprocessing_specs(domain)
+            input_preprocessing_specs = default_input_preprocessing_specs(domain)
 
         for key in domain.inputs.get_keys():
             spec_ = input_preprocessing_specs.get(key)
@@ -477,7 +464,7 @@ class DomainOptimizationProblem(PymooProblem):
                 out["G"] = np.hstack([out["G"], G]) if (out["G"] is not None) else G
 
 
-class LinearProjection(PymooRepair):
+class LinearProjectionPymooRepair(PymooRepair):
     """handles linear equality constraints by mapping to closest feasible point in the design space
     using quadratic programming, by projecting to x':
 
@@ -512,299 +499,31 @@ class LinearProjection(PymooRepair):
     def __init__(
         self,
         domain: Domain,
-        d: int,
-        bounds: Tensor,
         q: int,
-        domain_handler: Optional[GaMixedDomainHandler] = None,
+        domain_handler: GaMixedDomainHandler,
         constraints_include: Optional[List[Type[Constraint]]] = None,
         n_choose_k_constr_min_delta: float = 1e-3,
         verbose: bool = False,
+        scale_problem: bool = True,
     ):
-        if constraints_include is None:
-            constraints_include = [
-                LinearEqualityConstraint,
-                LinearInequalityConstraint,
-                NChooseKConstraint,
-            ]
-        else:
-            for constr in constraints_include:
-                assert constr in (
-                    LinearEqualityConstraint,
-                    LinearInequalityConstraint,
-                    NChooseKConstraint,
-                ), "Only linear constraints and NChooseK supported for LinearProjection"
-
-        def lin_constr_to_list(constr_) -> Tuple[List[int], List[float], float]:
-            """decode "get_linear_constraints" output: x-index, coefficients, and b
-            - convert from tensor to list of ints and floats
-            - multiply with (-1) to adhere to (usual) cvxopt format A*x <= b, instead of Botorch A*x >= b
-            """
-            index: List[int] = [int(x) for x in (constr_[0].detach().numpy())]
-            coeffs: List[float] = list(-constr_[1].detach().numpy())
-            b: float = -constr_[2]
-            return index, coeffs, b
-
-        # linear constraints
-        self.eq_constr, self.ineq_constr = [], []
-        if LinearEqualityConstraint in constraints_include:
-            self.eq_constr = [
-                lin_constr_to_list(eq_constr_)
-                for eq_constr_ in get_linear_constraints(
-                    domain, LinearEqualityConstraint
-                )
-            ]
-        if LinearInequalityConstraint in constraints_include:
-            self.ineq_constr = [
-                lin_constr_to_list(ineq_constr_)
-                for ineq_constr_ in get_linear_constraints(
-                    domain, LinearInequalityConstraint
-                )
-            ]
-
-        # NChooseKConstrains
-        class NChooseKBoundProjection:
-            """helper class for correcting upper and lower bounds to fulfill NChooseK constraints
-            in QP projection"""
-
-            def __init__(
-                self,
-                constraints: List[NChooseKConstraint],
-                bounds: np.ndarray,
-                min_delta,
-            ):
-                self.lb, self.ub = (
-                    bounds[0, :].reshape((1, -1)),
-                    bounds[1, :].reshape((1, -1)),
-                )
-                self.min_delta = min_delta
-                self.d = bounds.shape[1]
-
-                self.n_zero, self.n_non_zero, self.idx = [], [], []
-                for constraint in constraints:
-                    di = len(constraint.features)
-                    self.idx.append(
-                        np.array(
-                            [
-                                domain.inputs.get_keys(ContinuousInput).index(key)
-                                for key in constraint.features
-                            ]
-                        )
-                    )
-                    self.n_zero.append(di - constraint.max_count)
-                    self.n_non_zero.append(constraint.min_count)
-
-            @staticmethod
-            def _ub_correction(
-                ub: np.ndarray, x: np.ndarray, n_zero: int
-            ) -> np.ndarray:
-                """correct upper bounds: set the upper bound of the smallest n_zero elements in each row to zero"""
-                if n_zero == 0:
-                    return ub
-
-                # Get indices of the lowest n_zero values per row
-                low_indices = np.argsort(x, axis=1)[:, :n_zero]
-
-                # set the lowest indices of each row to zero
-                rows = np.arange(x.shape[0])[:, None]
-                ub[rows, low_indices] = 0
-
-                return ub
-
-            @staticmethod
-            def _lb_correction(
-                lb: np.ndarray, x: np.ndarray, n_non_zero: int, min_delta: float
-            ) -> np.ndarray:
-                """correct lower bounds: set the lower bound of the largest n_non_zero elements in each row to min_delta"""
-                if n_non_zero == 0:
-                    return lb
-
-                # Get indices of largest n_non_zero values for each row
-                top_indices = np.argsort(x, axis=1)[:, -n_non_zero:]
-
-                # Set all values in lb to 0 initially
-                lb.fill(0)
-                rows = np.arange(x.shape[0])[:, None]
-                lb[rows, top_indices] = min_delta
-
-                return lb
-
-            def __call__(self, x: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
-                """will generate bounds for the QP projection for all n_pop*q vectors of x, with
-                dimensions (n_pop, d*q)
-
-                Returns:
-                    List[Tuple[np.ndarray, np.ndarray]]: lower and upper bounds for each x in the population
-
-                """
-                x = x.reshape((-1, self.d))
-
-                lb, ub = self.lb.copy(), self.ub.copy()
-                lb, ub = (
-                    np.repeat(lb, x.shape[0], axis=0),
-                    np.repeat(ub, x.shape[0], axis=0),
-                )
-
-                for n_zero, n_non_zero, idx in zip(
-                    self.n_zero, self.n_non_zero, self.idx
-                ):
-                    x_, lb_, ub_ = x[:, idx], lb[:, idx].copy(), ub[:, idx].copy()
-                    lb_ = self._lb_correction(lb_, x_, n_non_zero, self.min_delta)
-                    ub_ = self._ub_correction(ub_, x_, n_zero)
-
-                    lb[:, idx], ub[:, idx] = lb_, ub_
-
-                return [(lb[i, :], ub[i, :]) for i in range(x.shape[0])]
-
-        self.n_choose_k_constr = None
-        if NChooseKConstraint in constraints_include:
-            n_choose_k_constraints = domain.constraints.get(
-                includes=[NChooseKConstraint]
-            )
-            if n_choose_k_constraints.constraints:
-                self.n_choose_k_constr = NChooseKBoundProjection(
-                    n_choose_k_constraints.constraints,  # type: ignore
-                    bounds.detach().numpy(),
-                    n_choose_k_constr_min_delta,
-                )
-
         self.domain_handler = domain_handler
-        self.d = d
-        self.q = q
-        self.domain = domain
-        self.bounds = bounds
-        self.verbose = verbose
+        self.linear_projection = LinearProjection(
+            domain=domain,
+            q=q,
+            input_preprocessing_specs=domain_handler.input_preprocessing_specs,
+            constraints_include=constraints_include,
+            n_choose_k_constr_min_delta=n_choose_k_constr_min_delta,
+            verbose=verbose,
+            scale_problem=scale_problem,
+        )
 
         super().__init__()
-
-    def _create_qp_problem_input(self, X: np.ndarray) -> dict:
-        n_pop = X.shape[0]
-        n_x_points = n_pop * self.q
-
-        def _build_A_b_matrices_for_single_constr(
-            index, coeffs, b
-        ) -> Tuple[sparse.csr_array, np.ndarray]:
-            """a single-line constraint matrix of the form A*x = b or A*x <= b"""
-            A = sparse.csr_array(
-                (
-                    [float(ci) for ci in coeffs],
-                    (
-                        [0] * len(index),  # row index, only one row
-                        [int(idx) for idx in index],  # column indices
-                    ),
-                ),
-                shape=(1, self.d),
-            )
-            b = np.array(b).reshape((1, 1))
-            return A, b
-
-        def _build_A_b_matrices_for_n_points(
-            constr: List[Tuple[List[int], List[float], float]],
-        ) -> Tuple[sparse.csr_array, np.ndarray]:
-            """build big sparse matrix for a constraint A*x = b, or A*x <= b (repeated A/b matrices for n_x_point)
-
-            will build a large constraint matrix A, with block-diagonal structure, such that each block represents
-            the constraint A*x =/<= b for one x in the population and q-points.
-
-            Args:
-                constr (List[Tuple[List[int], List[float], float]]): list of constraints, each as tuple of
-                    (index, coefficients, b) as returned by get_linear_constraints
-
-
-
-            """
-
-            if not constr:
-                return sparse.csr_array((0, self.d * n_x_points)), np.zeros(
-                    shape=(0, 1)
-                )
-
-            # vertically combine all linear equality constr.
-            Ab_single_eq = [
-                _build_A_b_matrices_for_single_constr(*constr_) for constr_ in constr
-            ]
-            A = sparse.vstack([Ab[0] for Ab in Ab_single_eq])
-            b = np.vstack([Ab[1] for Ab in Ab_single_eq])
-            # repeat for each x in the population
-            A = sparse.block_diag([A] * n_x_points)
-            b = np.vstack([b] * n_x_points)
-            return A, b
-
-        def _build_G_h_for_box_bounds() -> Tuple[sparse.csr_array, np.ndarray]:
-            """build linear inequality matrices, such that lb<=x<=ub -> G*x<=h:
-
-            G = [I; -I]
-            h = [ub; -lb]
-
-            """
-            G_bounds_ = sparse.vstack(
-                [
-                    sparse.identity(self.d),  # unity matrix
-                    -sparse.identity(self.d),  # negative unity matrix
-                ]
-            )
-            G = sparse.block_diag([G_bounds_] * n_x_points)
-
-            if self.n_choose_k_constr is None:  # use the normal lb/ub
-                lb, ub = (self.bounds[i, :].detach().numpy() for i in range(2))
-                h_bounds_ = np.concatenate((ub.reshape(-1), -lb.reshape(-1)))
-                h = np.vstack([h_bounds_.reshape(-1, 1)] * n_x_points)
-            else:
-                # correct bounds for NChooseK constraints
-                bounds = self.n_choose_k_constr(X)
-                # alternate upper- and (-1*lower) bound
-                h = np.vstack(
-                    [np.concatenate((b[1], -b[0])).reshape((-1, 1)) for b in bounds]
-                )
-
-            return G, h
-
-        # Prepare Matrices for solving the estimation problem
-        P = sparse.identity(self.d * n_x_points)  # the unit-matrix
-
-        A, b = _build_A_b_matrices_for_n_points(self.eq_constr)
-        G, h = _build_G_h_for_box_bounds()
-        if self.ineq_constr:
-            G_, h_ = _build_A_b_matrices_for_n_points(self.ineq_constr)
-            G = sparse.vstack([G, G_])
-            h = np.vstack([h, h_])
-
-        x = X.reshape(-1)
-        q = -x
-
-        return {
-            "P": P,
-            "q": q,
-            "G": G,
-            "h": h,
-            "A": A,
-            "b": b,
-            "initvals": x,
-        }
 
     def _do(self, problem, X, **kwargs):
         if self.domain_handler is not None:
             X = self.domain_handler.transform_mixed_to_2D(X)
 
-        matrices = self._create_qp_problem_input(X)
-
-        x_var = cp.Variable((np.size(X), 1))
-        x_var.value = matrices["initvals"].reshape(-1, 1)
-
-        objective = cp.Minimize(
-            0.5 * cp.quad_form(x_var, matrices["P"]) + matrices["q"].T @ x_var
-        )
-        constraints = []
-        if matrices["A"].shape[0] > 0:
-            constraints.append(matrices["A"] @ x_var == matrices["b"])
-        if matrices["G"].shape[0] > 0:
-            constraints.append(matrices["G"] @ x_var <= matrices["h"])
-
-        problem = cp.Problem(objective, constraints)
-
-        problem.solve(verbose=self.verbose)
-
-        x_corrected = x_var.value
-        X_corrected = x_corrected.reshape(X.shape)
+        X_corrected = self.linear_projection.solve_numeric(X)
 
         if self.domain_handler is not None:
             X_corrected = self.domain_handler.inverse_transform_to_mixed(X_corrected)
@@ -882,11 +601,7 @@ def get_ga_problem_and_algorithm(
     """
 
     if input_preprocessing_specs is None:
-        input_preprocessing_specs = _default_input_preprocessing_specs(domain)
-
-    bounds_botorch_space = get_torch_bounds_from_domain(
-        domain, input_preprocessing_specs
-    )
+        input_preprocessing_specs = default_input_preprocessing_specs(domain)
 
     n_obj = n_obj or len(objective_callables)
 
@@ -915,10 +630,8 @@ def get_ga_problem_and_algorithm(
         ],
     )
     if len(repair_constraints) > 0:
-        repair = LinearProjection(
+        repair = LinearProjectionPymooRepair(
             domain=domain,
-            d=bounds_botorch_space.shape[1],
-            bounds=bounds_botorch_space,
             q=q,
             domain_handler=problem.domain_handler,
             verbose=verbose,

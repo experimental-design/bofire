@@ -268,6 +268,7 @@ specs.add_valid(
         "kappa_fantasy": 10.0,
     },
 )
+
 specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
@@ -278,8 +279,30 @@ specs.add_valid(
         "n_burnin": 1000,
         "n_thinning": 32,
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
+        "sampler_kwargs": {},
     },
 )
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampling_method": SamplingMethodEnum.SOBOL,
+        "sampler_kwargs": {"scramble": True},
+    },
+)
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampling_method": SamplingMethodEnum.LHS,
+        "sampler_kwargs": {"scramble": True, "strength": 2},
+    },
+)
+
 for criterion in [
     strategies.AOptimalityCriterion,
     strategies.DOptimalityCriterion,

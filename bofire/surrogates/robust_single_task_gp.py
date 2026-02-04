@@ -83,9 +83,7 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
-                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                    self.input_preprocessing_specs, feats
-                ),
+                features_to_idx_mapper=self.get_feature_indices,
             ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
