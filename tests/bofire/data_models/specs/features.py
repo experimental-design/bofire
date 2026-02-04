@@ -245,6 +245,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "is_timeseries": False,
     },
 )
 
