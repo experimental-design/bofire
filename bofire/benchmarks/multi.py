@@ -440,11 +440,11 @@ class ZDT1(Benchmark):
         super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
-            ContinuousInput(key=f"x{i+1}", bounds=[0, 1]) for i in range(n_inputs)
+            ContinuousInput(key=f"x{i + 1}", bounds=[0, 1]) for i in range(n_inputs)
         ]
         inputs = Inputs(features=inputs)
         outputs = [
-            ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
+            ContinuousOutput(key=f"y{i + 1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
         outputs = Outputs(features=outputs)

@@ -9,7 +9,12 @@ from botorch.models.map_saas import (
     EnsembleMapSaasSingleTaskGP,
 )
 from botorch.models.transforms.input import InputTransform
-from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+from botorch.models.transforms.outcome import (
+    ChainedOutcomeTransform,
+    Log,
+    OutcomeTransform,
+    Standardize,
+)
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bofire.data_models.enum import OutputFilteringEnum
@@ -78,11 +83,17 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ):
         # EnsembleMapSaasSingleTaskGP repeats the data to create a batch dimension
-        # The outcome_transform needs to have the correct batch_shape
+        # The Standardize outcome_transform needs to have the correct batch_shape
         if isinstance(outcome_transform, Standardize):
             outcome_transform = Standardize(
                 m=tY.shape[-1],
                 batch_shape=torch.Size([self.n_taus]),
+            )
+        if isinstance(outcome_transform, Log) or isinstance(
+            outcome_transform, ChainedOutcomeTransform
+        ):
+            raise RuntimeError(
+                "Log output transform is not supported with EnsembleMapSaasSingleTaskGP."
             )
         self.model = EnsembleMapSaasSingleTaskGP(
             train_X=tX,

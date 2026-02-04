@@ -46,7 +46,8 @@ class SVM(Benchmark):
 
         # Define domain with continuous inputs for all hyperparameters
         input_features = [
-            ContinuousInput(key=f"x_{i+1}", bounds=[0.0, 1.0]) for i in range(self.dim)
+            ContinuousInput(key=f"x_{i + 1}", bounds=[0.0, 1.0])
+            for i in range(self.dim)
         ]
 
         output_features = [ContinuousOutput(key="y", objective=MinimizeObjective())]
@@ -125,7 +126,7 @@ class SVM(Benchmark):
             DataFrame with columns 'y' (SVM error) and 'valid_y' (always 1).
         """
         # Extract hyperparameters from candidates DataFrame
-        hypers_columns = [f"x_{i+1}" for i in range(self.dim)]
+        hypers_columns = [f"x_{i + 1}" for i in range(self.dim)]
         hypers = candidates[hypers_columns].values
 
         # Evaluate SVM for each set of hyperparameters

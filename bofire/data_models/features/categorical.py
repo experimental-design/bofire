@@ -133,7 +133,7 @@ class CategoricalInput(Input):
             possible_categories = self.get_possible_categories(values)
             if len(possible_categories) != len(self.categories):
                 raise ValueError(
-                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
+                    f"Categories {list(set(self.categories) - set(possible_categories))} of feature {self.key} not used. Remove them.",
                 )
         return values
 

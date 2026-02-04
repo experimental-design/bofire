@@ -303,7 +303,7 @@ class SyntheticBoTorch(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=b)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=b)
                     for i, b in enumerate(self.test_function._bounds)
                 ]
             ),
