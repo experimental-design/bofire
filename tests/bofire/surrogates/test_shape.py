@@ -1,6 +1,6 @@
 import pandas as pd
 import torch
-from gpytorch.kernels import MaternKernel, ProductKernel, ScaleKernel
+from gpytorch.kernels import MaternKernel, ProductKernel
 from gpytorch.priors import GammaPrior, LogNormalPrior
 from pandas.testing import assert_frame_equal
 from torch.testing import assert_close
@@ -72,27 +72,25 @@ def test_PiecewiseLinearGPSurrogate():
         },
     )
     surrogate.fit(experiments)
-    assert isinstance(surrogate.model.covar_module, ScaleKernel)
-    assert isinstance(surrogate.model.covar_module.outputscale_prior, GammaPrior)
-    assert isinstance(surrogate.model.covar_module.base_kernel, ProductKernel)
-    assert isinstance(surrogate.model.covar_module.base_kernel.kernels[0], MaternKernel)
+    assert isinstance(surrogate.model.covar_module, ProductKernel)
+    assert isinstance(surrogate.model.covar_module.kernels[0], MaternKernel)
     assert isinstance(
-        surrogate.model.covar_module.base_kernel.kernels[0].lengthscale_prior,
+        surrogate.model.covar_module.kernels[0].lengthscale_prior,
         GammaPrior,
     )
-    assert surrogate.model.covar_module.base_kernel.kernels[
-        0
-    ].active_dims == torch.tensor([1006], dtype=torch.int64)
+    assert surrogate.model.covar_module.kernels[0].active_dims == torch.tensor(
+        [1006], dtype=torch.int64
+    )
     assert isinstance(
-        surrogate.model.covar_module.base_kernel.kernels[1],
+        surrogate.model.covar_module.kernels[1],
         WassersteinKernel,
     )
     assert torch.allclose(
-        surrogate.model.covar_module.base_kernel.kernels[1].active_dims,
+        surrogate.model.covar_module.kernels[1].active_dims,
         torch.tensor(list(range(1000)), dtype=torch.int64),
     )
     assert isinstance(
-        surrogate.model.covar_module.base_kernel.kernels[1].lengthscale_prior,
+        surrogate.model.covar_module.kernels[1].lengthscale_prior,
         LogNormalPrior,
     )
 
