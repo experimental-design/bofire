@@ -18,7 +18,7 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import PiecewiseLinearGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.utils.torch_tools import InterpolateTransform, tkwargs
+from bofire.utils.torch_tools import InterpolateTransform, TrapezoidTransform, tkwargs
 
 
 class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
@@ -88,10 +88,6 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-
-        # print('in fit of PiecewiseLinearGPSurrogate')
-        # print('ard is ', self.ard)
-        # print(self.idx_continuous, self.idx_shape, len(self.idx_continuous), len(self.idx_shape))
 
         tX, tY = (
             torch.from_numpy(transformed_X.values).to(**tkwargs),
@@ -195,3 +191,121 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         # botorch.fit_fully_bayesian_model_nuts(
         #     self.model,  # type: ignore
         # )
+
+
+class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+    def __init__(
+        self,
+        data_model: DataModel,
+        **kwargs,
+    ):
+        self.shape_kernel = data_model.shape_kernel
+        self.continuous_kernel = data_model.continuous_kernel
+
+        self.noise_prior = data_model.noise_prior
+        self.outputscale_prior = data_model.outputscale_prior
+        self.ard = data_model.ard
+        self.saas = data_model.saas
+
+        idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
+        idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
+
+        inter = TrapezoidTransform(
+            idx_x=idx_x,
+            idx_y=idx_y,
+            prepend_x=torch.tensor(data_model.prepend_x).to(**tkwargs),
+            prepend_y=torch.tensor(data_model.prepend_y).to(**tkwargs),
+            append_x=torch.tensor(data_model.append_x).to(**tkwargs),
+            append_y=torch.tensor(data_model.append_y).to(**tkwargs),
+            normalize_y=torch.tensor(data_model.normalize_y).to(**tkwargs),
+            normalize_x=True,
+            keep_original=True,
+        )
+
+        # first index will now contain the trapezoid areas
+        self.idx_shape = [
+            0
+        ]  # TODO: can implement different ranges over which to compute areas later, then this will change
+
+        self.idx_continuous = sorted(
+            [
+                data_model.inputs.get_keys().index(k)
+                + 1  # +1 because first index is area now
+                for k in data_model.continuous_keys
+            ],
+        )
+
+        if len(self.idx_continuous) > 0:
+            bounds = torch.tensor(
+                data_model.inputs.get_by_keys(data_model.continuous_keys).get_bounds(
+                    specs={},
+                ),
+            ).to(**tkwargs)
+            norm = Normalize(
+                indices=self.idx_continuous,
+                d=len(data_model.inputs.get_keys())
+                + 1,  # +1 because first index is area now
+                bounds=bounds,
+            )
+
+            self.transform = ChainedInputTransform(tf1=inter, tf2=norm)
+        else:
+            self.transform = inter
+
+        super().__init__(data_model=data_model, **kwargs)
+
+    model: Optional[botorch.models.SingleTaskGP] = None
+    _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
+    training_specs: Dict = {}
+
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+        # interpolated y values at unique x locations
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
+
+        if self.continuous_kernel is not None:
+            covar_module = kernels.map(
+                self.continuous_kernel,
+                active_dims=self.idx_continuous,
+                ard_num_dims=1,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            ) * kernels.map(
+                self.shape_kernel,
+                active_dims=self.idx_shape,
+                ard_num_dims=len(self.idx_shape) if self.ard else None,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            )
+        else:
+            covar_module = kernels.map(
+                self.shape_kernel,
+                active_dims=self.idx_shape,
+                ard_num_dims=len(self.idx_shape) if self.ard else None,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
+            )
+
+        self.model = botorch.models.SingleTaskGP(  # type: ignore
+            train_X=tX,
+            train_Y=tY,
+            covar_module=covar_module,
+            outcome_transform=(Standardize(m=tY.shape[-1])),
+            input_transform=self.transform,
+        )
+
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.raw_noise_constraint = GreaterThan(5e-4)  # type: ignore
+
+        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)

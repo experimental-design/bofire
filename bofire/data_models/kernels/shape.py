@@ -29,3 +29,30 @@ class WassersteinKernel(Kernel):
     ard_num_dims: Optional[int] = None
     lengthscale_prior: Optional[AnyPrior] = None
     lengthscale_constraint: Optional[AnyPriorConstraint] = None
+
+
+class ExactWassersteinKernel(Kernel):
+    """Kernel based on the Wasserstein distance.
+
+    It only works for 1D data that is monotonically increasing, as it is just
+    calculating the integral of the absolute difference between two shapes.
+    Only when both shapes are monotonically increasing, this integral is also
+    a Wasserstein distance (https://arxiv.org/abs/2002.01878).
+
+    The shape are assumed to be discretized as a set of points. Make sure that
+    the discretization is fine enough to capture the shape of the data.
+
+    Attributes:
+        squared: If True, the squared exponential Wasserstein distance is used. Note
+            that the squared exponential Wasserstein distance kernel is not positive
+            definite for all lengthscales. For this reason, as default the absolute
+            exponential Wasserstein distance is used.
+        lengthscale_prior: Prior for the lengthscale of the kernel.
+
+    """
+
+    type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"
+    squared: bool = False
+    ard_num_dims: Optional[int] = None
+    lengthscale_prior: Optional[AnyPrior] = None
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None

@@ -12,7 +12,7 @@ import bofire.priors.api as priors
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 from bofire.kernels.categorical import HammingKernelWithOneHots
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
-from bofire.kernels.shape import WassersteinKernel
+from bofire.kernels.shape import ExactWassersteinKernel, WassersteinKernel
 
 
 def _compute_active_dims(
@@ -288,6 +288,25 @@ def map_WassersteinKernel(
     )
 
 
+def map_ExactWassersteinKernel(
+    data_model: data_models.ExactWassersteinKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> ExactWassersteinKernel:
+    return ExactWassersteinKernel(
+        squared=data_model.squared,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        active_dims=active_dims,
+        ard_num_dims=ard_num_dims,
+    )
+
+
 def map_PolynomialFeatureInteractionKernel(
     data_model: data_models.PolynomialFeatureInteractionKernel,
     batch_shape: torch.Size,
@@ -320,6 +339,7 @@ def map_PolynomialFeatureInteractionKernel(
 
 KERNEL_MAP = {
     data_models.WassersteinKernel: map_WassersteinKernel,
+    data_models.ExactWassersteinKernel: map_ExactWassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
     data_models.LinearKernel: map_LinearKernel,

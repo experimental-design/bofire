@@ -36,7 +36,10 @@ from bofire.data_models.surrogates.robust_single_task_gp import (
     RobustSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
+from bofire.data_models.surrogates.shape import (
+    ExactPiecewiseLinearGPSurrogate,
+    PiecewiseLinearGPSurrogate,
+)
 from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
@@ -72,6 +75,7 @@ AnySurrogate = Union[
     PiecewiseLinearGPSurrogate,
     SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    ExactPiecewiseLinearGPSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -89,6 +93,7 @@ AnyTrainableSurrogate = Union[
     SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
     PiecewiseLinearGPSurrogate,
+    ExactPiecewiseLinearGPSurrogate,
     SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
 ]
@@ -111,6 +116,7 @@ AnyRegressionSurrogate = Union[
     SingleTaskIBNNSurrogate,
     PiecewiseLinearGPSurrogate,
     SortingGPSurrogate,
+    ExactPiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
 ]
 
