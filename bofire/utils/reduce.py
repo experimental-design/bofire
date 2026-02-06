@@ -192,8 +192,9 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
 
     if len(constraints) > 0:
         _domain.constraints.constraints = (
-            _domain.constraints.constraints + constraints
-        )  # ty: ignore[unsupported-operator]
+            _domain.constraints.constraints
+            + constraints  # ty: ignore[unsupported-operator]
+        )
 
     # assemble equalities
     _equalities = []

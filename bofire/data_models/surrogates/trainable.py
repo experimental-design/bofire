@@ -83,8 +83,8 @@ class TrainableSurrogate(BaseModel):
     @model_validator(mode="after")
     def validate_aggregations(self):
         self.engineered_features.validate_inputs(
-            self.inputs
-        )  # ty: ignore[unresolved-attribute]
+            self.inputs  # ty: ignore[unresolved-attribute]
+        )
         return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):

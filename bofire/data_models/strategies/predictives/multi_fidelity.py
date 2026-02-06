@@ -34,8 +34,9 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
         """Ensures that there is only one target fidelity (task where fidelity==0)."""
         task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
         num_target = sum(
-            t == 0 for t in task_input.fidelities
-        )  # ty: ignore[unresolved-attribute]
+            t == 0
+            for t in task_input.fidelities  # ty: ignore[unresolved-attribute]
+        )
         if num_target != 1:
             raise ValueError(
                 f"Only one task can be the target fidelity (got {num_target})."

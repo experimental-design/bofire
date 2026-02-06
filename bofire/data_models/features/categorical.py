@@ -337,8 +337,8 @@ class CategoricalInput(Input):
                 lower = [0.0 for _ in self.categories]
                 upper = [
                     1.0
-                    if self.allowed[i] is True
-                    else 0.0  # ty: ignore[not-subscriptable]
+                    if self.allowed[i] is True  # ty: ignore[not-subscriptable]
+                    else 0.0
                     for i, _ in enumerate(self.categories)
                 ]
             else:

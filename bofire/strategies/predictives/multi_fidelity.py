@@ -28,8 +28,10 @@ class MultiFidelityStrategy(SoboStrategy):
 
         ft = data_model.fidelity_thresholds
         M = len(
-            self.domain.inputs.get_by_key(self.task_feature_key).fidelities
-        )  # ty: ignore[unresolved-attribute]
+            self.domain.inputs.get_by_key(
+                self.task_feature_key
+            ).fidelities  # ty: ignore[unresolved-attribute]
+        )
         self.fidelity_thresholds = ft if isinstance(ft, list) else [ft] * M
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:

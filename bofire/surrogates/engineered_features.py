@@ -71,8 +71,8 @@ def map_weighted_sum_feature(
     descriptors = torch.tensor(
         [
             inputs.get_by_key(key)
-            .to_df()[feature.descriptors]
-            .values[0]  # ty: ignore[unresolved-attribute]
+            .to_df()[feature.descriptors]  # ty: ignore[unresolved-attribute]
+            .values[0]
             for key in feature.features
         ],
         dtype=torch.double,
@@ -95,8 +95,9 @@ def map_molecular_weighted_sum_feature(
     indices = [features2idx[key][0] for key in feature.features]
 
     molecules = [
-        inputs.get_by_key(key).molecule for key in feature.features
-    ]  # ty: ignore[unresolved-attribute]
+        inputs.get_by_key(key).molecule  # ty: ignore[unresolved-attribute]
+        for key in feature.features
+    ]
     # filter out the highly-correlated descriptors
     feature.molfeatures.remove_correlated_descriptors(molecules)
     descriptors_df = feature.molfeatures.get_descriptor_values(pd.Series(molecules))

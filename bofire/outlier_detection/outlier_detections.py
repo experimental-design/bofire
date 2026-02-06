@@ -22,9 +22,9 @@ class OutlierDetections(ABC):
         data_model: DataModel,
         **kwargs,
     ):
-        self.detectors = [
+        self.detectors = [  # ty: ignore[invalid-assignment]
             map_outlier(model) for model in data_model.detectors
-        ]  # ty: ignore[invalid-assignment]
+        ]
 
     def detect(self, experiments: pd.DataFrame) -> pd.DataFrame:
         for outlier_model in self.detectors:

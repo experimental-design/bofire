@@ -257,9 +257,10 @@ class LinearProjection(DomainRepair):
                 x = x.reshape((-1, self.d))
 
                 lb, ub = self.lb.copy(), self.ub.copy()
+                n = x.shape[0]  # ty: ignore[index-out-of-bounds]
                 lb, ub = (
-                    np.repeat(lb, x.shape[0], axis=0),
-                    np.repeat(ub, x.shape[0], axis=0),
+                    np.repeat(lb, n, axis=0),
+                    np.repeat(ub, n, axis=0),
                 )
 
                 for n_zero, n_non_zero, idx in zip(
@@ -271,7 +272,7 @@ class LinearProjection(DomainRepair):
 
                     lb[:, idx], ub[:, idx] = lb_, ub_
 
-                return [(lb[i, :], ub[i, :]) for i in range(x.shape[0])]
+                return [(lb[i, :], ub[i, :]) for i in range(n)]
 
         self.n_choose_k_constr = None
         if NChooseKConstraint in constraints_include:

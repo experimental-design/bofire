@@ -79,8 +79,8 @@ class CategoricalMolecularInput(CategoricalInput):
     @staticmethod
     def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
         return (
-            CategoricalInput.valid_transform_types()
-            + [  # ty: ignore[invalid-return-type]
+            CategoricalInput.valid_transform_types()  # ty: ignore[invalid-return-type]
+            + [
                 Fingerprints,
                 CompositeMolFeatures,
                 Fragments,

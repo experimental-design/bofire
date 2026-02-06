@@ -142,9 +142,6 @@ max-complexity = 19
 include = ["bofire"]
 exclude = ["bofire/version.py"]
 
-[tool.ty.environment]
-python-version = "3.13"
-
 [tool.ty.rules]
 # These are largely false positives from incomplete third-party stubs
 # (torch .to(), pandas read_csv, etc.) in a young type checker.

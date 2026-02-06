@@ -90,9 +90,11 @@ class NonlinearConstraint(IntrapointConstraint):
                         + ", ".join(
                             [
                                 str(
-                                    sympy.S(info.data["expression"]).diff(
+                                    sympy.S(
+                                        info.data["expression"]
+                                    ).diff(  # ty: ignore[missing-argument]
                                         key
-                                    )  # ty: ignore[missing-argument]
+                                    )
                                 )
                                 for key in info.data["features"]
                             ],

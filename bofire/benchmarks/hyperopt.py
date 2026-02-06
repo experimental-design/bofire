@@ -56,9 +56,9 @@ class Hyperopt(Benchmark):
             else:
                 results = pd.concat(
                     [
-                        results,
+                        results,  # ty: ignore[unresolved-reference]
                         cv_test.get_metrics(combine_folds=True),
-                    ],  # ty: ignore[unresolved-reference]
+                    ],
                     ignore_index=True,
                     axis=0,
                 )
