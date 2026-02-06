@@ -51,7 +51,7 @@ class CategoricalInput(Input):
         return self
 
     @staticmethod
-    def valid_transform_types() -> List[CategoricalEncodingEnum]:  # type: ignore
+    def valid_transform_types() -> List[CategoricalEncodingEnum]:
         return [
             CategoricalEncodingEnum.ONE_HOT,
             CategoricalEncodingEnum.DUMMY,
@@ -320,7 +320,7 @@ class CategoricalInput(Input):
             ),
         )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
@@ -336,7 +336,9 @@ class CategoricalInput(Input):
             if values is None:
                 lower = [0.0 for _ in self.categories]
                 upper = [
-                    1.0 if self.allowed[i] is True else 0.0  # type: ignore
+                    1.0
+                    if self.allowed[i] is True
+                    else 0.0  # ty: ignore[not-subscriptable]
                     for i, _ in enumerate(self.categories)
                 ]
             else:
@@ -387,14 +389,14 @@ class CategoricalOutput(Output):
             raise ValueError("categories must match to objective categories")
         return self
 
-    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],
                 index=values.index,
                 name=values.name,
             )
-        return self.objective(values, values_adapt)  # type: ignore
+        return self.objective(values, values_adapt)  # ty: ignore[invalid-return-type]
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)

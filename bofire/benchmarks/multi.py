@@ -150,13 +150,13 @@ class BNH(Benchmark):
             ),
         )
         if self.constraints:
-            self._domain.outputs.features.append(  # type: ignore
+            self._domain.outputs.features.append(  # ty: ignore[unresolved-attribute]
                 ContinuousOutput(
                     key="c1",
                     objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
                 ),
             )
-            self._domain.outputs.features.append(  # type: ignore
+            self._domain.outputs.features.append(  # ty: ignore[unresolved-attribute]
                 ContinuousOutput(
                     key="c2",
                     objective=MaximizeSigmoidObjective(tp=7.7, steepness=1000),
@@ -230,7 +230,7 @@ class C2DTLZ2(DTLZ2):
     def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
         super().__init__(dim, num_objectives, **kwargs)
         # add also the constraint
-        self._domain.outputs.features.append(  # type: ignore
+        self._domain.outputs.features.append(
             ContinuousOutput(
                 key="slack",
                 objective=MaximizeSigmoidObjective(w=1.0, tp=0, steepness=1.0 / 1e-3),
@@ -451,7 +451,7 @@ class ZDT1(Benchmark):
         self._domain = Domain(inputs=inputs, outputs=outputs)
         self.zdt = BotorchZDT1(dim=n_inputs)
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
 
         Args:
@@ -584,7 +584,7 @@ class CrossCoupling(Benchmark):
         )
         ground_truth_yield = surrogates.map(data_model)
 
-        ground_truth_yield.fit(experiments=data)  # type: ignore
+        ground_truth_yield.fit(experiments=data)  # ty: ignore[unresolved-attribute]
         self.ground_truth_yield = ground_truth_yield
         super().__init__(**kwargs)
 

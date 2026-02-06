@@ -67,7 +67,9 @@ def smiles2fingerprints(
     """
     rdkit_mols = [smiles2mol(m) for m in smiles]
     fps = [
-        AllChem.GetMorganFingerprintAsBitVect(mol, radius=bond_radius, nBits=n_bits)  # type: ignore
+        AllChem.GetMorganFingerprintAsBitVect(
+            mol, radius=bond_radius, nBits=n_bits
+        )  # ty: ignore[unresolved-attribute]
         for mol in rdkit_mols
     ]
 

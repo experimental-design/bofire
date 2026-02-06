@@ -426,7 +426,7 @@ class DomainOptimizationProblem(PymooProblem):
         for ofnc in self.objective_callables:
             ofnc_val = np.array([])
             if self.callable_format == "torch":
-                ofnc_val = ofnc(x).detach().numpy()  # type: ignore
+                ofnc_val = ofnc(x).detach().numpy()
             elif self.callable_format == "pandas":
                 ofnc_val = ofnc(x)
 
@@ -449,7 +449,7 @@ class DomainOptimizationProblem(PymooProblem):
             for constr in self.nonlinear_torch_constraints:
                 # converting to form g(x) <= 0
                 constr_val = -constr[0](x)
-                G.append(constr_val.detach().numpy())  # type: ignore
+                G.append(constr_val.detach().numpy())
 
             out["G"] = np.hstack(G)
 

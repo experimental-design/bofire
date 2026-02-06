@@ -307,7 +307,7 @@ class EntingStrategy(PredictiveStrategy):
 
         return as_experiment
 
-    def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:
         """Generates candidates.
 
         If `candidate_count == 1`, then the globally optimal solution is returned.
@@ -385,7 +385,7 @@ class EntingStrategy(PredictiveStrategy):
         y = experiments[output_keys].to_numpy()
         self._enting.fit(X, y)
 
-    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore
+    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         assert self._enting is not None
         X = transformed.to_numpy()
         pred = self._enting.predict(X)

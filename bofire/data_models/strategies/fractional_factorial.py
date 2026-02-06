@@ -99,7 +99,7 @@ class FractionalFactorialStrategy(Strategy):
             n_blocks = (
                 len(block_feature.get_allowed_categories())
                 if isinstance(block_feature, CategoricalInput)
-                else len(block_feature.values)  # type: ignore
+                else len(block_feature.values)  # ty: ignore[possibly-missing-attribute]
             )
             if n_blocks < 2:
                 raise ValueError(

@@ -73,9 +73,9 @@ class BotorchSurrogate(Surrogate):
                 if isinstance(self.model.input_transform, FilterFeatures):
                     self.model.input_transform = None  # ty: ignore[invalid-assignment]
                 elif isinstance(self.model.input_transform, ChainedInputTransform):
-                    self.model.input_transform = (
+                    self.model.input_transform = (  # ty: ignore[invalid-assignment]
                         self.model.input_transform.tf2
-                    )  # ty: ignore[invalid-assignment]
+                    )
                 else:
                     raise ValueError("Undefined input transform structure detected.")
 

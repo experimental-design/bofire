@@ -27,10 +27,10 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
     # If we are using a base kernel wrapped in a scale kernel, get the lengthscales
     # from the base kernel. Otherwise, get the lengthscales from the top-level kernel.
     try:
-        scales = surrogate.model.covar_module.base_kernel.lengthscale  # type: ignore
+        scales = surrogate.model.covar_module.base_kernel.lengthscale
     except AttributeError:
         try:
-            scales = surrogate.model.covar_module.lengthscale  # type: ignore
+            scales = surrogate.model.covar_module.lengthscale
         except AttributeError:
             raise ValueError("No lenghtscale based kernel found.")
 

@@ -51,7 +51,7 @@ class StepwiseStrategy(Strategy):
                 ]  # ty: ignore[invalid-return-type]
         raise ValueError("No condition could be satisfied.")
 
-    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
         strategy, transform = self.get_step()
 
         candidate_count = candidate_count or 1
@@ -86,7 +86,7 @@ class StepwiseStrategy(Strategy):
     def surrogates_specs(self) -> BotorchSurrogateSpecs:
         strategy, _ = self.get_step()
         try:
-            specs = strategy.surrogate_specs  # type: ignore
+            specs = strategy.surrogate_specs  # ty: ignore[unresolved-attribute]
         except AttributeError:
             raise ValueError("Current Step do not possess any surrogates.")
         return specs
@@ -95,7 +95,7 @@ class StepwiseStrategy(Strategy):
     def surrogates(self) -> BotorchSurrogates:
         strategy, _ = self.get_step()
         try:
-            surrogates = strategy.surrogates  # type: ignore
+            surrogates = strategy.surrogates  # ty: ignore[unresolved-attribute]
         except AttributeError:
             raise ValueError("Current Step do not possess any surrogates.")
         return surrogates

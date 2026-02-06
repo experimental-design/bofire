@@ -75,7 +75,7 @@ class Strategy(ABC):
     @property
     def seed(self) -> int:
         """Returns the seed of the strategy."""
-        return self.seed_seq.entropy  # type: ignore
+        return self.seed_seq.entropy  # ty: ignore[invalid-return-type]
 
     @property
     def experiments(self) -> Optional[pd.DataFrame]:

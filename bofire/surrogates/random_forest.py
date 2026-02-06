@@ -151,8 +151,8 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
 
         self.model = _RandomForest(rf=rf, output_scaler=outcome_transform)
         if input_transform is not None:
-            self.model.input_transform = (
-                input_transform  # ty: ignore[invalid-assignment]
+            self.model.input_transform = (  # ty: ignore[invalid-assignment]
+                input_transform
             )
 
     def _dumps(self) -> str:

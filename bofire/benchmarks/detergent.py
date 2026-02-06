@@ -78,7 +78,7 @@ class Detergent(Benchmark):
             ],
         )
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         x = np.atleast_2d(X[self.domain.inputs.get_keys()])
         xp = np.stack([_poly2(xi) for xi in x], axis=0)
         return pd.DataFrame(

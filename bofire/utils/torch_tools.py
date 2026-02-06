@@ -81,10 +81,12 @@ def get_linear_constraints(
             idx = domain.inputs.get_keys(Input).index(featkey)
             feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():
-                rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
+                fixed = feat.fixed_value()
+                assert fixed is not None
+                rhs -= fixed[0] * c.coefficients[i]
             else:
-                lower.append(feat.lower_bound)  # type: ignore
-                upper.append(feat.upper_bound)  # type: ignore
+                lower.append(feat.lower_bound)
+                upper.append(feat.upper_bound)
                 indices.append(idx)
                 coefficients.append(
                     c.coefficients[i],

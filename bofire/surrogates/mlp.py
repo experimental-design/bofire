@@ -256,8 +256,8 @@ class RegressionMLPEnsemble(MLPEnsemble):
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps, output_scaler=outcome_transform)
         if input_transform is not None:
-            self.model.input_transform = (
-                input_transform  # ty: ignore[invalid-assignment]
+            self.model.input_transform = (  # ty: ignore[invalid-assignment]
+                input_transform
             )
 
 
@@ -312,6 +312,6 @@ class ClassificationMLPEnsemble(MLPEnsemble):
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps=mlps)
         if input_transform is not None:
-            self.model.input_transform = (
-                input_transform  # ty: ignore[invalid-assignment]
+            self.model.input_transform = (  # ty: ignore[invalid-assignment]
+                input_transform
             )

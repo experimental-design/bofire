@@ -75,7 +75,9 @@ class SphericalLinearKernel(gpytorch.kernels.RBFKernel):
             )
         # Expand bounds if a single tuple is provided
         if isinstance(bounds[0], (int, float)):
-            bounds = [(bounds[0], bounds[1])] * num_dims  # type: ignore
+            bounds = [
+                (bounds[0], bounds[1])
+            ] * num_dims  # ty: ignore[invalid-assignment]
 
         # Create buffer for the center and length of each dimension in the space
         _dtype = self.raw_lengthscale.dtype

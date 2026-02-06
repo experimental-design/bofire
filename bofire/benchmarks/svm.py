@@ -81,10 +81,10 @@ class SVM(Benchmark):
         )
         print("Downloading SVM data...")
         try:
-            with urllib.request.urlopen(url_X) as response:  # type: ignore
+            with urllib.request.urlopen(url_X) as response:
                 with gzip.GzipFile(fileobj=response) as f:
                     X_np = np.load(f)
-            with urllib.request.urlopen(url_y) as response:  # type: ignore
+            with urllib.request.urlopen(url_y) as response:
                 with gzip.GzipFile(fileobj=response) as f:
                     y_np = np.load(f)
             print("Download complete.")

@@ -92,7 +92,7 @@ class Benchmark:
 
     @property
     def domain(self) -> Domain:
-        return self._domain  # type: ignore
+        return self._domain  # ty: ignore[unresolved-attribute]
 
 
 class GenericBenchmark(Benchmark):
@@ -208,11 +208,11 @@ class FormulationWrapper(Benchmark):
             outputs=self._benchmark.domain.outputs,
         )
         self._mins = np.array(
-            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]  # type: ignore
+            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]
         )
         self._scales = np.array(
             [
-                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                feat.bounds[1] - feat.bounds[0]
                 for feat in self._benchmark.domain.inputs.get()
             ]
         )
@@ -251,11 +251,11 @@ class SpuriousFeaturesWrapper(Benchmark):
         self._benchmark = benchmark
         self._domain = Domain(
             inputs=Inputs(
-                features=benchmark.domain.inputs.features
+                features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
                 + [
                     ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
                     for i in range(n_spurious_features)
-                ]  # type: ignore
+                ]
             ),
             outputs=self._benchmark.domain.outputs,
             constraints=self._benchmark.domain.constraints,

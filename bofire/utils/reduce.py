@@ -191,7 +191,9 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
             raise Exception("There is no solution that fulfills the constraints.")
 
     if len(constraints) > 0:
-        _domain.constraints.constraints = _domain.constraints.constraints + constraints  # type: ignore
+        _domain.constraints.constraints = (
+            _domain.constraints.constraints + constraints
+        )  # ty: ignore[unsupported-operator]
 
     # assemble equalities
     _equalities = []

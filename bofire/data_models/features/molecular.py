@@ -77,15 +77,18 @@ class CategoricalMolecularInput(CategoricalInput):
         return categories
 
     @staticmethod
-    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:  # type: ignore
-        return CategoricalInput.valid_transform_types() + [  # type: ignore
-            Fingerprints,
-            CompositeMolFeatures,
-            Fragments,
-            MordredDescriptors,
-        ]
+    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
+        return (
+            CategoricalInput.valid_transform_types()
+            + [  # ty: ignore[invalid-return-type]
+                Fingerprints,
+                CompositeMolFeatures,
+                Fragments,
+                MordredDescriptors,
+            ]
+        )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,

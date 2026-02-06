@@ -283,7 +283,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         )
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         use_output_constraints: bool | None = None,
@@ -415,7 +415,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         )
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         use_output_constraints: bool | None = None,
@@ -545,7 +545,7 @@ class CustomSoboStrategy(SoboStrategy):
         self.f = cloudpickle.loads(f_bytes_load)
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         use_output_constraints: bool | None = None,

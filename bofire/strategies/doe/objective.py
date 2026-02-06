@@ -328,11 +328,11 @@ class SpaceFilling(Objective):
             -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments]),
         )
 
-    def _evaluate_jacobian(self, x: np.ndarray) -> float:  # type: ignore
+    def _evaluate_jacobian(self, x: np.ndarray) -> float:
         X = self._convert_input_to_tensor(x, requires_grad=True)
         torch.sum(torch.sort(torch.pdist(X))[0][: self.n_experiments]).backward()
 
-        return -X.grad.detach().numpy().flatten()  # type: ignore
+        return -X.grad.detach().numpy().flatten()
 
     def _convert_input_to_tensor(
         self,

@@ -82,7 +82,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:  # type: ignore
+    def __iter__(self) -> Iterator[F]:
         return iter(self.features)
 
     def __len__(self):
@@ -174,7 +174,9 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -206,7 +208,9 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -446,7 +450,9 @@ class Inputs(_BaseFeatures[AnyInput]):
         samples = pd.concat(res, axis=1)
 
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
+            val = feat.fixed_value()
+            assert val is not None
+            samples[feat.key] = val[0]
 
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
@@ -496,7 +502,9 @@ class Inputs(_BaseFeatures[AnyInput]):
     def get_number_of_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -542,7 +550,9 @@ class Inputs(_BaseFeatures[AnyInput]):
     def get_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -657,7 +667,9 @@ class Inputs(_BaseFeatures[AnyInput]):
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
-                descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
+                descriptor_names = specs[
+                    feat.key
+                ].get_descriptor_names()  # ty: ignore[possibly-missing-attribute]
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist(),
                 )

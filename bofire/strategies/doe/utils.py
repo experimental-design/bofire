@@ -486,26 +486,30 @@ class ConstraintWrapper:
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
-        if constraint.features is None:  # type: ignore
+        if constraint.features is None:  # ty: ignore[unresolved-attribute]
             raise ValueError(
                 f"The features attribute of constraint {constraint} is not set, but has to be set.",
             )
         self.constraint_feature_indices = np.searchsorted(
             self.names,
-            self.constraint.features,  # type: ignore
+            self.constraint.features,  # ty: ignore[unresolved-attribute]
         )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Call constraint with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        violation = self.constraint(x).to_numpy()  # type: ignore
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        violation = self.constraint(x).to_numpy()  # ty: ignore[call-non-callable]
         violation[np.abs(violation) < 0] = 0
         return violation
 
     def jacobian(self, x: np.ndarray, sparse: bool = False) -> np.ndarray:
         """Call constraint gradient with flattened numpy array.  If sparse is set to True, the output is a vector containing the entries of the sparse matrix representation of the jacobian."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        gradient_compressed = self.constraint.jacobian(x).to_numpy()  # type: ignore
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        gradient_compressed = self.constraint.jacobian(x).to_numpy()
 
         cols = np.repeat(
             self.D * np.arange(self.n_experiments),
@@ -529,8 +533,10 @@ class ConstraintWrapper:
 
     def hessian(self, x: np.ndarray, *args):
         """Call constraint hessian with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        hessian_dict = self.constraint.hessian(x)  # type: ignore
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        hessian_dict = self.constraint.hessian(x)
 
         hessian = np.zeros(
             shape=(self.D * self.n_experiments, self.D * self.n_experiments)
@@ -569,7 +575,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     for c in nchoosek_constraints:
         for name in np.unique(c.features):
             input = domain.inputs.get_by_key(name)
-            if input.bounds[0] > 0 or input.bounds[1] < 0:  # type: ignore
+            if input.bounds[0] > 0 or input.bounds[1] < 0:
                 raise ValueError(
                     f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
                     domain of the affected decision variables.",
@@ -606,7 +612,7 @@ def nchoosek_constraints_as_bounds(
 
     # bounds without NChooseK constraints
     bounds = np.array(
-        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments,  # type: ignore
+        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments,
     )
 
     if len(domain.constraints) > 0:

@@ -79,7 +79,7 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+            posterior = self.model.posterior(X=X, observation_noise=True)
 
         preds = posterior.mixture_mean.detach().numpy()
         stds = np.sqrt(posterior.mixture_variance.detach().numpy())

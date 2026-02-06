@@ -1,6 +1,6 @@
 # warn user if IPOPT scipy interface is not available
 try:
-    from cyipopt import Problem  # type: ignore
+    from cyipopt import Problem  # ty: ignore[unresolved-import]
 except ImportError:
 
     class Problem:

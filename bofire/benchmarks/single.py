@@ -115,7 +115,7 @@ class Ackley(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -400,7 +400,7 @@ class Himmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -474,7 +474,7 @@ class MultiTaskHimmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -684,7 +684,7 @@ class Multinormalpdfs(Benchmark):
         self.gaussians = gaussians
         self.prefactors = prefactors
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             {
                 "y": X.apply(
