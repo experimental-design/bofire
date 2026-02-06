@@ -144,9 +144,17 @@ exclude = ["bofire/version.py"]
 
 [tool.ty.rules]
 # These are largely false positives from incomplete third-party stubs
-# (torch .to(), pandas read_csv, etc.) in a young type checker.
+# (torch, gpytorch, botorch, pandas, etc.) in a young type checker.
 no-matching-overload = "ignore"
 invalid-argument-type = "ignore"
+# torch Module.__getattr__ returns Tensor|Module, causing false
+# "not callable" errors on every .expand(), .reshape(), etc.
+call-non-callable = "ignore"
+# torch tensor operations and model attribute assignments produce
+# false positives that vary across Python/stub versions.
+unsupported-operator = "warn"
+invalid-assignment = "warn"
+invalid-return-type = "warn"
 # BoFire intentionally narrows parameter types in subclass overrides.
 invalid-method-override = "warn"
 
