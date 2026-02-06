@@ -104,7 +104,7 @@ class Ackley(Benchmark):
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(key=f"x_{d+1}", bounds=[self.lower, self.upper]),
+                ContinuousInput(key=f"x_{d + 1}", bounds=[self.lower, self.upper]),
             )
 
         # Objective
@@ -129,7 +129,7 @@ class Ackley(Benchmark):
         a = 20
         b = 0.2
         c = np.pi * 2
-        x = np.array([X[f"x_{d+1}"] for d in range(self.dim)])
+        x = np.array([X[f"x_{d + 1}"] for d in range(self.dim)])
 
         c = np.zeros(len(X))
         d = np.zeros(len(X))
@@ -345,7 +345,7 @@ class Branin30(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1:02d}", bounds=[0, 1])
+                    ContinuousInput(key=f"x_{i + 1:02d}", bounds=[0, 1])
                     for i in range(30)
                 ],
             ),
@@ -356,7 +356,7 @@ class Branin30(Benchmark):
         self.branin = torchBranin().to(**tkwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        lb, ub = self.branin.bounds  # type: ignore
+        lb, ub = self.branin.bounds
         c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
             **tkwargs,
         )

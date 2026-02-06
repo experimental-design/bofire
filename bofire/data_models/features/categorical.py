@@ -24,7 +24,7 @@ class CategoricalInput(Input):
 
     """
 
-    type: Literal["CategoricalInput"] = "CategoricalInput"  # type: ignore
+    type: Literal["CategoricalInput"] = "CategoricalInput"
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
@@ -44,9 +44,9 @@ class CategoricalInput(Input):
 
     @model_validator(mode="after")
     def validate_categories_fitting_allowed(self):
-        if len(self.allowed) != len(self.categories):  # type: ignore
+        if len(self.allowed) != len(self.categories):
             raise ValueError("allowed must have same length as categories")
-        if sum(self.allowed) == 0:  # type: ignore
+        if sum(self.allowed) == 0:
             raise ValueError("no category is allowed")
         return self
 
@@ -133,7 +133,7 @@ class CategoricalInput(Input):
             possible_categories = self.get_possible_categories(values)
             if len(possible_categories) != len(self.categories):
                 raise ValueError(
-                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
+                    f"Categories {list(set(self.categories) - set(possible_categories))} of feature {self.key} not used. Remove them.",
                 )
         return values
 
@@ -366,7 +366,7 @@ class CategoricalInput(Input):
 
 
 class CategoricalOutput(Output):
-    type: Literal["CategoricalOutput"] = "CategoricalOutput"  # type: ignore
+    type: Literal["CategoricalOutput"] = "CategoricalOutput"
     order_id: ClassVar[int] = 10
 
     categories: CategoryVals

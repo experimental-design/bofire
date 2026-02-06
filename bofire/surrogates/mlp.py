@@ -121,7 +121,7 @@ class _MLPEnsemble(EnsembleModel):
     @property
     def num_outputs(self) -> int:
         r"""The number of outputs of the model."""
-        return self.mlps[0].layers[-2].out_features  # type: ignore
+        return self.mlps[0].layers[-2].out_features
 
 
 def fit_mlp(
@@ -149,7 +149,7 @@ def fit_mlp(
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)  # type: ignore
+    optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
     loss_function = loss_function()
     for _ in range(n_epoches):
         current_loss = 0.0
@@ -239,7 +239,7 @@ class RegressionMLPEnsemble(MLPEnsemble):
                 input_size=transformed_X.shape[1],
                 output_size=1,
                 hidden_layer_sizes=self.hidden_layer_sizes,
-                activation=self.activation,  # type: ignore
+                activation=self.activation,
                 dropout=self.dropout,
                 final_activation="identity",
             )
@@ -256,7 +256,9 @@ class RegressionMLPEnsemble(MLPEnsemble):
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps, output_scaler=outcome_transform)
         if input_transform is not None:
-            self.model.input_transform = input_transform
+            self.model.input_transform = (
+                input_transform  # ty: ignore[invalid-assignment]
+            )
 
 
 class ClassificationMLPEnsemble(MLPEnsemble):
@@ -293,7 +295,7 @@ class ClassificationMLPEnsemble(MLPEnsemble):
                     self.outputs[0].objective.to_dict_label()
                 ),  # Set outputs based on number of categories
                 hidden_layer_sizes=self.hidden_layer_sizes,
-                activation=self.activation,  # type: ignore
+                activation=self.activation,
                 dropout=self.dropout,
                 final_activation="softmax",
             )
@@ -305,9 +307,11 @@ class ClassificationMLPEnsemble(MLPEnsemble):
                 lr=self.lr,
                 shuffle=self.shuffle,
                 weight_decay=self.weight_decay,
-                loss_function=nn.CrossEntropyLoss,  # type: ignore
+                loss_function=nn.CrossEntropyLoss,
             )
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps=mlps)
         if input_transform is not None:
-            self.model.input_transform = input_transform
+            self.model.input_transform = (
+                input_transform  # ty: ignore[invalid-assignment]
+            )

@@ -105,7 +105,7 @@ class ShortestPathStrategy(Strategy):
                 self.domain.constraints.get(LinearInequalityConstraint),
             )
             constraints.append(A @ x <= b)
-        prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)  # type: ignore
+        prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)
         prob.solve(solver=cp.CLARABEL)
         step = pd.Series(index=inputs.get_keys(), data=x.value)
         # add other features based on start

@@ -24,7 +24,7 @@ class FractionalFactorialStrategy(Strategy):
     For every categorical combination, the continuous part of the design is repeated.
     """
 
-    type: Literal["FractionalFactorialStrategy"] = "FractionalFactorialStrategy"  # type: ignore
+    type: Literal["FractionalFactorialStrategy"] = "FractionalFactorialStrategy"
     n_repetitions: Annotated[
         int,
         Field(

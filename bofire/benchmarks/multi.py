@@ -82,7 +82,7 @@ class DTLZ2(Benchmark):
     def best_possible_hypervolume(self) -> float:
         # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
-        hypercube_vol = self.ref_point[0] ** self.num_objectives  # type: ignore
+        hypercube_vol = self.ref_point[0] ** self.num_objectives
         pos_hypersphere_vol = (
             math.pi ** (self.num_objectives / 2)
             / gamma(self.num_objectives / 2 + 1)
@@ -440,11 +440,11 @@ class ZDT1(Benchmark):
         super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
-            ContinuousInput(key=f"x{i+1}", bounds=[0, 1]) for i in range(n_inputs)
+            ContinuousInput(key=f"x{i + 1}", bounds=[0, 1]) for i in range(n_inputs)
         ]
         inputs = Inputs(features=inputs)
         outputs = [
-            ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
+            ContinuousOutput(key=f"y{i + 1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
         outputs = Outputs(features=outputs)

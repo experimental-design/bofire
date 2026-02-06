@@ -49,9 +49,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv pip install pre-commit ".[all]" --system
+        run: uv pip install pre-commit ".[all]" ty --system
 
-      - name: Pyright
-        uses: jakebailey/pyright-action@v2
-        with:
-          version: 1.1.305  # is there any reason not to use the latest?
+      - name: ty
+        run: ty check bofire

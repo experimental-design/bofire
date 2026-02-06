@@ -68,9 +68,7 @@ class IterativeTrimming(OutlierDetection):
 
                 # XXX: might be buggy when there are identical data points
                 # better to use argpartition! but may break ix_sub == ix_old.
-                ix_sub = (
-                    d_sq <= np.partition(d_sq, h)[h]  # type: ignore
-                )  # alpha-quantile
+                ix_sub = d_sq <= np.partition(d_sq, h)[h]  # alpha-quantile
                 consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence
@@ -102,7 +100,7 @@ class IterativeTrimming(OutlierDetection):
             chi_sq = chi2(p).ppf(alpha)
 
             # XXX: might be buggy when there are identical data points
-            ix_sub = d_sq <= chi_sq * consistency  # type: ignore
+            ix_sub = d_sq <= chi_sq * consistency
             consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence

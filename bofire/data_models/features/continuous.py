@@ -26,7 +26,7 @@ class ContinuousInput(NumericalInput):
 
     """
 
-    type: Literal["ContinuousInput"] = "ContinuousInput"  # type: ignore
+    type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
@@ -108,7 +108,9 @@ class ContinuousInput(NumericalInput):
 
         steps = np.array(self._get_allowed_steps())
 
-        return values.apply(lambda x: steps[np.argmin(np.abs(steps - x))])
+        return values.apply(
+            lambda x: steps[np.argmin(np.abs(steps - x))]
+        )  # ty: ignore[invalid-return-type]
 
     def is_fulfilled(self, values: pd.Series, noise: float = 10e-6) -> pd.Series:
         """Method to check if the values are within the bounds of the feature.
@@ -227,7 +229,7 @@ class ContinuousOutput(Output):
 
     """
 
-    type: Literal["ContinuousOutput"] = "ContinuousOutput"  # type: ignore
+    type: Literal["ContinuousOutput"] = "ContinuousOutput"
     order_id: ClassVar[int] = 9
     unit: Optional[str] = None
 

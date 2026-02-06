@@ -19,7 +19,7 @@ from scipy.optimize._minimize import LinearConstraint, NonlinearConstraint
 from bofire.strategies.doe.objective_base import Objective
 
 
-class FirstOrderDoEProblem(Problem):  # type: ignore
+class FirstOrderDoEProblem(Problem):
     def __init__(
         self,
         doe_objective: Objective,

@@ -151,7 +151,9 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
 
         self.model = _RandomForest(rf=rf, output_scaler=outcome_transform)
         if input_transform is not None:
-            self.model.input_transform = input_transform
+            self.model.input_transform = (
+                input_transform  # ty: ignore[invalid-assignment]
+            )
 
     def _dumps(self) -> str:
         """Dumps the random forest to a string via pickle as this is not directly json serializable."""

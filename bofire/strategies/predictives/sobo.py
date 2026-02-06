@@ -253,8 +253,8 @@ class AdditiveSoboStrategy(SoboStrategy):
             if isinstance(self.acquisition_function, (qSR, qUCB)):
                 return (
                     ConstrainedMCObjective(
-                        objective=objective_callable,  # type: ignore
-                        constraints=constraint_callables,  # type: ignore
+                        objective=objective_callable,
+                        constraints=constraint_callables,
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
                             objective=objective_callable,
@@ -264,7 +264,7 @@ class AdditiveSoboStrategy(SoboStrategy):
                     1e-3,
                 )
             return (
-                GenericMCObjective(objective=objective_callable),  # type: ignore
+                GenericMCObjective(objective=objective_callable),
                 constraint_callables,
                 etas,
             )
@@ -274,7 +274,8 @@ class AdditiveSoboStrategy(SoboStrategy):
             GenericMCObjective(
                 objective=get_additive_botorch_objective(
                     outputs=self.domain.outputs,
-                    exclude_constraints=False,  # type: ignore
+                    experiments=self.experiments,
+                    exclude_constraints=False,
                 ),
             ),
             constraint_callables,
@@ -337,7 +338,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_botorch_objective(  # type: ignore
+                objective=get_multiplicative_botorch_objective(
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
                     adapt_weights_to_1_inf=True,
@@ -402,7 +403,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_additive_objective(  # type: ignore
+                objective=get_multiplicative_additive_objective(
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
                     additive_features=self.additive_features,
@@ -501,8 +502,8 @@ class CustomSoboStrategy(SoboStrategy):
             if isinstance(self.acquisition_function, (qSR, qUCB)):
                 return (
                     ConstrainedMCObjective(
-                        objective=objective_callable,  # type: ignore
-                        constraints=constraint_callables,  # type: ignore
+                        objective=objective_callable,
+                        constraints=constraint_callables,
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
                             objective=objective_callable,
@@ -512,7 +513,7 @@ class CustomSoboStrategy(SoboStrategy):
                     1e-3,
                 )
             return (
-                GenericMCObjective(objective=objective_callable),  # type: ignore
+                GenericMCObjective(objective=objective_callable),
                 constraint_callables,
                 etas,
             )
@@ -520,7 +521,7 @@ class CustomSoboStrategy(SoboStrategy):
         # we absorb all constraints into the objective
         return (
             GenericMCObjective(
-                objective=get_custom_botorch_objective(  # type: ignore
+                objective=get_custom_botorch_objective(
                     outputs=self.domain.outputs,
                     f=self.f,
                     exclude_constraints=False,
@@ -535,13 +536,13 @@ class CustomSoboStrategy(SoboStrategy):
         """Dumps the function to a string via pickle as this is not directly json serializable."""
         if self.f is None:
             raise ValueError("No function has been provided for the strategy")
-        f_bytes_dump = cloudpickle.dumps(self.f)  # type: ignore
+        f_bytes_dump = cloudpickle.dumps(self.f)
         return base64.b64encode(f_bytes_dump).decode()
 
     def loads(self, data: str):
         """Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         f_bytes_load = base64.b64decode(data.encode())
-        self.f = cloudpickle.loads(f_bytes_load)  # type: ignore
+        self.f = cloudpickle.loads(f_bytes_load)
 
     @classmethod
     def make(  # type: ignore

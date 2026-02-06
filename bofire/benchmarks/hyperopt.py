@@ -57,5 +57,5 @@ class Hyperopt(Benchmark):
                     ignore_index=True,
                     axis=0,
                 )
-        results[f"valid_{self.target_metric.value}"] = 1  # type: ignore
-        return results  # type: ignore
+        results[f"valid_{self.target_metric.value}"] = 1
+        return results

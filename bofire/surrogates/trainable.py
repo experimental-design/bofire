@@ -39,7 +39,7 @@ class TrainableSurrogate(ABC):
         Y = experiments[self.outputs.get_keys()]  # type: ignore
         # fit
         options = options or {}
-        self._fit(X=X, Y=Y, **options)  # type: ignore
+        self._fit(X=X, Y=Y, **options)
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """
@@ -252,12 +252,12 @@ class TrainableSurrogate(ABC):
             # now call the hooks if available
             for hookname, hook in hooks.items():
                 hook_results[hookname].append(
-                    hook(
+                    hook(  # ty: ignore[missing-argument]
                         surrogate=self,  # type: ignore
-                        X_train=X_train,
-                        y_train=y_train,
-                        X_test=X_test,
-                        y_test=y_test,
+                        X_train=X_train,  # ty: ignore[unknown-argument]
+                        y_train=y_train,  # ty: ignore[unknown-argument]
+                        X_test=X_test,  # ty: ignore[unknown-argument]
+                        y_test=y_test,  # ty: ignore[unknown-argument]
                         **hook_kwargs.get(hookname, {}),
                     ),
                 )

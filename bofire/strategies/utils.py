@@ -94,7 +94,7 @@ class GaMixedDomainHandler:
             if isinstance(input_ref, ContinuousInput) and spec_ is None:
                 # simple case: non-transformed continuous variable
                 bounds_org = np.array(
-                    domain.inputs.get_by_key(key).get_bounds(spec_)  # type: ignore
+                    domain.inputs.get_by_key(key).get_bounds(spec_)
                 ).reshape(-1)
                 self.vars[key] = pymoo_variable.Real(
                     bounds=bounds_org
@@ -428,9 +428,9 @@ class DomainOptimizationProblem(PymooProblem):
             if self.callable_format == "torch":
                 ofnc_val = ofnc(x).detach().numpy()  # type: ignore
             elif self.callable_format == "pandas":
-                ofnc_val = ofnc(x)  # type: ignore
+                ofnc_val = ofnc(x)
 
-            if ofnc_val.ndim == 1:  # type: ignore
+            if ofnc_val.ndim == 1:
                 obj.append(ofnc_val.reshape(-1))
             elif ofnc_val.ndim == 2:
                 obj += [ofnc_val[:, i] for i in range(ofnc_val.shape[1])]
@@ -448,7 +448,7 @@ class DomainOptimizationProblem(PymooProblem):
             G = []
             for constr in self.nonlinear_torch_constraints:
                 # converting to form g(x) <= 0
-                constr_val = -constr[0](x)  # type: ignore
+                constr_val = -constr[0](x)
                 G.append(constr_val.detach().numpy())  # type: ignore
 
             out["G"] = np.hstack(G)

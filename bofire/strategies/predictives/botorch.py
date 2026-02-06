@@ -95,7 +95,7 @@ class BotorchStrategy(PredictiveStrategy):
             self.surrogate_specs.surrogates = [  # type: ignore
                 (
                     hyperoptimize(
-                        surrogate_data=surrogate_data,  # type: ignore
+                        surrogate_data=surrogate_data,
                         training_data=experiments,
                         folds=self.folds,
                     )[0]
@@ -112,10 +112,10 @@ class BotorchStrategy(PredictiveStrategy):
         )
         self.surrogates = BotorchSurrogates(
             data_model=self.surrogate_specs, re_init_kwargs=re_init_kwargs
-        )  # type: ignore
+        )
 
         self.surrogates.fit(experiments)
-        self.model = self.surrogates.compatibilize(  # type: ignore
+        self.model = self.surrogates.compatibilize(
             inputs=self.domain.inputs,
             outputs=self.domain.outputs,
         )
@@ -296,5 +296,5 @@ class BotorchStrategy(PredictiveStrategy):
         return get_infeasible_cost(
             X=X,
             model=self.model,
-            objective=objective,  # type: ignore
+            objective=objective,
         )

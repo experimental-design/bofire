@@ -117,7 +117,7 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 ),
             )
 
-        self.model = botorch.models.SingleTaskGP(  # type: ignore
+        self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
             covar_module=covar_module,
@@ -125,8 +125,8 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=self.transform,
         )
 
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
-        self.model.likelihood.noise_covar.raw_noise_constraint = GreaterThan(5e-4)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
+        self.model.likelihood.noise_covar.raw_noise_constraint = GreaterThan(5e-4)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)

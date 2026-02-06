@@ -29,7 +29,7 @@ class OutlierPrior(BaseModel):
 
 
 class UniformOutlierPrior(OutlierPrior):
-    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"  # type: ignore
+    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
     bounds: Tuple[float, float]
 
     def sample(self, n_samples: int) -> np.ndarray:
@@ -40,7 +40,7 @@ class UniformOutlierPrior(OutlierPrior):
 
 
 class NormalOutlierPrior(OutlierPrior):
-    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"  # type: ignore
+    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
     loc: float
     scale: PositiveFloat
 
@@ -189,7 +189,7 @@ class FormulationWrapper(Benchmark):
             )
         )
         if max_count is not None:
-            constraints.append(  # type: ignore
+            constraints.append(
                 NChooseKConstraint(
                     features=[
                         key
@@ -230,9 +230,9 @@ class FormulationWrapper(Benchmark):
 
         # drop original columns, only keep latent ones
         X = X.drop(columns=self.domain.inputs.get_keys())
-        X = X / self._scales_new  # type: ignore
+        X = X / self._scales_new
 
-        return self._mins + self._scales * X  # type: ignore
+        return self._mins + self._scales * X
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
         X_transformed = self._transform(candidates)
@@ -303,7 +303,7 @@ class SyntheticBoTorch(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=b)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=b)
                     for i, b in enumerate(self.test_function._bounds)
                 ]
             ),

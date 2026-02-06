@@ -71,9 +71,11 @@ class BotorchSurrogate(Surrogate):
         if self.is_fitted:
             if self.is_compatibilized:
                 if isinstance(self.model.input_transform, FilterFeatures):
-                    self.model.input_transform = None
+                    self.model.input_transform = None  # ty: ignore[invalid-assignment]
                 elif isinstance(self.model.input_transform, ChainedInputTransform):
-                    self.model.input_transform = self.model.input_transform.tf2
+                    self.model.input_transform = (
+                        self.model.input_transform.tf2
+                    )  # ty: ignore[invalid-assignment]
                 else:
                     raise ValueError("Undefined input transform structure detected.")
 
@@ -84,7 +86,7 @@ class BotorchSurrogate(Surrogate):
     def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
         # empty internal caches to get smaller dumps
-        self.model.prediction_strategy = None
+        self.model.prediction_strategy = None  # ty: ignore[invalid-assignment]
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         return base64.b64encode(buffer.getvalue()).decode()

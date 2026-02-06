@@ -208,13 +208,13 @@ class RandomStrategy(Strategy):
 
         """
         if seed is None:
-            seed = np.random.default_rng().integers(1, 1000000)
+            seed = int(np.random.default_rng().integers(1, 1000000))
 
         if sampler_kwargs is None:
             sampler_kwargs = {}
 
         # here we have to adapt for categoricals
-        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:  # type: ignore
+        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:
             return domain.inputs.sample(
                 n, fallback_sampling_method, seed=seed, sampler_kwargs=sampler_kwargs
             )
@@ -301,7 +301,7 @@ class RandomStrategy(Strategy):
                 dimension=len(domain.inputs.get(ContinuousInput)),
             )
 
-            combined_eqs = unfixed_eqs + unfixed_interpoints  # type: ignore
+            combined_eqs = unfixed_eqs + unfixed_interpoints
 
             # now use the hit and run sampler
             candidates = sample_q_batches_from_polytope(
@@ -309,7 +309,7 @@ class RandomStrategy(Strategy):
                 q=n,
                 bounds=bounds.to(**tkwargs),
                 inequality_constraints=(
-                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
+                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None
                 ),
                 equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
                 n_burnin=n_burnin,

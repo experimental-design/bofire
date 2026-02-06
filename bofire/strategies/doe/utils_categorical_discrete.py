@@ -37,9 +37,7 @@ def map_discrete_to_continuous(
     """
 
     def generate_value_key(input: DiscreteInput, d: float):
-        return (
-            f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-','__neg__')}"
-        )
+        return f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-', '__neg__')}"
 
     # Create a new list of inputs
     new_inputs = []
@@ -401,9 +399,7 @@ def project_candidates_into_domain(
                     )
 
     # Create the objective function
-    objective = cp.Minimize(
-        cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
-    )
+    objective = cp.Minimize(cp.sum_squares(b - cp.hstack(cp_variables)))
     prob = cp.Problem(objective=objective, constraints=constraints)
     if scip_params is None:
         scip_params = {"numerics/feastol": 1e-8}

@@ -53,7 +53,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
-    ) -> None:  # type: ignore
+    ) -> None:
         self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,

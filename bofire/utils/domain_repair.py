@@ -280,7 +280,7 @@ class LinearProjection(DomainRepair):
             )
             if n_choose_k_constraints.constraints:
                 self.n_choose_k_constr = NChooseKBoundProjection(
-                    n_choose_k_constraints.constraints,  # type: ignore
+                    n_choose_k_constraints.constraints,
                     bounds,
                     n_choose_k_constr_min_delta,
                 )

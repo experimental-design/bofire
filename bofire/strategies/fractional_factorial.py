@@ -161,7 +161,7 @@ class FractionalFactorialStrategy(Strategy):
         design = pd.concat(
             [
                 pd.concat([design] * len(categorical_design), ignore_index=True),
-                pd.concat([categorical_design] * len(design), ignore_index=True),  # type: ignore
+                pd.concat([categorical_design] * len(design), ignore_index=True),
             ],
             axis=1,
         ).sort_values(

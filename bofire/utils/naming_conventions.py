@@ -56,7 +56,7 @@ def postprocess_categorical_predictions(
                 .idxmax(1)
                 .str.replace(f"{feat.key}_", "")
                 .str.replace("_prob", "")
-                .values,  # type: ignore
+                .values,
             )
             predictions.insert(
                 loc=1,

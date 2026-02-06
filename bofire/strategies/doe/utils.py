@@ -69,7 +69,7 @@ def formula_str_to_fully_continuous(
     """
     for cat_input in inputs.get([CategoricalInput]):
         _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
-            categorical_inputs=[cat_input]  # type: ignore
+            categorical_inputs=[cat_input]
         )
         one_hot_terms = " + ".join(
             [var.key for var in categorical_one_hot_variabes[:-1]]
@@ -404,7 +404,7 @@ def get_constraint_function_and_bounds(
         fun = ConstraintWrapper(
             constraint=c,
             domain=domain,
-            n_experiments=n_experiments,  # type: ignore
+            n_experiments=n_experiments,
         )
 
         # write upper/lower bound as vector
@@ -420,7 +420,7 @@ def get_constraint_function_and_bounds(
         fun = ConstraintWrapper(
             constraint=c,
             domain=domain,
-            n_experiments=n_experiments,  # type: ignore
+            n_experiments=n_experiments,
         )
 
         # write upper/lower bound as vector

@@ -62,7 +62,7 @@ def domain_to_problem_config(
     """
     # entmoot expects int, not np.int64
     seed = int(seed) if not (isinstance(seed, int) or seed is None) else seed
-    problem_config = ProblemConfig(seed)  # type: ignore
+    problem_config = ProblemConfig(seed)
 
     for input_feature in domain.inputs.get():
         _bofire_feat_to_entmoot(problem_config, input_feature)
@@ -74,18 +74,18 @@ def domain_to_problem_config(
 
     constraints = []
     for constraint in domain.constraints.get():
-        constraints.append(_bofire_constraint_to_entmoot(problem_config, constraint))  # type: ignore
+        constraints.append(_bofire_constraint_to_entmoot(problem_config, constraint))
 
     # apply constraints to model
     model_pyo = problem_config.get_pyomo_model_core()
-    model_pyo.problem_constraints = pyo.ConstraintList()  # type: ignore
-    entconstr.ConstraintList(constraints).apply_pyomo_constraints(  # type: ignore
+    model_pyo.problem_constraints = pyo.ConstraintList()
+    entconstr.ConstraintList(constraints).apply_pyomo_constraints(
         model_pyo,
         problem_config.feat_list,
-        model_pyo.problem_constraints,  # type: ignore
+        model_pyo.problem_constraints,
     )
 
-    return problem_config, model_pyo  # type: ignore
+    return problem_config, model_pyo
 
 
 def _bofire_feat_to_entmoot(
@@ -165,21 +165,21 @@ def _bofire_constraint_to_entmoot(
 
     """
     if isinstance(constraint, LinearEqualityConstraint):
-        ent_constraint = entconstr.LinearEqualityConstraint(  # type: ignore
+        ent_constraint = entconstr.LinearEqualityConstraint(
             feature_keys=constraint.features,
             coefficients=constraint.coefficients,
             rhs=constraint.rhs,
         )
 
     elif isinstance(constraint, LinearInequalityConstraint):
-        ent_constraint = entconstr.LinearInequalityConstraint(  # type: ignore
+        ent_constraint = entconstr.LinearInequalityConstraint(
             feature_keys=constraint.features,
             coefficients=constraint.coefficients,
             rhs=constraint.rhs,
         )
 
     elif isinstance(constraint, NChooseKConstraint):
-        ent_constraint = entconstr.NChooseKConstraint(  # type: ignore
+        ent_constraint = entconstr.NChooseKConstraint(
             feature_keys=constraint.features,
             min_count=constraint.min_count,
             max_count=constraint.max_count,
@@ -189,7 +189,7 @@ def _bofire_constraint_to_entmoot(
     else:
         raise NotImplementedError("Only linear and nchoosek constraints are supported.")
 
-    return ent_constraint  # type: ignore
+    return ent_constraint
 
 
 def _dump_enting_params(data_model: data_models.EntingStrategy) -> dict:
@@ -250,9 +250,9 @@ class EntingStrategy(PredictiveStrategy):
 
     def _init_problem_config(self) -> None:
         cfg = domain_to_problem_config(self.domain, self.seed)
-        self._problem_config: ProblemConfig = cfg[0]  # type: ignore
-        self._model_pyo: pyo.ConcreteModel = cfg[1]  # type: ignore
-        self._enting = Enting(self._problem_config, self._enting_params)  # type: ignore
+        self._problem_config: ProblemConfig = cfg[0]
+        self._model_pyo: pyo.ConcreteModel = cfg[1]
+        self._enting = Enting(self._problem_config, self._enting_params)
 
     @property
     def input_preprocessing_specs(self):
@@ -349,7 +349,7 @@ class EntingStrategy(PredictiveStrategy):
         new_candidates = []
         # Subsequently generate candidates, using fantasies if appropriate
         for i in range(candidate_count):
-            opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)  # type: ignore
+            opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
             res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
             candidate = self._to_dataframe(res.opt_point)
             new_candidates.append(candidate)
@@ -361,7 +361,7 @@ class EntingStrategy(PredictiveStrategy):
                 )
                 self._fit(experiments_plus_fantasies)
 
-        self._fit(self.experiments)  # type: ignore
+        self._fit(self.experiments)
         # we do not return here the predictions as they are corrupted
         # by the fantasy observations. Instead, we return the plain candidates
         # and the predictions are generated in

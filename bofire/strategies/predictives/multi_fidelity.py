@@ -89,7 +89,7 @@ class MultiFidelityStrategy(SoboStrategy):
             m = fidelity_input.fidelities[fidelity_idx]
             fidelity_name = fidelity_input.categories[fidelity_idx]
 
-            fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()  # type: ignore
+            fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()
             fidelity_threshold = self.fidelity_thresholds[m] * fidelity_threshold_scale
 
             X_fid = X.assign(**{self.task_feature_key: fidelity_name})

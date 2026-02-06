@@ -36,7 +36,7 @@ def _map_reduction_feature(
     reducer: Callable,
 ) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]  # type: ignore
+    indices = [features2idx[key][0] for key in feature.features]
 
     def reduce_features(
         X: torch.Tensor,
@@ -47,7 +47,7 @@ def _map_reduction_feature(
         return result.expand(*result.shape[:-2], 1, -1)
 
     return AppendFeatures(
-        f=reduce_features,  # type: ignore
+        f=reduce_features,
         fkwargs={"indices": indices, "reducer": reducer},
         transform_on_train=True,
     )
@@ -72,13 +72,13 @@ def map_weighted_sum_feature(
         [
             inputs.get_by_key(key).to_df()[feature.descriptors].values[0]  # type: ignore
             for key in feature.features
-        ],  # type: ignore
+        ],
         dtype=torch.double,
     )
 
     # we need to get the descriptors into one tensor
     return AppendFeatures(
-        f=_weighted_sum_features,  # type: ignore
+        f=_weighted_sum_features,
         fkwargs={"indices": indices, "descriptors": descriptors},
         transform_on_train=True,
     )
@@ -99,7 +99,7 @@ def map_molecular_weighted_sum_feature(
     descriptors = torch.tensor(descriptors_df.values, dtype=torch.double)
 
     return AppendFeatures(
-        f=_weighted_sum_features,  # type: ignore
+        f=_weighted_sum_features,
         fkwargs={"indices": indices, "descriptors": descriptors},
         transform_on_train=True,
     )
@@ -117,7 +117,7 @@ AGGREGATE_MAP = {
 def map(
     data_model: EngineeredFeature, inputs: Inputs, transform_specs: InputTransformSpecs
 ) -> AppendFeatures:
-    return AGGREGATE_MAP[type(data_model)](  # type: ignore
+    return AGGREGATE_MAP[type(data_model)](
         inputs=inputs,
         transform_specs=transform_specs,
         feature=data_model,

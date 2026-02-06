@@ -403,7 +403,7 @@ def rref(A: np.ndarray, tol: float = 1e-8) -> Tuple[np.ndarray, List[int]]:
         # if yes: start elimination
         else:
             pivots.append(col)
-            max_row = np.argmax(np.abs(A[row:, col])) + row
+            max_row = int(np.argmax(np.abs(A[row:, col]))) + row
             # switch to most stable row
             A[[row, max_row], :] = A[[max_row, row], :]
             # normalize row

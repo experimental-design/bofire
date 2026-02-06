@@ -46,7 +46,9 @@ class StepwiseStrategy(Strategy):
         """Returns the strategy at the current step and the corresponding transform if given."""
         for i, condition in enumerate(self.conditions):
             if condition.evaluate(self.domain, experiments=self.experiments):
-                return self.strategies[i], self.transforms[i]
+                return self.strategies[i], self.transforms[
+                    i
+                ]  # ty: ignore[invalid-return-type]
         raise ValueError("No condition could be satisfied.")
 
     def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:  # type: ignore
