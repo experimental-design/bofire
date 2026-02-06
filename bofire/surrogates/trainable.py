@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -19,6 +20,15 @@ from bofire.surrogates.surrogate import Surrogate
 
 
 class TrainableSurrogate(ABC):
+    """Mixin for surrogates that can be trained. Concrete subclasses must also
+    inherit from :class:`Surrogate`, which provides ``inputs``, ``outputs``,
+    and ``predict``."""
+
+    # These attributes are provided by Surrogate via multiple inheritance.
+    inputs: Inputs
+    outputs: Outputs
+    predict: Callable[..., pd.DataFrame]
+
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
 
     def fit(self, experiments: pd.DataFrame, options: Optional[Dict] = None):
@@ -30,16 +40,16 @@ class TrainableSurrogate(ABC):
             options (Optional[Dict], optional): Additional options for fitting the model. Defaults to None.
         """
         # validate
-        experiments = self.inputs.validate_experiments(experiments, strict=False)  # type: ignore
-        experiments = self.outputs.validate_experiments(experiments)  # type: ignore
+        experiments = self.inputs.validate_experiments(experiments, strict=False)
+        experiments = self.outputs.validate_experiments(experiments)
         # preprocess
         experiments = self._preprocess_experiments(experiments)
-        X = experiments[self.inputs.get_keys()]  # type: ignore
+        X = experiments[self.inputs.get_keys()]
         # TODO: output feature validation
-        Y = experiments[self.outputs.get_keys()]  # type: ignore
+        Y = experiments[self.outputs.get_keys()]
         # fit
         options = options or {}
-        self._fit(X=X, Y=Y, **options)  # type: ignore
+        self._fit(X=X, Y=Y, **options)
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """
@@ -54,14 +64,14 @@ class TrainableSurrogate(ABC):
         if self._output_filtering is None:
             return experiments
         if self._output_filtering == OutputFilteringEnum.ALL:
-            return self.outputs.preprocess_experiments_all_valid_outputs(  # type: ignore
+            return self.outputs.preprocess_experiments_all_valid_outputs(
                 experiments=experiments,
-                output_feature_keys=self.outputs.get_keys(),  # type: ignore
+                output_feature_keys=self.outputs.get_keys(),
             )
         if self._output_filtering == OutputFilteringEnum.ANY:
-            return self.outputs.preprocess_experiments_any_valid_outputs(  # type: ignore
+            return self.outputs.preprocess_experiments_any_valid_outputs(  # ty: ignore[unresolved-attribute]
                 experiments=experiments,
-                output_feature_keys=self.outputs.get_keys(),  # type: ignore
+                output_feature_keys=self.outputs.get_keys(),
             )
         raise ValueError("Unknown output filtering option requested.")
 
@@ -132,22 +142,22 @@ class TrainableSurrogate(ABC):
         if include_labcodes and "labcode" not in experiments.columns:
             raise ValueError("No labcodes available for the provided experiments.")
 
-        if len(self.outputs) > 1:  # type: ignore
+        if len(self.outputs) > 1:
             raise NotImplementedError(
                 "Cross validation not implemented for multi-output models",
             )
 
         if stratified_feature is not None:
             if stratified_feature not in (
-                self.inputs.get_keys() + self.outputs.get_keys()  # type: ignore
+                self.inputs.get_keys() + self.outputs.get_keys()
             ):
                 raise ValueError(
                     "The feature to be stratified is not in the model inputs or outputs",
                 )
             try:
-                feat = self.inputs.get_by_key(stratified_feature)  # type: ignore
+                feat = self.inputs.get_by_key(stratified_feature)
             except KeyError:
-                feat = self.outputs.get_by_key(stratified_feature)  # type: ignore
+                feat = self.outputs.get_by_key(stratified_feature)
             if not isinstance(
                 feat,
                 (DiscreteInput, CategoricalInput, CategoricalOutput, ContinuousOutput),
@@ -189,15 +199,15 @@ class TrainableSurrogate(ABC):
             random_state=random_state,
         )
 
-        key = self.outputs.get_keys()[0]  # type: ignore
+        key = self.outputs.get_keys()[0]
         train_results = []
         test_results = []
         # now get the indices for the split
         for train_index, test_index in cv_func:
-            X_train = experiments.iloc[train_index][self.inputs.get_keys()]  # type: ignore
-            X_test = experiments.iloc[test_index][self.inputs.get_keys()]  # type: ignore
-            y_train = experiments.iloc[train_index][self.outputs.get_keys()]  # type: ignore
-            y_test = experiments.iloc[test_index][self.outputs.get_keys()]  # type: ignore
+            X_train = experiments.iloc[train_index][self.inputs.get_keys()]
+            X_test = experiments.iloc[test_index][self.inputs.get_keys()]
+            y_train = experiments.iloc[train_index][self.outputs.get_keys()]
+            y_test = experiments.iloc[test_index][self.outputs.get_keys()]
             train_labcodes = (
                 experiments.iloc[train_index]["labcode"] if include_labcodes else None
             )
@@ -207,25 +217,33 @@ class TrainableSurrogate(ABC):
             # now fit the model
             self._fit(X_train, y_train)
             # now do the scoring
-            y_test_pred = self.predict(X_test)  # type: ignore
-            y_train_pred = self.predict(X_train)  # type: ignore
+            y_test_pred = self.predict(X_test)
+            y_train_pred = self.predict(X_train)
 
             # Convert to categorical if applicable
             if isinstance(
-                self.outputs.get_by_key(key).objective,  # type: ignore
+                self.outputs.get_by_key(key).objective,
                 ConstrainedCategoricalObjective,
             ):
                 y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
+                    self.outputs.get_by_key(
+                        key
+                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
                 )
                 y_train_pred[f"{key}_pred"] = y_train_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
+                    self.outputs.get_by_key(
+                        key
+                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
                 )
                 y_test[key] = y_test[key].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
+                    self.outputs.get_by_key(
+                        key
+                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
                 )
                 y_train[key] = y_train[key].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
+                    self.outputs.get_by_key(
+                        key
+                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
                 )
 
             # now store the results
@@ -252,12 +270,12 @@ class TrainableSurrogate(ABC):
             # now call the hooks if available
             for hookname, hook in hooks.items():
                 hook_results[hookname].append(
-                    hook(
-                        surrogate=self,  # type: ignore
-                        X_train=X_train,
-                        y_train=y_train,
-                        X_test=X_test,
-                        y_test=y_test,
+                    hook(  # ty: ignore[missing-argument]
+                        surrogate=self,  # ty: ignore[unknown-argument]
+                        X_train=X_train,  # ty: ignore[unknown-argument]
+                        y_train=y_train,  # ty: ignore[unknown-argument]
+                        X_test=X_test,  # ty: ignore[unknown-argument]
+                        y_test=y_test,  # ty: ignore[unknown-argument]
                         **hook_kwargs.get(hookname, {}),
                     ),
                 )

@@ -161,8 +161,9 @@ def compute_hypervolume(
                             CloseToTargetObjective,
                         ],
                     )
-                ].values,  # type: ignore
+                ].values,
             ).to(**tkwargs),
+            None,
         ),
     )
 

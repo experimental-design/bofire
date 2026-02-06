@@ -38,7 +38,7 @@ def map_MixedSingleTaskGPSurrogate(
         sum_kernel = ScaleKernel(
             base_kernel=AdditiveKernel(
                 kernels=[
-                    data_model.continuous_kernel,  # type: ignore
+                    data_model.continuous_kernel,
                     ScaleKernel(base_kernel=data_model.categorical_kernel),
                 ]
             )
@@ -46,7 +46,7 @@ def map_MixedSingleTaskGPSurrogate(
         product_kernel = ScaleKernel(
             base_kernel=MultiplicativeKernel(
                 kernels=[
-                    data_model.continuous_kernel,  # type: ignore
+                    data_model.continuous_kernel,
                     data_model.categorical_kernel,
                 ]
             )
