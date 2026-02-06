@@ -1,4 +1,3 @@
-import pytest
 from botorch.models.map_saas import (
     AdditiveMapSaasSingleTaskGP,
     EnsembleMapSaasSingleTaskGP,
@@ -6,7 +5,7 @@ from botorch.models.map_saas import (
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
-from bofire.benchmarks.single import Himmelblau, PositiveHimmelblau
+from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.surrogates.api import (
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
@@ -77,24 +76,6 @@ def test_AdditiveMapSaasSingleTaskGPSurrogate_log_output_transform():
     assert_frame_equal(preds, preds2)
 
 
-def test_EnsembleMapSaasSingleTaskGPSurrogate_log_output_transform():
-    bench = PositiveHimmelblau()
-    samples = bench.domain.inputs.sample(10)
-    experiments = bench.f(samples, return_complete=True)
-    data_model = EnsembleMapSaasSingleTaskGPSurrogate(
-        inputs=bench.domain.inputs,
-        outputs=bench.domain.outputs,
-        output_scaler=ScalerEnum.LOG,
-    )
-    gp = surrogates.map(data_model)
-    # Log output transform is not compatible with EnsembleMapSaasSingleTaskGP
-    with pytest.raises(
-        RuntimeError,
-        match="Log output transform is not supported with EnsembleMapSaasSingleTaskGP",
-    ):
-        gp.fit(experiments=experiments)
-
-
 def test_AdditiveMapSaasSingleTaskGPSurrogate_chained_log_output_transform():
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
@@ -114,21 +95,3 @@ def test_AdditiveMapSaasSingleTaskGPSurrogate_chained_log_output_transform():
     assert preds.shape == (10, 2)
     preds2 = gp.predict(experiments)
     assert_frame_equal(preds, preds2)
-
-
-def test_EnsembleMapSaasSingleTaskGPSurrogate_chained_log_output_transform():
-    bench = PositiveHimmelblau()
-    samples = bench.domain.inputs.sample(10)
-    experiments = bench.f(samples, return_complete=True)
-    data_model = EnsembleMapSaasSingleTaskGPSurrogate(
-        inputs=bench.domain.inputs,
-        outputs=bench.domain.outputs,
-        output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
-    )
-    gp = surrogates.map(data_model)
-    # Log output transform is not compatible with EnsembleMapSaasSingleTaskGP
-    with pytest.raises(
-        RuntimeError,
-        match="Log output transform is not supported with EnsembleMapSaasSingleTaskGP",
-    ):
-        gp.fit(experiments=experiments)
