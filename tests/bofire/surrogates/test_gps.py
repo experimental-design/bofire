@@ -14,7 +14,7 @@ from botorch.models.transforms.input import (
     Normalize,
     NumericToCategoricalEncoding,
 )
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from gpytorch.constraints import GreaterThan
 from pandas.testing import assert_frame_equal
 from torch.nn import Module
@@ -83,6 +83,26 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
             ScalerEnum.IDENTITY,
             ScalerEnum.IDENTITY,
         ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.LOG,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.LOG,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
     ],
 )
 def test_SingleTaskGPModel(kernel, scaler, output_scaler):
@@ -123,6 +143,10 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert isinstance(model.model, SingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(model.model.outcome_transform, Log)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
@@ -214,6 +238,11 @@ def test_SingleTaskGPModel_with_engineered_features():
             ScalerEnum.IDENTITY,
             ScalerEnum.IDENTITY,
         ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
     ],
 )
 def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
@@ -265,6 +294,8 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.scaler, Normalize)
@@ -656,6 +687,11 @@ def test_MixedSingletaskGPModel_with_botorch():
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
         (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
         (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
+        (
+            RBFKernel(ard=False),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
     ],
 )
 def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
@@ -702,6 +738,8 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
@@ -744,6 +782,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
         (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
         (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.CHAINED_LOG_STANDARDIZE),
     ],
 )
 def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
@@ -791,6 +830,8 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     assert isinstance(model.model, SingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
 
@@ -862,6 +903,11 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
             ScalerEnum.IDENTITY,
             ScalerEnum.IDENTITY,
         ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
     ],
 )
 def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
@@ -902,6 +948,8 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
     assert isinstance(model.model, RobustRelevancePursuitSingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
@@ -918,6 +966,7 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
         outputs=outputs,
         kernel=kernel,
         scaler=scaler,
+        output_scaler=output_scaler,
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)

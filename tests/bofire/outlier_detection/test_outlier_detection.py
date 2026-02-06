@@ -265,7 +265,7 @@ def test_outlier_detectors_check_compatibility():
             inputs=Inputs(
                 features=[
                     ContinuousInput(
-                        key=f"x_{i+1}",
+                        key=f"x_{i + 1}",
                         bounds=(-4, 4),
                     )
                     for i in range(3)
@@ -288,7 +288,7 @@ def test_outlier_detectors_check_compatibility():
             inputs=Inputs(
                 features=[
                     ContinuousInput(
-                        key=f"x_{i+1}",
+                        key=f"x_{i + 1}",
                         bounds=(-4, 4),
                     )
                     for i in range(2)
@@ -312,7 +312,7 @@ def test_outlier_detectors_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -328,7 +328,7 @@ def test_outlier_detectors_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(4)
@@ -349,7 +349,7 @@ def test_outlier_detectors_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(4)
@@ -368,7 +368,7 @@ def test_outlier_detectors_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -408,7 +408,7 @@ def test_outlier_detectors_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -431,7 +431,7 @@ def test_outlier_detectors_unique_outputs():
         base_gp=SingleTaskGPSurrogate(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(3)
                 ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -442,7 +442,7 @@ def test_outlier_detectors_unique_outputs():
         base_gp=SingleTaskGPSurrogate(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(2)
                 ]
                 + [CategoricalInput(key="x_3", categories=["apple", "banana"])],
             ),

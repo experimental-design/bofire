@@ -211,12 +211,14 @@ def test_nchoosek_combinations_completeness(test_case):
 def test_nchoosek_combinations_nonexhaustive():
     domain = Domain(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(6)],
+            features=[
+                ContinuousInput(key=f"if{i + 1}", bounds=(0, 1)) for i in range(6)
+            ],
         ),
         constraints=Constraints(
             constraints=[
                 NChooseKConstraint(
-                    features=[f"if{i+1}" for i in range(4)],
+                    features=[f"if{i + 1}" for i in range(4)],
                     min_count=0,
                     max_count=2,
                     none_also_valid=True,

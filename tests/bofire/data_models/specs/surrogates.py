@@ -225,6 +225,58 @@ specs.add_valid(
     },
 )
 
+specs.add_invalid(
+    models.EnsembleMapSaasSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "n_taus": 4,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.LOG,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "hyperconfig": None,
+        "dump": None,
+    },
+    error=ValueError,
+    message="LOG and CHAINED_LOG_STANDARDIZE are not supported as output transforms for EnsembleMapSaasSingleTaskGPSurrogate.",
+)
+
+specs.add_invalid(
+    models.EnsembleMapSaasSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "n_taus": 4,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "hyperconfig": None,
+        "dump": None,
+    },
+    error=ValueError,
+    message="LOG and CHAINED_LOG_STANDARDIZE are not supported as output transforms for EnsembleMapSaasSingleTaskGPSurrogate.",
+)
+
 specs.add_valid(
     models.FullyBayesianSingleTaskGPSurrogate,
     lambda: {

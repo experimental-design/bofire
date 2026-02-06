@@ -440,6 +440,31 @@ class Himmelblau(Benchmark):
         )
 
 
+class PositiveHimmelblau(Himmelblau):
+    """Modified Himmelblau function shifted to be positive everywhere."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+        """Evaluates modified benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+            **kwargs: Allow additional unused arguments to prevent errors.
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+
+        """
+        X_temp = X.eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+            inplace=False,
+        )
+        Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
+        return Y + 1e-8
+
+
 class MultiTaskHimmelblau(Benchmark):
     """Himmelblau function for testing optimization algorithms
     Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
