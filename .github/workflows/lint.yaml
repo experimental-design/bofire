@@ -52,4 +52,4 @@ jobs:
         run: uv pip install pre-commit ".[all]" ty --system
 
       - name: ty
-        run: ty check bofire
+        run: ty check bofire --python $(which python)
