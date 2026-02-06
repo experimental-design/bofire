@@ -414,7 +414,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to predict the Motor Octane Number (MON) of a hydrocarbon mixture. The dataset stems from the paper from <a href="https://www.nature.com/articles/s41524-025-01552-2">Chew et al.</a>. It contains 722 experiments of up to 121 componet mixtures of 423 individual molecules. Each molecule is represented by its SMILES string.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="e4db7ca7" class="cell" data-execution_count="1">
+<div id="ed269447" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
@@ -435,7 +435,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="setup-data" class="level2">
 <h2 class="anchored" data-anchor-id="setup-data">Setup Data</h2>
-<div id="6bb4da9a" class="cell" data-execution_count="2">
+<div id="c0ae353c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df_experiments <span class="op">=</span> get_octane_data()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_experiments[<span class="st">"valid_MON"</span>] <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -454,7 +454,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-surrogate-and-perform-cv" class="level2">
 <h2 class="anchored" data-anchor-id="setup-surrogate-and-perform-cv">Setup Surrogate and perform CV</h2>
 <p>We model the high-dimensional problem by using an engineered feature called <code>MolecularWeightedSumFeature</code>. In computes the weighted sum of the molecular descriptors of the original <code>ContinuousMolecularInput</code>s that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</p>
-<div id="6f9d2a2b" class="cell" data-execution_count="3">
+<div id="2b8ccfec" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
@@ -500,13 +500,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>4.153533</td>
-<td>64.432815</td>
-<td>0.797425</td>
-<td>5.810373e+14</td>
-<td>0.893685</td>
-<td>0.887868</td>
-<td>1.609535e-111</td>
+<td>4.091612</td>
+<td>63.361234</td>
+<td>0.800794</td>
+<td>6.200920e+14</td>
+<td>0.895461</td>
+<td>0.895591</td>
+<td>2.344566e-113</td>
 </tr>
 </tbody>
 </table>

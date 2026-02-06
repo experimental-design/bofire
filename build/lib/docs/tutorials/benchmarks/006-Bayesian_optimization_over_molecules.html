@@ -441,7 +441,7 @@ window.Quarto = {
 <p>An example notebook for Bayesian optimisation on a molecular dataset using a Tanimoto fingerprint kernel and the photoswitch dataset.<span class="math inline">\(\newline\)</span> Paper: https://pubs.rsc.org/en/content/articlelanding/2022/sc/d2sc04306h <span class="math inline">\(\newline\)</span> Code: https://github.com/Ryan-Rhys/The-Photoswitch-Dataset <span class="math inline">\(\newline\)</span> This notebook is adapted from https://github.com/leojklarner/gauche/blob/main/notebooks/Bayesian%20Optimisation%20Over%20Molecules.ipynb <span class="math inline">\(\newline\)</span> The method of obtaining new data from a discrete dataset is explained in the notebook and the details of the dataset and the method are explained in the code and the paper respectively.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="51e40211" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.217913,&quot;end_time&quot;:&quot;2024-10-10T20:35:24.355488&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:21.137575&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="d56f6374" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.217913,&quot;end_time&quot;:&quot;2024-10-10T20:35:24.355488&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:21.137575&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -470,7 +470,7 @@ window.Quarto = {
 <section id="benchmark" class="level2">
 <h2 class="anchored" data-anchor-id="benchmark">Benchmark</h2>
 <p>input and output feature keys and extract them to get LookUpTable</p>
-<div id="ef6e7286" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.052545,&quot;end_time&quot;:&quot;2024-10-10T20:35:24.411570&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:24.359025&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="93dd04d9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.052545,&quot;end_time&quot;:&quot;2024-10-10T20:35:24.411570&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:24.359025&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> {</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"input"</span>: <span class="st">"SMILES"</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"output"</span>: <span class="st">"E isomer pi-pi* wavelength in nm"</span>,</span>
@@ -499,7 +499,7 @@ window.Quarto = {
 <section id="random-vs-sobo-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="random-vs-sobo-optimization">Random vs SOBO optimization</h2>
 <p>For molecules, we use Tanimoto GP which has a Tanimoto kernel as default</p>
-<div id="ec9cad40" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.640563,&quot;end_time&quot;:&quot;2024-10-10T20:35:25.055378&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:24.414815&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="8020ef73" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.640563,&quot;end_time&quot;:&quot;2024-10-10T20:35:25.055378&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:24.414815&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    datamodel <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>datamodel)</span>
@@ -569,15 +569,15 @@ window.Quarto = {
 <span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    random_results_set.append(random_results_new)</span>
 <span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    bo_results_set.append(bo_results_new)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=554.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 73.24it/s, Current Best:=554.000]
-  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=554.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  5.72it/s, Current Best:=554.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  5.70it/s, Current Best:=554.000]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=601.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 77.12it/s, Current Best:=601.000]
+  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=601.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  4.79it/s, Current Best:=601.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  4.77it/s, Current Best:=601.000]</code></pre>
 </div>
 </div>
 </section>
 <section id="performance" class="level2">
 <h2 class="anchored" data-anchor-id="performance">Performance</h2>
 <p>SOBO outperforms random search in terms of selecting molecules with high E isomer pi-pi* transition wavelength.</p>
-<div id="7e747b16" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="9899d190" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define a confience interval function for plotting.</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ci(y):</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">1.96</span> <span class="op">*</span> y.std(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">/</span> np.sqrt(n_iter)</span>
