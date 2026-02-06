@@ -67,7 +67,7 @@ all = [
     "entmoot>=2.0.6",
     "pyomo<=6.9.4",
     "rdkit>=2023.3.2",
-    "mordred>=1.2.0",
+    "mordredcommunity>=2.0.1",
     "mopti",
     "pytest",
     "pytest-cov",
