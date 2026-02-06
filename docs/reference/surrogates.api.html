@@ -424,7 +424,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#bofire.surrogates.api.TrainableSurrogate">TrainableSurrogate</a></td>
-<td></td>
+<td>Mixin for surrogates that can be trained. Concrete subclasses must also</td>
 </tr>
 <tr class="odd">
 <td><a href="#bofire.surrogates.api.SingleTaskGPSurrogate">SingleTaskGPSurrogate</a></td>
@@ -519,6 +519,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="bofire.surrogates.api.TrainableSurrogate" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.surrogates.api.TrainableSurrogate">TrainableSurrogate</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>surrogates.api.TrainableSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Mixin for surrogates that can be trained. Concrete subclasses must also inherit from :class:<code>Surrogate</code>, which provides <code>inputs</code>, <code>outputs</code>, and <code>predict</code>.</p>
 <section id="methods-1" class="level4">
 <h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
 <table class="caption-top table">
@@ -1272,7 +1273,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
 <span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Surrogate</span><span class="co">](#bofire.surrogates.api.Surrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TrainableSurrogate</span><span class="co">](#bofire.surrogates.api.TrainableSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TrainableSurrogate</span><span class="co">](#bofire.surrogates.api.TrainableSurrogate)</span> <span class="pp">|</span> Mixin for surrogates that can be trained. Concrete subclasses must also <span class="pp">|</span></span>
 <span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">SingleTaskGPSurrogate</span><span class="co">](#bofire.surrogates.api.SingleTaskGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiTaskGPSurrogate</span><span class="co">](#bofire.surrogates.api.MultiTaskGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">BotorchSurrogates</span><span class="co">](#bofire.surrogates.api.BotorchSurrogates)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
@@ -1326,165 +1327,167 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a>surrogates.api.TrainableSurrogate()</span>
 <span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a>Mixin for surrogates that can be trained. Concrete subclasses must also</span>
+<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>inherit from <span class="sc">:class:</span><span class="in">`Surrogate`</span>, which provides ``inputs<span class="in">``, ``</span>outputs``,</span>
+<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>and ``predict``.</span>
 <span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">cross_validate</span><span class="co">](#bofire.surrogates.api.TrainableSurrogate.cross_validate)</span> <span class="pp">|</span> Perform a cross validation for the provided training data. <span class="pp">|</span></span>
-<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">fit</span><span class="co">](#bofire.surrogates.api.TrainableSurrogate.fit)</span> <span class="pp">|</span> Fit the surrogate model to the provided experiments. <span class="pp">|</span></span>
-<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a><span class="fu">##### cross_validate { #bofire.surrogates.api.TrainableSurrogate.cross_validate }</span></span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">cross_validate</span><span class="co">](#bofire.surrogates.api.TrainableSurrogate.cross_validate)</span> <span class="pp">|</span> Perform a cross validation for the provided training data. <span class="pp">|</span></span>
+<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">fit</span><span class="co">](#bofire.surrogates.api.TrainableSurrogate.fit)</span> <span class="pp">|</span> Fit the surrogate model to the provided experiments. <span class="pp">|</span></span>
 <span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a>surrogates.api.TrainableSurrogate.cross_validate(</span>
-<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a>    experiments,</span>
-<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a>    folds<span class="op">=-</span><span class="dv">1</span>,</span>
-<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>    include_X<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>    include_labcodes<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a>    stratified_feature<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>    group_split_column<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>    hooks<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>    hook_kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a>Perform a cross validation for the provided training data.</span>
+<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a><span class="fu">##### cross_validate { #bofire.surrogates.api.TrainableSurrogate.cross_validate }</span></span>
+<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a>surrogates.api.TrainableSurrogate.cross_validate(</span>
+<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>    experiments,</span>
+<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>    folds<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a>    include_X<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a>    include_labcodes<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>    stratified_feature<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>    group_split_column<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a>    hooks<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a>    hook_kwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a>Perform a cross validation for the provided training data.</span>
 <span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name               <span class="pp">|</span> Type                                                                                            <span class="pp">|</span> Description                                                                                                                                                                                                                                                                                                                                                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|</span></span>
-<span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments        <span class="pp">|</span> pd.DataFrame                                                                                    <span class="pp">|</span> Data on which the cross validation should be performed.                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> folds              <span class="pp">|</span> int                                                                                             <span class="pp">|</span> Number of folds. -1 is equal to LOO CV. Defaults to -1.                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span> <span class="in">`-1`</span>       <span class="pp">|</span></span>
-<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include_X          <span class="pp">|</span> bool                                                                                            <span class="pp">|</span> If true the X values of the fold are written to respective CvResult objects for later analysis. Defaults to False.                                                                                                                                                                                                                                                                                                                                   <span class="pp">|</span> <span class="in">`False`</span>    <span class="pp">|</span></span>
-<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> random_state       <span class="pp">|</span> int                                                                                             <span class="pp">|</span> Controls the randomness of the indices in the train and test sets of each fold. Defaults to None.                                                                                                                                                                                                                                                                                                                                                    <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> stratified_feature <span class="pp">|</span> str                                                                                             <span class="pp">|</span> The feature name to preserve the percentage of samples for each class in the stratified folds. Defaults to None.                                                                                                                                                                                                                                                                                                                                     <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> group_split_column <span class="pp">|</span> str                                                                                             <span class="pp">|</span> The column name of the group id. This parameter is used to ensure that the splits are made such that the same group is not present in both training and testing sets. This is useful in scenarios where data points are related or dependent on each other, and splitting them into different sets would violate the assumption of independence. The number of unique groups must be greater than or equal to the number of folds. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> hooks              <span class="pp">|</span> Dict<span class="sc">\[</span>str, Callable<span class="sc">\[\[</span>Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame<span class="sc">\]</span>, Any<span class="sc">\]\]</span> <span class="pp">|</span> Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.                                                                                                                                                                                                                                <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> hook_kwargs        <span class="pp">|</span> Dict<span class="sc">\[</span>str, Dict<span class="sc">\[</span>str, Any<span class="sc">\]\]</span>                                                                   <span class="pp">|</span> Dictionary holding hook specific keyword arguments. Defaults to {}.                                                                                                                                                                                                                                                                                                                                                                                  <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name               <span class="pp">|</span> Type                                                                                            <span class="pp">|</span> Description                                                                                                                                                                                                                                                                                                                                                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments        <span class="pp">|</span> pd.DataFrame                                                                                    <span class="pp">|</span> Data on which the cross validation should be performed.                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> folds              <span class="pp">|</span> int                                                                                             <span class="pp">|</span> Number of folds. -1 is equal to LOO CV. Defaults to -1.                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span> <span class="in">`-1`</span>       <span class="pp">|</span></span>
+<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include_X          <span class="pp">|</span> bool                                                                                            <span class="pp">|</span> If true the X values of the fold are written to respective CvResult objects for later analysis. Defaults to False.                                                                                                                                                                                                                                                                                                                                   <span class="pp">|</span> <span class="in">`False`</span>    <span class="pp">|</span></span>
+<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> random_state       <span class="pp">|</span> int                                                                                             <span class="pp">|</span> Controls the randomness of the indices in the train and test sets of each fold. Defaults to None.                                                                                                                                                                                                                                                                                                                                                    <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> stratified_feature <span class="pp">|</span> str                                                                                             <span class="pp">|</span> The feature name to preserve the percentage of samples for each class in the stratified folds. Defaults to None.                                                                                                                                                                                                                                                                                                                                     <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> group_split_column <span class="pp">|</span> str                                                                                             <span class="pp">|</span> The column name of the group id. This parameter is used to ensure that the splits are made such that the same group is not present in both training and testing sets. This is useful in scenarios where data points are related or dependent on each other, and splitting them into different sets would violate the assumption of independence. The number of unique groups must be greater than or equal to the number of folds. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> hooks              <span class="pp">|</span> Dict<span class="sc">\[</span>str, Callable<span class="sc">\[\[</span>Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame<span class="sc">\]</span>, Any<span class="sc">\]\]</span> <span class="pp">|</span> Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.                                                                                                                                                                                                                                <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> hook_kwargs        <span class="pp">|</span> Dict<span class="sc">\[</span>str, Dict<span class="sc">\[</span>str, Any<span class="sc">\]\]</span>                                                                   <span class="pp">|</span> Dictionary holding hook specific keyword arguments. Defaults to {}.                                                                                                                                                                                                                                                                                                                                                                                  <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
 <span id="cb17-107"><a href="#cb17-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                                    <span class="pp">|</span> Description                                                                                                                                                                                                  <span class="pp">|</span></span>
-<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> Tuple<span class="sc">\[</span>CvResults, CvResults, Dict<span class="sc">\[</span>str, List<span class="sc">\[</span>Any<span class="sc">\]\]\]</span> <span class="pp">|</span> Tuple<span class="co">[</span><span class="ot">CvResults, CvResults, Dict[str, List[Any]</span><span class="co">]</span>]: First CvResults object reflects the training data, second CvResults object the test data, dictionary object holds the return values of the applied hooks. <span class="pp">|</span></span>
-<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="fu">##### fit { #bofire.surrogates.api.TrainableSurrogate.fit }</span></span>
+<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                                    <span class="pp">|</span> Description                                                                                                                                                                                                  <span class="pp">|</span></span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> Tuple<span class="sc">\[</span>CvResults, CvResults, Dict<span class="sc">\[</span>str, List<span class="sc">\[</span>Any<span class="sc">\]\]\]</span> <span class="pp">|</span> Tuple<span class="co">[</span><span class="ot">CvResults, CvResults, Dict[str, List[Any]</span><span class="co">]</span>]: First CvResults object reflects the training data, second CvResults object the test data, dictionary object holds the return values of the applied hooks. <span class="pp">|</span></span>
 <span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a>surrogates.api.TrainableSurrogate.fit(experiments, options<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a>Fit the surrogate model to the provided experiments.</span>
+<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a><span class="fu">##### fit { #bofire.surrogates.api.TrainableSurrogate.fit }</span></span>
+<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a>surrogates.api.TrainableSurrogate.fit(experiments, options<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-119"><a href="#cb17-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a>Fit the surrogate model to the provided experiments.</span>
 <span id="cb17-121"><a href="#cb17-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type             <span class="pp">|</span> Description                                                 <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb17-123"><a href="#cb17-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|------------------|-------------------------------------------------------------|------------|</span></span>
-<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame     <span class="pp">|</span> The experimental data to fit the model.                     <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> options     <span class="pp">|</span> Optional<span class="sc">\[</span>Dict<span class="sc">\]</span> <span class="pp">|</span> Additional options for fitting the model. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a><span class="fu">### SingleTaskGPSurrogate { #bofire.surrogates.api.SingleTaskGPSurrogate }</span></span>
+<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb17-123"><a href="#cb17-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type             <span class="pp">|</span> Description                                                 <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|------------------|-------------------------------------------------------------|------------|</span></span>
+<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame     <span class="pp">|</span> The experimental data to fit the model.                     <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> options     <span class="pp">|</span> Optional<span class="sc">\[</span>Dict<span class="sc">\]</span> <span class="pp">|</span> Additional options for fitting the model. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
 <span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a>surrogates.api.SingleTaskGPSurrogate(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a><span class="fu">### SingleTaskGPSurrogate { #bofire.surrogates.api.SingleTaskGPSurrogate }</span></span>
+<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a>surrogates.api.SingleTaskGPSurrogate(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-134"><a href="#cb17-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiTaskGPSurrogate { #bofire.surrogates.api.MultiTaskGPSurrogate }</span></span>
+<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a>surrogates.api.MultiTaskGPSurrogate(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiTaskGPSurrogate { #bofire.surrogates.api.MultiTaskGPSurrogate }</span></span>
+<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a>surrogates.api.MultiTaskGPSurrogate(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a><span class="fu">### BotorchSurrogates { #bofire.surrogates.api.BotorchSurrogates }</span></span>
+<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-144"><a href="#cb17-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a>surrogates.api.BotorchSurrogates(data_model, re_init_kwargs<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span>
-<span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-149"><a href="#cb17-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a><span class="fu">### BotorchSurrogates { #bofire.surrogates.api.BotorchSurrogates }</span></span>
+<span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a>surrogates.api.BotorchSurrogates(data_model, re_init_kwargs<span class="op">=</span><span class="va">None</span>, <span class="op">**</span>kwargs)</span>
+<span id="cb17-149"><a href="#cb17-149" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-150"><a href="#cb17-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-151"><a href="#cb17-151" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearDeterministicSurrogate { #bofire.surrogates.api.LinearDeterministicSurrogate }</span></span>
+<span id="cb17-151"><a href="#cb17-151" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-152"><a href="#cb17-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-153"><a href="#cb17-153" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-154"><a href="#cb17-154" aria-hidden="true" tabindex="-1"></a>surrogates.api.LinearDeterministicSurrogate(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-155"><a href="#cb17-155" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-156"><a href="#cb17-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-157"><a href="#cb17-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-153"><a href="#cb17-153" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearDeterministicSurrogate { #bofire.surrogates.api.LinearDeterministicSurrogate }</span></span>
+<span id="cb17-154"><a href="#cb17-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-155"><a href="#cb17-155" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-156"><a href="#cb17-156" aria-hidden="true" tabindex="-1"></a>surrogates.api.LinearDeterministicSurrogate(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-157"><a href="#cb17-157" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-158"><a href="#cb17-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-159"><a href="#cb17-159" aria-hidden="true" tabindex="-1"></a><span class="fu">### EmpiricalSurrogate { #bofire.surrogates.api.EmpiricalSurrogate }</span></span>
+<span id="cb17-159"><a href="#cb17-159" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-160"><a href="#cb17-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-161"><a href="#cb17-161" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-162"><a href="#cb17-162" aria-hidden="true" tabindex="-1"></a>surrogates.api.EmpiricalSurrogate(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-163"><a href="#cb17-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-164"><a href="#cb17-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-165"><a href="#cb17-165" aria-hidden="true" tabindex="-1"></a>All necessary functions has to be implemented in the model which can then be loaded</span>
-<span id="cb17-166"><a href="#cb17-166" aria-hidden="true" tabindex="-1"></a>from cloud pickle.</span>
-<span id="cb17-167"><a href="#cb17-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-168"><a href="#cb17-168" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb17-161"><a href="#cb17-161" aria-hidden="true" tabindex="-1"></a><span class="fu">### EmpiricalSurrogate { #bofire.surrogates.api.EmpiricalSurrogate }</span></span>
+<span id="cb17-162"><a href="#cb17-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-163"><a href="#cb17-163" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-164"><a href="#cb17-164" aria-hidden="true" tabindex="-1"></a>surrogates.api.EmpiricalSurrogate(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-165"><a href="#cb17-165" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-166"><a href="#cb17-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-167"><a href="#cb17-167" aria-hidden="true" tabindex="-1"></a>All necessary functions has to be implemented in the model which can then be loaded</span>
+<span id="cb17-168"><a href="#cb17-168" aria-hidden="true" tabindex="-1"></a>from cloud pickle.</span>
 <span id="cb17-169"><a href="#cb17-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-170"><a href="#cb17-170" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type               <span class="pp">|</span> Description             <span class="pp">|</span></span>
-<span id="cb17-171"><a href="#cb17-171" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------------|-------------------------|</span></span>
-<span id="cb17-172"><a href="#cb17-172" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> model  <span class="pp">|</span> DeterministicModel <span class="pp">|</span> Botorch model instance. <span class="pp">|</span></span>
-<span id="cb17-173"><a href="#cb17-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-174"><a href="#cb17-174" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb17-170"><a href="#cb17-170" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb17-171"><a href="#cb17-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-172"><a href="#cb17-172" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type               <span class="pp">|</span> Description             <span class="pp">|</span></span>
+<span id="cb17-173"><a href="#cb17-173" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------------|-------------------------|</span></span>
+<span id="cb17-174"><a href="#cb17-174" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> model  <span class="pp">|</span> DeterministicModel <span class="pp">|</span> Botorch model instance. <span class="pp">|</span></span>
 <span id="cb17-175"><a href="#cb17-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-176"><a href="#cb17-176" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb17-177"><a href="#cb17-177" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb17-178"><a href="#cb17-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">loads</span><span class="co">](#bofire.surrogates.api.EmpiricalSurrogate.loads)</span> <span class="pp">|</span> Loads the actual model from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute. <span class="pp">|</span></span>
-<span id="cb17-179"><a href="#cb17-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-180"><a href="#cb17-180" aria-hidden="true" tabindex="-1"></a><span class="fu">##### loads { #bofire.surrogates.api.EmpiricalSurrogate.loads }</span></span>
+<span id="cb17-176"><a href="#cb17-176" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb17-177"><a href="#cb17-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-178"><a href="#cb17-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb17-179"><a href="#cb17-179" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb17-180"><a href="#cb17-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">loads</span><span class="co">](#bofire.surrogates.api.EmpiricalSurrogate.loads)</span> <span class="pp">|</span> Loads the actual model from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute. <span class="pp">|</span></span>
 <span id="cb17-181"><a href="#cb17-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-182"><a href="#cb17-182" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-183"><a href="#cb17-183" aria-hidden="true" tabindex="-1"></a>surrogates.api.EmpiricalSurrogate.loads(data)</span>
-<span id="cb17-184"><a href="#cb17-184" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-185"><a href="#cb17-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-186"><a href="#cb17-186" aria-hidden="true" tabindex="-1"></a>Loads the actual model from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute.</span>
+<span id="cb17-182"><a href="#cb17-182" aria-hidden="true" tabindex="-1"></a><span class="fu">##### loads { #bofire.surrogates.api.EmpiricalSurrogate.loads }</span></span>
+<span id="cb17-183"><a href="#cb17-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-184"><a href="#cb17-184" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-185"><a href="#cb17-185" aria-hidden="true" tabindex="-1"></a>surrogates.api.EmpiricalSurrogate.loads(data)</span>
+<span id="cb17-186"><a href="#cb17-186" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-187"><a href="#cb17-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-188"><a href="#cb17-188" aria-hidden="true" tabindex="-1"></a><span class="fu">### RandomForestSurrogate { #bofire.surrogates.api.RandomForestSurrogate }</span></span>
+<span id="cb17-188"><a href="#cb17-188" aria-hidden="true" tabindex="-1"></a>Loads the actual model from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute.</span>
 <span id="cb17-189"><a href="#cb17-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-190"><a href="#cb17-190" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-191"><a href="#cb17-191" aria-hidden="true" tabindex="-1"></a>surrogates.api.RandomForestSurrogate(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-192"><a href="#cb17-192" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-193"><a href="#cb17-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-194"><a href="#cb17-194" aria-hidden="true" tabindex="-1"></a>BoFire Random Forest model.</span>
+<span id="cb17-190"><a href="#cb17-190" aria-hidden="true" tabindex="-1"></a><span class="fu">### RandomForestSurrogate { #bofire.surrogates.api.RandomForestSurrogate }</span></span>
+<span id="cb17-191"><a href="#cb17-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-192"><a href="#cb17-192" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-193"><a href="#cb17-193" aria-hidden="true" tabindex="-1"></a>surrogates.api.RandomForestSurrogate(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-194"><a href="#cb17-194" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-195"><a href="#cb17-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-196"><a href="#cb17-196" aria-hidden="true" tabindex="-1"></a>The same hyperparameters are available as for the wrapped sklearn RandomForestRegreesor.</span>
+<span id="cb17-196"><a href="#cb17-196" aria-hidden="true" tabindex="-1"></a>BoFire Random Forest model.</span>
 <span id="cb17-197"><a href="#cb17-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-198"><a href="#cb17-198" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb17-198"><a href="#cb17-198" aria-hidden="true" tabindex="-1"></a>The same hyperparameters are available as for the wrapped sklearn RandomForestRegreesor.</span>
 <span id="cb17-199"><a href="#cb17-199" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-200"><a href="#cb17-200" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb17-201"><a href="#cb17-201" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb17-202"><a href="#cb17-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">loads</span><span class="co">](#bofire.surrogates.api.RandomForestSurrogate.loads)</span> <span class="pp">|</span> Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute. <span class="pp">|</span></span>
-<span id="cb17-203"><a href="#cb17-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-204"><a href="#cb17-204" aria-hidden="true" tabindex="-1"></a><span class="fu">##### loads { #bofire.surrogates.api.RandomForestSurrogate.loads }</span></span>
+<span id="cb17-200"><a href="#cb17-200" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb17-201"><a href="#cb17-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-202"><a href="#cb17-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb17-203"><a href="#cb17-203" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb17-204"><a href="#cb17-204" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">loads</span><span class="co">](#bofire.surrogates.api.RandomForestSurrogate.loads)</span> <span class="pp">|</span> Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute. <span class="pp">|</span></span>
 <span id="cb17-205"><a href="#cb17-205" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-206"><a href="#cb17-206" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-207"><a href="#cb17-207" aria-hidden="true" tabindex="-1"></a>surrogates.api.RandomForestSurrogate.loads(data)</span>
-<span id="cb17-208"><a href="#cb17-208" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-209"><a href="#cb17-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-210"><a href="#cb17-210" aria-hidden="true" tabindex="-1"></a>Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute.</span>
+<span id="cb17-206"><a href="#cb17-206" aria-hidden="true" tabindex="-1"></a><span class="fu">##### loads { #bofire.surrogates.api.RandomForestSurrogate.loads }</span></span>
+<span id="cb17-207"><a href="#cb17-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-208"><a href="#cb17-208" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-209"><a href="#cb17-209" aria-hidden="true" tabindex="-1"></a>surrogates.api.RandomForestSurrogate.loads(data)</span>
+<span id="cb17-210"><a href="#cb17-210" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-211"><a href="#cb17-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-212"><a href="#cb17-212" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLPEnsemble { #bofire.surrogates.api.MLPEnsemble }</span></span>
+<span id="cb17-212"><a href="#cb17-212" aria-hidden="true" tabindex="-1"></a>Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the <span class="in">`model`</span> attribute.</span>
 <span id="cb17-213"><a href="#cb17-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-214"><a href="#cb17-214" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-215"><a href="#cb17-215" aria-hidden="true" tabindex="-1"></a>surrogates.api.MLPEnsemble(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-216"><a href="#cb17-216" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb17-217"><a href="#cb17-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-218"><a href="#cb17-218" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-214"><a href="#cb17-214" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLPEnsemble { #bofire.surrogates.api.MLPEnsemble }</span></span>
+<span id="cb17-215"><a href="#cb17-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-216"><a href="#cb17-216" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-217"><a href="#cb17-217" aria-hidden="true" tabindex="-1"></a>surrogates.api.MLPEnsemble(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-218"><a href="#cb17-218" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb17-219"><a href="#cb17-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-220"><a href="#cb17-220" aria-hidden="true" tabindex="-1"></a><span class="fu">### PiecewiseLinearGPSurrogate { #bofire.surrogates.api.PiecewiseLinearGPSurrogate }</span></span>
+<span id="cb17-220"><a href="#cb17-220" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-221"><a href="#cb17-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-222"><a href="#cb17-222" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb17-223"><a href="#cb17-223" aria-hidden="true" tabindex="-1"></a>surrogates.api.PiecewiseLinearGPSurrogate(data_model, <span class="op">**</span>kwargs)</span>
-<span id="cb17-224"><a href="#cb17-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb17-222"><a href="#cb17-222" aria-hidden="true" tabindex="-1"></a><span class="fu">### PiecewiseLinearGPSurrogate { #bofire.surrogates.api.PiecewiseLinearGPSurrogate }</span></span>
+<span id="cb17-223"><a href="#cb17-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-224"><a href="#cb17-224" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb17-225"><a href="#cb17-225" aria-hidden="true" tabindex="-1"></a>surrogates.api.PiecewiseLinearGPSurrogate(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb17-226"><a href="#cb17-226" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

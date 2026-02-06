@@ -729,7 +729,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="606a404b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.7129,&quot;end_time&quot;:&quot;2024-10-10T20:36:44.983985&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:41.271085&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="ebef63d0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.7129,&quot;end_time&quot;:&quot;2024-10-10T20:36:44.983985&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:41.271085&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -749,7 +749,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="single-objective-problem-setup" class="level2">
 <h2 class="anchored" data-anchor-id="single-objective-problem-setup">Single Objective Problem Setup</h2>
-<div id="9da86e1f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.013459,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.004781&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:44.991322&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="9e81f395" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.013459,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.004781&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:44.991322&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">10</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -763,7 +763,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="random-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="random-strategy">Random Strategy</h2>
 <p>The random strategy and other strategies that just inherit from <code>Strategy</code> and not <code>PredictiveStrategy</code> are special as they do not need defined output features in the domain and they do not need a call to <code>tell</code> before the <code>ask</code>. Furthermore they online provide input features in the candidates and no predictions for output features.</p>
-<div id="9cc14db4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.021248,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.031772&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.010524&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="e4536a9e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.021248,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.031772&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.010524&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># setup the data model</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(inputs<span class="op">=</span>benchmark.domain.inputs)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> RandomStrategyDataModel(domain<span class="op">=</span>domain)</span>
@@ -776,7 +776,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <pre><code>'{"type":"RandomStrategy","domain":{"type":"Domain","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[]},"constraints":{"type":"Constraints","constraints":[]}},"seed":null,"fallback_sampling_method":"UNIFORM","n_burnin":1000,"n_thinning":32,"num_base_samples":null,"max_iters":1000,"sampler_kwargs":null}'</code></pre>
 </div>
 </div>
-<div id="389a7f71" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.036003,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.070282&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.034279&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="2fc84c3c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.036003,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.070282&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.034279&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load it</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(jspec)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -791,18 +791,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>candidates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
-<pre><code>[Candidate(inputValues={'x_1': InputValue(value='-0.33740727337845655'), 'x_2': InputValue(value='-3.9148136069402937')}, outputValues=None),
- Candidate(inputValues={'x_1': InputValue(value='5.711601069467163'), 'x_2': InputValue(value='4.27365801050356')}, outputValues=None),
- Candidate(inputValues={'x_1': InputValue(value='-4.912889577010363'), 'x_2': InputValue(value='-1.2066305380350277')}, outputValues=None),
- Candidate(inputValues={'x_1': InputValue(value='-0.9345606901909624'), 'x_2': InputValue(value='0.706884529652184')}, outputValues=None),
- Candidate(inputValues={'x_1': InputValue(value='3.690680894152079'), 'x_2': InputValue(value='-5.336793707699238')}, outputValues=None)]</code></pre>
+<pre><code>[Candidate(inputValues={'x_1': InputValue(value='-0.5708124233039715'), 'x_2': InputValue(value='-5.180490307100198')}, outputValues=None),
+ Candidate(inputValues={'x_1': InputValue(value='-5.506544582386035'), 'x_2': InputValue(value='1.0838837703334416')}, outputValues=None),
+ Candidate(inputValues={'x_1': InputValue(value='-0.5065826598374805'), 'x_2': InputValue(value='1.6803202473979884')}, outputValues=None),
+ Candidate(inputValues={'x_1': InputValue(value='-0.80392974018228'), 'x_2': InputValue(value='5.356694656494966')}, outputValues=None),
+ Candidate(inputValues={'x_1': InputValue(value='-5.281650921585223'), 'x_2': InputValue(value='2.844300318378739')}, outputValues=None)]</code></pre>
 </div>
 </div>
 </section>
 <section id="sobo-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="sobo-strategy">SOBO Strategy</h2>
 <p>Setup the strategies data model.</p>
-<div id="ccefd64d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.009083,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.089494&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.080411&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="22151b81" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.009083,&quot;end_time&quot;:&quot;2024-10-10T20:36:45.089494&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.080411&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># setup the data model</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> SoboStrategyDataModel(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark.domain,</span>
@@ -818,7 +818,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>As SOBO is a predictive strategy, training data has to be provided before candidated can be requested.</p>
-<div id="675f9b5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:1.607265,&quot;end_time&quot;:&quot;2024-10-10T20:36:46.703175&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.095910&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="5e31af21" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:1.607265,&quot;end_time&quot;:&quot;2024-10-10T20:36:46.703175&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:45.095910&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load it</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(jspec)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -840,12 +840,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>candidates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
-<pre><code>[Candidate(inputValues={'x_1': InputValue(value='-0.6949844121516403'), 'x_2': InputValue(value='2.6396512278051065')}, outputValues={'y': OutputValue(predictedValue='69.34137624076928', standardDeviation=94.33771796066925, objective=-69.34137624076928)}),
- Candidate(inputValues={'x_1': InputValue(value='-2.4243991864550956'), 'x_2': InputValue(value='2.5495560058011293')}, outputValues={'y': OutputValue(predictedValue='69.10114012919087', standardDeviation=95.38295963630964, objective=-69.10114012919087)})]</code></pre>
+<pre><code>[Candidate(inputValues={'x_1': InputValue(value='4.062241939847733'), 'x_2': InputValue(value='-5.984230545052753')}, outputValues={'y': OutputValue(predictedValue='46.37668313927887', standardDeviation=87.318402435194, objective=-46.37668313927887)}),
+ Candidate(inputValues={'x_1': InputValue(value='2.1548900629679526'), 'x_2': InputValue(value='-6.0')}, outputValues={'y': OutputValue(predictedValue='129.48373016480804', standardDeviation=116.55017325651586, objective=-129.48373016480804)})]</code></pre>
 </div>
 </div>
 <p>We can also save the trained models of the strategy, for more info look at the <code>model_serial.ipynb</code> notebook. It could be that the <code>dumps</code> command fails here. But this is already fixed in the main branch of the <code>linear_operator</code> package, and if not yet, it should be available in main soon.</p>
-<div id="aba5eeda" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="243f5459" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>jsurrogate_spec <span class="op">=</span> strategy_data.surrogate_specs.surrogates[<span class="dv">0</span>].model_dump_json()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> strategy.surrogates.surrogates[<span class="dv">0</span>].dumps()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -853,14 +853,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="mobo-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="mobo-strategy">MOBO Strategy</h2>
 <p>As example for a multiobjective strategy we are using here the <code>MoboStrategy</code>. Related strategies would be Qparego, MultiplicativeSobo etc. To use it, we have to first generate a multiobjective domain.</p>
-<div id="05f4cbb9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="4b40fc02" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">20</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>pending_candidates <span class="op">=</span> benchmark.domain.inputs.sample(<span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Now the strategy spec is setup. Note that we can define there exactly which model to use.</p>
-<div id="17649e3c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="a7d40ffe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># setup the data model</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> MoboStrategyDataModel(</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark.domain,</span>
@@ -884,7 +884,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Generate the candidates.</p>
-<div id="e06d9336" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="8c15ba2e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load it</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(jspec)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -906,11 +906,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>candidates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="10">
-<pre><code>[Candidate(inputValues={'x_0': InputValue(value='1.0'), 'x_1': InputValue(value='0.6166894872301772'), 'x_2': InputValue(value='0.9250424269439776'), 'x_3': InputValue(value='0.34827521902812114'), 'x_4': InputValue(value='0.7743882154376847'), 'x_5': InputValue(value='0.332339302036313')}, outputValues={'f_0': OutputValue(predictedValue='0.2655265473426135', standardDeviation=0.2500695017539936, objective=-0.2655265473426135), 'f_1': OutputValue(predictedValue='0.8580806678521286', standardDeviation=0.17074063563261227, objective=-0.8580806678521286)})]</code></pre>
+<pre><code>[Candidate(inputValues={'x_0': InputValue(value='1.0'), 'x_1': InputValue(value='1.0'), 'x_2': InputValue(value='0.0'), 'x_3': InputValue(value='0.2503299157732042'), 'x_4': InputValue(value='1.0'), 'x_5': InputValue(value='0.10889163452116689')}, outputValues={'f_0': OutputValue(predictedValue='-0.0017248110854318766', standardDeviation=0.21379543460924588, objective=0.0017248110854318766), 'f_1': OutputValue(predictedValue='0.8078947001087934', standardDeviation=0.15723244525549318, objective=-0.8078947001087934)})]</code></pre>
 </div>
 </div>
 <p>To fill the model info section accordingly, the following snippet has to be executed for every surrogate, incldung saving the actual models.</p>
-<div id="022b3543" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="1cb586b6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Literal</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> BaseModel</span>
