@@ -1,5 +1,6 @@
 import importlib
 
+import numpy as np
 import pandas as pd
 import pytest
 import torch
@@ -9,6 +10,7 @@ from bofire.data_models.features.api import (
     ContinuousDescriptorInput,
     ContinuousInput,
     ContinuousMolecularInput,
+    InterpolateFeature,
     MeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
@@ -17,6 +19,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.surrogates.engineered_features import (
+    map_interpolate_feature,
     map_mean_feature,
     map_molecular_weighted_sum_feature,
     map_product_feature,
@@ -205,3 +208,213 @@ def test_map_molecular_weighted_sum_feature():
 
     assert torch.allclose(result[:, :-1], orig)
     assert torch.allclose(result[:, -1:], expected_weighted)
+
+
+def test_map_interpolate_feature_with_prepend_append():
+    """Test interpolation with prepend and append boundary values."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=[0, 60]),
+            ContinuousInput(key="x2", bounds=[0, 60]),
+            ContinuousInput(key="x3", bounds=[0, 60]),
+            ContinuousInput(key="y1", bounds=[0, 1]),
+            ContinuousInput(key="y2", bounds=[0, 1]),
+            ContinuousInput(key="y3", bounds=[0, 1]),
+        ]
+    )
+
+    n_interp = 200
+    feature = InterpolateFeature(
+        key="interp1",
+        features=["x1", "x2", "x3", "y1", "y2", "y3"],
+        x_keys=["x1", "x2", "x3"],
+        y_keys=["y1", "y2", "y3"],
+        n_interpolation_points=n_interp,
+        prepend_x=[0.0],
+        append_x=[60.0],
+        prepend_y=[0.0],
+        append_y=[1.0],
+    )
+
+    aggregator = map_interpolate_feature(
+        inputs=inputs, transform_specs={}, feature=feature
+    )
+
+    # Same data as original test: x=[10,40,55] y=[0.2,0.5,0.75] and
+    # x=[10,20,55] y=[0.2,0.5,0.7]. After prepend/append:
+    # x=[0,10,40,55,60], y=[0,0.2,0.5,0.75,1.0] etc.
+    tX = torch.tensor([[10, 40, 55, 0.2, 0.5, 0.75], [10, 20, 55, 0.2, 0.5, 0.7]]).to(
+        **tkwargs
+    )
+    result = aggregator(tX)
+
+    assert result.shape == (2, 6 + n_interp)
+    assert torch.allclose(result[:, :6], tX)
+
+    x_new = np.linspace(0, 60, n_interp)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+    np.testing.assert_allclose(result[:, 6:].numpy(), y_new, rtol=1e-6)
+
+
+def test_map_interpolate_feature_no_prepend_append():
+    """Test interpolation without prepend/append, all coordinates from features."""
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x{i}", bounds=[0, 60]) for i in range(5)]
+        + [ContinuousInput(key=f"y{i}", bounds=[0, 1]) for i in range(5)]
+    )
+
+    n_interp = 200
+    feature = InterpolateFeature(
+        key="interp1",
+        features=[f"x{i}" for i in range(5)] + [f"y{i}" for i in range(5)],
+        x_keys=[f"x{i}" for i in range(5)],
+        y_keys=[f"y{i}" for i in range(5)],
+        n_interpolation_points=n_interp,
+    )
+
+    aggregator = map_interpolate_feature(
+        inputs=inputs, transform_specs={}, feature=feature
+    )
+
+    tX = torch.tensor(
+        [
+            [0, 10, 40, 55, 60, 0, 0.2, 0.5, 0.75, 1],
+            [0, 10, 20, 55, 60, 0, 0.2, 0.5, 0.7, 1],
+        ],
+    ).to(**tkwargs)
+    result = aggregator(tX)
+
+    assert result.shape == (2, 10 + n_interp)
+    assert torch.allclose(result[:, :10], tX)
+
+    x_new = np.linspace(0, 60, n_interp)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+    np.testing.assert_allclose(result[:, 10:].numpy(), y_new, rtol=1e-6)
+
+
+def test_map_interpolate_feature_asymmetric_prepend_append():
+    """Test interpolation with asymmetric prepend/append (only prepend_x and append_y)."""
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x{i}", bounds=[0, 60]) for i in range(4)]
+        + [ContinuousInput(key=f"y{i}", bounds=[0, 1]) for i in range(4)]
+    )
+
+    n_interp = 200
+    feature = InterpolateFeature(
+        key="interp1",
+        features=[f"x{i}" for i in range(4)] + [f"y{i}" for i in range(4)],
+        x_keys=[f"x{i}" for i in range(4)],
+        y_keys=[f"y{i}" for i in range(4)],
+        n_interpolation_points=n_interp,
+        prepend_x=[0.0],
+        append_y=[1.0],
+    )
+
+    aggregator = map_interpolate_feature(
+        inputs=inputs, transform_specs={}, feature=feature
+    )
+
+    # After prepend/append: x=[0,10,40,55,60], y=[0,0.2,0.5,0.75,1.0]
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [10, 20, 55, 60, 0, 0.2, 0.5, 0.7],
+        ],
+    ).to(**tkwargs)
+    result = aggregator(tX)
+
+    assert result.shape == (2, 8 + n_interp)
+    assert torch.allclose(result[:, :8], tX)
+
+    x_new = np.linspace(0, 60, n_interp)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+    np.testing.assert_allclose(result[:, 8:].numpy(), y_new, rtol=1e-6)
+
+
+def test_map_interpolate_feature_normalize_x_and_y():
+    """Test interpolation with normalize_x and normalize_y enabled."""
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x{i}", bounds=[0, 100]) for i in range(4)]
+        + [ContinuousInput(key=f"y{i}", bounds=[0, 100]) for i in range(4)]
+    )
+
+    n_interp = 6
+    feature = InterpolateFeature(
+        key="interp1",
+        features=[f"x{i}" for i in range(4)] + [f"y{i}" for i in range(4)],
+        x_keys=[f"x{i}" for i in range(4)],
+        y_keys=[f"y{i}" for i in range(4)],
+        n_interpolation_points=n_interp,
+        prepend_x=[0.0],
+        append_x=[100.0],
+        prepend_y=[0.0],
+        append_y=[100.0],
+        normalize_y=100.0,
+        normalize_x=True,
+    )
+
+    aggregator = map_interpolate_feature(
+        inputs=inputs, transform_specs={}, feature=feature
+    )
+
+    tX = torch.tensor(
+        [
+            [20, 40, 60, 80, 20, 40, 60, 80],
+            [20, 40, 60, 80, 20, 40, 60, 80],
+        ]
+    ).to(**tkwargs)
+    result = aggregator(tX)
+
+    assert result.shape == (2, 8 + n_interp)
+    assert torch.allclose(result[:, :8], tX)
+
+    expected = torch.linspace(0, 1, n_interp, dtype=torch.double)
+    for i in range(2):
+        assert torch.allclose(result[i, 8:], expected, atol=1e-6)
+
+
+def test_map_interpolate_feature_3d_input():
+    """Test interpolation with 3D tensor input (batch x q x features)."""
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x{i}", bounds=[0, 60]) for i in range(5)]
+        + [ContinuousInput(key=f"y{i}", bounds=[0, 1]) for i in range(5)]
+    )
+
+    n_interp = 200
+    feature = InterpolateFeature(
+        key="interp1",
+        features=[f"x{i}" for i in range(5)] + [f"y{i}" for i in range(5)],
+        x_keys=[f"x{i}" for i in range(5)],
+        y_keys=[f"y{i}" for i in range(5)],
+        n_interpolation_points=n_interp,
+    )
+
+    aggregator = map_interpolate_feature(
+        inputs=inputs, transform_specs={}, feature=feature
+    )
+
+    # 3D input: batch=1, q=2, features=10
+    tX = torch.tensor(
+        [
+            [
+                [0, 10, 40, 55, 60, 0, 0.2, 0.5, 0.75, 1],
+                [0, 10, 20, 55, 60, 0, 0.2, 0.5, 0.7, 1],
+            ]
+        ],
+    ).to(**tkwargs)
+    result = aggregator(tX)
+
+    assert result.shape == (1, 2, 10 + n_interp)
+    assert torch.allclose(result[:, :, :10], tX)
+
+    x_new = np.linspace(0, 60, n_interp)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+    np.testing.assert_allclose(result[0, :, 10:].numpy(), y_new, rtol=1e-6)

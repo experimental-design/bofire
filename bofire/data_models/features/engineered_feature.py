@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
-from pydantic import Field
+from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
@@ -161,3 +161,51 @@ class ProductFeature(EngineeredFeature):
     @property
     def n_transformed_inputs(self) -> int:
         return 1
+
+
+class InterpolateFeature(EngineeredFeature):
+    """Interpolation feature, which performs piecewise linear interpolation
+    over specified x and y coordinate features.
+
+    Args:
+        x_keys: Feature keys used as x-coordinates for interpolation.
+        y_keys: Feature keys used as y-coordinates for interpolation.
+        interpolation_range: (lower, upper) bounds for the interpolation x-grid.
+        n_interpolation_points: Number of evenly spaced points in the interpolation grid.
+        prepend_x: Extra x-values to prepend before the feature x-values.
+        append_x: Extra x-values to append after the feature x-values.
+        prepend_y: Extra y-values to prepend before the feature y-values.
+        append_y: Extra y-values to append after the feature y-values.
+        normalize_y: Divisor for y-values before interpolation.
+        normalize_x: Whether to normalize x-values to [0, 1] before interpolation.
+    """
+
+    type: Literal["InterpolateFeature"] = "InterpolateFeature"
+    order_id: ClassVar[int] = 5
+
+    x_keys: List[str]
+    y_keys: List[str]
+    n_interpolation_points: PositiveInt
+
+    prepend_x: List[float] = Field(default_factory=list)
+    append_x: List[float] = Field(default_factory=list)
+    prepend_y: List[float] = Field(default_factory=list)
+    append_y: List[float] = Field(default_factory=list)
+    normalize_y: PositiveFloat = 1.0
+    normalize_x: bool = False
+
+    @model_validator(mode="after")
+    def validate_keys(self) -> "InterpolateFeature":
+        if set(self.x_keys) & set(self.y_keys):
+            raise ValueError("x_keys and y_keys must not overlap.")
+        if sorted(self.features) != sorted(self.x_keys + self.y_keys):
+            raise ValueError("features must match x_keys + y_keys.")
+        n_x = len(self.x_keys) + len(self.prepend_x) + len(self.append_x)
+        n_y = len(self.y_keys) + len(self.prepend_y) + len(self.append_y)
+        if n_x != n_y:
+            raise ValueError("Total number of x and y values must be equal.")
+        return self
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return self.n_interpolation_points

@@ -9,6 +9,7 @@ from bofire.data_models.features.descriptor import (
 from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.engineered_feature import (
     EngineeredFeature,
+    InterpolateFeature,
     MeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
@@ -48,6 +49,7 @@ AnyFeature = Union[
     MolecularWeightedSumFeature,
     ContinuousMolecularInput,
     ProductFeature,
+    InterpolateFeature,
 ]
 
 AnyInput = Union[
@@ -69,4 +71,5 @@ AnyEngineeredFeature = Union[
     WeightedSumFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
+    InterpolateFeature,
 ]
