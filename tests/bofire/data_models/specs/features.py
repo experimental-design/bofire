@@ -103,7 +103,7 @@ specs.add_valid(
         "x_keys": ["x1", "x2"],
         "y_keys": ["y1", "y2"],
         "n_interpolation_points": 20,
-        "interpolation_range": [0.0, 60.0],
+        "interpolation_range": [0.0, 1.0],
         "keep_features": True,
         "prepend_x": [0.0],
         "append_x": [],
