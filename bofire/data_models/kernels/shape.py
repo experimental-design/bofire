@@ -64,3 +64,4 @@ class ExactWassersteinKernel(Kernel):
     append_y: Optional[List[float]] = None
     normalize_y: Optional[float] = None
     normalize_x: Optional[bool] = None
+    use_global_grid: bool = True

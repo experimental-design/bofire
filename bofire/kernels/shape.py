@@ -32,6 +32,7 @@ def _prepare_piecewise_linear_xy(
     normalize_y: Tensor,
     normalize_x: bool = True,
 ) -> Tuple[Tensor, Tensor]:
+    """Extract and normalize x/y for piecewise-linear integration."""
     idx_x_t = torch.as_tensor(idx_x, dtype=torch.long, device=X.device)
     idx_y_t = torch.as_tensor(idx_y, dtype=torch.long, device=X.device)
 
@@ -64,10 +65,7 @@ def _pairwise_piecewise_linear_wasserstein(
     x2: Tensor,
     y2: Tensor,
 ) -> Tensor:
-    # print(
-    #     f"[wasserstein] x1 shape={tuple(x1.shape)}, y1 shape={tuple(y1.shape)}, "
-    #     f"x2 shape={tuple(x2.shape)}, y2 shape={tuple(y2.shape)}"
-    # )
+    """Pairwise exact integral via per-pair union grid and trapezoid on |diff|."""
     if x1.dim() != 2 or x2.dim() != 2:
         raise ValueError("Expected x1/x2 to be 2D tensors with shape (n, m).")
     if y1.dim() != 2 or y2.dim() != 2:
@@ -75,7 +73,6 @@ def _pairwise_piecewise_linear_wasserstein(
 
     n1 = x1.shape[0]
     n2 = x2.shape[0]
-    # print(f"[wasserstein] computing pairwise distances: n1={n1}, n2={n2}")
     dists = torch.empty((n1, n2), dtype=x1.dtype, device=x1.device)
 
     for i in range(n1):
@@ -83,35 +80,48 @@ def _pairwise_piecewise_linear_wasserstein(
         for j in range(n2):
             x2_u, y2_u = x2[j], y2[j]
             union_x = torch.sort(torch.cat([x1_u, x2_u])).values
-            # if i == 0 and j == 0:
-            #     print(
-            #         f"[wasserstein] union_x size={union_x.numel()}, "
-            #         f"range=({union_x.min().item():.6g}, {union_x.max().item():.6g})"
-            #     )
             if union_x.numel() < 2:
                 dists[i, j] = torch.zeros((), dtype=x1.dtype, device=x1.device)
                 continue
             y1_i = interp1d(x1_u, y1_u, union_x)
             y2_i = interp1d(x2_u, y2_u, union_x)
             diff = torch.abs(y1_i - y2_i)
-            # print('[wasserstein] diff shape:', diff)
-            # if i == 0 and j == 0:
-            #     print(
-            #         f"[wasserstein] diff stats: min={diff.min().item():.6g}, "
-            #         f"max={diff.max().item():.6g}"
-            #     )
-            # print an example y1_i and y2_i
-            if i == 0 and j == 0:
-                print(
-                    f"[wasserstein] y1_i shape={tuple(y1_i.shape)}, "
-                    f"y2_i shape={tuple(y2_i.shape)}, "
-                    f"y1_i {y1_i} "
-                    f"y2_i {y2_i}"
-                    f"union_x {union_x}"
-                )
             dists[i, j] = torch.trapezoid(diff, union_x)
 
-            # print(f'[wasserstein] dists[{i}, {j}] = {dists[i, j].item():.6g}')
+    return dists
+
+
+def _pairwise_piecewise_linear_wasserstein_global_grid(
+    x1: Tensor,
+    y1: Tensor,
+    x2: Tensor,
+    y2: Tensor,
+) -> Tensor:
+    """Pairwise exact integral on a global union grid with sign-aware formula."""
+    if x1.dim() != 2 or x2.dim() != 2:
+        raise ValueError("Expected x1/x2 to be 2D tensors with shape (n, m).")
+    if y1.dim() != 2 or y2.dim() != 2:
+        raise ValueError("Expected y1/y2 to be 2D tensors with shape (n, m).")
+
+    union_x = torch.sort(torch.cat([x1.reshape(-1), x2.reshape(-1)])).values
+
+    y1_grid = torch.vmap(interp1d, in_dims=(0, 0, None))(x1, y1, union_x)
+    y2_grid = torch.vmap(interp1d, in_dims=(0, 0, None))(x2, y2, union_x)
+
+    dx = union_x[1:] - union_x[:-1]
+    d0 = y1_grid[:, None, :-1] - y2_grid[None, :, :-1]
+    d1 = y1_grid[:, None, 1:] - y2_grid[None, :, 1:]
+
+    abs0 = torch.abs(d0)
+    abs1 = torch.abs(d1)
+    same_sign = (d0 * d1) >= 0
+    denom = torch.clamp(abs0 + abs1, min=1e-12)
+
+    area_same = 0.5 * (abs0 + abs1) * dx
+    area_cross = 0.5 * dx * (abs0**2 + abs1**2) / denom
+
+    area = torch.where(same_sign, area_same, area_cross)
+    dists = area.sum(dim=-1)
 
     return dists
 
@@ -133,14 +143,6 @@ class WassersteinKernel(Kernel):
         diag: bool = False,
         last_dim_is_batch: bool = False,
     ) -> Tensor:
-        # to allow for ard now
-        # print one example of x1 and x2
-        print(
-            f"[WassersteinKernel] x1 shape={tuple(x1.shape)}, x2 shape={tuple(x2.shape)}"
-        )
-        # print one example of x1 and x2 for instance the first row of the last dimension
-        print(f"[WassersteinKernel] x1[0] {x1[0]}, x2[0] {x2[0]}")
-
         x1_scaled = x1 / self.lengthscale
         x2_scaled = x2 / self.lengthscale
 
@@ -169,6 +171,7 @@ class ExactWassersteinKernel(Kernel):
         append_y: Optional[Tensor] = None,
         normalize_y: Optional[Tensor] = None,
         normalize_x: bool = True,
+        use_global_grid: bool = True,
         **kwargs,
     ):
         super(ExactWassersteinKernel, self).__init__(**kwargs)
@@ -181,6 +184,7 @@ class ExactWassersteinKernel(Kernel):
         self.append_y = append_y
         self.normalize_y = normalize_y
         self.normalize_x = normalize_x
+        self.use_global_grid = use_global_grid
 
     def forward(
         self,
@@ -189,10 +193,6 @@ class ExactWassersteinKernel(Kernel):
         diag: bool = False,
         last_dim_is_batch: bool = False,
     ) -> Tensor:
-        print(
-            f"[ExactWassersteinKernel] x1 shape={tuple(x1.shape)}, x2 shape={tuple(x2.shape)}, "
-            f"diag={diag}, last_dim_is_batch={last_dim_is_batch}"
-        )
         if self.idx_x is None or self.idx_y is None:
             raise RuntimeError("ExactWassersteinKernel is missing x/y index settings.")
         if (
@@ -241,14 +241,16 @@ class ExactWassersteinKernel(Kernel):
                     normalize_y,
                     normalize_x=self.normalize_x,
                 )
-                # if b == 0:
-                #     # print(
-                #     #     f"[ExactWassersteinKernel] b=0 x1_x shape={tuple(x1_x.shape)}, "
-                #     #     f"x2_x shape={tuple(x2_x.shape)}"
-                #     # )
-                batch_dists.append(
-                    _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
-                )
+                if self.use_global_grid:
+                    batch_dists.append(
+                        _pairwise_piecewise_linear_wasserstein_global_grid(
+                            x1_x, x1_y, x2_x, x2_y
+                        )
+                    )
+                else:
+                    batch_dists.append(
+                        _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
+                    )
             dists = torch.stack(batch_dists, dim=0)
         else:
             x1_x, x1_y = _prepare_piecewise_linear_xy(
@@ -273,16 +275,12 @@ class ExactWassersteinKernel(Kernel):
                 normalize_y,
                 normalize_x=self.normalize_x,
             )
-            # print(
-            #     f"[ExactWassersteinKernel] x1_x shape={tuple(x1_x.shape)}, "
-            #     f"x2_x shape={tuple(x2_x.shape)}"
-            # )
-            dists = _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
-
-        print(
-            f"[ExactWassersteinKernel] dists shape={tuple(dists.shape)}, "
-            f"min={dists.min().item():.6g}, max={dists.max().item():.6g}"
-        )
+            if self.use_global_grid:
+                dists = _pairwise_piecewise_linear_wasserstein_global_grid(
+                    x1_x, x1_y, x2_x, x2_y
+                )
+            else:
+                dists = _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
 
         if self.lengthscale.numel() == 1:
             dists = dists / self.lengthscale.squeeze()
