@@ -247,18 +247,18 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
 
         if len(self.idx_continuous) > 0:
-            bounds = torch.tensor(
-                data_model.inputs.get_by_keys(data_model.continuous_keys).get_bounds(
-                    specs={},
-                ),
-            ).to(**tkwargs)
-            norm = Normalize(
-                indices=self.idx_continuous,
-                d=len(data_model.inputs.get_keys()),
-                bounds=bounds,
-            )
+            # bounds = torch.tensor(
+            #     data_model.inputs.get_by_keys(data_model.continuous_keys).get_bounds(
+            #         specs={},
+            #     ),
+            # ).to(**tkwargs)
+            # norm = Normalize(
+            #     indices=self.idx_continuous,
+            #     d=len(data_model.inputs.get_keys()),
+            #     bounds=bounds,
+            # )
 
-            self.transform = norm
+            self.transform = None
         else:
             self.transform = None
 

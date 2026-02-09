@@ -101,15 +101,16 @@ def _pairwise_piecewise_linear_wasserstein(
             #         f"max={diff.max().item():.6g}"
             #     )
             # print an example y1_i and y2_i
-            # if i == 0 and j == 0:
-            #     print(
-            #         f"[wasserstein] y1_i shape={tuple(y1_i.shape)}, "
-            #         f"y2_i shape={tuple(y2_i.shape)}, "
-            #         f"y1_i {y1_i} "
-            #         f"y2_i {y2_i}"
-            #         f"union_x {union_x}"
-            #     )
+            if i == 0 and j == 0:
+                print(
+                    f"[wasserstein] y1_i shape={tuple(y1_i.shape)}, "
+                    f"y2_i shape={tuple(y2_i.shape)}, "
+                    f"y1_i {y1_i} "
+                    f"y2_i {y2_i}"
+                    f"union_x {union_x}"
+                )
             dists[i, j] = torch.trapezoid(diff, union_x)
+
             # print(f'[wasserstein] dists[{i}, {j}] = {dists[i, j].item():.6g}')
 
     return dists
@@ -133,6 +134,13 @@ class WassersteinKernel(Kernel):
         last_dim_is_batch: bool = False,
     ) -> Tensor:
         # to allow for ard now
+        # print one example of x1 and x2
+        print(
+            f"[WassersteinKernel] x1 shape={tuple(x1.shape)}, x2 shape={tuple(x2.shape)}"
+        )
+        # print one example of x1 and x2 for instance the first row of the last dimension
+        print(f"[WassersteinKernel] x1[0] {x1[0]}, x2[0] {x2[0]}")
+
         x1_scaled = x1 / self.lengthscale
         x2_scaled = x2 / self.lengthscale
 
