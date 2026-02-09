@@ -383,6 +383,47 @@ def test_map_interpolate_feature_normalize_x_and_y():
         assert torch.allclose(result[i, 8:], expected, atol=1e-6)
 
 
+def test_map_interpolate_feature_unsorted_x():
+    """Test that interpolation works correctly even when x-values are not in ascending order."""
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x{i}", bounds=[0, 60]) for i in range(5)]
+        + [ContinuousInput(key=f"y{i}", bounds=[0, 1]) for i in range(5)]
+    )
+
+    n_interp = 200
+    feature = InterpolateFeature(
+        key="interp1",
+        features=[f"x{i}" for i in range(5)] + [f"y{i}" for i in range(5)],
+        x_keys=[f"x{i}" for i in range(5)],
+        y_keys=[f"y{i}" for i in range(5)],
+        n_interpolation_points=n_interp,
+        interpolation_range=[0.0, 60.0],
+    )
+
+    aggregator = map_interpolate_feature(
+        inputs=inputs, transform_specs={}, feature=feature
+    )
+
+    # x-values deliberately out of order: [55, 0, 40, 10, 60]
+    tX = torch.tensor(
+        [
+            [55, 0, 40, 10, 60, 0.75, 0, 0.5, 0.2, 1],
+            [20, 0, 55, 10, 60, 0.5, 0, 0.7, 0.2, 1],
+        ],
+    ).to(**tkwargs)
+    result = aggregator(tX)
+
+    assert result.shape == (2, 10 + n_interp)
+    assert torch.allclose(result[:, :10], tX)
+
+    # Reference uses sorted x/y pairs
+    x_new = np.linspace(0, 60, n_interp)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+    np.testing.assert_allclose(result[:, 10:].numpy(), y_new, rtol=1e-6)
+
+
 def test_map_interpolate_feature_3d_input():
     """Test interpolation with 3D tensor input (batch x q x features)."""
     inputs = Inputs(

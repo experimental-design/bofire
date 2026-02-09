@@ -155,6 +155,11 @@ def _interpolate_features(
         x_flat = x.unsqueeze(0)
         y_flat = y.unsqueeze(0)
 
+    # Sort by x-values so interp1d gets monotonically increasing x
+    sort_idx = x_flat.argsort(dim=-1)
+    x_flat = x_flat.gather(-1, sort_idx)
+    y_flat = y_flat.gather(-1, sort_idx)
+
     new_x_expanded = new_x.expand(x_flat.shape[0], -1)
     result = torch.vmap(interp1d)(x_flat, y_flat, new_x_expanded)
 
