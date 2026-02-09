@@ -295,6 +295,41 @@ def map_ExactWassersteinKernel(
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> ExactWassersteinKernel:
+    idx_x = (
+        torch.as_tensor(data_model.idx_x, dtype=torch.long)
+        if data_model.idx_x is not None
+        else None
+    )
+    idx_y = (
+        torch.as_tensor(data_model.idx_y, dtype=torch.long)
+        if data_model.idx_y is not None
+        else None
+    )
+    prepend_x = (
+        torch.tensor(data_model.prepend_x, dtype=torch.double)
+        if data_model.prepend_x is not None
+        else None
+    )
+    prepend_y = (
+        torch.tensor(data_model.prepend_y, dtype=torch.double)
+        if data_model.prepend_y is not None
+        else None
+    )
+    append_x = (
+        torch.tensor(data_model.append_x, dtype=torch.double)
+        if data_model.append_x is not None
+        else None
+    )
+    append_y = (
+        torch.tensor(data_model.append_y, dtype=torch.double)
+        if data_model.append_y is not None
+        else None
+    )
+    normalize_y = (
+        torch.tensor(data_model.normalize_y, dtype=torch.double)
+        if data_model.normalize_y is not None
+        else None
+    )
     return ExactWassersteinKernel(
         squared=data_model.squared,
         lengthscale_prior=(
@@ -302,6 +337,16 @@ def map_ExactWassersteinKernel(
             if data_model.lengthscale_prior is not None
             else None
         ),
+        idx_x=idx_x,
+        idx_y=idx_y,
+        prepend_x=prepend_x,
+        prepend_y=prepend_y,
+        append_x=append_x,
+        append_y=append_y,
+        normalize_y=normalize_y,
+        normalize_x=data_model.normalize_x
+        if data_model.normalize_x is not None
+        else True,
         active_dims=active_dims,
         ard_num_dims=ard_num_dims,
     )

@@ -13,12 +13,15 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.kernels.api import (
+    ExactWassersteinKernel as ExactWassersteinKernelData,
+)
 
 # from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import PiecewiseLinearGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.utils.torch_tools import InterpolateTransform, TrapezoidTransform, tkwargs
+from bofire.utils.torch_tools import InterpolateTransform, tkwargs
 
 
 class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
@@ -41,6 +44,14 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         ).to(dtype=torch.float64)
         idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
         idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
+        self.idx_x = idx_x
+        self.idx_y = idx_y
+
+        self.prepend_x = torch.tensor(data_model.prepend_x).to(**tkwargs)
+        self.prepend_y = torch.tensor(data_model.prepend_y).to(**tkwargs)
+        self.append_x = torch.tensor(data_model.append_x).to(**tkwargs)
+        self.append_y = torch.tensor(data_model.append_y).to(**tkwargs)
+        self.normalize_y = torch.tensor(data_model.normalize_y).to(**tkwargs)
 
         inter = InterpolateTransform(
             new_x=new_ts,
@@ -210,29 +221,29 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
         idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
 
-        inter = TrapezoidTransform(
-            idx_x=idx_x,
-            idx_y=idx_y,
-            prepend_x=torch.tensor(data_model.prepend_x).to(**tkwargs),
-            prepend_y=torch.tensor(data_model.prepend_y).to(**tkwargs),
-            append_x=torch.tensor(data_model.append_x).to(**tkwargs),
-            append_y=torch.tensor(data_model.append_y).to(**tkwargs),
-            normalize_y=torch.tensor(data_model.normalize_y).to(**tkwargs),
-            normalize_x=True,
-            keep_original=True,
-        )
+        self.idx_x = idx_x
+        self.idx_y = idx_y
 
-        # first index will now contain the trapezoid areas
-        self.idx_shape = [
-            0
-        ]  # TODO: can implement different ranges over which to compute areas later, then this will change
+        self.prepend_x = torch.tensor(data_model.prepend_x).to(**tkwargs)
+        self.prepend_y = torch.tensor(data_model.prepend_y).to(**tkwargs)
+        self.append_x = torch.tensor(data_model.append_x).to(**tkwargs)
+        self.append_y = torch.tensor(data_model.append_y).to(**tkwargs)
+        self.normalize_y = torch.tensor(data_model.normalize_y).to(**tkwargs)
+
+        if isinstance(self.shape_kernel, ExactWassersteinKernelData):
+            self.shape_kernel.idx_x = list(range(len(idx_x)))
+            self.shape_kernel.idx_y = list(range(len(idx_x), len(idx_x) + len(idx_y)))
+            self.shape_kernel.prepend_x = data_model.prepend_x
+            self.shape_kernel.prepend_y = data_model.prepend_y
+            self.shape_kernel.append_x = data_model.append_x
+            self.shape_kernel.append_y = data_model.append_y
+            self.shape_kernel.normalize_y = data_model.normalize_y
+            self.shape_kernel.normalize_x = True
+
+        self.idx_shape = idx_x + idx_y
 
         self.idx_continuous = sorted(
-            [
-                data_model.inputs.get_keys().index(k)
-                + 1  # +1 because first index is area now
-                for k in data_model.continuous_keys
-            ],
+            [data_model.inputs.get_keys().index(k) for k in data_model.continuous_keys],
         )
 
         if len(self.idx_continuous) > 0:
@@ -243,14 +254,13 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             ).to(**tkwargs)
             norm = Normalize(
                 indices=self.idx_continuous,
-                d=len(data_model.inputs.get_keys())
-                + 1,  # +1 because first index is area now
+                d=len(data_model.inputs.get_keys()),
                 bounds=bounds,
             )
 
-            self.transform = ChainedInputTransform(tf1=inter, tf2=norm)
+            self.transform = norm
         else:
-            self.transform = inter
+            self.transform = None
 
         super().__init__(data_model=data_model, **kwargs)
 
@@ -268,7 +278,7 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
 
         if self.continuous_kernel is not None:
-            covar_module = kernels.map(
+            continuous_kernel = kernels.map(
                 self.continuous_kernel,
                 active_dims=self.idx_continuous,
                 ard_num_dims=1,
@@ -276,7 +286,8 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
                 ),
-            ) * kernels.map(
+            )
+            shape_kernel = kernels.map(
                 self.shape_kernel,
                 active_dims=self.idx_shape,
                 ard_num_dims=len(self.idx_shape) if self.ard else None,
@@ -285,8 +296,9 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                     self.input_preprocessing_specs, feats
                 ),
             )
+            covar_module = continuous_kernel * shape_kernel
         else:
-            covar_module = kernels.map(
+            shape_kernel = kernels.map(
                 self.shape_kernel,
                 active_dims=self.idx_shape,
                 ard_num_dims=len(self.idx_shape) if self.ard else None,
@@ -295,6 +307,7 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                     self.input_preprocessing_specs, feats
                 ),
             )
+            covar_module = shape_kernel
 
         self.model = botorch.models.SingleTaskGP(  # type: ignore
             train_X=tX,

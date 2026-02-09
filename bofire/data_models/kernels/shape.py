@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
@@ -56,3 +56,11 @@ class ExactWassersteinKernel(Kernel):
     ard_num_dims: Optional[int] = None
     lengthscale_prior: Optional[AnyPrior] = None
     lengthscale_constraint: Optional[AnyPriorConstraint] = None
+    idx_x: Optional[List[int]] = None
+    idx_y: Optional[List[int]] = None
+    prepend_x: Optional[List[float]] = None
+    prepend_y: Optional[List[float]] = None
+    append_x: Optional[List[float]] = None
+    append_y: Optional[List[float]] = None
+    normalize_y: Optional[float] = None
+    normalize_x: Optional[bool] = None
