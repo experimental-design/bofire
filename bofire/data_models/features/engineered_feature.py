@@ -7,7 +7,7 @@ from bofire.data_models.features.api import ContinuousDescriptorInput, Continuou
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.features.molecular import ContinuousMolecularInput
 from bofire.data_models.molfeatures.api import AnyMolFeatures
-from bofire.data_models.types import Descriptors, FeatureKeys
+from bofire.data_models.types import Bounds, Descriptors, FeatureKeys
 
 
 if TYPE_CHECKING:
@@ -185,6 +185,7 @@ class InterpolateFeature(EngineeredFeature):
 
     x_keys: List[str]
     y_keys: List[str]
+    interpolation_range: Bounds
     n_interpolation_points: PositiveInt
 
     prepend_x: List[float] = Field(default_factory=list)
