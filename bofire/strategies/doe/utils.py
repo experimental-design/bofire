@@ -500,7 +500,7 @@ class ConstraintWrapper:
         x = pd.DataFrame(
             x.reshape(len(x) // self.D, self.D), columns=self.names
         )  # ty: ignore[invalid-assignment]
-        violation = self.constraint(x).to_numpy()
+        violation = self.constraint(x).to_numpy(copy=True)
         violation[np.abs(violation) < 0] = 0
         return violation
 
