@@ -65,38 +65,6 @@ def _pairwise_piecewise_linear_wasserstein(
     x2: Tensor,
     y2: Tensor,
 ) -> Tensor:
-    """Pairwise exact integral via per-pair union grid and trapezoid on |diff|."""
-    if x1.dim() != 2 or x2.dim() != 2:
-        raise ValueError("Expected x1/x2 to be 2D tensors with shape (n, m).")
-    if y1.dim() != 2 or y2.dim() != 2:
-        raise ValueError("Expected y1/y2 to be 2D tensors with shape (n, m).")
-
-    n1 = x1.shape[0]
-    n2 = x2.shape[0]
-    dists = torch.empty((n1, n2), dtype=x1.dtype, device=x1.device)
-
-    for i in range(n1):
-        x1_u, y1_u = x1[i], y1[i]
-        for j in range(n2):
-            x2_u, y2_u = x2[j], y2[j]
-            union_x = torch.sort(torch.cat([x1_u, x2_u])).values
-            if union_x.numel() < 2:
-                dists[i, j] = torch.zeros((), dtype=x1.dtype, device=x1.device)
-                continue
-            y1_i = interp1d(x1_u, y1_u, union_x)
-            y2_i = interp1d(x2_u, y2_u, union_x)
-            diff = torch.abs(y1_i - y2_i)
-            dists[i, j] = torch.trapezoid(diff, union_x)
-
-    return dists
-
-
-def _pairwise_piecewise_linear_wasserstein_global_grid(
-    x1: Tensor,
-    y1: Tensor,
-    x2: Tensor,
-    y2: Tensor,
-) -> Tensor:
     """Pairwise exact integral on a global union grid with sign-aware formula."""
     if x1.dim() != 2 or x2.dim() != 2:
         raise ValueError("Expected x1/x2 to be 2D tensors with shape (n, m).")
@@ -119,6 +87,65 @@ def _pairwise_piecewise_linear_wasserstein_global_grid(
 
     area_same = 0.5 * (abs0 + abs1) * dx
     area_cross = 0.5 * dx * (abs0**2 + abs1**2) / denom
+
+    area = torch.where(same_sign, area_same, area_cross)
+    dists = area.sum(dim=-1)
+
+    return dists
+
+
+def _pairwise_piecewise_linear_wasserstein_batched(
+    x1: Tensor,
+    y1: Tensor,
+    x2: Tensor,
+    y2: Tensor,
+) -> Tensor:
+    """Batch-wise exact integral on a single global union grid across B and N."""
+    if x1.dim() != 3 or x2.dim() != 3:
+        raise ValueError("Expected x1/x2 to be 3D tensors with shape (b, n, m).")
+    if y1.dim() != 3 or y2.dim() != 3:
+        raise ValueError("Expected y1/y2 to be 3D tensors with shape (b, n, m).")
+    if x1.shape[0] != x2.shape[0]:
+        raise ValueError("Batch dimensions of x1 and x2 must match.")
+
+    bsz, n1, _ = x1.shape
+    _, n2, _ = x2.shape
+
+    union_x = torch.sort(torch.cat([x1.reshape(-1), x2.reshape(-1)])).values
+    if union_x.numel() < 2:
+        return torch.zeros((bsz, n1, n2), dtype=x1.dtype, device=x1.device)
+
+    x1_flat = x1.reshape(bsz * n1, -1)
+    y1_flat = y1.reshape(bsz * n1, -1)
+    x2_flat = x2.reshape(bsz * n2, -1)
+    y2_flat = y2.reshape(bsz * n2, -1)
+
+    y1_grid_flat = torch.vmap(interp1d, in_dims=(0, 0, None))(
+        x1_flat,
+        y1_flat,
+        union_x,
+    )
+    y2_grid_flat = torch.vmap(interp1d, in_dims=(0, 0, None))(
+        x2_flat,
+        y2_flat,
+        union_x,
+    )
+
+    y1_grid = y1_grid_flat.reshape(bsz, n1, -1)
+    y2_grid = y2_grid_flat.reshape(bsz, n2, -1)
+
+    dx = union_x[1:] - union_x[:-1]
+    d0 = y1_grid[:, :, None, :-1] - y2_grid[:, None, :, :-1]
+    d1 = y1_grid[:, :, None, 1:] - y2_grid[:, None, :, 1:]
+
+    abs0 = torch.abs(d0)
+    abs1 = torch.abs(d1)
+    same_sign = (d0 * d1) >= 0
+    denom = torch.clamp(abs0 + abs1, min=1e-12)
+
+    dx_view = dx.view(1, 1, 1, -1)
+    area_same = 0.5 * (abs0 + abs1) * dx_view
+    area_cross = 0.5 * dx_view * (abs0**2 + abs1**2) / denom
 
     area = torch.where(same_sign, area_same, area_cross)
     dists = area.sum(dim=-1)
@@ -171,7 +198,6 @@ class ExactWassersteinKernel(Kernel):
         append_y: Optional[Tensor] = None,
         normalize_y: Optional[Tensor] = None,
         normalize_x: bool = True,
-        use_global_grid: bool = True,
         **kwargs,
     ):
         super(ExactWassersteinKernel, self).__init__(**kwargs)
@@ -184,7 +210,6 @@ class ExactWassersteinKernel(Kernel):
         self.append_y = append_y
         self.normalize_y = normalize_y
         self.normalize_x = normalize_x
-        self.use_global_grid = use_global_grid
 
     def forward(
         self,
@@ -217,41 +242,31 @@ class ExactWassersteinKernel(Kernel):
         if x1.dim() == 3 and x2.dim() == 3:
             if x1.shape[0] != x2.shape[0]:
                 raise ValueError("Batch dimensions of x1 and x2 must match.")
-            batch_dists = []
-            for b in range(x1.shape[0]):
-                x1_x, x1_y = _prepare_piecewise_linear_xy(
-                    x1[b],
-                    idx_x,
-                    idx_y,
-                    prepend_x,
-                    prepend_y,
-                    append_x,
-                    append_y,
-                    normalize_y,
-                    normalize_x=self.normalize_x,
-                )
-                x2_x, x2_y = _prepare_piecewise_linear_xy(
-                    x2[b],
-                    idx_x,
-                    idx_y,
-                    prepend_x,
-                    prepend_y,
-                    append_x,
-                    append_y,
-                    normalize_y,
-                    normalize_x=self.normalize_x,
-                )
-                if self.use_global_grid:
-                    batch_dists.append(
-                        _pairwise_piecewise_linear_wasserstein_global_grid(
-                            x1_x, x1_y, x2_x, x2_y
-                        )
-                    )
-                else:
-                    batch_dists.append(
-                        _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
-                    )
-            dists = torch.stack(batch_dists, dim=0)
+            x1_x, x1_y = _prepare_piecewise_linear_xy(
+                x1,
+                idx_x,
+                idx_y,
+                prepend_x,
+                prepend_y,
+                append_x,
+                append_y,
+                normalize_y,
+                normalize_x=self.normalize_x,
+            )
+            x2_x, x2_y = _prepare_piecewise_linear_xy(
+                x2,
+                idx_x,
+                idx_y,
+                prepend_x,
+                prepend_y,
+                append_x,
+                append_y,
+                normalize_y,
+                normalize_x=self.normalize_x,
+            )
+            dists = _pairwise_piecewise_linear_wasserstein_batched(
+                x1_x, x1_y, x2_x, x2_y
+            )
         else:
             x1_x, x1_y = _prepare_piecewise_linear_xy(
                 x1,
@@ -275,12 +290,7 @@ class ExactWassersteinKernel(Kernel):
                 normalize_y,
                 normalize_x=self.normalize_x,
             )
-            if self.use_global_grid:
-                dists = _pairwise_piecewise_linear_wasserstein_global_grid(
-                    x1_x, x1_y, x2_x, x2_y
-                )
-            else:
-                dists = _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
+            dists = _pairwise_piecewise_linear_wasserstein(x1_x, x1_y, x2_x, x2_y)
 
         if self.lengthscale.numel() == 1:
             dists = dists / self.lengthscale.squeeze()
