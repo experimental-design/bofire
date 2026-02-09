@@ -205,6 +205,11 @@ class InterpolateFeature(EngineeredFeature):
         n_y = len(self.y_keys) + len(self.prepend_y) + len(self.append_y)
         if n_x != n_y:
             raise ValueError("Total number of x and y values must be equal.")
+        if self.normalize_x and tuple(self.interpolation_range) != (0.0, 1.0):
+            raise ValueError(
+                "When normalize_x is True, interpolation_range must be (0, 1) "
+                "since x-values are normalized to [0, 1]."
+            )
         return self
 
     @property

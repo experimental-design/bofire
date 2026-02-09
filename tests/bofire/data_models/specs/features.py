@@ -157,6 +157,21 @@ specs.add_invalid(
     message=r"Total number of x and y values must be equal\.",
 )
 
+specs.add_invalid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": "interp1",
+        "features": ["x1", "x2", "y1", "y2"],
+        "x_keys": ["x1", "x2"],
+        "y_keys": ["y1", "y2"],
+        "n_interpolation_points": 20,
+        "interpolation_range": [0.0, 60.0],
+        "normalize_x": True,
+    },
+    error=ValueError,
+    message=r"When normalize_x is True, interpolation_range must be \(0, 1\)",
+)
+
 specs.add_valid(
     features.DiscreteInput,
     lambda: {
