@@ -67,7 +67,7 @@ all = [
     "entmoot>=2.0.6",
     "pyomo<=6.9.4",
     "rdkit>=2023.3.2",
-    "mordred>=1.2.0",
+    "mordredcommunity>=2.0.1",
     "mopti",
     "pytest",
     "pytest-cov",
@@ -138,6 +138,32 @@ max-complexity = 19
 "bofire/plot/api.py" = ["F401"]
 "bofire/data_models/domain/api.py" = ["F401"]
 
-[tool.pyright]
+[tool.ty.src]
 include = ["bofire"]
 exclude = ["bofire/version.py"]
+
+[tool.ty.rules]
+# These are largely false positives from incomplete third-party stubs
+# (torch, gpytorch, botorch, pandas, etc.) in a young type checker.
+no-matching-overload = "ignore"
+invalid-argument-type = "ignore"
+# torch Module.__getattr__ returns Tensor|Module, causing false
+# "not callable" errors on every .expand(), .reshape(), etc.
+call-non-callable = "ignore"
+# torch tensor operations and model attribute assignments produce
+# false positives that vary across Python/stub versions.
+unsupported-operator = "warn"
+invalid-assignment = "warn"
+invalid-return-type = "warn"
+# BoFire intentionally narrows parameter types in subclass overrides.
+invalid-method-override = "warn"
+
+[tool.ty.analysis]
+# Optional dependencies that may not be installed or lack py.typed markers
+allowed-unresolved-imports = [
+    "botorch.**",
+    "gpytorch.**",
+    "linear_operator.**",
+    "entmoot.**",
+    "pyomo.**",
+]

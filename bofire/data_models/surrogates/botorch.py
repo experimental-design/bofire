@@ -84,7 +84,7 @@ class BotorchSurrogate(Surrogate):
         for key in categorical_keys:
             if key not in categorical_encodings:
                 feat = inputs.get_by_key(key)
-                categorical_encodings[key] = default_encodings[type(feat)]  # type: ignore
+                categorical_encodings[key] = default_encodings[type(feat)]
         return categorical_encodings
 
     @field_validator("categorical_encodings")

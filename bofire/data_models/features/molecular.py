@@ -21,7 +21,7 @@ from bofire.utils.cheminformatics import smiles2mol
 
 
 class ContinuousMolecularInput(ContinuousInput):
-    type: Literal["ContinuousMolecularInput"] = "ContinuousMolecularInput"  # type: ignore
+    type: Literal["ContinuousMolecularInput"] = "ContinuousMolecularInput"
     order_id: ClassVar[int] = 4
     molecule: str
 
@@ -44,8 +44,8 @@ class ContinuousMolecularInput(ContinuousInput):
         return v
 
 
-class CategoricalMolecularInput(CategoricalInput):  # type: ignore
-    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"  # type: ignore
+class CategoricalMolecularInput(CategoricalInput):
+    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
 
@@ -77,15 +77,18 @@ class CategoricalMolecularInput(CategoricalInput):  # type: ignore
         return categories
 
     @staticmethod
-    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:  # type: ignore
-        return CategoricalInput.valid_transform_types() + [  # type: ignore
-            Fingerprints,
-            CompositeMolFeatures,
-            Fragments,
-            MordredDescriptors,
-        ]
+    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
+        return (
+            CategoricalInput.valid_transform_types()  # ty: ignore[invalid-return-type]
+            + [
+                Fingerprints,
+                CompositeMolFeatures,
+                Fragments,
+                MordredDescriptors,
+            ]
+        )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,

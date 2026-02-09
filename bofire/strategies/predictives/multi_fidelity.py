@@ -27,7 +27,11 @@ class MultiFidelityStrategy(SoboStrategy):
         self.task_feature_key = self.domain.inputs.get_keys(TaskInput)[0]
 
         ft = data_model.fidelity_thresholds
-        M = len(self.domain.inputs.get_by_key(self.task_feature_key).fidelities)  # type: ignore
+        M = len(
+            self.domain.inputs.get_by_key(
+                self.task_feature_key
+            ).fidelities  # ty: ignore[unresolved-attribute]
+        )
         self.fidelity_thresholds = ft if isinstance(ft, list) else [ft] * M
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
@@ -49,7 +53,9 @@ class MultiFidelityStrategy(SoboStrategy):
 
         self._verify_all_fidelities_observed()
 
-        task_feature: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
+        task_feature: TaskInput = self.domain.inputs.get_by_key(
+            self.task_feature_key
+        )  # ty: ignore[invalid-assignment]
         # only optimize the input x on the target fidelity
         # we fix the fidelity by setting all other fidelities to 'not allowed'
         prev_allowed = task_feature.allowed
@@ -60,7 +66,9 @@ class MultiFidelityStrategy(SoboStrategy):
         x.update(fidelity_pred)
         return x
 
-    def _select_fidelity_and_get_predict(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _select_fidelity_and_get_predict(
+        self, X: pd.DataFrame
+    ) -> pd.DataFrame:  # ty: ignore[invalid-return-type]
         """Select the fidelity for a given input.
 
         Uses the variance based approach (see [Kandasamy et al. 2016,
@@ -73,7 +81,9 @@ class MultiFidelityStrategy(SoboStrategy):
         Returns:
             pd.DataFrame: selected fidelity and prediction
         """
-        fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
+        fidelity_input: TaskInput = self.domain.inputs.get_by_key(
+            self.task_feature_key
+        )  # ty: ignore[invalid-assignment]
         assert self.model is not None and self.experiments is not None
         assert fidelity_input.allowed is not None
 
@@ -89,7 +99,7 @@ class MultiFidelityStrategy(SoboStrategy):
             m = fidelity_input.fidelities[fidelity_idx]
             fidelity_name = fidelity_input.categories[fidelity_idx]
 
-            fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()  # type: ignore
+            fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()
             fidelity_threshold = self.fidelity_thresholds[m] * fidelity_threshold_scale
 
             X_fid = X.assign(**{self.task_feature_key: fidelity_name})
@@ -110,14 +120,14 @@ class MultiFidelityStrategy(SoboStrategy):
         allowed_fidelities = set(
             self.domain.inputs.get_by_key(
                 self.task_feature_key
-            ).get_allowed_categories()  # type: ignore
+            ).get_allowed_categories()
         )
         missing_fidelities = allowed_fidelities - observed_fidelities
         if missing_fidelities:
             raise ValueError(f"Some tasks have no experiments: {missing_fidelities}")
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         fidelity_thresholds: List[float] | float | None = None,

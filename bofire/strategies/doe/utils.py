@@ -1,4 +1,5 @@
 import importlib.util
+import re
 import sys
 from copy import copy
 from itertools import combinations
@@ -59,6 +60,29 @@ def represent_categories_as_by_their_states(
     return numerical_inputs, all_but_one_categoricals
 
 
+def formula_str_to_fully_continuous(
+    formula: str,
+    inputs: Inputs,
+) -> str:
+    """Converts a formula with categorical variables to a formula with only continuous variables by identifying the categorical variables and replacing them with their one-hot encoded counterparts.
+    E.g., if a categorical variable "color" has states "red", "blue", "green", the formula term "color" is replaced with "{color_red + color_blue}".
+    """
+    for cat_input in inputs.get([CategoricalInput]):
+        _, categorical_one_hot_variabes, _ = map_categorical_to_continuous(
+            categorical_inputs=[cat_input]
+        )
+        one_hot_terms = " + ".join(
+            [var.key for var in categorical_one_hot_variabes[:-1]]
+        )
+        # Use word boundaries to match only complete variable names
+        pattern = r"\b" + re.escape(cat_input.key) + r"\b"
+        formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
+
+    return str(
+        Formula(formula)
+    )  # formula casting for expansion of terms like (a+b)*(c+d)
+
+
 def get_formula_from_string(
     model_type: str | Formula = "linear",
     inputs: Optional[Inputs] = None,
@@ -82,8 +106,6 @@ def get_formula_from_string(
 
     if isinstance(model_type, Formula):
         return model_type
-        # build model if a keyword and a problem are given.
-    # linear model#
 
     if model_type in [
         "linear",
@@ -138,6 +160,12 @@ def get_formula_from_string(
             )
 
     else:
+        if inputs is not None:
+            if len(inputs.get([CategoricalInput])) > 0:
+                model_type = formula_str_to_fully_continuous(
+                    formula=model_type,
+                    inputs=inputs,
+                )
         formula = model_type + "   "
 
     formula = Formula(formula[:-3])
@@ -376,7 +404,7 @@ def get_constraint_function_and_bounds(
         fun = ConstraintWrapper(
             constraint=c,
             domain=domain,
-            n_experiments=n_experiments,  # type: ignore
+            n_experiments=n_experiments,
         )
 
         # write upper/lower bound as vector
@@ -392,7 +420,7 @@ def get_constraint_function_and_bounds(
         fun = ConstraintWrapper(
             constraint=c,
             domain=domain,
-            n_experiments=n_experiments,  # type: ignore
+            n_experiments=n_experiments,
         )
 
         # write upper/lower bound as vector
@@ -458,26 +486,30 @@ class ConstraintWrapper:
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
-        if constraint.features is None:  # type: ignore
+        if constraint.features is None:  # ty: ignore[unresolved-attribute]
             raise ValueError(
                 f"The features attribute of constraint {constraint} is not set, but has to be set.",
             )
         self.constraint_feature_indices = np.searchsorted(
             self.names,
-            self.constraint.features,  # type: ignore
+            self.constraint.features,  # ty: ignore[unresolved-attribute]
         )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Call constraint with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        violation = self.constraint(x).to_numpy(copy=True)  # type: ignore
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        violation = self.constraint(x).to_numpy(copy=True)
         violation[np.abs(violation) < 0] = 0
         return violation
 
     def jacobian(self, x: np.ndarray, sparse: bool = False) -> np.ndarray:
         """Call constraint gradient with flattened numpy array.  If sparse is set to True, the output is a vector containing the entries of the sparse matrix representation of the jacobian."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        gradient_compressed = self.constraint.jacobian(x).to_numpy()  # type: ignore
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        gradient_compressed = self.constraint.jacobian(x).to_numpy()
 
         cols = np.repeat(
             self.D * np.arange(self.n_experiments),
@@ -501,8 +533,10 @@ class ConstraintWrapper:
 
     def hessian(self, x: np.ndarray, *args):
         """Call constraint hessian with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        hessian_dict = self.constraint.hessian(x)  # type: ignore
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        hessian_dict = self.constraint.hessian(x)
 
         hessian = np.zeros(
             shape=(self.D * self.n_experiments, self.D * self.n_experiments)
@@ -541,7 +575,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     for c in nchoosek_constraints:
         for name in np.unique(c.features):
             input = domain.inputs.get_by_key(name)
-            if input.bounds[0] > 0 or input.bounds[1] < 0:  # type: ignore
+            if input.bounds[0] > 0 or input.bounds[1] < 0:
                 raise ValueError(
                     f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
                     domain of the affected decision variables.",
@@ -578,7 +612,7 @@ def nchoosek_constraints_as_bounds(
 
     # bounds without NChooseK constraints
     bounds = np.array(
-        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments,  # type: ignore
+        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments,
     )
 
     if len(domain.constraints) > 0:

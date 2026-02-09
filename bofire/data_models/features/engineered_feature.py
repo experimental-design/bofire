@@ -98,7 +98,7 @@ class WeightedSumFeature(EngineeredFeature):
 
     @property
     def n_transformed_inputs(self) -> int:
-        return len(self.descriptors)  # type: ignore
+        return len(self.descriptors)
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
@@ -108,7 +108,7 @@ class WeightedSumFeature(EngineeredFeature):
                 raise ValueError(
                     f"Feature '{feature_key}' is not a ContinuousDescriptorInput",
                 )
-            if len(set(self.descriptors) - set(feature.descriptors)) > 0:  # type: ignore
+            if len(set(self.descriptors) - set(feature.descriptors)) > 0:
                 raise ValueError(
                     f"Not all descriptors {self.descriptors} are present in feature '{feature_key}'",
                 )
