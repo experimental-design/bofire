@@ -230,6 +230,7 @@ def test_map_interpolate_feature_with_prepend_append():
         x_keys=["x1", "x2", "x3"],
         y_keys=["y1", "y2", "y3"],
         n_interpolation_points=n_interp,
+        interpolation_range=[0.0, 60.0],
         prepend_x=[0.0],
         append_x=[60.0],
         prepend_y=[0.0],
@@ -272,6 +273,7 @@ def test_map_interpolate_feature_no_prepend_append():
         x_keys=[f"x{i}" for i in range(5)],
         y_keys=[f"y{i}" for i in range(5)],
         n_interpolation_points=n_interp,
+        interpolation_range=[0.0, 60.0],
     )
 
     aggregator = map_interpolate_feature(
@@ -310,6 +312,7 @@ def test_map_interpolate_feature_asymmetric_prepend_append():
         x_keys=[f"x{i}" for i in range(4)],
         y_keys=[f"y{i}" for i in range(4)],
         n_interpolation_points=n_interp,
+        interpolation_range=[0.0, 60.0],
         prepend_x=[0.0],
         append_y=[1.0],
     )
@@ -351,6 +354,7 @@ def test_map_interpolate_feature_normalize_x_and_y():
         x_keys=[f"x{i}" for i in range(4)],
         y_keys=[f"y{i}" for i in range(4)],
         n_interpolation_points=n_interp,
+        interpolation_range=[0.0, 1.0],
         prepend_x=[0.0],
         append_x=[100.0],
         prepend_y=[0.0],
@@ -393,6 +397,7 @@ def test_map_interpolate_feature_3d_input():
         x_keys=[f"x{i}" for i in range(5)],
         y_keys=[f"y{i}" for i in range(5)],
         n_interpolation_points=n_interp,
+        interpolation_range=[0.0, 60.0],
     )
 
     aggregator = map_interpolate_feature(
