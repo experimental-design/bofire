@@ -43,7 +43,7 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)
@@ -107,7 +107,7 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)
@@ -135,7 +135,7 @@ def test_BotorchSurrogates_invalid_outputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(3)
             ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -144,7 +144,7 @@ def test_BotorchSurrogates_invalid_outputs():
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(2)
             ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -158,7 +158,7 @@ def test_BotorchSurrogates_invalid_inputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(3)
             ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -166,7 +166,9 @@ def test_BotorchSurrogates_invalid_inputs():
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)]
+            features=[
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(2)
+            ]
             + [CategoricalInput(key="x_3", categories=["apple", "banana"])],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -185,7 +187,7 @@ def test_BotorchSurrogates_invalid_inputs():
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(3)
@@ -207,7 +209,7 @@ def test_BotorchSurrogates_invalid_inputs():
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(2)
@@ -248,7 +250,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(3)
@@ -271,7 +273,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(2)
@@ -292,6 +294,106 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                 ),
             ]
         ),
+        (
+            [
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(3)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.LOG,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(2)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y2")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.LOG,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+            ]
+        ),
+        (
+            [
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(3)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(2)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y2")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+            ]
+        ),
     ],
 )
 def test_botorch_models_valid(surrogate_list):
@@ -299,12 +401,16 @@ def test_botorch_models_valid(surrogate_list):
     BotorchSurrogates(data_model=data_model)
 
 
-def test_botorch_models_check_compatibility():
+@pytest.mark.parametrize(
+    "output_scaler",
+    [ScalerEnum.STANDARDIZE, ScalerEnum.LOG, ScalerEnum.CHAINED_LOG_STANDARDIZE],
+)
+def test_botorch_models_check_compatibility(output_scaler):
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(3)
@@ -320,13 +426,13 @@ def test_botorch_models_check_compatibility():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
-        output_scaler=ScalerEnum.STANDARDIZE,
+        output_scaler=output_scaler,
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(2)
@@ -342,7 +448,7 @@ def test_botorch_models_check_compatibility():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
-        output_scaler=ScalerEnum.STANDARDIZE,
+        output_scaler=output_scaler,
     )
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     models = BotorchSurrogates(data_model=data_model)
@@ -350,7 +456,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -363,7 +469,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(4)
@@ -384,7 +490,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(4)
@@ -403,7 +509,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -443,7 +549,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -466,7 +572,7 @@ def test_botorch_models_input_preprocessing_specs():
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(3)
@@ -487,7 +593,7 @@ def test_botorch_models_input_preprocessing_specs():
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(2)
@@ -515,7 +621,7 @@ def test_botorch_models_invalid_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -553,7 +659,7 @@ def test_botorch_models_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -573,7 +679,7 @@ def test_botorch_models_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -615,7 +721,7 @@ def test_botorch_models_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -667,7 +773,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -687,7 +793,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -728,7 +834,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -780,9 +886,11 @@ class HimmelblauModel(DeterministicModel):
         self._num_outputs = 1
 
     def forward(self, X: Tensor) -> Tensor:
+        # Add 1e-8 to ensure positive outputs for Log outcome transform
         return (
             (X[..., 0] ** 2 + X[..., 1] - 11.0) ** 2
             + (X[..., 0] + X[..., 1] ** 2 - 7.0) ** 2
+            + 1e-8
         ).unsqueeze(-1)
 
 
@@ -790,7 +898,7 @@ def test_empirical_model():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -810,7 +918,7 @@ def test_empirical_model():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -851,7 +959,7 @@ def test_empirical_model():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -888,7 +996,7 @@ def test_empirical_model_io():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)

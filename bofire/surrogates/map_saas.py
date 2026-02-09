@@ -78,7 +78,7 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ):
         # EnsembleMapSaasSingleTaskGP repeats the data to create a batch dimension
-        # The outcome_transform needs to have the correct batch_shape
+        # The Standardize outcome_transform needs to have the correct batch_shape
         if isinstance(outcome_transform, Standardize):
             outcome_transform = Standardize(
                 m=tY.shape[-1],
