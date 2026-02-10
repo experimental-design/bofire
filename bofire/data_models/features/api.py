@@ -33,6 +33,7 @@ AbstractFeature = Union[
     Input,
     Output,
     NumericalInput,
+    TaskInput,
 ]
 
 # TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
@@ -45,7 +46,7 @@ AnyFeature = Union[
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    CategoricalTaskInput,
     ContinuousTaskInput,
     SumFeature,
     MeanFeature,

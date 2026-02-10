@@ -3,7 +3,7 @@ from typing import List, Literal, Union
 from pydantic import model_validator
 
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _ForbidPFMixin
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 
@@ -16,7 +16,9 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     @model_validator(mode="after")
     def validate_tasks_and_fidelity_thresholds(self):
         """Ensures that there is one threshold per fidelity"""
-        task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
+        task_input, *_ = self.domain.inputs.get(
+            includes=CategoricalTaskInput, exact=True
+        )
         num_tasks = len(task_input.categories)  # ty: ignore[possibly-missing-attribute]
 
         if (
@@ -32,7 +34,9 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     @model_validator(mode="after")
     def validate_only_one_target_fidelity(self):
         """Ensures that there is only one target fidelity (task where fidelity==0)."""
-        task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
+        task_input, *_ = self.domain.inputs.get(
+            includes=CategoricalTaskInput, exact=True
+        )
         num_target = sum(
             t == 0
             for t in task_input.fidelities  # ty: ignore[unresolved-attribute]
