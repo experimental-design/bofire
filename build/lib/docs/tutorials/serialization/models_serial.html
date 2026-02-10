@@ -423,7 +423,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="99e26ba8" class="cell" data-execution_count="1">
+<div id="3aa6df7a" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
@@ -444,7 +444,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="problem-setup" class="level2">
 <h2 class="anchored" data-anchor-id="problem-setup">Problem Setup</h2>
 <p>For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.</p>
-<div id="67d04bff" class="cell" data-execution_count="2">
+<div id="f1d92da1" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -467,72 +467,72 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-4.703111</td>
-<td>-4.933633</td>
-<td>197.971492</td>
+<td>3.979857</td>
+<td>5.025507</td>
+<td>591.734646</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>3.135001</td>
-<td>-0.096055</td>
-<td>16.474368</td>
+<td>0.962044</td>
+<td>-1.960484</td>
+<td>149.655818</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>5.538550</td>
-<td>3.100531</td>
-<td>585.201878</td>
+<td>0.360064</td>
+<td>-4.127953</td>
+<td>333.110467</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>-3.876930</td>
-<td>4.211226</td>
-<td>114.952692</td>
+<td>-2.506983</td>
+<td>-5.004517</td>
+<td>335.905650</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>-0.026471</td>
-<td>-0.285960</td>
-<td>175.585907</td>
+<td>-4.181822</td>
+<td>3.487668</td>
+<td>100.471069</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>-5.855472</td>
-<td>0.099039</td>
-<td>711.896961</td>
+<td>-1.730036</td>
+<td>4.688061</td>
+<td>186.521591</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>-3.984977</td>
-<td>4.066288</td>
-<td>110.836269</td>
+<td>1.319969</td>
+<td>-0.522203</td>
+<td>124.885411</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>3.347025</td>
-<td>0.841085</td>
-<td>9.765505</td>
+<td>-1.043063</td>
+<td>-1.204835</td>
+<td>167.031487</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>5.052547</td>
-<td>0.643441</td>
-<td>232.531162</td>
+<td>2.353251</td>
+<td>-0.079165</td>
+<td>52.240921</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>1.948352</td>
-<td>4.061325</td>
-<td>140.811603</td>
+<td>-4.389581</td>
+<td>-5.178031</td>
+<td>247.401763</td>
 <td>1</td>
 </tr>
 </tbody>
@@ -544,17 +544,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="model-fitting" class="level2">
 <h2 class="anchored" data-anchor-id="model-fitting">Model Fitting</h2>
-<div id="2b7cdeeb" class="cell" data-execution_count="3">
+<div id="50325529" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> benchmark.domain.inputs</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>output_features <span class="op">=</span> benchmark.domain.outputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b64c0b81" class="cell" data-execution_count="4">
+<div id="98d88ee0" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>input_features.model_dump_json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>'{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]}'</code></pre>
 </div>
 </div>
-<div id="d70a5859" class="cell" data-execution_count="5">
+<div id="2841e43b" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>output_features.model_dump_json()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>'{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]}'</code></pre>
@@ -563,7 +563,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="single-task-gp" class="level3">
 <h3 class="anchored" data-anchor-id="single-task-gp">Single Task GP</h3>
 <p>Generate the json spec</p>
-<div id="68bf75e8" class="cell" data-execution_count="6">
+<div id="727077c2" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(inputs<span class="op">=</span>input_features, outputs<span class="op">=</span>output_features)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -576,42 +576,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Load it from the spec</p>
-<div id="7802e1ca" class="cell" data-execution_count="7">
+<div id="d22b3331" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Map it</p>
-<div id="dc342302" class="cell" data-execution_count="8">
+<div id="47c2f2ce" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Fit it. This is not 100% finished. In the future we will call here hyperfit which will return the CV results etc. This has to be finished. So ignore this for now and just call fit.</p>
-<div id="3839ced6" class="cell" data-execution_count="9">
+<div id="27ca7ce2" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:180: UserWarning:
+
+The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+</code></pre>
+</div>
 </div>
 <p>Dump it.</p>
-<div id="01c230d7" class="cell" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7a9b5927" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Make predictions.</p>
-<div id="6488972a" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="31e2ef70" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Load again from spec and dump and make predictions.</p>
-<div id="e0da302d" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="19e3d7de" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="12">
 <pre><code>True</code></pre>
 </div>
@@ -620,35 +626,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="random-forest" class="level3">
 <h3 class="anchored" data-anchor-id="random-forest">Random Forest</h3>
 <p>Generate the json spec</p>
-<div id="e6664bc0" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RandomForestSurrogate(</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span>,</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7a3219c4" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RandomForestSurrogate(</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="13">
 <pre><code>'{"hyperconfig":null,"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"RandomForestSurrogate","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{},"dump":null,"categorical_encodings":{},"scaler":"NORMALIZE","output_scaler":"STANDARDIZE","n_estimators":100,"criterion":"squared_error","max_depth":null,"min_samples_split":2,"min_samples_leaf":1,"min_weight_fraction_leaf":0.0,"max_features":1.0,"max_leaf_nodes":null,"min_impurity_decrease":0.0,"bootstrap":true,"oob_score":false,"random_state":42,"ccp_alpha":0.0,"max_samples":null}'</code></pre>
 </div>
 </div>
-<div id="e352c680" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f472f261" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/models/ensemble.py:82: RuntimeWarning:
 
@@ -668,18 +674,18 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 </code></pre>
 </div>
 </div>
-<div id="20c73db5" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="05ff8311" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/models/ensemble.py:82: RuntimeWarning:
 
@@ -706,48 +712,48 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <section id="mlp-ensemble" class="level3">
 <h3 class="anchored" data-anchor-id="mlp-ensemble">MLP Ensemble</h3>
 <p>Generate the json spec</p>
-<div id="c8caee84" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RegressionMLPEnsemble(</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    n_estimators<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="66044e9a" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RegressionMLPEnsemble(</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    n_estimators<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <pre><code>'{"hyperconfig":null,"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"RegressionMLPEnsemble","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{},"dump":null,"categorical_encodings":{},"scaler":"IDENTITY","output_scaler":"IDENTITY","n_estimators":2,"hidden_layer_sizes":[100],"activation":"relu","dropout":0.0,"batch_size":10,"n_epochs":200,"lr":0.0001,"weight_decay":0.0,"subsample_fraction":1.0,"shuffle":true,"final_activation":"identity"}'</code></pre>
 </div>
 </div>
-<div id="3d3e7d2d" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="17103b8e" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="761c2329" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d599bae3" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <pre><code>True</code></pre>
 </div>
@@ -757,63 +763,63 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <section id="empirical-surrogate" class="level2">
 <h2 class="anchored" data-anchor-id="empirical-surrogate">Empirical Surrogate</h2>
 <p>The empirical model is special as it has per default no fit and you need cloudpickle. There can be empirical models which implement a fit, but for this they also have to inherit from <code>Trainable</code>. The current example is the default without any fit functionality.</p>
-<div id="26b6a312" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> botorch.models.deterministic <span class="im">import</span> DeterministicModel</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> Tensor</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> HimmelblauModel(DeterministicModel):</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._num_outputs <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, X: Tensor) <span class="op">-&gt;</span> Tensor:</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (</span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>            (X[..., <span class="dv">0</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">-</span> <span class="fl">11.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>            <span class="op">+</span> (X[..., <span class="dv">0</span>] <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">7.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div id="82305af4" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> EmpiricalSurrogate(</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<div id="c08191a1" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> botorch.models.deterministic <span class="im">import</span> DeterministicModel</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> Tensor</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> HimmelblauModel(DeterministicModel):</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._num_outputs <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, X: Tensor) <span class="op">-&gt;</span> Tensor:</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>            (X[..., <span class="dv">0</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">-</span> <span class="fl">11.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>            <span class="op">+</span> (X[..., <span class="dv">0</span>] <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">7.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="e5bf74bc" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> EmpiricalSurrogate(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="20">
 <pre><code>'{"type":"EmpiricalSurrogate","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x_1","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"x_2","unit":null,"bounds":[-6.0,6.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y","unit":null,"objective":{"type":"MinimizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{},"dump":null,"categorical_encodings":{}}'</code></pre>
 </div>
 </div>
-<div id="2955cc36" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="co"># attach the actual model to it</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>surrogate.model <span class="op">=</span> HimmelblauModel()</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="dc777c6c" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="co"># attach the actual model to it</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>surrogate.model <span class="op">=</span> HimmelblauModel()</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0dc247bb" class="cell" data-execution_count="22">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="396d9f54" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>True</code></pre>
 </div>
@@ -821,12 +827,12 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <section id="mixed-gp" class="level3">
 <h3 class="anchored" data-anchor-id="mixed-gp">Mixed GP</h3>
 <p>Generate data for a mixed problem.</p>
-<div id="afa5d02d" class="cell" data-execution_count="23">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> CrossCoupling()</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>experiments.head(<span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3fa19ede" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> CrossCoupling()</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>experiments.head(<span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="23">
 <div>
 
@@ -849,121 +855,121 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>1.549109</td>
-<td>1010.812833</td>
-<td>49.087968</td>
+<td>2.417266</td>
+<td>156.205164</td>
+<td>44.262887</td>
 <td>TMG</td>
 <td>tBuXPhos</td>
-<td>0.137666</td>
-<td>0.248296</td>
+<td>0.009902</td>
+<td>0.248327</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.294957</td>
-<td>631.391286</td>
-<td>94.440834</td>
-<td>TMG</td>
-<td>tBuBrettPhos</td>
-<td>0.792237</td>
-<td>0.278317</td>
+<td>1.177868</td>
+<td>1219.649969</td>
+<td>66.477527</td>
+<td>DBU</td>
+<td>tBuXPhos</td>
+<td>0.572266</td>
+<td>0.249525</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>1.461683</td>
-<td>276.129956</td>
-<td>91.044344</td>
-<td>DBU</td>
-<td>tBuXPhos</td>
-<td>0.993828</td>
-<td>0.249835</td>
+<td>1.477424</td>
+<td>907.758747</td>
+<td>88.541593</td>
+<td>TMG</td>
+<td>AlPhos</td>
+<td>0.883011</td>
+<td>0.419065</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>2.207878</td>
-<td>669.320858</td>
-<td>51.781861</td>
-<td>TEA</td>
-<td>tBuBrettPhos</td>
-<td>-0.001778</td>
-<td>0.279074</td>
+<td>1.947213</td>
+<td>803.308276</td>
+<td>37.168926</td>
+<td>TMG</td>
+<td>AlPhos</td>
+<td>0.053221</td>
+<td>0.419082</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>2.121206</td>
-<td>1111.207614</td>
-<td>81.725277</td>
-<td>TMG</td>
-<td>tBuXPhos</td>
-<td>0.585336</td>
-<td>0.248316</td>
+<td>1.490802</td>
+<td>1502.998069</td>
+<td>89.835282</td>
+<td>DBU</td>
+<td>tBuBrettPhos</td>
+<td>1.074654</td>
+<td>0.279898</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>1.171209</td>
-<td>811.527762</td>
-<td>63.104524</td>
-<td>DBU</td>
-<td>AlPhos</td>
-<td>0.711177</td>
-<td>0.420290</td>
+<td>2.244220</td>
+<td>1441.682920</td>
+<td>87.125070</td>
+<td>TMG</td>
+<td>tBuXPhos</td>
+<td>0.752343</td>
+<td>0.248321</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>2.136986</td>
-<td>742.751720</td>
-<td>48.053071</td>
+<td>1.702358</td>
+<td>1317.086920</td>
+<td>56.335932</td>
 <td>TMG</td>
-<td>tBuBrettPhos</td>
-<td>0.075678</td>
-<td>0.278348</td>
+<td>AlPhos</td>
+<td>0.246445</td>
+<td>0.419073</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>1.679751</td>
-<td>1205.633495</td>
-<td>85.848336</td>
-<td>TEA</td>
-<td>AlPhos</td>
-<td>0.117044</td>
-<td>0.419622</td>
+<td>1.845054</td>
+<td>1257.730449</td>
+<td>63.824488</td>
+<td>BTMG</td>
+<td>tBuBrettPhos</td>
+<td>1.008197</td>
+<td>0.358862</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>1.341673</td>
-<td>1482.519812</td>
-<td>48.018159</td>
-<td>DBU</td>
-<td>tBuXPhos</td>
-<td>0.287145</td>
-<td>0.249704</td>
+<td>2.419057</td>
+<td>1167.125377</td>
+<td>94.238849</td>
+<td>TMG</td>
+<td>AlPhos</td>
+<td>0.925301</td>
+<td>0.419099</td>
 <td>1</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>1.414944</td>
-<td>1074.488237</td>
-<td>87.335743</td>
-<td>BTMG</td>
-<td>AlPhos</td>
-<td>0.948107</td>
-<td>0.480816</td>
+<td>2.223569</td>
+<td>734.063056</td>
+<td>68.099604</td>
+<td>TEA</td>
+<td>tBuBrettPhos</td>
+<td>0.033997</td>
+<td>0.279080</td>
 <td>1</td>
 <td>1</td>
 </tr>
@@ -973,48 +979,48 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 </div>
 </div>
 </div>
-<div id="47e079f8" class="cell" data-execution_count="24">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> MixedSingleTaskGPSurrogate(</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs,</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>Outputs(features<span class="op">=</span>[benchmark.domain.outputs.features[<span class="dv">0</span>]]),</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    categorical_encodings<span class="op">=</span>{<span class="st">"catalyst"</span>: CategoricalEncodingEnum.ORDINAL},</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b2b15585" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> MixedSingleTaskGPSurrogate(</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs,</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>Outputs(features<span class="op">=</span>[benchmark.domain.outputs.features[<span class="dv">0</span>]]),</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    categorical_encodings<span class="op">=</span>{<span class="st">"catalyst"</span>: CategoricalEncodingEnum.ORDINAL},</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>jspec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="24">
-<pre><code>'{"hyperconfig":{"type":"MixedSingleTaskGPHyperconfig","hyperstrategy":"FractionalFactorialStrategy","inputs":{"type":"Inputs","features":[{"type":"CategoricalInput","key":"continuous_kernel","categories":["rbf","matern_1.5","matern_2.5"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"prior","categories":["mbo","threesix","hvarfner"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"ard","categories":["True","False"],"allowed":[true,true]}]},"n_iterations":null,"target_metric":"MAE"},"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"MixedSingleTaskGPSurrogate","inputs":{"type":"Inputs","features":[{"type":"CategoricalDescriptorInput","key":"catalyst","categories":["tBuXPhos","tBuBrettPhos","AlPhos"],"allowed":[true,true,true],"descriptors":["area_cat","M2_cat"],"values":[[460.7543,67.2057],[518.8408,89.8738],[819.933,129.0808]]},{"type":"CategoricalDescriptorInput","key":"base","categories":["TEA","TMG","BTMG","DBU"],"allowed":[true,true,true,true],"descriptors":["area","M2"],"values":[[162.2992,25.8165],[165.5447,81.4847],[227.3523,30.554],[192.4693,59.8367]]},{"type":"ContinuousInput","key":"base_eq","unit":null,"bounds":[1.0,2.5],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"temperature","unit":null,"bounds":[30.0,100.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"t_res","unit":null,"bounds":[60.0,1800.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"yield","unit":null,"objective":{"type":"MaximizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{"base":"ORDINAL","catalyst":"ORDINAL"},"dump":null,"categorical_encodings":{"catalyst":"ORDINAL","base":"DESCRIPTOR"},"scaler":"NORMALIZE","output_scaler":"STANDARDIZE","continuous_kernel":{"type":"RBFKernel","features":["t_res","base","base_eq","temperature"],"ard":true,"lengthscale_prior":{"type":"DimensionalityScaledLogNormalPrior","loc":1.4142135623730951,"loc_scaling":0.5,"scale":1.7320508075688772,"scale_scaling":0.0},"lengthscale_constraint":{"type":"GreaterThan","lower_bound":0.025}},"categorical_kernel":{"type":"HammingDistanceKernel","features":["catalyst"],"ard":true,"lengthscale_prior":null,"lengthscale_constraint":{"type":"GreaterThan","lower_bound":1e-6}},"noise_prior":{"type":"LogNormalPrior","loc":-4.0,"scale":1.0}}'</code></pre>
+<pre><code>'{"hyperconfig":{"type":"MixedSingleTaskGPHyperconfig","hyperstrategy":"FractionalFactorialStrategy","inputs":{"type":"Inputs","features":[{"type":"CategoricalInput","key":"continuous_kernel","categories":["rbf","matern_1.5","matern_2.5"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"prior","categories":["mbo","threesix","hvarfner"],"allowed":[true,true,true]},{"type":"CategoricalInput","key":"ard","categories":["True","False"],"allowed":[true,true]}]},"n_iterations":null,"target_metric":"MAE"},"engineered_features":{"type":"EngineeredFeatures","features":[]},"type":"MixedSingleTaskGPSurrogate","inputs":{"type":"Inputs","features":[{"type":"CategoricalDescriptorInput","key":"catalyst","categories":["tBuXPhos","tBuBrettPhos","AlPhos"],"allowed":[true,true,true],"descriptors":["area_cat","M2_cat"],"values":[[460.7543,67.2057],[518.8408,89.8738],[819.933,129.0808]]},{"type":"CategoricalDescriptorInput","key":"base","categories":["TEA","TMG","BTMG","DBU"],"allowed":[true,true,true,true],"descriptors":["area","M2"],"values":[[162.2992,25.8165],[165.5447,81.4847],[227.3523,30.554],[192.4693,59.8367]]},{"type":"ContinuousInput","key":"base_eq","unit":null,"bounds":[1.0,2.5],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"temperature","unit":null,"bounds":[30.0,100.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false},{"type":"ContinuousInput","key":"t_res","unit":null,"bounds":[60.0,1800.0],"local_relative_bounds":null,"stepsize":null,"allow_zero":false}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"yield","unit":null,"objective":{"type":"MaximizeObjective","w":1.0,"bounds":[0.0,1.0]}}]},"input_preprocessing_specs":{"base":"ORDINAL","catalyst":"ORDINAL"},"dump":null,"categorical_encodings":{"catalyst":"ORDINAL","base":"DESCRIPTOR"},"scaler":"NORMALIZE","output_scaler":"STANDARDIZE","continuous_kernel":{"type":"RBFKernel","features":["temperature","t_res","base","base_eq"],"ard":true,"lengthscale_prior":{"type":"DimensionalityScaledLogNormalPrior","loc":1.4142135623730951,"loc_scaling":0.5,"scale":1.7320508075688772,"scale_scaling":0.0},"lengthscale_constraint":{"type":"GreaterThan","lower_bound":0.025}},"categorical_kernel":{"type":"HammingDistanceKernel","features":["catalyst"],"ard":true,"lengthscale_prior":null,"lengthscale_constraint":{"type":"GreaterThan","lower_bound":1e-6}},"noise_prior":{"type":"LogNormalPrior","loc":-4.0,"scale":1.0}}'</code></pre>
 </div>
 </div>
-<div id="4ce2c955" class="cell" data-execution_count="25">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="43f57837" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="5afb6e3b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="26">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="bd109106" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="26">
 <pre><code>True</code></pre>
 </div>
@@ -1495,339 +1501,339 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Model Building with BoFire</span></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.</span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a><span class="fu">## Imports</span></span>
-<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
-<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
-<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.multi <span class="im">import</span> CrossCoupling</span>
-<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.single <span class="im">import</span> Himmelblau</span>
-<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Outputs</span>
-<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.enum <span class="im">import</span> CategoricalEncodingEnum</span>
-<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> (</span>
-<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>    AnySurrogate,</span>
-<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>    EmpiricalSurrogate,</span>
-<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>    MixedSingleTaskGPSurrogate,</span>
-<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>    RandomForestSurrogate,</span>
-<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>    RegressionMLPEnsemble,</span>
-<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>    SingleTaskGPSurrogate,</span>
-<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a><span class="fu">## Problem Setup</span></span>
-<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.</span>
-<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
-<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
-<span id="cb41-41"><a href="#cb41-41" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb41-42"><a href="#cb41-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a>experiments.head(<span class="dv">10</span>)</span>
-<span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Fitting</span></span>
-<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> benchmark.domain.inputs</span>
-<span id="cb41-52"><a href="#cb41-52" aria-hidden="true" tabindex="-1"></a>output_features <span class="op">=</span> benchmark.domain.outputs</span>
-<span id="cb41-53"><a href="#cb41-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-54"><a href="#cb41-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-57"><a href="#cb41-57" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-58"><a href="#cb41-58" aria-hidden="true" tabindex="-1"></a>input_features.model_dump_json()</span>
-<span id="cb41-59"><a href="#cb41-59" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-60"><a href="#cb41-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-63"><a href="#cb41-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-64"><a href="#cb41-64" aria-hidden="true" tabindex="-1"></a>output_features.model_dump_json()</span>
-<span id="cb41-65"><a href="#cb41-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-66"><a href="#cb41-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-67"><a href="#cb41-67" aria-hidden="true" tabindex="-1"></a><span class="fu">### Single Task GP</span></span>
-<span id="cb41-68"><a href="#cb41-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-69"><a href="#cb41-69" aria-hidden="true" tabindex="-1"></a>Generate the json spec</span>
-<span id="cb41-70"><a href="#cb41-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-73"><a href="#cb41-73" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-74"><a href="#cb41-74" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb41-75"><a href="#cb41-75" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(inputs<span class="op">=</span>input_features, outputs<span class="op">=</span>output_features)</span>
-<span id="cb41-76"><a href="#cb41-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-77"><a href="#cb41-77" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb41-78"><a href="#cb41-78" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb41-79"><a href="#cb41-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-80"><a href="#cb41-80" aria-hidden="true" tabindex="-1"></a>jspec</span>
-<span id="cb41-81"><a href="#cb41-81" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-82"><a href="#cb41-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-83"><a href="#cb41-83" aria-hidden="true" tabindex="-1"></a>Load it from the spec</span>
-<span id="cb41-84"><a href="#cb41-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-87"><a href="#cb41-87" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-88"><a href="#cb41-88" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-89"><a href="#cb41-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-90"><a href="#cb41-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-91"><a href="#cb41-91" aria-hidden="true" tabindex="-1"></a>Map it</span>
-<span id="cb41-92"><a href="#cb41-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-95"><a href="#cb41-95" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-96"><a href="#cb41-96" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-97"><a href="#cb41-97" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-98"><a href="#cb41-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-99"><a href="#cb41-99" aria-hidden="true" tabindex="-1"></a>Fit it. This is not 100% finished. In the future we will call here hyperfit which will return the CV results etc. This has to be finished. So ignore this for now and just call fit.</span>
-<span id="cb41-100"><a href="#cb41-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-103"><a href="#cb41-103" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-104"><a href="#cb41-104" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb41-105"><a href="#cb41-105" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-106"><a href="#cb41-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-107"><a href="#cb41-107" aria-hidden="true" tabindex="-1"></a>Dump it.</span>
-<span id="cb41-108"><a href="#cb41-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-111"><a href="#cb41-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-112"><a href="#cb41-112" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb41-113"><a href="#cb41-113" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb41-114"><a href="#cb41-114" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-115"><a href="#cb41-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-116"><a href="#cb41-116" aria-hidden="true" tabindex="-1"></a>Make predictions.</span>
-<span id="cb41-117"><a href="#cb41-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-120"><a href="#cb41-120" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-121"><a href="#cb41-121" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-122"><a href="#cb41-122" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-123"><a href="#cb41-123" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-124"><a href="#cb41-124" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
-<span id="cb41-125"><a href="#cb41-125" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-126"><a href="#cb41-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-127"><a href="#cb41-127" aria-hidden="true" tabindex="-1"></a>Load again from spec and dump and make predictions.</span>
-<span id="cb41-128"><a href="#cb41-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-131"><a href="#cb41-131" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-132"><a href="#cb41-132" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-133"><a href="#cb41-133" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-134"><a href="#cb41-134" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb41-135"><a href="#cb41-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-136"><a href="#cb41-136" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-137"><a href="#cb41-137" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-138"><a href="#cb41-138" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-139"><a href="#cb41-139" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb41-140"><a href="#cb41-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-141"><a href="#cb41-141" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb41-142"><a href="#cb41-142" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
-<span id="cb41-143"><a href="#cb41-143" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-144"><a href="#cb41-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-145"><a href="#cb41-145" aria-hidden="true" tabindex="-1"></a><span class="fu">### Random Forest</span></span>
-<span id="cb41-146"><a href="#cb41-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-147"><a href="#cb41-147" aria-hidden="true" tabindex="-1"></a>Generate the json spec</span>
-<span id="cb41-148"><a href="#cb41-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-151"><a href="#cb41-151" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-152"><a href="#cb41-152" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb41-153"><a href="#cb41-153" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RandomForestSurrogate(</span>
-<span id="cb41-154"><a href="#cb41-154" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
-<span id="cb41-155"><a href="#cb41-155" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
-<span id="cb41-156"><a href="#cb41-156" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span>,</span>
-<span id="cb41-157"><a href="#cb41-157" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb41-158"><a href="#cb41-158" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-159"><a href="#cb41-159" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb41-160"><a href="#cb41-160" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb41-161"><a href="#cb41-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-162"><a href="#cb41-162" aria-hidden="true" tabindex="-1"></a>jspec</span>
-<span id="cb41-163"><a href="#cb41-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-164"><a href="#cb41-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-167"><a href="#cb41-167" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-168"><a href="#cb41-168" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb41-169"><a href="#cb41-169" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-170"><a href="#cb41-170" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb41-171"><a href="#cb41-171" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-172"><a href="#cb41-172" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
-<span id="cb41-173"><a href="#cb41-173" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb41-174"><a href="#cb41-174" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb41-175"><a href="#cb41-175" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb41-176"><a href="#cb41-176" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-177"><a href="#cb41-177" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-178"><a href="#cb41-178" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-179"><a href="#cb41-179" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
-<span id="cb41-180"><a href="#cb41-180" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-181"><a href="#cb41-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-184"><a href="#cb41-184" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-185"><a href="#cb41-185" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-186"><a href="#cb41-186" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-187"><a href="#cb41-187" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb41-188"><a href="#cb41-188" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-189"><a href="#cb41-189" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-190"><a href="#cb41-190" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-191"><a href="#cb41-191" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-192"><a href="#cb41-192" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb41-193"><a href="#cb41-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-194"><a href="#cb41-194" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb41-195"><a href="#cb41-195" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
-<span id="cb41-196"><a href="#cb41-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-197"><a href="#cb41-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-198"><a href="#cb41-198" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLP Ensemble</span></span>
-<span id="cb41-199"><a href="#cb41-199" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-200"><a href="#cb41-200" aria-hidden="true" tabindex="-1"></a>Generate the json spec</span>
-<span id="cb41-201"><a href="#cb41-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-204"><a href="#cb41-204" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-205"><a href="#cb41-205" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb41-206"><a href="#cb41-206" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RegressionMLPEnsemble(</span>
-<span id="cb41-207"><a href="#cb41-207" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
-<span id="cb41-208"><a href="#cb41-208" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
-<span id="cb41-209"><a href="#cb41-209" aria-hidden="true" tabindex="-1"></a>    n_estimators<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb41-210"><a href="#cb41-210" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb41-211"><a href="#cb41-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-212"><a href="#cb41-212" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb41-213"><a href="#cb41-213" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb41-214"><a href="#cb41-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-215"><a href="#cb41-215" aria-hidden="true" tabindex="-1"></a>jspec</span>
-<span id="cb41-216"><a href="#cb41-216" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-217"><a href="#cb41-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-220"><a href="#cb41-220" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-221"><a href="#cb41-221" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb41-222"><a href="#cb41-222" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-223"><a href="#cb41-223" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb41-224"><a href="#cb41-224" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-225"><a href="#cb41-225" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
-<span id="cb41-226"><a href="#cb41-226" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb41-227"><a href="#cb41-227" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb41-228"><a href="#cb41-228" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb41-229"><a href="#cb41-229" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-230"><a href="#cb41-230" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-231"><a href="#cb41-231" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-232"><a href="#cb41-232" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
-<span id="cb41-233"><a href="#cb41-233" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-234"><a href="#cb41-234" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-237"><a href="#cb41-237" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-238"><a href="#cb41-238" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-239"><a href="#cb41-239" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-240"><a href="#cb41-240" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb41-241"><a href="#cb41-241" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-242"><a href="#cb41-242" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-243"><a href="#cb41-243" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-244"><a href="#cb41-244" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-245"><a href="#cb41-245" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb41-246"><a href="#cb41-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-247"><a href="#cb41-247" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb41-248"><a href="#cb41-248" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
-<span id="cb41-249"><a href="#cb41-249" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-250"><a href="#cb41-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-251"><a href="#cb41-251" aria-hidden="true" tabindex="-1"></a><span class="fu">## Empirical Surrogate</span></span>
-<span id="cb41-252"><a href="#cb41-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-253"><a href="#cb41-253" aria-hidden="true" tabindex="-1"></a>The empirical model is special as it has per default no fit and you need cloudpickle. There can be empirical models which implement a fit, but for this they also have to inherit from <span class="in">`Trainable`</span>. The current example is the default without any fit functionality.</span>
-<span id="cb41-254"><a href="#cb41-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-257"><a href="#cb41-257" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-258"><a href="#cb41-258" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> botorch.models.deterministic <span class="im">import</span> DeterministicModel</span>
-<span id="cb41-259"><a href="#cb41-259" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> Tensor</span>
-<span id="cb41-260"><a href="#cb41-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-261"><a href="#cb41-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-262"><a href="#cb41-262" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> HimmelblauModel(DeterministicModel):</span>
-<span id="cb41-263"><a href="#cb41-263" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
-<span id="cb41-264"><a href="#cb41-264" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb41-265"><a href="#cb41-265" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._num_outputs <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb41-266"><a href="#cb41-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-267"><a href="#cb41-267" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, X: Tensor) <span class="op">-&gt;</span> Tensor:</span>
-<span id="cb41-268"><a href="#cb41-268" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (</span>
-<span id="cb41-269"><a href="#cb41-269" aria-hidden="true" tabindex="-1"></a>            (X[..., <span class="dv">0</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">-</span> <span class="fl">11.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb41-270"><a href="#cb41-270" aria-hidden="true" tabindex="-1"></a>            <span class="op">+</span> (X[..., <span class="dv">0</span>] <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">7.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb41-271"><a href="#cb41-271" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb41-272"><a href="#cb41-272" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-273"><a href="#cb41-273" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-276"><a href="#cb41-276" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-277"><a href="#cb41-277" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> EmpiricalSurrogate(</span>
-<span id="cb41-278"><a href="#cb41-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-279"><a href="#cb41-279" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
-<span id="cb41-280"><a href="#cb41-280" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
-<span id="cb41-281"><a href="#cb41-281" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb41-282"><a href="#cb41-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-283"><a href="#cb41-283" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb41-284"><a href="#cb41-284" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb41-285"><a href="#cb41-285" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-286"><a href="#cb41-286" aria-hidden="true" tabindex="-1"></a>jspec</span>
-<span id="cb41-287"><a href="#cb41-287" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-288"><a href="#cb41-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-291"><a href="#cb41-291" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-292"><a href="#cb41-292" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb41-293"><a href="#cb41-293" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-294"><a href="#cb41-294" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb41-295"><a href="#cb41-295" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-296"><a href="#cb41-296" aria-hidden="true" tabindex="-1"></a><span class="co"># attach the actual model to it</span></span>
-<span id="cb41-297"><a href="#cb41-297" aria-hidden="true" tabindex="-1"></a>surrogate.model <span class="op">=</span> HimmelblauModel()</span>
-<span id="cb41-298"><a href="#cb41-298" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb41-299"><a href="#cb41-299" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb41-300"><a href="#cb41-300" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-301"><a href="#cb41-301" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-302"><a href="#cb41-302" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-303"><a href="#cb41-303" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
-<span id="cb41-304"><a href="#cb41-304" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-305"><a href="#cb41-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-308"><a href="#cb41-308" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-309"><a href="#cb41-309" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-310"><a href="#cb41-310" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-311"><a href="#cb41-311" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb41-312"><a href="#cb41-312" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-313"><a href="#cb41-313" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-314"><a href="#cb41-314" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-315"><a href="#cb41-315" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-316"><a href="#cb41-316" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb41-317"><a href="#cb41-317" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-318"><a href="#cb41-318" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb41-319"><a href="#cb41-319" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
-<span id="cb41-320"><a href="#cb41-320" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-321"><a href="#cb41-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-322"><a href="#cb41-322" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mixed GP</span></span>
-<span id="cb41-323"><a href="#cb41-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-324"><a href="#cb41-324" aria-hidden="true" tabindex="-1"></a>Generate data for a mixed problem.</span>
-<span id="cb41-325"><a href="#cb41-325" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-328"><a href="#cb41-328" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-329"><a href="#cb41-329" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> CrossCoupling()</span>
-<span id="cb41-330"><a href="#cb41-330" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
-<span id="cb41-331"><a href="#cb41-331" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb41-332"><a href="#cb41-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-333"><a href="#cb41-333" aria-hidden="true" tabindex="-1"></a>experiments.head(<span class="dv">10</span>)</span>
-<span id="cb41-334"><a href="#cb41-334" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-335"><a href="#cb41-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-338"><a href="#cb41-338" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-339"><a href="#cb41-339" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
-<span id="cb41-340"><a href="#cb41-340" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> MixedSingleTaskGPSurrogate(</span>
-<span id="cb41-341"><a href="#cb41-341" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs,</span>
-<span id="cb41-342"><a href="#cb41-342" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>Outputs(features<span class="op">=</span>[benchmark.domain.outputs.features[<span class="dv">0</span>]]),</span>
-<span id="cb41-343"><a href="#cb41-343" aria-hidden="true" tabindex="-1"></a>    categorical_encodings<span class="op">=</span>{<span class="st">"catalyst"</span>: CategoricalEncodingEnum.ORDINAL},</span>
-<span id="cb41-344"><a href="#cb41-344" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb41-345"><a href="#cb41-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-346"><a href="#cb41-346" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
-<span id="cb41-347"><a href="#cb41-347" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
-<span id="cb41-348"><a href="#cb41-348" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-349"><a href="#cb41-349" aria-hidden="true" tabindex="-1"></a>jspec</span>
-<span id="cb41-350"><a href="#cb41-350" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-351"><a href="#cb41-351" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-354"><a href="#cb41-354" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-355"><a href="#cb41-355" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
-<span id="cb41-356"><a href="#cb41-356" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-357"><a href="#cb41-357" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
-<span id="cb41-358"><a href="#cb41-358" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-359"><a href="#cb41-359" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
-<span id="cb41-360"><a href="#cb41-360" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
-<span id="cb41-361"><a href="#cb41-361" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
-<span id="cb41-362"><a href="#cb41-362" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
-<span id="cb41-363"><a href="#cb41-363" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-364"><a href="#cb41-364" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-365"><a href="#cb41-365" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-366"><a href="#cb41-366" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
-<span id="cb41-367"><a href="#cb41-367" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb41-368"><a href="#cb41-368" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-371"><a href="#cb41-371" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb41-372"><a href="#cb41-372" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb41-373"><a href="#cb41-373" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb41-374"><a href="#cb41-374" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
-<span id="cb41-375"><a href="#cb41-375" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb41-376"><a href="#cb41-376" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
-<span id="cb41-377"><a href="#cb41-377" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-378"><a href="#cb41-378" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
-<span id="cb41-379"><a href="#cb41-379" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
-<span id="cb41-380"><a href="#cb41-380" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
-<span id="cb41-381"><a href="#cb41-381" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
-<span id="cb41-382"><a href="#cb41-382" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-383"><a href="#cb41-383" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
-<span id="cb41-384"><a href="#cb41-384" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
-<span id="cb41-385"><a href="#cb41-385" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Model Building with BoFire</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a><span class="fu">## Imports</span></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.multi <span class="im">import</span> CrossCoupling</span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.single <span class="im">import</span> Himmelblau</span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Outputs</span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.enum <span class="im">import</span> CategoricalEncodingEnum</span>
+<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> (</span>
+<span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a>    AnySurrogate,</span>
+<span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a>    EmpiricalSurrogate,</span>
+<span id="cb42-25"><a href="#cb42-25" aria-hidden="true" tabindex="-1"></a>    MixedSingleTaskGPSurrogate,</span>
+<span id="cb42-26"><a href="#cb42-26" aria-hidden="true" tabindex="-1"></a>    RandomForestSurrogate,</span>
+<span id="cb42-27"><a href="#cb42-27" aria-hidden="true" tabindex="-1"></a>    RegressionMLPEnsemble,</span>
+<span id="cb42-28"><a href="#cb42-28" aria-hidden="true" tabindex="-1"></a>    SingleTaskGPSurrogate,</span>
+<span id="cb42-29"><a href="#cb42-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-30"><a href="#cb42-30" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-31"><a href="#cb42-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-32"><a href="#cb42-32" aria-hidden="true" tabindex="-1"></a><span class="fu">## Problem Setup</span></span>
+<span id="cb42-33"><a href="#cb42-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-34"><a href="#cb42-34" aria-hidden="true" tabindex="-1"></a>For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.</span>
+<span id="cb42-35"><a href="#cb42-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-38"><a href="#cb42-38" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-39"><a href="#cb42-39" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
+<span id="cb42-40"><a href="#cb42-40" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb42-41"><a href="#cb42-41" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb42-42"><a href="#cb42-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-43"><a href="#cb42-43" aria-hidden="true" tabindex="-1"></a>experiments.head(<span class="dv">10</span>)</span>
+<span id="cb42-44"><a href="#cb42-44" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-45"><a href="#cb42-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-46"><a href="#cb42-46" aria-hidden="true" tabindex="-1"></a><span class="fu">## Model Fitting</span></span>
+<span id="cb42-47"><a href="#cb42-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-50"><a href="#cb42-50" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-51"><a href="#cb42-51" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> benchmark.domain.inputs</span>
+<span id="cb42-52"><a href="#cb42-52" aria-hidden="true" tabindex="-1"></a>output_features <span class="op">=</span> benchmark.domain.outputs</span>
+<span id="cb42-53"><a href="#cb42-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-54"><a href="#cb42-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-57"><a href="#cb42-57" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-58"><a href="#cb42-58" aria-hidden="true" tabindex="-1"></a>input_features.model_dump_json()</span>
+<span id="cb42-59"><a href="#cb42-59" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-60"><a href="#cb42-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-63"><a href="#cb42-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-64"><a href="#cb42-64" aria-hidden="true" tabindex="-1"></a>output_features.model_dump_json()</span>
+<span id="cb42-65"><a href="#cb42-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-66"><a href="#cb42-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-67"><a href="#cb42-67" aria-hidden="true" tabindex="-1"></a><span class="fu">### Single Task GP</span></span>
+<span id="cb42-68"><a href="#cb42-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-69"><a href="#cb42-69" aria-hidden="true" tabindex="-1"></a>Generate the json spec</span>
+<span id="cb42-70"><a href="#cb42-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-73"><a href="#cb42-73" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-74"><a href="#cb42-74" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb42-75"><a href="#cb42-75" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(inputs<span class="op">=</span>input_features, outputs<span class="op">=</span>output_features)</span>
+<span id="cb42-76"><a href="#cb42-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-77"><a href="#cb42-77" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb42-78"><a href="#cb42-78" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb42-79"><a href="#cb42-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-80"><a href="#cb42-80" aria-hidden="true" tabindex="-1"></a>jspec</span>
+<span id="cb42-81"><a href="#cb42-81" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-82"><a href="#cb42-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-83"><a href="#cb42-83" aria-hidden="true" tabindex="-1"></a>Load it from the spec</span>
+<span id="cb42-84"><a href="#cb42-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-87"><a href="#cb42-87" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-88"><a href="#cb42-88" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-89"><a href="#cb42-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-90"><a href="#cb42-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-91"><a href="#cb42-91" aria-hidden="true" tabindex="-1"></a>Map it</span>
+<span id="cb42-92"><a href="#cb42-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-95"><a href="#cb42-95" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-96"><a href="#cb42-96" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-97"><a href="#cb42-97" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-98"><a href="#cb42-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-99"><a href="#cb42-99" aria-hidden="true" tabindex="-1"></a>Fit it. This is not 100% finished. In the future we will call here hyperfit which will return the CV results etc. This has to be finished. So ignore this for now and just call fit.</span>
+<span id="cb42-100"><a href="#cb42-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-103"><a href="#cb42-103" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-104"><a href="#cb42-104" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb42-105"><a href="#cb42-105" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-106"><a href="#cb42-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-107"><a href="#cb42-107" aria-hidden="true" tabindex="-1"></a>Dump it.</span>
+<span id="cb42-108"><a href="#cb42-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-111"><a href="#cb42-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-112"><a href="#cb42-112" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb42-113"><a href="#cb42-113" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb42-114"><a href="#cb42-114" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-115"><a href="#cb42-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-116"><a href="#cb42-116" aria-hidden="true" tabindex="-1"></a>Make predictions.</span>
+<span id="cb42-117"><a href="#cb42-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-120"><a href="#cb42-120" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-121"><a href="#cb42-121" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-122"><a href="#cb42-122" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-123"><a href="#cb42-123" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-124"><a href="#cb42-124" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
+<span id="cb42-125"><a href="#cb42-125" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-126"><a href="#cb42-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-127"><a href="#cb42-127" aria-hidden="true" tabindex="-1"></a>Load again from spec and dump and make predictions.</span>
+<span id="cb42-128"><a href="#cb42-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-131"><a href="#cb42-131" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-132"><a href="#cb42-132" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-133"><a href="#cb42-133" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-134"><a href="#cb42-134" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb42-135"><a href="#cb42-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-136"><a href="#cb42-136" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-137"><a href="#cb42-137" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-138"><a href="#cb42-138" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-139"><a href="#cb42-139" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb42-140"><a href="#cb42-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-141"><a href="#cb42-141" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb42-142"><a href="#cb42-142" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
+<span id="cb42-143"><a href="#cb42-143" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-144"><a href="#cb42-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-145"><a href="#cb42-145" aria-hidden="true" tabindex="-1"></a><span class="fu">### Random Forest</span></span>
+<span id="cb42-146"><a href="#cb42-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-147"><a href="#cb42-147" aria-hidden="true" tabindex="-1"></a>Generate the json spec</span>
+<span id="cb42-148"><a href="#cb42-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-151"><a href="#cb42-151" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-152"><a href="#cb42-152" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb42-153"><a href="#cb42-153" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RandomForestSurrogate(</span>
+<span id="cb42-154"><a href="#cb42-154" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
+<span id="cb42-155"><a href="#cb42-155" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
+<span id="cb42-156"><a href="#cb42-156" aria-hidden="true" tabindex="-1"></a>    random_state<span class="op">=</span><span class="dv">42</span>,</span>
+<span id="cb42-157"><a href="#cb42-157" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-158"><a href="#cb42-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-159"><a href="#cb42-159" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb42-160"><a href="#cb42-160" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb42-161"><a href="#cb42-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-162"><a href="#cb42-162" aria-hidden="true" tabindex="-1"></a>jspec</span>
+<span id="cb42-163"><a href="#cb42-163" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-164"><a href="#cb42-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-167"><a href="#cb42-167" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-168"><a href="#cb42-168" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb42-169"><a href="#cb42-169" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-170"><a href="#cb42-170" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb42-171"><a href="#cb42-171" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-172"><a href="#cb42-172" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
+<span id="cb42-173"><a href="#cb42-173" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb42-174"><a href="#cb42-174" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb42-175"><a href="#cb42-175" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb42-176"><a href="#cb42-176" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-177"><a href="#cb42-177" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-178"><a href="#cb42-178" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-179"><a href="#cb42-179" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
+<span id="cb42-180"><a href="#cb42-180" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-181"><a href="#cb42-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-184"><a href="#cb42-184" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-185"><a href="#cb42-185" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-186"><a href="#cb42-186" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-187"><a href="#cb42-187" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb42-188"><a href="#cb42-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-189"><a href="#cb42-189" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-190"><a href="#cb42-190" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-191"><a href="#cb42-191" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-192"><a href="#cb42-192" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb42-193"><a href="#cb42-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-194"><a href="#cb42-194" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb42-195"><a href="#cb42-195" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
+<span id="cb42-196"><a href="#cb42-196" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-197"><a href="#cb42-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-198"><a href="#cb42-198" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLP Ensemble</span></span>
+<span id="cb42-199"><a href="#cb42-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-200"><a href="#cb42-200" aria-hidden="true" tabindex="-1"></a>Generate the json spec</span>
+<span id="cb42-201"><a href="#cb42-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-204"><a href="#cb42-204" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-205"><a href="#cb42-205" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb42-206"><a href="#cb42-206" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> RegressionMLPEnsemble(</span>
+<span id="cb42-207"><a href="#cb42-207" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
+<span id="cb42-208"><a href="#cb42-208" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
+<span id="cb42-209"><a href="#cb42-209" aria-hidden="true" tabindex="-1"></a>    n_estimators<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb42-210"><a href="#cb42-210" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-211"><a href="#cb42-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-212"><a href="#cb42-212" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb42-213"><a href="#cb42-213" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb42-214"><a href="#cb42-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-215"><a href="#cb42-215" aria-hidden="true" tabindex="-1"></a>jspec</span>
+<span id="cb42-216"><a href="#cb42-216" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-217"><a href="#cb42-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-220"><a href="#cb42-220" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-221"><a href="#cb42-221" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb42-222"><a href="#cb42-222" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-223"><a href="#cb42-223" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb42-224"><a href="#cb42-224" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-225"><a href="#cb42-225" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
+<span id="cb42-226"><a href="#cb42-226" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb42-227"><a href="#cb42-227" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb42-228"><a href="#cb42-228" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb42-229"><a href="#cb42-229" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-230"><a href="#cb42-230" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-231"><a href="#cb42-231" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-232"><a href="#cb42-232" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
+<span id="cb42-233"><a href="#cb42-233" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-234"><a href="#cb42-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-237"><a href="#cb42-237" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-238"><a href="#cb42-238" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-239"><a href="#cb42-239" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-240"><a href="#cb42-240" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb42-241"><a href="#cb42-241" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-242"><a href="#cb42-242" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-243"><a href="#cb42-243" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-244"><a href="#cb42-244" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-245"><a href="#cb42-245" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb42-246"><a href="#cb42-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-247"><a href="#cb42-247" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb42-248"><a href="#cb42-248" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
+<span id="cb42-249"><a href="#cb42-249" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-250"><a href="#cb42-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-251"><a href="#cb42-251" aria-hidden="true" tabindex="-1"></a><span class="fu">## Empirical Surrogate</span></span>
+<span id="cb42-252"><a href="#cb42-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-253"><a href="#cb42-253" aria-hidden="true" tabindex="-1"></a>The empirical model is special as it has per default no fit and you need cloudpickle. There can be empirical models which implement a fit, but for this they also have to inherit from <span class="in">`Trainable`</span>. The current example is the default without any fit functionality.</span>
+<span id="cb42-254"><a href="#cb42-254" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-257"><a href="#cb42-257" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-258"><a href="#cb42-258" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> botorch.models.deterministic <span class="im">import</span> DeterministicModel</span>
+<span id="cb42-259"><a href="#cb42-259" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch <span class="im">import</span> Tensor</span>
+<span id="cb42-260"><a href="#cb42-260" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-261"><a href="#cb42-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-262"><a href="#cb42-262" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> HimmelblauModel(DeterministicModel):</span>
+<span id="cb42-263"><a href="#cb42-263" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb42-264"><a href="#cb42-264" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb42-265"><a href="#cb42-265" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._num_outputs <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb42-266"><a href="#cb42-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-267"><a href="#cb42-267" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, X: Tensor) <span class="op">-&gt;</span> Tensor:</span>
+<span id="cb42-268"><a href="#cb42-268" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (</span>
+<span id="cb42-269"><a href="#cb42-269" aria-hidden="true" tabindex="-1"></a>            (X[..., <span class="dv">0</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">-</span> <span class="fl">11.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb42-270"><a href="#cb42-270" aria-hidden="true" tabindex="-1"></a>            <span class="op">+</span> (X[..., <span class="dv">0</span>] <span class="op">+</span> X[..., <span class="dv">1</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">-</span> <span class="fl">7.0</span>) <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb42-271"><a href="#cb42-271" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb42-272"><a href="#cb42-272" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-273"><a href="#cb42-273" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-276"><a href="#cb42-276" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-277"><a href="#cb42-277" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> EmpiricalSurrogate(</span>
+<span id="cb42-278"><a href="#cb42-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-279"><a href="#cb42-279" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
+<span id="cb42-280"><a href="#cb42-280" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
+<span id="cb42-281"><a href="#cb42-281" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-282"><a href="#cb42-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-283"><a href="#cb42-283" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb42-284"><a href="#cb42-284" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb42-285"><a href="#cb42-285" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-286"><a href="#cb42-286" aria-hidden="true" tabindex="-1"></a>jspec</span>
+<span id="cb42-287"><a href="#cb42-287" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-288"><a href="#cb42-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-291"><a href="#cb42-291" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-292"><a href="#cb42-292" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb42-293"><a href="#cb42-293" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-294"><a href="#cb42-294" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb42-295"><a href="#cb42-295" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-296"><a href="#cb42-296" aria-hidden="true" tabindex="-1"></a><span class="co"># attach the actual model to it</span></span>
+<span id="cb42-297"><a href="#cb42-297" aria-hidden="true" tabindex="-1"></a>surrogate.model <span class="op">=</span> HimmelblauModel()</span>
+<span id="cb42-298"><a href="#cb42-298" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb42-299"><a href="#cb42-299" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb42-300"><a href="#cb42-300" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-301"><a href="#cb42-301" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-302"><a href="#cb42-302" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-303"><a href="#cb42-303" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
+<span id="cb42-304"><a href="#cb42-304" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-305"><a href="#cb42-305" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-308"><a href="#cb42-308" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-309"><a href="#cb42-309" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-310"><a href="#cb42-310" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-311"><a href="#cb42-311" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb42-312"><a href="#cb42-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-313"><a href="#cb42-313" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-314"><a href="#cb42-314" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-315"><a href="#cb42-315" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-316"><a href="#cb42-316" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb42-317"><a href="#cb42-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-318"><a href="#cb42-318" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb42-319"><a href="#cb42-319" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
+<span id="cb42-320"><a href="#cb42-320" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-321"><a href="#cb42-321" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-322"><a href="#cb42-322" aria-hidden="true" tabindex="-1"></a><span class="fu">### Mixed GP</span></span>
+<span id="cb42-323"><a href="#cb42-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-324"><a href="#cb42-324" aria-hidden="true" tabindex="-1"></a>Generate data for a mixed problem.</span>
+<span id="cb42-325"><a href="#cb42-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-328"><a href="#cb42-328" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-329"><a href="#cb42-329" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> CrossCoupling()</span>
+<span id="cb42-330"><a href="#cb42-330" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(n<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb42-331"><a href="#cb42-331" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb42-332"><a href="#cb42-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-333"><a href="#cb42-333" aria-hidden="true" tabindex="-1"></a>experiments.head(<span class="dv">10</span>)</span>
+<span id="cb42-334"><a href="#cb42-334" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-335"><a href="#cb42-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-338"><a href="#cb42-338" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-339"><a href="#cb42-339" aria-hidden="true" tabindex="-1"></a><span class="co"># we setup the data model, here a Single Task GP</span></span>
+<span id="cb42-340"><a href="#cb42-340" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> MixedSingleTaskGPSurrogate(</span>
+<span id="cb42-341"><a href="#cb42-341" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs,</span>
+<span id="cb42-342"><a href="#cb42-342" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>Outputs(features<span class="op">=</span>[benchmark.domain.outputs.features[<span class="dv">0</span>]]),</span>
+<span id="cb42-343"><a href="#cb42-343" aria-hidden="true" tabindex="-1"></a>    categorical_encodings<span class="op">=</span>{<span class="st">"catalyst"</span>: CategoricalEncodingEnum.ORDINAL},</span>
+<span id="cb42-344"><a href="#cb42-344" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb42-345"><a href="#cb42-345" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-346"><a href="#cb42-346" aria-hidden="true" tabindex="-1"></a><span class="co"># we generate the json spec</span></span>
+<span id="cb42-347"><a href="#cb42-347" aria-hidden="true" tabindex="-1"></a>jspec <span class="op">=</span> surrogate_data.model_dump_json()</span>
+<span id="cb42-348"><a href="#cb42-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-349"><a href="#cb42-349" aria-hidden="true" tabindex="-1"></a>jspec</span>
+<span id="cb42-350"><a href="#cb42-350" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-351"><a href="#cb42-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-354"><a href="#cb42-354" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-355"><a href="#cb42-355" aria-hidden="true" tabindex="-1"></a><span class="co"># Load it from the spec</span></span>
+<span id="cb42-356"><a href="#cb42-356" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-357"><a href="#cb42-357" aria-hidden="true" tabindex="-1"></a><span class="co"># Map it</span></span>
+<span id="cb42-358"><a href="#cb42-358" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-359"><a href="#cb42-359" aria-hidden="true" tabindex="-1"></a><span class="co"># Fit it</span></span>
+<span id="cb42-360"><a href="#cb42-360" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments<span class="op">=</span>experiments)</span>
+<span id="cb42-361"><a href="#cb42-361" aria-hidden="true" tabindex="-1"></a><span class="co"># dump it</span></span>
+<span id="cb42-362"><a href="#cb42-362" aria-hidden="true" tabindex="-1"></a>dump <span class="op">=</span> surrogate.dumps()</span>
+<span id="cb42-363"><a href="#cb42-363" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-364"><a href="#cb42-364" aria-hidden="true" tabindex="-1"></a>df_predictions <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-365"><a href="#cb42-365" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-366"><a href="#cb42-366" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions)</span>
+<span id="cb42-367"><a href="#cb42-367" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb42-368"><a href="#cb42-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-371"><a href="#cb42-371" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb42-372"><a href="#cb42-372" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb42-373"><a href="#cb42-373" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb42-374"><a href="#cb42-374" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> TypeAdapter(AnySurrogate).validate_json(jspec)</span>
+<span id="cb42-375"><a href="#cb42-375" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb42-376"><a href="#cb42-376" aria-hidden="true" tabindex="-1"></a>surrogate.loads(dump)</span>
+<span id="cb42-377"><a href="#cb42-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-378"><a href="#cb42-378" aria-hidden="true" tabindex="-1"></a><span class="co"># predict with it</span></span>
+<span id="cb42-379"><a href="#cb42-379" aria-hidden="true" tabindex="-1"></a>df_predictions2 <span class="op">=</span> surrogate.predict(experiments)</span>
+<span id="cb42-380"><a href="#cb42-380" aria-hidden="true" tabindex="-1"></a><span class="co"># transform to spec</span></span>
+<span id="cb42-381"><a href="#cb42-381" aria-hidden="true" tabindex="-1"></a>predictions2 <span class="op">=</span> surrogate.to_predictions(predictions<span class="op">=</span>df_predictions2)</span>
+<span id="cb42-382"><a href="#cb42-382" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-383"><a href="#cb42-383" aria-hidden="true" tabindex="-1"></a><span class="co"># check for equality</span></span>
+<span id="cb42-384"><a href="#cb42-384" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">==</span> predictions2</span>
+<span id="cb42-385"><a href="#cb42-385" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

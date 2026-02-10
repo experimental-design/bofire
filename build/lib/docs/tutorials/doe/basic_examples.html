@@ -446,7 +446,7 @@ window.Quarto = {
 
 
 <p>The following example has been taken from the paper “The construction of D- and I-optimal designs for mixture experiments with linear constraints on the components” by R. Coetzer and L. M. Haines (https://www.sciencedirect.com/science/article/pii/S0169743917303106).</p>
-<div id="5e1fa12f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.886753,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.603166&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:59.716413&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="88db5de8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.886753,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.603166&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:59.716413&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.ticker <span class="im">import</span> FormatStrFormatter</span>
@@ -468,7 +468,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="linear-model">Linear model</h2>
 <p>Creating an experimental design that is D-optimal with respect to a linear model is done the same way as making proposals using other methods in BoFire; you 1. create a domain 2. construct a stategy data model (here we want DoEStrategy) 3. map the strategy to its functional version, and finally 4. ask the strategy for proposals.</p>
 <p>We will start with the simplest case: make a design based on a linear model containing main-effects (i.e., simply the inputs themselves and an intercept, without any second-order terms).</p>
-<div id="e8b824b7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.258445,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.867393&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:02.608948&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="a62bddc7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.258445,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.867393&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:02.608948&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
@@ -500,7 +500,7 @@ window.Quarto = {
 <span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s visualize the experiments that were chosen. We will see that such a design puts the experiments at the extremes of the experimental space - these are the points that best allow us to estimate the parameters of the linear model we chose.</p>
-<div id="b8e7f3a7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="61553f37" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
@@ -543,7 +543,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="cubic-model">cubic model</h2>
 <p>While the previous design is optimal for the main-effects model, we might prefer to see something that does not allocate all the experimental effort to values at the boundary of the space. This implies that we think there might be some higher-order effects present in the system - if we were sure that the target variable would follow straight-line behavior across the domain, we would not need to investigate any points away from the extremes.</p>
 <p>We can address this by specifying our own linear model that includes higher-order terms.</p>
-<div id="b2e671f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="b98b115d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(</span>
@@ -555,7 +555,7 @@ window.Quarto = {
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In this case we can compare with the result reported in the paper of Coetzer and Haines.</p>
-<div id="fb4264d9" class="cell" data-execution_count="5">
+<div id="2cbfa707" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>d_opt <span class="op">=</span> np.array(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    [</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        [</span>
@@ -638,7 +638,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="9971651f" class="cell" data-execution_count="6">
+<div id="9f05dcf9" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>IOptimalityCriterion(</span>
@@ -728,7 +728,7 @@ Equality constraints were detected. No equidistant grid of points can be generat
 <h2 class="anchored" data-anchor-id="nonlinear-constraints">Nonlinear Constraints</h2>
 <p>Design generation also supports nonlinear constraints. The following 3 examples show what is possible.</p>
 <p>First, a convenience function for plotting.</p>
-<div id="d2cb6ce9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="5f1fba4e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_results_3d(result, surface_func):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    u, v <span class="op">=</span> np.mgrid[<span class="dv">0</span> : <span class="dv">2</span> <span class="op">*</span> np.pi : <span class="ot">100j</span>, <span class="dv">0</span> : np.pi : <span class="ot">80j</span>]</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.cos(u) <span class="op">*</span> np.sin(v)</span>
@@ -753,7 +753,7 @@ Equality constraints were detected. No equidistant grid of points can be generat
 <section id="example-1-design-inside-a-cone-nonlinear-inequality" class="level3">
 <h3 class="anchored" data-anchor-id="example-1-design-inside-a-cone-nonlinear-inequality">Example 1: Design inside a cone / nonlinear inequality</h3>
 <p>In the following example we have three design variables. We impose the constraint that all experiments have to be contained in the interior of a cone, which corresponds to the nonlinear inequality constraint <span class="math inline">\(\sqrt{x_1^2 + x_2^2} - x_3 \leq 0\)</span>. The optimization is done for a linear model and we will see that it places the points on the surface of the cone so as to maximize the distance between them (although this is not explicitly the objective of the optimization).</p>
-<div id="fc21a793" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="3c37b273" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
@@ -785,7 +785,7 @@ Equality constraints were detected. No equidistant grid of points can be generat
 
 Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/strategies/doe/utils.py:705: OptimizeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/strategies/doe/utils.py:709: OptimizeWarning:
 
 Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_feasible`, and `hess`are ignored by this method.
 </code></pre>
@@ -799,7 +799,7 @@ Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_fea
 </div>
 </div>
 <p>We can do the same for a design space limited by an elliptical cone <span class="math inline">\(x_1^2 + x_2^2 - x_3 \leq 0\)</span>.</p>
-<div id="2853b859" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="96f32640" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
@@ -830,7 +830,7 @@ Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_fea
 
 Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/strategies/doe/utils.py:705: OptimizeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/strategies/doe/utils.py:709: OptimizeWarning:
 
 Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_feasible`, and `hess`are ignored by this method.
 </code></pre>
@@ -848,7 +848,7 @@ Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_fea
 <h3 class="anchored" data-anchor-id="example-2-design-on-the-surface-of-a-cone-nonlinear-equality">Example 2: Design on the surface of a cone / nonlinear equality</h3>
 <p>We can also limit the design space to the surface of a cone, defined by the equality constraint <span class="math inline">\(\sqrt{x_1^2 + x_2^2} - x_3 = 0\)</span>. Before, we observed that the experimental proposals happened to be on the surface of the cone, but now they are constrained so that this must be the case.</p>
 <p>Remark: Due to missing sampling methods, the initial points provided to IPOPT don’t satisfy the constraints. But this does not matter for the solution.</p>
-<div id="b13e888b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="e828f2b3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
@@ -887,7 +887,7 @@ Nonlinear constraints were detected. Not all features and checks are supported f
 
 Sampling failed. Falling back to uniform sampling on input domain.                      Providing a custom sampling strategy compatible with the problem can                       possibly improve performance.
 
-/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/strategies/doe/utils.py:705: OptimizeWarning:
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/strategies/doe/utils.py:709: OptimizeWarning:
 
 Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_feasible`, and `hess`are ignored by this method.
 </code></pre>
@@ -905,7 +905,7 @@ Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_fea
 <h3 class="anchored" data-anchor-id="example-3-batch-constraints">Example 3: Batch constraints</h3>
 <p>Batch constraints can be used to create designs where each set of <code>multiplicity</code> subsequent experiments have the same value for a certain feature. This can be useful for setups where experiments are done in parallel and some parameters must be shared by experiments in the same parallel batch.</p>
 <p>In the following example we fix the value of the decision variable <code>x1</code> for each batch of 3 experiments.</p>
-<div id="ee5dda4d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="d0e12428" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
@@ -939,55 +939,55 @@ Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_fea
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.0</td>
 <td>1.0</td>
-<td>0.0</td>
+<td>1.0</td>
+<td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.0</td>
+<td>1.0</td>
 <td>1.0</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.0</td>
-<td>0.0</td>
 <td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
+<td>0.0</td>
 <td>1.0</td>
-<td>1.0</td>
-<td>1.0</td>
+<td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>1.0</td>
-<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
+<td>0.0</td>
+<td>0.0</td>
 <td>1.0</td>
-<td>0.0</td>
-<td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>1.0</td>
 <td>0.0</td>
-<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>1.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>1.0</td>
+<td>0.0</td>
 <td>1.0</td>
 <td>0.0</td>
 </tr>
@@ -1000,13 +1000,13 @@ Constraint options `finite_diff_jac_sparsity`, `finite_diff_rel_step`, `keep_fea
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>0.0</td>
-<td>0.0</td>
+<td>1.0</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>0.0</td>
-<td>0.0</td>
+<td>1.0</td>
 <td>1.0</td>
 </tr>
 </tbody>

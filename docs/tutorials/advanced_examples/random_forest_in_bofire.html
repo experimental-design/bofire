@@ -731,7 +731,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="2e030d64" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:26.862628,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.573982&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:33:46.711354&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="d7d05b51" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:26.862628,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.573982&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:33:46.711354&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.multi <span class="im">import</span> DTLZ2</span>
@@ -742,7 +742,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="setup-a-rf" class="level2">
 <h2 class="anchored" data-anchor-id="setup-a-rf">Setup a RF</h2>
-<div id="adad87ee" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.249081,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.826056&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:13.576975&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="29a1281e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.249081,&quot;end_time&quot;:&quot;2024-10-10T20:34:13.826056&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:13.576975&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">20</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -760,7 +760,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>cv_test.get_metrics()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/models/ensemble.py:82: RuntimeWarning:
+<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:180: UserWarning:
+
+The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/models/ensemble.py:82: RuntimeWarning:
 
 Could not update `train_inputs` with transformed inputs since _RandomForest does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.
 
@@ -1421,13 +1425,13 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.121209</td>
-<td>0.020429</td>
-<td>0.923403</td>
-<td>0.645964</td>
-<td>0.962073</td>
-<td>0.938346</td>
-<td>0.000547</td>
+<td>0.128021</td>
+<td>0.02588</td>
+<td>0.87013</td>
+<td>0.277232</td>
+<td>0.937056</td>
+<td>0.816541</td>
+<td>0.011507</td>
 </tr>
 </tbody>
 </table>
@@ -1438,7 +1442,7 @@ Could not update `train_inputs` with transformed inputs since _RandomForest does
 </section>
 <section id="setup-an-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="setup-an-optimization">Setup an optimization</h2>
-<div id="d92283c9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="94e00d11" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> MoboStrategy(</span>

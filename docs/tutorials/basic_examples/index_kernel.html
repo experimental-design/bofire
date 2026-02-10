@@ -721,7 +721,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The Index kernel models categorical variables by assigning each category an index and learning a low-rank representation of the kernel matrix. This is particularly useful for ordered categorical variables or when categories have some inherent structure. Unlike Hamming distance kernel which assumes binary correlation (same or different), Index kernels try to learn the correlation between the categories while fitting GP.</p>
 <p>In this tutorial, we show the steps to create a GP surrogate using Index and Positive Index kernels. One can extend the steps to incorporate the shown feature for Bayesian optimization.</p>
 <p>We use the <strong><em>aniline_cn_crosscoupling</em></strong> data-set.</p>
-<div id="f1c5d62b" class="cell" data-execution_count="1">
+<div id="273db3bf" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># import basic python libraries</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -740,7 +740,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.data.aniline_cn_crosscoupling <span class="im">import</span> EXPERIMENTS</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Load the data, get the basic properties out of the data and perform the train-test split</p>
-<div id="0651ad25" class="cell" data-execution_count="2">
+<div id="8123e850" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_df <span class="op">=</span> pd.DataFrame(json.loads(EXPERIMENTS))</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>categories_catalyst <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"catalyst"</span>].unique())</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>categories_base <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"base"</span>].unique())</span>
@@ -753,7 +753,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> data_df.drop(train_data.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Define the input and output bofire variables</p>
-<div id="d0d84092" class="cell" data-execution_count="3">
+<div id="ea478635" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"temperature"</span>, bounds<span class="op">=</span>bounds_temperature),</span>
@@ -766,7 +766,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"yld"</span>)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In this example, we will use RBF kernel for the continuous variables and Index Kernel for the categorical variables. The final kernel will be linear combination of each kernel. Users are free to combine the kernels according to their choice.</p>
-<div id="7d7f3f06" class="cell" data-execution_count="4">
+<div id="7bcbf58d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>kernel_list_index <span class="op">=</span> [</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>RBFKernel(ard<span class="op">=</span><span class="va">True</span>, lengthscale_constraint<span class="op">=</span>GreaterThan(lower_bound<span class="op">=</span><span class="fl">2.500e-02</span>), features<span class="op">=</span>[<span class="st">'temperature'</span>, <span class="st">'t_res'</span>, <span class="st">'base_equivalents'</span>])),</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>IndexKernel(num_categories<span class="op">=</span><span class="bu">len</span>(categories_catalyst), rank<span class="op">=</span><span class="dv">1</span>, features<span class="op">=</span>[<span class="st">'catalyst'</span>])),</span>
@@ -781,8 +781,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>surrogate_index <span class="op">=</span> surrogates.<span class="bu">map</span>(data_model_index)</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>surrogate_index.fit(train_data)</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"MAE:"</span>, diagnostics.mean_absolute_error(surrogate_index.predict(test_data)[<span class="st">"yld_pred"</span>], test_data[<span class="st">"yld"</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/utils/torch_tools.py:1134: UserWarning:
+
+The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>MAE: 0.29700494015465834</code></pre>
+<pre><code>MAE: 0.2630432480396367</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/linear_operator/utils/interpolation.py:71: UserWarning:
@@ -1280,87 +1286,87 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Introduction to index kernel and positive index kernel.</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>The Index kernel models categorical variables by assigning each category an index and learning a low-rank representation of the kernel matrix. This is particularly useful for ordered categorical variables or when categories have some inherent structure. Unlike Hamming distance kernel which assumes binary correlation (same or different), Index kernels try to learn the correlation between the categories while fitting GP.</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>In this tutorial, we show the steps to create a GP surrogate using Index and Positive Index kernels. One can extend the steps to incorporate the shown feature for Bayesian optimization.</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>We use the ***aniline_cn_crosscoupling*** data-set.</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co"># import basic python libraries</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="co"># import bofire components</span></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> IndexKernel, RBFKernel, PositiveIndexKernel, AdditiveKernel, ScaleKernel</span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Inputs, Outputs</span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput, ContinuousOutput, CategoricalInput</span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate</span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.diagnostics <span class="im">as</span> diagnostics</span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.priors.api <span class="im">import</span> GreaterThan</span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co"># import data</span></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.data.aniline_cn_crosscoupling <span class="im">import</span> EXPERIMENTS</span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>Load the data, get the basic properties out of the data and perform the train-test split</span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>data_df <span class="op">=</span> pd.DataFrame(json.loads(EXPERIMENTS))</span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>categories_catalyst <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"catalyst"</span>].unique())</span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>categories_base <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"base"</span>].unique())</span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>bounds_temperature <span class="op">=</span> (data_df[<span class="st">"temperature"</span>].<span class="bu">min</span>(), data_df[<span class="st">"temperature"</span>].<span class="bu">max</span>())</span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>bounds_t_res <span class="op">=</span> (data_df[<span class="st">"t_res"</span>].<span class="bu">min</span>(), data_df[<span class="st">"t_res"</span>].<span class="bu">max</span>())</span>
-<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>bounds_base_equivalents <span class="op">=</span> (data_df[<span class="st">"base_equivalents"</span>].<span class="bu">min</span>(), data_df[<span class="st">"base_equivalents"</span>].<span class="bu">max</span>())</span>
-<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>test_size <span class="op">=</span> <span class="fl">0.3</span></span>
-<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> data_df.sample(frac<span class="op">=</span><span class="dv">1</span> <span class="op">-</span> test_size, random_state<span class="op">=</span><span class="dv">42</span>)</span>
-<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> data_df.drop(train_data.index)</span>
-<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>Define the input and output bofire variables</span>
-<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
-<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
-<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"temperature"</span>, bounds<span class="op">=</span>bounds_temperature),</span>
-<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"t_res"</span>, bounds<span class="op">=</span>bounds_t_res),</span>
-<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"base_equivalents"</span>, bounds<span class="op">=</span>bounds_base_equivalents),</span>
-<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>            CategoricalInput(key<span class="op">=</span><span class="st">'catalyst'</span>, categories<span class="op">=</span>categories_catalyst),</span>
-<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>            CategoricalInput(key<span class="op">=</span><span class="st">'base'</span>, categories<span class="op">=</span>categories_base)</span>
-<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"yld"</span>)])</span>
-<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>In this example, we will use RBF kernel for the continuous variables and Index Kernel for the categorical variables. The final kernel will be linear combination of each kernel. Users are free to combine the kernels according to their choice.</span>
-<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a>kernel_list_index <span class="op">=</span> [</span>
-<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>RBFKernel(ard<span class="op">=</span><span class="va">True</span>, lengthscale_constraint<span class="op">=</span>GreaterThan(lower_bound<span class="op">=</span><span class="fl">2.500e-02</span>), features<span class="op">=</span>[<span class="st">'temperature'</span>, <span class="st">'t_res'</span>, <span class="st">'base_equivalents'</span>])),</span>
-<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>IndexKernel(num_categories<span class="op">=</span><span class="bu">len</span>(categories_catalyst), rank<span class="op">=</span><span class="dv">1</span>, features<span class="op">=</span>[<span class="st">'catalyst'</span>])),</span>
-<span id="cb7-72"><a href="#cb7-72" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>IndexKernel(num_categories<span class="op">=</span><span class="bu">len</span>(categories_base), rank<span class="op">=</span><span class="dv">1</span>, features<span class="op">=</span>[<span class="st">'base'</span>]))</span>
-<span id="cb7-73"><a href="#cb7-73" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb7-74"><a href="#cb7-74" aria-hidden="true" tabindex="-1"></a>final_kernel_index <span class="op">=</span> AdditiveKernel(kernels<span class="op">=</span>kernel_list_index)</span>
-<span id="cb7-75"><a href="#cb7-75" aria-hidden="true" tabindex="-1"></a>data_model_index <span class="op">=</span> SingleTaskGPSurrogate(</span>
-<span id="cb7-76"><a href="#cb7-76" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
-<span id="cb7-77"><a href="#cb7-77" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
-<span id="cb7-78"><a href="#cb7-78" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>final_kernel_index,</span>
-<span id="cb7-79"><a href="#cb7-79" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb7-80"><a href="#cb7-80" aria-hidden="true" tabindex="-1"></a>surrogate_index <span class="op">=</span> surrogates.<span class="bu">map</span>(data_model_index)</span>
-<span id="cb7-81"><a href="#cb7-81" aria-hidden="true" tabindex="-1"></a>surrogate_index.fit(train_data)</span>
-<span id="cb7-82"><a href="#cb7-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"MAE:"</span>, diagnostics.mean_absolute_error(surrogate_index.predict(test_data)[<span class="st">"yld_pred"</span>], test_data[<span class="st">"yld"</span>]))</span>
-<span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>Many a times the Index Kernel do not generate positive definite correlations matrices. Positive Index Kernel kernel addresses this by using Cholesky decomposition with positive elements only. So, off diagonal elements are always positive and the diagonal elements are normalized to 1 for a target task.</span>
-<span id="cb7-86"><a href="#cb7-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-87"><a href="#cb7-87" aria-hidden="true" tabindex="-1"></a>**NOTE:** This kernel should only be used when the correlation between different categories is expected to be positive.</span>
-<span id="cb7-88"><a href="#cb7-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-89"><a href="#cb7-89" aria-hidden="true" tabindex="-1"></a>One can replace ```IndexKernel``` with ```PositiveIndexKernel``` to make use of Positive Index Kernels.</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Introduction to index kernel and positive index kernel.</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>The Index kernel models categorical variables by assigning each category an index and learning a low-rank representation of the kernel matrix. This is particularly useful for ordered categorical variables or when categories have some inherent structure. Unlike Hamming distance kernel which assumes binary correlation (same or different), Index kernels try to learn the correlation between the categories while fitting GP.</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>In this tutorial, we show the steps to create a GP surrogate using Index and Positive Index kernels. One can extend the steps to incorporate the shown feature for Bayesian optimization.</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>We use the ***aniline_cn_crosscoupling*** data-set.</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="co"># import basic python libraries</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co"># import bofire components</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> IndexKernel, RBFKernel, PositiveIndexKernel, AdditiveKernel, ScaleKernel</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Inputs, Outputs</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput, ContinuousOutput, CategoricalInput</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.diagnostics <span class="im">as</span> diagnostics</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.priors.api <span class="im">import</span> GreaterThan</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="co"># import data</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.data.aniline_cn_crosscoupling <span class="im">import</span> EXPERIMENTS</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>Load the data, get the basic properties out of the data and perform the train-test split</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>data_df <span class="op">=</span> pd.DataFrame(json.loads(EXPERIMENTS))</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>categories_catalyst <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"catalyst"</span>].unique())</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>categories_base <span class="op">=</span> <span class="bu">list</span>(data_df[<span class="st">"base"</span>].unique())</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>bounds_temperature <span class="op">=</span> (data_df[<span class="st">"temperature"</span>].<span class="bu">min</span>(), data_df[<span class="st">"temperature"</span>].<span class="bu">max</span>())</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>bounds_t_res <span class="op">=</span> (data_df[<span class="st">"t_res"</span>].<span class="bu">min</span>(), data_df[<span class="st">"t_res"</span>].<span class="bu">max</span>())</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>bounds_base_equivalents <span class="op">=</span> (data_df[<span class="st">"base_equivalents"</span>].<span class="bu">min</span>(), data_df[<span class="st">"base_equivalents"</span>].<span class="bu">max</span>())</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>test_size <span class="op">=</span> <span class="fl">0.3</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> data_df.sample(frac<span class="op">=</span><span class="dv">1</span> <span class="op">-</span> test_size, random_state<span class="op">=</span><span class="dv">42</span>)</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> data_df.drop(train_data.index)</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>Define the input and output bofire variables</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"temperature"</span>, bounds<span class="op">=</span>bounds_temperature),</span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"t_res"</span>, bounds<span class="op">=</span>bounds_t_res),</span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>            ContinuousInput(key<span class="op">=</span><span class="st">"base_equivalents"</span>, bounds<span class="op">=</span>bounds_base_equivalents),</span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>            CategoricalInput(key<span class="op">=</span><span class="st">'catalyst'</span>, categories<span class="op">=</span>categories_catalyst),</span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>            CategoricalInput(key<span class="op">=</span><span class="st">'base'</span>, categories<span class="op">=</span>categories_base)</span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"yld"</span>)])</span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>In this example, we will use RBF kernel for the continuous variables and Index Kernel for the categorical variables. The final kernel will be linear combination of each kernel. Users are free to combine the kernels according to their choice.</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>kernel_list_index <span class="op">=</span> [</span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>RBFKernel(ard<span class="op">=</span><span class="va">True</span>, lengthscale_constraint<span class="op">=</span>GreaterThan(lower_bound<span class="op">=</span><span class="fl">2.500e-02</span>), features<span class="op">=</span>[<span class="st">'temperature'</span>, <span class="st">'t_res'</span>, <span class="st">'base_equivalents'</span>])),</span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>IndexKernel(num_categories<span class="op">=</span><span class="bu">len</span>(categories_catalyst), rank<span class="op">=</span><span class="dv">1</span>, features<span class="op">=</span>[<span class="st">'catalyst'</span>])),</span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>    ScaleKernel(base_kernel<span class="op">=</span>IndexKernel(num_categories<span class="op">=</span><span class="bu">len</span>(categories_base), rank<span class="op">=</span><span class="dv">1</span>, features<span class="op">=</span>[<span class="st">'base'</span>]))</span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>final_kernel_index <span class="op">=</span> AdditiveKernel(kernels<span class="op">=</span>kernel_list_index)</span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>data_model_index <span class="op">=</span> SingleTaskGPSurrogate(</span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>final_kernel_index,</span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>surrogate_index <span class="op">=</span> surrogates.<span class="bu">map</span>(data_model_index)</span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a>surrogate_index.fit(train_data)</span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"MAE:"</span>, diagnostics.mean_absolute_error(surrogate_index.predict(test_data)[<span class="st">"yld_pred"</span>], test_data[<span class="st">"yld"</span>]))</span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>Many a times the Index Kernel do not generate positive definite correlations matrices. Positive Index Kernel kernel addresses this by using Cholesky decomposition with positive elements only. So, off diagonal elements are always positive and the diagonal elements are normalized to 1 for a target task.</span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a>**NOTE:** This kernel should only be used when the correlation between different categories is expected to be positive.</span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a>One can replace ```IndexKernel``` with ```PositiveIndexKernel``` to make use of Positive Index Kernels.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
