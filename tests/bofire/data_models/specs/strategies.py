@@ -1026,22 +1026,28 @@ specs.add_valid(
     },
 )
 
-# specs.add_valid(
-#     strategies.MultiFidelityHVKGStrategy,
-#     lambda: {
-#         "domain": Domain(
-#             inputs=Inputs(
-#                 features=[
-#                     ContinuousInput(key="a", bounds=(0, 1)),
-#                     CategoricalTaskInput(key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]),
-#                 ]
-#             ),
-#             outputs=Outputs(features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]),
-#         ).model_dump(),
-#         **strategy_commons,
-#         "acquisition_function": qMFHVKG().model_dump(),
-#     },
-# )
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    CategoricalTaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=NotImplementedError,
+    message="only supports continuous fidelities",
+)
 
 
 specs.add_invalid(

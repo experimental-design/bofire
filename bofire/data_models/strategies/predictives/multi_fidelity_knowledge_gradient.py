@@ -1,6 +1,6 @@
 from typing import Dict, Generator, Literal, Optional, Type, Union, final
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.acquisition_functions.acquisition_function import qMFHVKG
 from bofire.data_models.acquisition_functions.cost_aware_utility import (
@@ -9,7 +9,11 @@ from bofire.data_models.acquisition_functions.cost_aware_utility import (
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalOutput, Feature
-from bofire.data_models.features.task import ContinuousTaskInput, TaskInput
+from bofire.data_models.features.task import (
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    TaskInput,
+)
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     AnyKernel,
@@ -61,6 +65,21 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     cost_aware_utility: CostAwareUtility = Field(
         default_factory=lambda: InverseCostWeightedUtility()
     )
+
+    @field_validator("domain", mode="after")
+    @classmethod
+    def validate_domain_has_continuous_task_input(cls, domain: Domain) -> Domain:
+        task_inputs = domain.inputs.get(includes=TaskInput)
+        cat_task_inputs = domain.inputs.get(includes=CategoricalTaskInput)
+        if len(task_inputs) == 0:
+            raise ValueError("Must provide at least one fidelity.")
+
+        if len(cat_task_inputs) > 0:
+            # To support categorical task features, we need to add a fidelity cost
+            # field to the CategoricalTaskInput.
+            raise NotImplementedError("MFHVKG only supports continuous fidelities.")
+
+        return domain
 
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
