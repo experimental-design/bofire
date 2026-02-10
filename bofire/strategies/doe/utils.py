@@ -281,7 +281,7 @@ def n_zero_eigvals(
         rhs_only=True,
         inputs=domain.inputs,
     )
-    N = 2 * len(model_formula) + 3
+    N = len(model_formula) + 3
 
     sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
     X = sampler.ask(N)
@@ -497,18 +497,14 @@ class ConstraintWrapper:
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Call constraint with flattened numpy array."""
-        x = pd.DataFrame(
-            x.reshape(len(x) // self.D, self.D), columns=self.names
-        )  # ty: ignore[invalid-assignment]
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # ty: ignore[invalid-assignment]
         violation = self.constraint(x).to_numpy()
         violation[np.abs(violation) < 0] = 0
         return violation
 
     def jacobian(self, x: np.ndarray, sparse: bool = False) -> np.ndarray:
         """Call constraint gradient with flattened numpy array.  If sparse is set to True, the output is a vector containing the entries of the sparse matrix representation of the jacobian."""
-        x = pd.DataFrame(
-            x.reshape(len(x) // self.D, self.D), columns=self.names
-        )  # ty: ignore[invalid-assignment]
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # ty: ignore[invalid-assignment]
         gradient_compressed = self.constraint.jacobian(x).to_numpy()
 
         cols = np.repeat(
@@ -533,9 +529,7 @@ class ConstraintWrapper:
 
     def hessian(self, x: np.ndarray, *args):
         """Call constraint hessian with flattened numpy array."""
-        x = pd.DataFrame(
-            x.reshape(len(x) // self.D, self.D), columns=self.names
-        )  # ty: ignore[invalid-assignment]
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # ty: ignore[invalid-assignment]
         hessian_dict = self.constraint.hessian(x)
 
         hessian = np.zeros(
