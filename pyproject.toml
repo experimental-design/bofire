@@ -94,6 +94,7 @@ find = {}
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
+fallback_version = "0.0.0.dev0+unknown"
 
 [tool.ruff]
 target-version = "py39"
