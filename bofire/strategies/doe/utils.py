@@ -281,7 +281,7 @@ def n_zero_eigvals(
         rhs_only=True,
         inputs=domain.inputs,
     )
-    N = len(model_formula) + 3
+    N = 2 * len(model_formula) + 3
 
     sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
     X = sampler.ask(N)
