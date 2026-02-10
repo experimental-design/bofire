@@ -60,7 +60,6 @@ AnyInput = Union[
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
     ContinuousTaskInput,
     CategoricalTaskInput,
     ContinuousMolecularInput,

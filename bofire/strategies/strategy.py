@@ -1,10 +1,11 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional, Self, TypeVar
+from typing import List, Optional, TypeVar
 
 import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
