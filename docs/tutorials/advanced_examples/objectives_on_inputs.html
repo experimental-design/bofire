@@ -731,7 +731,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This notebook demonstrates how to put objectives on input features or a combination of input features. Possible usecases are favoring lower or higher amounts of an ingredient or to take into account a known (linear) cost function. In case of categorical inputs it can be used to penalize the optimizer for choosing specific categories.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="0c788d2d" class="cell" data-execution_count="1">
+<div id="a5221e32" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -753,7 +753,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-an-example" class="level2">
 <h2 class="anchored" data-anchor-id="setup-an-example">Setup an Example</h2>
 <p>We use Himmelblau as example with an additional objective on <code>x_2</code> which pushes it to be larger 3 during the optimization. In addition, we introduce a categorical feature called <code>x_cat</code> which is mapped by an <code>CategoricalDeterministicSurrogate</code> to a continuous output called <code>y_cat</code>.</p>
-<div id="3a78e72f" class="cell" data-execution_count="2">
+<div id="7f633355" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bench <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> bench.f(bench.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -776,7 +776,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>experiments[<span class="st">"x_cat"</span>] <span class="op">=</span> np.random.choice([<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>], size<span class="op">=</span>experiments.shape[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The <code>LinearDeterministicSurrogate</code> can be used to model that <code>y_x2 = x_2</code>.</p>
-<div id="011390bc" class="cell" data-execution_count="3">
+<div id="58991730" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> LinearDeterministicSurrogate(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domain.inputs.get_by_keys([<span class="st">"x_2"</span>]),</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>domain.outputs.get_by_keys([<span class="st">"y_x2"</span>]),</span>
@@ -806,52 +806,52 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>2.662840</td>
+<td>-1.111756</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-4.888205</td>
+<td>5.574517</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-4.136931</td>
+<td>-0.891813</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>2.575164</td>
+<td>-0.221172</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>-1.716530</td>
+<td>4.044431</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>3.660114</td>
+<td>0.857236</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>2.797444</td>
+<td>4.387013</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>4.338418</td>
+<td>-3.109778</td>
 <td>0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>-2.655132</td>
+<td>-2.039592</td>
 <td>0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>0.521284</td>
+<td>0.231257</td>
 <td>0.0</td>
 </tr>
 </tbody>
@@ -861,7 +861,7 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 </div>
 </div>
 <p>The <code>CategoricalDeterministicSurrogate</code> can be used to map categories to specific continuous values.</p>
-<div id="bd384687" class="cell" data-execution_count="4">
+<div id="51668b8c" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>categorical_surrogate_data <span class="op">=</span> CategoricalDeterministicSurrogate(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domain.inputs.get_by_keys([<span class="st">"x_cat"</span>]),</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>domain.outputs.get_by_keys([<span class="st">"y_cat"</span>]),</span>
@@ -897,103 +897,103 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-1.085518</td>
-<td>2.662840</td>
-<td>52.238196</td>
+<td>-1.190948</td>
+<td>-1.111756</td>
+<td>162.720066</td>
 <td>1</td>
-<td>2.662840</td>
-<td>b</td>
-<td>0.2</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
-<td>-4.002055</td>
-<td>-4.888205</td>
-<td>166.232695</td>
-<td>1</td>
-<td>-4.888205</td>
-<td>b</td>
-<td>0.2</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>0.354935</td>
-<td>-4.136931</td>
-<td>334.931531</td>
-<td>1</td>
-<td>-4.136931</td>
-<td>c</td>
-<td>0.3</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>3.810885</td>
-<td>2.575164</td>
-<td>49.035504</td>
-<td>1</td>
-<td>2.575164</td>
+<td>-1.111756</td>
 <td>a</td>
 <td>1.0</td>
 </tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>3.730688</td>
-<td>-1.716530</td>
-<td>1.547832</td>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>-2.056043</td>
+<td>5.574517</td>
+<td>486.280695</td>
 <td>1</td>
-<td>-1.716530</td>
+<td>5.574517</td>
 <td>c</td>
 <td>0.3</td>
 </tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>-3.410298</td>
+<td>-0.891813</td>
+<td>92.516068</td>
+<td>1</td>
+<td>-0.891813</td>
+<td>a</td>
+<td>1.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>-3.903782</td>
+<td>-0.221172</td>
+<td>133.975182</td>
+<td>1</td>
+<td>-0.221172</td>
+<td>b</td>
+<td>0.2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>1.866581</td>
+<td>4.044431</td>
+<td>138.029187</td>
+<td>1</td>
+<td>4.044431</td>
+<td>a</td>
+<td>1.0</td>
+</tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>4.932555</td>
-<td>3.660114</td>
-<td>417.013271</td>
+<td>-1.256097</td>
+<td>0.857236</td>
+<td>129.928056</td>
 <td>1</td>
-<td>3.660114</td>
+<td>0.857236</td>
 <td>b</td>
 <td>0.2</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>4.713005</td>
-<td>2.797444</td>
-<td>226.953417</td>
+<td>-3.004742</td>
+<td>4.387013</td>
+<td>91.233186</td>
 <td>1</td>
-<td>2.797444</td>
-<td>c</td>
-<td>0.3</td>
+<td>4.387013</td>
+<td>b</td>
+<td>0.2</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>4.814391</td>
-<td>4.338418</td>
-<td>549.569168</td>
+<td>-5.565341</td>
+<td>-3.109778</td>
+<td>292.747915</td>
 <td>1</td>
-<td>4.338418</td>
+<td>-3.109778</td>
 <td>c</td>
 <td>0.3</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>-0.528315</td>
-<td>-2.655132</td>
-<td>179.146826</td>
+<td>-0.155637</td>
+<td>-2.039592</td>
+<td>178.374061</td>
 <td>1</td>
-<td>-2.655132</td>
-<td>b</td>
-<td>0.2</td>
+<td>-2.039592</td>
+<td>a</td>
+<td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>-5.084268</td>
-<td>0.521284</td>
-<td>375.805673</td>
+<td>-4.034384</td>
+<td>0.231257</td>
+<td>150.912897</td>
 <td>1</td>
-<td>0.521284</td>
-<td>c</td>
-<td>0.3</td>
+<td>0.231257</td>
+<td>b</td>
+<td>0.2</td>
 </tr>
 </tbody>
 </table>
@@ -1002,7 +1002,7 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 </div>
 </div>
 <p>Next we setup a <code>SoboStrategy</code> using the custom surrogates for outputs <code>y_x2</code> and <code>y_cat</code> and ask for a candidate. Note that the surrogate specs for output <code>y</code> is automatically generated and defaulted to be a <code>SingleTaskGPSurrogate</code>.</p>
-<div id="6e486655" class="cell" data-execution_count="5">
+<div id="fccbab07" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> MultiplicativeSoboStrategy(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>BotorchSurrogates(</span>
@@ -1037,62 +1037,62 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-5.487420</td>
-<td>3.527383</td>
+<td>-6.000000</td>
+<td>4.714442</td>
 <td>a</td>
-<td>131.843691</td>
+<td>96.343417</td>
 <td>1.0</td>
-<td>3.527383</td>
-<td>166.136537</td>
+<td>4.714442</td>
+<td>79.112467</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-131.843691</td>
-<td>0.994902</td>
+<td>-96.343417</td>
+<td>1.000000</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-6.000000</td>
+<td>-4.422116</td>
 <td>6.000000</td>
 <td>a</td>
-<td>167.098416</td>
+<td>107.508434</td>
 <td>1.0</td>
 <td>6.000000</td>
-<td>177.080333</td>
+<td>80.270170</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-167.098416</td>
+<td>-107.508434</td>
 <td>1.000000</td>
 <td>1.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-0.862582</td>
+<td>6.000000</td>
 <td>6.000000</td>
 <td>a</td>
-<td>194.896828</td>
+<td>124.711250</td>
 <td>1.0</td>
 <td>6.000000</td>
-<td>174.623504</td>
+<td>77.365973</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-194.896828</td>
+<td>-124.711250</td>
 <td>1.000000</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>-6.000000</td>
-<td>5.025211</td>
+<td>3.419117</td>
 <td>a</td>
-<td>166.196463</td>
+<td>84.984903</td>
 <td>1.0</td>
-<td>5.025211</td>
-<td>177.168817</td>
+<td>3.419117</td>
+<td>71.375369</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>-166.196463</td>
-<td>1.000000</td>
+<td>-84.984903</td>
+<td>0.985097</td>
 <td>1.0</td>
 </tr>
 </tbody>

@@ -445,7 +445,7 @@ window.Quarto = {
 <p>BoFire can be used to setup full (two level) and fractional factorial designs (https://en.wikipedia.org/wiki/Fractional_factorial_design). This tutorial notebook shows how.</p>
 <section id="imports-and-helper-functions" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-helper-functions">Imports and helper functions</h2>
-<div id="c015f11c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:4.584683,&quot;end_time&quot;:&quot;2024-10-10T20:36:14.685114&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:10.100431&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="b4f861d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:4.584683,&quot;end_time&quot;:&quot;2024-10-10T20:36:14.685114&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:10.100431&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
@@ -475,7 +475,7 @@ window.Quarto = {
 <section id="setup-the-problem-domain" class="level2">
 <h2 class="anchored" data-anchor-id="setup-the-problem-domain">Setup the problem domain</h2>
 <p>The designs are generated for a simple three dimensional problem comprised of three continuous factors/features.</p>
-<div id="96bddb75" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.007239,&quot;end_time&quot;:&quot;2024-10-10T20:36:14.698521&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:14.691282&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="26ae66b5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.007239,&quot;end_time&quot;:&quot;2024-10-10T20:36:14.698521&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:14.691282&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"temperature"</span>, bounds<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">80</span>)),</span>
@@ -488,7 +488,7 @@ window.Quarto = {
 <section id="setup-a-full-factorial-design" class="level2">
 <h2 class="anchored" data-anchor-id="setup-a-full-factorial-design">Setup a full factorial design</h2>
 <p>Here we setup a full two-level factorial design including a center point and plot it.</p>
-<div id="5fea545f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.193231,&quot;end_time&quot;:&quot;2024-10-10T20:36:14.897979&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:14.704748&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="736d383e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.193231,&quot;end_time&quot;:&quot;2024-10-10T20:36:14.897979&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:14.704748&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> FractionalFactorialStrategy(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    n_center<span class="op">=</span><span class="dv">1</span>,  <span class="co"># number of center points</span></span>
@@ -581,7 +581,7 @@ window.Quarto = {
 </div>
 </div>
 <p>The confounding structure is shown below, as expected for a full factorial design, no confound is present.</p>
-<div id="86406504" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.107183,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.012084&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:14.904901&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="57fb139f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.107183,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.012084&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:14.904901&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> get_confounding_matrix(domain.inputs, design<span class="op">=</span>design, interactions<span class="op">=</span>[<span class="dv">2</span>])</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>sns.heatmap(m, annot<span class="op">=</span><span class="va">True</span>, annot_kws<span class="op">=</span>{<span class="st">"fontsize"</span>: <span class="dv">7</span>}, fmt<span class="op">=</span><span class="st">"2.1f"</span>)</span>
@@ -598,7 +598,7 @@ window.Quarto = {
 <section id="setup-a-full-factorial-design-with-blocking" class="level2">
 <h2 class="anchored" data-anchor-id="setup-a-full-factorial-design-with-blocking">Setup a full factorial design with blocking</h2>
 <p>Here we setup a blocked full two-level factorial design including a center point and plot it.</p>
-<div id="82b90bba" class="cell" data-execution_count="5">
+<div id="96bb96af" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>blocked_domain <span class="op">=</span> Domain(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"temperature"</span>, bounds<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">80</span>)),</span>
@@ -736,7 +736,7 @@ window.Quarto = {
 <section id="setup-a-fractional-factorial-design" class="level2">
 <h2 class="anchored" data-anchor-id="setup-a-fractional-factorial-design">Setup a fractional factorial design</h2>
 <p>Here a fractional factorial design of the form <span class="math inline">\(2^{3-1}\)</span> is setup by specifying the number of generators (here 1). In comparison to the full factorial design with 9 candidates, it features only 5 experiments.</p>
-<div id="091583df" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.012973,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.037263&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.024290&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="7932bd7f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.012973,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.037263&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.024290&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> FractionalFactorialStrategy(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    n_center<span class="op">=</span><span class="dv">1</span>,  <span class="co"># number of center points</span></span>
@@ -797,14 +797,14 @@ window.Quarto = {
 </div>
 </div>
 <p>The generator string is automatically generated by making use of the method <code>get_generator</code> and specifying the total number of factors (here 3) and the number of generators (here 1).</p>
-<div id="c8af628b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.008137,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.052737&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.044600&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="7b9cfcaa" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.008137,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.052737&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.044600&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>get_generator(n_factors<span class="op">=</span><span class="dv">3</span>, n_generators<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>'a b ab'</code></pre>
 </div>
 </div>
 <p>As expected for a type III design the main effects are confounded with the two factor interactions:</p>
-<div id="806eea88" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.107571,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.168255&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.060684&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="70092ba6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.107571,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.168255&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.060684&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> get_confounding_matrix(domain.inputs, design<span class="op">=</span>design, interactions<span class="op">=</span>[<span class="dv">2</span>])</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>sns.heatmap(m, annot<span class="op">=</span><span class="va">True</span>, annot_kws<span class="op">=</span>{<span class="st">"fontsize"</span>: <span class="dv">7</span>}, fmt<span class="op">=</span><span class="st">"2.1f"</span>)</span>
@@ -818,14 +818,14 @@ window.Quarto = {
 </div>
 </div>
 <p>This can also be expressed by the so called alias structure that can be calculated as following:</p>
-<div id="38c1adad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006933,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.183147&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.176214&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="0c6fa45e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006933,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.183147&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.176214&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>get_alias_structure(<span class="st">"a b ab"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <pre><code>['a = bc', 'b = ac', 'c = ab', 'I = abc']</code></pre>
 </div>
 </div>
 <p>Here again a fractional factorial design of the form <span class="math inline">\(2^{3-1}\)</span> is setup by providing the complete generator string of the form <code>a b -ab</code> explicitly to the strategy.</p>
-<div id="a053ccf8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.012145,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.203578&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.191433&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="e9c1bc20" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.012145,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.203578&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.191433&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> FractionalFactorialStrategy(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    n_center<span class="op">=</span><span class="dv">1</span>,  <span class="co"># number of center points</span></span>
@@ -886,7 +886,7 @@ window.Quarto = {
 </div>
 </div>
 <p>The last two designs differ only in the last feature <code>time</code>, since the generator strings are different. In the first one it holds <code>time=ph x temperature</code> whereas in the second it holds <code>time=-ph x temperature</code>, which is also reflected in the confounding structure.</p>
-<div id="b1338e32" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.112252,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.324464&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.212212&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="1a4d8a66" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.112252,&quot;end_time&quot;:&quot;2024-10-10T20:36:15.324464&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:15.212212&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> get_confounding_matrix(domain.inputs, design<span class="op">=</span>design, interactions<span class="op">=</span>[<span class="dv">2</span>])</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>sns.heatmap(m, annot<span class="op">=</span><span class="va">True</span>, annot_kws<span class="op">=</span>{<span class="st">"fontsize"</span>: <span class="dv">7</span>}, fmt<span class="op">=</span><span class="st">"2.1f"</span>)</span>
