@@ -15,7 +15,7 @@ from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDesc
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.engineered_features import map as map_feature
-from bofire.utils.torch_tools import get_NumericToCategorical_input_transform
+from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
 def get_continuous_feature_keys(
@@ -61,7 +61,7 @@ def get_scaler(
     engineered_features: EngineeredFeatures,
     categorical_encodings: InputTransformSpecs,
     scaler_type: ScalerEnum,
-) -> Union[InputStandardize, Normalize, None]:
+) -> Union[InputStandardize, ChainedInputTransform, None]:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
 
@@ -97,23 +97,39 @@ def get_scaler(
         specs=categorical_encodings,
     )
 
-    ord_dims = inputs.get_feature_indices(
+    cont_feat_dims = inputs.get_feature_indices(
         specs=categorical_encodings,
         feature_keys=continuous_feature_keys,
-    ) + engineered_features.get_feature_indices(
+    )
+    engineered_feat_dims = engineered_features.get_feature_indices(
         offset=offset, feature_keys=engineered_features.get_keys()
     )
+    ord_dims = cont_feat_dims + engineered_feat_dims
 
     if len(ord_dims) == 0:
         return None
 
     if scaler_type == ScalerEnum.NORMALIZE:
-        return Normalize(
+        lower, upper = inputs.get_bounds(
+            specs=categorical_encodings,
+        )
+        feat_normalize = Normalize(
             d=d,
-            # bounds=torch.tensor([lower, upper]).to(**tkwargs),
-            indices=ord_dims,
+            bounds=torch.tensor([lower, upper]).to(**tkwargs),
+            indices=cont_feat_dims,
             batch_shape=torch.Size(),
         )
+
+        engineered_feat_normalize = Normalize(
+            d=d,
+            indices=engineered_feat_dims,
+            batch_shape=torch.Size(),
+        )
+
+        return ChainedInputTransform(
+            feat=feat_normalize, engineered_feat=engineered_feat_normalize
+        )
+
     # it has to be standardize
     return InputStandardize(
         d=d,
