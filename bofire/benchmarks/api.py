@@ -40,6 +40,7 @@ AnyMultiBenchmark = Union[
     SnarBenchmark,
     BNH,
     TNK,
+    MOMFBraninCurrin,
 ]
 AnySingleBenchmark = Union[
     Ackley,
