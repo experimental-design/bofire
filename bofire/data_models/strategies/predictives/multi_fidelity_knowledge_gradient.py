@@ -63,11 +63,6 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     )
 
     @model_validator(mode="after")
-    def validate_multitask_allowed(self):
-        """Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed."""
-        return self
-
-    @model_validator(mode="after")
     def validate_surrogate_specs(self):
         """Ensures that a single-task multi-fidelity model is specified for each output feature"""
         MultiFidelityHVKGStrategy._generate_surrogate_specs(

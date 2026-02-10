@@ -4,6 +4,7 @@ from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
     qLogPF,
+    qMFHVKG,
     qNegIntPosVar,
     qPI,
 )
@@ -22,6 +23,7 @@ from bofire.data_models.features.api import (
     CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
+    ContinuousTaskInput,
     DiscreteInput,
 )
 from bofire.data_models.objectives.api import (
@@ -1003,4 +1005,61 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Only one task can be the target fidelity",
+)
+
+specs.add_valid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+)
+
+# specs.add_valid(
+#     strategies.MultiFidelityHVKGStrategy,
+#     lambda: {
+#         "domain": Domain(
+#             inputs=Inputs(
+#                 features=[
+#                     ContinuousInput(key="a", bounds=(0, 1)),
+#                     CategoricalTaskInput(key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]),
+#                 ]
+#             ),
+#             outputs=Outputs(features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]),
+#         ).model_dump(),
+#         **strategy_commons,
+#         "acquisition_function": qMFHVKG().model_dump(),
+#     },
+# )
+
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=ValueError,
+    message="Must provide at least one fidelity",
 )
