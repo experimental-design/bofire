@@ -281,7 +281,11 @@ def n_zero_eigvals(
         rhs_only=True,
         inputs=domain.inputs,
     )
-    N = len(model_formula) + 3
+    # Need enough samples so the information matrix rank is determined by
+    # structural constraints (e.g. equality constraints), not by sampling luck.
+    # Discrete inputs with few levels are especially prone to degenerate samples
+    # at small N.
+    N = 5 * len(model_formula) + 3
 
     sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
     X = sampler.ask(N)
