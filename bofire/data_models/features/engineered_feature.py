@@ -1,5 +1,7 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
+
+from pydantic import Field
 
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
@@ -96,7 +98,7 @@ class WeightedSumFeature(EngineeredFeature):
 
     @property
     def n_transformed_inputs(self) -> int:
-        return len(self.descriptors)  # type: ignore
+        return len(self.descriptors)
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
@@ -106,7 +108,7 @@ class WeightedSumFeature(EngineeredFeature):
                 raise ValueError(
                     f"Feature '{feature_key}' is not a ContinuousDescriptorInput",
                 )
-            if len(set(self.descriptors) - set(feature.descriptors)) > 0:  # type: ignore
+            if len(set(self.descriptors) - set(feature.descriptors)) > 0:
                 raise ValueError(
                     f"Not all descriptors {self.descriptors} are present in feature '{feature_key}'",
                 )
@@ -139,3 +141,23 @@ class MolecularWeightedSumFeature(EngineeredFeature):
                 raise ValueError(
                     f"Feature '{feature_key}' is not a ContinuousMolecularInput",
                 )
+
+
+class ProductFeature(EngineeredFeature):
+    """Product feature, which compute the sum over the specified features.
+
+    Args:
+        features: The features to be used to compute the product.
+            It is allowed to state a feature more than once to for example
+            an quadratic term.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
+    type: Literal["ProductFeature"] = "ProductFeature"
+    order_id: ClassVar[int] = 4
+    features: Annotated[List[str], Field(min_length=2)]
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return 1

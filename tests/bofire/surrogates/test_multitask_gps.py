@@ -5,7 +5,7 @@ import pytest
 import torch
 from botorch.models import MultiTaskGP
 from botorch.models.transforms.input import InputStandardize, Normalize
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -105,6 +105,13 @@ def test_MultiTask_input_preprocessing():
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, None),
         (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE, None),
         (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY, LKJ_PRIOR()),
+        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.LOG, None),
+        (
+            RBFKernel(ard=False),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+            None,
+        ),
     ],
 )
 def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
@@ -161,6 +168,10 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     assert isinstance(model.model, MultiTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(model.model.outcome_transform, Log)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:

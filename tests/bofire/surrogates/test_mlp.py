@@ -6,12 +6,12 @@ from botorch.models.transforms.input import (
     Normalize,
     NumericToCategoricalEncoding,
 )
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from pandas.testing import assert_frame_equal
 from torch import nn
 
 import bofire.surrogates.api as surrogates
-from bofire.benchmarks.single import Himmelblau
+from bofire.benchmarks.single import Himmelblau, PositiveHimmelblau
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -181,10 +181,13 @@ def test_mlp_ensemble_forward():
         [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
         [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
         [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
+        [ScalerEnum.STANDARDIZE, ScalerEnum.LOG],
+        [ScalerEnum.STANDARDIZE, ScalerEnum.CHAINED_LOG_STANDARDIZE],
+        [ScalerEnum.IDENTITY, ScalerEnum.CHAINED_LOG_STANDARDIZE],
     ],
 )
 def test_mlp_ensemble_fit(scaler, output_scaler):
-    bench = Himmelblau()
+    bench = PositiveHimmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     ens = RegressionMLPEnsemble(
@@ -209,8 +212,12 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(surrogate.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(surrogate.model.outcome_transform, Log)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(surrogate.model, "outcome_transform")
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(surrogate.model.outcome_transform, ChainedOutcomeTransform)
 
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
@@ -228,7 +235,7 @@ def test_mlp_ensemble_fit_categorical(scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)

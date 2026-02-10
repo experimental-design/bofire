@@ -55,7 +55,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
-    ) -> None:  # type: ignore
+    ) -> None:
         self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -96,9 +96,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
             try:
-                posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+                posterior = self.model.posterior(X=X, observation_noise=True)
             except NotImplementedError:
-                posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
+                posterior = self.model.posterior(X=X, observation_noise=False)
             preds = posterior.mean.cpu().detach().numpy()
             stds = np.sqrt(posterior.variance.cpu().detach().numpy())
 

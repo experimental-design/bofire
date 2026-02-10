@@ -11,7 +11,12 @@ from botorch.models.transforms.input import (
     FilterFeatures,
     InputTransform,
 )
-from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+from botorch.models.transforms.outcome import (
+    ChainedOutcomeTransform,
+    Log,
+    OutcomeTransform,
+    Standardize,
+)
 
 from bofire.data_models.features.categorical import CategoricalOutput
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
@@ -71,9 +76,11 @@ class BotorchSurrogate(Surrogate):
         if self.is_fitted:
             if self.is_compatibilized:
                 if isinstance(self.model.input_transform, FilterFeatures):
-                    self.model.input_transform = None
+                    self.model.input_transform = None  # ty: ignore[invalid-assignment]
                 elif isinstance(self.model.input_transform, ChainedInputTransform):
-                    self.model.input_transform = self.model.input_transform.tf2
+                    self.model.input_transform = (  # ty: ignore[invalid-assignment]
+                        self.model.input_transform.tf2
+                    )
                 else:
                     raise ValueError("Undefined input transform structure detected.")
 
@@ -84,7 +91,7 @@ class BotorchSurrogate(Surrogate):
     def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
         # empty internal caches to get smaller dumps
-        self.model.prediction_strategy = None
+        self.model.prediction_strategy = None  # ty: ignore[invalid-assignment]
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         return base64.b64encode(buffer.getvalue()).decode()
@@ -172,12 +179,16 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             torch.from_numpy(transformed_X.values).to(**tkwargs),
             torch.from_numpy(Y.values).to(**tkwargs),
         )
-        # todo, we should implement log transforms also here
-        outcome_transform = (
-            Standardize(m=tY.shape[-1])
-            if self.output_scaler == ScalerEnum.STANDARDIZE
-            else None
-        )
+        if self.output_scaler == ScalerEnum.STANDARDIZE:
+            outcome_transform = Standardize(m=tY.shape[-1])
+        elif self.output_scaler == ScalerEnum.LOG:
+            outcome_transform = Log()
+        elif self.output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+            outcome_transform = ChainedOutcomeTransform(
+                log=Log(), standardize=Standardize(m=tY.shape[-1])
+            )
+        else:
+            outcome_transform = None
         self._fit_botorch(tX, tY, self._input_transform, outcome_transform, **kwargs)
 
     @abstractmethod
