@@ -213,8 +213,8 @@ def test_nchoosek():
     If7 = ContinuousInput(bounds=(1, 1), key="If7")
 
     c2 = LinearInequalityConstraint.from_greater_equal(
-        features=["if1", "if2"],
-        coefficients=[1.0, 1.0],
+        features=["if1", "if2", "if3"],
+        coefficients=[1.0, 1.0, 1.0],
         rhs=0.2,
     )
 
@@ -225,8 +225,8 @@ def test_nchoosek():
         none_also_valid=False,
     )
     c7 = LinearEqualityConstraint(
-        features=["if1", "if2"],
-        coefficients=[1.0, 1.0],
+        features=["if1", "if2", "if3"],
+        coefficients=[1.0, 1.0, 1.0],
         rhs=1.0,
     )
     domain = Domain.from_lists(

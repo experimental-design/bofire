@@ -26,6 +26,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     DiscreteInput,
 )
+from bofire.strategies.predictives.optimize_mcts import MCTS, Groups, NChooseK
 from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
@@ -59,6 +60,7 @@ class RandomStrategy(Strategy):
         self.fallback_sampling_method = data_model.fallback_sampling_method
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
+        self.max_combinations = data_model.max_combinations
         self.sampler_kwargs = data_model.sampler_kwargs
 
     def has_sufficient_experiments(self) -> bool:
@@ -124,30 +126,75 @@ class RandomStrategy(Strategy):
             pd.DataFrame: A DataFrame containing the sampled data.
 
         """
-        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
-            _, unused = self.domain.get_nchoosek_combinations()
+        features2idx, _ = self.domain.inputs._get_transform_info(
+            {},
+        )
+        idx2features = {idx[0]: key for key, idx in features2idx.items()}
 
-            if candidate_count <= len(unused):
-                sampled_combinations = [
-                    unused[i]
-                    for i in np.random.default_rng(self._get_seed()).choice(
-                        len(unused),
-                        size=candidate_count,
-                        replace=False,
+        if len(self.domain.constraints.get(NChooseKConstraint)) > 0 or any(
+            isinstance(feat, ContinuousInput) and feat.allow_zero
+            for feat in self.domain.inputs.get(ContinuousInput)
+        ):
+            groups = []
+            for constraint in self.domain.constraints.get(NChooseKConstraint):
+                assert isinstance(constraint, NChooseKConstraint)
+                groups.append(
+                    NChooseK(
+                        features=[features2idx[key][0] for key in constraint.features],
+                        min_count=constraint.min_count,
+                        max_count=constraint.max_count,
                     )
-                ]
-                num_samples_per_it = 1
-            else:
-                sampled_combinations = unused
-                num_samples_per_it = math.ceil(candidate_count / len(unused))
+                )
+            for feat in self.domain.inputs.get(ContinuousInput):
+                assert isinstance(feat, ContinuousInput)
+                if feat.allow_zero:
+                    groups.append(
+                        NChooseK(
+                            features=[features2idx[feat.key][0]],
+                            min_count=0,
+                            max_count=1,
+                        )
+                    )
+
+            mcts = MCTS(
+                groups=Groups(groups=groups),
+                seed=self._get_seed(),
+                reward_fn=lambda x,
+                y: 0.0,  # dummy reward function as we are only using the
+                # rollout to sample combinations, so we only use it for tree traversal.
+            )
+
+            # now we sample the combinations
+            combinations: dict[tuple[str, ...], int] = {}
+            for _ in range(min(self.max_combinations, candidate_count)):
+                combo, _ = mcts._rollout(mcts.root)
+                # combo is a tuple of feature indices, we convert it to feature keys
+                combo = tuple(idx2features[idx] for idx in combo)
+                if combo in combinations:
+                    combinations[combo] += 1
+                else:
+                    combinations[combo] = 1
+
+            nchoosek_features = {
+                key
+                for constraint in self.domain.constraints.get(NChooseKConstraint)
+                for key in constraint.features
+            }
 
             samples = []
-            for u in sampled_combinations:
+
+            sampling_multiplier = math.ceil(
+                candidate_count / min(candidate_count, self.max_combinations)
+            )
+
+            print(combinations)
+            for combo, n in combinations.items():
                 # create new domain without the nchoosekconstraints
                 domain = deepcopy(self.domain)
                 domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
+                unselected_features = nchoosek_features - set(combo)
                 # fix the unused features
-                for key in u:
+                for key in unselected_features:
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
                     feat.bounds = [0.0, 0.0]
@@ -159,7 +206,7 @@ class RandomStrategy(Strategy):
                         n_burnin=self.n_burnin,
                         n_thinning=self.n_thinning,
                         seed=self._get_seed(),
-                        n=num_samples_per_it,
+                        n=n * sampling_multiplier,
                         sampler_kwargs=self.sampler_kwargs,
                     ),
                 )
@@ -277,7 +324,7 @@ class RandomStrategy(Strategy):
             samples = pd.DataFrame(
                 data=np.nan,
                 index=range(n),
-                columns=domain.inputs.get_keys(),
+                columns=domain.inputs.get_keys(ContinuousInput),
             )
         else:
             bounds = torch.tensor([lower, upper]).to(**tkwargs)
@@ -326,6 +373,8 @@ class RandomStrategy(Strategy):
                 for feat in domain.inputs.get(ContinuousInput)
                 if feat.key not in fixed_features
             ]
+
+            print(free_continuals)
             # setup the output
             samples = pd.DataFrame(
                 data=candidates.detach().numpy(),
@@ -334,10 +383,13 @@ class RandomStrategy(Strategy):
             )
 
         # setup the categoricals and discrete ones as uniform sampled vals
+        # we have to make sure here that no fixed ones occur here
         samples = pd.concat(
             [
                 samples,
-                domain.inputs.get([CategoricalInput, DiscreteInput]).sample(
+                domain.inputs.get([CategoricalInput, DiscreteInput])
+                .get_free()
+                .sample(
                     n,
                     method=fallback_sampling_method,
                     seed=seed,
@@ -350,6 +402,9 @@ class RandomStrategy(Strategy):
         # setup the fixed continuous ones
         for key, value in fixed_features.items():
             samples[key] = value
+        # setup the fixed discrete/categorical ones
+        for feat in domain.inputs.get([CategoricalInput, DiscreteInput]).get_fixed():
+            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
 
         return samples[domain.inputs.get_keys()]
 

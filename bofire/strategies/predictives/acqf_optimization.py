@@ -47,6 +47,7 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies import utils
+from bofire.strategies.predictives.optimize_mcts import optimize_acqf_mcts
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -63,6 +64,7 @@ class OptimizerEnum(str, Enum):
     OPTIMIZE_ACQF = "OPTIMIZE_ACQF"
     OPTIMIZE_ACQF_MIXED = "OPTIMIZE_ACQF_MIXED"
     OPTIMIZE_ACQF_MIXED_ALTERNATING = "OPTIMIZE_ACQF_MIXED_ALTERNATING"
+    OPTIMIZE_ACQF_MCTS = "OPTIMIZE_ACQF_MCTS"
 
 
 # Threshold for switching between optimizers optimize_acqf_mixed
@@ -357,6 +359,26 @@ class _OptimizeAcqfMixedAlternatingInput(_OptimizeAcqfInputBase):
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
 
 
+class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
+    acq_function: Callable
+    bounds: Tensor
+    nchooseks: list[tuple[list[int], int, int]] | None
+    cat_dims: Dict[int, List[float]] | None
+    c_uct: float
+    k_rave: float
+    p_stop_rollout: float
+    num_iterations: int
+    pw_k0: float
+    pw_alpha: float
+    q: int
+    raw_samples: int
+    num_restarts: int
+    fixed_features: dict[int, float] | None
+    inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    equality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    seed: int | None
+
+
 class BotorchOptimizer(AcquisitionOptimizer):
     def __init__(self, data_model: BotorchOptimizerDataModel):
         self.n_restarts = data_model.n_restarts
@@ -454,6 +476,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF: optimize_acqf,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
+            OptimizerEnum.OPTIMIZE_ACQF_MCTS: optimize_acqf_mcts,
         }
         candidates, acqf_vals = optimizer_mapping[optimizer](
             **optimizer_input.model_dump()
@@ -482,6 +505,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
         }
 
     def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
+        # Check if we have NChooseK constraints - if so, use MCTS optimizer
+        if len(domain.constraints.get([NChooseKConstraint])) > 0 or any(
+            isinstance(feat, ContinuousInput) and feat.allow_zero
+            for feat in domain.inputs.get(ContinuousInput)
+        ):
+            return OptimizerEnum.OPTIMIZE_ACQF_MCTS
         if n_acqfs > 1:
             return OptimizerEnum.OPTIMIZE_ACQF_LIST
         n_categorical_combinations = (
@@ -508,6 +537,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         | _OptimizeAcqfMixedInput
         | _OptimizeAcqfListInput
         | _OptimizeAcqfMixedAlternatingInput
+        | _OptimizeAcqfMctsInput
     ):
         input_preprocessing_specs = self._input_preprocessing_specs(domain)
         features2idx = self._features2idx(domain)
@@ -615,6 +645,55 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
                 },
+            )
+        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MCTS:
+            # Convert NChooseKConstraint to tuples for MCTS
+            nchoosek_constraints = domain.constraints.get([NChooseKConstraint])
+            nchooseks_list = []
+            for constraint in nchoosek_constraints:
+                # Get feature indices for the constraint
+                feature_indices = [
+                    features2idx[feat_key][0] for feat_key in constraint.features
+                ]
+                # Create tuple (features, min_count, max_count)
+                nchooseks_list.append(
+                    (feature_indices, constraint.min_count, constraint.max_count)
+                )
+            # for OPTIMIZE_ACQF_MCTS, continuous features with allow_zero=True are treated
+            # as NChooseK constraints where min_count=0 and max_count=1
+            for feat in domain.inputs.get(ContinuousInput):
+                assert isinstance(feat, ContinuousInput)
+                if feat.allow_zero:
+                    feature_index = features2idx[feat.key][0]
+                    nchooseks_list.append(([feature_index], 0, 1))
+
+            # Get categorical dimensions (same as mixed_alternating)
+            fixed_keys = domain.inputs.get_fixed().get_keys()
+
+            return _OptimizeAcqfMctsInput(
+                acq_function=acqfs[0],
+                bounds=bounds,
+                nchooseks=nchooseks_list if nchooseks_list else None,
+                cat_dims={
+                    features2idx[feat.key][0]: feat.to_ordinal_encoding(  # type: ignore
+                        pd.Series(feat.get_allowed_categories())  # type: ignore
+                    ).tolist()
+                    for feat in domain.inputs.get(CategoricalInput)
+                    if feat.key not in fixed_keys
+                },
+                c_uct=1.0,  # Default MCTS parameters
+                k_rave=300.0,
+                p_stop_rollout=0.35,
+                num_iterations=300,
+                pw_k0=2.0,
+                pw_alpha=0.6,
+                q=candidate_count,
+                raw_samples=self.n_raw_samples,
+                num_restarts=self.n_restarts,
+                fixed_features=self.get_fixed_features(domain=domain),
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+                seed=None,
             )
         else:
             raise ValueError(f"Unknown optimizer: {optimizer}")
