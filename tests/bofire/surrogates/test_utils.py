@@ -329,10 +329,13 @@ def test_get_scaler_engineered_features():
     assert (
         scaler["feat_normalize"].indices == torch.tensor([0, 1], dtype=torch.int64)
     ).all()
+    assert not scaler["feat_normalize"].learn_coefficients
+
     assert (
         scaler["engineered_feat_normalize"].indices
         == torch.tensor([5, 6, 7, 8], dtype=torch.int64)
     ).all()
+    assert scaler["engineered_feat_normalize"].learn_coefficients
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
