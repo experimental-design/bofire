@@ -110,25 +110,34 @@ def get_scaler(
         return None
 
     if scaler_type == ScalerEnum.NORMALIZE:
+        # We create a separate Normalize for non-engineered features,
+        # since bounds are known for these features.
         lower, upper = inputs.get_bounds(
             specs=categorical_encodings,
         )
-        feat_normalize = Normalize(
-            d=d,
-            bounds=torch.tensor([lower, upper]).to(**tkwargs),
-            indices=cont_feat_dims,
-            batch_shape=torch.Size(),
-        )
+        input_tfs: dict[str, Normalize] = {}
+        if cont_feat_dims:
+            input_tfs["feat_normalize"] = Normalize(
+                d=d,
+                bounds=torch.tensor([lower, upper]).to(**tkwargs)[:, cont_feat_dims],
+                indices=cont_feat_dims,
+                batch_shape=torch.Size(),
+            )
 
-        engineered_feat_normalize = Normalize(
-            d=d,
-            indices=engineered_feat_dims,
-            batch_shape=torch.Size(),
-        )
+        if engineered_feat_dims:
+            input_tfs["engineered_feat_normalize"] = Normalize(
+                d=d,
+                indices=engineered_feat_dims,
+                batch_shape=torch.Size(),
+            )
 
-        return ChainedInputTransform(
-            feat=feat_normalize, engineered_feat=engineered_feat_normalize
-        )
+        if len(input_tfs) == 0:
+            return None
+
+        if len(input_tfs) == 1:
+            return next(iter(input_tfs.values()))
+
+        return ChainedInputTransform(**input_tfs)
 
     # it has to be standardize
     return InputStandardize(
