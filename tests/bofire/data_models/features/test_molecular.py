@@ -3,12 +3,12 @@ import importlib
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal, assert_series_equal
+from pandas.testing import assert_frame_equal
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
-    MolecularInput,
+    ContinuousMolecularInput,
 )
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
@@ -20,6 +20,9 @@ from bofire.data_models.molfeatures.api import (
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
+if RDKIT_AVAILABLE:
+    from bofire.data_models.molfeatures import names
+
 smiles = [
     "CC(=O)Oc1ccccc1C(=O)O",
     "c1ccccc1",
@@ -29,216 +32,6 @@ smiles = [
 VALID_SMILES = pd.Series(smiles)
 VALID_SMILES.name = "molecule"
 INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molecular_input_validate_experimental():
-    m = MolecularInput(key="molecule")
-    vals = m.validate_experimental(VALID_SMILES)
-    assert_series_equal(vals, VALID_SMILES)
-    with pytest.raises(ValueError):
-        m.validate_experimental(INVALID_SMILES)
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molecular_input_validate_candidental():
-    m = MolecularInput(key="molecule")
-    vals = m.validate_candidental(VALID_SMILES)
-    assert_series_equal(vals, VALID_SMILES)
-    with pytest.raises(ValueError):
-        m.validate_candidental(INVALID_SMILES)
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molecular_input_fixed():
-    m = MolecularInput(key="molecule")
-    assert m.fixed_value() is None
-    assert m.is_fixed() is False
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "expected, transform_type",
-    [
-        (
-            (
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                ],
-            ),
-            Fingerprints(n_bits=32),
-        ),
-        (
-            (
-                [0.0, 0.0, 0.0, 0.0],
-                [1.0, 1.0, 2.0, 1.0],
-            ),
-            Fragments(fragments=["fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO"]),
-        ),
-        (
-            (
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    1.0,
-                    0.0,
-                    1.0,
-                    1.0,
-                    2.0,
-                    1.0,
-                ],
-            ),
-            FingerprintsFragments(
-                n_bits=32,
-                fragments=["fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO"],
-            ),
-        ),
-        (
-            ([-8.34319526627219, 0.0], [0.5963718820861676, 1.0]),
-            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-        ),
-    ],
-)
-def test_molecular_feature_get_bounds(expected, transform_type):
-    input_feature = MolecularInput(key="molecule")
-    lower, upper = input_feature.get_bounds(
-        transform_type=transform_type,
-        values=VALID_SMILES,
-        reference_value=None,
-    )
-    assert np.allclose(lower, expected[0])
-    assert np.allclose(upper, expected[1])
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -349,8 +142,10 @@ def test_molecular_feature_get_bounds(expected, transform_type):
         ),
     ],
 )
-def test_molecular_input_to_descriptor_encoding(key, transform_type, values):
-    input_feature = MolecularInput(key=key)
+def test_categorical_molecular_input_to_descriptor_encoding(
+    key, transform_type, values
+):
+    input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
     encoded = input_feature.to_descriptor_encoding(transform_type, VALID_SMILES)
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
@@ -358,7 +153,6 @@ def test_molecular_input_to_descriptor_encoding(key, transform_type, values):
     assert_frame_equal(encoded, pd.DataFrame.from_dict(values))
 
 
-### tests for CategoricalMolecularInput
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_categorical_molecular_input_invalid_smiles():
     with pytest.raises(ValueError, match="abcd is not a valid smiles string."):
@@ -366,6 +160,12 @@ def test_categorical_molecular_input_invalid_smiles():
             key="a",
             categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"],
         )
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_continous_molecular_input_valid_smiles():
+    with pytest.raises(ValueError, match="abc is not a valid smiles string"):
+        ContinuousMolecularInput(key="a", bounds=[0, 1], molecule="abc")
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -441,3 +241,75 @@ def test_categorical_molecular_input_get_bounds():
     )
     assert lower == [0.0, 0.0]
     assert upper == [6.0, 6.0]
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_categorical_molecular_input_select_mordred_descriptors():
+    """Test the select_mordred_descriptors function."""
+    # Create MordredDescriptors with all available descriptors
+    transform_type = MordredDescriptors(descriptors=names.mordred)
+    initial_descriptor_count = len(transform_type.descriptors)
+
+    # Create CategoricalMolecularInput with the specified categories
+    categories = [
+        "CC(C)(C)C(=O)Nc1nc(NC(=O)C(C)(C)C)c2cc(Br)cnc2n1",
+        "Cc1nn(C)c(C)c1Br",
+        "COc1cccc(Br)n1",
+        "CC(C)c1cc(C(C)C)c(Br)c(C(C)C)c1",
+        "Cc1ccc(Br)cn1",
+        "Cc1ncc(Br)cn1",
+        "Brc1csc(Oc2ccccc2)n1",
+        "Brc1cnc(N2CCCCC2)nc1",
+        "CCc1cccc(CC)c1Br",
+        "Brc1ccc2ncccc2c1",
+        "Brc1ccnc2ccccc12",
+        "O=[N+]([O-])c1cccc(Br)c1",
+        "Cn1ncc2c(Br)cccc21",
+        "COc1ccccc1Br",
+        "Brc1cscn1",
+        "COc1cc(Br)cc(OC)c1OC",
+        "Brc1cncnc1",
+        "CCn1c2ccccc2c2cc(Br)ccc21",
+        "CSc1cccc(Br)c1",
+        "Brc1cccc2ccccc12",
+        "Brc1ccccn1",
+        "Brc1cnc2ccccc2c1",
+        "Brc1cccs1",
+        "FC(F)(F)c1ccccc1Br",
+        "Brc1cnc2ccccn12",
+        "Cn1cnc2ccc(Br)cc2c1=O",
+        "Cc1cscc1Br",
+        "Cn1cnc(Br)c1",
+        "CC(C)[Si](Oc1cccc(Br)c1)(C(C)C)C(C)C",
+        "FC(F)(F)c1cc(Br)cc(C(F)(F)F)c1",
+        "FC(F)(F)c1ccc(Br)cc1",
+        "Brc1ccc2ccccc2c1",
+        "Brc1cnn(C(c2ccccc2)(c2ccccc2)c2ccccc2)c1",
+        "COc1cccc(OC)c1Br",
+        "Cn1cc(Br)ccc1=O",
+        "Brc1ccccc1-n1cccn1",
+        "COc1ccc(Br)c(C)c1",
+    ]
+
+    feat = CategoricalMolecularInput(key="dummy", categories=categories)
+
+    # Run select_mordred_descriptors
+    feat.select_mordred_descriptors(transform_type=transform_type, cutoff=0.95)
+
+    # Check that the number of descriptors has decreased
+    final_descriptor_count = len(transform_type.descriptors)
+
+    assert final_descriptor_count < initial_descriptor_count, (
+        f"Expected descriptor count to decrease, but got "
+        f"initial: {initial_descriptor_count}, final: {final_descriptor_count}"
+    )
+
+    # Verify that all remaining descriptors are valid
+    assert all(
+        desc in names.mordred for desc in transform_type.descriptors
+    ), "Some descriptors in the filtered list are not valid Mordred descriptors"
+
+    # Verify that the descriptor count is positive
+    assert (
+        final_descriptor_count > 0
+    ), "All descriptors were removed, expected at least some to remain"

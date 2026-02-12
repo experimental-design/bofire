@@ -37,7 +37,7 @@ def isinstance_or_union(obj, of):
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
         return pd.to_numeric(s, errors="coerce").notnull().all()
-    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
+    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()
 
 
 class Domain(BaseModel):
@@ -197,8 +197,6 @@ class Domain(BaseModel):
             if used_features not in used_features_list_no_dup:
                 used_features_list_no_dup.append(used_features)
 
-        # print(f"duplicates dropped: {len(used_features_list_sorted)-len(used_features_list_no_dup)}")
-
         # remove combinations not fulfilling constraints
         used_features_list_final = []
         for combo in used_features_list_no_dup:
@@ -220,8 +218,6 @@ class Domain(BaseModel):
                     fulfil_constraints.append(False)
             if np.all(fulfil_constraints):
                 used_features_list_final.append(combo)
-
-        # print(f"violators dropped: {len(used_features_list_no_dup)-len(used_features_list_final)}")
 
         # features unused
         features_in_cc = []
@@ -310,9 +306,9 @@ class Domain(BaseModel):
         experiments = self.coerce_invalids(experiments)
 
         # group and aggregate
-        agg: Dict[str, Any] = {
-            feat: method for feat in self.outputs.get_keys(ContinuousOutput)
-        }
+        agg: Dict[str, Any] = dict.fromkeys(
+            self.outputs.get_keys(ContinuousOutput), method
+        )
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1

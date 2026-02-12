@@ -37,9 +37,7 @@ def map_discrete_to_continuous(
     """
 
     def generate_value_key(input: DiscreteInput, d: float):
-        return (
-            f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-','__neg__')}"
-        )
+        return f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-', '__neg__')}"
 
     # Create a new list of inputs
     new_inputs = []
@@ -341,7 +339,7 @@ def project_candidates_into_domain(
 
             # enforce that the sum of the auxiliary inputs times the allowed discrete values is equal to the discrete input
             constraints += [
-                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)  # type: ignore
+                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)
             ]
             b += [candidates_rounded[u].iloc[i]]
         if len(keys_continuous_inputs) > 0:
@@ -352,11 +350,11 @@ def project_candidates_into_domain(
             )
             # add upper and lower bounds for the continuous inputs
             lower_bounds = [
-                domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
+                domain.inputs.get_by_key(continuous_input).bounds[0]
                 for continuous_input in keys_continuous_inputs
             ]
             upper_bounds = [
-                domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
+                domain.inputs.get_by_key(continuous_input).bounds[1]
                 for continuous_input in keys_continuous_inputs
             ]
             constraints += [lower_bound(x=y, w=lower_bounds)]
@@ -401,9 +399,7 @@ def project_candidates_into_domain(
                     )
 
     # Create the objective function
-    objective = cp.Minimize(
-        cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
-    )
+    objective = cp.Minimize(cp.sum_squares(b - cp.hstack(cp_variables)))
     prob = cp.Problem(objective=objective, constraints=constraints)
     if scip_params is None:
         scip_params = {"numerics/feastol": 1e-8}
@@ -415,3 +411,55 @@ def project_candidates_into_domain(
         ),
         columns=columns,
     )
+
+
+def encode_candidates_to_relaxed_domain(
+    candidates: pd.DataFrame,
+    mappings_categorical_var_key_to_aux_var_key_state_pairs: Dict[str, Dict[str, str]],
+    mapping_discrete_input_to_discrete_aux: Dict[str, List[str]],
+    domain: Domain,
+) -> pd.DataFrame:
+    """
+    Encode candidates from the original domain to the relaxed domain with proper auxiliary variable values.
+
+    For categorical inputs, creates one-hot encoding with aux_{key}_{category} naming.
+    For discrete inputs, creates auxiliary variables with values based on the discrete input value.
+    Continuous inputs are kept as-is.
+
+    Args:
+        candidates: DataFrame with candidates in original domain (e.g., x1=5, cat='A')
+        mappings_categorical_var_key_to_aux_var_key_state_pairs: Mapping from categorical keys to
+            their auxiliary variable names and category values
+        mapping_discrete_input_to_discrete_aux: Mapping from discrete input keys to their
+            auxiliary variable names
+        domain: The original (non-relaxed) domain
+
+    Returns:
+        DataFrame with candidates in relaxed domain (e.g., x1=5, aux_cat_A=1, aux_cat_B=0)
+    """
+    encoded = candidates.copy()
+
+    # Encode categorical inputs
+    for (
+        cat_key,
+        aux_mapping,
+    ) in mappings_categorical_var_key_to_aux_var_key_state_pairs.items():
+        if cat_key in encoded.columns:
+            # For each category, create a column with 1 if that category is active, 0 otherwise
+            for aux_key, category_value in aux_mapping.items():
+                encoded[aux_key] = (encoded[cat_key] == category_value).astype(float)
+
+    # Encode discrete inputs
+    for discrete_key, aux_keys in mapping_discrete_input_to_discrete_aux.items():
+        if discrete_key in encoded.columns:
+            discrete_input = domain.inputs.get_by_key(discrete_key)
+            assert isinstance(discrete_input, DiscreteInput)
+
+            # For each allowed discrete value, create an auxiliary variable
+            for aux_key, discrete_value in zip(aux_keys, discrete_input.values):
+                # Set to 1 if the discrete input equals this value, 0 otherwise
+                encoded[aux_key] = (encoded[discrete_key] == discrete_value).astype(
+                    float
+                )
+
+    return encoded

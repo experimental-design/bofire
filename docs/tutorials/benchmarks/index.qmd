@@ -1,0 +1,48 @@
+---
+title: "Benchmark Examples"
+---
+
+# Benchmark Examples
+
+These tutorials demonstrate how to recreate results from various papers and common studies using BoFire's benchmarking capabilities. Benchmarks are useful for validating optimization strategies and comparing performance across different approaches.
+
+## Available Benchmarks
+
+### [001 - Himmelblau Function](001-Himmelblau.qmd)
+Classic optimization benchmark using the Himmelblau function.
+
+### [002 - DTLZ2](002-DTLZ2.qmd)
+Multi-objective optimization using the DTLZ2 test problem.
+
+### [003 - Hartmann with N-Choose-K](003-Hartmann_with_nchoosek.qmd)
+Hartmann function optimization with n-choose-k constraints.
+
+### [004 - 30-Dimensional Branin](004-30dimBranin.qmd)
+High-dimensional optimization using an extended Branin function.
+
+### [005 - Himmelblau with Outliers](005-Himmelblau_with_outliers.qmd)
+Robust optimization in the presence of outliers.
+
+### [006 - Bayesian Optimization over Molecules](006-Bayesian_optimization_over_molecules.qmd)
+Molecular optimization using chemical fingerprints and specialized kernels.
+
+### [007 - LSRBO](007-LSRBO.qmd)
+Local search-based Bayesian optimization.
+
+### [008 - ZDT1](008-ZDT1.qmd)
+Multi-objective optimization using the ZDT1 test problem.
+
+### [009 - BNH](009-BNH.qmd)
+Binh and Korn multi-objective test function.
+
+### [010 - TNK](010-TNK.qmd)
+Tanaka multi-objective test function.
+
+### [011 - Active Learning](011-ActiveLearning.qmd)
+Active learning strategies for experimental design.
+
+### [012 - Active Learning](012-engineered_features.qmd)
+Active learning strategies for experimental design.
+
+### [013 - Spherical linear kernels for high dimensional BO](013-spherical_kernel.qmd)
+High-dimensional Bayesian optimization using spherical linear kernels.

@@ -17,7 +17,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    MolecularInput,
 )
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
@@ -98,6 +97,37 @@ def test_inputs_get_categorical_combinations(inputs, data):
     expected = list(itertools.product(*data))
     assert inputs.get_categorical_combinations() == expected
     assert inputs.get_number_of_categorical_combinations() == len(expected)
+
+
+def test_inputs_get_categorical_combinations_conditional():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="f1",
+                categories=["c11", "c12"],
+            ),
+            ContinuousInput(key="f2", bounds=(1, 2), allow_zero=True),
+        ],
+    )
+    expected = [
+        (("f1", "c11"), ("f2", 0.0)),
+        (("f1", "c11"),),
+        (("f1", "c12"), ("f2", 0.0)),
+        (("f1", "c12"),),
+    ]
+    assert inputs.get_categorical_combinations() == expected
+    assert inputs.get_number_of_categorical_combinations() == len(expected)
+
+    # check purely continuous
+    continuous_inputs = inputs.get(includes=ContinuousInput)
+    continuous_expected = [
+        (("f2", 0.0),),
+        (),
+    ]
+    assert continuous_inputs.get_categorical_combinations() == continuous_expected
+    assert continuous_inputs.get_number_of_categorical_combinations() == len(
+        continuous_expected
+    )
 
 
 def test_inputs_is_fulfilled():
@@ -365,17 +395,8 @@ def test_inputs_validate_transform_valid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        # ({"x2": CategoricalEncodingEnum.ONE_HOT}),
-        # ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
-        ({"x4": CategoricalEncodingEnum.ONE_HOT}),
         ({"x4": ScalerEnum.NORMALIZE}),
         ({"x4": CategoricalEncodingEnum.DESCRIPTOR}),
-        # (
-        #    {
-        #        "x2": CategoricalEncodingEnum.ONE_HOT,
-        #        "x3": CategoricalEncodingEnum.DESCRIPTOR,
-        #    }
-        # ),
     ],
 )
 def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
@@ -389,7 +410,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
     with pytest.raises(ValueError):
@@ -436,7 +457,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
     inps._validate_transform_specs(specs)
@@ -545,7 +566,7 @@ def test_inputs_get_transform_info(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
     features2idx, features2names = inps._get_transform_info(specs)
@@ -779,7 +800,15 @@ def test_inputs_transform_molecular(specs, expected):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(
+                key="x4",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            ),
         ],
     )
     transformed = inps.transform(experiments=experiments, specs=specs)
@@ -1182,7 +1211,7 @@ def test_inputs_get_feature_indices(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
 

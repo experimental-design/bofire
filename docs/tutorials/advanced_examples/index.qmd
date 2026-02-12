@@ -1,0 +1,36 @@
+---
+title: "Advanced Examples"
+---
+
+# Advanced Examples
+
+These notebooks showcase more specialized and advanced use cases in BoFire. These examples are not necessarily better strategies, but represent more complex uses of components within the library.
+
+## Available Tutorials
+
+### [Custom SOBO](custom_sobo.qmd)
+Create custom single-objective Bayesian optimization strategies.
+
+### [Desirability Objectives](desirability_objectives.qmd)
+Working with desirability functions for multi-criteria optimization.
+
+### [Genetic Algorithm](genetic_algorithm.qmd)
+Using genetic algorithms for optimization in BoFire.
+
+### [Merging Objectives](merging_objectives.qmd)
+Techniques for combining multiple objectives in optimization.
+
+### [Multifidelity Bayesian Optimization](multifidelity_bo.qmd)
+Leveraging multiple fidelity levels for efficient optimization.
+
+### [Objectives on Inputs](objectives_on_inputs.qmd)
+Defining optimization objectives directly on input parameters.
+
+### [Random Forest in BoFire](random_forest_in_bofire.qmd)
+Using Random Forest as a surrogate model instead of Gaussian Processes.
+
+### [Transfer Learning BO](transfer_learning_bo.qmd)
+Applying transfer learning techniques to Bayesian optimization.
+
+### [Conditional Features BO](conditional_features_bo.qmd)
+Define input features that are conditionally active.

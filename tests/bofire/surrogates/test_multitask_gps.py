@@ -1,9 +1,11 @@
 import importlib
 
+import pandas as pd
 import pytest
+import torch
 from botorch.models import MultiTaskGP
 from botorch.models.transforms.input import InputStandardize, Normalize
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -92,7 +94,7 @@ def test_MultiTask_input_preprocessing():
         outputs=outputs,
     )
     assert data_model.input_preprocessing_specs == {
-        "categories": CategoricalEncodingEnum.ONE_HOT,
+        "categories": CategoricalEncodingEnum.ORDINAL,
         "task_id": CategoricalEncodingEnum.ORDINAL,
     }
 
@@ -103,13 +105,27 @@ def test_MultiTask_input_preprocessing():
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, None),
         (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE, None),
         (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY, LKJ_PRIOR()),
+        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.LOG, None),
+        (
+            RBFKernel(ard=False),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+            None,
+        ),
     ],
 )
 def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     benchmark = MultiTaskHimmelblau()
     inputs = benchmark.domain.inputs
     outputs = benchmark.domain.outputs
-    experiments = benchmark.f(inputs.sample(10), return_complete=True)
+    # Sample both tasks to ensure both are present in training data
+    experiments_task1 = benchmark.f(
+        inputs.sample(5, seed=42).assign(task_id="task_1"), return_complete=True
+    )
+    experiments_task2 = benchmark.f(
+        inputs.sample(5, seed=43).assign(task_id="task_2"), return_complete=True
+    )
+    experiments = pd.concat([experiments_task1, experiments_task2], ignore_index=True)
 
     model = MultiTaskGPSurrogate(
         inputs=inputs,
@@ -129,6 +145,19 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
             model.fit(experiments)
     else:
         model.fit(experiments)
+    # check that the active_dims are set correctly
+    assert torch.allclose(
+        model.model.covar_module.kernels[0].active_dims,
+        torch.tensor([0, 1], dtype=torch.long),
+    )
+    assert torch.allclose(
+        model.model.covar_module.kernels[0].active_dims,
+        torch.tensor([0, 1], dtype=torch.long),
+    )
+    assert torch.allclose(
+        model.model.covar_module.kernels[1].active_dims,
+        torch.tensor([2], dtype=torch.long),
+    )
     # dump the model
     dump = model.dumps()
     # make predictions
@@ -139,6 +168,10 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     assert isinstance(model.model, MultiTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(model.model.outcome_transform, Log)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:

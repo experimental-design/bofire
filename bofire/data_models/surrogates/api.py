@@ -15,12 +15,14 @@ from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.linear import LinearSurrogate
-from bofire.data_models.surrogates.map_saas import AdditiveMapSaasSingleTaskGPSurrogate
+from bofire.data_models.surrogates.map_saas import (
+    AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
+)
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPHyperconfig,
     MixedSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     MLPEnsemble,
@@ -47,11 +49,16 @@ from bofire.data_models.surrogates.single_task_gp import (
 from bofire.data_models.surrogates.sort import SortingGPSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
-from bofire.data_models.surrogates.trainable import MeanAggregation, SumAggregation
-from bofire.data_models.surrogates.xgb import XGBoostSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate, MLPEnsemble]
+AbstractSurrogate = Union[
+    Surrogate,
+    TrainableBotorchSurrogate,
+    BotorchSurrogate,
+    EmpiricalSurrogate,
+    MLPEnsemble,
+]
 
 
 AnySurrogate = Union[
@@ -60,11 +67,9 @@ AnySurrogate = Union[
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
@@ -75,6 +80,7 @@ AnySurrogate = Union[
     PiecewiseLinearGPSurrogate,
     SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
     ExactPiecewiseLinearGPSurrogate,
 ]
 
@@ -83,11 +89,9 @@ AnyTrainableSurrogate = Union[
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     SingleTaskIBNNSurrogate,
@@ -96,6 +100,7 @@ AnyTrainableSurrogate = Union[
     ExactPiecewiseLinearGPSurrogate,
     SortingGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyRegressionSurrogate = Union[
@@ -104,10 +109,8 @@ AnyRegressionSurrogate = Union[
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
@@ -118,6 +121,7 @@ AnyRegressionSurrogate = Union[
     SortingGPSurrogate,
     ExactPiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

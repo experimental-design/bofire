@@ -4,8 +4,8 @@
 
 <hr/>
 
-[![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
-[![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
+[![Tests](https://github.com/experimental-design/bofire/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/experimental-design/bofire/actions/workflows/test.yaml)
+[![Lint](https://github.com/experimental-design/bofire/actions/workflows/lint.yaml/badge.svg?branch=main)](https://github.com/experimental-design/bofire/actions/workflows/lint.yaml)
 [![Docs](https://github.com/experimental-design/bofire/workflows/Docs/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ADocs)
 [![PyPI](https://img.shields.io/pypi/v/bofire.svg)](https://pypi.org/project/bofire)
 
@@ -26,7 +26,7 @@ Why BoFire? BoFire ...
 
 ## Getting started
 
-In our [docs](https://experimental-design.github.io/bofire/), you can find all different options for the [BoFire installation](https://experimental-design.github.io/bofire/install/). For basic BoFire Bayesian optimization features using [BoTorch](https://botorch.org/) which depends on
+In our [docs](https://experimental-design.github.io/bofire/), you can find all different options for the [BoFire installation](https://experimental-design.github.io/bofire/install.html). For basic BoFire Bayesian optimization features using [BoTorch](https://botorch.org/) which depends on
 [PyTorch](https://pytorch.org/), you need to run
 
 ```
@@ -36,8 +36,6 @@ pip install bofire[optimization]
 For a more complete introduction to BoFire, please look in our [docs](https://experimental-design.github.io/bofire/).
 
 ### Optimization problem
-
-You will find a notebook covering the described example below in our [tutorials](https://github.com/experimental-design/bofire/tree/main/tutorials/quick_start) section to run the code yourself.
 
 Let us consider a test function for single-objective optimization - the [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau%27s_function). The Himmelblau's function has four identical local minima used to test the performance of optimization algorithms. The optimization domain of the Himmelblau's function is illustrated below together with the four minima marked red.
 
@@ -155,7 +153,7 @@ sobo_strategy = SoboStrategy.make(
 
 It is possible to separate BoFire into serializable parameters and a functional part. We call the serializable parameters usually data models.
 This is especially helpful when working with REST APIs.
-See the respective sections in our [docs](https://experimental-design.github.io/bofire/data_models_functionals/).
+See the respective sections in our [docs](https://experimental-design.github.io/bofire/docs/userguides/data_models_functionals.html).
 
 
 ### Run the optimization loop

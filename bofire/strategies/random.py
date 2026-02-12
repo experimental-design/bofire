@@ -59,6 +59,7 @@ class RandomStrategy(Strategy):
         self.fallback_sampling_method = data_model.fallback_sampling_method
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
+        self.sampler_kwargs = data_model.sampler_kwargs
 
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
@@ -69,7 +70,7 @@ class RandomStrategy(Strategy):
         """
         return True
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         """Generate candidate samples using the random strategy.
 
         If the domain is compatible with polytope sampling, it uses the polytope sampling to generate
@@ -159,6 +160,7 @@ class RandomStrategy(Strategy):
                         n_thinning=self.n_thinning,
                         seed=self._get_seed(),
                         n=num_samples_per_it,
+                        sampler_kwargs=self.sampler_kwargs,
                     ),
                 )
             samples = pd.concat(samples, axis=0, ignore_index=True)
@@ -176,6 +178,7 @@ class RandomStrategy(Strategy):
             n_thinning=self.n_thinning,
             seed=self._get_seed(),
             n=candidate_count,
+            sampler_kwargs=self.sampler_kwargs,
         )
 
     @staticmethod
@@ -186,6 +189,7 @@ class RandomStrategy(Strategy):
         n_burnin: int = 1000,
         n_thinning: int = 32,
         seed: Optional[int] = None,
+        sampler_kwargs: Optional[dict] = None,
     ) -> pd.DataFrame:
         """Sample points from a polytope defined by the given domain.
 
@@ -197,17 +201,23 @@ class RandomStrategy(Strategy):
             n_burnin (int, optional): The number of burn-in samples for the polytope sampler. Defaults to 1000.
             n_thinning (int, optional): The thinning factor for the polytope sampler. Defaults to 32.
             seed (Optional[int], optional): The seed value for random number generation. Defaults to None.
+            sampler_kwargs (Optional[Dict], optional): Additional arguments for the sampler. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame containing the sampled points.
 
         """
         if seed is None:
-            seed = np.random.default_rng().integers(1, 1000000)
+            seed = int(np.random.default_rng().integers(1, 1000000))
+
+        if sampler_kwargs is None:
+            sampler_kwargs = {}
 
         # here we have to adapt for categoricals
-        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:  # type: ignore
-            return domain.inputs.sample(n, fallback_sampling_method, seed=seed)
+        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:
+            return domain.inputs.sample(
+                n, fallback_sampling_method, seed=seed, sampler_kwargs=sampler_kwargs
+            )
 
         # check if we have pseudo fixed features in the linear equality constraints
         # a pseudo fixed is a linear euquality constraint with only one feature included
@@ -218,8 +228,8 @@ class RandomStrategy(Strategy):
             unit_scaled=False,
         )
         cleaned_eqs = []
-        fixed_features: Dict[str, float] = {  # type: ignore
-            feat.key: feat.fixed_value()[0]  # type: ignore
+        fixed_features: Dict[str, float] = {  # ty: ignore[invalid-assignment]
+            feat.key: feat.fixed_value()[0]  # ty: ignore[not-subscriptable]
             for feat in domain.inputs.get(ContinuousInput)
             if feat.is_fixed()
         }
@@ -248,13 +258,13 @@ class RandomStrategy(Strategy):
         interpoints = get_interpoint_constraints(domain=domain, n_candidates=n)
 
         lower = [
-            feat.lower_bound  # type: ignore
+            feat.lower_bound
             for feat in domain.inputs.get(ContinuousInput)
             if feat.key not in fixed_features
         ]
 
         upper = [
-            feat.upper_bound  # type: ignore
+            feat.upper_bound
             for feat in domain.inputs.get(ContinuousInput)
             if feat.key not in fixed_features
         ]
@@ -291,7 +301,7 @@ class RandomStrategy(Strategy):
                 dimension=len(domain.inputs.get(ContinuousInput)),
             )
 
-            combined_eqs = unfixed_eqs + unfixed_interpoints  # type: ignore
+            combined_eqs = unfixed_eqs + unfixed_interpoints
 
             # now use the hit and run sampler
             candidates = sample_q_batches_from_polytope(
@@ -299,7 +309,7 @@ class RandomStrategy(Strategy):
                 q=n,
                 bounds=bounds.to(**tkwargs),
                 inequality_constraints=(
-                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
+                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None
                 ),
                 equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
                 n_burnin=n_burnin,
@@ -353,6 +363,7 @@ class RandomStrategy(Strategy):
         num_base_samples: int | None = None,
         max_iters: int | None = None,
         seed: int | None = None,
+        sampler_kwargs: Optional[dict] = None,
     ) -> Self:
         """Create a new instance of the RandomStrategy class.
         Args:
@@ -363,6 +374,7 @@ class RandomStrategy(Strategy):
             num_base_samples: The number of base samples for rejection sampling.
             max_iters: The maximum number of iterations for rejection sampling.
             seed: The seed value for random number generation.
+            sampler_kwargs: Additional arguments for the sampler. Defaults to None.
         Returns:
             RandomStrategy: A new instance of the RandomStrategy class.
         """

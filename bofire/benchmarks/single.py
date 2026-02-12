@@ -104,7 +104,7 @@ class Ackley(Benchmark):
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(key=f"x_{d+1}", bounds=[self.lower, self.upper]),
+                ContinuousInput(key=f"x_{d + 1}", bounds=[self.lower, self.upper]),
             )
 
         # Objective
@@ -115,7 +115,7 @@ class Ackley(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -129,7 +129,7 @@ class Ackley(Benchmark):
         a = 20
         b = 0.2
         c = np.pi * 2
-        x = np.array([X[f"x_{d+1}"] for d in range(self.dim)])
+        x = np.array([X[f"x_{d + 1}"] for d in range(self.dim)])
 
         c = np.zeros(len(X))
         d = np.zeros(len(X))
@@ -345,7 +345,7 @@ class Branin30(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1:02d}", bounds=[0, 1])
+                    ContinuousInput(key=f"x_{i + 1:02d}", bounds=[0, 1])
                     for i in range(30)
                 ],
             ),
@@ -400,7 +400,7 @@ class Himmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -440,6 +440,31 @@ class Himmelblau(Benchmark):
         )
 
 
+class PositiveHimmelblau(Himmelblau):
+    """Modified Himmelblau function shifted to be positive everywhere."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+        """Evaluates modified benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+            **kwargs: Allow additional unused arguments to prevent errors.
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+
+        """
+        X_temp = X.eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+            inplace=False,
+        )
+        Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
+        return Y + 1e-8
+
+
 class MultiTaskHimmelblau(Benchmark):
     """Himmelblau function for testing optimization algorithms
     Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
@@ -474,7 +499,7 @@ class MultiTaskHimmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -684,7 +709,7 @@ class Multinormalpdfs(Benchmark):
         self.gaussians = gaussians
         self.prefactors = prefactors
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             {
                 "y": X.apply(

@@ -309,7 +309,7 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             )
             covar_module = shape_kernel
 
-        self.model = botorch.models.SingleTaskGP(  # type: ignore
+        self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
             covar_module=covar_module,

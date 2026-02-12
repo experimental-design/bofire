@@ -1,13 +1,33 @@
 import base64
 import io
+from abc import abstractmethod
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import ChainedInputTransform, FilterFeatures
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    FilterFeatures,
+    InputTransform,
+)
+from botorch.models.transforms.outcome import (
+    ChainedOutcomeTransform,
+    Log,
+    OutcomeTransform,
+    Standardize,
+)
 
+from bofire.data_models.features.categorical import CategoricalOutput
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
+from bofire.data_models.surrogates.api import (
+    TrainableBotorchSurrogate as TrainableDataModel,
+)
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.surrogate import Surrogate
+from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.surrogates.utils import get_input_transform
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -17,6 +37,9 @@ class BotorchSurrogate(Surrogate):
         data_model: DataModel,
         **kwargs,
     ):
+        self.categorical_encodings: InputTransformSpecs = (
+            data_model.categorical_encodings
+        )
         super().__init__(data_model=data_model, **kwargs)
 
     def _predict(self, transformed_X: pd.DataFrame):
@@ -53,9 +76,11 @@ class BotorchSurrogate(Surrogate):
         if self.is_fitted:
             if self.is_compatibilized:
                 if isinstance(self.model.input_transform, FilterFeatures):
-                    self.model.input_transform = None
+                    self.model.input_transform = None  # ty: ignore[invalid-assignment]
                 elif isinstance(self.model.input_transform, ChainedInputTransform):
-                    self.model.input_transform = self.model.input_transform.tf2
+                    self.model.input_transform = (  # ty: ignore[invalid-assignment]
+                        self.model.input_transform.tf2
+                    )
                 else:
                     raise ValueError("Undefined input transform structure detected.")
 
@@ -66,7 +91,7 @@ class BotorchSurrogate(Surrogate):
     def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
         # empty internal caches to get smaller dumps
-        self.model.prediction_strategy = None
+        self.model.prediction_strategy = None  # ty: ignore[invalid-assignment]
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         return base64.b64encode(buffer.getvalue()).decode()
@@ -75,3 +100,104 @@ class BotorchSurrogate(Surrogate):
         """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         buffer = io.BytesIO(base64.b64decode(data.encode()))
         self.model = torch.load(buffer, weights_only=False)
+
+
+class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+    def __init__(
+        self,
+        data_model: TrainableDataModel,
+        input_transform: Optional[Union[InputTransform, None]] = None,
+        **kwargs,
+    ):
+        self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
+        self.engineered_features = data_model.engineered_features
+        self._input_transform: Union[InputTransform, None] = input_transform
+        super().__init__(data_model=data_model, **kwargs)
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        return {"input_transform": self._input_transform}
+
+    def get_feature_indices(
+        self,
+        feature_keys: List[str],
+    ) -> List[int]:
+        """Returns the indices of the specified features (both original and engineered)
+        after applying all input transforms.
+
+        Args:
+            feature_keys: The feature keys to get the indices for.
+
+        Returns:
+            The indices of the specified features.
+        """
+        # get the keys belonging to the original inputs
+        original_keys = [key for key in feature_keys if key in self.inputs.get_keys()]
+        indices = self.inputs.get_feature_indices(
+            specs=self.categorical_encodings, feature_keys=original_keys
+        )
+        engineered_keys = [key for key in feature_keys if key not in original_keys]
+        for key in engineered_keys:
+            if key not in self.engineered_features.get_keys():
+                raise KeyError(f"Feature with key '{key}' not found.")
+        if len(engineered_keys) == 0:
+            return indices
+        for feat in self.engineered_features.get():
+            if feat.keep_features is False:
+                raise NotImplementedError(
+                    "Cannot get feature indices if original features are filtered. "
+                    "Define a feature specific kernel to filter out features and set "
+                    "`keep_features=True`."
+                )
+        # get the offset introduced by the original inputs
+        features2idx, _ = self.inputs._get_transform_info(self.categorical_encodings)
+        d = 0
+        for idx in features2idx.values():
+            d += len(idx)
+        indices += self.engineered_features.get_feature_indices(
+            offset=d, feature_keys=engineered_keys
+        )
+        return indices
+
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+        if self._input_transform is None:
+            self._input_transform = get_input_transform(
+                inputs=self.inputs,
+                engineered_features=self.engineered_features,
+                scaler_type=self.scaler,
+                categorical_encodings=self.categorical_encodings,
+            )
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+        # in case of classification we need to convert y from str to int
+        if isinstance(self.outputs[0], CategoricalOutput):
+            label_mapping = self.outputs[0].objective.to_dict_label()
+            Y = pd.DataFrame.from_dict(
+                {col: Y[col].map(label_mapping) for col in Y.columns},
+            )
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
+        if self.output_scaler == ScalerEnum.STANDARDIZE:
+            outcome_transform = Standardize(m=tY.shape[-1])
+        elif self.output_scaler == ScalerEnum.LOG:
+            outcome_transform = Log()
+        elif self.output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+            outcome_transform = ChainedOutcomeTransform(
+                log=Log(), standardize=Standardize(m=tY.shape[-1])
+            )
+        else:
+            outcome_transform = None
+        self._fit_botorch(tX, tY, self._input_transform, outcome_transform, **kwargs)
+
+    @abstractmethod
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        **kwargs,
+    ):
+        pass

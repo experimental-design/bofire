@@ -1,0 +1,223 @@
+# surrogates.api { #bofire.surrogates.api }
+
+`surrogates.api`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [Surrogate](#bofire.surrogates.api.Surrogate) |  |
+| [TrainableSurrogate](#bofire.surrogates.api.TrainableSurrogate) |  |
+| [SingleTaskGPSurrogate](#bofire.surrogates.api.SingleTaskGPSurrogate) |  |
+| [MultiTaskGPSurrogate](#bofire.surrogates.api.MultiTaskGPSurrogate) |  |
+| [BotorchSurrogates](#bofire.surrogates.api.BotorchSurrogates) |  |
+| [LinearDeterministicSurrogate](#bofire.surrogates.api.LinearDeterministicSurrogate) |  |
+| [EmpiricalSurrogate](#bofire.surrogates.api.EmpiricalSurrogate) | All necessary functions has to be implemented in the model which can then be loaded |
+| [RandomForestSurrogate](#bofire.surrogates.api.RandomForestSurrogate) | BoFire Random Forest model. |
+| [MLPEnsemble](#bofire.surrogates.api.MLPEnsemble) |  |
+| [PiecewiseLinearGPSurrogate](#bofire.surrogates.api.PiecewiseLinearGPSurrogate) |  |
+
+### Surrogate { #bofire.surrogates.api.Surrogate }
+
+```python
+surrogates.api.Surrogate(data_model)
+```
+
+
+
+#### Attributes
+
+| Name | Description |
+| --- | --- |
+| [is_fitted](#bofire.surrogates.api.Surrogate.is_fitted) | Return True if model is fitted, else False. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [dumps](#bofire.surrogates.api.Surrogate.dumps) | Dumps the actual model to a string as this is not directly json serializable. |
+| [loads](#bofire.surrogates.api.Surrogate.loads) | Loads the actual model from a string and writes it to the `model` attribute. |
+
+##### dumps { #bofire.surrogates.api.Surrogate.dumps }
+
+```python
+surrogates.api.Surrogate.dumps()
+```
+
+Dumps the actual model to a string as this is not directly json serializable.
+
+##### loads { #bofire.surrogates.api.Surrogate.loads }
+
+```python
+surrogates.api.Surrogate.loads(data)
+```
+
+Loads the actual model from a string and writes it to the `model` attribute.
+
+### TrainableSurrogate { #bofire.surrogates.api.TrainableSurrogate }
+
+```python
+surrogates.api.TrainableSurrogate()
+```
+
+
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [cross_validate](#bofire.surrogates.api.TrainableSurrogate.cross_validate) | Perform a cross validation for the provided training data. |
+| [fit](#bofire.surrogates.api.TrainableSurrogate.fit) | Fit the surrogate model to the provided experiments. |
+
+##### cross_validate { #bofire.surrogates.api.TrainableSurrogate.cross_validate }
+
+```python
+surrogates.api.TrainableSurrogate.cross_validate(
+    experiments,
+    folds=-1,
+    include_X=False,
+    include_labcodes=False,
+    random_state=None,
+    stratified_feature=None,
+    group_split_column=None,
+    hooks=None,
+    hook_kwargs=None,
+)
+```
+
+Perform a cross validation for the provided training data.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name               | Type                                                                                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                          | Default    |
+|--------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| experiments        | pd.DataFrame                                                                                    | Data on which the cross validation should be performed.                                                                                                                                                                                                                                                                                                                                                                                              | _required_ |
+| folds              | int                                                                                             | Number of folds. -1 is equal to LOO CV. Defaults to -1.                                                                                                                                                                                                                                                                                                                                                                                              | `-1`       |
+| include_X          | bool                                                                                            | If true the X values of the fold are written to respective CvResult objects for later analysis. Defaults to False.                                                                                                                                                                                                                                                                                                                                   | `False`    |
+| random_state       | int                                                                                             | Controls the randomness of the indices in the train and test sets of each fold. Defaults to None.                                                                                                                                                                                                                                                                                                                                                    | `None`     |
+| stratified_feature | str                                                                                             | The feature name to preserve the percentage of samples for each class in the stratified folds. Defaults to None.                                                                                                                                                                                                                                                                                                                                     | `None`     |
+| group_split_column | str                                                                                             | The column name of the group id. This parameter is used to ensure that the splits are made such that the same group is not present in both training and testing sets. This is useful in scenarios where data points are related or dependent on each other, and splitting them into different sets would violate the assumption of independence. The number of unique groups must be greater than or equal to the number of folds. Defaults to None. | `None`     |
+| hooks              | Dict\[str, Callable\[\[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame\], Any\]\] | Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.                                                                                                                                                                                                                                | `None`     |
+| hook_kwargs        | Dict\[str, Dict\[str, Any\]\]                                                                   | Dictionary holding hook specific keyword arguments. Defaults to {}.                                                                                                                                                                                                                                                                                                                                                                                  | `None`     |
+
+###### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type                                                    | Description                                                                                                                                                                                                  |
+|--------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|        | Tuple\[CvResults, CvResults, Dict\[str, List\[Any\]\]\] | Tuple[CvResults, CvResults, Dict[str, List[Any]]]: First CvResults object reflects the training data, second CvResults object the test data, dictionary object holds the return values of the applied hooks. |
+
+##### fit { #bofire.surrogates.api.TrainableSurrogate.fit }
+
+```python
+surrogates.api.TrainableSurrogate.fit(experiments, options=None)
+```
+
+Fit the surrogate model to the provided experiments.
+
+###### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type             | Description                                                 | Default    |
+|-------------|------------------|-------------------------------------------------------------|------------|
+| experiments | pd.DataFrame     | The experimental data to fit the model.                     | _required_ |
+| options     | Optional\[Dict\] | Additional options for fitting the model. Defaults to None. | `None`     |
+
+### SingleTaskGPSurrogate { #bofire.surrogates.api.SingleTaskGPSurrogate }
+
+```python
+surrogates.api.SingleTaskGPSurrogate(data_model, **kwargs)
+```
+
+
+
+### MultiTaskGPSurrogate { #bofire.surrogates.api.MultiTaskGPSurrogate }
+
+```python
+surrogates.api.MultiTaskGPSurrogate(data_model, **kwargs)
+```
+
+
+
+### BotorchSurrogates { #bofire.surrogates.api.BotorchSurrogates }
+
+```python
+surrogates.api.BotorchSurrogates(data_model, **kwargs)
+```
+
+
+
+### LinearDeterministicSurrogate { #bofire.surrogates.api.LinearDeterministicSurrogate }
+
+```python
+surrogates.api.LinearDeterministicSurrogate(data_model, **kwargs)
+```
+
+
+
+### EmpiricalSurrogate { #bofire.surrogates.api.EmpiricalSurrogate }
+
+```python
+surrogates.api.EmpiricalSurrogate(data_model, **kwargs)
+```
+
+All necessary functions has to be implemented in the model which can then be loaded
+from cloud pickle.
+
+#### Attributes {.doc-section .doc-section-attributes}
+
+| Name   | Type               | Description             |
+|--------|--------------------|-------------------------|
+| model  | DeterministicModel | Botorch model instance. |
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [loads](#bofire.surrogates.api.EmpiricalSurrogate.loads) | Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute. |
+
+##### loads { #bofire.surrogates.api.EmpiricalSurrogate.loads }
+
+```python
+surrogates.api.EmpiricalSurrogate.loads(data)
+```
+
+Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute.
+
+### RandomForestSurrogate { #bofire.surrogates.api.RandomForestSurrogate }
+
+```python
+surrogates.api.RandomForestSurrogate(data_model, **kwargs)
+```
+
+BoFire Random Forest model.
+
+The same hyperparameters are available as for the wrapped sklearn RandomForestRegreesor.
+
+#### Methods
+
+| Name | Description |
+| --- | --- |
+| [loads](#bofire.surrogates.api.RandomForestSurrogate.loads) | Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute. |
+
+##### loads { #bofire.surrogates.api.RandomForestSurrogate.loads }
+
+```python
+surrogates.api.RandomForestSurrogate.loads(data)
+```
+
+Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute.
+
+### MLPEnsemble { #bofire.surrogates.api.MLPEnsemble }
+
+```python
+surrogates.api.MLPEnsemble(data_model, **kwargs)
+```
+
+
+
+### PiecewiseLinearGPSurrogate { #bofire.surrogates.api.PiecewiseLinearGPSurrogate }
+
+```python
+surrogates.api.PiecewiseLinearGPSurrogate(data_model, **kwargs)
+```

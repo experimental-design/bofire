@@ -1,0 +1,28 @@
+/* Custom styles for BoFire documentation */
+
+.quarto-title-banner {
+  background: linear-gradient(135deg, #2c7fb8 0%, #41b6c4 100%);
+}
+
+.nav-footer {
+  border-top: 1px solid #dee2e6;
+  margin-top: 3rem;
+  padding-top: 1rem;
+}
+
+/* Improve code block appearance */
+.sourceCode {
+  border-radius: 4px;
+  border: 1px solid #e1e4e8;
+}
+
+/* Better spacing for listings */
+.quarto-listing {
+  margin-top: 2rem;
+}
+
+/* Notebook cell outputs */
+.cell-output-display {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}

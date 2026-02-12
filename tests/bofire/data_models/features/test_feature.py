@@ -10,7 +10,7 @@ from bofire.data_models.features.api import (
     CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
-    MolecularInput,
+    EngineeredFeature,
 )
 
 
@@ -19,14 +19,14 @@ from bofire.data_models.features.api import (
     [
         (spec, n)
         for spec in specs.features.valids
-        if (spec.cls != ContinuousOutput)
-        and (spec.cls != MolecularInput)
-        and (spec.cls != CategoricalOutput)
+        if (spec.cls != ContinuousOutput) and (spec.cls != CategoricalOutput)
         for n in [1, 5]
     ],
 )
 def test_sample(spec: specs.Spec, n: int):
     feat = spec.obj()
+    if isinstance(feat, EngineeredFeature):
+        return
     samples0 = feat.sample(n=n)
     feat.validate_candidental(samples0)
     samples1 = feat.sample(n=n, seed=42)

@@ -1,123 +1,51 @@
 import warnings
 from collections.abc import Sequence
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator
+from pydantic import Field, field_validator, validate_call
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
-from bofire.data_models.features.feature import Input, get_encoded_name
+from bofire.data_models.features.continuous import ContinuousInput
+from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.molfeatures.api import (
     AnyMolFeatures,
+    CompositeMolFeatures,
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
 from bofire.utils.cheminformatics import smiles2mol
 
 
-class MolecularInput(Input):
-    type: Literal["MolecularInput"] = "MolecularInput"  # type: ignore
-    # order_id: ClassVar[int] = 6
+class ContinuousMolecularInput(ContinuousInput):
+    type: Literal["ContinuousMolecularInput"] = "ContinuousMolecularInput"
     order_id: ClassVar[int] = 4
+    molecule: str
 
-    @staticmethod
-    def valid_transform_types() -> List[AnyMolFeatures]:  # type: ignore
-        return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]  # type: ignore
-
-    def validate_experimental(
-        self,
-        values: pd.Series,
-        strict: bool = False,
-    ) -> pd.Series:
-        values = values.map(str)
-        for smi in values:
-            smiles2mol(smi)
-
-        return values
-
-    def is_fulfilled(self, values: pd.Series) -> pd.Series:
-        raise NotImplementedError(
-            "`is_fulfilled` is not implemented for `MolecularInput`. "
-            "Please use `CategoricalMolecularInput` instead of `MolecularInput`.",
-        )
-
-    def validate_candidental(self, values: pd.Series) -> pd.Series:
-        values = values.map(str)
-        for smi in values:
-            smiles2mol(smi)
-        return values
-
-    def is_fixed(self) -> bool:
-        return False
-
-    def fixed_value(self, transform_type: Optional[AnyMolFeatures] = None) -> None:  # type: ignore
-        return None
-
-    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
-        raise ValueError("Sampling not supported for `MolecularInput`")
-
-    def get_bounds(  # type: ignore
-        self,
-        transform_type: AnyMolFeatures,
-        values: pd.Series,
-        reference_value: Optional[str] = None,
-    ) -> Tuple[List[float], List[float]]:
-        """Calculates the lower and upper bounds for the feature based on the given transform type and values.
+    @field_validator("molecule")
+    @classmethod
+    def validate_smiles(cls, v: str) -> str:
+        """Validates that molecule is a valid smiles. Note that this check can only
+        be executed when rdkit is available.
 
         Args:
-            transform_type (AnyMolFeatures): The type of transformation to apply to the data.
-            values (pd.Series): The actual data over which the lower and upper bounds are calculated.
-            reference_value (Optional[str], optional): The reference value for the transformation. Not used here.
-                Defaults to None.
-
-        Returns:
-            Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.
-
-        Raises:
-            NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.
-
+            v (str): smiles
         """
-        if values is None:
-            raise NotImplementedError(
-                "`values` is currently required for `MolecularInput`",
-            )
-        data = self.to_descriptor_encoding(transform_type, values)
-
-        lower = data.min(axis=0).values.tolist()
-        upper = data.max(axis=0).values.tolist()
-
-        return lower, upper
-
-    def to_descriptor_encoding(
-        self,
-        transform_type: AnyMolFeatures,
-        values: pd.Series,
-    ) -> pd.DataFrame:
-        """Converts values to descriptor encoding.
-
-        Args:
-            values (pd.Series): Values to transform.
-
-        Returns:
-            pd.DataFrame: Descriptor encoded dataframe.
-
-        """
-        descriptor_values = transform_type.get_descriptor_values(values)
-
-        descriptor_values.columns = [
-            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
-        ]
-        descriptor_values.index = values.index
-
-        return descriptor_values
+        # check on rdkit availability:
+        try:
+            smiles2mol(v)
+        except NameError:
+            warnings.warn("rdkit not installed, molecule cannot be validated.")
+            return v
+        smiles2mol(v)
+        return v
 
 
-class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: ignore
-    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"  # type: ignore
+class CategoricalMolecularInput(CategoricalInput):
+    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
 
@@ -149,15 +77,18 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
         return categories
 
     @staticmethod
-    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:  # type: ignore
-        return CategoricalInput.valid_transform_types() + [  # type: ignore
-            Fingerprints,
-            FingerprintsFragments,
-            Fragments,
-            MordredDescriptors,
-        ]
+    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
+        return (
+            CategoricalInput.valid_transform_types()  # ty: ignore[invalid-return-type]
+            + [
+                Fingerprints,
+                CompositeMolFeatures,
+                Fragments,
+                MordredDescriptors,
+            ]
+        )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,
@@ -183,6 +114,29 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
         return lower, upper
+
+    def to_descriptor_encoding(
+        self,
+        transform_type: AnyMolFeatures,
+        values: pd.Series,
+    ) -> pd.DataFrame:
+        """Converts values to descriptor encoding.
+
+        Args:
+            values (pd.Series): Values to transform.
+
+        Returns:
+            pd.DataFrame: Descriptor encoded dataframe.
+
+        """
+        descriptor_values = transform_type.get_descriptor_values(values)
+
+        descriptor_values.columns = [
+            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
+        ]
+        descriptor_values.index = values.index
+
+        return descriptor_values
 
     def from_descriptor_encoding(
         self,
@@ -231,3 +185,76 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
         ).idxmin(1)
         s.name = self.key
         return s
+
+    @validate_call
+    def select_mordred_descriptors(
+        self,
+        transform_type: MordredDescriptors,
+        cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.95,
+    ) -> None:
+        """
+        Filter Mordred descriptors by removing highly correlated ones.
+
+        This function removes descriptors with zero variance and then iteratively
+        filters out descriptors that are highly correlated with already selected ones.
+        Uses a greedy algorithm that iteratively selects descriptors and removes those
+        that are highly correlated with the selected ones.
+
+        Args:
+            transform_type: MordredDescriptors object containing the initial list of descriptors
+            cutoff: Absolute correlation threshold above which descriptors are considered redundant. Range: [0.0, 1.0]. Default: 0.95
+
+        Raises:
+            ValueError: If no descriptors with non-zero variance are found
+
+        """  # noqa: W293
+        # Get unique SMILES to avoid redundant calculations
+        unique_smiles = pd.Series(self.get_allowed_categories())
+
+        # Get descriptor values for all SMILES
+        descriptor_values = transform_type.get_descriptor_values(unique_smiles)
+
+        # Remove columns with zero variance (non-informative descriptors)
+        variances = descriptor_values.var()
+        non_zero_var_descriptors = variances[variances > 0].index.tolist()
+
+        if len(non_zero_var_descriptors) == 0:
+            raise ValueError(
+                f"No descriptors with non-zero variance found for feature '{self.key}'. "
+                "Cannot perform correlation-based filtering."
+            )
+
+        descriptor_values = descriptor_values[non_zero_var_descriptors]
+
+        # Handle edge case: only one descriptor left
+        if descriptor_values.shape[1] == 1:
+            warnings.warn(
+                f"Only one descriptor with non-zero variance found for feature '{self.key}'. "
+                "No correlation filtering needed."
+            )
+            transform_type.descriptors = non_zero_var_descriptors
+            return
+
+        # Compute absolute correlation matrix
+        correlation_matrix = descriptor_values.corr().abs()
+
+        # Greedy algorithm to select uncorrelated descriptors
+        selected_descriptors = []
+        remaining_descriptors = set(range(len(descriptor_values.columns)))
+
+        while remaining_descriptors:
+            # Select the first remaining descriptor
+            current_idx = min(remaining_descriptors)
+            selected_descriptors.append(descriptor_values.columns[current_idx])
+            remaining_descriptors.remove(current_idx)
+
+            # Find and remove highly correlated descriptors
+            to_remove = set()
+            for idx in remaining_descriptors:
+                if correlation_matrix.iloc[current_idx, idx] > cutoff:
+                    to_remove.add(idx)
+
+            remaining_descriptors -= to_remove
+
+        # Update the transform_type.descriptors with the filtered list
+        transform_type.descriptors = selected_descriptors

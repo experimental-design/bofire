@@ -121,7 +121,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
 
     """
 
-    type: Literal["PiecewiseLinearGPSurrogate"] = "PiecewiseLinearGPSurrogate"  # type: ignore
+    type: Literal["PiecewiseLinearGPSurrogate"] = "PiecewiseLinearGPSurrogate"
     interpolation_range: Bounds
     n_interpolation_points: PositiveInt = 1000
     x_keys: list[str]
@@ -132,7 +132,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     normalize_y: PositiveFloat = 1.0
-    hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(  # type: ignore
+    hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(
         default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig(),
     )
 

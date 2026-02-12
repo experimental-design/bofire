@@ -4,14 +4,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from botorch.models import MixedSingleTaskGP, SingleTaskGP
+from botorch.models import SingleTaskGP
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.transforms.input import (
     ChainedInputTransform,
     FilterFeatures,
     InputStandardize,
     Normalize,
-    OneHotToNumeric,
 )
 from pandas.testing import assert_frame_equal
 from torch import Tensor
@@ -44,7 +43,7 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)
@@ -66,19 +65,19 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     )
     surrogate = surrogates.map(data_model)
     assert surrogate.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ONE_HOT,
-        "cat": CategoricalEncodingEnum.DESCRIPTOR,
+        "x_cat": CategoricalEncodingEnum.ORDINAL,
+        "cat": CategoricalEncodingEnum.ORDINAL,
     }
     # test that it can also handle incomplete specs
     data_model = modelclass(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
     )
     surrogate = surrogates.map(data_model)
     assert surrogate.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ONE_HOT,
-        "cat": CategoricalEncodingEnum.DESCRIPTOR,
+        "x_cat": CategoricalEncodingEnum.ORDINAL,
+        "cat": CategoricalEncodingEnum.ORDINAL,
     }
 
 
@@ -108,7 +107,7 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)
@@ -136,7 +135,7 @@ def test_BotorchSurrogates_invalid_outputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(3)
             ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -145,7 +144,7 @@ def test_BotorchSurrogates_invalid_outputs():
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(2)
             ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -159,7 +158,7 @@ def test_BotorchSurrogates_invalid_inputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(3)
             ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
@@ -167,60 +166,13 @@ def test_BotorchSurrogates_invalid_inputs():
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
-            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)]
+            features=[
+                ContinuousInput(key=f"x_{i + 1}", bounds=(-4, 4)) for i in range(2)
+            ]
             + [CategoricalInput(key="x_3", categories=["apple", "banana"])],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
-    )
-    with pytest.raises(ValueError):
-        data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
-
-
-def test_BotorchSurrogates_invalid_preprocessing():
-    data_model1 = data_models.SingleTaskGPSurrogate(
-        inputs=Inputs(
-            features=[
-                ContinuousInput(
-                    key=f"x_{i+1}",
-                    bounds=(-4, 4),
-                )
-                for i in range(3)
-            ]
-            + [
-                CategoricalDescriptorInput(
-                    key="cat",
-                    categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
-                ),
-            ],
-        ),
-        outputs=Outputs(features=[ContinuousOutput(key="y")]),
-        scaler=ScalerEnum.NORMALIZE,
-        input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
-    )
-    data_model2 = data_models.SingleTaskGPSurrogate(
-        inputs=Inputs(
-            features=[
-                ContinuousInput(
-                    key=f"x_{i+1}",
-                    bounds=(-4, 4),
-                )
-                for i in range(2)
-            ]
-            + [
-                CategoricalDescriptorInput(
-                    key="cat",
-                    categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
-                ),
-            ],
-        ),
-        outputs=Outputs(features=[ContinuousOutput(key="y2")]),
-        scaler=ScalerEnum.NORMALIZE,
-        input_preprocessing_specs={"cat": CategoricalEncodingEnum.DESCRIPTOR},
     )
     with pytest.raises(ValueError):
         data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -235,7 +187,7 @@ def test_BotorchSurrogates_invalid_preprocessing():
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(3)
@@ -251,13 +203,13 @@ def test_BotorchSurrogates_invalid_preprocessing():
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=ScalerEnum.NORMALIZE,
-                    input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(2)
@@ -278,7 +230,7 @@ def test_BotorchSurrogates_invalid_preprocessing():
                         ],
                     ),
                     scaler=ScalerEnum.NORMALIZE,
-                    input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
             ]
         ),
@@ -298,7 +250,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(3)
@@ -315,13 +267,13 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=ScalerEnum.NORMALIZE,
                     output_scaler=ScalerEnum.STANDARDIZE,
-                    input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}",
+                                key=f"x_{i + 1}",
                                 bounds=(-4, 4),
                             )
                             for i in range(2)
@@ -338,7 +290,107 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=ScalerEnum.NORMALIZE,
                     output_scaler=ScalerEnum.STANDARDIZE,
-                    input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+            ]
+        ),
+        (
+            [
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(3)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.LOG,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(2)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y2")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.LOG,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+            ]
+        ),
+        (
+            [
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(3)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                ),
+                data_models.SingleTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            ContinuousInput(
+                                key=f"x_{i + 1}",
+                                bounds=(-4, 4),
+                            )
+                            for i in range(2)
+                        ]
+                        + [
+                            CategoricalDescriptorInput(
+                                key="cat",
+                                categories=["apple", "banana"],
+                                descriptors=["length", "width"],
+                                values=[[1, 2], [3, 4]],
+                            ),
+                        ],
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y2")]),
+                    scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
+                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
             ]
         ),
@@ -349,12 +401,16 @@ def test_botorch_models_valid(surrogate_list):
     BotorchSurrogates(data_model=data_model)
 
 
-def test_botorch_models_check_compatibility():
+@pytest.mark.parametrize(
+    "output_scaler",
+    [ScalerEnum.STANDARDIZE, ScalerEnum.LOG, ScalerEnum.CHAINED_LOG_STANDARDIZE],
+)
+def test_botorch_models_check_compatibility(output_scaler):
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(3)
@@ -370,14 +426,13 @@ def test_botorch_models_check_compatibility():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
-        output_scaler=ScalerEnum.STANDARDIZE,
-        input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
+        output_scaler=output_scaler,
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(2)
@@ -393,8 +448,7 @@ def test_botorch_models_check_compatibility():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
-        output_scaler=ScalerEnum.STANDARDIZE,
-        input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
+        output_scaler=output_scaler,
     )
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     models = BotorchSurrogates(data_model=data_model)
@@ -402,7 +456,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -415,7 +469,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(4)
@@ -436,7 +490,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(4)
@@ -455,7 +509,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -495,7 +549,7 @@ def test_botorch_models_check_compatibility():
     inp = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(3)
@@ -518,7 +572,7 @@ def test_botorch_models_input_preprocessing_specs():
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(3)
@@ -534,13 +588,12 @@ def test_botorch_models_input_preprocessing_specs():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
-        input_preprocessing_specs={"cat": CategoricalEncodingEnum.DESCRIPTOR},
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(
             features=[
                 ContinuousInput(
-                    key=f"x_{i+1}",
+                    key=f"x_{i + 1}",
                     bounds=(-4, 4),
                 )
                 for i in range(2)
@@ -554,13 +607,12 @@ def test_botorch_models_input_preprocessing_specs():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
-        input_preprocessing_specs={"cat2": CategoricalEncodingEnum.ONE_HOT},
     )
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     surrogate = BotorchSurrogates(data_model=data_model)
     assert surrogate.input_preprocessing_specs == {
-        "cat": CategoricalEncodingEnum.DESCRIPTOR,
-        "cat2": CategoricalEncodingEnum.ONE_HOT,
+        "cat": CategoricalEncodingEnum.ORDINAL,
+        "cat2": CategoricalEncodingEnum.ORDINAL,
     }
 
 
@@ -569,7 +621,7 @@ def test_botorch_models_invalid_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -607,7 +659,7 @@ def test_botorch_models_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -627,7 +679,7 @@ def test_botorch_models_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -646,7 +698,6 @@ def test_botorch_models_fit_and_compatibilize():
     data_model2 = data_models.MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=ScalerEnum.STANDARDIZE,
         output_scaler=ScalerEnum.STANDARDIZE,
     )
@@ -670,7 +721,7 @@ def test_botorch_models_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -683,7 +734,7 @@ def test_botorch_models_fit_and_compatibilize():
     assert botorch_surrogates.surrogates[1].is_compatibilized is False
     # check combined
     assert isinstance(combined.models[0], SingleTaskGP)
-    assert isinstance(combined.models[1], MixedSingleTaskGP)
+    assert isinstance(combined.models[1], SingleTaskGP)
     assert isinstance(combined.models[0].input_transform, ChainedInputTransform)
     assert isinstance(combined.models[0].input_transform.tcompatibilize, FilterFeatures)
     assert torch.eq(
@@ -691,14 +742,12 @@ def test_botorch_models_fit_and_compatibilize():
         torch.tensor([0, 1], dtype=torch.int64),
     ).all()
     assert isinstance(combined.models[0].input_transform.tf2, Normalize)
-    assert isinstance(combined.models[1].input_transform, ChainedInputTransform)
-    assert isinstance(combined.models[1].input_transform.tf1, InputStandardize)
-    assert isinstance(combined.models[1].input_transform.tf2, OneHotToNumeric)
+    assert isinstance(combined.models[1].input_transform, InputStandardize)
     # check predictions
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -724,7 +773,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -744,7 +793,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -763,7 +812,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     data_model2 = data_models.RandomForestSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -785,7 +834,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -810,7 +859,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -837,9 +886,11 @@ class HimmelblauModel(DeterministicModel):
         self._num_outputs = 1
 
     def forward(self, X: Tensor) -> Tensor:
+        # Add 1e-8 to ensure positive outputs for Log outcome transform
         return (
             (X[..., 0] ** 2 + X[..., 1] - 11.0) ** 2
             + (X[..., 0] + X[..., 1] ** 2 - 7.0) ** 2
+            + 1e-8
         ).unsqueeze(-1)
 
 
@@ -847,7 +898,7 @@ def test_empirical_model():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -867,7 +918,7 @@ def test_empirical_model():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -886,7 +937,6 @@ def test_empirical_model():
     data_model2 = data_models.MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=ScalerEnum.STANDARDIZE,
         output_scaler=ScalerEnum.STANDARDIZE,
     )
@@ -909,7 +959,7 @@ def test_empirical_model():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -920,20 +970,18 @@ def test_empirical_model():
     combined = botorch_surrogates.compatibilize(inputs=inputs, outputs=outputs)
     # check combined
     assert isinstance(combined.models[0], DeterministicModel)
-    assert isinstance(combined.models[1], MixedSingleTaskGP)
+    assert isinstance(combined.models[1], SingleTaskGP)
     assert isinstance(combined.models[0].input_transform, FilterFeatures)
     assert torch.eq(
         combined.models[0].input_transform.feature_indices,
         torch.tensor([0, 1], dtype=torch.int64),
     ).all()
-    assert isinstance(combined.models[1].input_transform, ChainedInputTransform)
-    assert isinstance(combined.models[1].input_transform.tf1, InputStandardize)
-    assert isinstance(combined.models[1].input_transform.tf2, OneHotToNumeric)
+    assert isinstance(combined.models[1].input_transform, InputStandardize)
     # check predictions
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -948,7 +996,7 @@ def test_empirical_model_io():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -973,29 +1021,6 @@ def test_empirical_model_io():
     surrogate3 = surrogates.map(data_model)
     preds3 = surrogate3.predict(samples)
     assert_frame_equal(preds, preds3)
-
-
-def test_multitask_invalid_processing():
-    inputs = Inputs(
-        features=[
-            TaskInput(key="task", categories=["task1", "task2"], allowed=[True, False]),
-            ContinuousInput(key="x", bounds=(-1, 1)),
-        ],
-    )
-
-    outputs_1 = Outputs(
-        features=[ContinuousOutput(key="y1")],
-    )
-    outputs_2 = Outputs(
-        features=[ContinuousOutput(key="y2")],
-    )
-
-    data_model_1 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
-
-    data_model_2 = data_models.SingleTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
-
-    with pytest.raises(ValueError):
-        data_models.BotorchSurrogates(surrogates=[data_model_1, data_model_2])
 
 
 def test_multitask_valid_processing():

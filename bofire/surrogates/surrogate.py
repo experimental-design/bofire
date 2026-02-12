@@ -27,10 +27,6 @@ class Surrogate(ABC):
         else:
             self.model = None
 
-    @classmethod
-    def from_spec(cls, data_model: DataModel) -> "Surrogate":
-        return cls(data_model=data_model)
-
     @property
     def is_fitted(self) -> bool:
         """Return True if model is fitted, else False."""
@@ -60,7 +56,7 @@ class Surrogate(ABC):
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
-            columns=pred_cols + sd_cols,  # type: ignore
+            columns=pred_cols + sd_cols,
         )
         # append predictions for categorical cases
         predictions = postprocess_categorical_predictions(
@@ -124,3 +120,12 @@ class Surrogate(ABC):
     @abstractmethod
     def loads(self, data: str):
         """Loads the actual model from a string and writes it to the `model` attribute."""
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        """this method will return properties of the class, which are constructed during initialization, and can be
+        added as keyword argument to the __init__ function of the class. Expensive to calculate properties can be
+        passed upon re-training a strategy to the new surrogates, given, that these do not depend on the current
+        training data but only on the domain
+        """
+        return {}

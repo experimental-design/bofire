@@ -65,9 +65,7 @@ class DTLZ2(Benchmark):
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=outputs),
         )
-        self.ref_point = {
-            feat: 1.1 for feat in domain.outputs.get_keys(ContinuousOutput)
-        }
+        self.ref_point = dict.fromkeys(domain.outputs.get_keys(ContinuousOutput), 1.1)
         self._domain = domain
 
     @field_validator("dim")
@@ -84,7 +82,7 @@ class DTLZ2(Benchmark):
     def best_possible_hypervolume(self) -> float:
         # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
-        hypercube_vol = self.ref_point[0] ** self.num_objectives  # type: ignore
+        hypercube_vol = self.ref_point[0] ** self.num_objectives
         pos_hypersphere_vol = (
             math.pi ** (self.num_objectives / 2)
             / gamma(self.num_objectives / 2 + 1)
@@ -152,13 +150,13 @@ class BNH(Benchmark):
             ),
         )
         if self.constraints:
-            self._domain.outputs.features.append(  # type: ignore
+            self._domain.outputs.features.append(  # ty: ignore[unresolved-attribute]
                 ContinuousOutput(
                     key="c1",
                     objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
                 ),
             )
-            self._domain.outputs.features.append(  # type: ignore
+            self._domain.outputs.features.append(  # ty: ignore[unresolved-attribute]
                 ContinuousOutput(
                     key="c2",
                     objective=MaximizeSigmoidObjective(tp=7.7, steepness=1000),
@@ -232,7 +230,7 @@ class C2DTLZ2(DTLZ2):
     def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
         super().__init__(dim, num_objectives, **kwargs)
         # add also the constraint
-        self._domain.outputs.features.append(  # type: ignore
+        self._domain.outputs.features.append(
             ContinuousOutput(
                 key="slack",
                 objective=MaximizeSigmoidObjective(w=1.0, tp=0, steepness=1.0 / 1e-3),
@@ -442,18 +440,18 @@ class ZDT1(Benchmark):
         super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
-            ContinuousInput(key=f"x{i+1}", bounds=[0, 1]) for i in range(n_inputs)
+            ContinuousInput(key=f"x{i + 1}", bounds=[0, 1]) for i in range(n_inputs)
         ]
         inputs = Inputs(features=inputs)
         outputs = [
-            ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
+            ContinuousOutput(key=f"y{i + 1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
         outputs = Outputs(features=outputs)
         self._domain = Domain(inputs=inputs, outputs=outputs)
         self.zdt = BotorchZDT1(dim=n_inputs)
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
 
         Args:
@@ -491,14 +489,10 @@ class CrossCoupling(Benchmark):
     Virtual experiments representing the Aniline Cross-Coupling reaction
     similar to Baumgartner et al. (2019) <https://`doi.org/10.1021/acs.oprd.9b00236>.
     Experimental outcomes are based on a SingleTaskGP fitted on the experimental data published by Baumgartner et al.
-    This is a five dimensional optimisation of temperature, residence time, base equivalents,
+    This is a five dimensional optimization of temperature, residence time, base equivalents,
     catalyst and base.
     The categorical variables (catalyst and base) contain descriptors
     calculated using COSMO-RS. Specifically, the descriptors are the first two sigma moments.
-
-    Args:
-        Benchmark (Benchmark): Benchmark base class
-
     """
 
     def __init__(
@@ -557,11 +551,6 @@ class CrossCoupling(Benchmark):
             ContinuousInput(key="t_res", bounds=[60, 1800]),
         ]
 
-        input_preprocessing_specs = {
-            "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
-            "base": CategoricalEncodingEnum.DESCRIPTOR,
-        }
-
         # Objectives: yield and cost
         outputs = [
             ContinuousOutput(
@@ -588,11 +577,14 @@ class CrossCoupling(Benchmark):
         data_model = SingleTaskGPSurrogate(
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
-            input_preprocessing_specs=input_preprocessing_specs,  # type: ignore
+            categorical_encodings={
+                "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
+                "base": CategoricalEncodingEnum.DESCRIPTOR,
+            },
         )
         ground_truth_yield = surrogates.map(data_model)
 
-        ground_truth_yield.fit(experiments=data)  # type: ignore
+        ground_truth_yield.fit(experiments=data)  # ty: ignore[unresolved-attribute]
         self.ground_truth_yield = ground_truth_yield
         super().__init__(**kwargs)
 

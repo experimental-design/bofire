@@ -7,9 +7,13 @@ name = "bofire"
 description = ""
 dynamic = ["version"]
 authors = []
-license = {text = "BSD-3"}
-urls = {homepage = "https://github.com/experimental-design/bofire"}
-keywords = ["Bayesian optimization", "Multi-objective optimization", "Experimental design"]
+license = { text = "BSD-3" }
+urls = { homepage = "https://github.com/experimental-design/bofire" }
+keywords = [
+    "Bayesian optimization",
+    "Multi-objective optimization",
+    "Experimental design",
+]
 classifiers = [
     "Development Status :: 1 - Planning",
     "Programming Language :: Python :: 3 :: Only",
@@ -18,7 +22,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
 ]
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10.0"
 dependencies = [
     "numpy",
@@ -26,12 +30,12 @@ dependencies = [
     "pydantic>=2.5",
     "scipy>=1.7",
     "typing-extensions",
-    "formulaic==1.0.1",
+    "formulaic<=1.0.2",
 ]
 
 [project.optional-dependencies]
 optimization = [
-    "botorch>=0.15.0",
+    "botorch>=0.16.1",
     "numpy",
     "multiprocess",
     "plotly",
@@ -39,29 +43,19 @@ optimization = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]",
-    "scikit-learn>=1.0.0,<1.6",
+    "scikit-learn>=1.0.0",
     "pymoo>=0.6.0",
     "shap>=0.48.0",
 ]
-entmoot = ["entmoot>=2.0.6"]
-xgb = ["xgboost>=1.7.5"]
-cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0,<1.6", "mordred>=1.2.0"]
-tests = [
-    "pytest",
-    "pytest-cov",
-    "papermill",
-]
-docs = [
-    "mkdocs",
-    "mkdocs-material",
-    "mkdocs-jupyter",
-    "mkdocstrings>=0.18",
-    "mkdocstrings-python",
-    "mike",
-]
-tutorials = ["jupyter", "matplotlib", "seaborn"]
+entmoot = [
+    "pyomo<=6.9.4",
+    "entmoot>=2.0.6",
+] # we pin the pyomo version here due to compatibility issues
+cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
+tests = ["pytest", "pytest-cov", "papermill"]
+docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.14.0",
+    "botorch>=0.16.1",
     "numpy",
     "multiprocess",
     "plotly",
@@ -69,11 +63,11 @@ all = [
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]",
-    "scikit-learn>=1.0.0,<1.6",
+    "scikit-learn>=1.0.0",
     "entmoot>=2.0.6",
-    "xgboost>=1.7.5",
+    "pyomo<=6.9.4",
     "rdkit>=2023.3.2",
-    "mordred>=1.2.0",
+    "mordredcommunity>=2.0.1",
     "mopti",
     "pytest",
     "pytest-cov",
@@ -94,9 +88,13 @@ all = [
 [tool.setuptools.packages]
 find = {}
 
+[tool.setuptools.package-data]
+"bofire.benchmarks.data" = ["octane.csv"]
+
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
+fallback_version = "0.0.0.dev0+unknown"
 
 [tool.ruff]
 target-version = "py39"
@@ -106,9 +104,9 @@ output-format = "concise"
 [tool.ruff.lint]
 select = ["B", "C", "E", "F", "W", "I"]
 ignore = [
-    "E501",  # don't enforce for comments and docstrings
-    "B017",  # required for tests
-    "B027",  # required for optional _tell method
+    "E501", # don't enforce for comments and docstrings
+    "B017", # required for tests
+    "B027", # required for optional _tell method
     "B028",
     "B904",
     "B905",
@@ -122,6 +120,7 @@ max-complexity = 19
 
 [tool.ruff.lint.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
+"bofire/data_models/molfeatures/api.py" = ["F401"]
 "bofire/data_models/priors/api.py" = ["F401"]
 "bofire/priors/api.py" = ["F401"]
 "bofire/utils/annotated.py" = ["F401"]
@@ -138,7 +137,34 @@ max-complexity = 19
 "bofire/data_models/strategies/api.py" = ["F401"]
 "bofire/data_models/dataframes/api.py" = ["F401"]
 "bofire/plot/api.py" = ["F401"]
+"bofire/data_models/domain/api.py" = ["F401"]
 
-[tool.pyright]
+[tool.ty.src]
 include = ["bofire"]
 exclude = ["bofire/version.py"]
+
+[tool.ty.rules]
+# These are largely false positives from incomplete third-party stubs
+# (torch, gpytorch, botorch, pandas, etc.) in a young type checker.
+no-matching-overload = "ignore"
+invalid-argument-type = "ignore"
+# torch Module.__getattr__ returns Tensor|Module, causing false
+# "not callable" errors on every .expand(), .reshape(), etc.
+call-non-callable = "ignore"
+# torch tensor operations and model attribute assignments produce
+# false positives that vary across Python/stub versions.
+unsupported-operator = "warn"
+invalid-assignment = "warn"
+invalid-return-type = "warn"
+# BoFire intentionally narrows parameter types in subclass overrides.
+invalid-method-override = "warn"
+
+[tool.ty.analysis]
+# Optional dependencies that may not be installed or lack py.typed markers
+allowed-unresolved-imports = [
+    "botorch.**",
+    "gpytorch.**",
+    "linear_operator.**",
+    "entmoot.**",
+    "pyomo.**",
+]

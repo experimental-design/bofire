@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.input import InputTransform, NumericToCategoricalEncoding
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
@@ -19,7 +19,15 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.features.api import ContinuousInput, Input
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    CategoricalMolecularInput,
+    ContinuousInput,
+    Input,
+)
+from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -73,10 +81,12 @@ def get_linear_constraints(
             idx = domain.inputs.get_keys(Input).index(featkey)
             feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():
-                rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
+                fixed = feat.fixed_value()
+                assert fixed is not None
+                rhs -= fixed[0] * c.coefficients[i]
             else:
-                lower.append(feat.lower_bound)  # type: ignore
-                upper.append(feat.upper_bound)  # type: ignore
+                lower.append(feat.lower_bound)
+                upper.append(feat.upper_bound)
                 indices.append(idx)
                 coefficients.append(
                     c.coefficients[i],
@@ -739,7 +749,7 @@ def get_multiplicative_botorch_objective(
         val = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val = val * c(samples, None) ** w
-        return val  # type: ignore
+        return val
 
     return objective
 
@@ -760,7 +770,7 @@ def get_additive_botorch_objective(
         val = torch.tensor(0.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val = val + c(samples, None) * w
-        return val  # type: ignore
+        return val
 
     return objective
 
@@ -933,7 +943,7 @@ def get_initial_conditions_generator(
     return generator
 
 
-@torch.jit.script  # type: ignore
+@torch.jit.script
 def interp1d(
     x: torch.Tensor,
     y: torch.Tensor,
@@ -1160,3 +1170,66 @@ def create_supervised_dataset(
         outcome_names=outputs.get_keys(),
         validate_init=True,
     )
+
+
+class Encoder:
+    def __init__(self, encoding: torch.Tensor):
+        self.encoding = encoding
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        return self.encoding[x]
+
+    @property
+    def dim(self) -> int:
+        return self.encoding.shape[1]
+
+
+def get_categorical_encoder(
+    feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
+) -> Encoder:
+    """Get the categorical transformer for a given feature."""
+    if isinstance(transform, AnyMolFeatures):
+        assert isinstance(feature, CategoricalMolecularInput)
+        # filter out the highly-correlated descriptors
+        transform.remove_correlated_descriptors(feature.categories)
+        encodings = torch.from_numpy(
+            feature.to_descriptor_encoding(
+                transform, pd.Series(feature.categories)
+            ).values
+        ).to(**tkwargs)
+    elif transform == CategoricalEncodingEnum.ONE_HOT:
+        encodings = torch.from_numpy(
+            feature.to_onehot_encoding(pd.Series(feature.categories)).values
+        ).to(**tkwargs)
+    elif transform == CategoricalEncodingEnum.DESCRIPTOR:
+        assert isinstance(feature, CategoricalDescriptorInput)
+        encodings = torch.from_numpy(
+            feature.to_descriptor_encoding(pd.Series(feature.categories)).values
+        ).to(**tkwargs)
+    else:
+        raise ValueError(
+            f"No categorical transformer found for feature with key: {feature.key} "
+            f"and transform: {transform}"
+        )
+    return Encoder(encodings)
+
+
+def get_NumericToCategorical_input_transform(
+    inputs: Inputs, transform_specs: InputTransformSpecs
+) -> Optional[NumericToCategoricalEncoding]:
+    encoders = {
+        inputs.get_keys().index(feat.key): get_categorical_encoder(
+            feat,
+            transform_specs[feat.key],
+        )
+        for feat in inputs.get(CategoricalInput)
+        if transform_specs.get(feat.key, CategoricalEncodingEnum.ORDINAL)
+        is not CategoricalEncodingEnum.ORDINAL
+    }
+    if len(encoders) > 0:
+        return NumericToCategoricalEncoding(
+            dim=len(inputs.get()),
+            categorical_features={i: enc.dim for i, enc in encoders.items()},
+            encoders=encoders,
+        )
+    return None

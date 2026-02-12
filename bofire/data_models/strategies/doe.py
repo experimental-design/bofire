@@ -6,7 +6,7 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
-from bofire.data_models.features.api import Feature, MolecularInput
+from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds
@@ -27,16 +27,13 @@ class OptimalityCriterion(BaseModel):
 
 
 class SpaceFillingCriterion(OptimalityCriterion):
-    type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"  # type: ignore
+    type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
     type: str
-    formula: Union[
-        PREDEFINED_MODEL_TYPES,
-        str,
-    ]
+    formula: Union[PREDEFINED_MODEL_TYPES, str]
     """
     model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
     are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
@@ -45,7 +42,7 @@ class DoEOptimalityCriterion(OptimalityCriterion):
     @field_validator("formula")
     @classmethod
     def validate_formula(cls, formula: str) -> str:
-        if formula not in PREDEFINED_MODEL_TYPES.__args__:  # type: ignore
+        if formula not in PREDEFINED_MODEL_TYPES.__args__:
             # check that it is a valid formula
             try:
                 Formula(formula)
@@ -55,27 +52,27 @@ class DoEOptimalityCriterion(OptimalityCriterion):
 
 
 class DOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["DOptimalityCriterion"] = "DOptimalityCriterion"  # type: ignore
+    type: Literal["DOptimalityCriterion"] = "DOptimalityCriterion"
 
 
 class EOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["EOptimalityCriterion"] = "EOptimalityCriterion"  # type: ignore
+    type: Literal["EOptimalityCriterion"] = "EOptimalityCriterion"
 
 
 class AOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["AOptimalityCriterion"] = "AOptimalityCriterion"  # type: ignore
+    type: Literal["AOptimalityCriterion"] = "AOptimalityCriterion"
 
 
 class GOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["GOptimalityCriterion"] = "GOptimalityCriterion"  # type: ignore
+    type: Literal["GOptimalityCriterion"] = "GOptimalityCriterion"
 
 
 class KOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"  # type: ignore
+    type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"
 
 
 class IOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["IOptimalityCriterion"] = "IOptimalityCriterion"  # type: ignore
+    type: Literal["IOptimalityCriterion"] = "IOptimalityCriterion"
     n_space_filling_points: Optional[int] = None
     ipopt_options: Optional[Dict] = None
 
@@ -96,7 +93,7 @@ AnyOptimalityCriterion = Union[
 
 
 class DoEStrategy(Strategy):
-    type: Literal["DoEStrategy"] = "DoEStrategy"  # type: ignore
+    type: Literal["DoEStrategy"] = "DoEStrategy"
 
     criterion: AnyOptimalityCriterion = Field(
         default_factory=lambda: DOptimalityCriterion(formula="fully-quadratic")
@@ -130,8 +127,6 @@ class DoEStrategy(Strategy):
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        if my_type in [MolecularInput]:
-            return False
         return True
 
     @classmethod

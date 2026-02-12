@@ -19,10 +19,14 @@ class ContinuousInput(NumericalInput):
         stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
             Defaults to None.
+        allow_zero (bool): A boolean indicating if the input feature can take inactive values.
+            Useful for features that take values between `bounds`, but can also take a value of 0.
+            One may choose to use a conditional kernel for this, if taking a value of 0
+            represents a distinct behaviour from non-zero values.
 
     """
 
-    type: Literal["ContinuousInput"] = "ContinuousInput"  # type: ignore
+    type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
@@ -30,6 +34,7 @@ class ContinuousInput(NumericalInput):
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
     ] = None
     stepsize: Optional[PositiveFloat] = None
+    allow_zero: bool = False
 
     @property
     def lower_bound(self) -> float:
@@ -53,6 +58,18 @@ class ContinuousInput(NumericalInput):
         if range / self.stepsize < 1:
             raise ValueError(
                 "Stepsize is too big for provided range.",
+            )
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_allow_zero(self):
+        if not self.allow_zero:
+            return self
+        lower, upper = self.bounds
+        if lower <= 0.0 <= upper:
+            raise ValueError(
+                "If `allow_zero==True`, then zero must not lie within the bounds."
             )
 
         return self
@@ -91,7 +108,9 @@ class ContinuousInput(NumericalInput):
 
         steps = np.array(self._get_allowed_steps())
 
-        return values.apply(lambda x: steps[np.argmin(np.abs(steps - x))])
+        return values.apply(
+            lambda x: steps[np.argmin(np.abs(steps - x))]
+        )  # ty: ignore[invalid-return-type]
 
     def is_fulfilled(self, values: pd.Series, noise: float = 10e-6) -> pd.Series:
         """Method to check if the values are within the bounds of the feature.
@@ -103,9 +122,11 @@ class ContinuousInput(NumericalInput):
         Returns:
             A series with boolean values indicating if the input feature is fulfilled.
         """
-        return (values >= self.lower_bound - noise) & (
+        within_bounds = (values >= self.lower_bound - noise) & (
             values <= self.upper_bound + noise
         )
+        zero_and_allowed = (values.abs() <= noise) & self.allow_zero
+        return within_bounds | zero_and_allowed
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
@@ -124,13 +145,14 @@ class ContinuousInput(NumericalInput):
         """
         noise = 10e-6
         values = super().validate_candidental(values)
-        if (values < self.lower_bound - noise).any():
+        non_zero_idcs = (values.abs() > noise) | (not self.allow_zero)
+        if (values[non_zero_idcs] < self.lower_bound - noise).any():
             raise ValueError(
-                f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` ",
+                f"not all values of input feature `{self.key}` are larger than lower bound `{self.lower_bound}` ",
             )
-        if (values > self.upper_bound + noise).any():
+        if (values[non_zero_idcs] > self.upper_bound + noise).any():
             raise ValueError(
-                f"not all values of input feature `{self.key}`are smaller than upper bound `{self.upper_bound}` ",
+                f"not all values of input feature `{self.key}` are smaller than upper bound `{self.upper_bound}` ",
             )
         return values
 
@@ -154,7 +176,7 @@ class ContinuousInput(NumericalInput):
             ),
         )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
@@ -207,7 +229,7 @@ class ContinuousOutput(Output):
 
     """
 
-    type: Literal["ContinuousOutput"] = "ContinuousOutput"  # type: ignore
+    type: Literal["ContinuousOutput"] = "ContinuousOutput"
     order_id: ClassVar[int] = 9
     unit: Optional[str] = None
 
@@ -215,14 +237,14 @@ class ContinuousOutput(Output):
         default_factory=lambda: MaximizeObjective(w=1.0),
     )
 
-    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],
                 index=values.index,
                 name=values.name,
             )
-        return self.objective(values, values_adapt)  # type: ignore
+        return self.objective(values, values_adapt)  # ty: ignore[invalid-return-type]
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         try:

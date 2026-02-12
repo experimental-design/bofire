@@ -11,10 +11,15 @@ from scipy.stats import norm, uniform
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
+    LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    ContinuousDescriptorInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
 
@@ -24,7 +29,7 @@ class OutlierPrior(BaseModel):
 
 
 class UniformOutlierPrior(OutlierPrior):
-    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"  # type: ignore
+    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
     bounds: Tuple[float, float]
 
     def sample(self, n_samples: int) -> np.ndarray:
@@ -35,7 +40,7 @@ class UniformOutlierPrior(OutlierPrior):
 
 
 class NormalOutlierPrior(OutlierPrior):
-    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"  # type: ignore
+    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
     loc: float
     scale: PositiveFloat
 
@@ -87,7 +92,7 @@ class Benchmark:
 
     @property
     def domain(self) -> Domain:
-        return self._domain  # type: ignore
+        return self._domain  # ty: ignore[unresolved-attribute]
 
 
 class GenericBenchmark(Benchmark):
@@ -112,16 +117,19 @@ class FormulationWrapper(Benchmark):
     introducing a sum constraint on all features. The original features get new bounds
     [0, 1/n_original_features] while the spurious features get bounds [0, 1]. On
     evaluation the original features are rescaled back to their original bounds and
-    the original benchmark is evaluated.
+    the original benchmark is evaluated. if `n_features_per_original_feature` is larger than 1,
+    multiple features per original feature are created and a linear inequality constraint
+    is added to ensure that their sum does not exceed 1/n_original_features.
 
     Via the `max_count` parameter an additional NChooseK constraint can be added to
-    the formulation, that limits the number of non-zero features to `max_count`.
+    the formulation, that limits the number of non-zero non-filler features to `max_count`.
     """
 
     def __init__(
         self,
         benchmark: Benchmark,
         n_filler_features: int = 1,
+        n_features_per_original_feature: int = 1,
         max_count: Optional[int] = None,
         **kwargs,
     ):
@@ -133,35 +141,61 @@ class FormulationWrapper(Benchmark):
             benchmark.domain.inputs
         ), "Only continuous inputs supported yet."
         self.n_filler_features = n_filler_features
+        self.n_features_per_original_feature = n_features_per_original_feature
 
-        inputs = Inputs(
-            features=[
+        features = []
+        constraints = []
+        for j, feat in enumerate(self._benchmark.domain.inputs.get()):
+            features += [
                 ContinuousInput(
-                    key=feat.key, bounds=(0, 1 / len(self._benchmark.domain.inputs))
+                    key=f"{feat.key}_{i}",
+                    bounds=(0, 1 / len(self._benchmark.domain.inputs)),
                 )
-                for feat in self._benchmark.domain.inputs.get()
-            ]
-            + [
-                ContinuousInput(key=f"x_filler_{i}", bounds=(0, 1))
-                for i in range(self.n_filler_features)
-            ],
-        )
-        constraints = Constraints(
-            constraints=[
-                LinearEqualityConstraint(
-                    features=inputs.get_keys(),
-                    coefficients=[1.0] * len(inputs),
-                    rhs=1.0,
+                if self.n_features_per_original_feature == 1
+                else ContinuousDescriptorInput(
+                    key=f"{feat.key}_{i}",
+                    bounds=(0, 1 / len(self._benchmark.domain.inputs)),
+                    descriptors=self._benchmark.domain.inputs.get_keys(),
+                    values=[
+                        1 if k == j else 0
+                        for k in range(len(self._benchmark.domain.inputs))
+                    ],
                 )
+                for i in range(self.n_features_per_original_feature)
             ]
+            if self.n_features_per_original_feature > 1:
+                constraints.append(
+                    LinearInequalityConstraint(
+                        features=[
+                            f"{feat.key}_{i}"
+                            for i in range(self.n_features_per_original_feature)
+                        ],
+                        coefficients=[1.0] * self.n_features_per_original_feature,
+                        rhs=1 / len(self._benchmark.domain.inputs),
+                    )
+                )
+
+        features += [
+            ContinuousInput(key=f"x_filler_{i}", bounds=(0, 1))
+            for i in range(self.n_filler_features)
+        ]
+
+        inputs = Inputs(features=features)
+        constraints.append(
+            LinearEqualityConstraint(
+                features=inputs.get_keys(),
+                coefficients=[1.0] * len(inputs),
+                rhs=1.0,
+            )
         )
         if max_count is not None:
-            assert max_count < len(
-                inputs
-            ), "`max_count` must be smaller than total number of features."
-            constraints.constraints.append(  # type: ignore
+            constraints.append(
                 NChooseKConstraint(
-                    features=inputs.get_keys(),
+                    features=[
+                        key
+                        for key in inputs.get_keys()
+                        if not key.startswith("x_filler_")
+                    ],
                     max_count=max_count,
                     min_count=0,
                     none_also_valid=True,
@@ -170,32 +204,35 @@ class FormulationWrapper(Benchmark):
 
         self._domain = Domain(
             inputs=inputs,
-            constraints=constraints,
+            constraints=Constraints(constraints=constraints),
             outputs=self._benchmark.domain.outputs,
         )
         self._mins = np.array(
-            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]  # type: ignore
+            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]
         )
         self._scales = np.array(
             [
-                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                feat.bounds[1] - feat.bounds[0]
                 for feat in self._benchmark.domain.inputs.get()
             ]
         )
         self._scales_new = np.array(
-            [
-                feat.bounds[1] - feat.bounds[0]  # type: ignore
-                for feat in self.domain.inputs.get_by_keys(
-                    self._benchmark.domain.inputs.get_keys()
-                )
-            ]
+            [1 / len(self._benchmark.domain.inputs.get_keys())]
+            * len(self._benchmark.domain.inputs.get_keys())
         )
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        Xt = X[self._benchmark.domain.inputs.get_keys()].values
-        Xs = Xt / self._scales_new
-        Xs = self._mins + self._scales * Xs
-        return pd.DataFrame(data=Xs, columns=self._benchmark.domain.inputs.get_keys())
+        X = X.copy()
+        for key in self._benchmark.domain.inputs.get_keys():
+            X[key] = X[
+                [f"{key}_{i}" for i in range(self.n_features_per_original_feature)]
+            ].sum(axis=1)
+
+        # drop original columns, only keep latent ones
+        X = X.drop(columns=self.domain.inputs.get_keys())
+        X = X / self._scales_new
+
+        return self._mins + self._scales * X
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
         X_transformed = self._transform(candidates)
@@ -214,11 +251,11 @@ class SpuriousFeaturesWrapper(Benchmark):
         self._benchmark = benchmark
         self._domain = Domain(
             inputs=Inputs(
-                features=benchmark.domain.inputs.features
+                features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
                 + [
                     ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
                     for i in range(n_spurious_features)
-                ]  # type: ignore
+                ]
             ),
             outputs=self._benchmark.domain.outputs,
             constraints=self._benchmark.domain.constraints,
@@ -266,7 +303,7 @@ class SyntheticBoTorch(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=b)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=b)
                     for i, b in enumerate(self.test_function._bounds)
                 ]
             ),
@@ -285,6 +322,20 @@ class SyntheticBoTorch(Benchmark):
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
         Xt = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
             **tkwargs
+        )
+        # botorch is very picky regarding the candidates being exactly within the bounds
+        # and does not tolerate any numerical noise here. For this reason we clamp the
+        # values here.
+        Xt = torch.clamp(
+            Xt,
+            min=torch.tensor(
+                [b[0] for b in self.test_function._bounds],
+                **tkwargs,
+            ),
+            max=torch.tensor(
+                [b[1] for b in self.test_function._bounds],
+                **tkwargs,
+            ),
         )
         result = pd.DataFrame(
             self.test_function(Xt).numpy(), columns=self.domain.outputs.get_keys()

@@ -24,7 +24,7 @@ class CategoricalInput(Input):
 
     """
 
-    type: Literal["CategoricalInput"] = "CategoricalInput"  # type: ignore
+    type: Literal["CategoricalInput"] = "CategoricalInput"
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
@@ -44,14 +44,14 @@ class CategoricalInput(Input):
 
     @model_validator(mode="after")
     def validate_categories_fitting_allowed(self):
-        if len(self.allowed) != len(self.categories):  # type: ignore
+        if len(self.allowed) != len(self.categories):
             raise ValueError("allowed must have same length as categories")
-        if sum(self.allowed) == 0:  # type: ignore
+        if sum(self.allowed) == 0:
             raise ValueError("no category is allowed")
         return self
 
     @staticmethod
-    def valid_transform_types() -> List[CategoricalEncodingEnum]:  # type: ignore
+    def valid_transform_types() -> List[CategoricalEncodingEnum]:
         return [
             CategoricalEncodingEnum.ONE_HOT,
             CategoricalEncodingEnum.DUMMY,
@@ -90,11 +90,11 @@ class CategoricalInput(Input):
             if transform_type == CategoricalEncodingEnum.ORDINAL:
                 return self.to_ordinal_encoding(pd.Series([val])).tolist()
             raise ValueError(
-                f"Unkwon transform type {transform_type} for categorical input {self.key}",
+                f"Unknown transform type {transform_type} for categorical input {self.key}",
             )
         return None
 
-    def get_allowed_categories(self):
+    def get_allowed_categories(self) -> list[str]:
         """Returns the allowed categories.
 
         Returns:
@@ -133,7 +133,7 @@ class CategoricalInput(Input):
             possible_categories = self.get_possible_categories(values)
             if len(possible_categories) != len(self.categories):
                 raise ValueError(
-                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
+                    f"Categories {list(set(self.categories) - set(possible_categories))} of feature {self.key} not used. Remove them.",
                 )
         return values
 
@@ -320,7 +320,7 @@ class CategoricalInput(Input):
             ),
         )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
@@ -336,7 +336,9 @@ class CategoricalInput(Input):
             if values is None:
                 lower = [0.0 for _ in self.categories]
                 upper = [
-                    1.0 if self.allowed[i] is True else 0.0  # type: ignore
+                    1.0
+                    if self.allowed[i] is True  # ty: ignore[not-subscriptable]
+                    else 0.0
                     for i, _ in enumerate(self.categories)
                 ]
             else:
@@ -366,7 +368,7 @@ class CategoricalInput(Input):
 
 
 class CategoricalOutput(Output):
-    type: Literal["CategoricalOutput"] = "CategoricalOutput"  # type: ignore
+    type: Literal["CategoricalOutput"] = "CategoricalOutput"
     order_id: ClassVar[int] = 10
 
     categories: CategoryVals
@@ -387,14 +389,14 @@ class CategoricalOutput(Output):
             raise ValueError("categories must match to objective categories")
         return self
 
-    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],
                 index=values.index,
                 name=values.name,
             )
-        return self.objective(values, values_adapt)  # type: ignore
+        return self.objective(values, values_adapt)  # ty: ignore[invalid-return-type]
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)

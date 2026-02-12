@@ -9,16 +9,14 @@ from botorch.models.fully_bayesian import (
     FullyBayesianSingleTaskGP,
     SaasFullyBayesianSingleTaskGP,
 )
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.outcome import OutcomeTransform
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import (
     FullyBayesianSingleTaskGPSurrogate as DataModel,
 )
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.surrogates.utils import get_scaler
+from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -29,7 +27,7 @@ _model_mapper = {
 }
 
 
-class FullyBayesianSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     def __init__(
         self,
         data_model: DataModel,
@@ -48,33 +46,29 @@ class FullyBayesianSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, disable_progbar: bool = True):  # type: ignore
-        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
-        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-
-        tX, tY = (
-            torch.from_numpy(transformed_X.values).to(**tkwargs),
-            torch.from_numpy(Y.values).to(**tkwargs),
-        )
+    def _fit_botorch(
+        self,
+        tX: torch.Tensor,
+        tY: torch.Tensor,
+        input_transform: Optional[InputTransform] = None,
+        outcome_transform: Optional[OutcomeTransform] = None,
+        disable_progbar: bool = True,
+    ):
         self.model = _model_mapper[self.model_type](
             train_X=tX,
             train_Y=tY,
-            outcome_transform=(
-                Standardize(m=1)
-                if self.output_scaler == ScalerEnum.STANDARDIZE
-                else None
-            ),
-            input_transform=scaler,
+            outcome_transform=outcome_transform,
+            input_transform=input_transform,
             use_input_warping=True if len(self.features_to_warp) > 0 else False,
             indices_to_warp=self.inputs.get_feature_indices(
-                self.input_preprocessing_specs, self.features_to_warp
+                self.categorical_encodings, self.features_to_warp
             )
             if len(self.features_to_warp) > 0
-            else None,  # type: ignore
+            else None,
         )
 
         fit_fully_bayesian_model_nuts(
-            self.model,  # type: ignore
+            self.model,
             warmup_steps=self.warmup_steps,
             num_samples=self.num_samples,
             thinning=self.thinning,
@@ -85,7 +79,7 @@ class FullyBayesianSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+            posterior = self.model.posterior(X=X, observation_noise=True)
 
         preds = posterior.mixture_mean.detach().numpy()
         stds = np.sqrt(posterior.mixture_variance.detach().numpy())

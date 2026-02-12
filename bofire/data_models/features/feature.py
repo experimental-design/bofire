@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import ClassVar, List, Optional, Tuple, Union
+from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
 class Feature(BaseModel):
     """The base class for all features."""
 
-    type: str
+    type: Any
     key: str
     order_id: ClassVar[int] = -1
 
@@ -171,8 +171,8 @@ class Output(Feature):
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
-        return pd.to_numeric(s, errors="coerce").notnull().all()  # type: ignore
-    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
+        return pd.to_numeric(s, errors="coerce").notnull().all()
+    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()
 
 
 def is_categorical(s: pd.Series, categories: List[str]):
