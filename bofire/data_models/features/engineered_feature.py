@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 from pydantic import Field
 
+from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.features.molecular import ContinuousMolecularInput
@@ -161,3 +162,25 @@ class ProductFeature(EngineeredFeature):
     @property
     def n_transformed_inputs(self) -> int:
         return 1
+
+
+class CloneFeature(EngineeredFeature):
+    """Engineered feature that creates a copy of the original features.
+
+    This is useful if you want to have features undergoing different scalers
+    before entering different kernels.
+
+    Args:
+        features: The features to be used to compute the product.
+            It is allowed to state a feature more than once to for example
+            an quadratic term.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
+    type: Literal["ClonedFeature"] = "ClonedFeature"
+    order_id: ClassVar[int] = 5
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return len(self.features)

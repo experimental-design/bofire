@@ -7,6 +7,7 @@ from botorch.models.transforms.input import AppendFeatures
 
 from bofire.data_models.api import Inputs
 from bofire.data_models.features.api import (
+    CloneFeature,
     EngineeredFeature,
     MeanFeature,
     MolecularWeightedSumFeature,
@@ -110,12 +111,32 @@ def map_molecular_weighted_sum_feature(
     )
 
 
+def map_clone_feature(
+    inputs: Inputs,
+    transform_specs: InputTransformSpecs,
+    feature: CloneFeature,
+) -> AppendFeatures:
+    features2idx, _ = inputs._get_transform_info(transform_specs)
+    indices = [features2idx[key][0] for key in feature.features]
+
+    def clone_features(X: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
+        result = X[..., indices].unsqueeze(-2)
+        return result.expand(*result.shape[:-2], 1, -1)
+
+    return AppendFeatures(
+        f=clone_features,
+        fkwargs={"indices": indices},
+        transform_on_train=True,
+    )
+
+
 AGGREGATE_MAP = {
     SumFeature: map_sum_feature,
     ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
     WeightedSumFeature: map_weighted_sum_feature,
     MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
+    CloneFeature: map_clone_feature,
 }
 
 

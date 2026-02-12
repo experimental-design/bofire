@@ -1,8 +1,33 @@
+from typing import Any, Literal, Union
+
 from pydantic import field_validator
 
+from bofire.data_models.base import BaseModel
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.types import FeatureKeys
+
+
+class Scaler(BaseModel):
+    type: Any
+    features: FeatureKeys
+
+
+class Normalize(Scaler):
+    type: Literal["Normalize"] = "Normalize"
+
+
+class Standardize(Scaler):
+    type: Literal["Standardize"] = "Standardize"
+
+
+class Log10(Scaler):
+    type: Literal["Log10"] = "Log10"
+
+
+class Scalers(BaseModel):
+    scalers: list[Union[Normalize, Standardize, Log10]]
 
 
 class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
