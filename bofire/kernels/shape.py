@@ -95,21 +95,21 @@ def _pairwise_piecewise_linear_wasserstein(
     bsz, n1, _ = x1.shape
     _, n2, _ = x2.shape
 
-    union_x_with_dups = torch.sort(torch.cat([x1.reshape(-1), x2.reshape(-1)])).values
+    # union_x_with_dups = torch.sort(torch.cat([x1.reshape(-1), x2.reshape(-1)])).values
 
-    print(
-        "[pairwise_piecewise_linear_wasserstein_batched] x1 shape:",
-        x1.shape,
-        "x2 shape:",
-        x2.shape,
-    )
-    print(
-        "[pairwise_piecewise_linear_wasserstein_batched] union_x size:", union_x.shape
-    )
-    print(
-        "[pairwise_piecewise_linear_wasserstein_batched] union_x_with_dups size:",
-        union_x_with_dups.shape,
-    )
+    # print(
+    #     "[pairwise_piecewise_linear_wasserstein_batched] x1 shape:",
+    #     x1.shape,
+    #     "x2 shape:",
+    #     x2.shape,
+    # )
+    # print(
+    #     "[pairwise_piecewise_linear_wasserstein_batched] union_x size:", union_x.shape
+    # )
+    # print(
+    #     "[pairwise_piecewise_linear_wasserstein_batched] union_x_with_dups size:",
+    #     union_x_with_dups.shape,
+    # )
 
     if union_x.numel() < 2:
         result = torch.zeros((bsz, n1, n2), dtype=x1.dtype, device=x1.device)
@@ -272,6 +272,8 @@ class ExactWassersteinKernel(Kernel):
             dists = dists / self.lengthscale.squeeze()
         else:
             dists = dists / self.lengthscale.mean()
+
+        dists = dists.clamp_min(1e-15)
 
         if self.squared:
             return torch.exp(-(dists**2))

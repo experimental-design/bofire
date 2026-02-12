@@ -38,6 +38,7 @@ def _compute_active_dims(
 def map_RBFKernel(
     data_model: data_models.RBFKernel,
     batch_shape: torch.Size,
+    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.RBFKernel:
@@ -498,12 +499,14 @@ KERNEL_MAP = {
 def map(
     data_model: data_models.AnyKernel,
     batch_shape: torch.Size,
+    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> GpytorchKernel:
     return KERNEL_MAP[data_model.__class__](
         data_model,
         batch_shape,
+        ard_num_dims,
         active_dims,
         features_to_idx_mapper,
     )
