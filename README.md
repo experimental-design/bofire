@@ -195,7 +195,7 @@ Documentation including a section on how to get started can be found under https
 We would love for you to use BoFire in your work! If you do, please cite [our paper](https://arxiv.org/abs/2408.05040):
     
     @article{JMLR:v26:24-1540,
-      author  = {Johannes P. DÃ¼rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and Wagner Steuer Costa and David Walz and Niklas Wulkow and Behrang Shafei},
+      author  = {Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and Wagner Steuer Costa and David Walz and Niklas Wulkow and Behrang Shafei},
       title   = {BoFire: Bayesian Optimization Framework Intended for Real Experiments},
       journal = {Journal of Machine Learning Research},
       year    = {2025},
