@@ -728,7 +728,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="cd80ba3e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.909057,&quot;end_time&quot;:&quot;2024-10-10T20:34:41.096329&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:38.187272&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="265fe7e3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.909057,&quot;end_time&quot;:&quot;2024-10-10T20:34:41.096329&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:38.187272&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -746,7 +746,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="random-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="random-optimization">Random Optimization</h2>
-<div id="538336e3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.274635,&quot;end_time&quot;:&quot;2024-10-10T20:34:41.373576&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:41.098941&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="da76c5e6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.274635,&quot;end_time&quot;:&quot;2024-10-10T20:34:41.373576&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:41.098941&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    datamodel <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>datamodel)</span>
@@ -768,13 +768,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=15.743]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 87.14it/s, Current Best:=15.743]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=68.068]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 81.85it/s, Current Best:=68.068]</code></pre>
 </div>
 </div>
 </section>
 <section id="sobo-gpei-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="sobo-gpei-optimization">SOBO (GPEI) Optimization</h2>
-<div id="58db24cf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.314577,&quot;end_time&quot;:&quot;2024-10-10T20:34:41.695714&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:41.381137&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="c5bb7180" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.314577,&quot;end_time&quot;:&quot;2024-10-10T20:34:41.695714&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:41.381137&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_factory(domain: Domain):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    data_model <span class="op">=</span> SoboStrategy(domain<span class="op">=</span>domain, acquisition_function<span class="op">=</span>qLogEI())</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategies.<span class="bu">map</span>(data_model)</span>
@@ -794,7 +794,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
 
-  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s, Current Best:=15.970]Run 0: 100%|██████████| 1/1 [00:01&lt;00:00,  1.03s/it, Current Best:=15.970]Run 0: 100%|██████████| 1/1 [00:01&lt;00:00,  1.04s/it, Current Best:=15.970]</code></pre>
+  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=47.854]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  1.60it/s, Current Best:=47.854]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  1.60it/s, Current Best:=47.854]</code></pre>
 </div>
 </div>
 
