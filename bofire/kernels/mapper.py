@@ -63,6 +63,7 @@ def map_RBFKernel(
 def map_MaternKernel(
     data_model: data_models.MaternKernel,
     batch_shape: torch.Size,
+    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.MaternKernel:
