@@ -12,7 +12,8 @@ from botorch.models.transforms.input import (
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
-from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.scaler import AnyScaler
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeDataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform
@@ -60,7 +61,7 @@ def get_scaler(
     inputs: Inputs,
     engineered_features: EngineeredFeatures,
     categorical_encodings: InputTransformSpecs,
-    scaler_type: ScalerEnum,
+    scaler_type: AnyScaler,
 ) -> Union[InputStandardize, Normalize, None]:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
@@ -71,14 +72,14 @@ def get_scaler(
         engineered_features: Engineered features.
         categorical_encodings: Dictionary how to treat
             the categoricals and/or molecules.
-        scaler_type (ScalerEnum): Enum indicating the scaler of interest.
+        scaler_type (AnyScaler): The scaler object indicating the scaler of interest.
 
     Returns:
         The instantiated botorch scaler object or None if no scaling is to be
             applied.
 
     """
-    if scaler_type == ScalerEnum.IDENTITY:
+    if scaler_type is None:
         return None
     features2idx, _ = inputs._get_transform_info(categorical_encodings)
 
@@ -92,22 +93,44 @@ def get_scaler(
     for indices in efeatures2idx.values():
         d += len(indices)
 
-    continuous_feature_keys = get_continuous_feature_keys(
-        inputs=inputs,
-        specs=categorical_encodings,
-    )
+    if len(scaler_type.features) == 0:
+        # if no features are specified, we scale all features that
+        # behave like continuous features, i.e. all features that are
+        # not encoded as categoricals
+        continuous_feature_keys = get_continuous_feature_keys(
+            inputs=inputs,
+            specs=categorical_encodings,
+        )
 
-    ord_dims = inputs.get_feature_indices(
-        specs=categorical_encodings,
-        feature_keys=continuous_feature_keys,
-    ) + engineered_features.get_feature_indices(
-        offset=offset, feature_keys=engineered_features.get_keys()
-    )
+        ord_dims = inputs.get_feature_indices(
+            specs=categorical_encodings,
+            feature_keys=continuous_feature_keys,
+        ) + engineered_features.get_feature_indices(
+            offset=offset, feature_keys=engineered_features.get_keys()
+        )
+    else:
+        # if features are specified, we only scale those
+        # for this we have to find its indices in the transformed space
+        # and for this we have to first find out which features are original
+        # and which are engineered
+        ord_dims = inputs.get_feature_indices(
+            specs=categorical_encodings,
+            feature_keys=[
+                feat for feat in scaler_type.features if feat in inputs.get_keys()
+            ],
+        ) + engineered_features.get_feature_indices(
+            offset=offset,
+            feature_keys=[
+                feat
+                for feat in scaler_type.features
+                if feat in engineered_features.get_keys()
+            ],
+        )
 
     if len(ord_dims) == 0:
         return None
 
-    if scaler_type == ScalerEnum.NORMALIZE:
+    if isinstance(scaler_type, NormalizeDataModel):
         return Normalize(
             d=d,
             # bounds=torch.tensor([lower, upper]).to(**tkwargs),
@@ -125,7 +148,7 @@ def get_scaler(
 def get_input_transform(
     inputs: Inputs,
     engineered_features: EngineeredFeatures,
-    scaler_type: ScalerEnum,
+    scaler_type: AnyScaler,
     categorical_encodings: InputTransformSpecs,
 ) -> Union[InputTransform, None]:
     """Creates the botorch input transform on the basis of
