@@ -7,7 +7,6 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     FilterFeatures,
     InputStandardize,
-    InputTransform,
     Normalize,
     NumericToCategoricalEncoding,
 )
@@ -40,15 +39,6 @@ from bofire.surrogates.utils import (
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
-
-
-def _is_normalize(input_transform: InputTransform | dict[str, InputTransform]):
-    """Return True if the input transform is Normalize, or if it is a
-    ChainedInputTransform composed of many Normalizes."""
-    return isinstance(input_transform, Normalize) or (
-        isinstance(input_transform, dict)
-        and all(isinstance(tf, Normalize) for tf in input_transform.values())
-    )
 
 
 def test_get_scaler_none():
@@ -168,12 +158,13 @@ def test_get_scaler(
         ],
     )
 
-    scaler = get_scaler(
+    scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings=input_preprocessing_specs,
         scaler_type=scaler_enum,
     )
+    scaler = None if scaler_dict is None else scaler_dict["scaler"]
     assert isinstance(scaler, expected_scaler)
     if expected_indices is not None:
         assert (scaler.indices == expected_indices).all()
@@ -207,7 +198,7 @@ def test_get_scaler_with_experiments():
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings={},
         scaler_type=ScalerEnum.NORMALIZE,
-    )
+    )["scaler"]
 
     assert isinstance(scaler, Normalize)
     assert (scaler.bounds == torch.tensor([[-4.0], [4.0]])).all()
@@ -222,7 +213,7 @@ def test_get_scaler_with_experiments():
         categorical_encodings={},
         scaler_type=ScalerEnum.NORMALIZE,
         X=experiments_beyond_bounds,
-    )
+    )["scaler"]
 
     assert (
         scaler_beyond_bounds.bounds == torch.tensor([[-8.0, -4.0], [4.0, 5.0]])
@@ -316,23 +307,18 @@ def test_get_scaler_molecular(
         [1.5, 4.5, "N[C@](C)(F)C(=O)O"],
     ]
     experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_mol"])
-    scaler = get_scaler(
+    scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings=input_preprocessing_specs,
         scaler_type=scaler_enum,
         # X=experiments[inputs.get_keys()],
     )
+    scaler = None if scaler_dict is None else scaler_dict["scaler"]
     assert isinstance(scaler, expected_scaler)
     if expected_indices is not None:
         assert scaler.transform_on_train is True
         assert (scaler.indices == expected_indices).all()
-    else:
-        with pytest.raises(
-            AttributeError,
-            match="'NoneType' object has no attribute 'indices'",
-        ):
-            assert (scaler.indices == expected_indices).all()
 
 
 def test_get_scaler_engineered_features():
@@ -357,23 +343,26 @@ def test_get_scaler_engineered_features():
             ),
         ],
     )
-    scaler = get_scaler(
+    scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=engineered_features,
         categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler_type=ScalerEnum.NORMALIZE,
     )
-    assert _is_normalize(scaler)
+
+    assert isinstance(scaler_dict, dict) and all(
+        isinstance(tf, Normalize) for tf in scaler_dict.values()
+    )
     assert (
-        scaler["feat_normalize"].indices == torch.tensor([0, 1], dtype=torch.int64)
+        scaler_dict["scaler"].indices == torch.tensor([0, 1], dtype=torch.int64)
     ).all()
-    assert not scaler["feat_normalize"].learn_coefficients
+    assert not scaler_dict["scaler"].learn_coefficients
 
     assert (
-        scaler["engineered_feat_normalize"].indices
+        scaler_dict["engineered_scaler"].indices
         == torch.tensor([5, 6, 7, 8], dtype=torch.int64)
     ).all()
-    assert scaler["engineered_feat_normalize"].learn_coefficients
+    assert scaler_dict["engineered_scaler"].learn_coefficients
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -546,17 +535,14 @@ def test_get_input_transform():
         ),
     )
     assert isinstance(input_transform, ChainedInputTransform)
-    assert len(input_transform.keys()) == 3
-    assert list(input_transform.keys()) == ["cat", "sum", "scaler"]
-    scaler = input_transform["scaler"]
-    assert _is_normalize(scaler)
-    assert (
-        scaler["feat_normalize"].indices == torch.tensor([0, 1], dtype=torch.int64)
-    ).all()
-    assert (
-        scaler["engineered_feat_normalize"].indices
-        == torch.tensor([5], dtype=torch.int64)
-    ).all()
+    assert list(input_transform.keys()) == ["cat", "sum", "scaler", "engineered_scaler"]
+    scaler, engineered_scaler = (
+        input_transform["scaler"],
+        input_transform["engineered_scaler"],
+    )
+    assert isinstance(scaler, Normalize) and isinstance(engineered_scaler, Normalize)
+    assert (scaler.indices == torch.tensor([0, 1], dtype=torch.int64)).all()
+    assert (engineered_scaler.indices == torch.tensor([5], dtype=torch.int64)).all()
     # case 6 engineered features keep_features = False
     input_transform = get_input_transform(
         inputs=inputs,
@@ -571,8 +557,13 @@ def test_get_input_transform():
         ),
     )
     assert isinstance(input_transform, ChainedInputTransform)
-    assert len(input_transform.keys()) == 4
-    assert list(input_transform.keys()) == ["cat", "sum", "scaler", "filter_engineered"]
+    assert list(input_transform.keys()) == [
+        "cat",
+        "sum",
+        "scaler",
+        "engineered_scaler",
+        "filter_engineered",
+    ]
     filter = input_transform["filter_engineered"]
     assert isinstance(filter, FilterFeatures)
     assert (

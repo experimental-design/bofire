@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Mapping, Union
 
 import pandas as pd
 import torch
@@ -63,7 +63,7 @@ def get_scaler(
     categorical_encodings: InputTransformSpecs,
     scaler_type: ScalerEnum,
     X: pd.DataFrame | None = None,
-) -> InputStandardize | Normalize | dict[str, Normalize] | None:
+) -> Mapping[str, Normalize | InputStandardize] | None:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
 
@@ -77,7 +77,7 @@ def get_scaler(
         X: Experimental values of input features
 
     Returns:
-        The instantiated botorch scaler object or None if no scaling is to be
+        The instantiated botorch scaler(s) object or None if no scaling is to be
             applied.
 
     """
@@ -121,7 +121,7 @@ def get_scaler(
         )
         input_tfs: dict[str, Normalize] = {}
         if cont_feat_dims:
-            input_tfs["feat_normalize"] = Normalize(
+            input_tfs["scaler"] = Normalize(
                 d=d,
                 bounds=torch.tensor([lower, upper]).to(**tkwargs)[:, cont_feat_dims],
                 indices=cont_feat_dims,
@@ -129,7 +129,7 @@ def get_scaler(
             )
 
         if engineered_feat_dims:
-            input_tfs["engineered_feat_normalize"] = Normalize(
+            input_tfs["engineered_scaler"] = Normalize(
                 d=d,
                 indices=engineered_feat_dims,
                 batch_shape=torch.Size(),
@@ -138,17 +138,16 @@ def get_scaler(
         if len(input_tfs) == 0:
             return None
 
-        if len(input_tfs) == 1:
-            return next(iter(input_tfs.values()))
-
         return input_tfs
 
     # it has to be standardize
-    return InputStandardize(
-        d=d,
-        indices=ord_dims,
-        batch_shape=torch.Size(),
-    )
+    return {
+        "scaler": InputStandardize(
+            d=d,
+            indices=ord_dims,
+            batch_shape=torch.Size(),
+        )
+    }
 
 
 def get_input_transform(
@@ -200,10 +199,7 @@ def get_input_transform(
         X=X,
     )
     if scaler is not None:
-        if isinstance(scaler, dict):
-            transforms.update(scaler)
-        else:
-            transforms["scaler"] = scaler
+        transforms.update(scaler)
 
     # fourth remove ignored features
     if len(ignored) > 0:

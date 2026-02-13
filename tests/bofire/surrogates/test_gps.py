@@ -343,7 +343,7 @@ def test_SingleTaskGP_bound_relearning():
     )
     surrogate = surrogates.map(surrogate_data)
     surrogate.fit(experiments)
-    engineered_scaler = surrogate.model.input_transform["engineered_feat_normalize"]
+    engineered_scaler = surrogate.model.input_transform["engineered_scaler"]
     bounds1 = engineered_scaler.bounds.clone()
     experiments2 = bench.f(bench.domain.inputs.sample(10), return_complete=True)
     surrogate.fit(experiments2)
