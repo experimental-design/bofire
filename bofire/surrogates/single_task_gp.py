@@ -50,6 +50,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
+                ard_num_dims=1,
                 features_to_idx_mapper=self.get_feature_indices,
             ),
             outcome_transform=outcome_transform,
