@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 from pydantic import Field
 
-from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.features.molecular import ContinuousMolecularInput
