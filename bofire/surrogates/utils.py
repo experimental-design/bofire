@@ -1,5 +1,6 @@
 from typing import List, Union
 
+import pandas as pd
 import torch
 from botorch.models.transforms.input import (
     ChainedInputTransform,
@@ -61,7 +62,8 @@ def get_scaler(
     engineered_features: EngineeredFeatures,
     categorical_encodings: InputTransformSpecs,
     scaler_type: ScalerEnum,
-) -> Union[InputStandardize, ChainedInputTransform, None]:
+    X: pd.DataFrame,
+) -> InputStandardize | Normalize | dict[str, Normalize] | None:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
 
@@ -72,6 +74,7 @@ def get_scaler(
         categorical_encodings: Dictionary how to treat
             the categoricals and/or molecules.
         scaler_type (ScalerEnum): Enum indicating the scaler of interest.
+        X: Experimental values of input features
 
     Returns:
         The instantiated botorch scaler object or None if no scaling is to be
@@ -114,6 +117,7 @@ def get_scaler(
         # since bounds are known for these features.
         lower, upper = inputs.get_bounds(
             specs=categorical_encodings,
+            experiments=X,
         )
         input_tfs: dict[str, Normalize] = {}
         if cont_feat_dims:
@@ -137,7 +141,7 @@ def get_scaler(
         if len(input_tfs) == 1:
             return next(iter(input_tfs.values()))
 
-        return ChainedInputTransform(**input_tfs)
+        return input_tfs
 
     # it has to be standardize
     return InputStandardize(
@@ -152,6 +156,7 @@ def get_input_transform(
     engineered_features: EngineeredFeatures,
     scaler_type: ScalerEnum,
     categorical_encodings: InputTransformSpecs,
+    X: pd.DataFrame,
 ) -> Union[InputTransform, None]:
     """Creates the botorch input transform on the basis of
     the specified inputs, engineered features and categorical
@@ -163,6 +168,7 @@ def get_input_transform(
         scaler_type: The scaler enum to be used.
         categorical_encodings: Dictionary how to treat
             the categoricals and/or molecules.
+        X: Experimental values of input features
 
     Returns:
         The created input transform or None.
@@ -191,9 +197,13 @@ def get_input_transform(
         engineered_features=engineered_features,
         categorical_encodings=categorical_encodings,
         scaler_type=scaler_type,
+        X=X,
     )
     if scaler is not None:
-        transforms["scaler"] = scaler
+        if isinstance(scaler, dict):
+            transforms.update(scaler)
+        else:
+            transforms["scaler"] = scaler
 
     # fourth remove ignored features
     if len(ignored) > 0:
