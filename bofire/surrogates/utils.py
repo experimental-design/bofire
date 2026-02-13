@@ -62,7 +62,7 @@ def get_scaler(
     engineered_features: EngineeredFeatures,
     categorical_encodings: InputTransformSpecs,
     scaler_type: ScalerEnum,
-    X: pd.DataFrame,
+    X: pd.DataFrame | None = None,
 ) -> InputStandardize | Normalize | dict[str, Normalize] | None:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
@@ -156,7 +156,7 @@ def get_input_transform(
     engineered_features: EngineeredFeatures,
     scaler_type: ScalerEnum,
     categorical_encodings: InputTransformSpecs,
-    X: pd.DataFrame,
+    X: pd.DataFrame | None = None,
 ) -> Union[InputTransform, None]:
     """Creates the botorch input transform on the basis of
     the specified inputs, engineered features and categorical

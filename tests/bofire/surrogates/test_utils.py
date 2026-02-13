@@ -42,11 +42,11 @@ from bofire.surrogates.utils import (
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
-def _is_normalize(input_transform: InputTransform):
+def _is_normalize(input_transform: InputTransform | dict[str, InputTransform]):
     """Return True if the input transform is Normalize, or if it is a
     ChainedInputTransform composed of many Normalizes."""
     return isinstance(input_transform, Normalize) or (
-        isinstance(input_transform, ChainedInputTransform)
+        isinstance(input_transform, dict)
         and all(isinstance(tf, Normalize) for tf in input_transform.values())
     )
 
@@ -189,6 +189,44 @@ def test_get_scaler(
     #         assert (scaler.offset == expected_offset).all()
     #     with pytest.raises(AttributeError):
     #         assert (scaler.coefficient == expected_coefficient).all()
+
+
+def test_get_scaler_with_experiments():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+    )
+
+    scaler = get_scaler(
+        inputs=inputs,
+        engineered_features=EngineeredFeatures(features=[]),
+        categorical_encodings={},
+        scaler_type=ScalerEnum.NORMALIZE,
+    )
+
+    assert isinstance(scaler, Normalize)
+    assert (scaler.bounds == torch.tensor([[-4.0], [4.0]])).all()
+
+    experiments_beyond_bounds = pd.DataFrame(
+        [[-8.0, 0.1], [1.2, 5.0]], columns=inputs.get_keys()
+    )
+
+    scaler_beyond_bounds = get_scaler(
+        inputs=inputs,
+        engineered_features=EngineeredFeatures(features=[]),
+        categorical_encodings={},
+        scaler_type=ScalerEnum.NORMALIZE,
+        X=experiments_beyond_bounds,
+    )
+
+    assert (
+        scaler_beyond_bounds.bounds == torch.tensor([[-8.0, -4.0], [4.0, 5.0]])
+    ).all()
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
