@@ -1,9 +1,9 @@
 import json
 import os
 from copy import deepcopy
-from typing import Callable, List, Optional, Protocol, Tuple, Union
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Protocol, Union
 
-import numpy as np
 import pandas as pd
 from multiprocess.pool import Pool
 from tqdm import tqdm
@@ -17,6 +17,30 @@ class StrategyFactory(Protocol):
     def __call__(self, domain: Domain) -> Strategy: ...
 
 
+@dataclass
+class RunResult:
+    """Result of a single optimization run.
+
+    Supports tuple-style access for backward compatibility with ``run()``,
+    which historically returned ``List[Tuple[pd.DataFrame, pd.Series]]``.
+    You can still write ``experiments, metric_values = result`` or
+    ``result[0]`` / ``result[1]``.
+    """
+
+    experiments: pd.DataFrame
+    metric_values: pd.Series
+    terminated_early: bool = False
+    final_iteration: int = 0
+    termination_metrics: Dict[str, List[float]] = field(default_factory=dict)
+
+    # Backward-compat: behave like (experiments, metric_values) tuple.
+    def __iter__(self):
+        return iter((self.experiments, self.metric_values))
+
+    def __getitem__(self, idx):
+        return (self.experiments, self.metric_values)[idx]
+
+
 def _single_run(
     run_idx: int,
     benchmark: Benchmark,
@@ -28,7 +52,8 @@ def _single_run(
     initial_sampler: Optional[
         Union[Callable[[Domain], pd.DataFrame], pd.DataFrame]
     ] = None,
-) -> Tuple[pd.DataFrame, pd.Series]:
+    termination_condition: Any = None,
+) -> RunResult:
     def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during
         time-expensive optimization runs. Autosave should operate every 10
@@ -60,7 +85,18 @@ def _single_run(
             XY = initial_sampler
         strategy.tell(XY)
 
-    metric_values = np.zeros(n_iterations)
+    # Set up termination evaluators if a condition is provided
+    evaluators: list = []
+    if termination_condition is not None:
+        from bofire.termination.api import get_required_evaluators
+
+        evaluators = get_required_evaluators(termination_condition)
+
+    metric_values: List[float] = []
+    termination_metrics: Dict[str, List[float]] = {}
+    terminated_early = False
+    final_iteration = 0
+
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
         X = strategy.ask(candidate_count=n_candidates_per_proposals)
@@ -70,14 +106,45 @@ def _single_run(
         # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
         # column needs to be converted back to str to be added to the benchmark domain.
         strategy.tell(XY)
-        metric_values[i] = metric(strategy.domain, strategy.experiments)
+        current_metric = metric(strategy.domain, strategy.experiments)
+        metric_values.append(current_metric)
+
+        # Check termination condition if provided
+        if termination_condition is not None:
+            eval_kwargs: Dict[str, Any] = {}
+            for evaluator in evaluators:
+                metrics = evaluator.evaluate(strategy, strategy.experiments, i)
+                eval_kwargs.update(metrics)
+                for key, value in metrics.items():
+                    if isinstance(value, (int, float)):
+                        if key not in termination_metrics:
+                            termination_metrics[key] = []
+                        termination_metrics[key].append(value)
+
+            if termination_condition.should_terminate(
+                domain=strategy.domain,
+                experiments=strategy.experiments,
+                iteration=i,
+                **eval_kwargs,
+            ):
+                terminated_early = True
+                final_iteration = i
+                break
+
         pbar.set_description(f"Run {run_idx}")
-        pbar.set_postfix({"Current Best:": f"{metric_values[i]:0.3f}"})
+        pbar.set_postfix({"Current Best:": f"{current_metric:0.3f}"})
         if (i + 1) % safe_interval == 0:
             autosafe_results(benchmark=benchmark)
-    return strategy.experiments, pd.Series(
-        metric_values
-    )  # ty: ignore[invalid-return-type]
+
+        final_iteration = i
+
+    return RunResult(
+        experiments=strategy.experiments,
+        metric_values=pd.Series(metric_values),
+        terminated_early=terminated_early,
+        final_iteration=final_iteration,
+        termination_metrics=termination_metrics,
+    )
 
 
 def run(
@@ -90,8 +157,9 @@ def run(
     n_runs: int = 5,
     n_procs: int = 5,
     safe_interval: int = 1000,
-) -> List[Tuple[pd.DataFrame, pd.Series]]:
-    """Run a benchmark problem several times in parallel
+    termination_condition: Any = None,
+) -> List[RunResult]:
+    """Run a benchmark problem several times in parallel.
 
     Args:
         benchmark: problem to be benchmarked
@@ -101,13 +169,19 @@ def run(
         metric: measure of success, e.g, best value found so far for single
             objective or hypervolume for multi-objective
         initial_sampler: Creates initial data
-        n_candidates: also known as batch size, number of proposals made at once
-            by the strategy
+        n_candidates_per_proposal: also known as batch size, number of proposals
+            made at once by the strategy
         n_runs: number of runs
         n_procs: number of parallel processes to execute the runs
+        safe_interval: Interval for autosaving results.
+        termination_condition: Optional termination condition (from
+            ``bofire.data_models.termination.api``). When provided, runs may
+            stop early. Defaults to ``None`` (run all *n_iterations*).
 
     Returns:
-        per run, a tuple with the benchmark object containing the proposed data and metric values
+        List of :class:`RunResult`, one per run.  Each ``RunResult`` can be
+        unpacked as ``(experiments, metric_values)`` for backward
+        compatibility.
 
     """
 
@@ -121,6 +195,7 @@ def run(
             n_candidates_per_proposal,
             safe_interval,
             initial_sampler,
+            termination_condition,
         )
 
     if n_procs == 1:
