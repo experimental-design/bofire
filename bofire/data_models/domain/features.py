@@ -7,7 +7,18 @@ import re
 import warnings
 from collections.abc import Iterator, Sequence
 from enum import Enum
-from typing import Dict, Generic, List, Literal, Optional, Tuple, Type, Union, cast
+from typing import (
+    Dict,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+    overload,
+)
 
 import numpy as np
 import pandas as pd
@@ -51,6 +62,7 @@ EngineeredFeatureT = TypeVar(
     "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
 )
 OutputT = TypeVar("OutputT", bound=AnyOutput, default=AnyOutput)
+OutputGetT = TypeVar("OutputGetT", bound=AnyOutput, default=AnyOutput)
 
 
 class _BaseFeatures(BaseModel, Generic[FeatureT]):
@@ -1212,3 +1224,27 @@ class Outputs(_BaseFeatures[OutputT]):
             ),
         )
         return clean_exp
+
+    @overload
+    def get(
+        self, includes: Type[OutputGetT], excludes: None = None, exact: bool = False
+    ) -> Outputs[OutputGetT]: ...
+
+    @overload
+    def get(
+        self,
+        includes: Type | List[Type] | None,
+        excludes: Type | List[Type] | None,
+        exact: bool,
+    ) -> Self: ...
+
+    def get(
+        self,
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        excludes: Union[Type, List[Type], None] = None,
+        exact: bool = False,
+    ) -> Self:
+        # repeat the function here as implementation must be below overloads
+        return super().get(includes, excludes, exact)
