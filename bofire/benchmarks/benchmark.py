@@ -135,31 +135,28 @@ class FormulationWrapper(Benchmark):
     ):
         super().__init__(**kwargs)
         self._benchmark = benchmark
+        benchmark_inputs = self._benchmark.domain.inputs.get()
         assert n_filler_features >= 1, "n_filler_features must be >= 1."
         assert len(benchmark.domain.constraints) == 0, "Constraints not supported yet."
-        assert len(benchmark.domain.inputs.get(ContinuousInput)) == len(
-            benchmark.domain.inputs
-        ), "Only continuous inputs supported yet."
+        if not Inputs.is_continuous(benchmark_inputs):
+            raise ValueError("Only continuous inputs supported yet.")
         self.n_filler_features = n_filler_features
         self.n_features_per_original_feature = n_features_per_original_feature
 
         features = []
         constraints = []
-        for j, feat in enumerate(self._benchmark.domain.inputs.get()):
+        for j, feat in enumerate(benchmark_inputs):
             features += [
                 ContinuousInput(
                     key=f"{feat.key}_{i}",
-                    bounds=(0, 1 / len(self._benchmark.domain.inputs)),
+                    bounds=(0, 1 / len(benchmark_inputs)),
                 )
                 if self.n_features_per_original_feature == 1
                 else ContinuousDescriptorInput(
                     key=f"{feat.key}_{i}",
                     bounds=(0, 1 / len(self._benchmark.domain.inputs)),
                     descriptors=self._benchmark.domain.inputs.get_keys(),
-                    values=[
-                        1 if k == j else 0
-                        for k in range(len(self._benchmark.domain.inputs))
-                    ],
+                    values=[1 if k == j else 0 for k in range(len(benchmark_inputs))],
                 )
                 for i in range(self.n_features_per_original_feature)
             ]
@@ -171,7 +168,7 @@ class FormulationWrapper(Benchmark):
                             for i in range(self.n_features_per_original_feature)
                         ],
                         coefficients=[1.0] * self.n_features_per_original_feature,
-                        rhs=1 / len(self._benchmark.domain.inputs),
+                        rhs=1 / len(benchmark_inputs),
                     )
                 )
 
@@ -207,15 +204,13 @@ class FormulationWrapper(Benchmark):
             constraints=Constraints(constraints=constraints),
             outputs=self._benchmark.domain.outputs,
         )
-        inputs = self._benchmark.domain.inputs.get()
-        if Inputs.is_continuous(inputs):
-            self._mins = np.array([feat.bounds[0] for feat in inputs])
-            self._scales = np.array(
-                [feat.bounds[1] - feat.bounds[0] for feat in inputs]
-            )
+
+        self._mins = np.array([feat.bounds[0] for feat in benchmark_inputs])
+        self._scales = np.array(
+            [feat.bounds[1] - feat.bounds[0] for feat in benchmark_inputs]
+        )
         self._scales_new = np.array(
-            [1 / len(self._benchmark.domain.inputs.get_keys())]
-            * len(self._benchmark.domain.inputs.get_keys())
+            [1 / len(benchmark_inputs.get_keys())] * len(benchmark_inputs.get_keys())
         )
 
     def _transform(self, X: pd.DataFrame) -> pd.DataFrame:
