@@ -247,7 +247,7 @@ specs.add_valid(
 
 
 specs.add_valid(
-    features.TaskInput,
+    features.CategoricalTaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": [
@@ -261,7 +261,7 @@ specs.add_valid(
 )
 
 specs.add_invalid(
-    features.TaskInput,
+    features.CategoricalTaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": [
@@ -277,7 +277,7 @@ specs.add_invalid(
 )
 
 specs.add_invalid(
-    features.TaskInput,
+    features.CategoricalTaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": [

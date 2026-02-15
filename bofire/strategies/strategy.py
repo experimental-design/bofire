@@ -1,16 +1,20 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, TypeVar
 
 import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
+
+
+ST = TypeVar("ST", bound="Strategy")
 
 
 class Strategy(ABC):
@@ -68,7 +72,7 @@ class Strategy(ABC):
         return spawned_seed_seq.generate_state(1).item()
 
     @classmethod
-    def from_spec(cls, data_model: DataModel) -> "Strategy":
+    def from_spec(cls, data_model: DataModel) -> Self:
         """Used by the mapper to map from data model to functional strategy."""
         return cls(data_model=data_model)
 
@@ -332,7 +336,7 @@ class Strategy(ABC):
         return len(self.experiments)
 
 
-def make_strategy(strategy_type, data_model_type, locals_of_make: dict):
+def make_strategy(strategy_type: type[ST], data_model_type, locals_of_make: dict) -> ST:
     """Factory function to create a strategy of type strategy_type from a data model of type data_model_type.
     This function is a helper for the `make`-`@classmethod`s of the strategies. All locals that are not None are passed to the
     strategy constructor. The ones that are None are not passed and hence their default values
