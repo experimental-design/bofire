@@ -7,24 +7,13 @@ import re
 import warnings
 from collections.abc import Iterator, Sequence
 from enum import Enum
-from typing import (
-    Dict,
-    Generic,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Dict, Generic, List, Literal, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
-from typing_extensions import Self
+from typing_extensions import Self, TypeGuard, TypeVar
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
@@ -56,11 +45,15 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.types import InputTransformSpecs
 
 
-F = TypeVar("F", bound=AnyFeature)
-FeatureSequence = Sequence[F]
+FeatureT = TypeVar("FeatureT", bound=AnyFeature, default=AnyFeature)
+InputT = TypeVar("InputT", bound=AnyInput, default=AnyInput)
+EngineeredFeatureT = TypeVar(
+    "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
+)
+OutputT = TypeVar("OutputT", bound=AnyOutput, default=AnyOutput)
 
 
-class _BaseFeatures(BaseModel, Generic[F]):
+class _BaseFeatures(BaseModel, Generic[FeatureT]):
     """Container of features, both input and output features are allowed.
 
     Attributes:
@@ -69,26 +62,26 @@ class _BaseFeatures(BaseModel, Generic[F]):
     """
 
     type: Literal["Features"] = "Features"
-    features: FeatureSequence = Field(default_factory=list)
+    features: Sequence[FeatureT] = Field(default_factory=list)
 
     @field_validator("features")
     @classmethod
     def validate_unique_feature_keys(
         cls: type[_BaseFeatures],
-        features: FeatureSequence,
-    ) -> FeatureSequence:
+        features: Sequence[FeatureT],
+    ) -> Sequence[FeatureT]:
         keys = [feat.key for feat in features]
         if len(keys) != len(set(keys)):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:
+    def __iter__(self) -> Iterator[FeatureT]:
         return iter(self.features)
 
     def __len__(self):
         return len(self.features)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> FeatureT:
         return self.features[i]
 
     def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures]):
@@ -126,7 +119,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             )
         return Features(features=new_feature_seq)
 
-    def get_by_key(self, key: str, use_regex: bool = False) -> F:
+    def get_by_key(self, key: str, use_regex: bool = False) -> FeatureT:
         """Get a feature by its key.
 
         First, the method tries to find the feature by its key. If no feature is
@@ -255,7 +248,7 @@ class Features(_BaseFeatures[AnyFeature]):
     pass
 
 
-class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
+class EngineeredFeatures(_BaseFeatures[EngineeredFeatureT]):
     """Container of engineered (input) features, only engineered features
     are allowed.
 
@@ -331,7 +324,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         return sum(feat.n_transformed_inputs for feat in self.get())
 
 
-class Inputs(_BaseFeatures[AnyInput]):
+class Inputs(_BaseFeatures[InputT]):
     """Container of input features, only input features are allowed.
 
     Attributes:
@@ -343,7 +336,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     @field_validator("features")
     @classmethod
-    def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
+    def validate_only_one_task_input(cls, features: Sequence[InputT]):
         filtered = filter_by_class(
             features,
             includes=TaskInput,
@@ -911,8 +904,12 @@ class Inputs(_BaseFeatures[AnyInput]):
             .all(axis=1)
         )
 
+    @staticmethod
+    def is_continuous(inputs: Inputs) -> TypeGuard[Inputs[ContinuousInput]]:
+        return len(inputs.get(ContinuousInput)) == len(inputs)
 
-class Outputs(_BaseFeatures[AnyOutput]):
+
+class Outputs(_BaseFeatures[OutputT]):
     """Container of output features, only output features are allowed.
 
     Attributes:
