@@ -207,15 +207,12 @@ class FormulationWrapper(Benchmark):
             constraints=Constraints(constraints=constraints),
             outputs=self._benchmark.domain.outputs,
         )
-        self._mins = np.array(
-            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]
-        )
-        self._scales = np.array(
-            [
-                feat.bounds[1] - feat.bounds[0]
-                for feat in self._benchmark.domain.inputs.get()
-            ]
-        )
+        inputs = self._benchmark.domain.inputs.get()
+        if Inputs.is_continuous(inputs):
+            self._mins = np.array([feat.bounds[0] for feat in inputs])
+            self._scales = np.array(
+                [feat.bounds[1] - feat.bounds[0] for feat in inputs]
+            )
         self._scales_new = np.array(
             [1 / len(self._benchmark.domain.inputs.get_keys())]
             * len(self._benchmark.domain.inputs.get_keys())
