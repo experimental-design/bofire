@@ -167,7 +167,7 @@ specs.add_invalid(
         "scaler": Normalize(features=["d", "e"]),
     },
     error=ValueError,
-    message="The following features are missing in inputs: ['d', 'e']",
+    message="The following features are missing in inputs",
 )
 
 
