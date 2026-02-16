@@ -1,5 +1,6 @@
-from typing import List, Union
+from typing import List, Mapping, Union
 
+import pandas as pd
 import torch
 from botorch.models.transforms.input import (
     ChainedInputTransform,
@@ -16,7 +17,7 @@ from bofire.data_models.surrogates.scaler import AnyScaler
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeDataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.engineered_features import map as map_feature
-from bofire.utils.torch_tools import get_NumericToCategorical_input_transform
+from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
 def get_continuous_feature_keys(
@@ -62,7 +63,8 @@ def get_scaler(
     engineered_features: EngineeredFeatures,
     categorical_encodings: InputTransformSpecs,
     scaler_type: AnyScaler,
-) -> Union[InputStandardize, Normalize, None]:
+    X: pd.DataFrame | None = None,
+) -> Mapping[str, Normalize | InputStandardize] | None:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
 
@@ -73,9 +75,10 @@ def get_scaler(
         categorical_encodings: Dictionary how to treat
             the categoricals and/or molecules.
         scaler_type (AnyScaler): The scaler object indicating the scaler of interest.
+        X: Experimental values of input features
 
     Returns:
-        The instantiated botorch scaler object or None if no scaling is to be
+        The instantiated botorch scaler(s) object or None if no scaling is to be
             applied.
 
     """
@@ -102,23 +105,26 @@ def get_scaler(
             specs=categorical_encodings,
         )
 
-        ord_dims = inputs.get_feature_indices(
+        cont_feat_dims = inputs.get_feature_indices(
             specs=categorical_encodings,
             feature_keys=continuous_feature_keys,
-        ) + engineered_features.get_feature_indices(
+        )
+        engineered_feat_dims = engineered_features.get_feature_indices(
             offset=offset, feature_keys=engineered_features.get_keys()
         )
+
     else:
         # if features are specified, we only scale those
         # for this we have to find its indices in the transformed space
         # and for this we have to first find out which features are original
         # and which are engineered
-        ord_dims = inputs.get_feature_indices(
+        cont_feat_dims = inputs.get_feature_indices(
             specs=categorical_encodings,
             feature_keys=[
                 feat for feat in scaler_type.features if feat in inputs.get_keys()
             ],
-        ) + engineered_features.get_feature_indices(
+        )
+        engineered_feat_dims = engineered_features.get_feature_indices(
             offset=offset,
             feature_keys=[
                 feat
@@ -127,22 +133,72 @@ def get_scaler(
             ],
         )
 
+        # ord_dims = inputs.get_feature_indices(
+        #     specs=categorical_encodings,
+        #     feature_keys=[
+        #         feat for feat in scaler_type.features if feat in inputs.get_keys()
+        #     ],
+        # ) + engineered_features.get_feature_indices(
+        #     offset=offset,
+        #     feature_keys=[
+        #         feat
+        #         for feat in scaler_type.features
+        #         if feat in engineered_features.get_keys()
+        #     ],
+        # )
+
+    # # this is from toby
+    # cont_feat_dims = inputs.get_feature_indices(
+    #     specs=categorical_encodings,
+    #     feature_keys=continuous_feature_keys,
+    # )
+    # engineered_feat_dims = engineered_features.get_feature_indices(
+    #     offset=offset, feature_keys=engineered_features.get_keys()
+    # )
+    # ord_dims = cont_feat_dims + engineered_feat_dims
+    # here it ends from toby
+
+    ord_dims = cont_feat_dims + engineered_feat_dims
+
     if len(ord_dims) == 0:
         return None
 
     if isinstance(scaler_type, NormalizeDataModel):
-        return Normalize(
+        # We create a separate Normalize for non-engineered features,
+        # since bounds are known for these features.
+        lower, upper = inputs.get_bounds(
+            specs=categorical_encodings,
+            experiments=X,
+        )
+        input_tfs: dict[str, Normalize] = {}
+        if cont_feat_dims:
+            input_tfs["scaler"] = Normalize(
+                d=d,
+                bounds=torch.tensor([lower, upper]).to(**tkwargs)[:, cont_feat_dims],
+                indices=cont_feat_dims,
+                batch_shape=torch.Size(),
+            )
+
+        if engineered_feat_dims:
+            input_tfs["engineered_scaler"] = Normalize(
+                d=d,
+                indices=engineered_feat_dims,
+                batch_shape=torch.Size(),
+            )
+
+        if len(input_tfs) == 0:
+            return None
+
+        return input_tfs
+
+    # it has to be standardize
+    return {
+        "scaler": InputStandardize(
             d=d,
-            # bounds=torch.tensor([lower, upper]).to(**tkwargs),
             indices=ord_dims,
             batch_shape=torch.Size(),
         )
-    # it has to be standardize
-    return InputStandardize(
-        d=d,
-        indices=ord_dims,
-        batch_shape=torch.Size(),
-    )
+    }
 
 
 def get_input_transform(
@@ -150,6 +206,7 @@ def get_input_transform(
     engineered_features: EngineeredFeatures,
     scaler_type: AnyScaler,
     categorical_encodings: InputTransformSpecs,
+    X: pd.DataFrame | None = None,
 ) -> Union[InputTransform, None]:
     """Creates the botorch input transform on the basis of
     the specified inputs, engineered features and categorical
@@ -161,6 +218,7 @@ def get_input_transform(
         scaler_type: The scaler enum to be used.
         categorical_encodings: Dictionary how to treat
             the categoricals and/or molecules.
+        X: Experimental values of input features
 
     Returns:
         The created input transform or None.
@@ -189,9 +247,10 @@ def get_input_transform(
         engineered_features=engineered_features,
         categorical_encodings=categorical_encodings,
         scaler_type=scaler_type,
+        X=X,
     )
     if scaler is not None:
-        transforms["scaler"] = scaler
+        transforms.update(scaler)
 
     # fourth remove ignored features
     if len(ignored) > 0:
