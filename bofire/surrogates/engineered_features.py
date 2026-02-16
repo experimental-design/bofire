@@ -23,11 +23,10 @@ def _weighted_sum_features(
     indices: torch.Tensor,
     descriptors: torch.Tensor,
 ) -> torch.Tensor:
-    result = torch.matmul(
+    return torch.matmul(
         X[..., indices],
         descriptors,
     ).unsqueeze(-2)
-    return result.expand(*result.shape[:-2], 1, -1)
 
 
 def _map_reduction_feature(
@@ -44,8 +43,7 @@ def _map_reduction_feature(
         indices: torch.Tensor,
         reducer: Callable,
     ) -> torch.Tensor:
-        result = reducer(X[..., indices], dim=-1, keepdim=True).unsqueeze(-2)
-        return result.expand(*result.shape[:-2], 1, -1)
+        return reducer(X[..., indices], dim=-1, keepdim=True).unsqueeze(-2)
 
     return AppendFeatures(
         f=reduce_features,
@@ -120,8 +118,7 @@ def map_clone_feature(
     indices = [features2idx[key][0] for key in feature.features]
 
     def clone_features(X: torch.Tensor, indices: torch.Tensor) -> torch.Tensor:
-        result = X[..., indices].unsqueeze(-2)
-        return result.expand(*result.shape[:-2], 1, -1)
+        return X[..., indices].unsqueeze(-2)
 
     return AppendFeatures(
         f=clone_features,
