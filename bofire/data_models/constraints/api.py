@@ -28,6 +28,8 @@ from bofire.data_models.constraints.nonlinear import (
     NonlinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    filter_candidates_by_constraints,
+    get_constraint_violations,
 )
 from bofire.data_models.constraints.product import (
     ProductConstraint,

@@ -296,3 +296,74 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
+
+
+
+def filter_candidates_by_constraints(
+    candidates: pd.DataFrame,
+    constraints: list,
+) -> pd.DataFrame:
+    """
+    Filter candidates to keep only those satisfying all nonlinear constraints.
+    
+    Args:
+        candidates: DataFrame with candidate points
+        constraints: List of NonlinearConstraint objects
+        
+    Returns:
+        DataFrame containing only feasible candidates
+    """
+    mask = pd.Series([True] * len(candidates), index=candidates.index)
+    
+    for constraint in constraints:
+        constraint_values = constraint(candidates)
+        
+        # Handle both Series and DataFrame returns
+        if isinstance(constraint_values, pd.DataFrame):
+            values = constraint_values.iloc[:, 0]
+        else:
+            values = constraint_values
+        
+        # For inequality constraints, feasible means <= 0
+        if isinstance(constraint, NonlinearInequalityConstraint):
+            mask &= (values <= 0)
+        # For equality constraints, check if close to 0 (within tolerance)
+        elif isinstance(constraint, NonlinearEqualityConstraint):
+            mask &= (values.abs() < 1e-6)
+    
+    return candidates[mask]
+
+
+def get_constraint_violations(
+    candidates: pd.DataFrame,
+    constraints: list,
+) -> pd.DataFrame:
+    """
+    Calculate constraint violation amounts for each candidate.
+    
+    Args:
+        candidates: DataFrame with candidate points
+        constraints: List of NonlinearConstraint objects
+        
+    Returns:
+        DataFrame with violation amounts (0 = satisfied, >0 = violated)
+    """
+    violations = pd.DataFrame(index=candidates.index)
+    
+    for constraint in constraints:
+        constraint_values = constraint(candidates)
+        
+        # Handle both Series and DataFrame returns
+        if isinstance(constraint_values, pd.DataFrame):
+            values = constraint_values.iloc[:, 0]
+        else:
+            values = constraint_values
+        
+        # For inequality: violation = max(0, value)
+        if isinstance(constraint, NonlinearInequalityConstraint):
+            violations[constraint.expression] = values.clip(lower=0)
+        # For equality: violation = |value|
+        elif isinstance(constraint, NonlinearEqualityConstraint):
+            violations[constraint.expression] = values.abs()
+    
+    return violations
