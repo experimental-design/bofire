@@ -7,7 +7,7 @@ from bofire.data_models.features.api import ContinuousDescriptorInput, Continuou
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.features.molecular import ContinuousMolecularInput
 from bofire.data_models.molfeatures.api import AnyMolFeatures
-from bofire.data_models.types import Descriptors, FeatureKeys
+from bofire.data_models.types import Descriptors, FeatureKeys, OneFeatureKeys
 
 
 if TYPE_CHECKING:
@@ -177,8 +177,9 @@ class CloneFeature(EngineeredFeature):
             creating the engineered feature in surrogate creation.
     """
 
-    type: Literal["ClonedFeature"] = "ClonedFeature"
+    type: Literal["CloneFeature"] = "CloneFeature"
     order_id: ClassVar[int] = 5
+    features: OneFeatureKeys
 
     @property
     def n_transformed_inputs(self) -> int:

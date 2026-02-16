@@ -49,6 +49,7 @@ AnyFeature = Union[
     MolecularWeightedSumFeature,
     ContinuousMolecularInput,
     ProductFeature,
+    CloneFeature,
 ]
 
 AnyInput = Union[
