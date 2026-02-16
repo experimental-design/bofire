@@ -150,6 +150,26 @@ specs.add_invalid(
     message="RobustGP only supports one output.",
 )
 
+specs.add_invalid(
+    models.SingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="a"),
+            ],
+        ),
+        "scaler": Normalize(features=["d", "e"]),
+    },
+    error=ValueError,
+    message="The following features are missing in inputs: ['d', 'e']",
+)
+
 
 specs.add_valid(
     models.SingleTaskIBNNSurrogate,
