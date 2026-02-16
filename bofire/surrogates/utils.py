@@ -64,7 +64,7 @@ def get_scaler(
     categorical_encodings: InputTransformSpecs,
     scaler_type: AnyScaler,
     X: pd.DataFrame | None = None,
-) -> Mapping[str, Normalize | InputStandardize] | None:
+) -> Mapping[str, Normalize | InputStandardize]:
     """Returns the instanitated scaler object for a set of input features and
     categorical_encodings.
 
@@ -78,12 +78,11 @@ def get_scaler(
         X: Experimental values of input features
 
     Returns:
-        The instantiated botorch scaler(s) object or None if no scaling is to be
-            applied.
+        Dictionary of the instantiated botorch scaler object(s), can be empty.
 
     """
     if scaler_type is None:
-        return None
+        return {}
     features2idx, _ = inputs._get_transform_info(categorical_encodings)
 
     d = 0
@@ -133,35 +132,10 @@ def get_scaler(
             ],
         )
 
-        # ord_dims = inputs.get_feature_indices(
-        #     specs=categorical_encodings,
-        #     feature_keys=[
-        #         feat for feat in scaler_type.features if feat in inputs.get_keys()
-        #     ],
-        # ) + engineered_features.get_feature_indices(
-        #     offset=offset,
-        #     feature_keys=[
-        #         feat
-        #         for feat in scaler_type.features
-        #         if feat in engineered_features.get_keys()
-        #     ],
-        # )
-
-    # # this is from toby
-    # cont_feat_dims = inputs.get_feature_indices(
-    #     specs=categorical_encodings,
-    #     feature_keys=continuous_feature_keys,
-    # )
-    # engineered_feat_dims = engineered_features.get_feature_indices(
-    #     offset=offset, feature_keys=engineered_features.get_keys()
-    # )
-    # ord_dims = cont_feat_dims + engineered_feat_dims
-    # here it ends from toby
-
     ord_dims = cont_feat_dims + engineered_feat_dims
 
     if len(ord_dims) == 0:
-        return None
+        return {}
 
     if isinstance(scaler_type, NormalizeDataModel):
         # We create a separate Normalize for non-engineered features,
@@ -249,8 +223,8 @@ def get_input_transform(
         scaler_type=scaler_type,
         X=X,
     )
-    if scaler is not None:
-        transforms.update(scaler)
+
+    transforms.update(scaler)
 
     # fourth remove ignored features
     if len(ignored) > 0:
