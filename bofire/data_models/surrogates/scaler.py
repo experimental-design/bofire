@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Literal, Optional
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.types import FeatureKeys
+from bofire.data_models.types import NonRestrictedFeatureKeys
 
 
 class ScalerEnum(str, Enum):
@@ -18,7 +18,7 @@ class ScalerEnum(str, Enum):
 
 class Scaler(BaseModel):
     type: Any
-    features: FeatureKeys = []
+    features: NonRestrictedFeatureKeys = []
 
 
 class Normalize(Scaler):
