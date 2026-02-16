@@ -1,4 +1,4 @@
-from typing import Dict, Generator, Literal, Optional, Type, Union, final
+from typing import Dict, Generator, Literal, Optional, Type, Union
 
 from pydantic import Field, field_validator, model_validator
 
@@ -57,7 +57,6 @@ def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
             yield from _traverse_kernels(base_kernel)
 
 
-@final
 class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None

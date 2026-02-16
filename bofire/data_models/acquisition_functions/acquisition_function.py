@@ -88,7 +88,7 @@ class qMFHVKG(MultiObjectiveAcquisitionFunction):
     alpha: Annotated[float, Field(ge=0)] = 0.0
     num_fantasies: int = 8
     num_pareto: int = 10
-    n_mc_samples: IntPowerOfTwo = 512
+    n_mc_samples: IntPowerOfTwo = 32
 
 
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):

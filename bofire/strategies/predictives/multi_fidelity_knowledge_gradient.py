@@ -19,6 +19,7 @@ from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.sampling.get_sampler import get_sampler
+from botorch.sampling.list_sampler import ListSampler
 from pydantic import PositiveInt
 from torch import Tensor
 from typing_extensions import Self
@@ -189,17 +190,15 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             self.input_preprocessing_specs,
         )
         X = torch.from_numpy(transformed.values).to(**tkwargs)
-        # combine to calculate a single acqf value for the whole batch
-        X = X.unsqueeze(-2)
 
         with torch.no_grad():
-            val = curr_val_acqf.forward(X).cpu().detach()
+            val = curr_val_acqf(X).cpu().detach()
 
         task_feature.bounds = prev_bounds
         return val
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         ref_point: ExplicitReferencePoint | dict[str, float] | None = None,
@@ -244,10 +243,23 @@ def get_acquisition_function_qMFHVKG(
     if ref_point is None:
         raise ValueError("`ref_point` must be a Tensor for qMFHVKG")
 
-    sampler = get_sampler(
+    seed_sequence = np.random.SeedSequence(seed)
+    seeds = seed_sequence.generate_state(1 + model.num_outputs)
+    inner_sampler = get_sampler(
         posterior=model.posterior(X_observed[:1]),  # type: ignore
         sample_shape=torch.Size([mc_samples]),
-        seed=seed,
+        seed=int(seeds[0]),
+    )
+
+    sampler = ListSampler(
+        *[
+            get_sampler(
+                posterior=model.posterior(X_observed[:1]),
+                sample_shape=torch.Size([num_fantasies]),
+                seed=int(seed),
+            )
+            for seed in seeds[1:]
+        ]
     )
 
     return qMultiFidelityHypervolumeKnowledgeGradient(
@@ -260,7 +272,7 @@ def get_acquisition_function_qMFHVKG(
         num_pareto=num_pareto,
         sampler=sampler,
         objective=objective,
-        inner_sampler=None,
+        inner_sampler=inner_sampler,
         X_pending=X_pending,
         X_evaluation_mask=None,
         X_pending_evaluation_mask=None,
