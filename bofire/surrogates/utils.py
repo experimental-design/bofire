@@ -14,7 +14,7 @@ from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
 from bofire.data_models.surrogates.scaler import AnyScaler
-from bofire.data_models.surrogates.scaler import Normalize as NormalizeDataModel
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
@@ -137,7 +137,7 @@ def get_scaler(
     if len(ord_dims) == 0:
         return {}
 
-    if isinstance(scaler_type, NormalizeDataModel):
+    if isinstance(scaler_type, NormalizeScaler):
         # We create a separate Normalize for non-engineered features,
         # since bounds are known for these features.
         lower, upper = inputs.get_bounds(
@@ -159,9 +159,6 @@ def get_scaler(
                 indices=engineered_feat_dims,
                 batch_shape=torch.Size(),
             )
-
-        if len(input_tfs) == 0:
-            return None
 
         return input_tfs
 
