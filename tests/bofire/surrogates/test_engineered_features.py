@@ -6,6 +6,7 @@ import torch
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
+    CloneFeature,
     ContinuousDescriptorInput,
     ContinuousInput,
     ContinuousMolecularInput,
@@ -17,6 +18,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.surrogates.engineered_features import (
+    map_clone_feature,
     map_mean_feature,
     map_molecular_weighted_sum_feature,
     map_product_feature,
@@ -205,3 +207,27 @@ def test_map_molecular_weighted_sum_feature():
 
     assert torch.allclose(result[:, :-1], orig)
     assert torch.allclose(result[:, -1:], expected_weighted)
+
+
+def test_map_clone_feature():
+    inputs = Inputs(
+        features=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(1, 6)]
+    )
+    # clone two non-consecutive inputs x2 and x5
+    aggregation = CloneFeature(key="agg1", features=["x2", "x5"])
+
+    aggregator = map_clone_feature(
+        inputs=inputs, transform_specs={}, feature=aggregation
+    )
+
+    orig = torch.tensor([[0.1, 0.2, 0.3, 0.4, 0.5], [0.6, 0.7, 0.8, 0.9, 1.0]]).to(
+        **tkwargs
+    )
+    result = aggregator(orig)
+    assert result.shape[0] == 2
+    assert result.shape[1] == 7
+
+    assert torch.allclose(result[:, :-2], orig)
+    # clones appended in the order specified: x2 then x5
+    assert torch.allclose(result[:, -2], orig[:, 1])
+    assert torch.allclose(result[:, -1], orig[:, 4])
