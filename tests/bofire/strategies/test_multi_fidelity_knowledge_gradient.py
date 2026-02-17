@@ -38,13 +38,13 @@ def test_mfhvkg_fidelity_selection():
 
     # when the high fidelity is expensive, MFHVKG will (almost always) evaluate the low fidelity
     task_input: ContinuousTaskInput = strategy.domain.inputs.get(ContinuousTaskInput)[0]
-    task_input.fidelity_cost.weight = 10.0
+    task_input.fidelity_cost_weight = 10.0
     candidate_lf = strategy.ask(1)
     assert candidate_lf[task_input.key].item() == task_input.lower_bound
 
     # when the high fidelity is cheap, MFHVKG will evaluate a higher fidelity
     task_input: ContinuousTaskInput = strategy.domain.inputs.get(ContinuousTaskInput)[0]
-    task_input.fidelity_cost.weight = 0.01
+    task_input.fidelity_cost_weight = 0.01
     candidate_lf = strategy.ask(1)
     assert candidate_lf[task_input.key].item() > 0.1
 

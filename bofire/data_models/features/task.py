@@ -37,3 +37,5 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
 class ContinuousTaskInput(TaskInput, ContinuousInput):
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
+    fidelity_fixed_cost: float = 1.0
+    fidelity_cost_weight: float = 1.0

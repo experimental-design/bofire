@@ -57,10 +57,6 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
-    fidelity_cost_models: BotorchSurrogates = Field(
-        default_factory=lambda: BotorchSurrogates(surrogates=[]),
-        validate_default=True,
-    )
 
     @field_validator("domain", mode="after")
     @classmethod
