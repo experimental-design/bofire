@@ -1,7 +1,8 @@
 import collections.abc
 from collections.abc import Iterator, Sequence
 from itertools import chain
-from typing import Generic, List, Literal, Optional, Type, TypeVar, Union
+from typing import Generic, List, Literal, Optional, Type, Union, overload
+from typing_extensions import TypeVar
 
 import pandas as pd
 from pydantic import Field
@@ -10,29 +11,27 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
 
-
-C = TypeVar("C", bound=Union[AnyConstraint, Constraint])
-CIncludes = TypeVar("CIncludes", bound=Union[AnyConstraint, Constraint])
-CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])
+ConstraintT = TypeVar("ConstraintT", bound=AnyConstraint, default=AnyConstraint)
+ConstraintGetT = TypeVar("ConstraintGetT", bound=AnyConstraint, default=AnyConstraint)
 
 
-class Constraints(BaseModel, Generic[C]):
+class Constraints(BaseModel, Generic[ConstraintT]):
     type: Literal["Constraints"] = "Constraints"
-    constraints: Sequence[C] = Field(default_factory=list)
+    constraints: Sequence[ConstraintT] = Field(default_factory=list)
 
-    def __iter__(self) -> Iterator[C]:
+    def __iter__(self) -> Iterator[ConstraintT]:
         return iter(self.constraints)
 
     def __len__(self):
         return len(self.constraints)
 
-    def __getitem__(self, i) -> C:
+    def __getitem__(self, i) -> ConstraintT:
         return self.constraints[i]
 
     def __add__(
         self,
-        other: Union[Sequence[CIncludes], "Constraints[CIncludes]"],
-    ) -> "Constraints[Union[C, CIncludes]]":
+        other: Union[Sequence[ConstraintGetT], "Constraints[ConstraintGetT]"],
+    ) -> "Constraints[Union[ConstraintT, ConstraintGetT]]":
         if isinstance(other, collections.abc.Sequence):
             other_constraints = other
         else:
@@ -87,14 +86,22 @@ class Constraints(BaseModel, Generic[C]):
             .all(axis=1)
         )
 
+    @overload
+    def get(self, includes: Type[ConstraintGetT], excludes: None = None, exact: bool = False) -> "Constraints[ConstraintGetT]":
+        ...
+
+    @overload
+    def get(self, includes: Type[AnyConstraint] | Sequence[Type[AnyConstraint]] | Constraint, excludes: Type[AnyConstraint] | List[Type[AnyConstraint]] | None, exact: bool) -> Self:
+        ...
+
     def get(
         self,
         includes: Union[
-            Type[CIncludes], Sequence[Type[CIncludes]]
+            Type[ConstraintGetT], Sequence[Type[ConstraintGetT]]
         ] = Constraint,  # ty: ignore[invalid-parameter-default]
-        excludes: Optional[Union[Type[CExcludes], List[Type[CExcludes]]]] = None,
+        excludes: Optional[Union[Type[AnyConstraint], List[Type[CExcludes]]]] = None,
         exact: bool = False,
-    ) -> "Constraints[CIncludes]":
+    ) -> "Constraints[ConstraintGetT]":
         """Get constraints of the domain
 
         Args:
