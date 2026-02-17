@@ -35,17 +35,51 @@ from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient
     MultiFidelityHVKGStrategy as DataModel,
 )
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.strategy import make_strategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
 
-def _target_fidelity(task_feature: ContinuousTaskInput) -> float:
-    if task_feature.fidelity_cost.weight > 0:
-        return task_feature.upper_bound
-    else:
-        return task_feature.lower_bound
+def _map_cost_model_to_botorch(
+    cost_data_model: BotorchSurrogates, features2idx: dict[str, tuple[int]]
+) -> tuple[AffineFidelityCostModel, dict[int, float]]:
+    """Convert the deterministic surrogates to a cost model for the cost-weighted utility.
+
+    TODO: convert a categorical cost model as well."""
+    linear_cost_data_model = [
+        cm
+        for cm in cost_data_model.surrogates
+        if isinstance(cm, LinearDeterministicSurrogate)
+    ][0]
+    return _map_linear_cost_model_to_botorch(linear_cost_data_model, features2idx)
+
+
+def _map_linear_cost_model_to_botorch(
+    cost_data_model: LinearDeterministicSurrogate, features2idx: dict[str, tuple[int]]
+) -> tuple[AffineFidelityCostModel, dict[int, float]]:
+    def _target_fidelity(task_feature: ContinuousTaskInput, weight: float) -> float:
+        # if the cost is positive, then the upper bound is the highest fidelity.
+        return task_feature.upper_bound if weight > 0 else task_feature.lower_bound
+
+    fidelity_weights = {
+        features2idx[key][0]: weight
+        for key, weight in cost_data_model.coefficients.items()
+    }
+
+    cost_function = AffineFidelityCostModel(
+        fidelity_weights=fidelity_weights,
+        fixed_cost=cost_data_model.intercept,
+    )
+    target_fidelities = {
+        (idx := features2idx[key][0]): _target_fidelity(
+            cost_data_model.inputs.get_by_key(key), fidelity_weights[idx]
+        )  # type: ignore
+        for key in cost_data_model.coefficients
+    }
+
+    return cost_function, target_fidelities
 
 
 class MultiFidelityHVKGStrategy(BotorchStrategy):
@@ -58,9 +92,9 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
-        self.task_feature_key = self.domain.inputs.get_keys(ContinuousTaskInput)[0]
+        self.task_feature_keys = self.domain.inputs.get_keys(ContinuousTaskInput)
         self.acquisition_function = data_model.acquisition_function
-        self.cost_aware_utility = data_model.cost_aware_utility
+        self.fidelity_cost_models = data_model.fidelity_cost_models
 
         # assert isinstance(data_model.ref_point, ExplicitReferencePoint)
         assert not isinstance(data_model.ref_point, dict)
@@ -80,31 +114,13 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             self.input_preprocessing_specs
         )
 
-        # they are normalized in the tutorial - should these be normalized?
-        task_feature: ContinuousTaskInput = self.domain.inputs.get(ContinuousTaskInput)[
-            0
-        ]
-        assert isinstance(task_feature, ContinuousTaskInput)
-        target_fidelities = {
-            features2idx[self.task_feature_key][0]: _target_fidelity(task_feature)
-        }
-
-        # TODO: build utility based on acquisition function
-        assert self.cost_aware_utility.type == "InverseCostWeightedUtility"
-        assert task_feature.fidelity_cost.type == "AffineFidelityCostModel"
-
-        cost_aware_utility = InverseCostWeightedUtility(
-            cost_model=AffineFidelityCostModel(
-                fidelity_weights={
-                    features2idx[self.task_feature_key][
-                        0
-                    ]: task_feature.fidelity_cost.weight
-                },
-                fixed_cost=task_feature.fidelity_cost.fixed_cost,
-            )
+        cost_function, target_fidelities = _map_cost_model_to_botorch(
+            self.fidelity_cost_models, features2idx
         )
 
-        current_value = self.get_current_value()
+        cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_function)
+
+        current_value = self.get_current_value(target_fidelities)
 
         acqf = get_acquisition_function_qMFHVKG(
             self.model,
@@ -156,7 +172,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             )
         ).tolist()
 
-    def get_current_value(self):
+    def get_current_value(self, target_fidelities: dict[int, float]):
         """Compute the hypervolume of the current HV maximizing set."""
         assert self.model is not None
         curr_val_acqf = _get_hv_value_function(
@@ -167,15 +183,17 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
         # fix the task feature
         # we only want the HV at the highest fidelity
-        task_feature: ContinuousTaskInput = self.domain.inputs.get(ContinuousTaskInput)[
-            0
-        ]
-        assert isinstance(task_feature, ContinuousTaskInput)
-        prev_bounds = task_feature.bounds
-        task_feature.bounds = (
-            _target_fidelity(task_feature),
-            _target_fidelity(task_feature),
+        features2idx, _ = self.domain.inputs._get_transform_info(
+            self.input_preprocessing_specs
         )
+        prev_bounds: dict[str, tuple[float, float]] = {}
+
+        for key in self.task_feature_keys:
+            task_feature = self.inputs.get_by_key(key)
+            assert isinstance(task_feature, ContinuousTaskInput)
+            prev_bounds[key] = (task_feature.lower_bound, task_feature.upper_bound)
+            tgt = target_fidelities[features2idx[key][0]]
+            task_feature.bounds = (tgt, tgt)
 
         candidates = self.acqf_optimizer.optimize(
             candidate_count=self.acquisition_function.num_pareto,
@@ -194,7 +212,11 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         with torch.no_grad():
             val = curr_val_acqf(X).cpu().detach()
 
-        task_feature.bounds = prev_bounds
+        for key in self.task_feature_keys:
+            task_feature = self.inputs.get_by_key(key)
+            assert isinstance(task_feature, ContinuousTaskInput)
+            task_feature.bounds = prev_bounds[key]
+
         return val
 
     @classmethod

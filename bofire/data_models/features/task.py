@@ -1,9 +1,8 @@
-from typing import Any, ClassVar, List, Literal
+from typing import ClassVar, List, Literal
 
 import numpy as np
-from pydantic import Field, model_validator
+from pydantic import model_validator
 
-from bofire.data_models.base import BaseModel
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.feature import Input
@@ -35,21 +34,6 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
         return self
 
 
-class CostModel(BaseModel):
-    """Function mapping task value to experimental cost."""
-
-    type: Any
-
-
-class AffineFidelityCostModel(CostModel):
-    type: Literal["AffineFidelityCostModel"] = "AffineFidelityCostModel"
-    weight: float
-    fixed_cost: float
-
-
 class ContinuousTaskInput(TaskInput, ContinuousInput):
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
-    fidelity_cost: AffineFidelityCostModel = Field(
-        default_factory=lambda: AffineFidelityCostModel(weight=1.0, fixed_cost=1.0)
-    )

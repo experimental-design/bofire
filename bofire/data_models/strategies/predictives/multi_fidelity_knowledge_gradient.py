@@ -3,10 +3,6 @@ from typing import Dict, Generator, Literal, Optional, Type, Union
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.acquisition_functions.acquisition_function import qMFHVKG
-from bofire.data_models.acquisition_functions.cost_aware_utility import (
-    CostAwareUtility,
-    InverseCostWeightedUtility,
-)
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.features.task import (
@@ -61,8 +57,9 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
-    cost_aware_utility: CostAwareUtility = Field(
-        default_factory=lambda: InverseCostWeightedUtility()
+    fidelity_cost_models: BotorchSurrogates = Field(
+        default_factory=lambda: BotorchSurrogates(surrogates=[]),
+        validate_default=True,
     )
 
     @field_validator("domain", mode="after")
