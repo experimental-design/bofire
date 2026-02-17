@@ -151,10 +151,33 @@ class NonlinearConstraint(IntrapointConstraint):
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self.jacobian_expression is not None:
             if isinstance(self.jacobian_expression, str):
-                res = experiments.eval(self.jacobian_expression)
-                for i, col in enumerate(res):
-                    if not hasattr(col, "__iter__"):
-                        res[i] = pd.Series(np.repeat(col, experiments.shape[0]))
+                # Check if the expression is a list literal
+                expr = self.jacobian_expression.strip()
+                
+                if expr.startswith('[') and expr.endswith(']'):
+                    # ✅ Handle list expressions like "[2*x1, 2*x2, -1]"
+                    # Remove brackets and split by comma
+                    inner = expr[1:-1]
+                    components = [c.strip() for c in inner.split(',')]
+                    
+                    # Evaluate each component separately
+                    res = []
+                    for component in components:
+                        col_result = experiments.eval(component)
+                        
+                        # Handle scalar results (like -1)
+                        if not hasattr(col_result, "__iter__"):
+                            res.append(pd.Series(np.repeat(col_result, experiments.shape[0])))
+                        elif isinstance(col_result, pd.Series):
+                            res.append(col_result)
+                        else:
+                            res.append(pd.Series(col_result))
+                else:
+                    # ✅ Handle single expressions (backward compatibility)
+                    res = experiments.eval(expr)
+                    for i, col in enumerate(res):
+                        if not hasattr(col, "__iter__"):
+                            res[i] = pd.Series(np.repeat(col, experiments.shape[0]))
 
                 if self.features is not None:
                     return pd.DataFrame(
@@ -165,6 +188,7 @@ class NonlinearConstraint(IntrapointConstraint):
                     res,
                     index=[f"dg/dx{i}" for i in range(experiments.shape[1])],
                 ).transpose()
+                
             elif isinstance(self.jacobian_expression, Callable):
                 args = inspect.getfullargspec(self.jacobian_expression).args
 
@@ -185,6 +209,7 @@ class NonlinearConstraint(IntrapointConstraint):
                     ),
                     index=["dg/d" + name for name in experiments.columns],
                 ).transpose()
+                
         elif isinstance(self.expression, Callable):
             args = inspect.getfullargspec(self.expression).args
 
@@ -204,6 +229,7 @@ class NonlinearConstraint(IntrapointConstraint):
             "The jacobian of a nonlinear constraint cannot be evaluated if jacobian_expression is None and expression is not Callable.",
         )
 
+
     def hessian(self, experiments: pd.DataFrame) -> Dict[Union[str, int], pd.DataFrame]:
         """
         Computes a dict of dataframes where the key dimension is the index of the experiments dataframe
@@ -218,7 +244,64 @@ class NonlinearConstraint(IntrapointConstraint):
         """
         if self.hessian_expression is not None:
             if isinstance(self.hessian_expression, str):
-                res = experiments.eval(self.hessian_expression)
+                expr = self.hessian_expression.strip()
+                
+                # ✅ Check if it's a nested list literal
+                if expr.startswith('[[') and expr.endswith(']]'):
+                    # Handle nested list expressions like "[[6*x1, 0, 0], [0, 2, 0], [0, 0, 0]]"
+                    inner = expr[1:-1]  # Remove outer brackets
+                    
+                    # Parse rows
+                    rows = []
+                    current_row = ""
+                    depth = 0
+                    
+                    for char in inner:
+                        if char == '[':
+                            depth += 1
+                            if depth == 1:
+                                current_row = ""
+                                continue
+                        elif char == ']':
+                            depth -= 1
+                            if depth == 0:
+                                rows.append(current_row.strip())
+                                current_row = ""
+                                continue
+                        
+                        if depth > 0:
+                            current_row += char
+                    
+                    # Evaluate each element in the nested structure
+                    res = []
+                    for row_expr in rows:
+                        components = [c.strip() for c in row_expr.split(',')]
+                        row_values = []
+                        
+                        for component in components:
+                            col_result = experiments.eval(component)
+                            
+                            if not hasattr(col_result, "__iter__"):
+                                row_values.append(pd.Series(np.repeat(col_result, experiments.shape[0])))
+                            elif isinstance(col_result, pd.Series):
+                                row_values.append(col_result)
+                            else:
+                                row_values.append(pd.Series(col_result))
+                        
+                        res.append(row_values)
+                    
+                    # Convert to numpy array with shape (n_features, n_features, n_samples)
+                    res = np.array([[col.values for col in row] for row in res])
+                    
+                else:
+                    # ✅ Original code path for non-list expressions
+                    res = experiments.eval(expr)
+                    for i, _ in enumerate(res):
+                        for j, entry in enumerate(res[i]):
+                            if not hasattr(entry, "__iter__"):
+                                res[i][j] = pd.Series(np.repeat(entry, experiments.shape[0]))
+                    res = np.array(res)
+                    
             else:
                 if not isinstance(self.hessian_expression, Callable):
                     raise ValueError(
@@ -231,11 +314,13 @@ class NonlinearConstraint(IntrapointConstraint):
                     for arg in args
                 }
                 res = self.hessian_expression(**func_input)
-            for i, _ in enumerate(res):
-                for j, entry in enumerate(res[i]):
-                    if not hasattr(entry, "__iter__"):
-                        res[i][j] = pd.Series(np.repeat(entry, experiments.shape[0]))
-            res = np.array(res)
+                
+                for i, _ in enumerate(res):
+                    for j, entry in enumerate(res[i]):
+                        if not hasattr(entry, "__iter__"):
+                            res[i][j] = pd.Series(np.repeat(entry, experiments.shape[0]))
+                res = np.array(res)
+            
             names = self.features or [f"x{i}" for i in range(experiments.shape[1])]
 
             return {
@@ -274,6 +359,7 @@ class NonlinearConstraint(IntrapointConstraint):
         raise ValueError(
             "The hessian of a nonlinear constraint cannot be evaluated if hessian_expression is None and expression is not Callable.",
         )
+
 
 
 class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
