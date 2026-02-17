@@ -78,7 +78,7 @@ def get_linear_constraints(
         upper = []
         rhs = 0.0
         for i, featkey in enumerate(c.features):
-            idx = domain.inputs.get_keys(Input).index(featkey)
+            idx = domain.inputs.get_keys().index(featkey)
             feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():
                 fixed = feat.fixed_value()

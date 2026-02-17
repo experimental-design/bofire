@@ -2,14 +2,15 @@ import collections.abc
 from collections.abc import Iterator, Sequence
 from itertools import chain
 from typing import Generic, List, Literal, Optional, Type, Union, overload
-from typing_extensions import TypeVar
 
 import pandas as pd
 from pydantic import Field
+from typing_extensions import Self, TypeVar
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
+
 
 ConstraintT = TypeVar("ConstraintT", bound=AnyConstraint, default=AnyConstraint)
 ConstraintGetT = TypeVar("ConstraintGetT", bound=AnyConstraint, default=AnyConstraint)
@@ -87,19 +88,26 @@ class Constraints(BaseModel, Generic[ConstraintT]):
         )
 
     @overload
-    def get(self, includes: Type[ConstraintGetT], excludes: None = None, exact: bool = False) -> "Constraints[ConstraintGetT]":
-        ...
+    def get(
+        self, includes: Type[ConstraintGetT], excludes: None = None, exact: bool = False
+    ) -> "Constraints[ConstraintGetT]": ...
 
     @overload
-    def get(self, includes: Type[AnyConstraint] | Sequence[Type[AnyConstraint]] | Constraint, excludes: Type[AnyConstraint] | List[Type[AnyConstraint]] | None, exact: bool) -> Self:
-        ...
+    def get(
+        self,
+        includes: Type[AnyConstraint] | Sequence[Type[AnyConstraint]] | Constraint,
+        excludes: Type[AnyConstraint] | List[Type[AnyConstraint]] | None,
+        exact: bool,
+    ) -> Self: ...
 
     def get(
         self,
         includes: Union[
             Type[ConstraintGetT], Sequence[Type[ConstraintGetT]]
         ] = Constraint,  # ty: ignore[invalid-parameter-default]
-        excludes: Optional[Union[Type[AnyConstraint], List[Type[CExcludes]]]] = None,
+        excludes: Optional[
+            Union[Type[AnyConstraint], List[Type[AnyConstraint]]]
+        ] = None,
         exact: bool = False,
     ) -> "Constraints[ConstraintGetT]":
         """Get constraints of the domain

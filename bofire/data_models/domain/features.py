@@ -53,11 +53,20 @@ from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     Objective,
 )
-from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.types import (
+    CategoricalFeatureKey,
+    ContinuousFeatureKey,
+    DiscreteFeatureKey,
+    InputTransformSpecs,
+)
 
+
+# https://github.com/python/typing/issues/548
 
 FeatureT = TypeVar("FeatureT", bound=AnyFeature, default=AnyFeature)
+FeatureGetT = TypeVar("FeatureGetT", bound=AnyFeature, default=AnyFeature)
 InputT = TypeVar("InputT", bound=AnyInput, default=AnyInput)
+InputGetT = TypeVar("InputGetT", bound=AnyInput, default=AnyInput)
 EngineeredFeatureT = TypeVar(
     "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
 )
@@ -213,9 +222,7 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
 
     def get_keys(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        includes: Union[Type[AnyFeature], List[Type[AnyFeature]], None] = AnyFeature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -634,7 +641,7 @@ class Inputs(_BaseFeatures[InputT]):
         features2idx = {}
         features2names = {}
         counter = 0
-        for _, feat in enumerate(self.get()):
+        for feat in self.get():
             if feat.key not in specs.keys():
                 features2idx[feat.key] = (counter,)
                 features2names[feat.key] = (feat.key,)
@@ -919,6 +926,58 @@ class Inputs(_BaseFeatures[InputT]):
     @staticmethod
     def is_continuous(inputs: Inputs) -> TypeGuard[Inputs[ContinuousInput]]:
         return len(inputs.get(ContinuousInput)) == len(inputs)
+
+    @overload
+    def get(
+        self, includes: Type[InputGetT], excludes: None = None, exact: bool = False
+    ) -> Inputs[InputGetT]: ...
+
+    @overload
+    def get(
+        self,
+        includes: Type | List[Type] | None,
+        excludes: Type | List[Type] | None,
+        exact: bool,
+    ) -> Self: ...
+
+    def get(
+        self,
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        excludes: Union[Type, List[Type], None] = None,
+        exact: bool = False,
+    ) -> Self:
+        # repeat the function here as implementation must be below overloads
+        return super().get(includes, excludes, exact)
+
+    @overload
+    def get_by_key(
+        self, key: ContinuousFeatureKey, use_regex: Literal[False] = False
+    ) -> ContinuousInput: ...
+
+    @overload
+    def get_by_key(
+        self, key: DiscreteFeatureKey, use_regex: Literal[False] = False
+    ) -> DiscreteInput: ...
+
+    @overload
+    def get_by_key(
+        self,
+        key: ContinuousFeatureKey | DiscreteFeatureKey,
+        use_regex: Literal[False] = False,
+    ) -> ContinuousInput | DiscreteInput: ...
+
+    @overload
+    def get_by_key(
+        self, key: CategoricalFeatureKey, use_regex: Literal[False] = False
+    ) -> CategoricalInput: ...
+
+    @overload
+    def get_by_key(self, key: str, use_regex: bool = False) -> InputT: ...
+
+    def get_by_key(self, key: str, use_regex: bool = False) -> AnyFeature:
+        return super().get_by_key(key, use_regex)
 
 
 class Outputs(_BaseFeatures[OutputT]):
