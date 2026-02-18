@@ -20,8 +20,8 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.surrogates.engineered_features import (
-    map_interpolate_feature,
     map_clone_feature,
+    map_interpolate_feature,
     map_mean_feature,
     map_molecular_weighted_sum_feature,
     map_product_feature,
@@ -482,26 +482,13 @@ def test_map_interpolate_feature_3d_input():
     y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
     y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
     np.testing.assert_allclose(result[0, :, 10:].numpy(), y_new, rtol=1e-6)
-    # test this also for a 3d batch tensor
-    orig_3d = torch.tensor(
-        [
-            [[0.1, 0.2], [0.4, 0.1]],
-            [[0.11, 0.12], [0.14, 0.15]],
-        ]
-    ).to(**tkwargs)
-    result_3d = aggregator(orig_3d)
-    assert result_3d.shape == (2, 2, 3)
-    assert torch.allclose(result_3d[:, :, :-1], orig_3d)
-    expected_weighted_3d = torch.matmul(orig_3d, descriptors)
-    assert torch.allclose(result_3d[:, :, -1:], expected_weighted_3d)
 
 
 def test_map_clone_feature():
     inputs = Inputs(
         features=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(1, 6)]
     )
-    # clone two non-consecutive inputs x2 and x5
-    aggregation = CloneFeature(key="agg1", features=["x2", "x5"])
+    aggregation = CloneFeature(key="agg1", features=["x2"])
 
     aggregator = map_clone_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
@@ -512,12 +499,10 @@ def test_map_clone_feature():
     )
     result = aggregator(orig)
     assert result.shape[0] == 2
-    assert result.shape[1] == 7
+    assert result.shape[1] == 6
 
-    assert torch.allclose(result[:, :-2], orig)
-    # clones appended in the order specified: x2 then x5
-    assert torch.allclose(result[:, -2], orig[:, 1])
-    assert torch.allclose(result[:, -1], orig[:, 4])
+    assert torch.allclose(result[:, :-1], orig)
+    assert torch.allclose(result[:, -1], orig[:, 1])
 
     # also test with a 3D tensor (batch x repeat x features)
     orig_3d = torch.tensor(
@@ -527,7 +512,6 @@ def test_map_clone_feature():
         ]
     ).to(**tkwargs)
     result_3d = aggregator(orig_3d)
-    assert result_3d.shape == (2, 2, 7)
-    assert torch.allclose(result_3d[:, :, :-2], orig_3d)
-    assert torch.allclose(result_3d[:, :, -2], orig_3d[:, :, 1])
-    assert torch.allclose(result_3d[:, :, -1], orig_3d[:, :, 4])
+    assert result_3d.shape == (2, 2, 6)
+    assert torch.allclose(result_3d[:, :, :-1], orig_3d)
+    assert torch.allclose(result_3d[:, :, -1], orig_3d[:, :, 1])

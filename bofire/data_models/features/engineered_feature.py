@@ -215,7 +215,8 @@ class InterpolateFeature(EngineeredFeature):
     @property
     def n_transformed_inputs(self) -> int:
         return self.n_interpolation_points
-      
+
+
 class CloneFeature(EngineeredFeature):
     """Engineered feature that creates a copy of the original features.
 
