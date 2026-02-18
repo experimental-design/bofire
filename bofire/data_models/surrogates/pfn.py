@@ -12,7 +12,7 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.molfeatures.api import Fingerprints
-from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.scaler import AnyScaler, Normalize, ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -71,7 +71,7 @@ class PFNSurrogate(TrainableBotorchSurrogate):
     # )
 
     # Scaling configuration
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
+    scaler: AnyScaler = Normalize()
     output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
 
     @field_validator("output_scaler")

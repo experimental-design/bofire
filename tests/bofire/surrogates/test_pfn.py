@@ -1,5 +1,4 @@
 import pytest
-from botorch.models.transforms.input import InputStandardize, Normalize
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -10,7 +9,12 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.surrogates.api import PFNSurrogate, ScalerEnum
+from bofire.data_models.surrogates.api import (
+    Normalize,
+    PFNSurrogate,
+    ScalerEnum,
+    Standardize,
+)
 
 
 try:
@@ -33,8 +37,8 @@ pytestmark = pytest.mark.skipif(
 @pytest.mark.parametrize(
     "scaler, output_scaler",
     [
-        [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
+        [Normalize(), ScalerEnum.IDENTITY],
+        [Standardize(), ScalerEnum.STANDARDIZE],
         [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
     ],
 )
@@ -58,11 +62,7 @@ def test_pfn_surrogate_fit(scaler, output_scaler):
     surrogate.fit(experiments=experiments)
 
     # Check input transforms
-    if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(surrogate._input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(surrogate._input_transform, InputStandardize)
-    elif scaler == ScalerEnum.IDENTITY:
+    if scaler == ScalerEnum.IDENTITY:
         assert surrogate._input_transform is None
 
     # Check outcome transforms
@@ -129,7 +129,7 @@ def test_pfn_surrogate_checkpoint_variants():
         checkpoint_url="pfns4bo_bnn",
         batch_first=False,
         multivariate=False,
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)

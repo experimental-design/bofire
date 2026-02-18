@@ -28,7 +28,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     LogNormalPrior,
 )
-from bofire.data_models.surrogates.api import Normalize, ScalerEnum
+from bofire.data_models.surrogates.api import Normalize, ScalerEnum, Standardize
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
@@ -1194,7 +1194,7 @@ specs.add_valid(
         "batch_first": False,
         "multivariate": False,
         "constant_model_kwargs": {},
-        "scaler": ScalerEnum.NORMALIZE,
+        "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
@@ -1224,7 +1224,7 @@ specs.add_valid(
         "batch_first": True,
         "multivariate": True,
         "constant_model_kwargs": {"key": "value"},
-        "scaler": ScalerEnum.STANDARDIZE,
+        "scaler": Standardize().model_dump(),
         "output_scaler": ScalerEnum.IDENTITY,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
@@ -1252,7 +1252,7 @@ specs.add_invalid(
         "batch_first": False,
         "multivariate": False,
         "constant_model_kwargs": {},
-        "scaler": ScalerEnum.NORMALIZE,
+        "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.LOG,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
@@ -1284,7 +1284,7 @@ specs.add_invalid(
         "batch_first": False,
         "multivariate": False,
         "constant_model_kwargs": {},
-        "scaler": ScalerEnum.NORMALIZE,
+        "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.CHAINED_LOG_STANDARDIZE,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
