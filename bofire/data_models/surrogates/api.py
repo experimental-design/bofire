@@ -38,7 +38,12 @@ from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.robust_single_task_gp import (
     RobustSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.scaler import (
+    AnyScaler,
+    Normalize,
+    ScalerEnum,
+    Standardize,
+)
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPHyperconfig,

@@ -167,6 +167,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                 engineered_features=self.engineered_features,
                 scaler_type=self.scaler,
                 categorical_encodings=self.categorical_encodings,
+                X=X,
             )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         # in case of classification we need to convert y from str to int
