@@ -75,7 +75,9 @@ def _single_run(
         pbar.set_postfix({"Current Best:": f"{metric_values[i]:0.3f}"})
         if (i + 1) % safe_interval == 0:
             autosafe_results(benchmark=benchmark)
-    return strategy.experiments, pd.Series(metric_values)
+    return strategy.experiments, pd.Series(
+        metric_values
+    )  # ty: ignore[invalid-return-type]
 
 
 def run(

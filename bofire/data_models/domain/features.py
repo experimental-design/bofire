@@ -42,7 +42,6 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Feature,
     Input,
-    MolecularInput,
     Output,
     TaskInput,
 )
@@ -83,7 +82,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:  # type: ignore
+    def __iter__(self) -> Iterator[F]:
         return iter(self.features)
 
     def __len__(self):
@@ -175,7 +174,9 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -207,7 +208,9 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -263,7 +266,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         features: list of the engineered features.
     """
 
-    type: Literal["EngineeredFeatures"] = "EngineeredFeatures"  # type: ignore
+    type: Literal["EngineeredFeatures"] = "EngineeredFeatures"
 
     def get_features2idx(self, offset: int = 0) -> Dict[str, Tuple[int, ...]]:
         """Get a dictionary that maps feature names to indices (used for surrogate
@@ -336,7 +339,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     """
 
-    type: Literal["Inputs"] = "Inputs"  # type: ignore
+    type: Literal["Inputs"] = "Inputs"
 
     @field_validator("features")
     @classmethod
@@ -447,7 +450,9 @@ class Inputs(_BaseFeatures[AnyInput]):
         samples = pd.concat(res, axis=1)
 
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
+            val = feat.fixed_value()
+            assert val is not None
+            samples[feat.key] = val[0]
 
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
@@ -497,7 +502,9 @@ class Inputs(_BaseFeatures[AnyInput]):
     def get_number_of_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -543,7 +550,9 @@ class Inputs(_BaseFeatures[AnyInput]):
     def get_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -595,7 +604,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 )
             ]
 
-        return all_combos  # type: ignore
+        return all_combos
 
     # transformation related methods
     def _get_transform_info(
@@ -657,8 +666,10 @@ class Inputs(_BaseFeatures[AnyInput]):
                 )
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, MolecularInput)
-                descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
+                assert isinstance(feat, CategoricalMolecularInput)
+                descriptor_names = specs[
+                    feat.key
+                ].get_descriptor_names()  # ty: ignore[possibly-missing-attribute]
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist(),
                 )
@@ -706,8 +717,8 @@ class Inputs(_BaseFeatures[AnyInput]):
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.to_descriptor_encoding(s))
             elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, MolecularInput)
-                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))  # type: ignore
+                assert isinstance(feat, CategoricalMolecularInput)
+                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -754,7 +765,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
                 transformed.append(
-                    feat.from_descriptor_encoding(specs[feat.key], experiments),  # type: ignore
+                    feat.from_descriptor_encoding(specs[feat.key], experiments),
                 )
 
         return pd.concat(transformed, axis=1)
@@ -796,7 +807,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
-                if not isinstance(value, tuple(no_enums)):  # type: ignore
+                if not isinstance(value, tuple(no_enums)):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
@@ -844,8 +855,8 @@ class Inputs(_BaseFeatures[AnyInput]):
         for feat in self.get():
             assert isinstance(feat, Input)
             lo, up = feat.get_bounds(
-                transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
+                transform_type=specs.get(feat.key),
+                values=experiments[feat.key] if experiments is not None else None,
                 reference_value=(
                     reference_experiment[feat.key]
                     if reference_experiment is not None
@@ -909,7 +920,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
 
     """
 
-    type: Literal["Outputs"] = "Outputs"  # type: ignore
+    type: Literal["Outputs"] = "Outputs"
 
     def get_by_objective(
         self,
@@ -1018,7 +1029,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments_adapt[feat.key].dropna(),  # type: ignore
+                    experiments_adapt[feat.key].dropna(),
                 )
                 for feat in self.features
                 if feat.objective is not None
@@ -1026,10 +1037,10 @@ class Outputs(_BaseFeatures[AnyOutput]):
             ]
             + [
                 (
-                    pd.Series(  # type: ignore
+                    pd.Series(
                         data=feat(
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),
                         ),
                         name=f"{feat.key}_pred",
                     )
@@ -1099,7 +1110,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
                         excludes=Objective,
-                        includes=None,  # type: ignore
+                        includes=None,
                     )
                 ],
             ),

@@ -16,25 +16,25 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousDescriptorInput,
     ContinuousInput,
     MeanFeature,
-    MolecularInput,
     SumFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.molfeatures.api import (
+    CompositeMolFeatures,
     Fingerprints,
     FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.surrogates.api import ScalerEnum
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
+from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.surrogates.utils import (
-    get_categorical_feature_keys,
     get_continuous_feature_keys,
     get_input_transform,
-    get_molecular_feature_keys,
     get_scaler,
 )
 
@@ -56,16 +56,16 @@ def test_get_scaler_none():
             "x_cat": CategoricalEncodingEnum.ONE_HOT,
             "x_desc": CategoricalEncodingEnum.ONE_HOT,
         },
-        scaler_type=ScalerEnum.NORMALIZE,
+        scaler_type=NormalizeScaler(),
     )
-    assert scaler is None
+    assert scaler == {}
 
 
 @pytest.mark.parametrize(
     "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices, expected_offset, expected_coefficient",
     [
         (
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.ONE_HOT,
@@ -76,7 +76,7 @@ def test_get_scaler_none():
             None,
         ),
         (
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
@@ -87,7 +87,7 @@ def test_get_scaler_none():
             None,
         ),
         (
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.ONE_HOT,
@@ -98,7 +98,7 @@ def test_get_scaler_none():
             None,
         ),
         (
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
@@ -109,7 +109,7 @@ def test_get_scaler_none():
             None,
         ),
         (
-            ScalerEnum.IDENTITY,
+            None,
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.ONE_HOT,
@@ -120,7 +120,7 @@ def test_get_scaler_none():
             None,
         ),
         (
-            ScalerEnum.IDENTITY,
+            None,
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
@@ -158,14 +158,15 @@ def test_get_scaler(
             ),
         ],
     )
-    # experiments = inputs.sample(n=10)
-    scaler = get_scaler(
+
+    scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings=input_preprocessing_specs,
         scaler_type=scaler_enum,
-        # X=experiments[inputs.get_keys()],
     )
+    scaler = None if scaler_dict == {} else scaler_dict["scaler"]
+
     assert isinstance(scaler, expected_scaler)
     if expected_indices is not None:
         assert (scaler.indices == expected_indices).all()
@@ -183,12 +184,50 @@ def test_get_scaler(
     #         assert (scaler.coefficient == expected_coefficient).all()
 
 
+def test_get_scaler_with_experiments():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+    )
+
+    scaler = get_scaler(
+        inputs=inputs,
+        engineered_features=EngineeredFeatures(features=[]),
+        categorical_encodings={},
+        scaler_type=NormalizeScaler(),
+    )["scaler"]
+
+    assert isinstance(scaler, Normalize)
+    assert (scaler.bounds == torch.tensor([[-4.0], [4.0]])).all()
+
+    experiments_beyond_bounds = pd.DataFrame(
+        [[-8.0, 0.1], [1.2, 5.0]], columns=inputs.get_keys()
+    )
+
+    scaler_beyond_bounds = get_scaler(
+        inputs=inputs,
+        engineered_features=EngineeredFeatures(features=[]),
+        categorical_encodings={},
+        scaler_type=NormalizeScaler(),
+        X=experiments_beyond_bounds,
+    )["scaler"]
+
+    assert (
+        scaler_beyond_bounds.bounds == torch.tensor([[-8.0, -4.0], [4.0, 5.0]])
+    ).all()
+
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices",
     [
         (
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             {
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
@@ -196,7 +235,7 @@ def test_get_scaler(
             torch.tensor([0, 1, 2, 3], dtype=torch.int64),
         ),
         (
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             {
                 "x_mol": Fingerprints(n_bits=2),
             },
@@ -204,7 +243,7 @@ def test_get_scaler(
             torch.tensor([0, 1], dtype=torch.int64),
         ),
         (
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             {
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
@@ -212,7 +251,7 @@ def test_get_scaler(
             torch.tensor([0, 1, 2, 3], dtype=torch.int64),
         ),
         (
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             {
                 "x_mol": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
@@ -220,7 +259,7 @@ def test_get_scaler(
             torch.tensor([0, 1], dtype=torch.int64),
         ),
         (
-            ScalerEnum.IDENTITY,
+            None,
             {
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
@@ -228,7 +267,7 @@ def test_get_scaler(
             None,
         ),
         (
-            ScalerEnum.IDENTITY,
+            None,
             {
                 "x_mol": FingerprintsFragments(n_bits=32),
             },
@@ -251,7 +290,17 @@ def test_get_scaler_molecular(
             )
             for i in range(2)
         ]
-        + [MolecularInput(key="x_mol")],
+        + [
+            CategoricalMolecularInput(
+                key="x_mol",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            )
+        ],
     )
     experiments = [
         [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O"],
@@ -260,23 +309,18 @@ def test_get_scaler_molecular(
         [1.5, 4.5, "N[C@](C)(F)C(=O)O"],
     ]
     experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_mol"])
-    scaler = get_scaler(
+    scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings=input_preprocessing_specs,
         scaler_type=scaler_enum,
         # X=experiments[inputs.get_keys()],
     )
+    scaler = None if len(scaler_dict) == 0 else scaler_dict["scaler"]
     assert isinstance(scaler, expected_scaler)
     if expected_indices is not None:
         assert scaler.transform_on_train is True
         assert (scaler.indices == expected_indices).all()
-    else:
-        with pytest.raises(
-            AttributeError,
-            match="'NoneType' object has no attribute 'indices'",
-        ):
-            assert (scaler.indices == expected_indices).all()
 
 
 def test_get_scaler_engineered_features():
@@ -301,19 +345,67 @@ def test_get_scaler_engineered_features():
             ),
         ],
     )
-    scaler = get_scaler(
+    scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=engineered_features,
         categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
-        scaler_type=ScalerEnum.NORMALIZE,
+        scaler_type=NormalizeScaler(),
     )
-    assert isinstance(scaler, Normalize)
-    assert (scaler.indices == torch.tensor([0, 1, 5, 6, 7, 8], dtype=torch.int64)).all()
+
+    assert isinstance(scaler_dict, dict) and all(
+        isinstance(tf, Normalize) for tf in scaler_dict.values()
+    )
+    assert (
+        scaler_dict["scaler"].indices == torch.tensor([0, 1], dtype=torch.int64)
+    ).all()
+    assert not scaler_dict["scaler"].learn_coefficients
+
+    assert (
+        scaler_dict["engineered_scaler"].indices
+        == torch.tensor([5, 6, 7, 8], dtype=torch.int64)
+    ).all()
+    assert scaler_dict["engineered_scaler"].learn_coefficients
+
+
+def test_get_scaler_feature_specific():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(0, 5),
+            )
+            for i in range(5)
+        ]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa", "lotta"])],
+    )
+
+    engineered_features = EngineeredFeatures(
+        features=[
+            SumFeature(key="sum", features=["x_1", "x_2"]),
+            MeanFeature(key="mean", features=["x_1", "x_2"]),
+        ]
+    )
+
+    scaler_dict = get_scaler(
+        inputs=inputs,
+        engineered_features=engineered_features,
+        categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        scaler_type=NormalizeScaler(features=["x_2", "x_4", "sum"]),
+    )
+
+    assert len(scaler_dict) == 2
+    assert (
+        scaler_dict["scaler"].indices == torch.tensor([1, 3], dtype=torch.int64)
+    ).all()
+
+    assert (
+        scaler_dict["engineered_scaler"].indices == torch.tensor([8], dtype=torch.int64)
+    ).all()
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "specs, expected_continuous_keys, expected_categorical_keys, expected_molecular_keys",
+    "specs, expected_continuous_keys",
     [
         (
             {
@@ -322,8 +414,6 @@ def test_get_scaler_engineered_features():
                 "x4": Fingerprints(n_bits=2),
             },
             ["x1"],
-            ["x2", "x3"],
-            ["x4"],
         ),
         (
             {
@@ -332,8 +422,6 @@ def test_get_scaler_engineered_features():
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
             ["x1"],
-            ["x2", "x3"],
-            ["x4"],
         ),
         (
             {
@@ -342,8 +430,6 @@ def test_get_scaler_engineered_features():
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             ["x1", "x4"],
-            ["x2", "x3"],
-            [],
         ),
         (
             {
@@ -352,8 +438,6 @@ def test_get_scaler_engineered_features():
                 "x4": Fingerprints(n_bits=2),
             },
             ["x1", "x3"],
-            ["x2"],
-            ["x4"],
         ),
         (
             {
@@ -362,8 +446,16 @@ def test_get_scaler_engineered_features():
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
             ["x1", "x3"],
-            ["x2"],
-            ["x4"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": FingerprintsFragments(
+                    fragments=["fr_unbrch_alkane", "fr_thiocyan"], n_bits=32
+                ),
+            },
+            ["x1", "x3"],
         ),
         (
             {
@@ -372,16 +464,25 @@ def test_get_scaler_engineered_features():
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             ["x1", "x3", "x4"],
-            ["x2"],
-            [],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": CompositeMolFeatures(
+                    features=[
+                        MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                        Fingerprints(n_bits=128),
+                    ]
+                ),
+            },
+            ["x1", "x3", "x4"],
         ),
     ],
 )
 def test_get_feature_keys(
     specs,
     expected_continuous_keys,
-    expected_categorical_keys,
-    expected_molecular_keys,
 ):
     inps = Inputs(
         features=[
@@ -393,16 +494,20 @@ def test_get_feature_keys(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(
+                key="x4",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            ),
         ],
     )
-    molecular_feature_keys = get_molecular_feature_keys(specs)
     continuous_feature_keys = get_continuous_feature_keys(inps, specs)
-    categorical_feature_keys = get_categorical_feature_keys(specs)
 
-    assert molecular_feature_keys == expected_molecular_keys
     assert continuous_feature_keys == expected_continuous_keys
-    assert categorical_feature_keys == expected_categorical_keys
 
 
 def test_get_input_transform():
@@ -417,7 +522,7 @@ def test_get_input_transform():
     # case 1 scaler not none, categorical transform not none
     input_transform = get_input_transform(
         inputs=inputs,
-        scaler_type=ScalerEnum.NORMALIZE,
+        scaler_type=NormalizeScaler(),
         categorical_encodings={
             "x2": CategoricalEncodingEnum.ONE_HOT,
         },
@@ -427,7 +532,7 @@ def test_get_input_transform():
     # case 2 scaler is none, categorical transform is not none
     input_transform = get_input_transform(
         inputs=inputs,
-        scaler_type=ScalerEnum.IDENTITY,
+        scaler_type=None,
         categorical_encodings={
             "x2": CategoricalEncodingEnum.ONE_HOT,
         },
@@ -437,7 +542,7 @@ def test_get_input_transform():
     # case 3 scaler is not none, categorical transform is none
     input_transform = get_input_transform(
         inputs=inputs,
-        scaler_type=ScalerEnum.NORMALIZE,
+        scaler_type=NormalizeScaler(),
         categorical_encodings={
             "x2": CategoricalEncodingEnum.ORDINAL,
         },
@@ -447,7 +552,7 @@ def test_get_input_transform():
     # case 4 both is none
     input_transform = get_input_transform(
         inputs=inputs,
-        scaler_type=ScalerEnum.IDENTITY,
+        scaler_type=None,
         categorical_encodings={
             "x2": CategoricalEncodingEnum.ORDINAL,
         },
@@ -457,7 +562,7 @@ def test_get_input_transform():
     # case 5 engineered features with scaler and categorical transform
     input_transform = get_input_transform(
         inputs=inputs,
-        scaler_type=ScalerEnum.NORMALIZE,
+        scaler_type=NormalizeScaler(),
         categorical_encodings={
             "x2": CategoricalEncodingEnum.ONE_HOT,
         },
@@ -468,15 +573,18 @@ def test_get_input_transform():
         ),
     )
     assert isinstance(input_transform, ChainedInputTransform)
-    assert len(input_transform.keys()) == 3
-    assert list(input_transform.keys()) == ["cat", "sum", "scaler"]
-    scaler = input_transform["scaler"]
-    assert isinstance(scaler, Normalize)
-    assert (scaler.indices == torch.tensor([0, 1, 5], dtype=torch.int64)).all()
+    assert list(input_transform.keys()) == ["cat", "sum", "scaler", "engineered_scaler"]
+    scaler, engineered_scaler = (
+        input_transform["scaler"],
+        input_transform["engineered_scaler"],
+    )
+    assert isinstance(scaler, Normalize) and isinstance(engineered_scaler, Normalize)
+    assert (scaler.indices == torch.tensor([0, 1], dtype=torch.int64)).all()
+    assert (engineered_scaler.indices == torch.tensor([5], dtype=torch.int64)).all()
     # case 6 engineered features keep_features = False
     input_transform = get_input_transform(
         inputs=inputs,
-        scaler_type=ScalerEnum.NORMALIZE,
+        scaler_type=NormalizeScaler(),
         categorical_encodings={
             "x2": CategoricalEncodingEnum.ONE_HOT,
         },
@@ -487,8 +595,13 @@ def test_get_input_transform():
         ),
     )
     assert isinstance(input_transform, ChainedInputTransform)
-    assert len(input_transform.keys()) == 4
-    assert list(input_transform.keys()) == ["cat", "sum", "scaler", "filter_engineered"]
+    assert list(input_transform.keys()) == [
+        "cat",
+        "sum",
+        "scaler",
+        "engineered_scaler",
+        "filter_engineered",
+    ]
     filter = input_transform["filter_engineered"]
     assert isinstance(filter, FilterFeatures)
     assert (

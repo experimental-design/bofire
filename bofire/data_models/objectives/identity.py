@@ -18,7 +18,7 @@ class IdentityObjective(Objective):
 
     """
 
-    type: Literal["IdentityObjective"] = "IdentityObjective"  # type: ignore
+    type: Literal["IdentityObjective"] = "IdentityObjective"
     w: TWeight = 1
     bounds: Bounds = [0, 1]
 

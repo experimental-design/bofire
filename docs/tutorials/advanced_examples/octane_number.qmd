@@ -1,0 +1,79 @@
+---
+title: Predict Motor Octane Number of Hydrocarbon Mixtures
+jupyter: python3
+---
+
+
+This tutorial shows how to predict the Motor Octane Number (MON) of a hydrocarbon mixture. The dataset stems from the paper from [Chew et al.](https://www.nature.com/articles/s41524-025-01552-2). It contains 722 experiments of up to 121 componet mixtures of 423 individual molecules. Each molecule is represented by its SMILES string.
+
+
+## Imports
+
+```{python}
+import os
+
+import bofire.surrogates.api as surrogates
+from bofire.benchmarks.data.octane_number import get_octane_data
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
+from bofire.data_models.features.api import (
+    ContinuousMolecularInput,
+    ContinuousOutput,
+    MolecularWeightedSumFeature,
+)
+from bofire.data_models.molfeatures.api import MordredDescriptors
+from bofire.data_models.molfeatures.names import mordred as mordred_names
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+## Setup Data
+
+```{python}
+df_experiments = get_octane_data()
+df_experiments["valid_MON"] = 1
+
+output_key = "MON"
+
+inputs = Inputs(
+    features = [
+        ContinuousMolecularInput(key=col, molecule=col, bounds=(0,1))
+        for col in df_experiments.columns
+        if col not in ["MON", "Label", "valid_MON"]
+    ]
+)
+outputs = Outputs(features=[ContinuousOutput(key=output_key)])
+
+```
+
+## Setup Surrogate and perform CV
+
+We model the high-dimensional problem by using an engineered feature called `MolecularWeightedSumFeature`. In computes the weighted sum of the molecular descriptors of the original `ContinuousMolecularInput`s that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.
+
+```{python}
+surrogate_data = SingleTaskGPSurrogate(
+    inputs=inputs,
+    outputs=outputs,
+    engineered_features = EngineeredFeatures(
+        features=[
+                MolecularWeightedSumFeature(
+                    key="mixture",
+                    features=inputs.get_keys(),
+                    molfeatures=MordredDescriptors(descriptors=mordred_names,ignore_3D=False, correlation_cutoff=0.9),
+                    keep_features=False
+                )
+            ]
+        )
+)
+
+print("Number of molecular features before correlation filtering: ", len(surrogate_data.engineered_features[0].molfeatures.get_descriptor_names()))
+surrogate = surrogates.map(surrogate_data)
+cv_train, cv_test, _ = surrogate.cross_validate(df_experiments, folds=10 if not SMOKE_TEST else 3)
+
+display(cv_test.get_metrics())
+
+print("Number of molecular features before correlation filtering: ", len(surrogate_data.engineered_features[0].molfeatures.get_descriptor_names()))
+```
+
+Even better performance can be achieved by using SAAS based surrogates, like `AdditiveMapSaasSingleTaskGPSurrogate` or `EnsembleMapSaasSingleTaskGPSurrogate`. Drawback are higher computational costs.

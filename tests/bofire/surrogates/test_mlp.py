@@ -6,12 +6,12 @@ from botorch.models.transforms.input import (
     Normalize,
     NumericToCategoricalEncoding,
 )
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from pandas.testing import assert_frame_equal
 from torch import nn
 
 import bofire.surrogates.api as surrogates
-from bofire.benchmarks.single import Himmelblau
+from bofire.benchmarks.single import Himmelblau, PositiveHimmelblau
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -25,6 +25,8 @@ from bofire.data_models.surrogates.api import (
     RegressionMLPEnsemble,
     ScalerEnum,
 )
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
+from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.surrogates.mlp import MLP, MLPDataset, _MLPEnsemble, fit_mlp
 from bofire.utils.torch_tools import tkwargs
 
@@ -178,13 +180,16 @@ def test_mlp_ensemble_forward():
 @pytest.mark.parametrize(
     "scaler, output_scaler",
     [
-        [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
+        [NormalizeScaler(), ScalerEnum.IDENTITY],
+        [StandardizeScaler(), ScalerEnum.STANDARDIZE],
+        [None, ScalerEnum.STANDARDIZE],
+        [StandardizeScaler(), ScalerEnum.LOG],
+        [StandardizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE],
+        [None, ScalerEnum.CHAINED_LOG_STANDARDIZE],
     ],
 )
 def test_mlp_ensemble_fit(scaler, output_scaler):
-    bench = Himmelblau()
+    bench = PositiveHimmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     ens = RegressionMLPEnsemble(
@@ -199,9 +204,9 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
     surrogate.fit(experiments=experiments)
 
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(surrogate.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(surrogate.model.input_transform, InputStandardize)
     else:
         with pytest.raises(AttributeError):
@@ -209,8 +214,12 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(surrogate.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(surrogate.model.outcome_transform, Log)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(surrogate.model, "outcome_transform")
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(surrogate.model.outcome_transform, ChainedOutcomeTransform)
 
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
@@ -222,13 +231,13 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
 @pytest.mark.parametrize(
     "scaler",
-    [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY],
+    [NormalizeScaler(), StandardizeScaler(), None],
 )
 def test_mlp_ensemble_fit_categorical(scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -252,7 +261,7 @@ def test_mlp_ensemble_fit_categorical(scaler):
     surrogate = surrogates.map(ens)
     surrogate.fit(experiments=experiments)
 
-    if scaler == ScalerEnum.IDENTITY:
+    if scaler is None:
         assert isinstance(surrogate.model.input_transform, NumericToCategoricalEncoding)
     else:
         assert isinstance(surrogate.model.input_transform, ChainedInputTransform)

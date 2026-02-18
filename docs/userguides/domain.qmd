@@ -81,7 +81,6 @@ BoFire allows for the following different user-facing input classes:
 - `ContinuousInput`
 - `DiscreteInput`
 - `CategoricalInput`
-- `MolecularInput`
 - `CategoricalDescriptorInput`
 - `CategoricalMolecularInput`
 - `TaskInput`
@@ -122,14 +121,7 @@ from bofire.data_models.features.api import CategoricalInput
 CategoricalInput(key="x4", categories=["A", "B", "C"])
 ```
 
-#### Molecular inputs
-Molecular inputs are used to define molecular structures. This requires the optional cheminfo dependencies installed. The `MolecularInput` class operates on SMILES strings. For example, the following code defines a new molecular input variable $x_5$.
 
-```{python}
-from bofire.data_models.features.api import MolecularInput
-
-MolecularInput(key="x5")
-```
 
 <!-- #### Continuous descriptor inputs
  -->
@@ -151,7 +143,7 @@ CategoricalDescriptorInput(
 ```
 
 #### Categorical molecular inputs
-Categorical molecular inputs inherit from both molecular and categorical inputs. In addition to the 'MolecularInput' the user can provide a list of allowed SMILES strings via the `categories` attribute. The following code defines a new categorical molecular input variable $x_7$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
+Categorical molecular inputs inherit from categorical inputs. Its list of categories has to be a list of valid SMILES strings. The following code defines a new categorical molecular input variable $x_7$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
 
 ```{python}
 from bofire.data_models.features.api import CategoricalMolecularInput
@@ -173,7 +165,6 @@ inputs = Inputs(
     ContinuousInput(key="x2", bounds=[0,1]),
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", categories=["A", "B", "C"]),
-    MolecularInput(key="x5"),
     CategoricalDescriptorInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=["density", "hardness"], values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]),
     CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])])
 ```

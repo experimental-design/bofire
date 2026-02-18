@@ -12,6 +12,7 @@ from bofire.data_models.kernels.continuous import (
     MaternKernel,
     PolynomialKernel,
     RBFKernel,
+    SphericalLinearKernel,
 )
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
@@ -24,6 +25,7 @@ class AdditiveKernel(AggregationKernel):
     kernels: Sequence[
         Union[
             RBFKernel,
+            SphericalLinearKernel,
             MaternKernel,
             LinearKernel,
             HammingDistanceKernel,
@@ -43,6 +45,7 @@ class MultiplicativeKernel(AggregationKernel):
     kernels: Sequence[
         Union[
             RBFKernel,
+            SphericalLinearKernel,
             MaternKernel,
             LinearKernel,
             HammingDistanceKernel,
@@ -60,6 +63,7 @@ class ScaleKernel(AggregationKernel):
     type: Literal["ScaleKernel"] = "ScaleKernel"
     base_kernel: Union[
         RBFKernel,
+        SphericalLinearKernel,
         MaternKernel,
         LinearKernel,
         HammingDistanceKernel,
@@ -128,6 +132,7 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             PolynomialKernel,
             MaternKernel,
             RBFKernel,
+            SphericalLinearKernel,
             TanimotoKernel,
             InfiniteWidthBNNKernel,
             WassersteinKernel,

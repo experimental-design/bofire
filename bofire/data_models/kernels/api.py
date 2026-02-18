@@ -20,6 +20,7 @@ from bofire.data_models.kernels.continuous import (
     MaternKernel,
     PolynomialKernel,
     RBFKernel,
+    SphericalLinearKernel,
 )
 from bofire.data_models.kernels.kernel import (
     AggregationKernel,
@@ -44,6 +45,7 @@ AnyContinuousKernel = Union[
     LinearKernel,
     PolynomialKernel,
     RBFKernel,
+    SphericalLinearKernel,
     InfiniteWidthBNNKernel,
 ]
 
@@ -67,6 +69,7 @@ AnyKernel = Union[
     PolynomialKernel,
     MaternKernel,
     RBFKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
     InfiniteWidthBNNKernel,
     WassersteinKernel,

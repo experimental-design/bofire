@@ -1475,7 +1475,7 @@ def test_get_categorical_encoder(feature, transform, expected_encoding):
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_categorical_encoder_molecular():
     feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
-    transform = Fingerprints()
+    transform = Fingerprints(filter_descriptors=False)
     expected_encoding = torch.from_numpy(
         feat.to_descriptor_encoding(transform, pd.Series(feat.categories)).values
     ).to(**tkwargs)

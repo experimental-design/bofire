@@ -1,4 +1,4 @@
-from typing import Dict, Type
+from typing import Callable, Dict, Type
 
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
@@ -38,7 +38,7 @@ def map_MixedSingleTaskGPSurrogate(
         sum_kernel = ScaleKernel(
             base_kernel=AdditiveKernel(
                 kernels=[
-                    data_model.continuous_kernel,  # type: ignore
+                    data_model.continuous_kernel,
                     ScaleKernel(base_kernel=data_model.categorical_kernel),
                 ]
             )
@@ -46,7 +46,7 @@ def map_MixedSingleTaskGPSurrogate(
         product_kernel = ScaleKernel(
             base_kernel=MultiplicativeKernel(
                 kernels=[
-                    data_model.continuous_kernel,  # type: ignore
+                    data_model.continuous_kernel,
                     data_model.categorical_kernel,
                 ]
             )
@@ -71,6 +71,32 @@ def map_MixedSingleTaskGPSurrogate(
     )
 
 
+def map_TanimotoGPSurrogate(
+    data_model: data_models.TanimotoGPSurrogate,
+) -> data_models.SingleTaskGPSurrogate:
+    return data_models.SingleTaskGPSurrogate(
+        inputs=data_model.inputs,
+        outputs=data_model.outputs,
+        input_preprocessing_specs=data_model.input_preprocessing_specs,
+        categorical_encodings=data_model.categorical_encodings,
+        dump=data_model.dump,
+        scaler=None,
+        output_scaler=data_model.output_scaler,
+        noise_prior=data_model.noise_prior,
+        hyperconfig=None,
+        kernel=data_model.kernel,
+    )
+
+
+DATA_MODEL_MAP: Dict[
+    Type[data_models.MixedSingleTaskGPSurrogate],
+    Callable[[data_models.MixedSingleTaskGPSurrogate], data_models.AnySurrogate],
+] = {
+    data_models.MixedSingleTaskGPSurrogate: map_MixedSingleTaskGPSurrogate,
+    data_models.TanimotoGPSurrogate: map_TanimotoGPSurrogate,
+}
+
+
 SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.EmpiricalSurrogate: EmpiricalSurrogate,
     data_models.RandomForestSurrogate: RandomForestSurrogate,
@@ -92,9 +118,10 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
 }
 
 
-def map(data_model: data_models.Surrogate) -> Surrogate:
+def map(data_model: data_models.Surrogate, **kwargs) -> Surrogate:
     new_data_model = data_model
-    if isinstance(data_model, data_models.MixedSingleTaskGPSurrogate):
-        new_data_model = map_MixedSingleTaskGPSurrogate(data_model)
+    if data_model.__class__ in DATA_MODEL_MAP:
+        new_data_model = DATA_MODEL_MAP[data_model.__class__](data_model)
+
     cls = SURROGATE_MAP[new_data_model.__class__]
-    return cls(data_model=new_data_model)
+    return cls(data_model=new_data_model, **kwargs)

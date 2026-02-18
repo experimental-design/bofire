@@ -9,7 +9,6 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.molecular import MolecularInput
 
 
 if TYPE_CHECKING:
@@ -69,10 +68,10 @@ class ThresholdCondition(Condition):
         def evaluate(x: ArrayLike):
             return threshold_operators[self.operator](x, self.threshold)
 
-        return values.apply(evaluate)
+        return values.apply(evaluate)  # ty: ignore[invalid-return-type]
 
     def validate_feature(self, feature: "AnyInput") -> None:
-        if isinstance(feature, (CategoricalInput, MolecularInput)):
+        if isinstance(feature, CategoricalInput):
             raise TypeError(
                 f"Feature {feature.key} is a {type(feature).__name__}, and cannot be used "
                 f"with a {type(self).__name__}."
@@ -99,7 +98,7 @@ class SelectionCondition(Condition):
         return values.isin(self.selection)
 
     def validate_feature(self, feature: "AnyInput") -> None:
-        if isinstance(feature, (ContinuousInput, MolecularInput)):
+        if isinstance(feature, ContinuousInput):
             raise TypeError(
                 f"Feature {feature.key} is a {type(feature).__name__}, and cannot be used "
                 f"with a {type(self).__name__}."
@@ -128,7 +127,7 @@ class NonZeroCondition(Condition):
         return values != 0
 
     def validate_feature(self, feature: "AnyInput") -> None:
-        if isinstance(feature, (CategoricalInput, MolecularInput)):
+        if isinstance(feature, CategoricalInput):
             raise TypeError(
                 f"Feature {feature.key} is a {type(feature).__name__}, and cannot be used "
                 f"with a {type(self).__name__}."

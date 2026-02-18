@@ -83,7 +83,7 @@ class ModelBasedObjective(Objective):
             **tkwargs,
         )
 
-        return jacobian(self._evaluate_tensor, D).detach().numpy().flatten()  # type: ignore
+        return jacobian(self._evaluate_tensor, D).detach().numpy().flatten()
 
     # FIXME: currently not returning the hessian in a way that is compatible with ipopt
     # also, the hessians of the constraints are missing
@@ -103,7 +103,7 @@ class ModelBasedObjective(Objective):
     def tensor_to_model_matrix(self, D: Tensor) -> Tensor:
         """Evaluate the model matrix of the design matrix as a tensor."""
         var_dict = {var: D[:, i] for i, var in enumerate(self.vars)}
-        var_dict["torch"] = torch  # type: ignore
+        var_dict["torch"] = torch
         return eval(str(self.model_terms_string_expression), {}, var_dict)
 
     def _evaluate_tensor(self, D: Tensor) -> Tensor:
@@ -328,11 +328,11 @@ class SpaceFilling(Objective):
             -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments]),
         )
 
-    def _evaluate_jacobian(self, x: np.ndarray) -> float:  # type: ignore
+    def _evaluate_jacobian(self, x: np.ndarray) -> float:
         X = self._convert_input_to_tensor(x, requires_grad=True)
         torch.sum(torch.sort(torch.pdist(X))[0][: self.n_experiments]).backward()
 
-        return -X.grad.detach().numpy().flatten()  # type: ignore
+        return -X.grad.detach().numpy().flatten()
 
     def _convert_input_to_tensor(
         self,

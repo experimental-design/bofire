@@ -25,6 +25,91 @@ VALID_SMILES = pd.Series(smiles)
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "molfeatures",
+    [
+        (Fingerprints(correlation_cutoff=0.95)),
+        (Fragments(correlation_cutoff=0.95)),
+        (FingerprintsFragments(correlation_cutoff=0.95)),
+        (MordredDescriptors(correlation_cutoff=0.95)),
+    ],
+)
+def test_get_uncorrelated_descriptors(molfeatures):
+    # Create MordredDescriptors with all available descriptors
+    initial_descriptor_count = len(molfeatures.get_descriptor_names())
+
+    molecules = [
+        "CC(C)(C)C(=O)Nc1nc(NC(=O)C(C)(C)C)c2cc(Br)cnc2n1",
+        "Cc1nn(C)c(C)c1Br",
+        "COc1cccc(Br)n1",
+        "CC(C)c1cc(C(C)C)c(Br)c(C(C)C)c1",
+        "Cc1ccc(Br)cn1",
+        "Cc1ncc(Br)cn1",
+        "Brc1csc(Oc2ccccc2)n1",
+        "Brc1cnc(N2CCCCC2)nc1",
+        "CCc1cccc(CC)c1Br",
+        "Brc1ccc2ncccc2c1",
+        "Brc1ccnc2ccccc12",
+        "O=[N+]([O-])c1cccc(Br)c1",
+        "Cn1ncc2c(Br)cccc21",
+        "COc1ccccc1Br",
+        "Brc1cscn1",
+        "COc1cc(Br)cc(OC)c1OC",
+        "Brc1cncnc1",
+        "CCn1c2ccccc2c2cc(Br)ccc21",
+        "CSc1cccc(Br)c1",
+        "Brc1cccc2ccccc12",
+        "Brc1ccccn1",
+        "Brc1cnc2ccccc2c1",
+        "Brc1cccs1",
+        "FC(F)(F)c1ccccc1Br",
+        "Brc1cnc2ccccn12",
+        "Cn1cnc2ccc(Br)cc2c1=O",
+        "Cc1cscc1Br",
+        "Cn1cnc(Br)c1",
+        "CC(C)[Si](Oc1cccc(Br)c1)(C(C)C)C(C)C",
+        "FC(F)(F)c1cc(Br)cc(C(F)(F)F)c1",
+        "FC(F)(F)c1ccc(Br)cc1",
+        "Brc1ccc2ccccc2c1",
+        "Brc1cnn(C(c2ccccc2)(c2ccccc2)c2ccccc2)c1",
+        "COc1cccc(OC)c1Br",
+        "Cn1cc(Br)ccc1=O",
+        "Brc1ccccc1-n1cccn1",
+        "COc1ccc(Br)c(C)c1",
+    ]
+
+    initial_descriptor_values = molfeatures.get_descriptor_values(pd.Series(molecules))
+
+    # Run select_mordred_descriptors
+    new_names = molfeatures.remove_correlated_descriptors(molecules=molecules)
+
+    # Check that the number of descriptors has decreased
+    final_descriptor_count = len(molfeatures.get_descriptor_names())
+    final_descriptor_values = molfeatures.get_descriptor_values(pd.Series(molecules))
+    assert final_descriptor_count < initial_descriptor_count, (
+        f"Expected descriptor count to decrease, but got "
+        f"initial: {initial_descriptor_count}, final: {final_descriptor_count}"
+    )
+
+    assert final_descriptor_values.shape[1] == final_descriptor_count
+    assert sorted(final_descriptor_values.columns) == sorted(
+        molfeatures.get_descriptor_names()
+    )
+
+    assert_frame_equal(
+        initial_descriptor_values[molfeatures.get_descriptor_names()],
+        final_descriptor_values,
+    )
+
+    assert molfeatures.get_descriptor_names() == new_names
+
+    # Verify that the descriptor count is positive
+    assert (
+        final_descriptor_count > 0
+    ), "All descriptors were removed, expected at least some to remain"
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_fragments():
     from rdkit.Chem import Descriptors
 

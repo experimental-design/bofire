@@ -114,7 +114,7 @@ class AcquisitionOptimizer(ABC):
                     candidate_count=candidate_count,
                     acqf=acqfs[0],
                     domain=domain,
-                    experiments=experiments,  # type: ignore
+                    experiments=experiments,
                 )
 
         return self._optimize(
@@ -213,10 +213,10 @@ class AcquisitionOptimizer(ABC):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
-                    transform_type=input_preprocessing_specs.get(feat.key),  # type: ignore
+                    transform_type=input_preprocessing_specs.get(feat.key),
                 )
                 for j, idx in enumerate(features2idx[feat.key]):
-                    fixed_features[idx] = fixed_values[j]  # type: ignore
+                    fixed_features[idx] = fixed_values[j]
 
         return fixed_features
 
@@ -240,14 +240,16 @@ class AcquisitionOptimizer(ABC):
         - an associated acquisition value.
         """
         choices = pd.DataFrame.from_dict(
-            [  # type: ignore
+            [
                 {e[0]: e[1] for e in combi}
                 for combi in domain.inputs.get_categorical_combinations()
             ],
         )
         # adding categorical features that are fixed
         for feat in domain.inputs.get_fixed():
-            choices[feat.key] = feat.fixed_value()[0]  # type: ignore
+            fixed_val = feat.fixed_value()
+            assert fixed_val is not None
+            choices[feat.key] = fixed_val[0]
         # compare the choices with the training data and remove all that are also part
         # of the training data
         merged = choices.merge(
@@ -478,7 +480,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         }
         candidates, acqf_vals = optimizer_mapping[optimizer](
             **optimizer_input.model_dump()
-        )  # type: ignore
+        )
         return candidates, acqf_vals
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
@@ -489,8 +491,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             Dict[str, int]: The dictionary with the settings.
 
         """
+        assert self.batch_limit is not None
         return {
-            "batch_limit": (  # type: ignore
+            "batch_limit": (
                 self.batch_limit
                 if len(
                     domain.constraints.get([NChooseKConstraint, ProductConstraint]),
@@ -573,7 +576,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 q=candidate_count,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),  # type: ignore
+                options=self._get_optimizer_options(domain),
                 sequential=self.sequential,
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints + interpoints,
@@ -591,7 +594,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 q=candidate_count,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),  # type: ignore
+                options=self._get_optimizer_options(domain),
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
@@ -606,7 +609,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 bounds=bounds,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),  # type: ignore
+                options=self._get_optimizer_options(domain),
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
@@ -632,12 +635,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 equality_constraints=equality_constraints,
                 fixed_features=self.get_fixed_features(domain=domain),
                 discrete_dims={
-                    features2idx[feat.key][0]: feat.values  # type: ignore
+                    features2idx[feat.key][0]: feat.values
                     for feat in domain.inputs.get(DiscreteInput)
                 },
                 cat_dims={
-                    features2idx[feat.key][0]: feat.to_ordinal_encoding(  # type: ignore
-                        pd.Series(feat.get_allowed_categories())  # type: ignore
+                    features2idx[feat.key][0]: feat.to_ordinal_encoding(
+                        pd.Series(feat.get_allowed_categories())
                     ).tolist()
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
@@ -720,11 +723,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 feat, val = pair
                 feature = domain.inputs.get_by_key(feat)
                 if isinstance(feature, (ContinuousInput, DiscreteInput)):
-                    fixed_features[features2idx[feat][0]] = val  # type: ignore
+                    fixed_features[features2idx[feat][0]] = (
+                        val  # ty: ignore[invalid-assignment]
+                    )
                 if isinstance(feature, CategoricalInput):
                     assert feature.categories is not None
                     fixed_features[features2idx[feat][0]] = feature.categories.index(
-                        val  # type: ignore
+                        val
                     )  # this transforms to ordinal encoding
 
             list_of_fixed_features.append(fixed_features)
@@ -852,7 +857,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             optimization_direction="max",
         )
 
-        return x_opt, f_opt  # type: ignore
+        return x_opt, f_opt  # ty: ignore[invalid-return-type]
 
 
 OPTIMIZER_MAP: Dict[Type[AcquisitionOptimizerDataModel], Type[AcquisitionOptimizer]] = {

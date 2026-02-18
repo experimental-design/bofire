@@ -40,7 +40,7 @@ class FractionalFactorialStrategy(Strategy):
             self.n_blocks = (
                 len(block_feature.get_allowed_categories())
                 if isinstance(block_feature, CategoricalInput)
-                else len(block_feature.values)  # type: ignore
+                else len(block_feature.values)
             )
         else:
             self.n_blocks = 1
@@ -114,7 +114,7 @@ class FractionalFactorialStrategy(Strategy):
             block_vals = (
                 block_feature.get_allowed_categories()
                 if isinstance(block_feature, CategoricalInput)
-                else block_feature.values  # type: ignore
+                else block_feature.values
             )
             design[self.block_feature_key] = design[self.block_feature_key].map(
                 dict(enumerate(block_vals))
@@ -161,7 +161,7 @@ class FractionalFactorialStrategy(Strategy):
         design = pd.concat(
             [
                 pd.concat([design] * len(categorical_design), ignore_index=True),
-                pd.concat([categorical_design] * len(design), ignore_index=True),  # type: ignore
+                pd.concat([categorical_design] * len(design), ignore_index=True),
             ],
             axis=1,
         ).sort_values(

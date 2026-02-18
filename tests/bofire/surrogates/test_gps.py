@@ -14,7 +14,7 @@ from botorch.models.transforms.input import (
     Normalize,
     NumericToCategoricalEncoding,
 )
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from gpytorch.constraints import GreaterThan
 from pandas.testing import assert_frame_equal
 from torch.nn import Module
@@ -36,6 +36,7 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
     ScaleKernel,
+    SphericalLinearKernel,
     TanimotoKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints, MordredDescriptors
@@ -57,6 +58,8 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
+from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.data_models.surrogates.trainable import metrics2objectives
 from bofire.utils.torch_tools import tkwargs
 
@@ -69,18 +72,38 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
     [
         (
             ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             ScalerEnum.STANDARDIZE,
         ),
         (
             ScaleKernel(base_kernel=RBFKernel(ard=False)),
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             ScalerEnum.STANDARDIZE,
         ),
         (
             ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            None,
             ScalerEnum.IDENTITY,
-            ScalerEnum.IDENTITY,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            None,
+            ScalerEnum.LOG,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            StandardizeScaler(),
+            ScalerEnum.LOG,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            StandardizeScaler(),
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            None,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
         ),
     ],
 )
@@ -122,11 +145,15 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert isinstance(model.model, SingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(model.model.outcome_transform, Log)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(model.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(model.model.input_transform, InputStandardize)
     else:
         with pytest.raises(AttributeError):
@@ -200,18 +227,23 @@ def test_SingleTaskGPModel_with_engineered_features():
     [
         (
             ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             ScalerEnum.STANDARDIZE,
         ),
         (
             ScaleKernel(base_kernel=RBFKernel(ard=False)),
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             ScalerEnum.STANDARDIZE,
         ),
         (
             ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            None,
             ScalerEnum.IDENTITY,
-            ScalerEnum.IDENTITY,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            None,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
         ),
     ],
 )
@@ -264,10 +296,12 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
-    if scaler == ScalerEnum.NORMALIZE:
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.scaler, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.scaler, InputStandardize)
     else:
@@ -288,6 +322,35 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     model2.loads(dump)
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
+
+
+def test_SingleTaskGP_bound_relearning():
+    bench = Himmelblau()
+    experiments = bench.f(
+        pd.DataFrame({"x_1": [0.0, 0.1], "x_2": [0.0, 0.1]}), return_complete=True
+    )
+    # we include an engineered feature, since the bound relearning only occurs for
+    # engineered features
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
+        engineered_features=EngineeredFeatures(
+            features=[
+                SumFeature(
+                    key="x_Sum",
+                    features=bench.domain.inputs.get_keys(ContinuousInput),
+                )
+            ]
+        ),
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    engineered_scaler = surrogate.model.input_transform["engineered_scaler"]
+    bounds1 = engineered_scaler.bounds.clone()
+    experiments2 = bench.f(bench.domain.inputs.sample(10), return_complete=True)
+    surrogate.fit(experiments2)
+    bounds2 = engineered_scaler.bounds.clone()
+    assert not torch.equal(bounds1, bounds2)
 
 
 @pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
@@ -463,21 +526,24 @@ def test_SingleTaskGPModel_mixed_features():
         categorical_encodings={
             "x_cat_1": CategoricalEncodingEnum.ORDINAL,
             "x_cat_2": CategoricalEncodingEnum.ORDINAL,
-            "x_mol": Fingerprints(n_bits=2048),
+            "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
         },
     )
 
     gp_mapped = surrogates.map(gp_data)
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
+    n_descriptors_after_filtering = len(
+        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+    )
     assert pred.shape == (4, 2)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
-        2050,
-        2051,
+        2 + n_descriptors_after_filtering,
+        3 + n_descriptors_after_filtering,
     ]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
     assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
-        range(2, 2050)
+        range(2, 2 + n_descriptors_after_filtering)
     )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
@@ -632,9 +698,14 @@ def test_MixedSingletaskGPModel_with_botorch():
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
     [
-        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY),
+        (
+            RBFKernel(ard=False),
+            StandardizeScaler(),
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        ),
     ],
 )
 def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
@@ -681,9 +752,11 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         # assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform, Normalize)
         assert torch.eq(
@@ -691,7 +764,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
         # assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         # assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform, InputStandardize)
         assert torch.eq(
@@ -720,9 +793,10 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler",
     [
-        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE),
     ],
 )
 def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
@@ -770,10 +844,12 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     assert isinstance(model.model, SingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
 
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.scaler, Normalize)
         assert torch.eq(
@@ -781,7 +857,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.scaler, InputStandardize)
         assert torch.eq(
@@ -828,18 +904,23 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     [
         (
             ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            ScalerEnum.NORMALIZE,
+            NormalizeScaler(),
             ScalerEnum.STANDARDIZE,
         ),
         (
             ScaleKernel(base_kernel=RBFKernel(ard=False)),
-            ScalerEnum.STANDARDIZE,
+            StandardizeScaler(),
             ScalerEnum.STANDARDIZE,
         ),
         (
             ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            None,
             ScalerEnum.IDENTITY,
-            ScalerEnum.IDENTITY,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            None,
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
         ),
     ],
 )
@@ -881,11 +962,13 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
     assert isinstance(model.model, RobustRelevancePursuitSingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(model.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(model.model.input_transform, InputStandardize)
     else:
         with pytest.raises(AttributeError):
@@ -897,6 +980,7 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
         outputs=outputs,
         kernel=kernel,
         scaler=scaler,
+        output_scaler=output_scaler,
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)
@@ -982,3 +1066,45 @@ def test_RobustSingleTaskGPHyperconfig():
                 surrogate_data.kernel.base_kernel.lengthscale_prior
                 == HVARFNER_LENGTHSCALE_PRIOR()
             )
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        SphericalLinearKernel(ard=True),
+        SphericalLinearKernel(
+            ard=True, lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(), bounds=(0, 1)
+        ),
+        SphericalLinearKernel(ard=False, bounds=[(0, 1), (0, 1), (0, 1)]),
+    ],
+)
+def test_gp_with_spherical_kernel(kernel):
+    """Test GP training with SphericalLinearKernel"""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(0, 1),
+            )
+            for i in range(3)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
+    experiments["y"] = experiments["x_1"] + experiments["x_2"] + experiments["x_3"]
+
+    data_model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=ScaleKernel(base_kernel=kernel),
+    )
+    model = surrogates.map(data_model)
+    model.fit(experiments)
+
+    # Verify the model is fitted
+    assert hasattr(model, "model")
+
+    # Make predictions
+    samples = inputs.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)
