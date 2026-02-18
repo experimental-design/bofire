@@ -26,7 +26,6 @@ from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import qMFHVKG
 from bofire.data_models.api import Domain
-from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import ContinuousTaskInput, DiscreteTaskInput
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
@@ -36,6 +35,7 @@ from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient
     MultiFidelityHVKGStrategy as DataModel,
 )
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.strategy import make_strategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
@@ -43,7 +43,7 @@ from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 
 
 def _map_cost_model_to_botorch(
-    inputs: Inputs, features2idx: dict[str, tuple[int]]
+    cost_data_model: LinearDeterministicSurrogate, features2idx: dict[str, tuple[int]]
 ) -> tuple[AffineFidelityCostModel, dict[int, float]]:
     """Convert the task inputs to a cost model for the cost-weighted utility."""
 
@@ -53,24 +53,21 @@ def _map_cost_model_to_botorch(
         # if the cost is positive, then the upper bound is the highest fidelity.
         return task_input.upper_bound if weight > 0 else task_input.lower_bound
 
-    task_inputs = inputs.get([ContinuousTaskInput, DiscreteTaskInput])
-
     fidelity_weights = {
-        features2idx[task_input.key][0]: task_input.fidelity_cost_weight
-        for task_input in task_inputs
+        features2idx[key][0]: weight
+        for key, weight in cost_data_model.coefficients.items()
     }
-
-    total_fixed_cost = sum(task_input.fidelity_fixed_cost for task_input in task_inputs)
 
     cost_function = AffineFidelityCostModel(
         fidelity_weights=fidelity_weights,
-        fixed_cost=total_fixed_cost,
+        fixed_cost=cost_data_model.intercept,
     )
     target_fidelities = {
-        (idx := features2idx[task_input.key][0]): _target_fidelity(
-            task_input, fidelity_weights[idx]
+        (idx := features2idx[key][0]): _target_fidelity(
+            cost_data_model.inputs.get_by_key(key),
+            fidelity_weights[idx],  # type: ignore
         )
-        for task_input in task_inputs
+        for key in cost_data_model.coefficients
     }
 
     return cost_function, target_fidelities
@@ -96,6 +93,8 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         self.ref_point: ExplicitReferencePoint | None = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
 
+        self.fidelity_cost_output_key: str = data_model.fidelity_cost_output_key
+
     def _get_acqfs(self, n: PositiveInt) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
         assert self.experiments is not None, "No experiments available."
@@ -109,8 +108,14 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             self.input_preprocessing_specs
         )
 
+        cost_data_model = [
+            surr
+            for surr in self.surrogate_specs.surrogates
+            if surr.outputs.get_keys() == [self.fidelity_cost_output_key]
+        ][0]
+        assert isinstance(cost_data_model, LinearDeterministicSurrogate)
         cost_function, target_fidelities = _map_cost_model_to_botorch(
-            self.domain.inputs, features2idx
+            cost_data_model, features2idx
         )
 
         cost_aware_utility = InverseCostWeightedUtility(cost_model=cost_function)
