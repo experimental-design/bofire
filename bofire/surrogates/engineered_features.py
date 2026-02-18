@@ -198,6 +198,10 @@ def map_interpolate_feature(
             "normalize_y": feature.normalize_y,
             "normalize_x": feature.normalize_x,
         },
+        transform_on_train=True,
+    )
+
+
 def map_clone_feature(
     inputs: Inputs,
     transform_specs: InputTransformSpecs,
