@@ -83,6 +83,19 @@ FeatureKeys = Annotated[
     AfterValidator(make_unique_validator("Features")),
 ]
 
+OneFeatureKeys = Annotated[
+    List[str],
+    Field(
+        min_length=1,
+    ),
+    AfterValidator(make_unique_validator("Features")),
+]
+
+NonRestrictedFeatureKeys = Annotated[
+    List[str], AfterValidator(make_unique_validator("Features"))
+]
+
+
 CategoryVals = Annotated[
     List[str],
     Field(min_length=2),
