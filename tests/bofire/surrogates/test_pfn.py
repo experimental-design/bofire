@@ -39,7 +39,7 @@ pytestmark = pytest.mark.skipif(
     [
         [Normalize(), ScalerEnum.IDENTITY],
         [Standardize(), ScalerEnum.STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
+        [None, ScalerEnum.STANDARDIZE],
     ],
 )
 def test_pfn_surrogate_fit(scaler, output_scaler):
@@ -62,7 +62,7 @@ def test_pfn_surrogate_fit(scaler, output_scaler):
     surrogate.fit(experiments=experiments)
 
     # Check input transforms
-    if scaler == ScalerEnum.IDENTITY:
+    if scaler is None:
         assert surrogate._input_transform is None
 
     # Check outcome transforms
@@ -100,7 +100,7 @@ def test_pfn_surrogate_multivariate():
         checkpoint_url="pfns4bo_hebo",
         batch_first=False,
         multivariate=True,  # Enable multivariate posterior
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)
@@ -157,7 +157,7 @@ def test_pfn_surrogate_batch_first():
         checkpoint_url="pfns4bo_hebo",
         batch_first=True,  # Batch dimension first
         multivariate=False,
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)
@@ -196,7 +196,7 @@ def test_pfn_surrogate_categorical_input():
         checkpoint_url="pfns4bo_hebo",
         batch_first=False,
         multivariate=False,
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)
@@ -222,7 +222,7 @@ def test_pfn_surrogate_small_dataset():
         checkpoint_url="pfns4bo_hebo",
         batch_first=False,
         multivariate=False,
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)
@@ -248,7 +248,7 @@ def test_pfn_surrogate_constant_model_kwargs():
         batch_first=False,
         multivariate=False,
         constant_model_kwargs={},  # Empty dict for now
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)
@@ -273,7 +273,7 @@ def test_pfn_surrogate_is_fitted():
         checkpoint_url="pfns4bo_hebo",
         batch_first=False,
         multivariate=False,
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)
@@ -305,7 +305,7 @@ def test_pfn_surrogate_prediction_shapes():
         checkpoint_url="pfns4bo_hebo",
         batch_first=False,
         multivariate=False,
-        scaler=ScalerEnum.NORMALIZE,
+        scaler=Normalize(),
         output_scaler=ScalerEnum.STANDARDIZE,
     )
     surrogate = surrogates.map(pfn)

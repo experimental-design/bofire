@@ -1,6 +1,6 @@
 import base64
 import io
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -22,10 +22,7 @@ try:
     )
     from botorch_community.models.utils.prior_fitted_network import ModelPaths
 except ImportError as e:
-    raise ImportError(
-        "botorch_community is required for PFNSurrogate. "
-        "Install it with: pip install botorch_community"
-    ) from e
+    raise ImportError("Issue in importing PFN models from botorch_community.") from e
 
 
 class PFNSurrogate(TrainableBotorchSurrogate):
@@ -76,7 +73,7 @@ class PFNSurrogate(TrainableBotorchSurrogate):
         input_transform: Optional[InputTransform] = None,
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
-    ):
+    ) -> None:
         """Fit the PFN model to training data.
 
         For PFN, "fitting" means loading the pre-trained model and storing
@@ -135,7 +132,7 @@ class PFNSurrogate(TrainableBotorchSurrogate):
         if outcome_transform is not None:
             self._outcome_transform = outcome_transform
 
-    def _predict(self, transformed_X: pd.DataFrame):
+    def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         """Predict using the PFN model.
 
         The PFN model handles input transformation internally via its
@@ -169,10 +166,13 @@ class PFNSurrogate(TrainableBotorchSurrogate):
             preds = preds.cpu().detach().numpy()
         return preds, stds
 
-    # Override the _dumps and _loads methods to handle the fact that PFN models are not standard PyTorch models and may have additional state (outcome transform) that needs to be saved and loaded.
+    # Override the _dumps and _loads methods to handle the fact that PFN models are not
+    # standard PyTorch models and may have additional state (outcome transform) that needs
+    # to be saved and loaded.
     # TODO: PFN implementation in botorch_community uses posterior_transform.
     # However, this is not currently implemented in the botorch impementation.
-    # Add this functionality once the botorch implementation is updated to match the botorch_community implementation.
+    # Add this functionality once the botorch implementation is updated to match the
+    # botorch_community implementation.
     def _dumps(self) -> str:
         """Dumps the model and outcome transform to a string.
 
@@ -197,7 +197,7 @@ class PFNSurrogate(TrainableBotorchSurrogate):
             return f"{model_bytes}|||OUTCOME_TRANSFORM|||{outcome_transform_bytes}"
         return model_bytes
 
-    def loads(self, data: str):
+    def loads(self, data: str) -> None:
         """Loads the model and outcome transform from a string.
 
         Overrides the parent method to also restore the outcome transform.
