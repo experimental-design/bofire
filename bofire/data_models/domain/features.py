@@ -53,23 +53,20 @@ from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     Objective,
 )
-from bofire.data_models.types import (
-    CategoricalFeatureKey,
-    ContinuousFeatureKey,
-    DiscreteFeatureKey,
-    InputTransformSpecs,
-)
+from bofire.data_models.types import InputTransformSpecs
 
 
 FeatureT = TypeVar("FeatureT", bound=AnyFeature, default=AnyFeature)
-FeatureGetT = TypeVar("FeatureGetT", bound=AnyFeature, default=AnyFeature)
+FeatureGetT = TypeVar(
+    "FeatureGetT", bound=AnyFeature | Feature, default=AnyFeature | Feature
+)
 InputT = TypeVar("InputT", bound=AnyInput, default=AnyInput)
-InputGetT = TypeVar("InputGetT", bound=AnyInput, default=AnyInput)
+InputGetT = TypeVar("InputGetT", bound=AnyInput | Input, default=AnyInput | Input)
 EngineeredFeatureT = TypeVar(
     "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
 )
 OutputT = TypeVar("OutputT", bound=AnyOutput, default=AnyOutput)
-OutputGetT = TypeVar("OutputGetT", bound=AnyOutput, default=AnyOutput)
+OutputGetT = TypeVar("OutputGetT", bound=AnyOutput | Output, default=AnyOutput | Output)
 
 
 class _BaseFeatures(BaseModel, Generic[FeatureT]):
@@ -186,10 +183,8 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
 
     def get(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
-        excludes: Union[Type, List[Type], None] = None,
+        includes: Type[FeatureGetT] | list[Type[FeatureGetT]] = Feature,
+        excludes: Type[AnyFeature] | List[Type[AnyFeature]] | None = None,
         exact: bool = False,
     ) -> Self:
         """Get features of this container and filter via includes and excludes.
@@ -220,15 +215,15 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
 
     def get_keys(
         self,
-        includes: Union[Type[AnyFeature], List[Type[AnyFeature]], None] = AnyFeature,
-        excludes: Union[Type, List[Type], None] = None,
+        includes: Type[FeatureGetT] | list[Type[FeatureGetT]] = Feature,
+        excludes: Type[AnyFeature] | List[Type[AnyFeature]] | None = None,
         exact: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """Get feature-keys of this container and filter via includes and excludes.
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -422,7 +417,7 @@ class Inputs(_BaseFeatures[InputT]):
                 pd.concat(
                     [
                         feat.sample(n, seed=int(rng.integers(1, 1000000)))
-                        for feat in self.get(Input)
+                        for feat in self.get()
                     ],
                     axis=1,
                 ),
@@ -511,10 +506,8 @@ class Inputs(_BaseFeatures[InputT]):
 
     def get_number_of_categorical_combinations(
         self,
-        include: Union[Type, List[Type]] = Input,
-        exclude: Union[
-            Type, List[Type]
-        ] = None,  # ty: ignore[invalid-parameter-default]
+        include: Type[InputGetT] | List[Type[InputGetT]] = Input,
+        exclude: Type[AnyInput] | List[Type[AnyInput]] | None = None,
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -559,10 +552,8 @@ class Inputs(_BaseFeatures[InputT]):
 
     def get_categorical_combinations(
         self,
-        include: Union[Type, List[Type]] = Input,
-        exclude: Union[
-            Type, List[Type]
-        ] = None,  # ty: ignore[invalid-parameter-default]
+        include: Type[InputGetT] | list[Type[InputGetT]] = Input,
+        exclude: Type[AnyInput] | List[Type[AnyInput]] | None = None,
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -927,55 +918,33 @@ class Inputs(_BaseFeatures[InputT]):
 
     @overload
     def get(
-        self, includes: Type[InputGetT], excludes: None = None, exact: bool = False
+        self, includes: Type[Input] = Input, excludes: None = None, exact: bool = False
+    ) -> Inputs[InputT]: ...
+
+    @overload
+    def get(
+        self,
+        includes: Type[InputGetT] | list[Type[InputGetT]],
+        excludes: None = None,
+        exact: bool = False,
     ) -> Inputs[InputGetT]: ...
 
     @overload
     def get(
         self,
-        includes: Type | List[Type] | None,
+        includes: Type[InputGetT] | List[Type[InputGetT]] | None,
         excludes: Type | List[Type] | None,
         exact: bool,
     ) -> Self: ...
 
     def get(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
-        excludes: Union[Type, List[Type], None] = None,
+        includes: Type[InputGetT] | List[Type[InputGetT]] | None = Input,
+        excludes: Type[AnyInput] | List[Type[AnyInput]] | None = None,
         exact: bool = False,
     ) -> Self:
         # repeat the function here as implementation must be below overloads
         return super().get(includes, excludes, exact)
-
-    @overload
-    def get_by_key(
-        self, key: ContinuousFeatureKey, use_regex: Literal[False] = False
-    ) -> ContinuousInput: ...
-
-    @overload
-    def get_by_key(
-        self, key: DiscreteFeatureKey, use_regex: Literal[False] = False
-    ) -> DiscreteInput: ...
-
-    @overload
-    def get_by_key(
-        self,
-        key: ContinuousFeatureKey | DiscreteFeatureKey,
-        use_regex: Literal[False] = False,
-    ) -> ContinuousInput | DiscreteInput: ...
-
-    @overload
-    def get_by_key(
-        self, key: CategoricalFeatureKey, use_regex: Literal[False] = False
-    ) -> CategoricalInput: ...
-
-    @overload
-    def get_by_key(self, key: str, use_regex: bool = False) -> InputT: ...
-
-    def get_by_key(self, key: str, use_regex: bool = False) -> AnyFeature:
-        return super().get_by_key(key, use_regex)
 
 
 class Outputs(_BaseFeatures[OutputT]):
