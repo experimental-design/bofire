@@ -56,16 +56,16 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.types import InputTransformSpecs
 
 
-FeatureT = TypeVar("FeatureT", bound=AnyFeature, default=AnyFeature)
+FeatureT = TypeVar("FeatureT", bound=AnyFeature | Feature, default=AnyFeature | Feature)
 FeatureGetT = TypeVar(
     "FeatureGetT", bound=AnyFeature | Feature, default=AnyFeature | Feature
 )
-InputT = TypeVar("InputT", bound=AnyInput, default=AnyInput)
+InputT = TypeVar("InputT", bound=AnyInput | Input, default=AnyInput | Input)
 InputGetT = TypeVar("InputGetT", bound=AnyInput | Input, default=AnyInput | Input)
 EngineeredFeatureT = TypeVar(
     "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
 )
-OutputT = TypeVar("OutputT", bound=AnyOutput, default=AnyOutput)
+OutputT = TypeVar("OutputT", bound=AnyOutput | Output, default=AnyOutput | Output)
 OutputGetT = TypeVar("OutputGetT", bound=AnyOutput | Output, default=AnyOutput | Output)
 
 
@@ -183,8 +183,8 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
 
     def get(
         self,
-        includes: Type[FeatureGetT] | list[Type[FeatureGetT]] = Feature,
-        excludes: Type[AnyFeature] | List[Type[AnyFeature]] | None = None,
+        includes: Type[FeatureGetT] | Sequence[Type[FeatureGetT]] = Feature,
+        excludes: Type[AnyFeature] | Sequence[Type[AnyFeature]] | None = None,
         exact: bool = False,
     ) -> Self:
         """Get features of this container and filter via includes and excludes.
@@ -215,8 +215,8 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
 
     def get_keys(
         self,
-        includes: Type[FeatureGetT] | list[Type[FeatureGetT]] = Feature,
-        excludes: Type[AnyFeature] | List[Type[AnyFeature]] | None = None,
+        includes: Type[FeatureGetT] | Sequence[Type[FeatureGetT]] = Feature,
+        excludes: Type[AnyFeature] | Sequence[Type[AnyFeature]] | None = None,
         exact: bool = False,
     ) -> list[str]:
         """Get feature-keys of this container and filter via includes and excludes.
@@ -256,7 +256,7 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
         return df
 
 
-class Features(_BaseFeatures[AnyFeature]):
+class Features(_BaseFeatures[FeatureT]):
     pass
 
 
@@ -506,8 +506,8 @@ class Inputs(_BaseFeatures[InputT]):
 
     def get_number_of_categorical_combinations(
         self,
-        include: Type[InputGetT] | List[Type[InputGetT]] = Input,
-        exclude: Type[AnyInput] | List[Type[AnyInput]] | None = None,
+        include: Type[InputGetT] | list[Type[InputGetT]] = Input,
+        exclude: Type[AnyInput] | list[Type[AnyInput]] | None = None,
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -924,7 +924,7 @@ class Inputs(_BaseFeatures[InputT]):
     @overload
     def get(
         self,
-        includes: Type[InputGetT] | list[Type[InputGetT]],
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]],
         excludes: None = None,
         exact: bool = False,
     ) -> Inputs[InputGetT]: ...
@@ -932,15 +932,15 @@ class Inputs(_BaseFeatures[InputT]):
     @overload
     def get(
         self,
-        includes: Type[InputGetT] | List[Type[InputGetT]] | None,
-        excludes: Type | List[Type] | None,
-        exact: bool,
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]],
+        excludes: Type[AnyInput] | Sequence[Type[AnyInput]] | None,
+        exact: bool = False,
     ) -> Self: ...
 
     def get(
         self,
-        includes: Type[InputGetT] | List[Type[InputGetT]] | None = Input,
-        excludes: Type[AnyInput] | List[Type[AnyInput]] | None = None,
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]] = Input,
+        excludes: Type[AnyInput] | Sequence[Type[AnyInput]] | None = None,
         exact: bool = False,
     ) -> Self:
         # repeat the function here as implementation must be below overloads
@@ -1145,7 +1145,6 @@ class Outputs(_BaseFeatures[OutputT]):
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
                         excludes=Objective,
-                        includes=None,
                     )
                 ],
             ),
@@ -1253,23 +1252,32 @@ class Outputs(_BaseFeatures[OutputT]):
 
     @overload
     def get(
-        self, includes: Type[OutputGetT], excludes: None = None, exact: bool = False
+        self,
+        includes: Type[Output] = Output,
+        excludes: None = None,
+        exact: bool = False,
+    ) -> Outputs[OutputT]: ...
+
+    @overload
+    def get(
+        self,
+        includes: Type[OutputGetT] | Sequence[Type[OutputGetT]],
+        excludes: None = None,
+        exact: bool = False,
     ) -> Outputs[OutputGetT]: ...
 
     @overload
     def get(
         self,
-        includes: Type | List[Type] | None,
-        excludes: Type | List[Type] | None,
-        exact: bool,
+        includes: Type[OutputGetT] | Sequence[Type[OutputGetT]],
+        excludes: Type[AnyOutput] | Sequence[Type[AnyOutput]] | None,
+        exact: bool = False,
     ) -> Self: ...
 
     def get(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
-        excludes: Union[Type, List[Type], None] = None,
+        includes: Type[OutputGetT] | Sequence[Type[OutputGetT]] = Output,
+        excludes: Type[AnyOutput] | Sequence[Type[AnyOutput]] | None = None,
         exact: bool = False,
     ) -> Self:
         # repeat the function here as implementation must be below overloads
