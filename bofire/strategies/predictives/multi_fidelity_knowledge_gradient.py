@@ -64,8 +64,8 @@ def _map_cost_model_to_botorch(
     )
     target_fidelities = {
         (idx := features2idx[key][0]): _target_fidelity(
-            cost_data_model.inputs.get_by_key(key),
-            fidelity_weights[idx],  # type: ignore
+            cost_data_model.inputs.get_by_key(key),  # type: ignore
+            fidelity_weights[idx],
         )
         for key in cost_data_model.coefficients
     }

@@ -1018,12 +1018,42 @@ specs.add_valid(
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                    ContinuousOutput(key="fidelity_cost", objective=None),
+                ]
             ),
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_output_key": "fidelity_cost",
     },
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_output_key": "fidelity_cost",
+    },
+    error=ValueError,
+    message="Must provide an Output corresponding to the fidelity cost",
 )
 
 specs.add_invalid(
@@ -1039,14 +1069,19 @@ specs.add_invalid(
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                    ContinuousOutput(key="fidelity_cost", objective=None),
+                ]
             ),
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_output_key": "fidelity_cost",
     },
-    error=NotImplementedError,
-    message="only supports continuous fidelities",
+    error=ValueError,
+    message="only supports continuous/discrete fidelities",
 )
 
 
