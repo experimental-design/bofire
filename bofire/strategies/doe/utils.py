@@ -281,7 +281,11 @@ def n_zero_eigvals(
         rhs_only=True,
         inputs=domain.inputs,
     )
-    N = len(model_formula) + 3
+    # Need enough samples so the information matrix rank is determined by
+    # structural constraints (e.g. equality constraints), not by sampling luck.
+    # Discrete inputs with few levels are especially prone to degenerate samples
+    # at small N.
+    N = 5 * len(model_formula) + 3
 
     sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
     X = sampler.ask(N)
@@ -497,8 +501,10 @@ class ConstraintWrapper:
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """Call constraint with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # ty: ignore[invalid-assignment]
-        violation = self.constraint(x).to_numpy()
+        x = pd.DataFrame(
+            x.reshape(len(x) // self.D, self.D), columns=self.names
+        )  # ty: ignore[invalid-assignment]
+        violation = self.constraint(x).to_numpy(copy=True)
         violation[np.abs(violation) < 0] = 0
         return violation
 

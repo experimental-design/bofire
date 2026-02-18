@@ -11,7 +11,12 @@ from botorch.models.transforms.input import (
     FilterFeatures,
     InputTransform,
 )
-from botorch.models.transforms.outcome import OutcomeTransform, Standardize
+from botorch.models.transforms.outcome import (
+    ChainedOutcomeTransform,
+    Log,
+    OutcomeTransform,
+    Standardize,
+)
 
 from bofire.data_models.features.categorical import CategoricalOutput
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
@@ -162,6 +167,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                 engineered_features=self.engineered_features,
                 scaler_type=self.scaler,
                 categorical_encodings=self.categorical_encodings,
+                X=X,
             )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         # in case of classification we need to convert y from str to int
@@ -174,12 +180,16 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             torch.from_numpy(transformed_X.values).to(**tkwargs),
             torch.from_numpy(Y.values).to(**tkwargs),
         )
-        # todo, we should implement log transforms also here
-        outcome_transform = (
-            Standardize(m=tY.shape[-1])
-            if self.output_scaler == ScalerEnum.STANDARDIZE
-            else None
-        )
+        if self.output_scaler == ScalerEnum.STANDARDIZE:
+            outcome_transform = Standardize(m=tY.shape[-1])
+        elif self.output_scaler == ScalerEnum.LOG:
+            outcome_transform = Log()
+        elif self.output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+            outcome_transform = ChainedOutcomeTransform(
+                log=Log(), standardize=Standardize(m=tY.shape[-1])
+            )
+        else:
+            outcome_transform = None
         self._fit_botorch(tX, tY, self._input_transform, outcome_transform, **kwargs)
 
     @abstractmethod

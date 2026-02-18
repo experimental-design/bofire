@@ -106,7 +106,7 @@ def test_PiecewiseLinearGPSurrogate_no_continuous():
     surrogate_data = PiecewiseLinearGPSurrogate(
         inputs=Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
+            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(2)]
         ),
         outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         interpolation_range=(0, 1),

@@ -16,6 +16,7 @@ The method of obtaining new data from a discrete dataset is explained in the not
 #| papermill: {duration: 3.217913, end_time: '2024-10-10T20:35:24.355488', exception: false, start_time: '2024-10-10T20:35:21.137575', status: completed}
 #| tags: []
 import os
+import io
 import warnings
 
 import numpy as np
@@ -50,7 +51,7 @@ benchmark = {
     "input": "SMILES",
     "output": "E isomer pi-pi* wavelength in nm",
 }
-df = pd.read_json(EXPERIMENTS)
+df = pd.read_json(io.StringIO(EXPERIMENTS))
 main_file = pd.DataFrame(columns=[benchmark["input"], benchmark["output"]])
 nans = df[benchmark["output"]].isnull().to_list()
 nan_indices = [nan for nan, x in enumerate(nans) if x]
