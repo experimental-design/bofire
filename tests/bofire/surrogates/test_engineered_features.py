@@ -157,6 +157,8 @@ def test_map_weighted_sum_feature():
 
     orig = torch.tensor([[0.1, 0.2, 0.7], [0.4, 0.1, 0.5]]).to(**tkwargs)
     result = aggregator(orig)
+    descriptors = torch.tensor([[1, 2], [4, 5], [7, 8]]).to(**tkwargs)
+    expected = torch.matmul(orig, descriptors)
 
     assert result.shape[0] == 2
     assert result.shape[1] == 5
@@ -164,6 +166,7 @@ def test_map_weighted_sum_feature():
     assert torch.allclose(
         result[:, :-2], torch.tensor([[0.1, 0.2, 0.7], [0.4, 0.1, 0.5]]).to(**tkwargs)
     )
+    assert torch.allclose(result[:, -2:], expected)
 
 
 def test_map_weighted_mean_feature():
