@@ -3,10 +3,13 @@ from bofire.data_models.acquisition_functions.api import qMFHVKG
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.strategies.api import BotorchOptimizer
+from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
 from bofire.strategies.api import MultiFidelityHVKGStrategy, RandomStrategy
 
 
 def test_mfhvkg_fidelity_selection():
+    # FIXME: this currently fails: botorch is struggling with the reference point
+    # having 2 outputs, but the model producing 3 outputs.
     benchmark = MOMFBraninCurrin()
 
     random_strategy = RandomStrategy.make(
@@ -17,7 +20,6 @@ def test_mfhvkg_fidelity_selection():
 
     experiments = benchmark.f(random_strategy.ask(4), return_complete=True)
 
-    # we reduce the samples to improve runtime
     strategy = MultiFidelityHVKGStrategy.make(
         domain=benchmark.domain,
         acquisition_function=qMFHVKG(n_mc_samples=16),
@@ -26,6 +28,7 @@ def test_mfhvkg_fidelity_selection():
             maxiter=200,
         ),
         seed=0,
+        fidelity_cost_output_key="fidelity_cost",
     )
 
     strategy.tell(experiments)
@@ -36,17 +39,20 @@ def test_mfhvkg_fidelity_selection():
     candidates = strategy.ask(candidate_count)
     assert len(candidates) == candidate_count
 
-    # when the high fidelity is expensive, MFHVKG will (almost always) evaluate the low fidelity
+    cost_data_model = [
+        surr
+        for surr in strategy.surrogate_specs.surrogates
+        if surr.outputs.get_keys() == [strategy.fidelity_cost_output_key]
+    ][0]
     task_input: ContinuousTaskInput = strategy.domain.inputs.get(ContinuousTaskInput)[0]
-    task_input.fidelity_cost_weight = 10.0
+    assert isinstance(cost_data_model, LinearDeterministicSurrogate)
+    # when the high fidelity is expensive, MFHVKG will (almost always) evaluate the low fidelity
+    cost_data_model.coefficients[task_input.key] = 10.0
     candidate_lf = strategy.ask(1)
     assert candidate_lf[task_input.key].item() == task_input.lower_bound
 
     # when the high fidelity is cheap, MFHVKG will evaluate a higher fidelity
     task_input: ContinuousTaskInput = strategy.domain.inputs.get(ContinuousTaskInput)[0]
-    task_input.fidelity_cost_weight = 0.01
+    cost_data_model.coefficients[task_input.key] = 0.01
     candidate_lf = strategy.ask(1)
     assert candidate_lf[task_input.key].item() > 0.1
-
-
-# TODO: write test for CategoricalTaskInput

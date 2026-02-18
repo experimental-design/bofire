@@ -705,6 +705,7 @@ class MOMFBraninCurrin(Benchmark):
             features=[
                 ContinuousOutput(key="branin", objective=MinimizeObjective()),
                 ContinuousOutput(key="currin", objective=MinimizeObjective()),
+                ContinuousOutput(key="fidelity_cost", objective=None),
             ]
         )
 
@@ -740,6 +741,10 @@ class MOMFBraninCurrin(Benchmark):
         C = -y + 14
         return C / 15
 
+    def _fidelity_cost(self, X: np.ndarray) -> np.ndarray:
+        # simple linear cost
+        return 1.0 + X[..., 2]
+
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         X = candidates.to_numpy()
         return pd.DataFrame(
@@ -748,5 +753,7 @@ class MOMFBraninCurrin(Benchmark):
                 "valid_branin": 1,
                 "currin": self._currin(X),
                 "valid_currin": 1,
+                "fidelity_cost": self._fidelity_cost(X),
+                "valid_fidelity_cost": 1,
             }
         )
