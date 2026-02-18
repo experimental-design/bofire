@@ -273,7 +273,7 @@ specs.add_invalid(
         "fidelities": [0, 1],
     },
     error=ValueError,
-    message="Length of fidelity lists must be equal to the number of tasks",
+    message="Length of fidelity list must be equal to the number of tasks",
 )
 
 specs.add_invalid(

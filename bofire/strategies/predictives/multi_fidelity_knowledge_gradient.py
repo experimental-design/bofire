@@ -27,7 +27,7 @@ from typing_extensions import Self
 from bofire.data_models.acquisition_functions.api import qMFHVKG
 from bofire.data_models.api import Domain
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.features.api import ContinuousTaskInput
+from bofire.data_models.features.api import ContinuousTaskInput, DiscreteTaskInput
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
@@ -45,20 +45,15 @@ from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
 def _map_cost_model_to_botorch(
     inputs: Inputs, features2idx: dict[str, tuple[int]]
 ) -> tuple[AffineFidelityCostModel, dict[int, float]]:
-    """Convert the deterministic surrogates to a cost model for the cost-weighted utility.
+    """Convert the task inputs to a cost model for the cost-weighted utility."""
 
-    TODO: convert a categorical cost model as well."""
-    return _map_linear_cost_model_to_botorch(inputs, features2idx)
-
-
-def _map_linear_cost_model_to_botorch(
-    inputs: Inputs, features2idx: dict[str, tuple[int]]
-) -> tuple[AffineFidelityCostModel, dict[int, float]]:
-    def _target_fidelity(task_input: ContinuousTaskInput, weight: float) -> float:
+    def _target_fidelity(
+        task_input: ContinuousTaskInput | DiscreteTaskInput, weight: float
+    ) -> float:
         # if the cost is positive, then the upper bound is the highest fidelity.
         return task_input.upper_bound if weight > 0 else task_input.lower_bound
 
-    task_inputs = inputs.get(ContinuousTaskInput)
+    task_inputs = inputs.get([ContinuousTaskInput, DiscreteTaskInput])
 
     fidelity_weights = {
         features2idx[task_input.key][0]: task_input.fidelity_cost_weight
@@ -91,7 +86,9 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
-        self.task_feature_keys = self.domain.inputs.get_keys(ContinuousTaskInput)
+        self.task_feature_keys = self.domain.inputs.get_keys(
+            [ContinuousTaskInput, DiscreteTaskInput]
+        )
         self.acquisition_function = data_model.acquisition_function
 
         # assert isinstance(data_model.ref_point, ExplicitReferencePoint)
