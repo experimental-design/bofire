@@ -26,6 +26,7 @@ from bofire.data_models.surrogates.mlp import (
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+from bofire.data_models.surrogates.pfn import PFNSurrogate
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
@@ -51,6 +52,7 @@ AnyBotorchSurrogate = Union[
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    PFNSurrogate,
 ]
 
 

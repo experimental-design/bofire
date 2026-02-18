@@ -30,7 +30,7 @@ dependencies = [
     "pydantic>=2.5",
     "scipy>=1.7",
     "typing-extensions",
-    "formulaic<=1.0.2",
+    "formulaic==1.0.2",
 ]
 
 [project.optional-dependencies]
@@ -39,7 +39,7 @@ optimization = [
     "numpy",
     "multiprocess",
     "plotly",
-    "formulaic>=1.0.1,<1.1",
+    "formulaic==1.0.2",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]",
@@ -52,22 +52,43 @@ entmoot = [
     "entmoot>=2.0.6",
 ] # we pin the pyomo version here due to compatibility issues
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
+# pfn4bo requires scikitlearn<1.2. This version is not compatible with numpy 2.X
+# We modify numpy, scikit-learn, cvpxy and shap to meet the pfn4bo requirements.
+pfn = [
+    "botorch>=0.16.1",
+    "numpy>=1.22,<2.0",
+    "multiprocess",
+    "plotly",
+    "formulaic==1.0.2",
+    "cloudpickle>=2.0.0",
+    "sympy>=1.12",
+    "cvxpy[CLARABEL,SCIP]>=1.5,<1.8",
+    "scikit-learn>=0.24.2,<1.2",
+    "pymoo>=0.6.0",
+    "shap<0.50.0",
+    "pfns4bo",
+    "requests",
+    "pfns @ git+https://github.com/automl/PFNs.git",
+]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
     "botorch>=0.16.1",
-    "numpy",
+    "numpy>=1.22,<2.0",
     "multiprocess",
     "plotly",
-    "formulaic==1.0.1",
+    "formulaic==1.0.2",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL,SCIP]",
-    "scikit-learn>=1.0.0",
+    "scikit-learn>=0.24.2,<1.2",
+    "cvxpy[CLARABEL,SCIP]>=1.5,<1.8",
     "entmoot>=2.0.6",
     "pyomo<=6.9.4",
     "rdkit>=2023.3.2",
     "mordredcommunity>=2.0.1",
+    "pfns4bo",
+    "requests",
+    "pfns @ git+https://github.com/automl/PFNs.git",
     "mopti",
     "pytest",
     "pytest-cov",
@@ -82,7 +103,7 @@ all = [
     "matplotlib",
     "seaborn",
     "pymoo>=0.6.0",
-    "shap>=0.48.0",
+    "shap<0.50.0",
 ]
 
 [tool.setuptools.packages]

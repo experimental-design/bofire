@@ -18,6 +18,7 @@ from bofire.surrogates.map_saas import (
 )
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
+from bofire.surrogates.pfn import PFNSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.robust_single_task_gp import RobustSingleTaskGPSurrogate
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
@@ -89,6 +90,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
     data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
     data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,
+    data_models.PFNSurrogate: PFNSurrogate,
 }
 
 
