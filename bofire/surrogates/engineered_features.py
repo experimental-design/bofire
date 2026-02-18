@@ -12,6 +12,7 @@ from bofire.data_models.features.api import (
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.types import InputTransformSpecs
@@ -26,6 +27,21 @@ def _weighted_sum_features(
         X[..., indices],
         descriptors,
     ).unsqueeze(-2)
+    return result.expand(*result.shape[:-2], 1, -1)
+
+
+def _weighted_mean_features(
+    X: torch.Tensor,
+    indices: torch.Tensor,
+    descriptors: torch.Tensor,
+) -> torch.Tensor:
+    weights = X[..., indices]
+    weighted_sum = torch.matmul(weights, descriptors)
+    weight_sum = torch.clamp(
+        torch.sum(weights, dim=-1, keepdim=True),
+        min=torch.finfo(weights.dtype).eps,
+    )
+    result = (weighted_sum / weight_sum).unsqueeze(-2)
     return result.expand(*result.shape[:-2], 1, -1)
 
 
@@ -86,6 +102,31 @@ def map_weighted_sum_feature(
     )
 
 
+def map_weighted_mean_feature(
+    inputs: Inputs,
+    transform_specs: InputTransformSpecs,
+    feature: WeightedMeanFeature,
+) -> AppendFeatures:
+    features2idx, _ = inputs._get_transform_info(transform_specs)
+    indices = [features2idx[key][0] for key in feature.features]
+
+    descriptors = torch.tensor(
+        [
+            inputs.get_by_key(key)
+            .to_df()[feature.descriptors]  # ty: ignore[unresolved-attribute]
+            .values[0]
+            for key in feature.features
+        ],
+        dtype=torch.double,
+    )
+
+    return AppendFeatures(
+        f=_weighted_mean_features,
+        fkwargs={"indices": indices, "descriptors": descriptors},
+        transform_on_train=True,
+    )
+
+
 def map_molecular_weighted_sum_feature(
     inputs: Inputs,
     transform_specs: InputTransformSpecs,
@@ -114,6 +155,7 @@ AGGREGATE_MAP = {
     SumFeature: map_sum_feature,
     ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
+    WeightedMeanFeature: map_weighted_mean_feature,
     WeightedSumFeature: map_weighted_sum_feature,
     MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
 }

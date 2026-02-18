@@ -114,6 +114,21 @@ class WeightedSumFeature(EngineeredFeature):
                 )
 
 
+class WeightedMeanFeature(WeightedSumFeature):
+    """Weighted mean feature, which computes the mean over the specified
+    descriptors weighted by the involved feature values.
+
+    Args:
+        features: The features to be used to compute the weighted mean.
+        descriptors: The descriptors to be used to compute the weighted mean.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
+    type: Literal["WeightedMeanFeature"] = "WeightedMeanFeature"
+    order_id: ClassVar[int] = 5
+
+
 class MolecularWeightedSumFeature(EngineeredFeature):
     """Molecular weighted sum feature, which computes the sum over the specified
     molecular descriptors weighted by the involved feature values.

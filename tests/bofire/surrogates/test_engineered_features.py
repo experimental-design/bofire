@@ -13,6 +13,7 @@ from bofire.data_models.features.api import (
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
@@ -21,6 +22,7 @@ from bofire.surrogates.engineered_features import (
     map_molecular_weighted_sum_feature,
     map_product_feature,
     map_sum_feature,
+    map_weighted_mean_feature,
     map_weighted_sum_feature,
 )
 from bofire.utils.torch_tools import tkwargs
@@ -162,6 +164,53 @@ def test_map_weighted_sum_feature():
     assert torch.allclose(
         result[:, :-2], torch.tensor([[0.1, 0.2, 0.7], [0.4, 0.1, 0.5]]).to(**tkwargs)
     )
+
+
+def test_map_weighted_mean_feature():
+    inputs = Inputs(
+        features=[
+            ContinuousDescriptorInput(
+                key="x1",
+                bounds=[0, 1],
+                descriptors=["d1", "d2", "d3"],
+                values=[1, 2, 3],
+            ),
+            ContinuousDescriptorInput(
+                key="x2",
+                bounds=[0, 1],
+                descriptors=["d1", "d2", "d3"],
+                values=[4, 5, 6],
+            ),
+            ContinuousDescriptorInput(
+                key="x3",
+                bounds=[0, 1],
+                descriptors=["d1", "d2", "d3"],
+                values=[7, 8, 9],
+            ),
+        ]
+    )
+    aggregation = WeightedMeanFeature(
+        key="agg1",
+        features=["x1", "x2", "x3"],
+        descriptors=["d1", "d2"],
+    )
+
+    assert aggregation.n_transformed_inputs == 2
+
+    aggregator = map_weighted_mean_feature(
+        inputs=inputs, transform_specs={}, feature=aggregation
+    )
+
+    orig = torch.tensor([[0.1, 0.2, 0.7], [0.4, 0.1, 0.5]]).to(**tkwargs)
+    result = aggregator(orig)
+
+    descriptors = torch.tensor([[1, 2], [4, 5], [7, 8]]).to(**tkwargs)
+    expected = torch.matmul(orig, descriptors) / orig.sum(dim=1, keepdim=True)
+
+    assert result.shape[0] == 2
+    assert result.shape[1] == 5
+    assert torch.allclose(result[:, :-2], orig)
+    assert torch.allclose(result[:, -2:], expected)
 
 
 @pytest.mark.skipif(
