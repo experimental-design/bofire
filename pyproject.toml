@@ -70,7 +70,7 @@ pfn = [
     "shap<0.50.0; python_version < '3.12'",
     "pfns4bo; python_version < '3.12'",
     "requests; python_version < '3.12'",
-    "pfns @ git+https://github.com/automl/PFNs.git; python_version < '3.12'",
+    "pfns @ git+https://github.com/automl/PFNs.git",
 ]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
@@ -91,7 +91,7 @@ all = [
     "mordredcommunity>=2.0.1",
     "pfns4bo; python_version < '3.12'",
     "requests",
-    "pfns @ git+https://github.com/automl/PFNs.git; python_version < '3.12'",
+    "pfns @ git+https://github.com/automl/PFNs.git",
     "mopti",
     "pytest",
     "pytest-cov",
@@ -106,7 +106,8 @@ all = [
     "matplotlib",
     "seaborn",
     "pymoo>=0.6.0",
-    "shap>=0.48.0,<0.50.0; python_version < '3.12'",
+    "shap<0.50.0; python_version < '3.12'",
+    "shap>=0.48.0; python_version >= '3.12'",
 ]
 
 [tool.setuptools.packages]
