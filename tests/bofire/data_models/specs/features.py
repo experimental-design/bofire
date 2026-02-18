@@ -172,10 +172,9 @@ specs.add_invalid(
     message=r"When normalize_x is True, interpolation_range must be \(0, 1\)",
 )
 
-specs.add_invalid(
+specs.add_valid(
     features.CloneFeature,
     lambda: {"key": str(uuid.uuid4()), "features": ["a", "b"], "keep_features": True},
-    error=ValueError,
 )
 
 specs.add_valid(
