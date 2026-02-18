@@ -8,6 +8,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Added
 
+- `PFNSurrogate` - Prior-data Fitted Networks (PFN) surrogate model for Bayesian optimization using pre-trained transformers from the `pfns4bo` library. Includes support for both univariate and multivariate outputs with custom serialization for outcome transforms.
 - `CloneFeatures` engineered feature, that can be used to create a copy of a set of features, this can be useful if one wants to further process features differently (different scalers, different kernels etc.)
 - Explicit Interaction features (like `x_1 * x_2`) for botorch based surrogates via the engineered features mechanism.
 - Support for custom formulas including discrete and categorical features in the DoE module.
