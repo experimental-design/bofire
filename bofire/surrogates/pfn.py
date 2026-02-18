@@ -1,5 +1,6 @@
 import base64
 import io
+import warnings
 from typing import Optional, Tuple
 
 import numpy as np
@@ -21,8 +22,11 @@ try:
         PFNModel,
     )
     from botorch_community.models.utils.prior_fitted_network import ModelPaths
-except ImportError as e:
-    raise ImportError("Issue in importing PFN models from botorch_community.") from e
+except ImportError:
+    warnings.warn(
+        "botorch_community not installed, PFN models cannot be used.",
+        ImportWarning,
+    )
 
 
 class PFNSurrogate(TrainableBotorchSurrogate):

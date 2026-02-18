@@ -8,7 +8,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Added
 
-- `PFNSurrogate` - Prior-data Fitted Networks (PFN) surrogate model for Bayesian optimization using pre-trained transformers from the `pfns4bo` library. Includes support for both univariate and multivariate outputs with custom serialization for outcome transforms.
+- `PFNSurrogate` - Prior-data Fitted Networks (PFN) surrogate model for Bayesian optimization using pre-trained transformers from the `pfns4bo` library. Includes support for both univariate and multivariate outputs with custom serialization for outcome transforms. **Note:** The `pfn` extras require Python 3.10 or 3.11 due to dependencies on older versions of scikit-learn (<1.2) that are incompatible with Python 3.12+.
 - `CloneFeatures` engineered feature, that can be used to create a copy of a set of features, this can be useful if one wants to further process features differently (different scalers, different kernels etc.)
 - Explicit Interaction features (like `x_1 * x_2`) for botorch based surrogates via the engineered features mechanism.
 - Support for custom formulas including discrete and categorical features in the DoE module.

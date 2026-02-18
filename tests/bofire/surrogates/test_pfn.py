@@ -170,9 +170,6 @@ def test_pfn_surrogate_batch_first():
     assert "y_sd" in preds.columns
 
 
-@pytest.mark.skip(
-    reason="PFN pfns4bo_hebo model has issues with categorical features - dimension mismatch"
-)
 def test_pfn_surrogate_categorical_input():
     """Test PFN surrogate with categorical inputs."""
     inputs = Inputs(
