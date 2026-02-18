@@ -61,8 +61,6 @@ from bofire.data_models.types import (
 )
 
 
-# https://github.com/python/typing/issues/548
-
 FeatureT = TypeVar("FeatureT", bound=AnyFeature, default=AnyFeature)
 FeatureGetT = TypeVar("FeatureGetT", bound=AnyFeature, default=AnyFeature)
 InputT = TypeVar("InputT", bound=AnyInput, default=AnyInput)

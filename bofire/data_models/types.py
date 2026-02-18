@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated, Dict, List, NewType, Tuple, Union
+from typing import Annotated, Dict, List, Tuple, Union
 
 from pydantic import AfterValidator, Field, PositiveInt
 
@@ -72,10 +72,6 @@ def validate_monotonically_increasing(sequence: Sequence[float]) -> Sequence[flo
             raise ValueError("Sequence is not monotonically increasing.")
     return sequence
 
-
-ContinuousFeatureKey = NewType("ContinuousFeatureKey", str)
-CategoricalFeatureKey = NewType("CategoricalFeatureKey", str)
-DiscreteFeatureKey = NewType("DiscreteFeatureKey", str)
 
 FeatureKeys = Annotated[
     List[str],

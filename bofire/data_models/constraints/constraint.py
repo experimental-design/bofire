@@ -1,24 +1,19 @@
 from abc import abstractmethod
-from typing import Annotated, Any, Optional
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import AfterValidator, Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.types import (
-    ContinuousFeatureKey,
-    DiscreteFeatureKey,
-    make_unique_validator,
-)
+from bofire.data_models.types import FeatureKeys
 
 
 class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
     type: Any
-    # features: FeatureKeys
+    features: FeatureKeys
 
     @abstractmethod
     def is_fulfilled(
@@ -71,17 +66,7 @@ class Constraint(BaseModel):
         """
 
 
-class ContinuousConstraint(Constraint):
-    """Abstract Constraint that operates only on continuous features."""
-
-    features: Annotated[
-        list[ContinuousFeatureKey | DiscreteFeatureKey],
-        Field(min_length=2),
-        AfterValidator(make_unique_validator("Features")),
-    ]
-
-
-class IntrapointConstraint(ContinuousConstraint):
+class IntrapointConstraint(Constraint):
     """An intrapoint constraint describes required relationships within a candidate
     when asking a strategy to return one or more candidates.
     """
