@@ -87,6 +87,16 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    features.CloneFeature,
+    lambda: {"key": str(uuid.uuid4()), "features": ["a", "b"], "keep_features": True},
+)
+
+specs.add_valid(
+    features.CloneFeature,
+    lambda: {"key": str(uuid.uuid4()), "features": ["a"], "keep_features": True},
+)
+
+specs.add_valid(
     features.DiscreteInput,
     lambda: {
         "key": str(uuid.uuid4()),

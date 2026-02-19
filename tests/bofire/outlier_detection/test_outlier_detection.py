@@ -12,7 +12,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import RBFKernel, ScaleKernel
-from bofire.data_models.surrogates.api import ScalerEnum, SingleTaskGPSurrogate
+from bofire.data_models.surrogates.api import Normalize, SingleTaskGPSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 
 
@@ -51,7 +51,7 @@ def test_IterativeTrimming():
     )
     outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
-    scaler = ScalerEnum.NORMALIZE
+    scaler = Normalize()
     ITGP_model = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
             inputs=inputs,
@@ -99,7 +99,7 @@ def test_OutlierDetections():
     )
     outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
-    scaler = ScalerEnum.NORMALIZE
+    scaler = Normalize()
     ITGP_model1 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
             inputs=inputs,
@@ -150,7 +150,7 @@ def test_OutlierDetections():
     outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
-    scaler = ScalerEnum.NORMALIZE
+    scaler = Normalize()
     ITGP_model1 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
             inputs=inputs,
@@ -226,7 +226,7 @@ def test_OutlierDetections():
     outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[3])])
 
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
-    scaler = ScalerEnum.NORMALIZE
+    scaler = Normalize()
     ITGP_model1 = data_models.IterativeTrimming(
         base_gp=SingleTaskGPSurrogate(
             inputs=inputs1,
@@ -280,7 +280,7 @@ def test_outlier_detectors_check_compatibility():
                 ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
-            scaler=ScalerEnum.NORMALIZE,
+            scaler=Normalize(),
         ),
     )
     data_model2 = data_models.IterativeTrimming(
@@ -303,7 +303,7 @@ def test_outlier_detectors_check_compatibility():
                 ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y2")]),
-            scaler=ScalerEnum.NORMALIZE,
+            scaler=Normalize(),
         ),
     )
     data_model = data_models.OutlierDetections(detectors=[data_model1, data_model2])
@@ -435,7 +435,7 @@ def test_outlier_detectors_unique_outputs():
                 ],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
-            scaler=ScalerEnum.NORMALIZE,
+            scaler=Normalize(),
         ),
     )
     data_model2 = data_models.IterativeTrimming(
@@ -447,7 +447,7 @@ def test_outlier_detectors_unique_outputs():
                 + [CategoricalInput(key="x_3", categories=["apple", "banana"])],
             ),
             outputs=Outputs(features=[ContinuousOutput(key="y")]),
-            scaler=ScalerEnum.NORMALIZE,
+            scaler=Normalize(),
         ),
     )
     with pytest.raises(
