@@ -77,6 +77,102 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["x1", "x2", "y1", "y2"],
+        "x_keys": ["x1", "x2"],
+        "y_keys": ["y1", "y2"],
+        "n_interpolation_points": 20,
+        "interpolation_range": [0.0, 60.0],
+        "keep_features": True,
+        "prepend_x": [],
+        "append_x": [],
+        "prepend_y": [],
+        "append_y": [],
+        "normalize_y": 1.0,
+        "normalize_x": False,
+    },
+)
+
+specs.add_valid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["x1", "x2", "y1", "y2"],
+        "x_keys": ["x1", "x2"],
+        "y_keys": ["y1", "y2"],
+        "n_interpolation_points": 20,
+        "interpolation_range": [0.0, 1.0],
+        "keep_features": True,
+        "prepend_x": [0.0],
+        "append_x": [],
+        "prepend_y": [0.0],
+        "append_y": [],
+        "normalize_y": 2.0,
+        "normalize_x": True,
+    },
+)
+
+specs.add_invalid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": "interp1",
+        "features": ["x1", "y1"],
+        "interpolation_range": [0.0, 60.0],
+        "x_keys": ["x1"],
+        "y_keys": ["x1"],
+        "n_interpolation_points": 20,
+    },
+    error=ValueError,
+    message=r"x_keys and y_keys must not overlap\.",
+)
+
+specs.add_invalid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": "interp1",
+        "features": ["x1", "x2", "y1"],
+        "interpolation_range": [0.0, 60.0],
+        "x_keys": ["x1"],
+        "y_keys": ["y1"],
+        "n_interpolation_points": 20,
+    },
+    error=ValueError,
+    message=r"features must match x_keys \+ y_keys\.",
+)
+
+specs.add_invalid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": "interp1",
+        "features": ["x1", "x2", "y1", "y2"],
+        "x_keys": ["x1", "x2"],
+        "y_keys": ["y1", "y2"],
+        "n_interpolation_points": 20,
+        "interpolation_range": [0.0, 60.0],
+        "prepend_x": [0.0],
+    },
+    error=ValueError,
+    message=r"Total number of x and y values must be equal\.",
+)
+
+specs.add_invalid(
+    features.InterpolateFeature,
+    lambda: {
+        "key": "interp1",
+        "features": ["x1", "x2", "y1", "y2"],
+        "x_keys": ["x1", "x2"],
+        "y_keys": ["y1", "y2"],
+        "n_interpolation_points": 20,
+        "interpolation_range": [0.0, 60.0],
+        "normalize_x": True,
+    },
+    error=ValueError,
+    message=r"When normalize_x is True, interpolation_range must be \(0, 1\)",
+)
+
+specs.add_valid(
     features.CloneFeature,
     lambda: {"key": str(uuid.uuid4()), "features": ["a", "b"], "keep_features": True},
 )
