@@ -409,7 +409,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>This notebook demonstrates the use of desirability functions for multi-objective optimization. The desirability function is a scalar function that maps a vector of objective values to a scalar value, most often in the range [0, 1]. The desirability function is used to aggregate multiple objectives into a single objective value, e.g.&nbsp;by the multiplicative Sobo strategy.</p>
-<div id="6b42fccd" class="cell" data-execution_count="1">
+<div id="bbf683a6" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -417,7 +417,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="desirability-functions-map-from-the-input-space-to-the-range-0-1-also-by-clipping-after-the-bounds" class="level3">
 <h3 class="anchored" data-anchor-id="desirability-functions-map-from-the-input-space-to-the-range-0-1-also-by-clipping-after-the-bounds">Desirability Functions map from the input space to the range [0, 1], also by clipping after the bounds</h3>
-<div id="93dd533e" class="cell" data-execution_count="2">
+<div id="1bd0d0a9" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>objectives <span class="op">=</span> {</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Increasing"</span>: objectives_data_model.IncreasingDesirabilityObjective(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        bounds<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">5.0</span>)</span>
@@ -431,7 +431,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"In-Range"</span>: objectives_data_model.InRangeDesirability(bounds<span class="op">=</span>(<span class="fl">1.0</span>, <span class="fl">3.0</span>)),</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="4a5a42b6" class="cell" data-execution_count="3">
+<div id="e7802589" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key, objective <span class="kw">in</span> objectives.items():</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">7.0</span>, <span class="dv">100</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> objective(x, <span class="va">None</span>)</span>
@@ -449,7 +449,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="clipping-is-optional-but-leads-to-values-outside-the-0-1-range" class="level3">
 <h3 class="anchored" data-anchor-id="clipping-is-optional-but-leads-to-values-outside-the-0-1-range">Clipping is optional, but leads to values outside the [0, 1] range</h3>
-<div id="94beaae0" class="cell" data-execution_count="4">
+<div id="58aa2f0a" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>objectives <span class="op">=</span> {</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Increasing"</span>: objectives_data_model.IncreasingDesirabilityObjective(</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        bounds<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">5.0</span>), clip<span class="op">=</span><span class="va">False</span></span>
@@ -478,7 +478,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="a-concave-or-convex-desirability-function-can-be-created-by-setting-the-log_shape_factor" class="level3">
 <h3 class="anchored" data-anchor-id="a-concave-or-convex-desirability-function-can-be-created-by-setting-the-log_shape_factor">A concave or convex desirability function can be created by setting the <code>log_shape_factor</code></h3>
-<div id="c74d898a" class="cell" data-execution_count="5">
+<div id="0cbb991a" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>objectives <span class="op">=</span> {</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Increasing"</span>: objectives_data_model.IncreasingDesirabilityObjective(</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        bounds<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">5.0</span>), log_shape_factor<span class="op">=</span><span class="fl">1.0</span></span>

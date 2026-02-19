@@ -401,7 +401,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="1cbb2aff" class="cell" data-execution_count="1">
+<div id="39ab4df3" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -409,7 +409,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="794bbef3" class="cell" data-execution_count="2">
+<div id="be479bec" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -437,7 +437,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="c769f465" class="cell" data-execution_count="3">
+<div id="1d9e6319" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
@@ -463,18 +463,24 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 <pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:40: NumericalWarning:
 
 A not p.d., added jitter of 1.0e-08 to the diagonal
+
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
+
+Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
 </code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100     x_101    x_102     x_103     x_104  \
-0  0.191858  0.322471  0.812018  0.087083  0.31559  0.636415  0.742719   
+        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
+0  0.212249  0.211433  0.648706  0.470268  0.790014  0.953726  0.071058   
 
-      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
-0  0.645433  0.834545  0.409596  ...  0.287135  0.645938  0.992381  0.584306   
+      x_105     x_106     x_107  ...     x_95      x_96      x_97      x_98  \
+0  0.885282  0.153164  0.409444  ...  0.49382  0.428308  0.897351  0.521494   
 
-       x_99    y_pred     y_sd     y_des         y  valid_y  
-0  0.804964  0.236782  0.00201 -0.236782  0.231422        1  
+      x_99    y_pred     y_sd     y_des         y  valid_y  
+0  0.44064  0.236782  0.00201 -0.236782  0.232084        1  
 
 [1 rows x 393 columns]
 Step 2/3</code></pre>
@@ -487,14 +493,14 @@ A not p.d., added jitter of 1.0e-08 to the diagonal
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
-0  0.940255  0.565046  0.883589  0.766391  0.232162  0.811619  0.006645   
+      x_1      x_10     x_100     x_101     x_102    x_103     x_104  \
+0  0.1298  0.434168  0.636069  0.078802  0.946293  0.91358  0.795813   
 
-     x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
-0  0.72419  0.391615  0.069565  ...  0.963824  0.071718  0.457861  0.620867   
+      x_105     x_106     x_107  ...     x_95      x_96      x_97      x_98  \
+0  0.162688  0.562483  0.466307  ...  0.96857  0.017605  0.858722  0.889144   
 
        x_99    y_pred      y_sd     y_des         y  valid_y  
-0  0.760722  0.236649  0.002025 -0.236649  0.230954        1  
+0  0.118597  0.236666  0.002021 -0.236666  0.233162        1  
 
 [1 rows x 393 columns]
 Step 3/3</code></pre>
@@ -507,14 +513,14 @@ A not p.d., added jitter of 1.0e-08 to the diagonal
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
-0  0.840529  0.119069  0.553139  0.723635  0.684167  0.509582  0.568643   
+        x_1      x_10     x_100     x_101     x_102     x_103    x_104  \
+0  0.597506  0.288676  0.780293  0.684276  0.133081  0.508465  0.64511   
 
-      x_105     x_106    x_107  ...    x_95      x_96      x_97      x_98  \
-0  0.003685  0.548494  0.25539  ...  0.6334  0.816674  0.193165  0.277561   
+      x_105    x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.380321  0.88236  0.376153  ...  0.927389  0.279624  0.134092  0.740703   
 
        x_99    y_pred      y_sd     y_des         y  valid_y  
-0  0.946459  0.236495  0.002042 -0.236495  0.228243        1  
+0  0.935112  0.236574  0.002026 -0.236574  0.228982        1  
 
 [1 rows x 393 columns]</code></pre>
 </div>
