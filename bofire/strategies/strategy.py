@@ -75,7 +75,7 @@ class Strategy(ABC):
     @property
     def seed(self) -> int:
         """Returns the seed of the strategy."""
-        return self.seed_seq.entropy  # type: ignore
+        return self.seed_seq.entropy  # ty: ignore[invalid-return-type]
 
     @property
     def experiments(self) -> Optional[pd.DataFrame]:
@@ -189,7 +189,7 @@ class Strategy(ABC):
         """
         keys_in_constraints = []
         for c in self.domain.constraints.get():
-            keys_in_constraints.extend(c.features)  # type: ignore
+            keys_in_constraints.extend(c.features)
         for feature in self.domain.inputs.get(ContinuousInput):
             assert isinstance(feature, ContinuousInput)
             if feature.key not in keys_in_constraints:

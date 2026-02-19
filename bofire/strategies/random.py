@@ -70,7 +70,7 @@ class RandomStrategy(Strategy):
         """
         return True
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         """Generate candidate samples using the random strategy.
 
         If the domain is compatible with polytope sampling, it uses the polytope sampling to generate
@@ -208,13 +208,13 @@ class RandomStrategy(Strategy):
 
         """
         if seed is None:
-            seed = np.random.default_rng().integers(1, 1000000)
+            seed = int(np.random.default_rng().integers(1, 1000000))
 
         if sampler_kwargs is None:
             sampler_kwargs = {}
 
         # here we have to adapt for categoricals
-        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:  # type: ignore
+        if len(domain.constraints.get(AnyContinuousConstraint)) == 0:
             return domain.inputs.sample(
                 n, fallback_sampling_method, seed=seed, sampler_kwargs=sampler_kwargs
             )
@@ -228,8 +228,8 @@ class RandomStrategy(Strategy):
             unit_scaled=False,
         )
         cleaned_eqs = []
-        fixed_features: Dict[str, float] = {  # type: ignore
-            feat.key: feat.fixed_value()[0]  # type: ignore
+        fixed_features: Dict[str, float] = {  # ty: ignore[invalid-assignment]
+            feat.key: feat.fixed_value()[0]  # ty: ignore[not-subscriptable]
             for feat in domain.inputs.get(ContinuousInput)
             if feat.is_fixed()
         }
@@ -258,13 +258,13 @@ class RandomStrategy(Strategy):
         interpoints = get_interpoint_constraints(domain=domain, n_candidates=n)
 
         lower = [
-            feat.lower_bound  # type: ignore
+            feat.lower_bound
             for feat in domain.inputs.get(ContinuousInput)
             if feat.key not in fixed_features
         ]
 
         upper = [
-            feat.upper_bound  # type: ignore
+            feat.upper_bound
             for feat in domain.inputs.get(ContinuousInput)
             if feat.key not in fixed_features
         ]
@@ -301,7 +301,7 @@ class RandomStrategy(Strategy):
                 dimension=len(domain.inputs.get(ContinuousInput)),
             )
 
-            combined_eqs = unfixed_eqs + unfixed_interpoints  # type: ignore
+            combined_eqs = unfixed_eqs + unfixed_interpoints
 
             # now use the hit and run sampler
             candidates = sample_q_batches_from_polytope(
@@ -309,7 +309,7 @@ class RandomStrategy(Strategy):
                 q=n,
                 bounds=bounds.to(**tkwargs),
                 inequality_constraints=(
-                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
+                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None
                 ),
                 equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
                 n_burnin=n_burnin,

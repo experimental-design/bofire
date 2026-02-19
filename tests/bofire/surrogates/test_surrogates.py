@@ -69,7 +69,7 @@ def test_zero_outputs():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)
@@ -95,14 +95,14 @@ def test_to_outputs(n_outputs):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)
         ],
     )
     outputs = Outputs(
-        features=[ContinuousOutput(key=f"y_{i+1}") for i in range(n_outputs)],
+        features=[ContinuousOutput(key=f"y_{i + 1}") for i in range(n_outputs)],
     )
     data_model = DummyDataModel(inputs=inputs, outputs=outputs)
     model = Dummy(data_model=data_model)
@@ -111,8 +111,8 @@ def test_to_outputs(n_outputs):
     preds = model.predict(inputs.sample(10))
     output = model.to_predictions(preds)
     assert len(output) == n_outputs
-    assert sorted(output.keys()) == [f"y_{i+1}" for i in range(n_outputs)]
-    for key in [f"y_{i+1}" for i in range(n_outputs)]:
+    assert sorted(output.keys()) == [f"y_{i + 1}" for i in range(n_outputs)]
+    for key in [f"y_{i + 1}" for i in range(n_outputs)]:
         assert len(output[key]) == 10
 
 
@@ -120,7 +120,7 @@ def test_is_fitted():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(5)

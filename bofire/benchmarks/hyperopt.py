@@ -30,11 +30,11 @@ class Hyperopt(Benchmark):
 
     @property
     def domain(self) -> Domain:
-        return self.surrogate_data.hyperconfig.domain  # type: ignore
+        return self.surrogate_data.hyperconfig.domain
 
     @property
     def target_metric(self):
-        return self.surrogate_data.hyperconfig.target_metric  # type: ignore
+        return self.surrogate_data.hyperconfig.target_metric
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         for i, candidate in tqdm(
@@ -44,18 +44,23 @@ class Hyperopt(Benchmark):
         ):
             self.surrogate_data.update_hyperparameters(candidate)
             surrogate = surrogates.map(self.surrogate_data)
-            _, cv_test, _ = surrogate.cross_validate(  # type: ignore
-                self.training_data,
-                folds=self.folds,
-                random_state=self.random_state,
+            _, cv_test, _ = (
+                surrogate.cross_validate(  # ty: ignore[unresolved-attribute]
+                    self.training_data,
+                    folds=self.folds,
+                    random_state=self.random_state,
+                )
             )
             if i == 0:
                 results = cv_test.get_metrics(combine_folds=True)
             else:
                 results = pd.concat(
-                    [results, cv_test.get_metrics(combine_folds=True)],  # type: ignore
+                    [
+                        results,  # ty: ignore[unresolved-reference]
+                        cv_test.get_metrics(combine_folds=True),
+                    ],
                     ignore_index=True,
                     axis=0,
                 )
-        results[f"valid_{self.target_metric.value}"] = 1  # type: ignore
-        return results  # type: ignore
+        results[f"valid_{self.target_metric.value}"] = 1
+        return results

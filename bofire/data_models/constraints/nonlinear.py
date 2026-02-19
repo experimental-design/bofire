@@ -19,10 +19,10 @@ except ImportError:
     def error_func(*args, **kwargs):
         raise NotImplementedError("torch must be installed to use this functionality")
 
-    torch_jacobian = error_func
+    torch_jacobian = error_func  # ty: ignore[invalid-assignment]
     torch_tensor = error_func
     torch_diag = error_func
-    torch_hessian = error_func
+    torch_hessian = error_func  # ty: ignore[invalid-assignment]
 
 from bofire.data_models.constraints.constraint import (
     EqualityConstraint,
@@ -89,7 +89,13 @@ class NonlinearConstraint(IntrapointConstraint):
                         "["
                         + ", ".join(
                             [
-                                str(sympy.S(info.data["expression"]).diff(key))
+                                str(
+                                    sympy.S(
+                                        info.data["expression"]
+                                    ).diff(  # ty: ignore[missing-argument]
+                                        key
+                                    )
+                                )
                                 for key in info.data["features"]
                             ],
                         )
@@ -122,7 +128,9 @@ class NonlinearConstraint(IntrapointConstraint):
                                 + ", ".join(
                                     [
                                         str(
-                                            sympy.S(info.data["expression"])
+                                            sympy.S(
+                                                info.data["expression"]
+                                            )  # ty: ignore[missing-argument]
                                             .diff(key1)
                                             .diff(key2)
                                         )
