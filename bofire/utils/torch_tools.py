@@ -960,7 +960,12 @@ def interp1d(
         torch.Tensor: The interpolated values at the x_new x-coordinates.
 
     """
-    m = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
+    dx = x[1:] - x[:-1]
+
+    # soft clamp the dx to avoid division by zero
+    dx = torch.clamp(dx, min=1e-8)
+
+    m = (y[1:] - y[:-1]) / dx
     b = y[:-1] - (m * x[:-1])
 
     idx = torch.sum(torch.ge(x_new[:, None], x[None, :]), 1) - 1
