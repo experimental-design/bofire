@@ -13,6 +13,9 @@ from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy,
 )
+from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
+    MultiFidelityHVKGStrategy,
+)
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -33,6 +36,7 @@ ActualStrategy = Union[
     MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiFidelityStrategy,
+    MultiFidelityHVKGStrategy,
     QparegoStrategy,
     EntingStrategy,
     RandomStrategy,

@@ -4,6 +4,7 @@ from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
     qLogPF,
+    qMFHVKG,
     qNegIntPosVar,
     qPI,
 )
@@ -19,10 +20,11 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
+    ContinuousTaskInput,
     DiscreteInput,
-    TaskInput,
 )
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
@@ -916,7 +918,7 @@ specs.add_invalid(
         "domain": Domain(
             inputs=Inputs(
                 features=[
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task",
                         categories=["task_1", "task_2"],
                         allowed=[True, True],
@@ -931,7 +933,7 @@ specs.add_invalid(
                 MultiTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
-                            TaskInput(
+                            CategoricalTaskInput(
                                 key="task",
                                 categories=["task_1", "task_2"],
                                 allowed=[True, True],
@@ -955,7 +957,7 @@ specs.add_valid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
                     ),
                 ]
@@ -990,7 +992,7 @@ specs.add_invalid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 0]
                     ),
                 ]
@@ -1003,4 +1005,102 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Only one task can be the target fidelity",
+)
+
+specs.add_valid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                    ContinuousOutput(key="fidelity_cost", objective=None),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_output_key": "fidelity_cost",
+    },
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_output_key": "fidelity_cost",
+    },
+    error=ValueError,
+    message="Must provide an Output corresponding to the fidelity cost",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    CategoricalTaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                    ContinuousOutput(key="fidelity_cost", objective=None),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_output_key": "fidelity_cost",
+    },
+    error=ValueError,
+    message="only supports continuous/discrete fidelities",
+)
+
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=ValueError,
+    message="Must provide at least one fidelity",
 )

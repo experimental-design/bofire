@@ -3,6 +3,7 @@ from typing import Callable, List, Optional
 import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
+from botorch.models.kernels.downsampling import DownsamplingKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
 from botorch.models.kernels.positive_index import PositiveIndexKernel
 from gpytorch.kernels import IndexKernel
@@ -408,6 +409,39 @@ def map_SphericalLinearKernel(
     )
 
 
+def map_DownsamplingKernel(
+    data_model: data_models.DownsamplingKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> DownsamplingKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return DownsamplingKernel(
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+        offset_prior=(
+            priors.map(data_model.offset_prior, d=len(active_dims))
+            if data_model.offset_prior is not None
+            else None
+        ),
+        offset_constraint=(
+            priors.map(data_model.offset_constraint)
+            if data_model.offset_constraint is not None
+            else None
+        ),
+        power_prior=(
+            priors.map(data_model.power_prior, d=len(active_dims))
+            if data_model.power_prior is not None
+            else None
+        ),
+        power_constraint=(
+            priors.map(data_model.power_constraint)
+            if data_model.power_constraint is not None
+            else None
+        ),
+    )
+
+
 KERNEL_MAP = {
     data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
@@ -425,6 +459,7 @@ KERNEL_MAP = {
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,
+    data_models.DownsamplingKernel: map_DownsamplingKernel,
 }
 
 

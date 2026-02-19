@@ -13,7 +13,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.priors.api import LKJPrior
 
 # from bofire.data_models.molfeatures.api import MolFeatures
@@ -28,7 +28,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         data_model: DataModel,
         **kwargs,
     ):
-        self.n_tasks = len(data_model.inputs.get(TaskInput).features[0].categories)
+        self.n_tasks = len(
+            data_model.inputs.get(CategoricalTaskInput).features[0].categories
+        )
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
@@ -38,7 +40,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             # set the number of tasks in the prior
             self.task_prior.n_tasks = self.n_tasks
         # obtain the name of the task feature
-        self.task_feature_key = data_model.inputs.get_keys(TaskInput)[0]
+        self.task_feature_key = data_model.inputs.get_keys(CategoricalTaskInput)[0]
 
         super().__init__(data_model=data_model, **kwargs)
 

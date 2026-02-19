@@ -257,7 +257,7 @@ specs.add_valid(
 
 
 specs.add_valid(
-    features.TaskInput,
+    features.CategoricalTaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": [
@@ -271,7 +271,7 @@ specs.add_valid(
 )
 
 specs.add_invalid(
-    features.TaskInput,
+    features.CategoricalTaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": [
@@ -283,11 +283,11 @@ specs.add_invalid(
         "fidelities": [0, 1],
     },
     error=ValueError,
-    message="Length of fidelity lists must be equal to the number of tasks",
+    message="Length of fidelity list must be equal to the number of tasks",
 )
 
 specs.add_invalid(
-    features.TaskInput,
+    features.CategoricalTaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": [

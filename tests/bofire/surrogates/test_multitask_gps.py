@@ -14,9 +14,9 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
-    TaskInput,
 )
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
@@ -76,7 +76,7 @@ def test_MultiTask_input_preprocessing():
     # test that if no input_preprocessing_specs are provided, the ordinal encoding is used
     inputs = Inputs(
         features=[ContinuousInput(key="x", bounds=(-1, 1))]
-        + [TaskInput(key="task_id", categories=["1", "2"])],
+        + [CategoricalTaskInput(key="task_id", categories=["1", "2"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs)
@@ -88,7 +88,7 @@ def test_MultiTask_input_preprocessing():
     inputs = Inputs(
         features=[ContinuousInput(key="x", bounds=(-1, 1))]
         + [CategoricalInput(key="categories", categories=["1", "2"])]
-        + [TaskInput(key="task_id", categories=["1", "2"])],
+        + [CategoricalTaskInput(key="task_id", categories=["1", "2"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(

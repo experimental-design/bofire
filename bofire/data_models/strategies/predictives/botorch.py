@@ -4,7 +4,11 @@ from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import CategoricalInput, ContinuousInput, TaskInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    CategoricalTaskInput,
+    ContinuousInput,
+)
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     AnyAcqfOptimizer,
@@ -146,7 +150,7 @@ class BotorchStrategy(PredictiveStrategy):
             isinstance(m, MultiTaskGPSurrogate) for m in self.surrogate_specs.surrogates
         ):
             # find the task input
-            task_input = self.domain.inputs.get(TaskInput, exact=True)
+            task_input = self.domain.inputs.get(CategoricalTaskInput, exact=True)
             # check if there is only one allowed task category
             assert (
                 sum(task_input.features[0].allowed) == 1
