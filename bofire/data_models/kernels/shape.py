@@ -64,3 +64,4 @@ class ExactWassersteinKernel(Kernel):
     append_y: Optional[List[float]] = None
     normalize_y: Optional[float] = None
     normalize_x: Optional[bool] = None
+    order: Literal[1, 2] = 1

@@ -1,10 +1,15 @@
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import torch
 from gpytorch.kernels.kernel import Kernel
 from torch import Tensor
 
 from bofire.utils.torch_tools import interp1d
+
+
+_AUTO_CHUNK_THRESHOLD = 128
+_AUTO_CHUNK_SIZE = 32
+_ORDER2_SQRT_EPS = 1e-12
 
 
 def _expand_values_like(X: Tensor, values: Tensor) -> Tensor:
@@ -25,17 +30,18 @@ def _build_union_x(
     x1: Tensor,
     x2: Tensor,
 ) -> Tensor:
-    union_x = torch.sort(torch.cat([x1.reshape(-1), x2.reshape(-1)])).values
+    union_x = torch.cat([x1.reshape(-1), x2.reshape(-1)])
     if union_x.requires_grad:
         union_x = union_x.detach()
+    union_x = torch.sort(union_x).values
     union_x = torch.unique_consecutive(union_x)
-    return union_x
+    return union_x.contiguous()
 
 
 def _prepare_piecewise_linear_xy(
     X: Tensor,
-    idx_x: Union[List[int], Tensor],
-    idx_y: Union[List[int], Tensor],
+    idx_x: Tensor,
+    idx_y: Tensor,
     prepend_x: Tensor,
     prepend_y: Tensor,
     append_x: Tensor,
@@ -44,11 +50,8 @@ def _prepare_piecewise_linear_xy(
     normalize_x: bool = True,
 ) -> Tuple[Tensor, Tensor]:
     """Extract and normalize x/y for piecewise-linear integration."""
-    idx_x_t = torch.as_tensor(idx_x, dtype=torch.long, device=X.device)
-    idx_y_t = torch.as_tensor(idx_y, dtype=torch.long, device=X.device)
-
-    x = X[..., idx_x_t]
-    y = X[..., idx_y_t]
+    x = X[..., idx_x]
+    y = X[..., idx_y]
 
     if prepend_x.numel() > 0:
         x = _prepend_values(x, prepend_x)
@@ -70,12 +73,35 @@ def _prepare_piecewise_linear_xy(
     return x, y
 
 
+def _integrate_piecewise_diff(d0: Tensor, d1: Tensor, dx: Tensor, order: int) -> Tensor:
+    if order == 1:
+        abs0 = torch.abs(d0)
+        abs1 = torch.abs(d1)
+        same_sign = (d0 * d1) >= 0
+        sum_abs = abs0 + abs1
+        denom = torch.clamp(sum_abs, min=1e-12)
+
+        area_same = 0.5 * sum_abs * dx
+        sq_sum = (abs0 * abs0) + (abs1 * abs1)
+        area_cross = 0.5 * dx * sq_sum / denom
+        area = torch.where(same_sign, area_same, area_cross)
+        return area.sum(dim=-1)
+    if order == 2:
+        # Exact integral of a squared linear segment: ∫(a + bt)^2 dt.
+        area = (dx / 3.0) * ((d0 * d0) + (d0 * d1) + (d1 * d1))
+        return torch.sqrt(torch.clamp(area.sum(dim=-1), min=_ORDER2_SQRT_EPS))
+    raise ValueError("order must be 1 or 2.")
+
+
 def _pairwise_piecewise_linear_wasserstein(
     x1: Tensor,
     y1: Tensor,
     x2: Tensor,
     y2: Tensor,
     union_x: Optional[Tensor] = None,
+    pair_chunk_size: Optional[int] = None,
+    order: int = 1,
+    diag: bool = False,
 ) -> Tensor:
     """Batch-wise exact integral on a single global union grid across B and N."""
     squeeze_batch = False
@@ -115,6 +141,14 @@ def _pairwise_piecewise_linear_wasserstein(
         result = torch.zeros((bsz, n1, n2), dtype=x1.dtype, device=x1.device)
         return result.squeeze(0) if squeeze_batch else result
 
+    if pair_chunk_size is not None and pair_chunk_size < 1:
+        raise ValueError("pair_chunk_size must be None or >= 1.")
+    if order not in (1, 2):
+        raise ValueError("order must be 1 or 2.")
+    effective_chunk_size = pair_chunk_size
+    if effective_chunk_size is None and n2 >= _AUTO_CHUNK_THRESHOLD:
+        effective_chunk_size = min(_AUTO_CHUNK_SIZE, n2)
+
     x1_flat = x1.reshape(bsz * n1, -1)
     y1_flat = y1.reshape(bsz * n1, -1)
     x2_flat = x2.reshape(bsz * n2, -1)
@@ -135,20 +169,31 @@ def _pairwise_piecewise_linear_wasserstein(
     y2_grid = y2_grid_flat.reshape(bsz, n2, -1)
 
     dx = union_x[1:] - union_x[:-1]
-    d0 = y1_grid[:, :, None, :-1] - y2_grid[:, None, :, :-1]
-    d1 = y1_grid[:, :, None, 1:] - y2_grid[:, None, :, 1:]
-
-    abs0 = torch.abs(d0)
-    abs1 = torch.abs(d1)
-    same_sign = (d0 * d1) >= 0
-    denom = torch.clamp(abs0 + abs1, min=1e-12)
-
     dx_view = dx.view(1, 1, 1, -1)
-    area_same = 0.5 * (abs0 + abs1) * dx_view
-    area_cross = 0.5 * dx_view * (abs0**2 + abs1**2) / denom
+    y1_left = y1_grid[:, :, None, :-1]
+    y1_right = y1_grid[:, :, None, 1:]
 
-    area = torch.where(same_sign, area_same, area_cross)
-    dists = area.sum(dim=-1)
+    if diag and n1 == n2:
+        d0 = y1_grid[..., :-1] - y2_grid[..., :-1]
+        d1 = y1_grid[..., 1:] - y2_grid[..., 1:]
+        dists = _integrate_piecewise_diff(d0, d1, dx, order=order)
+    elif effective_chunk_size is None or effective_chunk_size >= n2:
+        d0 = y1_left - y2_grid[:, None, :, :-1]
+        d1 = y1_right - y2_grid[:, None, :, 1:]
+        dists = _integrate_piecewise_diff(d0, d1, dx_view, order=order)
+    else:
+        dist_chunks = []
+        for start in range(0, n2, effective_chunk_size):
+            end = min(start + effective_chunk_size, n2)
+            y2_chunk = y2_grid[:, start:end, :]
+
+            d0 = y1_left - y2_chunk[:, None, :, :-1]
+            d1 = y1_right - y2_chunk[:, None, :, 1:]
+            dist_chunks.append(
+                _integrate_piecewise_diff(d0, d1, dx_view, order=order),
+            )
+
+        dists = torch.cat(dist_chunks, dim=-1)
 
     return dists.squeeze(0) if squeeze_batch else dists
 
@@ -173,9 +218,16 @@ class WassersteinKernel(Kernel):
         x1_scaled = x1 / self.lengthscale
         x2_scaled = x2 / self.lengthscale
 
-        # print("x1 shape:", x1.shape, "x2 shape:", x2.shape)
-
-        dists = self.calc_wasserstein_distances(x1_scaled, x2_scaled)
+        if diag:
+            if x1_scaled.shape == x2_scaled.shape:
+                dists = (x1_scaled - x2_scaled).abs().mean(dim=-1).clamp_min(1e-15)
+            else:
+                dists = self.calc_wasserstein_distances(x1_scaled, x2_scaled).diagonal(
+                    dim1=-2,
+                    dim2=-1,
+                )
+        else:
+            dists = self.calc_wasserstein_distances(x1_scaled, x2_scaled)
 
         if self.squared:
             return torch.exp(-(dists**2))
@@ -198,18 +250,24 @@ class ExactWassersteinKernel(Kernel):
         append_y: Optional[Tensor] = None,
         normalize_y: Optional[Tensor] = None,
         normalize_x: bool = True,
+        pair_chunk_size: Optional[int] = None,
+        order: int = 1,
         **kwargs,
     ):
         super(ExactWassersteinKernel, self).__init__(**kwargs)
+        if order not in (1, 2):
+            raise ValueError("order must be 1 or 2.")
         self.squared = squared
-        self.idx_x = idx_x
-        self.idx_y = idx_y
-        self.prepend_x = prepend_x
-        self.prepend_y = prepend_y
-        self.append_x = append_x
-        self.append_y = append_y
-        self.normalize_y = normalize_y
+        self.register_buffer("idx_x", idx_x)
+        self.register_buffer("idx_y", idx_y)
+        self.register_buffer("prepend_x", prepend_x)
+        self.register_buffer("prepend_y", prepend_y)
+        self.register_buffer("append_x", append_x)
+        self.register_buffer("append_y", append_y)
+        self.register_buffer("normalize_y", normalize_y)
         self.normalize_x = normalize_x
+        self.pair_chunk_size = pair_chunk_size
+        self.order = order
 
     def forward(
         self,
@@ -231,42 +289,43 @@ class ExactWassersteinKernel(Kernel):
                 "ExactWassersteinKernel is missing prepend/append/normalize settings."
             )
 
-        idx_x = self.idx_x.to(device=x1.device)
-        idx_y = self.idx_y.to(device=x1.device)
-        prepend_x = self.prepend_x.to(x1)
-        prepend_y = self.prepend_y.to(x1)
-        append_x = self.append_x.to(x1)
-        append_y = self.append_y.to(x1)
-        normalize_y = self.normalize_y.to(x1)
-
         x1_x, x1_y = _prepare_piecewise_linear_xy(
             x1,
-            idx_x,
-            idx_y,
-            prepend_x,
-            prepend_y,
-            append_x,
-            append_y,
-            normalize_y,
+            self.idx_x,
+            self.idx_y,
+            self.prepend_x,
+            self.prepend_y,
+            self.append_x,
+            self.append_y,
+            self.normalize_y,
             normalize_x=self.normalize_x,
         )
         x2_x, x2_y = _prepare_piecewise_linear_xy(
             x2,
-            idx_x,
-            idx_y,
-            prepend_x,
-            prepend_y,
-            append_x,
-            append_y,
-            normalize_y,
+            self.idx_x,
+            self.idx_y,
+            self.prepend_x,
+            self.prepend_y,
+            self.append_x,
+            self.append_y,
+            self.normalize_y,
             normalize_x=self.normalize_x,
         )
         union_x = _build_union_x(x1_x, x2_x)
 
         # print("[ExactWassersteinKernel] union_x size:", union_x.shape, "union_x:", union_x)
         dists = _pairwise_piecewise_linear_wasserstein(
-            x1_x, x1_y, x2_x, x2_y, union_x=union_x
+            x1_x,
+            x1_y,
+            x2_x,
+            x2_y,
+            union_x=union_x,
+            pair_chunk_size=self.pair_chunk_size,
+            order=self.order,
+            diag=diag and x1_x.shape[-2] == x2_x.shape[-2],
         )
+        if diag and x1_x.shape[-2] != x2_x.shape[-2]:
+            dists = dists.diagonal(dim1=-2, dim2=-1)
 
         if self.lengthscale.numel() == 1:
             dists = dists / self.lengthscale.squeeze()

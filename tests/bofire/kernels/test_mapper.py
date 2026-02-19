@@ -34,6 +34,9 @@ from bofire.data_models.kernels.api import (
     WassersteinKernel,
     WedgeKernel,
 )
+from bofire.data_models.kernels.api import (
+    ExactWassersteinKernel as ExactWassersteinKernelDataModel,
+)
 from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     GammaPrior,
@@ -243,6 +246,31 @@ def test_map_wasserstein_kernel():
     )
     assert k.squared is True
     assert hasattr(k, "lengthscale_prior") is False
+
+
+def test_map_exact_wasserstein_kernel_auto_chunking():
+    kernel = ExactWassersteinKernelDataModel(
+        squared=False,
+        idx_x=[4, 5],
+        idx_y=[0, 1, 2, 3],
+        prepend_x=[0.0],
+        prepend_y=[],
+        append_x=[1.0],
+        append_y=[],
+        normalize_y=100.0,
+        normalize_x=True,
+        order=2,
+    )
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(6)),
+        ard_num_dims=1,
+        features_to_idx_mapper=None,
+    )
+    assert isinstance(k, shapeKernels.ExactWassersteinKernel)
+    assert k.pair_chunk_size is None
+    assert k.order == 2
 
 
 def test_map_HammingDistanceKernel_to_categorical_without_ard():

@@ -371,6 +371,7 @@ def map_ExactWassersteinKernel(
         normalize_x=data_model.normalize_x
         if data_model.normalize_x is not None
         else True,
+        order=data_model.order,
         active_dims=active_dims,
         ard_num_dims=ard_num_dims,
     )
