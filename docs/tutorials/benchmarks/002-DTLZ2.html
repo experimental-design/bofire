@@ -738,7 +738,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="0ddfb8c5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.877548,&quot;end_time&quot;:&quot;2024-10-10T20:34:48.494020&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:45.616472&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="64cfcd96" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.877548,&quot;end_time&quot;:&quot;2024-10-10T20:34:48.494020&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:45.616472&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -763,7 +763,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="manual-setup-of-the-optimization-domain" class="level2">
 <h2 class="anchored" data-anchor-id="manual-setup-of-the-optimization-domain">Manual setup of the optimization domain</h2>
 <p>The following cell shows how to manually setup the optimization problem in BoFire for didactic purposes. In the following the implemented benchmark module is then used.</p>
-<div id="f4fa9dc1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006199,&quot;end_time&quot;:&quot;2024-10-10T20:34:48.504930&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:48.498731&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="60bac280" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006199,&quot;end_time&quot;:&quot;2024-10-10T20:34:48.504930&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:48.498731&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> Inputs(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[ContinuousInput(key<span class="op">=</span><span class="ss">f"x_</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">6</span>)],</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -780,7 +780,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="random-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="random-strategy">Random Strategy</h2>
-<div id="cb08fa37" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.324348,&quot;end_time&quot;:&quot;2024-10-10T20:34:48.833702&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:48.509354&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="6d2cb721" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.324348,&quot;end_time&quot;:&quot;2024-10-10T20:34:48.833702&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:48.509354&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    datamodel <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>datamodel)</span>
@@ -806,7 +806,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
 
-Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=0.001]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 53.31it/s, Current Best:=0.001]</code></pre>
+Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=0.000]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 52.57it/s, Current Best:=0.000]</code></pre>
 </div>
 </div>
 </section>
@@ -814,7 +814,7 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 <h2 class="anchored" data-anchor-id="mobo-strategy">MOBO Strategy</h2>
 <section id="automatic-run" class="level3">
 <h3 class="anchored" data-anchor-id="automatic-run">Automatic run</h3>
-<div id="5168610f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="6fb6e854" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_factory(domain: Domain):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    data_model <span class="op">=</span> MoboStrategy(domain<span class="op">=</span>domain, ref_point<span class="op">=</span>{<span class="st">"f_0"</span>: <span class="fl">1.1</span>, <span class="st">"f_1"</span>: <span class="fl">1.1</span>})</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategies.<span class="bu">map</span>(data_model)</span>
@@ -830,7 +830,7 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s, Current Best:=0.090]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.35s/it, Current Best:=0.090]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.35s/it, Current Best:=0.090]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:03&lt;?, ?it/s, Current Best:=0.054]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.07s/it, Current Best:=0.054]Run 0: 100%|██████████| 1/1 [00:03&lt;00:00,  3.07s/it, Current Best:=0.054]</code></pre>
 </div>
 </div>
 </section>
@@ -838,7 +838,7 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 <h3 class="anchored" data-anchor-id="manual-setup">Manual setup</h3>
 <section id="using-the-default-models" class="level4">
 <h4 class="anchored" data-anchor-id="using-the-default-models">Using the default Models</h4>
-<div id="07f26a70" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="fa8c6e15" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we get the domain from the benchmark module, in real use case we have to build it on our own</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure that the objective is set correctly</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>).domain</span>
@@ -881,18 +881,18 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>1.0</td>
-<td>0.36574</td>
-<td>1.0</td>
+<td>0.990697</td>
 <td>1.0</td>
 <td>0.0</td>
-<td>0.458874</td>
-<td>0.154995</td>
-<td>0.945121</td>
-<td>0.167088</td>
-<td>0.102564</td>
-<td>-0.154995</td>
-<td>-0.945121</td>
+<td>0.0</td>
+<td>0.859033</td>
+<td>0.277903</td>
+<td>0.047285</td>
+<td>0.834372</td>
+<td>0.143281</td>
+<td>0.308217</td>
+<td>-0.047285</td>
+<td>-0.834372</td>
 </tr>
 </tbody>
 </table>
@@ -903,7 +903,7 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 </section>
 <section id="setup-specific-models" class="level4">
 <h4 class="anchored" data-anchor-id="setup-specific-models">Setup specific models</h4>
-<div id="addc8737" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="9c6f373f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> RBFKernel, ScaleKernel</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates, SingleTaskGPSurrogate</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -960,18 +960,18 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.978427</td>
-<td>1.0</td>
 <td>1.0</td>
 <td>1.0</td>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.214517</td>
-<td>0.744684</td>
-<td>0.14164</td>
-<td>0.334432</td>
-<td>-0.214517</td>
-<td>-0.744684</td>
+<td>0.459591</td>
+<td>0.216458</td>
+<td>0.021604</td>
+<td>0.796092</td>
+<td>0.078187</td>
+<td>0.314473</td>
+<td>-0.021604</td>
+<td>-0.796092</td>
 </tr>
 </tbody>
 </table>
@@ -984,7 +984,7 @@ Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 </section>
 <section id="qparego-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="qparego-strategy">QPAREGO Strategy</h2>
-<div id="b2763249" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="baaadf8d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>results_qparego <span class="op">=</span> run(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    DTLZ2(dim<span class="op">=</span><span class="dv">6</span>),</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    strategy_factory<span class="op">=</span><span class="kw">lambda</span> domain: strategies.<span class="bu">map</span>(QparegoStrategy(domain<span class="op">=</span>domain)),</span>
@@ -1003,13 +1003,13 @@ qNoisyExpectedImprovement has known numerical issues that lead to suboptimal opt
 
 instead, which fixes the issues and has the same API. See https://arxiv.org/abs/2310.20708 for details.
 
-Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s, Current Best:=0.025]Run 0: 100%|██████████| 1/1 [00:01&lt;00:00,  1.35s/it, Current Best:=0.025]Run 0: 100%|██████████| 1/1 [00:01&lt;00:00,  1.35s/it, Current Best:=0.025]</code></pre>
+Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s, Current Best:=0.078]Run 0: 100%|██████████| 1/1 [00:01&lt;00:00,  1.44s/it, Current Best:=0.078]Run 0: 100%|██████████| 1/1 [00:01&lt;00:00,  1.45s/it, Current Best:=0.078]</code></pre>
 </div>
 </div>
 </section>
 <section id="performance-plot" class="level2">
 <h2 class="anchored" data-anchor-id="performance-plot">Performance Plot</h2>
-<div id="bde759fe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="662500f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1028,7 +1028,7 @@ Run 0:   0%|          | 0/1 [00:01&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:0
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="002-DTLZ2_files/figure-html/cell-9-output-1.png" width="597" height="429" class="figure-img"></p>
+<p><img src="002-DTLZ2_files/figure-html/cell-9-output-1.png" width="589" height="429" class="figure-img"></p>
 </figure>
 </div>
 </div>
