@@ -88,12 +88,15 @@ class WeightedSumFeature(EngineeredFeature):
     Args:
         features: The features to be used to compute the weighted sum.
         descriptors: The descriptors to be used to compute the weighted sum.
+        normalize_by_weight_sum: If True, normalize by the sum of feature
+            values and compute a weighted mean instead of a weighted sum.
         keep_features: Whether to keep the original features after
             creating the engineered feature in surrogate creation.
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
     descriptors: Descriptors
+    normalize_by_weight_sum: bool = False
     order_id: ClassVar[int] = 2
 
     @property
@@ -114,21 +117,6 @@ class WeightedSumFeature(EngineeredFeature):
                 )
 
 
-class WeightedMeanFeature(WeightedSumFeature):
-    """Weighted mean feature, which computes the mean over the specified
-    descriptors weighted by the involved feature values.
-
-    Args:
-        features: The features to be used to compute the weighted mean.
-        descriptors: The descriptors to be used to compute the weighted mean.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
-
-    type: Literal["WeightedMeanFeature"] = "WeightedMeanFeature"
-    order_id: ClassVar[int] = 5
-
-
 class MolecularWeightedSumFeature(EngineeredFeature):
     """Molecular weighted sum feature, which computes the sum over the specified
     molecular descriptors weighted by the involved feature values.
@@ -136,12 +124,15 @@ class MolecularWeightedSumFeature(EngineeredFeature):
     Args:
         features: The molecular features to be used to compute the weighted sum.
         molfeatures: The molecular feature descriptor specification.
+        normalize_by_weight_sum: If True, normalize by the sum of feature
+            values and compute a weighted mean instead of a weighted sum.
         keep_features: Whether to keep the original features after
             creating the engineered feature in surrogate creation.
     """
 
     type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
     molfeatures: AnyMolFeatures
+    normalize_by_weight_sum: bool = False
     order_id: ClassVar[int] = 3
 
     @property

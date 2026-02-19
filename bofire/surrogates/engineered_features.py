@@ -13,7 +13,6 @@ from bofire.data_models.features.api import (
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.types import InputTransformSpecs
@@ -74,20 +73,7 @@ def map_weighted_sum_feature(
         inputs=inputs,
         transform_specs=transform_specs,
         feature=feature,
-        normalize=False,
-    )
-
-
-def map_weighted_mean_feature(
-    inputs: Inputs,
-    transform_specs: InputTransformSpecs,
-    feature: WeightedMeanFeature,
-) -> AppendFeatures:
-    return _map_weighted_descriptor_feature(
-        inputs=inputs,
-        transform_specs=transform_specs,
-        feature=feature,
-        normalize=True,
+        normalize=feature.normalize_by_weight_sum,
     )
 
 
@@ -158,7 +144,7 @@ def map_molecular_weighted_sum_feature(
     return _append_weighted_features(
         indices=indices,
         descriptors=descriptors,
-        normalize=False,
+        normalize=feature.normalize_by_weight_sum,
     )
 
 
@@ -184,7 +170,6 @@ AGGREGATE_MAP = {
     SumFeature: map_sum_feature,
     ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
-    WeightedMeanFeature: map_weighted_mean_feature,
     WeightedSumFeature: map_weighted_sum_feature,
     MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
     CloneFeature: map_clone_feature,

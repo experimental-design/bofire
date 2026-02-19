@@ -7,7 +7,6 @@ from bofire.data_models.features.api import (
     ContinuousMolecularInput,
     MolecularWeightedSumFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
@@ -67,9 +66,12 @@ def test_weighted_sum_feature_validation():
         weighted_sum_feature.validate_features(inputs)
 
 
-def test_weighted_mean_feature_validation():
-    weighted_mean_feature = WeightedMeanFeature(
-        key="w_mean1", features=["feat1", "feat2"], descriptors=["desc1", "desc2"]
+def test_weighted_sum_feature_validation_with_normalization_flag():
+    weighted_sum_feature = WeightedSumFeature(
+        key="w_sum1",
+        features=["feat1", "feat2"],
+        descriptors=["desc1", "desc2"],
+        normalize_by_weight_sum=True,
     )
     inputs = Inputs(
         features=[
@@ -85,7 +87,7 @@ def test_weighted_mean_feature_validation():
     with pytest.raises(
         ValueError, match="Feature 'feat2' is not a ContinuousDescriptorInput"
     ):
-        weighted_mean_feature.validate_features(inputs)
+        weighted_sum_feature.validate_features(inputs)
 
     inputs = Inputs(
         features=[
@@ -104,7 +106,7 @@ def test_weighted_mean_feature_validation():
         ]
     )
     with pytest.raises(ValueError, match="Not all descriptors"):
-        weighted_mean_feature.validate_features(inputs)
+        weighted_sum_feature.validate_features(inputs)
 
 
 def test_molecular_weighted_sum_feature_validation():

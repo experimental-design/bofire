@@ -14,7 +14,6 @@ from bofire.data_models.features.api import (
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
@@ -24,7 +23,6 @@ from bofire.surrogates.engineered_features import (
     map_molecular_weighted_sum_feature,
     map_product_feature,
     map_sum_feature,
-    map_weighted_mean_feature,
     map_weighted_sum_feature,
 )
 from bofire.utils.torch_tools import tkwargs
@@ -187,7 +185,7 @@ def test_map_weighted_sum_feature():
     assert torch.allclose(result[:, -2:], expected)
 
 
-def test_map_weighted_mean_feature():
+def test_map_weighted_sum_feature_normalized():
     inputs = Inputs(
         features=[
             ContinuousDescriptorInput(
@@ -210,15 +208,16 @@ def test_map_weighted_mean_feature():
             ),
         ]
     )
-    aggregation = WeightedMeanFeature(
+    aggregation = WeightedSumFeature(
         key="agg1",
         features=["x1", "x2", "x3"],
         descriptors=["d1", "d2"],
+        normalize_by_weight_sum=True,
     )
 
     assert aggregation.n_transformed_inputs == 2
 
-    aggregator = map_weighted_mean_feature(
+    aggregator = map_weighted_sum_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -234,7 +233,7 @@ def test_map_weighted_mean_feature():
     assert torch.allclose(result[:, -2:], expected)
 
 
-def test_map_weighted_mean_feature_zero_weight_sum():
+def test_map_weighted_sum_feature_normalized_zero_weight_sum():
     inputs = Inputs(
         features=[
             ContinuousDescriptorInput(
@@ -251,12 +250,13 @@ def test_map_weighted_mean_feature_zero_weight_sum():
             ),
         ]
     )
-    aggregation = WeightedMeanFeature(
+    aggregation = WeightedSumFeature(
         key="agg1",
         features=["x1", "x2"],
         descriptors=["d1", "d2"],
+        normalize_by_weight_sum=True,
     )
-    aggregator = map_weighted_mean_feature(
+    aggregator = map_weighted_sum_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -327,6 +327,42 @@ def test_map_molecular_weighted_sum_feature():
     assert torch.allclose(result_3d[:, :, :-1], orig_3d)
     expected_weighted_3d = torch.matmul(orig_3d, descriptors)
     assert torch.allclose(result_3d[:, :, -1:], expected_weighted_3d)
+
+
+@pytest.mark.skipif(
+    not (RDKIT_AVAILABLE and MORDRED_AVAILABLE),
+    reason="requires rdkit and mordred",
+)
+def test_map_molecular_weighted_sum_feature_normalized():
+    inputs = Inputs(
+        features=[
+            ContinuousMolecularInput(key="m1", bounds=[0, 1], molecule="C"),
+            ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
+        ]
+    )
+    molfeatures = MordredDescriptors(
+        descriptors=["NssCH2", "ATSC2d"], ignore_3D=True, correlation_cutoff=1.0
+    )
+    aggregation = MolecularWeightedSumFeature(
+        key="agg1",
+        features=["m1", "m2"],
+        molfeatures=molfeatures,
+        normalize_by_weight_sum=True,
+    )
+
+    aggregator = map_molecular_weighted_sum_feature(
+        inputs=inputs, transform_specs={}, feature=aggregation
+    )
+
+    orig = torch.tensor([[0.1, 0.2], [0.4, 0.1]]).to(**tkwargs)
+    result = aggregator(orig)
+
+    descriptors_df = molfeatures.get_descriptor_values(pd.Series(["C", "CC"]))
+    descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
+    expected_weighted = torch.matmul(orig, descriptors) / orig.sum(dim=1, keepdim=True)
+
+    assert torch.allclose(result[:, :-1], orig)
+    assert torch.allclose(result[:, -1:], expected_weighted)
 
 
 def test_map_clone_feature():
