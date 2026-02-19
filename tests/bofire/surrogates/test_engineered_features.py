@@ -216,6 +216,45 @@ def test_map_weighted_mean_feature():
     assert torch.allclose(result[:, -2:], expected)
 
 
+def test_map_weighted_mean_feature_zero_weight_sum():
+    inputs = Inputs(
+        features=[
+            ContinuousDescriptorInput(
+                key="x1",
+                bounds=[0, 1],
+                descriptors=["d1", "d2"],
+                values=[1, 2],
+            ),
+            ContinuousDescriptorInput(
+                key="x2",
+                bounds=[0, 1],
+                descriptors=["d1", "d2"],
+                values=[3, 4],
+            ),
+        ]
+    )
+    aggregation = WeightedMeanFeature(
+        key="agg1",
+        features=["x1", "x2"],
+        descriptors=["d1", "d2"],
+    )
+    aggregator = map_weighted_mean_feature(
+        inputs=inputs, transform_specs={}, feature=aggregation
+    )
+
+    # Zero weights would cause division-by-zero without epsilon clamping.
+    orig = torch.tensor([[0.0, 0.0], [0.1, 0.0]]).to(**tkwargs)
+    result = aggregator(orig)
+
+    assert result.shape == (2, 4)
+    assert torch.allclose(result[:, :-2], orig)
+    assert torch.isfinite(result[:, -2:]).all()
+    assert torch.allclose(
+        result[:, -2:],
+        torch.tensor([[0.0, 0.0], [1.0, 2.0]]).to(**tkwargs),
+    )
+
+
 @pytest.mark.skipif(
     not (RDKIT_AVAILABLE and MORDRED_AVAILABLE),
     reason="requires rdkit and mordred",

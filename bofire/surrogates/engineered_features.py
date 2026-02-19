@@ -18,30 +18,21 @@ from bofire.data_models.features.api import (
 from bofire.data_models.types import InputTransformSpecs
 
 
-def _weighted_sum_features(
+def _weighted_features(
     X: torch.Tensor,
     indices: torch.Tensor,
     descriptors: torch.Tensor,
-) -> torch.Tensor:
-    result = torch.matmul(
-        X[..., indices],
-        descriptors,
-    ).unsqueeze(-2)
-    return result.expand(*result.shape[:-2], 1, -1)
-
-
-def _weighted_mean_features(
-    X: torch.Tensor,
-    indices: torch.Tensor,
-    descriptors: torch.Tensor,
+    normalize: bool,
 ) -> torch.Tensor:
     weights = X[..., indices]
     weighted_sum = torch.matmul(weights, descriptors)
-    weight_sum = torch.clamp(
-        torch.sum(weights, dim=-1, keepdim=True),
-        min=torch.finfo(weights.dtype).eps,
-    )
-    result = (weighted_sum / weight_sum).unsqueeze(-2)
+    if normalize:
+        weight_sum = torch.clamp(
+            torch.sum(weights, dim=-1, keepdim=True),
+            min=torch.finfo(weights.dtype).eps,
+        )
+        weighted_sum = weighted_sum / weight_sum
+    result = weighted_sum.unsqueeze(-2)
     return result.expand(*result.shape[:-2], 1, -1)
 
 
@@ -79,26 +70,11 @@ def map_weighted_sum_feature(
     transform_specs: InputTransformSpecs,
     feature: WeightedSumFeature,
 ) -> AppendFeatures:
-    # use get_feature_indices
-
-    features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]
-
-    descriptors = torch.tensor(
-        [
-            inputs.get_by_key(key)
-            .to_df()[feature.descriptors]  # ty: ignore[unresolved-attribute]
-            .values[0]
-            for key in feature.features
-        ],
-        dtype=torch.double,
-    )
-
-    # we need to get the descriptors into one tensor
-    return AppendFeatures(
-        f=_weighted_sum_features,
-        fkwargs={"indices": indices, "descriptors": descriptors},
-        transform_on_train=True,
+    return _map_weighted_descriptor_feature(
+        inputs=inputs,
+        transform_specs=transform_specs,
+        feature=feature,
+        normalize=False,
     )
 
 
@@ -106,6 +82,36 @@ def map_weighted_mean_feature(
     inputs: Inputs,
     transform_specs: InputTransformSpecs,
     feature: WeightedMeanFeature,
+) -> AppendFeatures:
+    return _map_weighted_descriptor_feature(
+        inputs=inputs,
+        transform_specs=transform_specs,
+        feature=feature,
+        normalize=True,
+    )
+
+
+def _append_weighted_features(
+    indices: list[int],
+    descriptors: torch.Tensor,
+    normalize: bool,
+) -> AppendFeatures:
+    return AppendFeatures(
+        f=_weighted_features,
+        fkwargs={
+            "indices": indices,
+            "descriptors": descriptors,
+            "normalize": normalize,
+        },
+        transform_on_train=True,
+    )
+
+
+def _map_weighted_descriptor_feature(
+    inputs: Inputs,
+    transform_specs: InputTransformSpecs,
+    feature: WeightedSumFeature,
+    normalize: bool,
 ) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
@@ -120,11 +126,25 @@ def map_weighted_mean_feature(
         dtype=torch.double,
     )
 
-    return AppendFeatures(
-        f=_weighted_mean_features,
-        fkwargs={"indices": indices, "descriptors": descriptors},
-        transform_on_train=True,
+    return _append_weighted_features(
+        indices=indices,
+        descriptors=descriptors,
+        normalize=normalize,
     )
+
+
+def _get_molecular_descriptors(
+    inputs: Inputs,
+    feature: MolecularWeightedSumFeature,
+) -> torch.Tensor:
+    molecules = [
+        inputs.get_by_key(key).molecule  # ty: ignore[unresolved-attribute]
+        for key in feature.features
+    ]
+    # filter out highly-correlated descriptors before computing descriptor values
+    feature.molfeatures.remove_correlated_descriptors(molecules)
+    descriptors_df = feature.molfeatures.get_descriptor_values(pd.Series(molecules))
+    return torch.tensor(descriptors_df.values, dtype=torch.double)
 
 
 def map_molecular_weighted_sum_feature(
@@ -134,20 +154,11 @@ def map_molecular_weighted_sum_feature(
 ) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
-
-    molecules = [
-        inputs.get_by_key(key).molecule  # ty: ignore[unresolved-attribute]
-        for key in feature.features
-    ]
-    # filter out the highly-correlated descriptors
-    feature.molfeatures.remove_correlated_descriptors(molecules)
-    descriptors_df = feature.molfeatures.get_descriptor_values(pd.Series(molecules))
-    descriptors = torch.tensor(descriptors_df.values, dtype=torch.double)
-
-    return AppendFeatures(
-        f=_weighted_sum_features,
-        fkwargs={"indices": indices, "descriptors": descriptors},
-        transform_on_train=True,
+    descriptors = _get_molecular_descriptors(inputs=inputs, feature=feature)
+    return _append_weighted_features(
+        indices=indices,
+        descriptors=descriptors,
+        normalize=False,
     )
 
 
