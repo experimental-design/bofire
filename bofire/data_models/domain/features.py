@@ -66,7 +66,7 @@ EngineeredFeatureT = TypeVar(
     "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
 )
 OutputT = TypeVar("OutputT", bound=AnyOutput | Output, default=AnyOutput | Output)
-OutputGetT = TypeVar("OutputGetT", bound=AnyOutput, default=AnyOutput)
+OutputGetT = TypeVar("OutputGetT", bound=AnyOutput | Output, default=AnyOutput | Output)
 
 
 class _BaseFeatures(BaseModel, Generic[FeatureT]):
@@ -919,7 +919,7 @@ class Inputs(_BaseFeatures[InputT]):
     @overload
     def get(
         self,
-        includes: Type[InputGetT] | Sequence[Type[InputGetT]],
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]] = Input,
         excludes: None = None,
         exact: bool = False,
     ) -> Inputs[InputGetT]: ...

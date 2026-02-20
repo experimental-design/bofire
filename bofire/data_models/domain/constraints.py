@@ -1,7 +1,7 @@
 import collections.abc
 from collections.abc import Iterator, Sequence
 from itertools import chain
-from typing import Generic, List, Literal, Type, Union, overload
+from typing import Generic, Literal, Type, Union, overload
 
 import pandas as pd
 from pydantic import Field
@@ -95,21 +95,24 @@ class Constraints(BaseModel, Generic[ConstraintT]):
 
     @overload
     def get(
-        self, includes: Type[ConstraintGetT], excludes: None = None, exact: bool = False
+        self,
+        includes: Type[ConstraintGetT] | Sequence[Type[ConstraintGetT]],
+        excludes: None = None,
+        exact: bool = False,
     ) -> "Constraints[ConstraintGetT]": ...
 
     @overload
     def get(
         self,
-        includes: Type[ConstraintGetT] | Sequence[Type[ConstraintGetT]],
-        excludes: Type[AnyConstraint] | List[Type[AnyConstraint]] | None,
+        includes: Type[ConstraintGetT] | Sequence[Type[ConstraintGetT]] = Constraint,
+        excludes: Type[AnyConstraint] | Sequence[Type[AnyConstraint]] | None = None,
         exact: bool = False,
     ) -> Self: ...
 
     def get(
         self,
         includes: Type[ConstraintGetT] | Sequence[Type[ConstraintGetT]] = Constraint,
-        excludes: Type[AnyConstraint] | List[Type[AnyConstraint]] | None = None,
+        excludes: Type[AnyConstraint] | Sequence[Type[AnyConstraint]] | None = None,
         exact: bool = False,
     ) -> "Constraints[ConstraintGetT]":
         """Get constraints of the domain
