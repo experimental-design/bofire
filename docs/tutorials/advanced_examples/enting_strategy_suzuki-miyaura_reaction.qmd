@@ -10,7 +10,7 @@ format:
     toc-depth: 3
 jupyter: python3
 execute:
-  eval: false
+  eval: true
   warning: false
 ---
 
@@ -40,13 +40,13 @@ Goal: Maximize reaction yield (%)
 ## Installation
 
 ```{python}
+#| label: imports
 # Create environment
 # conda create -n bofire_enting python=3.11 -y
 # conda activate bofire_enting
 
 # Install BoFire with all dependencies (IMPORTANT!)
 # pip install "bofire[all]"
----
 
 import os
 os.environ['PYOMO_AUTOLOAD_SOLVERS'] = 'false'
@@ -72,10 +72,27 @@ print("Reaction Optimization with EntingStrategy")
 print("=" * 80)
 ```
 
+```{python}
+#| label: SMOKE_TEST config
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+if SMOKE_TEST:
+    n_initial = 4
+    n_iterations = 2
+    verbose = False
+else:
+    n_initial = 12
+    n_iterations = 20
+    verbose = True
+if SMOKE_TEST:
+    print("⚡ SMOKE TEST MODE: Using reduced iterations for fast validation")
+else:
+    print(f"🔬 Full mode: {n_initial} initial + {n_iterations} optimization iterations")
+```
+
 ### STEP 1: Define the Chemical Reaction Space
 
 ```{python}
-print("\n📐 STEP 1: Define Reaction Parameter Space")
+print("STEP 1: Define Reaction Parameter Space")
 print("-" * 80)
 
 inputs = Inputs(features=[
@@ -110,9 +127,9 @@ outputs = Outputs(features=[
 
 domain = Domain(inputs=inputs, outputs=outputs)
 
-print("✅ Reaction space defined:")
+print("Reaction space defined:")
 # Access features by iterating through them
-for feature in inputs.get()
+for feature in inputs.get():
     if feature.key == "solvent":
         print(f"   Solvents: {feature.categories}")
     elif feature.key == "base":
@@ -128,7 +145,7 @@ for feature in inputs.get()
 ### STEP 2: Simulate Realistic Reaction Response
 
 ```{python}
-print("\n🔬 STEP 2: Define Reaction Response Function")
+print("STEP 2: Define Reaction Response Function")
 print("-" * 80)
 
 def suzuki_reaction_simulator(params: pd.Series) -> float:
@@ -225,7 +242,7 @@ def suzuki_reaction_simulator(params: pd.Series) -> float:
 
     return final_yield
 
-print("✅ Reaction simulator ready")
+print("Reaction simulator ready")
 print("   Includes: solvent effects, base strength, temperature optimum,")
 print("   time saturation, catalyst loading, synergistic interactions, and noise")
 ```
@@ -233,12 +250,11 @@ print("   time saturation, catalyst loading, synergistic interactions, and noise
 ### STEP 3: Generate Initial Screening Experiments
 
 ```{python}
-print("\n🌱 STEP 3: Initial Random Screening (Design of Experiments)")
+print("STEP 3: Initial Random Screening (Design of Experiments)")
 print("-" * 80)
 
 np.random.seed(42)  # For reproducibility
 
-n_initial = 12  # Typical initial screen size
 initial_experiments = domain.inputs.sample(n_initial)
 
 # "Run" the initial experiments
@@ -247,8 +263,9 @@ initial_experiments["yield"] = initial_experiments.apply(
 )
 
 print(f"✅ Completed {n_initial} initial screening experiments")
-print(f"\n📊 Initial screening results:")
-print(initial_experiments.to_string(index=False))
+if verbose:
+    print(f"\n📊 Initial screening results:")
+    print(initial_experiments.to_string(index=False))
 print(f"\n   Best initial yield: {initial_experiments['yield'].max():.1f}%")
 print(f"   Average yield: {initial_experiments['yield'].mean():.1f}%")
 ```
@@ -259,11 +276,8 @@ print(f"   Average yield: {initial_experiments['yield'].mean():.1f}%")
 print("\n🤖 STEP 4: Initialize EntingStrategy")
 print("-" * 80)
 
-# Import the strategy data model
-from bofire.data_models.strategies.api import EntingStrategy as EntingStrategyDataModel
-
 # Create the strategy configuration (data model)
-strategy_data_model = EntingStrategyDataModel(
+strategy_data_model = EntingStrategy(
     domain=domain,
     seed=42  # For reproducibility
 )
@@ -284,10 +298,11 @@ print("   Perfect for: categorical variables, non-smooth responses, interactions
 ```{python}
 print("\n🔄 STEP 5: Run Optimization Campaign")
 print("=" * 80)
-print(f"{'Iter':<6} {'Solvent':<10} {'Base':<10} {'Temp':<8} {'Time':<8} {'Cat%':<8} {'Yield':<8} {'Best':<8}")
-print("-" * 80)
-
-n_iterations = 20
+print(f"   Running {n_iterations} iterations...")
+if verbose:
+    print(f"{'Iter':<6} {'Solvent':<10} {'Base':<10} {'Temp':<8} "
+          f"{'Time':<8} {'Cat%':<8} {'Yield':<8} {'Best':<8}")
+    print("-" * 80)
 history = []
 
 for i in range(n_iterations):
@@ -302,14 +317,13 @@ for i in range(n_iterations):
 
     # Track progress
     current_best = strategy.experiments["yield"].max()
-    best_idx = strategy.experiments["yield"].idxmax()
-    best_exp = strategy.experiments.loc[best_idx]
 
     # Display current experiment
     curr = candidate.iloc[0]
-    print(f"{i+1:<6} {curr['solvent']:<10} {curr['base']:<10} "
-          f"{curr['temperature']:<8.1f} {curr['time']:<8.1f} "
-          f"{curr['catalyst_loading']:<8.1f} {curr['yield']:<8.1f} {current_best:<8.1f}")
+    if verbose:
+        print(f"{i+1:<6} {curr['solvent']:<10} {curr['base']:<10} "
+            f"{curr['temperature']:<8.1f} {curr['time']:<8.1f} "
+            f"{curr['catalyst_loading']:<8.1f} {curr['yield']:<8.1f} {current_best:<8.1f}")
 
     history.append({
         'iteration': i + 1,
@@ -348,130 +362,133 @@ print(f"   Improvement: {best_result['yield'] - initial_experiments['yield'].max
 ### STEP 7: Visualizations
 
 ```{python}
-print("\n📈 STEP 7: Generating Visualizations...")
+print("STEP 7: Generating Visualizations...")
 print("-" * 80)
 
 history_df = pd.DataFrame(history)
 all_experiments = strategy.experiments.copy()
 
-# Create figure with multiple subplots
-fig = plt.figure(figsize=(16, 10))
-gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
+if not SMOKE_TEST:
+    # Create figure with multiple subplots
+    fig = plt.figure(figsize=(16, 10))
+    gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
 
-# Plot 1: Convergence curve
-ax1 = fig.add_subplot(gs[0, :2])
-ax1.plot(history_df['iteration'], history_df['best_yield'],
-         'b-o', linewidth=2, markersize=6, label='Best yield')
-ax1.fill_between(history_df['iteration'],
-                  history_df['yield'],
-                  alpha=0.3, label='Individual experiments')
-ax1.axhline(y=initial_experiments['yield'].max(),
-            color='gray', linestyle='--', alpha=0.7, label='Initial best')
-ax1.set_xlabel('Iteration', fontsize=11, fontweight='bold')
-ax1.set_ylabel('Yield (%)', fontsize=11, fontweight='bold')
-ax1.set_title('Optimization Progress', fontsize=13, fontweight='bold', pad=15)
-ax1.grid(True, alpha=0.3)
-ax1.legend()
-ax1.set_ylim(bottom=0)
+    # Plot 1: Convergence curve
+    ax1 = fig.add_subplot(gs[0, :2])
+    ax1.plot(history_df['iteration'], history_df['best_yield'],
+            'b-o', linewidth=2, markersize=6, label='Best yield')
+    ax1.fill_between(history_df['iteration'],
+                    history_df['yield'],
+                    alpha=0.3, label='Individual experiments')
+    ax1.axhline(y=initial_experiments['yield'].max(),
+                color='gray', linestyle='--', alpha=0.7, label='Initial best')
+    ax1.set_xlabel('Iteration', fontsize=11, fontweight='bold')
+    ax1.set_ylabel('Yield (%)', fontsize=11, fontweight='bold')
+    ax1.set_title('Optimization Progress', fontsize=13, fontweight='bold', pad=15)
+    ax1.grid(True, alpha=0.3)
+    ax1.legend()
+    ax1.set_ylim(bottom=0)
 
-# Plot 2: Yield distribution
-ax2 = fig.add_subplot(gs[0, 2])
-ax2.hist(all_experiments['yield'], bins=15, color='skyblue', edgecolor='black', alpha=0.7)
-ax2.axvline(best_result['yield'], color='red', linestyle='--', linewidth=2, label='Best')
-ax2.set_xlabel('Yield (%)', fontsize=10, fontweight='bold')
-ax2.set_ylabel('Frequency', fontsize=10, fontweight='bold')
-ax2.set_title('Yield Distribution', fontsize=12, fontweight='bold')
-ax2.legend()
+    # Plot 2: Yield distribution
+    ax2 = fig.add_subplot(gs[0, 2])
+    ax2.hist(all_experiments['yield'], bins=15, color='skyblue', edgecolor='black', alpha=0.7)
+    ax2.axvline(best_result['yield'], color='red', linestyle='--', linewidth=2, label='Best')
+    ax2.set_xlabel('Yield (%)', fontsize=10, fontweight='bold')
+    ax2.set_ylabel('Frequency', fontsize=10, fontweight='bold')
+    ax2.set_title('Yield Distribution', fontsize=12, fontweight='bold')
+    ax2.legend()
 
-# Plot 3: Solvent effect
-ax3 = fig.add_subplot(gs[1, 0])
-solvent_avg = all_experiments.groupby('solvent')['yield'].mean().sort_values(ascending=False)
-colors_solvent = ['green' if x == best_result['solvent'] else 'lightblue' for x in solvent_avg.index]
-ax3.barh(solvent_avg.index, solvent_avg.values, color=colors_solvent, edgecolor='black')
-ax3.set_xlabel('Avg Yield (%)', fontsize=10, fontweight='bold')
-ax3.set_title('Solvent Effect', fontsize=12, fontweight='bold')
-ax3.grid(axis='x', alpha=0.3)
+    # Plot 3: Solvent effect
+    ax3 = fig.add_subplot(gs[1, 0])
+    solvent_avg = all_experiments.groupby('solvent')['yield'].mean().sort_values(ascending=False)
+    colors_solvent = ['green' if x == best_result['solvent'] else 'lightblue' for x in solvent_avg.index]
+    ax3.barh(solvent_avg.index, solvent_avg.values, color=colors_solvent, edgecolor='black')
+    ax3.set_xlabel('Avg Yield (%)', fontsize=10, fontweight='bold')
+    ax3.set_title('Solvent Effect', fontsize=12, fontweight='bold')
+    ax3.grid(axis='x', alpha=0.3)
 
-# Plot 4: Base effect
-ax4 = fig.add_subplot(gs[1, 1])
-base_avg = all_experiments.groupby('base')['yield'].mean().sort_values(ascending=False)
-colors_base = ['green' if x == best_result['base'] else 'lightcoral' for x in base_avg.index]
-ax4.barh(base_avg.index, base_avg.values, color=colors_base, edgecolor='black')
-ax4.set_xlabel('Avg Yield (%)', fontsize=10, fontweight='bold')
-ax4.set_title('Base Effect', fontsize=12, fontweight='bold')
-ax4.grid(axis='x', alpha=0.3)
+    # Plot 4: Base effect
+    ax4 = fig.add_subplot(gs[1, 1])
+    base_avg = all_experiments.groupby('base')['yield'].mean().sort_values(ascending=False)
+    colors_base = ['green' if x == best_result['base'] else 'lightcoral' for x in base_avg.index]
+    ax4.barh(base_avg.index, base_avg.values, color=colors_base, edgecolor='black')
+    ax4.set_xlabel('Avg Yield (%)', fontsize=10, fontweight='bold')
+    ax4.set_title('Base Effect', fontsize=12, fontweight='bold')
+    ax4.grid(axis='x', alpha=0.3)
 
-# Plot 5: Temperature vs Yield
-ax5 = fig.add_subplot(gs[1, 2])
-scatter1 = ax5.scatter(all_experiments['temperature'], all_experiments['yield'],
-                       c=all_experiments['yield'], cmap='RdYlGn',
-                       s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
-ax5.scatter(best_result['temperature'], best_result['yield'],
-            color='red', s=200, marker='*', edgecolors='black', linewidth=2,
-            label='Best', zorder=5)
-ax5.set_xlabel('Temperature (°C)', fontsize=10, fontweight='bold')
-ax5.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
-ax5.set_title('Temperature Effect', fontsize=12, fontweight='bold')
-ax5.legend()
-ax5.grid(True, alpha=0.3)
+    # Plot 5: Temperature vs Yield
+    ax5 = fig.add_subplot(gs[1, 2])
+    scatter1 = ax5.scatter(all_experiments['temperature'], all_experiments['yield'],
+                        c=all_experiments['yield'], cmap='RdYlGn',
+                        s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
+    ax5.scatter(best_result['temperature'], best_result['yield'],
+                color='red', s=200, marker='*', edgecolors='black', linewidth=2,
+                label='Best', zorder=5)
+    ax5.set_xlabel('Temperature (°C)', fontsize=10, fontweight='bold')
+    ax5.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
+    ax5.set_title('Temperature Effect', fontsize=12, fontweight='bold')
+    ax5.legend()
+    ax5.grid(True, alpha=0.3)
 
-# Plot 6: Time vs Yield
-ax6 = fig.add_subplot(gs[2, 0])
-scatter2 = ax6.scatter(all_experiments['time'], all_experiments['yield'],
-                       c=all_experiments['yield'], cmap='RdYlGn',
-                       s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
-ax6.scatter(best_result['time'], best_result['yield'],
-            color='red', s=200, marker='*', edgecolors='black', linewidth=2,
-            label='Best', zorder=5)
-ax6.set_xlabel('Time (hours)', fontsize=10, fontweight='bold')
-ax6.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
-ax6.set_title('Time Effect', fontsize=12, fontweight='bold')
-ax6.legend()
-ax6.grid(True, alpha=0.3)
+    # Plot 6: Time vs Yield
+    ax6 = fig.add_subplot(gs[2, 0])
+    scatter2 = ax6.scatter(all_experiments['time'], all_experiments['yield'],
+                        c=all_experiments['yield'], cmap='RdYlGn',
+                        s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
+    ax6.scatter(best_result['time'], best_result['yield'],
+                color='red', s=200, marker='*', edgecolors='black', linewidth=2,
+                label='Best', zorder=5)
+    ax6.set_xlabel('Time (hours)', fontsize=10, fontweight='bold')
+    ax6.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
+    ax6.set_title('Time Effect', fontsize=12, fontweight='bold')
+    ax6.legend()
+    ax6.grid(True, alpha=0.3)
 
-# Plot 7: Catalyst loading vs Yield
-ax7 = fig.add_subplot(gs[2, 1])
-scatter3 = ax7.scatter(all_experiments['catalyst_loading'], all_experiments['yield'],
-                       c=all_experiments['yield'], cmap='RdYlGn',
-                       s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
-ax7.scatter(best_result['catalyst_loading'], best_result['yield'],
-            color='red', s=200, marker='*', edgecolors='black', linewidth=2,
-            label='Best', zorder=5)
-ax7.set_xlabel('Catalyst Loading (mol%)', fontsize=10, fontweight='bold')
-ax7.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
-ax7.set_title('Catalyst Effect', fontsize=12, fontweight='bold')
-ax7.legend()
-ax7.grid(True, alpha=0.3)
+    # Plot 7: Catalyst loading vs Yield
+    ax7 = fig.add_subplot(gs[2, 1])
+    scatter3 = ax7.scatter(all_experiments['catalyst_loading'], all_experiments['yield'],
+                        c=all_experiments['yield'], cmap='RdYlGn',
+                        s=60, alpha=0.6, edgecolors='black', linewidth=0.5)
+    ax7.scatter(best_result['catalyst_loading'], best_result['yield'],
+                color='red', s=200, marker='*', edgecolors='black', linewidth=2,
+                label='Best', zorder=5)
+    ax7.set_xlabel('Catalyst Loading (mol%)', fontsize=10, fontweight='bold')
+    ax7.set_ylabel('Yield (%)', fontsize=10, fontweight='bold')
+    ax7.set_title('Catalyst Effect', fontsize=12, fontweight='bold')
+    ax7.legend()
+    ax7.grid(True, alpha=0.3)
 
-# Plot 8: Summary statistics
-ax8 = fig.add_subplot(gs[2, 2])
-ax8.axis('off')
-summary_text = f"""
-EXPERIMENT SUMMARY
+    # Plot 8: Summary statistics
+    ax8 = fig.add_subplot(gs[2, 2])
+    ax8.axis('off')
+    summary_text = f"""
+    EXPERIMENT SUMMARY
 
-Total runs: {len(all_experiments)}
-Initial screen: {n_initial}
-Optimization: {n_iterations}
+    Total runs: {len(all_experiments)}
+    Initial screen: {n_initial}
+    Optimization: {n_iterations}
 
-Best yield: {best_result['yield']:.1f}%
-Worst yield: {all_experiments['yield'].min():.1f}%
-Average: {all_experiments['yield'].mean():.1f}%
-Std dev: {all_experiments['yield'].std():.1f}%
+    Best yield: {best_result['yield']:.1f}%
+    Worst yield: {all_experiments['yield'].min():.1f}%
+    Average: {all_experiments['yield'].mean():.1f}%
+    Std dev: {all_experiments['yield'].std():.1f}%
 
-Improvement:
-{best_result['yield'] - initial_experiments['yield'].max():.1f}% absolute
-{((best_result['yield'] / initial_experiments['yield'].max() - 1) * 100):.1f}% relative
-"""
-ax8.text(0.1, 0.5, summary_text, fontsize=10, family='monospace',
-         verticalalignment='center', bbox=dict(boxstyle='round',
-         facecolor='wheat', alpha=0.5))
+    Improvement:
+    {best_result['yield'] - initial_experiments['yield'].max():.1f}% absolute
+    {((best_result['yield'] / initial_experiments['yield'].max() - 1) * 100):.1f}% relative
+    """
+    ax8.text(0.1, 0.5, summary_text, fontsize=10, family='monospace',
+            verticalalignment='center', bbox=dict(boxstyle='round',
+            facecolor='wheat', alpha=0.5))
 
-plt.suptitle('Suzuki-Miyaura Reaction Optimization Dashboard',
-             fontsize=16, fontweight='bold', y=0.98)
+    plt.suptitle('Suzuki-Miyaura Reaction Optimization Dashboard',
+                fontsize=16, fontweight='bold', y=0.98)
 
-plt.savefig('reaction_optimization_results.png', dpi=300, bbox_inches='tight')
-print("✅ Saved: reaction_optimization_results.png")
-plt.show()
+    plt.savefig('reaction_optimization_results.png', dpi=300, bbox_inches='tight')
+    print("✅ Saved: reaction_optimization_results.png")
+    plt.show()
+else:
+    print("Smoke test: Skipping visualizations")
 ```
 
 ### STEP 8: Export Results
@@ -495,16 +512,19 @@ with open('best_conditions.txt', 'w') as f:
     f.write(f"Catalyst loading: {best_result['catalyst_loading']:.1f} mol%\n")
     f.write(f"\nYield: {best_result['yield']:.1f}%\n")
     f.write(f"\nTotal experiments: {len(all_experiments)}\n")
+    f.write(f"SMOKE_TEST mode: {bool(SMOKE_TEST)}\n")
 
 print("✅ Saved: best_conditions.txt")
-
-print("\n📖 Next steps:")
-print("   1. Review the optimization_experiments.csv file")
-print("   2. Check the visualization dashboard")
-print("   3. Adapt this code for YOUR reaction!")
-print("\n💡 To use for your own reaction:")
-print("   - Modify the categorical options (solvents, bases, etc.)")
-print("   - Adjust continuous ranges (temp, time, etc.)")
-print("   - Replace the simulator with your actual lab experiments")
-print("   - Run the same workflow!")
+if not SMOKE_TEST:
+    print("\n📖 Next steps:")
+    print("   1. Review the optimization_experiments.csv file")
+    print("   2. Check the visualization dashboard")
+    print("   3. Adapt this code for YOUR reaction!")
+    print("\n💡 To use for your own reaction:")
+    print("   - Modify the categorical options (solvents, bases, etc.)")
+    print("   - Adjust continuous ranges (temp, time, etc.)")
+    print("   - Replace the simulator with your actual lab experiments")
+    print("   - Run the same workflow!")
+else:
+    print("⚡ Smoke test complete — all steps executed successfully.")
 ```
