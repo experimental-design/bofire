@@ -2,7 +2,7 @@ from typing import Annotated, Dict, Literal, Type
 
 from pydantic import Field, field_validator, model_validator
 
-from bofire.data_models.domain.api import EngineeredFeatures
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -27,6 +27,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
     type: Literal["CategoricalDeterministicSurrogate"] = (
         "CategoricalDeterministicSurrogate"
     )
+    inputs: Inputs[CategoricalInput]
     mapping: Annotated[Dict[str, float], Field(min_length=2)]
 
     @model_validator(mode="after")
