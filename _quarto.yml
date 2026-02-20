@@ -210,6 +210,7 @@ website:
             - docs/tutorials/advanced_examples/custom_sobo.qmd
             - docs/tutorials/advanced_examples/desirability_objectives.qmd
             - docs/tutorials/advanced_examples/genetic_algorithm.qmd
+            - docs/tutorials/advanced_examples/enting_strategy_suzuki_miyaura_reaction.qmd
             - docs/tutorials/advanced_examples/merging_objectives.qmd
             - docs/tutorials/advanced_examples/multifidelity_bo.qmd
             - docs/tutorials/advanced_examples/objectives_on_inputs.qmd
