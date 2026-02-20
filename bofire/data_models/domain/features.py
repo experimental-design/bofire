@@ -66,7 +66,7 @@ EngineeredFeatureT = TypeVar(
     "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
 )
 OutputT = TypeVar("OutputT", bound=AnyOutput | Output, default=AnyOutput | Output)
-OutputGetT = TypeVar("OutputGetT", bound=AnyOutput | Output, default=AnyOutput | Output)
+OutputGetT = TypeVar("OutputGetT", bound=AnyOutput, default=AnyOutput)
 
 
 class _BaseFeatures(BaseModel, Generic[FeatureT]):
@@ -100,7 +100,7 @@ class _BaseFeatures(BaseModel, Generic[FeatureT]):
     def __getitem__(self, i) -> FeatureT:
         return self.features[i]
 
-    def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures]):
+    def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures[FeatureGetT]]):
         if isinstance(other, Features):
             other_feature_seq = other.features
         else:
@@ -918,11 +918,6 @@ class Inputs(_BaseFeatures[InputT]):
 
     @overload
     def get(
-        self, includes: Type[Input] = Input, excludes: None = None, exact: bool = False
-    ) -> Inputs[InputT]: ...
-
-    @overload
-    def get(
         self,
         includes: Type[InputGetT] | Sequence[Type[InputGetT]],
         excludes: None = None,
@@ -1249,14 +1244,6 @@ class Outputs(_BaseFeatures[OutputT]):
             ),
         )
         return clean_exp
-
-    @overload
-    def get(
-        self,
-        includes: Type[Output] = Output,
-        excludes: None = None,
-        exact: bool = False,
-    ) -> Outputs[OutputT]: ...
 
     @overload
     def get(

@@ -17,7 +17,6 @@ def get_column_names(outputs: Outputs) -> Tuple[List[str], List[str]]:
 
     """
     pred_cols, sd_cols = [], []
-
     for feat in outputs.get(CategoricalOutput):
         pred_cols = pred_cols + [f"{feat.key}_{cat}_prob" for cat in feat.categories]
         sd_cols = sd_cols + [f"{feat.key}_{cat}_sd" for cat in feat.categories]

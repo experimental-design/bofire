@@ -152,6 +152,8 @@ class Output(Feature):
 
     """
 
+    objective: Any
+
     @abstractmethod
     def __call__(self, values: pd.Series) -> pd.Series:
         pass
