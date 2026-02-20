@@ -138,10 +138,30 @@ class BotorchOptimizer(AcquisitionOptimizer):
             constraints.NonlinearInequalityConstraint,
             constraints.NonlinearEqualityConstraint,
         ]:
-            return False
+            return True  # was False
         return True
 
     def validate_domain(self, domain: Domain):
+        def validate_nonlinear_equality_constraints(domain: Domain):
+            """Enforce batch_limit=1 and n_restarts=1 for nonlinear equality constraints."""
+            if any(
+                isinstance(c, constraints.NonlinearEqualityConstraint)
+                for c in domain.constraints
+            ):
+                if self.batch_limit != 1:
+                    warnings.warn(
+                        "Nonlinear equality constraints require batch_limit=1. "
+                        "Overriding current value.",
+                    )
+                    # Use object.__setattr__ to bypass Pydantic's frozen model behavior
+                    object.__setattr__(self, "batch_limit", 1)
+                if self.n_restarts != 1:
+                    warnings.warn(
+                        "Nonlinear equality constraints require n_restarts=1 "
+                        "to avoid parallel batch optimization. Overriding current value.",
+                    )
+                    object.__setattr__(self, "n_restarts", 1)
+
         def validate_local_search_config(domain: Domain):
             if self.local_search_config is not None:
                 if has_local_search_region(domain) is False:
@@ -182,6 +202,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         "CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
                     )
 
+        validate_nonlinear_equality_constraints(domain)
         validate_local_search_config(domain)
         validate_interpoint_constraints(domain)
         validate_exclude_constraints(domain)

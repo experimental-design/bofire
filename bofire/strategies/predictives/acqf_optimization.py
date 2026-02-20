@@ -514,7 +514,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
         equality_constraints = get_linear_constraints(
             domain, constraint=LinearEqualityConstraint
         )
-        if len(nonlinear_constraints := get_nonlinear_constraints(domain)) == 0:
+        if (
+            len(
+                nonlinear_constraints := get_nonlinear_constraints(
+                    domain, equality_tolerance=1e-3
+                )
+            )
+            == 0
+        ):
             ic_generator = None
             ic_gen_kwargs = {}
         else:

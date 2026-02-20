@@ -86,6 +86,7 @@ class PredictiveStrategy(Strategy):
         )
         self.domain.validate_candidates(
             candidates=candidates,
+            tol=self._validation_tol,
             raise_validation_error=raise_validation_error,
         )
         return candidates

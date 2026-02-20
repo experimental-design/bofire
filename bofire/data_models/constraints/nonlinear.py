@@ -4,6 +4,7 @@ from typing import Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+import torch
 from pydantic import Field, field_validator, model_validator
 
 
@@ -138,19 +139,87 @@ class NonlinearConstraint(IntrapointConstraint):
 
         return hessian_expression
 
-    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+    def __call__(
+        self, experiments: Union[pd.DataFrame, torch.Tensor]
+    ) -> Union[pd.Series, torch.Tensor]:
+        """Evaluate the constraint.
+
+        Args:
+            experiments: Either a DataFrame with feature columns or a PyTorch tensor
+
+        Returns:
+            Constraint values as Series (for DataFrame) or Tensor (for Tensor input)
+        """
+        # Handle Tensor input from BoTorch
+        if isinstance(experiments, torch.Tensor):
+            # Handle 3D tensor from BoTorch: [n_restarts, q, n_features]
+            if experiments.ndim == 3:
+                batch_size, q, n_features = experiments.shape
+                # Reshape to 2D: [batch_size * q, n_features]
+                experiments_2d = experiments.reshape(-1, n_features)
+                # Evaluate and reshape back
+                results_2d = self.__call__(experiments_2d)
+                return results_2d.reshape(batch_size, q)
+
+            if isinstance(self.expression, str):
+                # For string expressions, convert tensor to dict
+                if experiments.ndim == 1:
+                    # Single point: shape (n_features,)
+                    feature_dict = {
+                        feat: experiments[i] for i, feat in enumerate(self.features)
+                    }
+                    # Use eval with torch operations available
+                    return eval(
+                        self.expression,
+                        {"__builtins__": {}, "torch": torch},
+                        feature_dict,
+                    )
+                else:
+                    # Batch: shape (batch_size, n_features)
+                    results = []
+                    for point in experiments:
+                        feature_dict = {
+                            feat: point[i] for i, feat in enumerate(self.features)
+                        }
+                        result = eval(
+                            self.expression,
+                            {"__builtins__": {}, "torch": torch},
+                            feature_dict,
+                        )
+                        results.append(result)
+                    return torch.stack(results)
+
+            elif isinstance(self.expression, Callable):
+                # Callable expression - pass as dict
+                if experiments.ndim == 1:
+                    feature_dict = {
+                        feat: experiments[i] for i, feat in enumerate(self.features)
+                    }
+                    return self.expression(**feature_dict)
+                else:
+                    # Batch processing
+                    results = []
+                    for point in experiments:
+                        feature_dict = {
+                            feat: point[i] for i, feat in enumerate(self.features)
+                        }
+                        results.append(self.expression(**feature_dict))
+                    return torch.stack(results)
+
+        #  Handle DataFrame input (existing logic)
         if isinstance(self.expression, str):
             return experiments.eval(self.expression)
         elif isinstance(self.expression, Callable):
             func_input = {
-                col: torch_tensor(experiments[col], requires_grad=False)
+                col: torch.tensor(
+                    experiments[col].values, dtype=torch.float64, requires_grad=False
+                )
                 for col in experiments.columns
             }
-            return pd.Series(
-                self.expression(**func_input).cpu().numpy(),
-                index=experiments.index  # ✅ Preserve original index
-            )
 
+            return pd.Series(
+                self.expression(**func_input).cpu().numpy(), index=experiments.index
+            )
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self.jacobian_expression is not None:

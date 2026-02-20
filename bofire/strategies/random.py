@@ -8,13 +8,11 @@ import pandas as pd
 import torch
 from botorch.optim.initializers import sample_q_batches_from_polytope
 from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
-from pydantic.types import PositiveInt
 from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
     AnyContinuousConstraint,
-    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -54,12 +52,24 @@ class RandomStrategy(Strategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.num_base_samples = data_model.num_base_samples
+        # self.num_base_samples = data_model.num_base_samples
+        if data_model.num_base_samples is None:
+            num_inputs = len(self.domain.inputs.get())
+            self.num_base_samples = 1024 * num_inputs
+        else:
+            self.num_base_samples = data_model.num_base_samples
         self.max_iters = data_model.max_iters
         self.fallback_sampling_method = data_model.fallback_sampling_method
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
         self.sampler_kwargs = data_model.sampler_kwargs
+
+        from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
+
+        if any(
+            isinstance(c, NonlinearEqualityConstraint) for c in self.domain.constraints
+        ):
+            self._validation_tol = 1e-3
 
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
@@ -70,45 +80,39 @@ class RandomStrategy(Strategy):
         """
         return True
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
-        """Generate candidate samples using the random strategy.
-
-        If the domain is compatible with polytope sampling, it uses the polytope sampling to generate
-        candidate samples. Otherwise, it performs rejection sampling by repeatedly generating candidate
-        samples until the desired number of valid samples is obtained.
+    def _ask(self, candidate_count: int) -> pd.DataFrame:
+        """Generate random samples that satisfy constraints.
 
         Args:
-            candidate_count (PositiveInt): The number of candidate samples to generate.
+            candidate_count: Number of candidates to generate
 
         Returns:
-            pd.DataFrame: A DataFrame containing the generated candidate samples.
+            DataFrame with valid candidates
 
+        Raises:
+            ValueError: If unable to generate enough valid samples
         """
-        # no nonlinear constraints present --> no rejection sampling needed
-        if len(self.domain.constraints) == len(
-            self.domain.constraints.get(
-                [
-                    LinearInequalityConstraint,
-                    LinearEqualityConstraint,
-                    NChooseKConstraint,
-                    InterpointEqualityConstraint,
-                ],
-            ),
-        ):
-            return self._sample_with_nchooseks(candidate_count)
-        # perform the rejection sampling
-        num_base_samples = self.num_base_samples or candidate_count
-        n_iters = 0
-        n_found = 0
         valid_samples = []
-        while n_found < candidate_count:
-            if n_iters > self.max_iters:
-                raise ValueError("Maximum iterations exceeded in rejection sampling.")
-            samples = self._sample_with_nchooseks(num_base_samples)
-            valid = self.domain.constraints.is_fulfilled(samples)
+        n_found = 0
+        n_iters = 0
+
+        while n_found < candidate_count and n_iters < self.max_iters:
+            samples = self.domain.inputs.sample(n=self.num_base_samples)
+            valid = self.domain.constraints.is_fulfilled(
+                samples, tol=self._validation_tol
+            )
             n_found += np.sum(valid)
             valid_samples.append(samples[valid])
             n_iters += 1
+
+        # Check if we found enough samples
+        if n_found < candidate_count:
+            raise ValueError(
+                f"RandomStrategy could not generate {candidate_count} valid samples "
+                f"after {self.max_iters} iterations (found {n_found}). "
+                f"Consider relaxing constraints or using a different sampling strategy."
+            )
+
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
     def _sample_with_nchooseks(
