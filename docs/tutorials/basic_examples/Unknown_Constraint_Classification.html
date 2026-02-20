@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-dd96db0072a085c98b6ca2c306c14af0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -768,7 +768,7 @@ window.Quarto = {
 <p>We are interested in testing whether or not a surrogate model can correctly identify unknown constraints based on categorical criteria with classification surrogates. Essentially, we want to account for scenarios where specialists can look at a set of experiments and label outcomes as ‘acceptable’, ‘unacceptable’, ‘ideal’, etc.</p>
 <p>This involves new models that produce <code>CategoricalOutput</code>’s rather than continuous outputs. Mathematically, if <span class="math inline">\(g_{\theta}:\mathbb{R}^d\to[0,1]^c\)</span> represents the function governed by learnable parameters <span class="math inline">\(\theta\)</span> which outputs a probability vector over <span class="math inline">\(c\)</span> potential classes (i.e.&nbsp;for input <span class="math inline">\(x\in\mathbb{R}^d\)</span>, <span class="math inline">\(g_{\theta}(x)^\top\mathbf{1}=1\)</span> where <span class="math inline">\(\mathbf{1}\)</span> is the vector of all 1’s) and we have acceptibility criteria for the corresponding classes given by <span class="math inline">\(a\in\{0,1\}^c\)</span>, we can compute the scalar output <span class="math inline">\(g_{\theta}(x)^\top a\in[0,1]\)</span> which represents the expected value of acceptance as an objective value to be passed in as a constrained function.</p>
 <p>In this script, we look at the <a href="https://en.wikipedia.org/wiki/Test_functions_for_optimization#cite_note-12">Rosenbrock function constrained to a disk</a> which attains a global minima at <span class="math inline">\((x_0^*,x_1^*)=(1.0, 1.0)\)</span>. To facilitate testing the functionality offered by BoFire, we label all points inside of the circle <span class="math inline">\(x_0^2+x_1^2\le2\)</span> as ‘acceptable’ and further label anything inside of the intersection of this circle and the circle <span class="math inline">\((x_0-1)^2+(x_1-1)^2\le1.0\)</span> as ‘ideal’; points lying outside of these two locations are labeled as “unacceptable.”</p>
-<div id="80a71b1f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.996427,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.182910&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:32.186483&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="d7c532cb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.996427,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.182910&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:32.186483&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import packages</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -788,7 +788,7 @@ window.Quarto = {
 <section id="manual-setup-of-the-optimization-domain" class="level2">
 <h2 class="anchored" data-anchor-id="manual-setup-of-the-optimization-domain">Manual setup of the optimization domain</h2>
 <p>The following cells show how to manually setup the optimization problem in BoFire for didactic purposes.</p>
-<div id="d79ead73" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005827,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.193653&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.187826&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="f1e02313" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005827,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.193653&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.187826&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write helper functions which give the objective and the constraints</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rosenbrock(x: pd.Series) <span class="op">-&gt;</span> pd.Series:</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="st">"x_0"</span> <span class="kw">in</span> x.columns</span>
@@ -811,7 +811,7 @@ window.Quarto = {
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>            feasiblity_vector.append(<span class="st">"unacceptable"</span>)</span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> feasiblity_vector</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="68cc9860" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.01961,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.214891&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.195281&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="2b4b50e7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.01961,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.214891&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.195281&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up the inputs and outputs, use categorical domain just as an example</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> Inputs(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[ContinuousInput(key<span class="op">=</span><span class="ss">f"x_</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="fl">1.75</span>, <span class="fl">1.75</span>)) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>)]</span>
@@ -862,43 +862,43 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-1.653505</td>
-<td>1.445285</td>
-<td>0</td>
-<td>173.139815</td>
+<td>0.824570</td>
+<td>1.309444</td>
+<td>1</td>
+<td>39.661384</td>
 <td>unacceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.081337</td>
-<td>1.464098</td>
-<td>0</td>
-<td>213.269478</td>
+<td>-0.346403</td>
+<td>-1.624434</td>
+<td>1</td>
+<td>306.116008</td>
 <td>unacceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-1.676957</td>
-<td>1.442021</td>
+<td>1.245232</td>
+<td>-0.519503</td>
 <td>0</td>
-<td>194.900777</td>
-<td>unacceptable</td>
+<td>428.593585</td>
+<td>acceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>0.582883</td>
-<td>1.437035</td>
+<td>-0.089551</td>
+<td>-0.466235</td>
 <td>1</td>
-<td>120.576759</td>
-<td>unacceptable</td>
+<td>23.678861</td>
+<td>acceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.553131</td>
-<td>0.654230</td>
+<td>1.527277</td>
+<td>-1.399046</td>
 <td>0</td>
-<td>12.329360</td>
-<td>ideal</td>
+<td>1392.777872</td>
+<td>unacceptable</td>
 </tr>
 </tbody>
 </table>
@@ -906,7 +906,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="35ef61c6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.600439,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.816921&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.216482&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="bdf42b48" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.600439,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.816921&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.216482&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the sample df</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -949,9 +949,9 @@ window.Quarto = {
 <span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>fig.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_SVG"></script><script type="text/javascript">if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script type="text/javascript">window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.3.1.min.js" integrity="sha256-4rD3fugVb/nVJYUv5Ky3v+fYXoouHaBSP20WIJuEiWg=" crossorigin="anonymous"></script>                <div id="db399b6f-b854-4943-aacc-c79d02051fbd" class="plotly-graph-div" style="height:525px; width:550px;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("db399b6f-b854-4943-aacc-c79d02051fbd")) {                    Plotly.newPlot(                        "db399b6f-b854-4943-aacc-c79d02051fbd",                        [{"hovertemplate":"f_1=unacceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"unacceptable","marker":{"color":"#636efa","symbol":"circle"},"mode":"markers","name":"unacceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"L4lhhsF0+r9wl\u002f5Wf9K0P+w+PsTQ1Pq\u002fKBRkCPum4j\u002fup5OLE4byP145ZMOhduG\u002fODE\u002fKMfX+79+QQo45EXxP+QVSWBMnus\u002fMC7rwvy047\u002fwXysl\u002fT7Gv5zSL0qu5OE\u002feAczfy0j+T\u002fwqTLYnbnzP+Mcu07P+\u002fq\u002fzjr7L4fL8z9wdgPA50j4Pxbbkb1y+vI\u002fT12rNGkQ+L+kZwCXH1f7P8b6eKZblfo\u002f01zX3LyK+7\u002fQatGEgxi1v+CKoxQKou8\u002fQEh6zorz5D860umzzKP6P1kB+fiymPq\u002fDD+dGPpL8D+EPykjARnbvxh2xS58jOo\u002fNEk\u002fBtH387+xBHpcl6nrv1LXgdPw0fm\u002fDK6gav2P+D\u002fVQdIN6mvyv8mk7aK5uPi\u002fXTQFQLV18r+wTbGZy5f5v5wm89cZWvQ\u002fTDAYtvVa+L8u85i1Kczwv9Tbg0B4LPk\u002f2MtJv9F67z+oPF0TRdnbPxiptmSvENy\u002f462TJlbV+b+EKz+GQ7j7v2D+CLKZZOY\u002fyJpSVASh4T\u002fCiWgFpZvwP93UTQmP7vm\u002fbd6Iryr8+r\u002foz1ezt6v4vw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"UrfLmOMf9z9QmfpG8mz3P8in3gyFEvc\u002f9BwLahj+9j+WxPAQjJnsvzPlU4jT7va\u002fqDV6OATQ6T9waoPJLsD5PzAdQIeJu\u002fc\u002f3nVuF3wk9z8FInK73ur5vzC3mXV3Q\u002fo\u002fwI0N0MFxxz\u002fT0sI11JPzv07PnrGhdPM\u002fGvL4YphY+r\u002f4rz7xzTPZv0VGn7DAiOy\u002ffOu\u002fJyee5L\u002fQfCdYLlTrv3A9Q6Qh\u002f\u002fU\u002ffQnFYMGm8r9C3Sz2XWb5PzAos55Bs\u002fK\u002fPjBMus06+D93QGHBG5jwv7DsLqKFE+u\u002fJWjUUllR87+SJp1n4GH6vx7uo6ASwva\u002f9D7pi9lt8T8sLNkFS0X4PzJvRJsk0vC\u002fJBZdDCYW+z+mnE0USbX4P3R9QhUaF+8\u002f2K40E1wr+b848YY8pFL1P7oajtBbDO+\u002f+itUPlco+L8R0fFskiT2v3jt1dx90Ow\u002fpn3IdbKh9j82jZc7wUz2v+KY1ZgE6\u002fU\u002fwARO0v2B7b\u002fyJK3NRVrlv9D4siN4Tvo\u002fHTN11ajf9r9MHrGAk2T2PyDPys4zlNu\u002fYO6ZjoHX1r9AtVyYjqj0Pw=="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=ideal\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"ideal","marker":{"color":"#EF553B","symbol":"circle"},"mode":"markers","name":"ideal","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"ZCSDDT+z4T\u002folww41MHtP74PsnBtP\u002fQ\u002fQLUdxBL3oj8g0qY5muu9P6jXcC7yw8Q\u002fBMhEbz7I5D\u002felvg4ExjyPyB17I2XZOg\u002fiP5zyzBC7D9chjeqVG\u002fyP1R0FW7Y8Oo\u002f8kHLoSHM8D8gTrp3gSHxPw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"hDgDQnTv5D9gvVCxXHGxPwDq9Klttq0\u002fON4AkKl26T88bTWZ3RXwP\u002fxjSsRYjeE\u002fsHg2C2kPwz9wGIofVNXNP7AhLeGHafE\u002fYIx5UOfesz\u002fY3ThiM4DSP2BQa3wQkq8\u002fcPUJJP1g5T+wppLd1zHNPw=="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=acceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"acceptable","marker":{"color":"#00cc96","symbol":"circle"},"mode":"markers","name":"acceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"O7kf4tSF9L+w24FOe+S0vwAFAY4w3Xy\u002fjN5wRX8e4L8YIufeVYvGPxWew5pjsPG\u002fYCjyu22V3j8WdfsMg73nv0A3grstnfG\u002f5EH24ea82b9w9HevznLrvwDmR91bX9A\u002f0Hf9MsmbwL\u002f0+HM2oYDkv1ClfciERuY\u002fdCBMgl9J5T+gyN\u002fYRyTqP5hMHHeJNeo\u002fcDevM+4B7j\u002fiD0uBLqHxP3AkwII4q+m\u002fx1QpvJZZ67+oML0cdP3nP4hsg73FDcQ\u002fI2WKlURn8r8YejNR5NDsvwvgXRYhrfO\u002fZGRFul5m77\u002fclY1zLvjiv5Ck8jqHHtu\u002f2JVVtxTN8L\u002fYeAfgeUPtP3A0uHDST9A\u002f"},"xaxis":"x","y":{"dtype":"f8","bdata":"iBJ2U6b6yj9m7oC3797nv\u002f4GPhWL1+O\u002fMLJStldG9L9fZkxm4PPzv5AsbDHo\u002f9S\u002fsmR5Hglx6b8oD\u002f0+O1bZv2Dzv\u002fE2C+Y\u002feG8dkhXmwr94wciAOpnZv1xZC6k7gtq\u002fIGvTCg41tz+wKHeA2yG2PzBGHzIgO+K\u002ftBpN8xFW678WjSCi27bwvyw6BR7J+OW\u002fDNARJWNu479yd8wZCtzgvxRvIE\u002fnhOs\u002fqEPB67ai2j8wyBbqhZrmv6mdH5vt0uq\u002f4GIk6+ntpz8gN51SGnLQv+goFhLnx8U\u002frNzjfoDS479w98BFIVvaP8kYeoQDSvW\u002fUB5EZxBbsj+m6MOeR1Lsv0V8sMaOJPW\u002f"},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"x_0"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"x_1"}},"legend":{"title":{"text":"f_1"},"tracegroupgap":0},"title":{"text":"Samples with labels"},"height":525,"width":550,"shapes":[{"fillcolor":"red","line":{"color":"red"},"opacity":0.1,"type":"circle","x0":-1.4142135623730951,"x1":1.4142135623730951,"xref":"x","y0":-1.4142135623730951,"y1":1.4142135623730951,"yref":"y"},{"fillcolor":"LightSeaGreen","line":{"color":"LightSeaGreen"},"opacity":0.2,"type":"circle","x0":0,"x1":2,"xref":"x","y0":0,"y1":2,"yref":"y"}]},                        {"responsive": true}                    ).then(function(){
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.3.1.min.js" integrity="sha256-4rD3fugVb/nVJYUv5Ky3v+fYXoouHaBSP20WIJuEiWg=" crossorigin="anonymous"></script>                <div id="619af2c1-5fa2-4f75-8e3d-8a9f29b6fcde" class="plotly-graph-div" style="height:525px; width:550px;"></div>            <script type="text/javascript">                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("619af2c1-5fa2-4f75-8e3d-8a9f29b6fcde")) {                    Plotly.newPlot(                        "619af2c1-5fa2-4f75-8e3d-8a9f29b6fcde",                        [{"hovertemplate":"f_1=unacceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"unacceptable","marker":{"color":"#636efa","symbol":"circle"},"mode":"markers","name":"unacceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"yDbi9uBi6j+0\u002f4cIdivWv3oAZR+6b\u002fg\u002f8r4F5OKr9L\u002fAd056fTq8P4D253mvqeI\u002fw\u002fKysKTp978oUPA9k9nyv665XpI0B\u002fK\u002ffomeJtqn8b\u002fYzIAUrcD0P5aAgbijI+O\u002fmJPLfb708z88YL1FGkv7P7EiSU8Y+Pe\u002f1IP1lVfP+L8QaNK8f8C4PxCYa0NR8fm\u002fjyPVi+Cb6b\u002fUZ1gy9qr0P8iP26KfaOW\u002fwvyBVloZ7L\u002fk2SoYmy36PzsszP5bLvi\u002foDtp\u002fguo7z8ATXNRrEfdvzOZh05\u002fjeq\u002fUAkx5vM1+z+AAltL+570v7brd2JP8vi\u002fLwW+0tT68L+YeMuFIrr6Pyhag\u002fDNHPe\u002fJP1PimMf+j+qBFGxK\u002fb0v9wKcxI7eOk\u002fUKzR6UkWsL8cBcdrdGvzP1BRSbQO1Ne\u002fzWz8p\u002fwZ7L+kKwVLivb1PxTOqwK0Jvo\u002fTqyCPga\u002f9D\u002fSf9uYTHL5v6qFKPBf2O+\u002f+uwOJbN78L+UDaE7rmj5v2MAEgHod\u002fq\u002fcohTQISH7b8="},"xaxis":"x","y":{"dtype":"f8","bdata":"4D0z+3vz9D+Bf+OUrv35v1a4ih9+Yva\u002fXxro6h6b87\u002f4ntilzcL6v0KkiLHWM\u002fo\u002fHq+gdryB8b8oNNOWLqT0P7pXdYA9bPI\u002fZGYn1D5k9D9sK31M+v\u002fzP5yRgy+7UvU\u002fyunKZ8Nr8r\u002f+pk\u002f1dGn0P5Sb8TTa7Pc\u002frq+odPzC8j\u002f0F9SEbDr6vzAbz8KqGO6\u002fTw49fRC79r98XgspiKftv7zPVBKnUvo\u002fkO4bFO37+D\u002fgiF6pUC77P0SdYHhhW\u002fM\u002fNJHXfJ9U+T9UCZ9CTPX3P0jmPKa\u002f4\u002fi\u002fqKXmEtXG+b80IRY8pvnjv2i3AoxVa+Y\u002ffhKcEU9B9j8Au\u002fAXHLaSv7Cc7s3VP9U\u002fEA4AVnjhzr9IptooHJT5P7y8T8+LBvS\u002ffs2C6MkD979mCn6PNefyPxjxGSgrLvu\u002faWi0kC9Q+b8ULoV8+pnxPx62Yybbi+a\u002fTOd8vYPA8b9FKvasy23xv1jXUs4IUfQ\u002fXlh7tm6D9z9Ad+VD2fGtvySfecpc8PQ\u002fFNmknFUf+78="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=acceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"acceptable","marker":{"color":"#EF553B","symbol":"circle"},"mode":"markers","name":"acceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"5uO7Injs8z8gzemo1ey2v1ASiviNAbU\u002fYIQfnKX8zz9JFAF24wr2v7DI1agVd74\u002fdBffJhxn6D+\u002fywwEuvvxv4Arr1GNxIi\u002fsC7VPScOxr+AyykKPU7nP\u002fkzfctWrvO\u002fACMMzkiImj+A+WRtCyyjP4Q5ciyvaeA\u002fqBzm+Owtxr+wSnayjQzYPzCdi5tcMPS\u002fsg\u002f7lcd48L\u002fixoysyKriv26F6qEpauq\u002fMFZ+FYnr3r8gpWvkdSrnv5B7FWL71cg\u002fvJvtj3p24b9QBOzEyvTnv\u002fgmqi\u002fkA9O\u002fgMYsMxT23z+jKZBQ51rwvyirFPeLEsc\u002fiD5v\u002fCPK0z+YrWjqKcbQv7xy2Afhbdi\u002fWDB\u002f7Mea3z9QkK0O2bzSP\u002fZesLmbvOa\u002fsFbMMOPY4T\u002fEXfsNW9fnP99z+7hcIei\u002fOCbMiTSCxL\u002fQJs4hg8jivw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"JNeWWsSf4L+ALlDcy9bdv8iufaZ7T9G\u002ftuw+GhAZ6L+YdxoJqMHBv8C\u002fVaz5Ed8\u002fJ8R5sEgi8r\u002fQLZ3XLh3bP\u002fhJGulzk+0\u002fUKutd\u002fYX2j\u002fQkLVHrqjmv9jQGoOIE9a\u002fYDWThLgjvb9mnmwM0Yr2v2zELHbkT9C\u002fTR3kyOov6b\u002fo30MSLP7Uv1T1R5iNbt2\u002fLvgrINqE4r+gE0eY6avYv3+f8jP5eui\u002fiiP9mrnE8L+gn+yP8HnNv9Tbk6VNA\u002fO\u002fsFSjIUJv6b8kV9\u002fYgW\u002fvP0BkZl5S\u002fuM\u002fLpxNGaIN6L8ghRDeVBHiP4Dp7DSgN82\u002f0PShTeMTxj+2UIPYcBv1vxD0cjguptY\u002flG6OFN3q878R0Pt+X0b1vzghkWbMJ98\u002fmIdzev3ky79o5dP6wQbnv5D3NQQRwuo\u002f3GHya81K8z+ArCvjXxCePw=="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=ideal\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"ideal","marker":{"color":"#00cc96","symbol":"circle"},"mode":"markers","name":"ideal","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"bJHBfCt66T8s8IHKdx7hP1DI4JaoVsI\u002foBvISdmazz\u002fUtY\u002fp2sT0P9oBtYLdyvE\u002fcN4oBQcM6z+0TB+LvqDnP5xwOSXe2ec\u002fiDtOwIsV3z8="},"xaxis":"x","y":{"dtype":"f8","bdata":"oH6zRrXw7z9EwY4gAi7zP4AfJbBrpPU\u002fEPprkTNI3T\u002f4R\u002fn1M8rVP1Rkxpm4yOE\u002f8MbXMUpR8T94MWpPzT\u002fjP0iPgx2U4N4\u002fmCs+7ztI9D8="},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"},"margin":{"b":0,"l":0,"r":0,"t":30}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"x_0"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"x_1"}},"legend":{"title":{"text":"f_1"},"tracegroupgap":0},"title":{"text":"Samples with labels"},"height":525,"width":550,"shapes":[{"fillcolor":"red","line":{"color":"red"},"opacity":0.1,"type":"circle","x0":-1.4142135623730951,"x1":1.4142135623730951,"xref":"x","y0":-1.4142135623730951,"y1":1.4142135623730951,"yref":"y"},{"fillcolor":"LightSeaGreen","line":{"color":"LightSeaGreen"},"opacity":0.2,"type":"circle","x0":0,"x1":2,"xref":"x","y0":0,"y1":2,"yref":"y"}]},                        {"responsive": true}                    ).then(function(){
                             
-var gd = document.getElementById('db399b6f-b854-4943-aacc-c79d02051fbd');
+var gd = document.getElementById('619af2c1-5fa2-4f75-8e3d-8a9f29b6fcde');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -979,7 +979,7 @@ if (outputEl) {{
 </section>
 <section id="evaluate-the-classification-model-performance-outside-of-the-optimization-procedure" class="level2">
 <h2 class="anchored" data-anchor-id="evaluate-the-classification-model-performance-outside-of-the-optimization-procedure">Evaluate the classification model performance (outside of the optimization procedure)</h2>
-<div id="2ed1f9b4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.208408,&quot;end_time&quot;:&quot;2024-10-10T20:34:36.095990&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.887582&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="2627b206" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.208408,&quot;end_time&quot;:&quot;2024-10-10T20:34:36.095990&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.887582&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import packages</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> ClassificationMLPEnsemble</span>
@@ -1061,7 +1061,7 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 </code></pre>
 </div>
 </div>
-<div id="a9adec5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="128c7917" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print training performance</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>cv_train.get_metrics(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    metrics<span class="op">=</span>ClassificationMetricsEnum,</span>
@@ -1082,8 +1082,8 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.83</td>
-<td>0.83</td>
+<td>0.785</td>
+<td>0.785</td>
 </tr>
 </tbody>
 </table>
@@ -1091,7 +1091,7 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 </div>
 </div>
 </div>
-<div id="8d1d312d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="b72d8e0a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print test performance</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>cv_test.get_metrics(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    metrics<span class="op">=</span>ClassificationMetricsEnum,</span>
@@ -1112,8 +1112,8 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.75</td>
-<td>0.75</td>
+<td>0.68</td>
+<td>0.68</td>
 </tr>
 </tbody>
 </table>
@@ -1125,7 +1125,7 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <section id="setup-strategy-and-ask-for-candidates" class="level2">
 <h2 class="anchored" data-anchor-id="setup-strategy-and-ask-for-candidates">Setup strategy and ask for candidates</h2>
 <p>Now we setup a <code>SoboStrategy</code> for generating candidates, the categorical output is modelled using the surrogate from above. The categorical output is modelled as an output constraint in the acquistion function optimization (constrained expected improvement). For more details have a look at this notebook: https://github.com/pytorch/botorch/blob/main/notebooks_community/clf_constrained_bo.ipynb and/or this paper: https://arxiv.org/abs/2402.07692.</p>
-<div id="b95c9f30" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="a8b1798a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogEI</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates</span>
@@ -1143,7 +1143,7 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>strategy.tell(sample_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="fd90ea1e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="9b3ec7f4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">10</span>)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>candidates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
@@ -1158,7 +1158,13 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
 
 Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
+
+Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
 Trying again with a new set of initial conditions.
 
 /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
@@ -1179,9 +1185,17 @@ Trying again with a new set of initial conditions.
 
 /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
 
+Optimization failed on the second try, after generating a new set of initial conditions.
+
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
+
 Optimization failed in `gen_candidates_scipy` with the following warning(s):
 [RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
 Trying again with a new set of initial conditions.
+
+/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:795: RuntimeWarning:
+
+Optimization failed on the second try, after generating a new set of initial conditions.
 
 /opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/botorch/models/ensemble.py:82: RuntimeWarning:
 
@@ -1228,183 +1242,183 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.960529</td>
-<td>0.901183</td>
-<td>0</td>
+<td>1.320449</td>
+<td>1.750000</td>
+<td>1</td>
 <td>acceptable</td>
 <td>0.0</td>
-<td>-0.056547</td>
-<td>0.064690</td>
-<td>0.001759</td>
-<td>0.933551</td>
-<td>4.299463</td>
-<td>0.141136</td>
-<td>0.001538</td>
-<td>0.141343</td>
-<td>-0.933551</td>
-<td>0.066449</td>
+<td>-0.960604</td>
+<td>0.720409</td>
+<td>0.000993</td>
+<td>0.278599</td>
+<td>5.218592</td>
+<td>0.389458</td>
+<td>0.001981</td>
+<td>0.388955</td>
+<td>-0.278599</td>
+<td>0.721401</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.181525</td>
-<td>1.376302</td>
-<td>0</td>
-<td>acceptable</td>
+<td>0.360146</td>
+<td>0.126264</td>
+<td>1</td>
+<td>ideal</td>
 <td>0.0</td>
-<td>-1.389159</td>
-<td>0.620213</td>
-<td>0.000306</td>
-<td>0.379481</td>
-<td>4.571813</td>
-<td>0.518994</td>
-<td>0.000510</td>
-<td>0.518733</td>
-<td>-0.379481</td>
-<td>0.620519</td>
+<td>0.701949</td>
+<td>0.205773</td>
+<td>0.789829</td>
+<td>0.004398</td>
+<td>3.845506</td>
+<td>0.443906</td>
+<td>0.441447</td>
+<td>0.008179</td>
+<td>-0.004398</td>
+<td>0.995602</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-0.074961</td>
-<td>0.001184</td>
-<td>1</td>
+<td>1.679961</td>
+<td>0.433449</td>
+<td>0</td>
 <td>unacceptable</td>
 <td>0.0</td>
-<td>1.260829</td>
-<td>0.026151</td>
-<td>0.973216</td>
-<td>0.000633</td>
-<td>4.424063</td>
-<td>0.056133</td>
-<td>0.055778</td>
-<td>0.000813</td>
-<td>-0.000633</td>
-<td>0.999367</td>
+<td>569.515569</td>
+<td>0.805890</td>
+<td>0.001649</td>
+<td>0.192461</td>
+<td>4.560040</td>
+<td>0.430142</td>
+<td>0.002196</td>
+<td>0.428774</td>
+<td>-0.192461</td>
+<td>0.807539</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>1.322194</td>
-<td>1.750000</td>
+<td>1.298224</td>
+<td>1.691341</td>
 <td>0</td>
 <td>acceptable</td>
 <td>0.0</td>
-<td>-1.604933</td>
-<td>0.798560</td>
-<td>0.000062</td>
-<td>0.201377</td>
-<td>5.289598</td>
-<td>0.444955</td>
-<td>0.000103</td>
-<td>0.444964</td>
-<td>-0.201377</td>
-<td>0.798623</td>
+<td>-0.048945</td>
+<td>0.801033</td>
+<td>0.001280</td>
+<td>0.197687</td>
+<td>5.004060</td>
+<td>0.438594</td>
+<td>0.001645</td>
+<td>0.437866</td>
+<td>-0.197687</td>
+<td>0.802313</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.205170</td>
-<td>1.750000</td>
+<td>0.812442</td>
+<td>0.645212</td>
 <td>0</td>
 <td>unacceptable</td>
 <td>0.0</td>
-<td>288.280531</td>
-<td>0.998337</td>
-<td>0.000172</td>
-<td>0.001491</td>
-<td>5.071570</td>
-<td>0.000978</td>
-<td>0.000202</td>
-<td>0.000975</td>
-<td>-0.001491</td>
-<td>0.998509</td>
+<td>1.177755</td>
+<td>0.093486</td>
+<td>0.507585</td>
+<td>0.398929</td>
+<td>3.926326</td>
+<td>0.173841</td>
+<td>0.485380</td>
+<td>0.545153</td>
+<td>-0.398929</td>
+<td>0.601071</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>1.024741</td>
-<td>0.639040</td>
+<td>0.068953</td>
+<td>0.002732</td>
 <td>0</td>
-<td>unacceptable</td>
+<td>ideal</td>
 <td>0.0</td>
-<td>16.091958</td>
-<td>0.002680</td>
-<td>0.001379</td>
-<td>0.995941</td>
-<td>4.281487</td>
-<td>0.004496</td>
-<td>0.000934</td>
-<td>0.004816</td>
-<td>-0.995941</td>
-<td>0.004059</td>
+<td>0.902233</td>
+<td>0.055894</td>
+<td>0.943339</td>
+<td>0.000767</td>
+<td>3.820162</td>
+<td>0.121212</td>
+<td>0.121144</td>
+<td>0.000665</td>
+<td>-0.000767</td>
+<td>0.999233</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>-1.134231</td>
-<td>-0.498400</td>
-<td>0</td>
-<td>unacceptable</td>
-<td>0.0</td>
-<td>322.817659</td>
-<td>0.090140</td>
-<td>0.909355</td>
-<td>0.000505</td>
-<td>4.375566</td>
-<td>0.197774</td>
-<td>0.197570</td>
-<td>0.000416</td>
-<td>-0.000505</td>
-<td>0.999495</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>1.048876</td>
-<td>1.084826</td>
-<td>0</td>
-<td>acceptable</td>
-<td>0.0</td>
-<td>-0.611477</td>
-<td>0.394211</td>
-<td>0.001103</td>
-<td>0.604686</td>
-<td>4.358907</td>
-<td>0.526224</td>
-<td>0.001027</td>
-<td>0.525974</td>
-<td>-0.604686</td>
-<td>0.395314</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>0.827152</td>
-<td>1.525919</td>
-<td>0</td>
-<td>unacceptable</td>
-<td>0.0</td>
-<td>71.702932</td>
-<td>0.798890</td>
-<td>0.000066</td>
-<td>0.201044</td>
-<td>4.504033</td>
-<td>0.445067</td>
-<td>0.000102</td>
-<td>0.445072</td>
-<td>-0.201044</td>
-<td>0.798956</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>1.526182</td>
-<td>-0.331510</td>
+<td>1.688604</td>
+<td>0.706325</td>
 <td>1</td>
 <td>unacceptable</td>
 <td>0.0</td>
-<td>710.956184</td>
-<td>0.405865</td>
-<td>0.202712</td>
-<td>0.391423</td>
-<td>4.497305</td>
-<td>0.540042</td>
-<td>0.444787</td>
-<td>0.534433</td>
-<td>-0.391423</td>
-<td>0.608577</td>
+<td>458.168672</td>
+<td>0.731733</td>
+<td>0.000947</td>
+<td>0.267319</td>
+<td>4.943397</td>
+<td>0.397762</td>
+<td>0.002010</td>
+<td>0.397202</td>
+<td>-0.267319</td>
+<td>0.732681</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>1.750000</td>
+<td>0.367667</td>
+<td>0</td>
+<td>unacceptable</td>
+<td>0.0</td>
+<td>723.721360</td>
+<td>0.800135</td>
+<td>0.001612</td>
+<td>0.198252</td>
+<td>5.286763</td>
+<td>0.443080</td>
+<td>0.002145</td>
+<td>0.441776</td>
+<td>-0.198252</td>
+<td>0.801748</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>1.169237</td>
+<td>-0.184120</td>
+<td>1</td>
+<td>unacceptable</td>
+<td>0.0</td>
+<td>238.159252</td>
+<td>0.731957</td>
+<td>0.001078</td>
+<td>0.266964</td>
+<td>4.075854</td>
+<td>0.395522</td>
+<td>0.002229</td>
+<td>0.394892</td>
+<td>-0.266964</td>
+<td>0.733036</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>0.622317</td>
+<td>0.379688</td>
+<td>1</td>
+<td>unacceptable</td>
+<td>0.0</td>
+<td>0.818355</td>
+<td>0.339111</td>
+<td>0.207333</td>
+<td>0.453556</td>
+<td>3.909592</td>
+<td>0.402576</td>
+<td>0.442921</td>
+<td>0.433485</td>
+<td>-0.453556</td>
+<td>0.546444</td>
 </tr>
 </tbody>
 </table>
@@ -1416,11 +1430,11 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <section id="check-classification-of-proposed-candidates" class="level2">
 <h2 class="anchored" data-anchor-id="check-classification-of-proposed-candidates">Check classification of proposed candidates</h2>
 <p>Use the logic from above to verify the classification values</p>
-<div id="e6f623bc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="552d6606" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Append to the candidates</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>candidates[<span class="st">"f_1_true"</span>] <span class="op">=</span> constraints(x<span class="op">=</span>candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="c6c4e965" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="c02dca91" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print results</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>candidates[[<span class="st">"x_0"</span>, <span class="st">"x_1"</span>, <span class="st">"f_1_pred"</span>, <span class="st">"f_1_true"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
@@ -1440,73 +1454,73 @@ Could not update `train_inputs` with transformed inputs since _MLPEnsemble does 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.960529</td>
-<td>0.901183</td>
+<td>1.320449</td>
+<td>1.750000</td>
 <td>acceptable</td>
-<td>ideal</td>
+<td>unacceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.181525</td>
-<td>1.376302</td>
+<td>0.360146</td>
+<td>0.126264</td>
+<td>ideal</td>
 <td>acceptable</td>
-<td>unacceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-0.074961</td>
-<td>0.001184</td>
+<td>1.679961</td>
+<td>0.433449</td>
 <td>unacceptable</td>
-<td>acceptable</td>
+<td>unacceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>1.322194</td>
-<td>1.750000</td>
+<td>1.298224</td>
+<td>1.691341</td>
 <td>acceptable</td>
 <td>unacceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.205170</td>
-<td>1.750000</td>
-<td>unacceptable</td>
-<td>unacceptable</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>1.024741</td>
-<td>0.639040</td>
+<td>0.812442</td>
+<td>0.645212</td>
 <td>unacceptable</td>
 <td>ideal</td>
 </tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>0.068953</td>
+<td>0.002732</td>
+<td>ideal</td>
+<td>acceptable</td>
+</tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>-1.134231</td>
-<td>-0.498400</td>
+<td>1.688604</td>
+<td>0.706325</td>
 <td>unacceptable</td>
-<td>acceptable</td>
+<td>unacceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>1.048876</td>
-<td>1.084826</td>
-<td>acceptable</td>
+<td>1.750000</td>
+<td>0.367667</td>
+<td>unacceptable</td>
 <td>unacceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>0.827152</td>
-<td>1.525919</td>
+<td>1.169237</td>
+<td>-0.184120</td>
 <td>unacceptable</td>
-<td>unacceptable</td>
+<td>acceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>1.526182</td>
-<td>-0.331510</td>
+<td>0.622317</td>
+<td>0.379688</td>
 <td>unacceptable</td>
-<td>unacceptable</td>
+<td>ideal</td>
 </tr>
 </tbody>
 </table>

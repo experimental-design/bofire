@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-dark-dd96db0072a085c98b6ca2c306c14af0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -414,7 +414,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to predict the Motor Octane Number (MON) of a hydrocarbon mixture. The dataset stems from the paper from <a href="https://www.nature.com/articles/s41524-025-01552-2">Chew et al.</a>. It contains 722 experiments of up to 121 componet mixtures of 423 individual molecules. Each molecule is represented by its SMILES string.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="e9c00d14" class="cell" data-execution_count="1">
+<div id="97a36e2c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
@@ -435,7 +435,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="setup-data" class="level2">
 <h2 class="anchored" data-anchor-id="setup-data">Setup Data</h2>
-<div id="e333dbb4" class="cell" data-execution_count="2">
+<div id="21ae75a6" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df_experiments <span class="op">=</span> get_octane_data()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_experiments[<span class="st">"valid_MON"</span>] <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -450,7 +450,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span>output_key)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2986/4204084361.py:2: PerformanceWarning:
+<pre><code>/tmp/ipykernel_2995/4204084361.py:2: PerformanceWarning:
 
 DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
 </code></pre>
@@ -460,7 +460,7 @@ DataFrame is highly fragmented.  This is usually the result of calling `frame.in
 <section id="setup-surrogate-and-perform-cv" class="level2">
 <h2 class="anchored" data-anchor-id="setup-surrogate-and-perform-cv">Setup Surrogate and perform CV</h2>
 <p>We model the high-dimensional problem by using an engineered feature called <code>MolecularWeightedSumFeature</code>. In computes the weighted sum of the molecular descriptors of the original <code>ContinuousMolecularInput</code>s that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</p>
-<div id="a142ccfa" class="cell" data-execution_count="3">
+<div id="37ba51d6" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
@@ -512,13 +512,13 @@ The given NumPy array is not writable, and PyTorch does not support non-writable
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>3.613734</td>
-<td>65.195108</td>
-<td>0.795028</td>
-<td>6.285217e+14</td>
-<td>0.891747</td>
-<td>0.905846</td>
-<td>2.344566e-113</td>
+<td>4.805004</td>
+<td>72.047305</td>
+<td>0.773485</td>
+<td>3.811262e+14</td>
+<td>0.88049</td>
+<td>0.89087</td>
+<td>1.609535e-111</td>
 </tr>
 </tbody>
 </table>

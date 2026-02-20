@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-dark-dd96db0072a085c98b6ca2c306c14af0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -440,7 +440,7 @@ window.Quarto = {
 
 
 <p>Showcase of active learning in bofire. Active learning per definition focusses on fitting the model to the experimental observations best possible in an iterative manner reducing some kind of uncertainty. The ActiveLearningStrategy proposes a set of evaluation points that will gain the most information about the problem each iteration. Thus, an unknown black-box-function can be approximated without optimization. It represents an exploration-only strategy.</p>
-<div id="13c6c7e7" class="cell" data-execution_count="1">
+<div id="c64af9b8" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -465,7 +465,7 @@ window.Quarto = {
 <p>For a 1-D objective function. The Himmelblau benchmark is used. <span class="math display">\[\begin{equation}
     f: \mathbb{R}^2 \rightarrow \mathbb{R} \quad | \quad&nbsp;f(x_1, x_2) = (x_1^2 + x_2 - 11)^2 + (x_1 + x_2^2) ^2
 \end{equation}\]</span> To start the active learning strategy we need to supply some initial data points to set up the Gaussian Regression Model in the background.</p>
-<div id="06ddadd8" class="cell" data-execution_count="2">
+<div id="00fb3e4c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>himmelblau <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -496,72 +496,72 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>3.384690</td>
-<td>3.509025</td>
-<td>91.376705</td>
+<td>-5.643773</td>
+<td>5.717169</td>
+<td>1107.622087</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>4.489837</td>
-<td>-3.030648</td>
-<td>82.103436</td>
+<td>0.472170</td>
+<td>-5.258568</td>
+<td>703.394427</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>5.176661</td>
-<td>4.153283</td>
-<td>636.021212</td>
+<td>-3.658263</td>
+<td>4.265536</td>
+<td>101.000891</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>3.617274</td>
-<td>-1.030840</td>
-<td>6.493399</td>
+<td>-4.838224</td>
+<td>4.124912</td>
+<td>300.148659</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>3.924973</td>
-<td>4.749811</td>
-<td>463.509947</td>
+<td>-2.549831</td>
+<td>-4.562773</td>
+<td>209.096118</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>1.347252</td>
-<td>-5.878287</td>
-<td>1062.197001</td>
+<td>-4.518643</td>
+<td>-0.551759</td>
+<td>204.371052</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>3.129911</td>
-<td>-1.759547</td>
-<td>9.379779</td>
+<td>2.308664</td>
+<td>1.115234</td>
+<td>32.632416</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>1.001123</td>
-<td>4.761605</td>
-<td>305.439665</td>
+<td>3.983774</td>
+<td>-0.972408</td>
+<td>19.482364</td>
 <td>1</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>-3.613166</td>
-<td>-5.078454</td>
-<td>239.498693</td>
+<td>-4.310248</td>
+<td>1.174961</td>
+<td>175.217731</td>
 <td>1</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>2.653285</td>
-<td>-1.996620</td>
-<td>35.612020</td>
+<td>-5.254051</td>
+<td>5.334297</td>
+<td>743.796930</td>
 <td>1</td>
 </tr>
 </tbody>
@@ -575,7 +575,7 @@ window.Quarto = {
 <p>The <code>ActiveLearningstrategy</code> can be set up just as other BO strategies implemented in bofire. Just take a look into the other tutorials. Basic calls are <code>ask()</code> to retrieve new evaluation candidates from the acquisition function and <code>tell()</code> to train the model with a new observation.</p>
 <p>Currently, the default active learning acquisition function implemented is <code>qNegIntegratedPosteriorVariance</code>. It focuses on minimizing the overall posterior variance by choosing a new candidate.</p>
 <p>The <code>ActiveLearningStrategy</code> uses Monte-Carlo-integration to evaluate the acquisition function. The number of integration nodes significantly influences the speed of the integration. These can be adjusted by changing the parameter <code>data_model.num_sobol_samples</code>. Note that a sample size representing a power of <span class="math inline">\(2\)</span> increases performance.</p>
-<div id="739aae28" class="cell" data-execution_count="3">
+<div id="c35467a1" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Manual set up of ActiveLearning</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qNegIntPosVar</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> ActiveLearningStrategy</span>
@@ -591,7 +591,7 @@ window.Quarto = {
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>recommender.tell(experiments<span class="op">=</span>initial_experiments)</span>
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> recommender.ask(candidate_count<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="6bd8dddb" class="cell" data-execution_count="4">
+<div id="00eb21e0" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>display(candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
@@ -611,11 +611,11 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-2.6153</td>
-<td>-1.61294</td>
-<td>360.613512</td>
-<td>332.986769</td>
-<td>-360.613512</td>
+<td>-1.03213</td>
+<td>-1.838033</td>
+<td>303.479105</td>
+<td>365.77538</td>
+<td>-303.479105</td>
 </tr>
 </tbody>
 </table>
@@ -623,7 +623,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="39769a85" class="cell" data-execution_count="5">
+<div id="eb54a319" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the active learning strategy</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>n_iter <span class="op">=</span> <span class="dv">1</span> <span class="cf">if</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">20</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> initial_experiments</span>
@@ -636,7 +636,7 @@ window.Quarto = {
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    recommender.tell(experiments<span class="op">=</span>XY)  <span class="co"># pass new experimental data</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    results <span class="op">=</span> pd.concat([results, XY], axis<span class="op">=</span><span class="dv">0</span>, ignore_index<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b71c59a8" class="cell" data-execution_count="6">
+<div id="d3c84e5c" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Running a random strategy for comparison</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_factory(domain: Domain):</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    data_model <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
@@ -656,7 +656,7 @@ window.Quarto = {
 </section>
 <section id="plotting" class="level4">
 <h4 class="anchored" data-anchor-id="plotting">Plotting</h4>
-<div id="2a80fc6a" class="cell" data-execution_count="7">
+<div id="5220372b" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST:</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">4</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -703,7 +703,7 @@ window.Quarto = {
 
         \end{pmatrix}
 \end{equation}\]</span></p>
-<div id="f8b18cd2" class="cell" data-execution_count="8">
+<div id="3f1adaba" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x_1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)),</span>
@@ -746,7 +746,7 @@ window.Quarto = {
 <span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>For the multi-objective function we need to pass two models to the strategy as each individual output is represented by a separate model. By default, the <code>ActiveLearningStrategy</code> focusses on minimizing the negative integrated posterior variance of each model equally. To minimize the variances in a more specific way certain weights can be provided for each output feature. This can be done by passing a <code>dictionary</code> containing the individual weights for each output feature with its corresponding key to the parameter <code>weights</code>.</p>
-<div id="f13f7f4f" class="cell" data-execution_count="9">
+<div id="5bfdafbd" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Manual set up of ActiveLearning</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> {</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"f_0"</span>: <span class="fl">0.4</span>,</span>
@@ -775,7 +775,7 @@ window.Quarto = {
 <span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>recommender.tell(experiments<span class="op">=</span>initial_experiments)</span>
 <span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> recommender.ask(candidate_count<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="928462bf" class="cell" data-execution_count="10">
+<div id="ab30488c" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>display(candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
@@ -798,14 +798,14 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.096472</td>
-<td>1.045059</td>
-<td>314.474269</td>
-<td>11.163672</td>
-<td>432.90352</td>
-<td>1.541065</td>
-<td>-314.474269</td>
-<td>-11.163672</td>
+<td>-1.546482</td>
+<td>-3.147225</td>
+<td>496.681482</td>
+<td>12.134275</td>
+<td>503.902389</td>
+<td>0.707613</td>
+<td>-496.681482</td>
+<td>-12.134275</td>
 </tr>
 </tbody>
 </table>
@@ -813,7 +813,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="15669812" class="cell" data-execution_count="11">
+<div id="ac871d9b" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Running the active learning strategy</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>n_iter <span class="op">=</span> <span class="dv">1</span> <span class="cf">if</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">20</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> initial_experiments</span>
@@ -826,7 +826,7 @@ window.Quarto = {
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    recommender.tell(experiments<span class="op">=</span>XY)  <span class="co"># pass new experimental data</span></span>
 <span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    results <span class="op">=</span> pd.concat([results, XY], axis<span class="op">=</span><span class="dv">0</span>, ignore_index<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="e5d06f41" class="cell" data-execution_count="12">
+<div id="270f1984" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>random_results <span class="op">=</span> run(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    function,</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    strategy_factory<span class="op">=</span>strategy_factory,</span>
@@ -839,7 +839,7 @@ window.Quarto = {
 </div>
 <section id="plotting-1" class="level4">
 <h4 class="anchored" data-anchor-id="plotting-1">Plotting</h4>
-<div id="ce2f110a" class="cell" data-execution_count="13">
+<div id="de5c4de4" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST:</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>)</span>

@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-dark-dd96db0072a085c98b6ca2c306c14af0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -401,7 +401,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="57d4d8d3" class="cell" data-execution_count="1">
+<div id="0ea3803a" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -409,7 +409,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="98c0f215" class="cell" data-execution_count="2">
+<div id="0a456044" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -437,7 +437,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="dea20cb0" class="cell" data-execution_count="3">
+<div id="9dafecfa" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>

@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-dark-dd96db0072a085c98b6ca2c306c14af0.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-819bec620838c3ebd74f21573cae29b9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-190f78c2e5d4fee0518b0fee78312ed9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-16315412525afdab2a864ffb3f8457a3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -423,7 +423,7 @@ window.Quarto = {
 
 
 
-<div id="78e3f852" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.980124,&quot;end_time&quot;:&quot;2024-10-10T20:34:18.797038&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:15.816914&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="3295dd47" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.980124,&quot;end_time&quot;:&quot;2024-10-10T20:34:18.797038&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:15.816914&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -444,7 +444,7 @@ window.Quarto = {
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    SingleTaskGPSurrogate,</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="69cb92f6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.262804,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.062415&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:18.799611&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="91a38e2b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.262804,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.062415&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:18.799611&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In this notebook we show how to use BoFire for the purposes of transfer learning Bayesian optimization. In particular, we assume we have a task <span class="math inline">\(f_2\)</span> with data that is relevant to the optimization of our current task <span class="math inline">\(f_1\)</span>. The procedure is simple, we fit a MultiTask GP to both data-sets, however only carry out the BO on <span class="math inline">\(f_1\)</span>, i.e., we optimize the acquisition functions on on the task <span class="math inline">\(f_1\)</span>.</p>
@@ -453,7 +453,7 @@ window.Quarto = {
 <p>And we will have data the second related task:</p>
 <p><span class="math display">\[ f_2 = 0.9 \sin(2 \pi x) + 0.2 \cos(3 \pi x) - 0.2 \]</span></p>
 <p>We begin by defining the functions, generating some data, and plotting it. We generate 15 data-points for Task 2 and just 4 data-points for Task 1, all the data-points in Task 1 will be in a restricted area of the space.</p>
-<div id="c1c78438" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.663407,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.732148&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:19.068741&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="77366a72" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.663407,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.732148&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:19.068741&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> task_1_f(x):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.sin(x <span class="op">*</span> <span class="dv">2</span> <span class="op">*</span> np.pi)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -508,7 +508,7 @@ window.Quarto = {
 <ul>
 <li>To define the task we choose the <code>TaskInput</code> feature, everything else follows standard BoFire procedure.</li>
 </ul>
-<div id="070b3876" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006739,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.750236&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:19.743497&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="a7083bb6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006739,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.750236&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:19.743497&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set-up the task model with allowed variable as ["True"] for the target task and ["False"] for the other task</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>task_input <span class="op">=</span> TaskInput(key<span class="op">=</span><span class="st">"task"</span>, categories<span class="op">=</span>[<span class="st">"task_1"</span>, <span class="st">"task_2"</span>])</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># define the input features</span></span>
@@ -523,7 +523,7 @@ window.Quarto = {
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> MultiTaskGPSurrogate(inputs<span class="op">=</span>inputs, outputs<span class="op">=</span>outputs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We map from the surrogate data into the surrogate model and fit the data.</p>
-<div id="2992e528" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.152004,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.909174&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:19.757170&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="9b0141ee" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.152004,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.909174&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:19.757170&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -539,7 +539,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 </div>
 </div>
 <p>Plot to see how we are able to predict outside of the region where there is data for Task 1, since we can use the data from Task 2 and the learnt correlations:</p>
-<div id="3d36886d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="bfdf571c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict the high fidelity data</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>x_predict <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">101</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>y_predict <span class="op">=</span> surrogate.predict(</span>
@@ -592,7 +592,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <ul>
 <li>For <code>TaskInput</code> we must set the variable <code>allowed</code> as a list, with each element in the list corresponding to one of the <code>categories</code> such that all auxiliary tasks have <code>False</code> and target task has <code>True</code>. For example, we have <code>categories = ["task_1, task_2"]</code> and the goal of our optimization is to optimize <code>task_1</code> therefore we set <code>allowed = [True, False]</code>:</li>
 </ul>
-<div id="56f6f106" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="218af8f4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> [</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    ContinuousInput(key<span class="op">=</span><span class="st">"x"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    TaskInput(key<span class="op">=</span><span class="st">"task"</span>, categories<span class="op">=</span>[<span class="st">"task_1"</span>, <span class="st">"task_2"</span>], allowed<span class="op">=</span>[<span class="va">True</span>, <span class="va">False</span>]),</span>
@@ -624,7 +624,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>sobo_strategy.tell(experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We can now generate experimental candidates:</p>
-<div id="16b0a018" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="4890a66f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> sobo_strategy.ask(<span class="dv">3</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>candidates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -646,27 +646,27 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.167509</td>
+<td>0.189196</td>
 <td>task_1</td>
-<td>0.907269</td>
-<td>0.198521</td>
-<td>0.907269</td>
+<td>0.916253</td>
+<td>0.196206</td>
+<td>0.916253</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.188964</td>
+<td>0.214489</td>
 <td>task_1</td>
-<td>0.916210</td>
-<td>0.196241</td>
-<td>0.916210</td>
+<td>0.905623</td>
+<td>0.192964</td>
+<td>0.905623</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.214738</td>
+<td>0.167614</td>
 <td>task_1</td>
-<td>0.905374</td>
-<td>0.192937</td>
-<td>0.905374</td>
+<td>0.907394</td>
+<td>0.198503</td>
+<td>0.907394</td>
 </tr>
 </tbody>
 </table>
@@ -675,7 +675,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 </div>
 </div>
 <p>If we instead wanted to optimize <code>task_2</code> instead of <code>task_1</code>, we simply change <code>allowed = [False, True]</code>:</p>
-<div id="4828591e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="33516b56" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> [</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    ContinuousInput(key<span class="op">=</span><span class="st">"x"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    TaskInput(key<span class="op">=</span><span class="st">"task"</span>, categories<span class="op">=</span>[<span class="st">"task_1"</span>, <span class="st">"task_2"</span>], allowed<span class="op">=</span>[<span class="va">False</span>, <span class="va">True</span>]),</span>
@@ -707,7 +707,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>sobo_strategy.tell(experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We now obtain candidates for <code>task_2</code>:</p>
-<div id="02029578" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="cd4481b7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>candidate <span class="op">=</span> sobo_strategy.ask(<span class="dv">1</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>candidate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -732,7 +732,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <td>0.197146</td>
 <td>task_2</td>
 <td>0.594692</td>
-<td>0.026345</td>
+<td>0.026346</td>
 <td>0.594692</td>
 </tr>
 </tbody>
@@ -743,7 +743,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 </div>
 <p>Let us now run a Bayesian optimization loop on the Branin benchmark to show the usefulness of transfer learning Bayesian optimization in a practical setting. We create a small data-set composed of the Branin benchmark itself, and a large one composed of the Branin function with a small amount of bias added by summing the Branin and Ackley functions.</p>
 <p>We begin by defining a function that creates random initial data-sets, and create as many data-sets as the number of runs we want to average over:</p>
-<div id="f3c29aa1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="891f2a48" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Branin()</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>bias <span class="op">=</span> Ackley()</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -768,7 +768,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> high_fidelity_data, experiments_joint</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="9583888e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="12">
+<div id="f8fc5583" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>single_task_all_regrets <span class="op">=</span> []</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
@@ -792,7 +792,7 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    experiments_joint_datasets.append(experiments_joint)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let us now run a Bayesian optimization loop only using the high-fidelity data:</p>
-<div id="d996e8e5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="13">
+<div id="24372fd0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    high_fidelity_data <span class="op">=</span> high_fidelity_datasets[run]</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -843,15 +843,15 @@ torch.sparse.SparseTensor(indices, values, shape, *, device=) is deprecated.  Pl
 <span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>    single_task_all_regrets.append(regrets_single_task)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=14.0257]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.22it/s, Regret=14.0257]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.22it/s, Regret=3.0468] Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.16it/s, Regret=3.0468]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.17it/s, Regret=3.0468]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=4.2490]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.79it/s, Regret=4.2490]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.79it/s, Regret=4.2490]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.68it/s, Regret=4.2490]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.70it/s, Regret=4.2490]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=11.1478]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  1.99it/s, Regret=11.1478]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  1.99it/s, Regret=5.1709] Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.35it/s, Regret=5.1709]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.29it/s, Regret=5.1709]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=9.8711]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  3.10it/s, Regret=9.8711]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  3.10it/s, Regret=9.8711]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  3.09it/s, Regret=9.8711]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  3.09it/s, Regret=9.8711]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=17.0579]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.80it/s, Regret=17.0579]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.80it/s, Regret=1.5468] Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.84it/s, Regret=1.5468]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.83it/s, Regret=1.5468]</code></pre>
+<pre><code>Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=5.5923]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.43it/s, Regret=5.5923]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.43it/s, Regret=5.5923]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.42it/s, Regret=5.5923]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.42it/s, Regret=5.5923]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=6.1898]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.38it/s, Regret=6.1898]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.38it/s, Regret=6.1898]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.50it/s, Regret=6.1898]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.48it/s, Regret=6.1898]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=8.6320]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.59it/s, Regret=8.6320]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.59it/s, Regret=8.6320]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.79it/s, Regret=8.6320]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.76it/s, Regret=8.6320]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=3.1458]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.38it/s, Regret=3.1458]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.38it/s, Regret=3.1458]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.34it/s, Regret=3.1458]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.35it/s, Regret=3.1458]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=14.5552]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.03it/s, Regret=14.5552]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  2.03it/s, Regret=14.5552]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.17it/s, Regret=14.5552]Optimizing: 100%|██████████| 2/2 [00:00&lt;00:00,  2.15it/s, Regret=14.5552]</code></pre>
 </div>
 </div>
 <p>We now repeat the experiment but using transfer learning BO:</p>
-<div id="f91ca771" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="14">
+<div id="49aa8b0c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>multitask_all_regrets <span class="op">=</span> []</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
@@ -914,15 +914,15 @@ Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          |
 <span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>    multitask_all_regrets.append(regrets_transfer_learning)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.4920]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.62s/it, Regret=0.4920]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.62s/it, Regret=0.4920]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.95s/it, Regret=0.4920]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.90s/it, Regret=0.4920]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.0993]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.28s/it, Regret=1.0993]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.28s/it, Regret=1.0993]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.33s/it, Regret=1.0993]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.32s/it, Regret=1.0993]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=4.4676]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.45s/it, Regret=4.4676]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.45s/it, Regret=2.6612]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.73s/it, Regret=2.6612]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.68s/it, Regret=2.6612]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=3.3113]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.90s/it, Regret=3.3113]Optimizing:  50%|█████     | 1/2 [00:04&lt;00:01,  1.90s/it, Regret=2.9128]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.15s/it, Regret=2.9128]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.12s/it, Regret=2.9128]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:03&lt;?, ?it/s, Regret=1.5555]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:03,  3.09s/it, Regret=1.5555]Optimizing:  50%|█████     | 1/2 [00:06&lt;00:03,  3.09s/it, Regret=1.5555]Optimizing: 100%|██████████| 2/2 [00:06&lt;00:00,  3.32s/it, Regret=1.5555]Optimizing: 100%|██████████| 2/2 [00:06&lt;00:00,  3.29s/it, Regret=1.5555]</code></pre>
+<pre><code>Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.5775]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.66s/it, Regret=1.5775]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.66s/it, Regret=1.5775]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.65s/it, Regret=1.5775]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.65s/it, Regret=1.5775]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=0.2609]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.23s/it, Regret=0.2609]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:02,  2.23s/it, Regret=0.2609]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.93s/it, Regret=0.2609]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.97s/it, Regret=0.2609]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=4.3390]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.67s/it, Regret=4.3390]Optimizing:  50%|█████     | 1/2 [00:04&lt;00:02,  2.67s/it, Regret=4.3390]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.42s/it, Regret=4.3390]Optimizing: 100%|██████████| 2/2 [00:04&lt;00:00,  2.46s/it, Regret=4.3390]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=7.0428]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.33s/it, Regret=7.0428]Optimizing:  50%|█████     | 1/2 [00:05&lt;00:02,  2.33s/it, Regret=0.4102]Optimizing: 100%|██████████| 2/2 [00:05&lt;00:00,  2.66s/it, Regret=0.4102]Optimizing: 100%|██████████| 2/2 [00:05&lt;00:00,  2.61s/it, Regret=0.4102]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:02&lt;?, ?it/s, Regret=0.0961]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:02,  2.21s/it, Regret=0.0961]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:02,  2.21s/it, Regret=0.0961]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.87s/it, Regret=0.0961]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.92s/it, Regret=0.0961]</code></pre>
 </div>
 </div>
 <p>We now plot the quantiles and median simple regret against iteration:</p>
-<div id="fd119cbe" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="15">
+<div id="e7024683" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the results</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="dv">4</span>))</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
