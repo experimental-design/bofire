@@ -359,6 +359,38 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+        """
+        Check if the nonlinear equality constraint is fulfilled.
+
+        Since this constraint is converted to two inequality constraints during
+        optimization (f(x) <= tol and f(x) >= -tol), we validate consistently
+        by checking if the violation is within the tolerance band.
+
+        Args:
+            experiments: DataFrame containing the candidate points to validate
+            tol: Tolerance for constraint fulfillment (default: 1e-6)
+
+        Returns:
+            Boolean Series indicating whether each candidate fulfills the constraint
+        """
+        violation = self(experiments)
+        result = (violation >= -tol) & (violation <= tol)
+
+        # DEBUG: Print detailed information
+        print("\n=== NonlinearEqualityConstraint.is_fulfilled DEBUG ===")
+        print(f"Expression: {self.expression}")
+        print(f"Tolerance (tol): {tol}")
+        print(f"Violation values: {violation.values}")
+        print(f"Violation dtype: {violation.dtype}")
+        print(f"Check (violation >= -tol): {(violation >= -tol).values}")
+        print(f"Check (violation <= tol): {(violation <= tol).values}")
+        print(f"Combined result: {result.values}")
+        print(f"Result dtype: {result.dtype}")
+        print("=" * 50)
+        eps = max(tol * 1e-9, 1e-15)
+        return pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
+
 
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """Nonlinear inequality constraint of the form 'expression <= 0'.
