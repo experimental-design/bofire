@@ -1,6 +1,6 @@
 from typing import Literal, Type
 
-from pydantic import Field, model_validator, PrivateAttr
+from pydantic import Field, PrivateAttr, model_validator
 
 from bofire.data_models.features.api import (
     AnyOutput,
@@ -40,7 +40,9 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     _skip_encodings_validation: bool = (
-        PrivateAttr(default=False)  # helper-function to skip validatio of categorical encodings,
+        PrivateAttr(
+            default=False
+        )  # helper-function to skip validatio of categorical encodings,
     )
     # after moving molfeatures to kernel for pre-computed similarities
 
