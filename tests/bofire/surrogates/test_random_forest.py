@@ -22,6 +22,8 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.surrogates.api import RandomForestSurrogate, ScalerEnum
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
+from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.surrogates.random_forest import _RandomForest
 
 
@@ -66,15 +68,15 @@ def test_random_forest_forward():
 @pytest.mark.parametrize(
     "scaler, output_scaler",
     [
-        [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.IDENTITY],
-        [ScalerEnum.IDENTITY, ScalerEnum.LOG],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.LOG],
-        [ScalerEnum.NORMALIZE, ScalerEnum.LOG],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.CHAINED_LOG_STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.CHAINED_LOG_STANDARDIZE],
+        [NormalizeScaler(), ScalerEnum.IDENTITY],
+        [StandardizeScaler(), ScalerEnum.STANDARDIZE],
+        [None, ScalerEnum.STANDARDIZE],
+        [None, ScalerEnum.IDENTITY],
+        [None, ScalerEnum.LOG],
+        [StandardizeScaler(), ScalerEnum.LOG],
+        [NormalizeScaler(), ScalerEnum.LOG],
+        [StandardizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE],
+        [None, ScalerEnum.CHAINED_LOG_STANDARDIZE],
     ],
 )
 def test_random_forest(scaler, output_scaler):
@@ -91,9 +93,9 @@ def test_random_forest(scaler, output_scaler):
     rf = surrogates.map(rf)
     rf.fit(experiments=experiments)
 
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(rf.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(rf.model.input_transform, InputStandardize)
     else:
         with pytest.raises(AttributeError):
@@ -136,10 +138,10 @@ def test_random_forest(scaler, output_scaler):
     with pytest.raises(ValueError):
         rf.dumps()
     rf.fit(experiments=experiments)
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(rf.model.input_transform, ChainedInputTransform)
         assert isinstance(rf.model.input_transform.scaler, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(rf.model.input_transform, ChainedInputTransform)
         assert isinstance(rf.model.input_transform.scaler, InputStandardize)
     else:
@@ -165,10 +167,10 @@ def test_random_forest(scaler, output_scaler):
     rf2.loads(dump)
     preds2 = rf2.predict(experiments)
     assert_frame_equal(preds, preds2)
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(rf2.model.input_transform, ChainedInputTransform)
         assert isinstance(rf2.model.input_transform.scaler, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(rf2.model.input_transform, ChainedInputTransform)
         assert isinstance(rf2.model.input_transform.scaler, InputStandardize)
     else:
