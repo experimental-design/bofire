@@ -25,6 +25,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     ContinuousInput,
+    DiscreteInput,
     Input,
 )
 from bofire.data_models.molfeatures.api import AnyMolFeatures
@@ -56,7 +57,7 @@ tkwargs = {
 
 def get_linear_constraints(
     domain: Domain,
-    constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
+    constraint: Type[LinearEqualityConstraint] | Type[LinearInequalityConstraint],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Converts linear constraints to the form required by BoTorch. For inequality constraints, this is A * x >= b (!).
@@ -71,6 +72,7 @@ def get_linear_constraints(
 
     """
     constraints = []
+    inputs = domain.inputs.get([ContinuousInput, DiscreteInput])
     for c in domain.constraints.get(constraint):
         indices = []
         coefficients = []
@@ -78,8 +80,8 @@ def get_linear_constraints(
         upper = []
         rhs = 0.0
         for i, featkey in enumerate(c.features):
-            idx = domain.inputs.get_keys(Input).index(featkey)
-            feat = domain.inputs.get_by_key(featkey)
+            idx = inputs.get_keys().index(featkey)
+            feat = inputs.get_by_key(featkey)
             if feat.is_fixed():
                 fixed = feat.fixed_value()
                 assert fixed is not None
