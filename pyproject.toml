@@ -49,7 +49,7 @@ optimization = [
 ]
 entmoot = [
     "pyomo<=6.9.4",
-    "entmoot>=2.0.6",
+    "entmoot>=2.1.1",
 ] # we pin the pyomo version here due to compatibility issues
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
 tests = ["pytest", "pytest-cov", "papermill"]
@@ -64,7 +64,7 @@ all = [
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]",
     "scikit-learn>=1.0.0",
-    "entmoot>=2.0.6",
+    "entmoot>=2.1.1",
     "pyomo<=6.9.4",
     "rdkit>=2023.3.2",
     "mordredcommunity>=2.0.1",
@@ -97,7 +97,7 @@ write_to = "./bofire/version.py"
 fallback_version = "0.0.0.dev0+unknown"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 88
 output-format = "concise"
 
