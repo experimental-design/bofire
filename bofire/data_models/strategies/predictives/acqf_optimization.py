@@ -89,7 +89,7 @@ class LSRBO(LocalSearchConfig):
 
     """
 
-    type: Literal["LSRBO"] = "LSRBO"  # type: ignore
+    type: Literal["LSRBO"] = "LSRBO"
     gamma: float = 0.1
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
@@ -100,7 +100,7 @@ AnyLocalSearchConfig = LSRBO
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
-    type: Literal["BotorchOptimizer"] = "BotorchOptimizer"  # type: ignore
+    type: Literal["BotorchOptimizer"] = "BotorchOptimizer"
     n_restarts: PositiveInt = 20  # same default as in Ax
     n_raw_samples: IntPowerOfTwo = 1024  # same default as in Ax
     maxiter: PositiveInt = 2000

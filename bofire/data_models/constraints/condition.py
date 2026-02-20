@@ -68,7 +68,7 @@ class ThresholdCondition(Condition):
         def evaluate(x: ArrayLike):
             return threshold_operators[self.operator](x, self.threshold)
 
-        return values.apply(evaluate)
+        return values.apply(evaluate)  # ty: ignore[invalid-return-type]
 
     def validate_feature(self, feature: "AnyInput") -> None:
         if isinstance(feature, CategoricalInput):

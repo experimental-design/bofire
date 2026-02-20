@@ -46,7 +46,7 @@ def map_RBFKernel(
     return gpytorch.kernels.RBFKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
-        active_dims=active_dims,  # type: ignore
+        active_dims=active_dims,
         lengthscale_prior=(
             priors.map(data_model.lengthscale_prior, d=len(active_dims))
             if data_model.lengthscale_prior is not None
@@ -148,7 +148,7 @@ def map_AdditiveKernel(
     **kwargs,
 ) -> gpytorch.kernels.AdditiveKernel:
     return gpytorch.kernels.AdditiveKernel(
-        *[  # type: ignore
+        *[
             map(
                 data_model=k,
                 batch_shape=batch_shape,
@@ -168,7 +168,7 @@ def map_MultiplicativeKernel(
     **kwargs,
 ) -> gpytorch.kernels.ProductKernel:
     return gpytorch.kernels.ProductKernel(
-        *[  # type: ignore
+        *[
             map(
                 data_model=k,
                 batch_shape=batch_shape,
@@ -239,7 +239,7 @@ def map_HammingDistanceKernel(
     return CategoricalKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
-        active_dims=active_dims,  # type: ignore
+        active_dims=active_dims,
         lengthscale_prior=(
             priors.map(data_model.lengthscale_prior, d=len(active_dims))
             if data_model.lengthscale_prior is not None
@@ -265,7 +265,7 @@ def map_IndexKernel(
         batch_shape=batch_shape,
         num_tasks=data_model.num_categories,
         rank=data_model.rank,
-        active_dims=active_dims,  # type: ignore
+        active_dims=active_dims,
         prior=(priors.map(data_model.prior) if data_model.prior is not None else None),
         var_constraint=(
             priors.map(data_model.var_constraint)
@@ -287,7 +287,7 @@ def map_PositiveIndexKernel(
         batch_shape=batch_shape,
         num_tasks=data_model.num_categories,
         rank=data_model.rank,
-        active_dims=active_dims,  # type: ignore
+        active_dims=active_dims,
         task_prior=(
             priors.map(data_model.task_prior)
             if data_model.task_prior is not None
@@ -336,7 +336,7 @@ def map_PolynomialFeatureInteractionKernel(
 ) -> PolynomialFeatureInteractionKernel:
     ks = [
         map(
-            k,  # type: ignore
+            k,
             active_dims=active_dims,
             batch_shape=batch_shape,
             features_to_idx_mapper=features_to_idx_mapper,

@@ -1,6 +1,6 @@
 # warn user if IPOPT scipy interface is not available
 try:
-    from cyipopt import Problem  # type: ignore
+    from cyipopt import Problem  # ty: ignore[unresolved-import]
 except ImportError:
 
     class Problem:
@@ -19,7 +19,7 @@ from scipy.optimize._minimize import LinearConstraint, NonlinearConstraint
 from bofire.strategies.doe.objective_base import Objective
 
 
-class FirstOrderDoEProblem(Problem):  # type: ignore
+class FirstOrderDoEProblem(Problem):
     def __init__(
         self,
         doe_objective: Objective,

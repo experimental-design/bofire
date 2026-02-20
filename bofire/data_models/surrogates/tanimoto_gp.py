@@ -20,7 +20,6 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     AnyPrior,
 )
-from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -37,7 +36,6 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     _skip_encodings_validation: bool = (
         PrivateAttr(
