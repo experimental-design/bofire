@@ -69,36 +69,6 @@ def map_weighted_sum_feature(
     transform_specs: InputTransformSpecs,
     feature: WeightedSumFeature,
 ) -> AppendFeatures:
-    return _map_weighted_descriptor_feature(
-        inputs=inputs,
-        transform_specs=transform_specs,
-        feature=feature,
-        normalize=feature.normalize_by_weight_sum,
-    )
-
-
-def _append_weighted_features(
-    indices: list[int],
-    descriptors: torch.Tensor,
-    normalize: bool,
-) -> AppendFeatures:
-    return AppendFeatures(
-        f=_weighted_features,
-        fkwargs={
-            "indices": indices,
-            "descriptors": descriptors,
-            "normalize": normalize,
-        },
-        transform_on_train=True,
-    )
-
-
-def _map_weighted_descriptor_feature(
-    inputs: Inputs,
-    transform_specs: InputTransformSpecs,
-    feature: WeightedSumFeature,
-    normalize: bool,
-) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
 
@@ -112,10 +82,14 @@ def _map_weighted_descriptor_feature(
         dtype=torch.double,
     )
 
-    return _append_weighted_features(
-        indices=indices,
-        descriptors=descriptors,
-        normalize=normalize,
+    return AppendFeatures(
+        f=_weighted_features,
+        fkwargs={
+            "indices": indices,
+            "descriptors": descriptors,
+            "normalize": feature.normalize_by_weight_sum,
+        },
+        transform_on_train=True,
     )
 
 
@@ -141,10 +115,14 @@ def map_molecular_weighted_sum_feature(
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
     descriptors = _get_molecular_descriptors(inputs=inputs, feature=feature)
-    return _append_weighted_features(
-        indices=indices,
-        descriptors=descriptors,
-        normalize=feature.normalize_by_weight_sum,
+    return AppendFeatures(
+        f=_weighted_features,
+        fkwargs={
+            "indices": indices,
+            "descriptors": descriptors,
+            "normalize": feature.normalize_by_weight_sum,
+        },
+        transform_on_train=True,
     )
 
 
