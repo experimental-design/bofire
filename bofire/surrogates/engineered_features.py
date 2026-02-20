@@ -10,9 +10,11 @@ from bofire.data_models.features.api import (
     CloneFeature,
     EngineeredFeature,
     MeanFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.types import InputTransformSpecs
@@ -32,8 +34,7 @@ def _weighted_features(
             min=torch.finfo(weights.dtype).eps,
         )
         weighted_sum = weighted_sum / weight_sum
-    result = weighted_sum.unsqueeze(-2)
-    return result.expand(*result.shape[:-2], 1, -1)
+    return weighted_sum.unsqueeze(-2)
 
 
 def _map_reduction_feature(
@@ -59,19 +60,14 @@ def _map_reduction_feature(
     )
 
 
-map_sum_feature = partial(_map_reduction_feature, reducer=torch.sum)
-map_product_feature = partial(_map_reduction_feature, reducer=torch.prod)
-map_mean_feature = partial(_map_reduction_feature, reducer=torch.mean)
-
-
-def map_weighted_sum_feature(
+def _map_weighted_feature(
     inputs: Inputs,
     transform_specs: InputTransformSpecs,
     feature: WeightedSumFeature,
+    normalize: bool,
 ) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
-
     descriptors = torch.tensor(
         [
             inputs.get_by_key(key)
@@ -81,22 +77,25 @@ def map_weighted_sum_feature(
         ],
         dtype=torch.double,
     )
-
     return AppendFeatures(
         f=_weighted_features,
         fkwargs={
             "indices": indices,
             "descriptors": descriptors,
-            "normalize": feature.normalize_by_weight_sum,
+            "normalize": normalize,
         },
         transform_on_train=True,
     )
 
 
-def _get_molecular_descriptors(
+def _map_molecular_weighted_feature(
     inputs: Inputs,
+    transform_specs: InputTransformSpecs,
     feature: MolecularWeightedSumFeature,
-) -> torch.Tensor:
+    normalize: bool,
+) -> AppendFeatures:
+    features2idx, _ = inputs._get_transform_info(transform_specs)
+    indices = [features2idx[key][0] for key in feature.features]
     molecules = [
         inputs.get_by_key(key).molecule  # ty: ignore[unresolved-attribute]
         for key in feature.features
@@ -104,23 +103,13 @@ def _get_molecular_descriptors(
     # filter out highly-correlated descriptors before computing descriptor values
     feature.molfeatures.remove_correlated_descriptors(molecules)
     descriptors_df = feature.molfeatures.get_descriptor_values(pd.Series(molecules))
-    return torch.tensor(descriptors_df.values, dtype=torch.double)
-
-
-def map_molecular_weighted_sum_feature(
-    inputs: Inputs,
-    transform_specs: InputTransformSpecs,
-    feature: MolecularWeightedSumFeature,
-) -> AppendFeatures:
-    features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]
-    descriptors = _get_molecular_descriptors(inputs=inputs, feature=feature)
+    descriptors = torch.tensor(descriptors_df.values, dtype=torch.double)
     return AppendFeatures(
         f=_weighted_features,
         fkwargs={
             "indices": indices,
             "descriptors": descriptors,
-            "normalize": feature.normalize_by_weight_sum,
+            "normalize": normalize,
         },
         transform_on_train=True,
     )
@@ -144,11 +133,27 @@ def map_clone_feature(
     )
 
 
+# Mapper bindings
+map_sum_feature = partial(_map_reduction_feature, reducer=torch.sum)
+map_product_feature = partial(_map_reduction_feature, reducer=torch.prod)
+map_mean_feature = partial(_map_reduction_feature, reducer=torch.mean)
+map_weighted_sum_feature = partial(_map_weighted_feature, normalize=False)
+map_weighted_mean_feature = partial(_map_weighted_feature, normalize=True)
+map_molecular_weighted_sum_feature = partial(
+    _map_molecular_weighted_feature, normalize=False
+)
+map_molecular_weighted_mean_feature = partial(
+    _map_molecular_weighted_feature, normalize=True
+)
+
+
 AGGREGATE_MAP = {
     SumFeature: map_sum_feature,
     ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
+    WeightedMeanFeature: map_weighted_mean_feature,
     WeightedSumFeature: map_weighted_sum_feature,
+    MolecularWeightedMeanFeature: map_molecular_weighted_mean_feature,
     MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
     CloneFeature: map_clone_feature,
 }

@@ -59,18 +59,16 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
         "descriptors": ["alpha", "beta"],
-        "normalize_by_weight_sum": False,
         "keep_features": True,
     },
 )
 
 specs.add_valid(
-    features.WeightedSumFeature,
+    features.WeightedMeanFeature,
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
         "descriptors": ["alpha", "beta"],
-        "normalize_by_weight_sum": True,
         "keep_features": True,
     },
 )
@@ -84,13 +82,12 @@ specs.add_valid(
             descriptors=["NssCH2", "ATSC2d"],
             ignore_3D=True,
         ).model_dump(),
-        "normalize_by_weight_sum": False,
         "keep_features": True,
     },
 )
 
 specs.add_valid(
-    features.MolecularWeightedSumFeature,
+    features.MolecularWeightedMeanFeature,
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
@@ -98,7 +95,6 @@ specs.add_valid(
             descriptors=["NssCH2", "ATSC2d"],
             ignore_3D=True,
         ).model_dump(),
-        "normalize_by_weight_sum": True,
         "keep_features": True,
     },
 )

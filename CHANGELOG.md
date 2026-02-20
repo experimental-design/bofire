@@ -12,13 +12,13 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Explicit Interaction features (like `x_1 * x_2`) for botorch based surrogates via the engineered features mechanism.
 - Support for custom formulas including discrete and categorical features in the DoE module.
 - Support for pandas 3.0
-- Optional normalization (`normalize_by_weight_sum`) for `WeightedSumFeature` and `MolecularWeightedSumFeature`, enabling weighted-mean behavior.
+- `WeightedMeanFeature` and `MolecularWeightedMeanFeature` engineered features for weighted-mean behavior.
 
 ### Changed
 
 - **Breaking**: For all botorch surrogate that are trainable, the `scaler` keyword used on defining how to scale the inputs before entering the actual model/kernel, do not expect anymore an enum but instance of a `Scaler` class like `Normalize` or `Standardize`. Via this, it can be controlled on which features the scaler should operate.
 - Static type checking was migrated from `pyright` to `ty`.
-- Refactored weighted engineered-feature surrogate mapping to share implementation across descriptor and molecular weighted-sum features.
+- Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
 
 ### Fixed
 
