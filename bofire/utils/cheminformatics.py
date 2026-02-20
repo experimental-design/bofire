@@ -8,7 +8,6 @@ import pandas as pd
 try:
     from rdkit import RDLogger
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
-    from rdkit.DataStructs import FingerprintSimilarity
 
     lg = RDLogger.logger()
     lg.setLevel(RDLogger.CRITICAL)
