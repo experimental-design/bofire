@@ -1,5 +1,5 @@
 import warnings
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -53,7 +53,8 @@ def smiles2fingerprints(
     smiles: List[str],
     bond_radius: int = 5,
     n_bits: int = 2048,
-) -> np.ndarray:
+    output_as_rdkit_bitvector: bool = False,
+) -> np.ndarray | Any:
     """Transforms a list of smiles to an array of morgan fingerprints.
 
     Args:
@@ -73,7 +74,7 @@ def smiles2fingerprints(
         for mol in rdkit_mols
     ]
 
-    return np.asarray(fps)
+    return fps if output_as_rdkit_bitvector else np.asarray(fps)
 
 
 def smiles2fragments(
