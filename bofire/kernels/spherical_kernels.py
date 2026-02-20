@@ -75,11 +75,13 @@ class SphericalLinearKernel(gpytorch.kernels.RBFKernel):
             )
         # Expand bounds if a single tuple is provided
         if isinstance(bounds[0], (int, float)):
-            bounds = [(bounds[0], bounds[1])] * num_dims  # type: ignore
+            bounds = [
+                (bounds[0], bounds[1])
+            ] * num_dims  # ty: ignore[invalid-assignment]
 
         # Create buffer for the center and length of each dimension in the space
         _dtype = self.raw_lengthscale.dtype
-        _bounds = torch.tensor(bounds, dtype=_dtype)  # type: ignore
+        _bounds = torch.tensor(bounds, dtype=_dtype)
         mins = _bounds[..., 0]
         maxs = _bounds[..., 1]
         centers = (mins + maxs).div(2.0)
@@ -87,7 +89,7 @@ class SphericalLinearKernel(gpytorch.kernels.RBFKernel):
         self.register_buffer("_maxs", maxs)
         self.register_buffer("_centers", centers)
         self.register_buffer("_num_dims", torch.tensor(num_dims, dtype=torch.long))
-        assert torch.all(self._maxs > self._mins), f"Invalid bounds {bounds}."  # type: ignore
+        assert torch.all(self._maxs > self._mins), f"Invalid bounds {bounds}."
 
         # When ard=False, fix the lengthscales (don't learn them)
         if self.ard_num_dims is None:
@@ -150,7 +152,7 @@ class SphericalLinearKernel(gpytorch.kernels.RBFKernel):
         # If ard_num_dims is None, lengthscale is a scalar, so we need to broadcast it
         if self.ard_num_dims is None:
             # Non-ARD case: lengthscale is scalar, expand to match number of dimensions
-            lengthscale = lengthscale.expand(*lengthscale.shape[:-1], self._num_dims)  # type: ignore
+            lengthscale = lengthscale.expand(*lengthscale.shape[:-1], self._num_dims)
 
         max_sq_norm: torch.Tensor = (
             (self._maxs - self._mins)[..., None, :]  # Shape: (..., 1, D)

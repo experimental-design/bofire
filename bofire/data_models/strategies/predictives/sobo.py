@@ -53,7 +53,7 @@ class SoboStrategy(SoboBaseStrategy):
         if (
             len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
             - len(
-                self.domain.outputs.get_by_objective(includes=None, excludes=Objective)  # type: ignore
+                self.domain.outputs.get_by_objective(includes=None, excludes=Objective)
             )
         ) > 1 and not isinstance(self.acquisition_function, qLogPF):
             raise ValueError(
@@ -106,7 +106,9 @@ class _CheckAdaptableWeightsMixin:
 
     @model_validator(mode="after")
     def check_adaptable_weights(self):
-        for obj in self.domain.outputs.get_by_objective():  # type: ignore
+        for (
+            obj
+        ) in self.domain.outputs.get_by_objective():  # ty: ignore[unresolved-attribute]
             if obj.objective.w < 1e-8:
                 raise pydantic.ValidationError(
                     f"Weight transformation to (1, inf) requires w>=1e-8 . Violated by feature {obj.key}."

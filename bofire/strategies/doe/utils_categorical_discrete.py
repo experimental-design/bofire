@@ -37,9 +37,7 @@ def map_discrete_to_continuous(
     """
 
     def generate_value_key(input: DiscreteInput, d: float):
-        return (
-            f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-','__neg__')}"
-        )
+        return f"aux_{input.key}_{str(d).replace('.', '__decpt__').replace('-', '__neg__')}"
 
     # Create a new list of inputs
     new_inputs = []
@@ -341,7 +339,7 @@ def project_candidates_into_domain(
 
             # enforce that the sum of the auxiliary inputs times the allowed discrete values is equal to the discrete input
             constraints += [
-                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)  # type: ignore
+                linear_equality_constraint(domain.inputs.get_by_key(u).values, x, x_u)
             ]
             b += [candidates_rounded[u].iloc[i]]
         if len(keys_continuous_inputs) > 0:
@@ -352,11 +350,11 @@ def project_candidates_into_domain(
             )
             # add upper and lower bounds for the continuous inputs
             lower_bounds = [
-                domain.inputs.get_by_key(continuous_input).bounds[0]  # type: ignore
+                domain.inputs.get_by_key(continuous_input).bounds[0]
                 for continuous_input in keys_continuous_inputs
             ]
             upper_bounds = [
-                domain.inputs.get_by_key(continuous_input).bounds[1]  # type: ignore
+                domain.inputs.get_by_key(continuous_input).bounds[1]
                 for continuous_input in keys_continuous_inputs
             ]
             constraints += [lower_bound(x=y, w=lower_bounds)]
@@ -401,9 +399,7 @@ def project_candidates_into_domain(
                     )
 
     # Create the objective function
-    objective = cp.Minimize(
-        cp.sum_squares(b - cp.hstack(cp_variables))  # type: ignore
-    )
+    objective = cp.Minimize(cp.sum_squares(b - cp.hstack(cp_variables)))
     prob = cp.Problem(objective=objective, constraints=constraints)
     if scip_params is None:
         scip_params = {"numerics/feastol": 1e-8}
