@@ -104,8 +104,8 @@ def test_tanimoto_calculation(
             rtol=1e-3,
             atol=1e-3,
         )
-        assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
-        assert np.allclose(cov1, cov2, rtol=1e-3, atol=1e-3)
+        assert np.allclose(mean1, mean2)
+        assert np.allclose(cov1, cov2)
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")

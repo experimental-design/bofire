@@ -153,16 +153,3 @@ def smiles2fragments_fingerprints(
     fragments = smiles2fragments(smiles, fragments_list=fragments_list)
 
     return np.hstack((fingerprints, fragments))
-
-
-def mutual_tanimoto_similarities(
-    smiles: list[str],
-    bond_radius: int = 5,
-    n_bits: int = 2048,
-) -> list[float]:
-    fingerprints = smiles2fingerprints(
-        smiles, bond_radius, n_bits, output_as_rdkit_bitvector=True
-    )
-
-    fp_pairs = list(combinations(fingerprints, 2))
-    return [FingerprintSimilarity(*fp) for fp in fp_pairs]

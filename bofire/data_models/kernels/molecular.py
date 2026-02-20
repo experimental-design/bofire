@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import model_validator
+from pydantic import model_validator, PrivateAttr
 
 from bofire.data_models.features.molecular import CategoricalMolecularInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
@@ -14,11 +14,11 @@ class MolecularKernel(FeatureSpecificKernel):
 class TanimotoKernel(MolecularKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
     ard: bool = True
-    _pre_compute_similarities: bool = False
+    _pre_compute_similarities: bool = PrivateAttr(default=None)
 
     # private attributes, for pre-computation of similarities: will be overridden by tanimoto_gp, or auto-computed
-    _fingerprint_settings_for_similarities: Optional[dict[str, AnyMolFeatures]] = None
-    _molecular_inputs: Optional[list[CategoricalMolecularInput]] = None
+    _fingerprint_settings_for_similarities: Optional[dict[str, AnyMolFeatures]] = PrivateAttr(default=None)
+    _molecular_inputs: Optional[list[CategoricalMolecularInput]] = PrivateAttr(default=None)
 
     @model_validator(mode="after")
     def compute_mutual_tanimoto_distances(self):
@@ -27,7 +27,7 @@ class TanimotoKernel(MolecularKernel):
 
         assert (
             self._molecular_inputs is not None
-        ), "need molecular inputs ofr pre-computed distances"
+        ), "need molecular inputs for pre-computed distances"
 
         # fill fingerprint settings
         if self._fingerprint_settings_for_similarities is None:
