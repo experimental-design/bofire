@@ -28,7 +28,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     LogNormalPrior,
 )
-from bofire.data_models.surrogates.api import Normalize, ScalerEnum
+from bofire.data_models.surrogates.api import Normalize, ScalerEnum, Standardize
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
@@ -1170,4 +1170,129 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Feature keys do not match input keys.",
+)
+
+# PFN Surrogate specs
+specs.add_valid(
+    models.PFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "checkpoint_url": "pfns4bo_hebo",
+        "load_training_checkpoint": False,
+        "cache_dir": None,
+        "batch_first": False,
+        "multivariate": False,
+        "constant_model_kwargs": {},
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+)
+
+specs.add_valid(
+    models.PFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "checkpoint_url": "pfns4bo_bnn",
+        "load_training_checkpoint": False,
+        "cache_dir": None,
+        "batch_first": True,
+        "multivariate": True,
+        "constant_model_kwargs": {"key": "value"},
+        "scaler": Standardize().model_dump(),
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+)
+
+specs.add_invalid(
+    models.PFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "checkpoint_url": "pfns4bo_hebo",
+        "load_training_checkpoint": False,
+        "cache_dir": None,
+        "batch_first": False,
+        "multivariate": False,
+        "constant_model_kwargs": {},
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.LOG,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
+    message="PFNSurrogate does not support output_scaler=LOG. "
+    "LOG and CHAINED_LOG_STANDARDIZE transforms are incompatible with "
+    "PFN's variance predictions. Use STANDARDIZE, NORMALIZE, or IDENTITY instead.",
+)
+
+specs.add_invalid(
+    models.PFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "checkpoint_url": "pfns4bo_hebo",
+        "load_training_checkpoint": False,
+        "cache_dir": None,
+        "batch_first": False,
+        "multivariate": False,
+        "constant_model_kwargs": {},
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.CHAINED_LOG_STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
+    message="PFNSurrogate does not support output_scaler=CHAINED_LOG_STANDARDIZE. "
+    "LOG and CHAINED_LOG_STANDARDIZE transforms are incompatible with "
+    "PFN's variance predictions. Use STANDARDIZE, NORMALIZE, or IDENTITY instead.",
 )
