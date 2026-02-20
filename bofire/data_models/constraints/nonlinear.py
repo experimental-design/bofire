@@ -158,7 +158,6 @@ class NonlinearConstraint(IntrapointConstraint):
                 self.expression(**func_input).cpu().numpy(),
                 index=experiments.index,  # Preserves orogonal    indices instead of creating new ones.
             )
-        raise ValueError("expression must be a string or callable")
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self.jacobian_expression is not None:
