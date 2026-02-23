@@ -64,7 +64,30 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    features.WeightedMeanFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "descriptors": ["alpha", "beta"],
+        "keep_features": True,
+    },
+)
+
+specs.add_valid(
     features.MolecularWeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "molfeatures": MordredDescriptors(
+            descriptors=["NssCH2", "ATSC2d"],
+            ignore_3D=True,
+        ).model_dump(),
+        "keep_features": True,
+    },
+)
+
+specs.add_valid(
+    features.MolecularWeightedMeanFeature,
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
