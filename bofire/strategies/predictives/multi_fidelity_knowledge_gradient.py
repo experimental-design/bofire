@@ -18,6 +18,7 @@ from botorch.acquisition.multi_objective.objective import (
 from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.gpytorch import GPyTorchModel
+from botorch.models.model import ModelList
 from botorch.sampling.get_sampler import get_sampler
 from pydantic import PositiveInt
 from torch import Tensor
@@ -101,7 +102,19 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         X_train, X_pending = self.get_acqf_input_tensors()
 
         objective = self._get_objective()
+
+        # We must subset the model here, to remove the deterministic cost model from the
+        # ModelList. Otherwise, an error will be raised in the acqf when we try to
+        # generate fantasies, since determinstic models do not have a `.fantasize`
+        # method.
         assert self.model is not None
+        model = ModelList(
+            *[
+                m
+                for m, k in zip(self.model.models, self.domain.outputs.get_keys())
+                if k != self.fidelity_cost_output_key
+            ]  # type: ignore
+        )
 
         features2idx, _ = self.domain.inputs._get_transform_info(
             self.input_preprocessing_specs
@@ -122,7 +135,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         current_value = self.get_current_value(target_fidelities)
 
         acqf = get_acquisition_function_qMFHVKG(
-            self.model,
+            model,
             ref_point=self.get_adjusted_refpoint(),
             current_value=current_value,
             objective=objective,
@@ -247,7 +260,7 @@ def get_project(target_fidelities: dict[int, float]) -> Callable[[Tensor], Tenso
 
 
 def get_acquisition_function_qMFHVKG(
-    model: GPyTorchModel,
+    model: GPyTorchModel | ModelList,
     objective: MCMultiOutputObjective,
     X_observed: Tensor,
     target_fidelities: dict[int, float],
