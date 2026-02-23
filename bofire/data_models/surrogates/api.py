@@ -5,6 +5,7 @@ from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
     BotorchSurrogates,
+    register_botorch_surrogate,
 )
 from bofire.data_models.surrogates.deterministic import (
     CategoricalDeterministicSurrogate,

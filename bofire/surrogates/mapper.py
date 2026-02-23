@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, Optional, Type
 
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
@@ -116,6 +116,36 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
     data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,
 }
+
+
+def register(
+    data_model_cls: Type[data_models.Surrogate],
+    surrogate_cls: Type[Surrogate],
+    data_model_transform: Optional[Callable] = None,
+) -> None:
+    """Register a custom surrogate mapping from data model to functional class.
+
+    If ``data_model_cls`` is a subclass of
+    :class:`~bofire.data_models.surrogates.botorch.BotorchSurrogate`, it is
+    also registered with :class:`BotorchSurrogates` so that it can be used
+    in botorch-based strategies out of the box.
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        surrogate_cls: The functional surrogate class.
+        data_model_transform: Optional function that transforms the data model
+            before instantiation (e.g. to convert to a simpler representation).
+    """
+    SURROGATE_MAP[data_model_cls] = surrogate_cls
+    if data_model_transform is not None:
+        DATA_MODEL_MAP[data_model_cls] = data_model_transform
+
+    if issubclass(data_model_cls, data_models.BotorchSurrogate):
+        from bofire.data_models.surrogates.botorch_surrogates import (
+            register_botorch_surrogate,
+        )
+
+        register_botorch_surrogate(data_model_cls)
 
 
 def map(data_model: data_models.Surrogate, **kwargs) -> Surrogate:
