@@ -146,6 +146,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             num_fantasies=self.acquisition_function.num_fantasies,
             num_pareto=self.acquisition_function.num_pareto,
             cost_aware_utility=cost_aware_utility,
+            seed=self.seed,
         )
         return [acqf]
 

@@ -8,8 +8,6 @@ from bofire.strategies.api import MultiFidelityHVKGStrategy, RandomStrategy
 
 
 def test_mfhvkg_fidelity_selection():
-    # FIXME: this currently fails: botorch is struggling with the reference point
-    # having 2 outputs, but the model producing 3 outputs.
     benchmark = MOMFBraninCurrin()
 
     random_strategy = RandomStrategy.make(
@@ -22,10 +20,10 @@ def test_mfhvkg_fidelity_selection():
 
     strategy = MultiFidelityHVKGStrategy.make(
         domain=benchmark.domain,
-        acquisition_function=qMFHVKG(n_mc_samples=16),
+        acquisition_function=qMFHVKG(n_mc_samples=16, num_pareto=5, num_fantasies=8),
         acquisition_optimizer=BotorchOptimizer(
             n_raw_samples=128,
-            maxiter=200,
+            maxiter=10,
         ),
         seed=0,
         fidelity_cost_output_key="fidelity_cost",

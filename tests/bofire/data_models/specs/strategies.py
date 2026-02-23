@@ -25,6 +25,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     ContinuousTaskInput,
     DiscreteInput,
+    DiscreteTaskInput,
 )
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
@@ -1015,6 +1016,7 @@ specs.add_valid(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     ContinuousTaskInput(key="task", bounds=(0, 1)),
+                    DiscreteTaskInput(key="task_discrete", values=[1, 2, 3]),
                 ]
             ),
             outputs=Outputs(
