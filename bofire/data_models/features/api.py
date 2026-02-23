@@ -11,9 +11,11 @@ from bofire.data_models.features.engineered_feature import (
     CloneFeature,
     EngineeredFeature,
     MeanFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.features.feature import Feature, Input, Output
@@ -45,7 +47,9 @@ AnyFeature = Union[
     TaskInput,
     SumFeature,
     MeanFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ContinuousMolecularInput,
     ProductFeature,
@@ -68,7 +72,9 @@ AnyOutput = Union[ContinuousOutput, CategoricalOutput]
 AnyEngineeredFeature = Union[
     SumFeature,
     MeanFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
     CloneFeature,
