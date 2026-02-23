@@ -154,7 +154,10 @@ class NonlinearConstraint(IntrapointConstraint):
                 col: torch_tensor(experiments[col], requires_grad=False)
                 for col in experiments.columns
             }
-            return pd.Series(self.expression(**func_input).cpu().numpy())
+            return pd.Series(
+                self.expression(**func_input).cpu().numpy(),
+                index=experiments.index,  # Preserves orogonal indices instead of creating new ones.
+            )
         raise ValueError("expression must be a string or callable")
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:

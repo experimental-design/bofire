@@ -337,7 +337,7 @@ def test_inputs_sample_empty():
     [
         ({"x4": CategoricalEncodingEnum.ONE_HOT}),
         ({"x1": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x2": ScalerEnum.NORMALIZE}),
+        ({"x2": ScalerEnum.STANDARDIZE}),
         ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
         ({"x1": Fingerprints()}),
         ({"x2": Fragments()}),
@@ -395,7 +395,7 @@ def test_inputs_validate_transform_valid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x4": ScalerEnum.NORMALIZE}),
+        ({"x4": ScalerEnum.STANDARDIZE}),
         ({"x4": CategoricalEncodingEnum.DESCRIPTOR}),
     ],
 )
