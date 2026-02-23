@@ -25,7 +25,7 @@ from torch import Tensor
 from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import qMFHVKG
-from bofire.data_models.api import Domain
+from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import ContinuousTaskInput, DiscreteTaskInput
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
@@ -79,22 +79,17 @@ def _get_domain_with_fixed_task_inputs(
     features2idx: dict[str, tuple[int]],
 ) -> Domain:
     """Create a copy of the domain with task inputs fixed at the highest fidelity."""
-    fixed_inputs = domain.inputs.model_copy()
-
-    # for key in self.task_feature_keys:
-    #     task_feature = self.inputs.get_by_key(key)
-    #     assert isinstance(task_feature, ContinuousTaskInput)
-    #     prev_bounds[key] = (task_feature.lower_bound, task_feature.upper_bound)
-    #     tgt = target_fidelities[features2idx[key][0]]
-    #     task_feature.bounds = (tgt, tgt)
+    fixed_inputs = domain.inputs.get(excludes=DiscreteTaskInput).model_copy()
 
     for feat in fixed_inputs.get(ContinuousTaskInput):
         target = target_fidelities[features2idx[feat.key][0]]
         feat.bounds = (target, target)
 
-    for feat in fixed_inputs.get(DiscreteTaskInput):
+    # fixed discrete features aren't supported - we must create new fixed continuous features
+    for feat in domain.inputs.get(DiscreteTaskInput):
         target = target_fidelities[features2idx[feat.key][0]]
-        feat.values = [target]
+        new_fixed_feat = ContinuousTaskInput(key=feat.key, bounds=(target, target))
+        fixed_inputs += [new_fixed_feat]
 
     return domain.model_copy(update={"inputs": fixed_inputs})
 
@@ -127,8 +122,6 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
         X_train, X_pending = self.get_acqf_input_tensors()
 
-        objective = self._get_objective()
-
         # We must subset the model here, to remove the deterministic cost model from the
         # ModelList. Otherwise, an error will be raised in the acqf when we try to
         # generate fantasies, since determinstic models do not have a `.fantasize`
@@ -141,6 +134,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
                 if k != self.fidelity_cost_output_key
             ]  # type: ignore
         )
+        objective = self._get_objective(exclude_task_cost=True)
 
         features2idx, _ = self.domain.inputs._get_transform_info(
             self.input_preprocessing_specs
@@ -176,10 +170,24 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         )
         return [acqf]
 
-    def _get_objective(self) -> GenericMCMultiOutputObjective:
+    def _get_objective(
+        self, exclude_task_cost: bool = False
+    ) -> GenericMCMultiOutputObjective:
         assert self.experiments is not None
+
+        outputs = self.domain.outputs
+        if exclude_task_cost:
+            # we filter task cost from Outputs, since this is filtered from `self.model`
+            # (to work with fantasize), and so must be filtered here as well so that
+            # indices are compatible
+            outputs = Outputs(
+                features=[
+                    f for f in outputs.get() if f.key != self.fidelity_cost_output_key
+                ]
+            )
+
         objective = get_multiobjective_objective(
-            outputs=self.domain.outputs,
+            outputs=outputs,
             experiments=self.experiments,
         )
         return GenericMCMultiOutputObjective(objective=objective)
