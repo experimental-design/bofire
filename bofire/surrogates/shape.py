@@ -130,7 +130,6 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             covar_module = kernels.map(
                 self.continuous_kernel,
                 active_dims=self.idx_continuous,
-                ard_num_dims=1,
                 batch_shape=torch.Size(),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
@@ -138,7 +137,6 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             ) * kernels.map(
                 self.shape_kernel,
                 active_dims=self.idx_shape,
-                ard_num_dims=len(self.idx_shape) if self.ard else None,
                 batch_shape=torch.Size(),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
@@ -160,7 +158,6 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             covar_module = kernels.map(
                 self.shape_kernel,
                 active_dims=self.idx_shape,
-                ard_num_dims=len(self.idx_shape) if self.ard else None,
                 batch_shape=torch.Size(),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
@@ -281,7 +278,6 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             continuous_kernel = kernels.map(
                 self.continuous_kernel,
                 active_dims=self.idx_continuous,
-                ard_num_dims=1,
                 batch_shape=torch.Size(),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
@@ -290,7 +286,6 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             shape_kernel = kernels.map(
                 self.shape_kernel,
                 active_dims=self.idx_shape,
-                ard_num_dims=len(self.idx_shape) if self.ard else None,
                 batch_shape=torch.Size(),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats
@@ -301,7 +296,6 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             shape_kernel = kernels.map(
                 self.shape_kernel,
                 active_dims=self.idx_shape,
-                ard_num_dims=len(self.idx_shape) if self.ard else None,
                 batch_shape=torch.Size(),
                 features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                     self.input_preprocessing_specs, feats

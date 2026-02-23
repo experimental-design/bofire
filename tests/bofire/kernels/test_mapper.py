@@ -265,7 +265,6 @@ def test_map_exact_wasserstein_kernel_auto_chunking():
         kernel,
         batch_shape=torch.Size(),
         active_dims=list(range(6)),
-        ard_num_dims=1,
         features_to_idx_mapper=None,
     )
     assert isinstance(k, shapeKernels.ExactWassersteinKernel)

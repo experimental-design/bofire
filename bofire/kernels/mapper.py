@@ -38,7 +38,6 @@ def _compute_active_dims(
 def map_RBFKernel(
     data_model: data_models.RBFKernel,
     batch_shape: torch.Size,
-    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.RBFKernel:
@@ -63,7 +62,6 @@ def map_RBFKernel(
 def map_MaternKernel(
     data_model: data_models.MaternKernel,
     batch_shape: torch.Size,
-    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> gpytorch.kernels.MaternKernel:
@@ -296,7 +294,6 @@ def map_PositiveIndexKernel(
 def map_WassersteinKernel(
     data_model: data_models.WassersteinKernel,
     batch_shape: torch.Size,
-    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> WassersteinKernel:
@@ -308,14 +305,12 @@ def map_WassersteinKernel(
             else None
         ),
         active_dims=active_dims,
-        ard_num_dims=ard_num_dims,
     )
 
 
 def map_ExactWassersteinKernel(
     data_model: data_models.ExactWassersteinKernel,
     batch_shape: torch.Size,
-    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> ExactWassersteinKernel:
@@ -373,7 +368,6 @@ def map_ExactWassersteinKernel(
         else True,
         order=data_model.order,
         active_dims=active_dims,
-        ard_num_dims=ard_num_dims,
     )
 
 
@@ -501,14 +495,12 @@ KERNEL_MAP = {
 def map(
     data_model: data_models.AnyKernel,
     batch_shape: torch.Size,
-    ard_num_dims: int,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> GpytorchKernel:
     return KERNEL_MAP[data_model.__class__](
         data_model,
         batch_shape,
-        ard_num_dims,
         active_dims,
         features_to_idx_mapper,
     )

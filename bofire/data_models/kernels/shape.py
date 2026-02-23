@@ -26,7 +26,6 @@ class WassersteinKernel(Kernel):
 
     type: Literal["WassersteinKernel"] = "WassersteinKernel"
     squared: bool = False
-    ard_num_dims: Optional[int] = None
     lengthscale_prior: Optional[AnyPrior] = None
     lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
@@ -53,7 +52,6 @@ class ExactWassersteinKernel(Kernel):
 
     type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"
     squared: bool = False
-    ard_num_dims: Optional[int] = None
     lengthscale_prior: Optional[AnyPrior] = None
     lengthscale_constraint: Optional[AnyPriorConstraint] = None
     idx_x: Optional[List[int]] = None
