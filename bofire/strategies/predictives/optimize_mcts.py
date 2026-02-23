@@ -17,6 +17,85 @@ from botorch.optim import optimize_acqf
 from torch import Tensor
 
 
+# Ideas to improve MCTS performance / robustness in tree-like NChooseK spaces:
+# 1) Multi-fidelity reward evaluation:
+#    - Use cheap optimize_acqf settings early (smaller raw_samples / num_restarts),
+#      and expensive settings only for promising regions.
+#    - Even cheaper early-phase option: skip full optimize_acqf and estimate reward
+#      by drawing feasible samples (e.g., Sobol/random under fixed discrete choices),
+#      evaluating acq_function on them, and using max/top-k mean as a proxy.
+#      Then switch to full optimize_acqf for promising branches / final ranking.
+#    - Keep RAVE and rollout policy learning active in both sampling and full-opt
+#      phases, but make updates fidelity-dependent (e.g., lower update weight for
+#      proxy/sample rewards, full weight for optimize_acqf rewards).
+#    - Apply fidelity-dependent weighting to backprop / node updates as well
+#      (e.g., weighted reward accumulation and effective visits), so low-fidelity
+#      proxy rewards do not dominate UCT node values.
+# 2) Progressive optimization budget by node visits:
+#    - Increase optimize_acqf budget as a function of node.n_visits to stay broad
+#      early and become accurate later.
+# 3) Reward normalization for stable UCT/RAVE:
+#    - Backpropagate normalized rewards (running min/max or mean/std) to reduce
+#      scale sensitivity and outlier lock-in.
+# 4) Noise-aware value estimates:
+#    - Re-evaluate promising leaves multiple times and backpropagate averaged
+#      rewards (optionally track uncertainty).
+# 5) Policy-guided rollouts:
+#    - Replace uniform rollout actions with priors from RAVE stats and/or
+#      feature-level heuristics (e.g., variance gain proxies).
+#    - Practical v1 recommendation: learn rollout priors online with minimal
+#      overhead using per-(group_idx, action) running statistics.
+#    - Keep rollout_stats[(group_idx, action)] = (visits, total_reward), update
+#      from terminal rewards of rollout trajectories.
+#    - Score legal rollout actions with a blended heuristic such as:
+#        score(a) = w_r * rave_mean(a) + w_l * local_mean(a)
+#                   + w_n / sqrt(local_visits(a) + 1)
+#      where rave_mean uses existing global RAVE stats, local_mean comes from
+#      rollout_stats, and the novelty term preserves exploration.
+#    - Convert scores to probabilities via softmax temperature τ and mix with
+#      uniform exploration:
+#        p(a) = (1 - ε) * softmax(score/τ) + ε * uniform
+#      with annealing schedules (high τ/ε early, lower τ/ε later).
+#    - Include STOP in the same policy when legal (NChooseK), rather than only
+#      fixed p_stop_rollout, so stopping behavior can be learned from rewards.
+#    - Optional next step: make rollout_stats context-aware (e.g., bucket by
+#      selected-count/depth) for better state-conditional rollout decisions.
+#    - State-aware keys (recommended v1.5): replace global keys
+#      rollout_stats[(group_idx, action)] with
+#      rollout_stats[(state_bucket, action)], where state_bucket is a coarse
+#      summary such as (group_idx, min(selected_count, 3), min(depth, 5),
+#      stop_legal_flag). This lets the same action have different learned value
+#      in different contexts (e.g., early vs late picks), while keeping table
+#      size bounded via bucketing.
+#    Better rollout policy ideas (specific to this item):
+#    - RAVE-guided sampling: score legal actions by RAVE mean and sample with
+#      softmax probabilities p(a) ∝ exp(score(a)/τ), with temperature annealing.
+#    - Epsilon-mix with uniform: p = (1-ε) * p_policy + ε * p_uniform to avoid
+#      over-committing to noisy priors (anneal ε over search).
+#    - Adaptive STOP behavior in NChooseK rollouts: infer stop preference from
+#      historical marginal gains instead of relying only on fixed p_stop_rollout.
+#    - Action novelty bonus: add β/sqrt(n_a + 1) to prefer under-explored actions
+#      in rollout while preserving exploitation.
+#    - Categorical priors per dimension/value: keep simple running means for each
+#      categorical value and use them as rollout priors instead of uniform choice.
+#    - Depth-aware exploration: use higher τ/ε near root and lower τ/ε near leaves.
+# 6) Top-K final refinement:
+#    - Keep K best MCTS terminal selections and run a final high-fidelity
+#      optimize_acqf pass for improved reliability.
+# 7) Parallel MCTS with virtual loss:
+#    - Evaluate multiple leaves concurrently while discouraging duplicate branch
+#      selection during expansion.
+# 8) Categorical robustness:
+#    - Prefer tracking categorical indices in statistics/updates rather than
+#      float-value equality checks.
+# 9) Non-MCTS alternative: Cross-Entropy Method (CEM):
+#    - Maintain a sampling distribution over feasible NChooseK selections and
+#      categorical choices, sample a population, evaluate via optimize_acqf,
+#      keep elite samples, and update the distribution toward elites.
+#    - Often competitive or better when reward is terminal-only and expensive,
+#      especially with batched/parallel evaluations.
+
+
 STOP = -1  # Sentinel for stopping selection in a group
 
 
