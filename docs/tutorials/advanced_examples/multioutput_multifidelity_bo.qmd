@@ -1,0 +1,130 @@
+---
+title: Multi-Objective, Multi-Fidelity BO
+jupyter: python3
+---
+
+This tutorial shows how to set up a multi-fidelity problem that has multiple objectives.
+This approach uses the Multi-fidelity Hypervolume Knowledge Gradient acquisition function [1],
+which supports:
+- Multiple objectives, optimizing their pareto front
+- Multiple fidelities (both continuous and discrete), which can correspond to the quality
+of a function evaluation. For example, when running a computer simulation, one can control
+the resolution or the duration, each of which trade-off between quality and cost.
+- A cost-weighting, which determines how expensive an experiment is to carry out given
+the fidelity.
+
+For a deeper look at how this acquisition function works, see the corresponding paper
+or the [BoTorch tutorial](https://botorch.org/docs/tutorials/Multi_objective_multi_fidelity_BO).
+
+[1] S. Daulton, M. Balandat, and E. Bakshy. Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information. ICML, 2023.
+
+```{python}
+from bofire.data_models.acquisition_functions.api import qMFHVKG
+from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.features.api import ContinuousTaskInput
+from bofire.data_models.strategies.api import BotorchOptimizer
+from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
+from bofire.strategies.api import MultiFidelityHVKGStrategy, RandomStrategy
+import pandas as pd
+import numpy as np
+```
+
+## Problem definition
+
+We will consider a very simple objective function - a rigid-body physics simulation
+of thousands of particles in a packed bed reactor. We can control the shape of each
+particle, and we want to optimize the performance of the reactor. This includes:
+- maximizing air flow through the reactor (minimizing pressure drop), and
+- maximizing the number reaction sites (maximizing surface area per unit volume of the reactor).
+
+We can also decrease the fidelity in two different ways, each reducing the cost of an experiment:
+- stop the simulation early, and
+- reduce the resolution of the simulation.
+
+```{python}
+def simulation_black_box(experiments: pd.DataFrame, fixed_simulation_cost: float = 1.0) -> pd.DataFrame:
+    """Toy function representing a rigid-body simulation of reactor packing.
+
+    For the sake of this tutorial, we provide simple expressions to represent the various
+    impacts of changing the experiment conditions and fidelities."""
+
+    # Pressure drop is minimized for near-spherical cylinders
+    aspect_ratio = experiments["height"] / (2 * experiments["radius"])
+    pressure_drop = np.exp((1 - np.log(aspect_ratio)).abs())
+
+    # Specific surface area is maximized for tall, thin cylinders
+    optimal_surface_area = pd.DataFrame([[10.0, 1.0]], columns=["height", "radius"])
+    surface_area = 10.0 - 0.1*((experiments[["height", "radius"]] - optimal_surface_area) ** 2).sum(axis=1)
+
+    # Cost is linear wrt both resolution and simulation time, plus some fixed cost
+    cost = experiments[["sim_resolution", "sim_duration"]].sum(axis=1) + fixed_simulation_cost
+
+    # By terminating the simulation early, the packing doesn't settle - we underestimate
+    # the pressure drop, and the specific surface area has some noisy bias
+    pressure_drop += 0.2 * (experiments["sim_duration"] - 1.0)
+    surface_area += 0.1 * np.sin(5.0 * experiments["sim_duration"])
+
+    # By decreasing the resolution, the computed mesh starts combining adjacent particles
+    # to fill voids. This causes large decrease in specific surface area for small resolution.
+    surface_area += -0.2 * np.exp(2.0 * (1.0 - experiments["sim_resolution"]) - 1.0)
+
+    return pd.DataFrame({
+        "pressure_drop": pressure_drop,
+        "surface_area": surface_area,
+        "cost": cost,
+    })
+```
+
+```{python}
+from bofire.benchmarks.api import Benchmark
+import bofire.data_models.domain.api as domain_api
+import bofire.data_models.features.api as feature_api
+import bofire.data_models.objectives.api as objective_api
+
+class SimulationBenchmark(Benchmark):
+    def __init__(self, fixed_simulation_cost: float = 1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.fixed_simulation_cost = fixed_simulation_cost
+        inputs = domain_api.Inputs(features=[
+            feature_api.ContinuousInput(key="height", bounds=(1.0, 10.0)),
+            feature_api.ContinuousInput(key="radius", bounds=(1.0, 10.0)),
+            feature_api.ContinuousTaskInput(key="sim_duration", bounds=(0.1, 1.0)),
+            feature_api.DiscreteTaskInput(key="sim_resolution", values=[0.2, 0.4, 0.8]),
+        ])
+
+        outputs = domain_api.Outputs(features=[
+            feature_api.ContinuousOutput(key="pressure_drop", objective=objective_api.MinimizeObjective()),
+            feature_api.ContinuousOutput(key="surface_area", objective=objective_api.MaximizeObjective()),
+            feature_api.ContinuousOutput(key="cost", objective=None),
+        ])
+
+        self._domain = domain_api.Domain(
+            inputs=inputs,
+            outputs=outputs,
+        )
+
+    def _f(self, candidates: pd.DataFrame):
+        return simulation_black_box(candidates, self.fixed_simulation_cost)
+```
+
+```{python}
+benchmark = SimulationBenchmark(fixed_simulation_cost=1.0)
+samples = benchmark.domain.inputs.sample(10, seed=0)
+experiments = benchmark.f(samples, return_complete=True)
+experiments.head()
+```
+
+
+We now need to create the strategy to solve this problem.
+
+```{python}
+from bofire.strategies.api import MultiFidelityHVKGStrategy
+
+strategy = MultiFidelityHVKGStrategy.make(
+    domain=benchmark.domain,
+    fidelity_cost_output_key="cost",
+)
+
+strategy.tell(experiments)
+strategy.ask(1)
+```
