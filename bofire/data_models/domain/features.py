@@ -37,13 +37,13 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     Feature,
     Input,
     Output,
-    TaskInput,
 )
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
@@ -346,12 +346,14 @@ class Inputs(_BaseFeatures[AnyInput]):
     def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
         filtered = filter_by_class(
             features,
-            includes=TaskInput,
+            includes=CategoricalTaskInput,
             excludes=None,
             exact=False,
         )
         if len(filtered) > 1:
-            raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
+            raise ValueError(
+                f"Only one `CategoricalTaskInput` is allowed, got {len(filtered)}."
+            )
         return features
 
     def get_fixed(self) -> Inputs:

@@ -73,6 +73,32 @@ def _map_cost_model_to_botorch(
     return cost_function, target_fidelities
 
 
+def _get_domain_with_fixed_task_inputs(
+    domain: Domain,
+    target_fidelities: dict[int, float],
+    features2idx: dict[str, tuple[int]],
+) -> Domain:
+    """Create a copy of the domain with task inputs fixed at the highest fidelity."""
+    fixed_inputs = domain.inputs.model_copy()
+
+    # for key in self.task_feature_keys:
+    #     task_feature = self.inputs.get_by_key(key)
+    #     assert isinstance(task_feature, ContinuousTaskInput)
+    #     prev_bounds[key] = (task_feature.lower_bound, task_feature.upper_bound)
+    #     tgt = target_fidelities[features2idx[key][0]]
+    #     task_feature.bounds = (tgt, tgt)
+
+    for feat in fixed_inputs.get(ContinuousTaskInput):
+        target = target_fidelities[features2idx[feat.key][0]]
+        feat.bounds = (target, target)
+
+    for feat in fixed_inputs.get(DiscreteTaskInput):
+        target = target_fidelities[features2idx[feat.key][0]]
+        feat.values = [target]
+
+    return domain.model_copy(update={"inputs": fixed_inputs})
+
+
 class MultiFidelityHVKGStrategy(BotorchStrategy):
     """Use the MFHVKG AF for a multi-objective, multi-fidelity problem.
 
@@ -195,29 +221,22 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             use_posterior_mean=True,
         )
 
-        # fix the task feature
-        # we only want the HV at the highest fidelity
         features2idx, _ = self.domain.inputs._get_transform_info(
             self.input_preprocessing_specs
         )
-        prev_bounds: dict[str, tuple[float, float]] = {}
-
-        for key in self.task_feature_keys:
-            task_feature = self.inputs.get_by_key(key)
-            assert isinstance(task_feature, ContinuousTaskInput)
-            prev_bounds[key] = (task_feature.lower_bound, task_feature.upper_bound)
-            tgt = target_fidelities[features2idx[key][0]]
-            task_feature.bounds = (tgt, tgt)
+        fixed_domain = _get_domain_with_fixed_task_inputs(
+            self.domain, target_fidelities, features2idx
+        )
 
         candidates = self.acqf_optimizer.optimize(
             candidate_count=self.acquisition_function.num_pareto,
             acqfs=[curr_val_acqf],
-            domain=self.domain,
+            domain=fixed_domain,
             experiments=self.experiments,
         )
 
         # calculate the acquisition function value
-        transformed = self.domain.inputs.transform(
+        transformed = fixed_domain.inputs.transform(
             candidates,
             self.input_preprocessing_specs,
         )
@@ -225,11 +244,6 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
         with torch.no_grad():
             val = curr_val_acqf(X).cpu().detach()
-
-        for key in self.task_feature_keys:
-            task_feature = self.inputs.get_by_key(key)
-            assert isinstance(task_feature, ContinuousTaskInput)
-            task_feature.bounds = prev_bounds[key]
 
         return val
 
