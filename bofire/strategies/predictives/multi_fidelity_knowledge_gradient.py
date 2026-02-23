@@ -19,7 +19,6 @@ from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.sampling.get_sampler import get_sampler
-from botorch.sampling.list_sampler import ListSampler
 from pydantic import PositiveInt
 from torch import Tensor
 from typing_extensions import Self
@@ -178,6 +177,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         curr_val_acqf = _get_hv_value_function(
             model=self.model,
             ref_point=torch.as_tensor(self.get_adjusted_refpoint(), **tkwargs),
+            objective=self._get_objective(),
             use_posterior_mean=True,
         )
 
@@ -266,22 +266,17 @@ def get_acquisition_function_qMFHVKG(
         raise ValueError("`ref_point` must be a Tensor for qMFHVKG")
 
     seed_sequence = np.random.SeedSequence(seed)
-    seeds = seed_sequence.generate_state(1 + model.num_outputs)
+    seeds = seed_sequence.generate_state(2)
     inner_sampler = get_sampler(
         posterior=model.posterior(X_observed[:1]),  # type: ignore
         sample_shape=torch.Size([mc_samples]),
         seed=int(seeds[0]),
     )
 
-    sampler = ListSampler(
-        *[
-            get_sampler(
-                posterior=model.posterior(X_observed[:1]),
-                sample_shape=torch.Size([num_fantasies]),
-                seed=int(seed),
-            )
-            for seed in seeds[1:]
-        ]
+    sampler = get_sampler(
+        posterior=model.posterior(X_observed[:1]),  # type: ignore
+        sample_shape=torch.Size([num_fantasies]),
+        seed=int(seeds[1]),
     )
 
     return qMultiFidelityHypervolumeKnowledgeGradient(
