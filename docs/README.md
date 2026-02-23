@@ -54,7 +54,7 @@ To build the documentation, you need:
 
 3. **Jupyter**: Required for rendering notebooks
    ```bash
-   pip install jupyter nbformat nbclient
+   pip install jupyter nbformat nbclient jupyter-cache
    ```
 
 ## Building the Documentation

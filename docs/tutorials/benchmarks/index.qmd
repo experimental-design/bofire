@@ -41,8 +41,8 @@ Tanaka multi-objective test function.
 ### [011 - Active Learning](011-ActiveLearning.qmd)
 Active learning strategies for experimental design.
 
-### [012 - Active Learning](012-engineered_features.qmd)
-Active learning strategies for experimental design.
+### [012 - Engineered Features](012-engineered_features.qmd)
+Optimization with continuous descriptor inputs and engineered features.
 
 ### [013 - Spherical linear kernels for high dimensional BO](013-spherical_kernel.qmd)
 High-dimensional Bayesian optimization using spherical linear kernels.

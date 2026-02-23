@@ -7,7 +7,7 @@ from bofire.data_models.features.api import ContinuousDescriptorInput, Continuou
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.features.molecular import ContinuousMolecularInput
 from bofire.data_models.molfeatures.api import AnyMolFeatures
-from bofire.data_models.types import Descriptors, FeatureKeys
+from bofire.data_models.types import Descriptors, FeatureKeys, OneFeatureKeys
 
 
 if TYPE_CHECKING:
@@ -161,3 +161,26 @@ class ProductFeature(EngineeredFeature):
     @property
     def n_transformed_inputs(self) -> int:
         return 1
+
+
+class CloneFeature(EngineeredFeature):
+    """Engineered feature that creates a copy of the original features.
+
+    This is useful if you want to have features undergoing different scalers
+    before entering different kernels.
+
+    Args:
+        features: The features to be used to compute the product.
+            It is allowed to state a feature more than once to for example
+            an quadratic term.
+        keep_features: Whether to keep the original features after
+            creating the engineered feature in surrogate creation.
+    """
+
+    type: Literal["CloneFeature"] = "CloneFeature"
+    order_id: ClassVar[int] = 5
+    features: OneFeatureKeys
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return len(self.features)
