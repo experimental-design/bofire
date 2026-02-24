@@ -120,10 +120,20 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
 
 def register(
     data_model_cls: Type[data_models.Surrogate],
-    surrogate_cls: Type[Surrogate],
+    surrogate_cls: Optional[Type[Surrogate]] = None,
     data_model_transform: Optional[Callable] = None,
-) -> None:
+):
     """Register a custom surrogate mapping from data model to functional class.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyDataModel)
+        class MySurrogate(Surrogate):
+            ...
+
+        # Direct call form
+        register(MyDataModel, MySurrogate)
 
     If ``data_model_cls`` is a subclass of
     :class:`~bofire.data_models.surrogates.botorch.BotorchSurrogate`, it is
@@ -132,20 +142,33 @@ def register(
 
     Args:
         data_model_cls: The Pydantic data model class.
-        surrogate_cls: The functional surrogate class.
+        surrogate_cls: The functional surrogate class. If not provided,
+            returns a decorator.
         data_model_transform: Optional function that transforms the data model
             before instantiation (e.g. to convert to a simpler representation).
+
+    Returns:
+        The surrogate class (unchanged) when used as a decorator, None otherwise.
     """
-    SURROGATE_MAP[data_model_cls] = surrogate_cls
-    if data_model_transform is not None:
-        DATA_MODEL_MAP[data_model_cls] = data_model_transform
 
-    if issubclass(data_model_cls, data_models.BotorchSurrogate):
-        from bofire.data_models.surrogates.botorch_surrogates import (
-            register_botorch_surrogate,
-        )
+    def _register(cls: Type[Surrogate]) -> Type[Surrogate]:
+        SURROGATE_MAP[data_model_cls] = cls
+        if data_model_transform is not None:
+            DATA_MODEL_MAP[data_model_cls] = data_model_transform
 
-        register_botorch_surrogate(data_model_cls)
+        if issubclass(data_model_cls, data_models.BotorchSurrogate):
+            from bofire.data_models.surrogates.botorch_surrogates import (
+                register_botorch_surrogate,
+            )
+
+            register_botorch_surrogate(data_model_cls)
+        return cls
+
+    if surrogate_cls is not None:
+        _register(surrogate_cls)
+        return None
+
+    return _register
 
 
 def map(data_model: data_models.Surrogate, **kwargs) -> Surrogate:
