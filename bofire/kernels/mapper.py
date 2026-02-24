@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Type
 
 import gpytorch
 import torch
@@ -426,6 +426,49 @@ KERNEL_MAP = {
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,
 }
+
+
+def register(
+    data_model_cls: Type[data_models.Kernel],
+    map_fn: Optional[Callable] = None,
+):
+    """Register a custom kernel mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyKernelDataModel)
+        def map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):
+            return MyGpytorchKernel(...)
+
+        # Direct call form
+        register(MyKernelDataModel, map_my_kernel)
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes ``(data_model, batch_shape, active_dims,
+            features_to_idx_mapper)`` and returns a gpytorch kernel. If not
+            provided, returns a decorator.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        KERNEL_MAP[data_model_cls] = fn
+
+        # Also register with the data model union so Pydantic accepts the type
+        from bofire.data_models.kernels.api import register_kernel
+
+        register_kernel(data_model_cls)
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
 
 
 def map(

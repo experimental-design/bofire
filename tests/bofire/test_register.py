@@ -1,4 +1,5 @@
 from typing import Literal, Type
+from unittest.mock import MagicMock
 
 import pandas as pd
 
@@ -8,8 +9,11 @@ from bofire.data_models.features.api import (
     AnyOutput,
     ContinuousInput,
     ContinuousOutput,
+    EngineeredFeature,
     Feature,
 )
+from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
+from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate as SurrogateDataModel
@@ -133,6 +137,44 @@ class TestRegisterStrategy:
         # cleanup
         META_MAP.pop(_CustomStrategyDataModel, None)
 
+    def test_register_decorator_syntax(self):
+        import bofire.strategies.api as strategies_api
+        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
+
+        ACTUAL_MAP.pop(_CustomStrategyDataModel, None)
+
+        @strategies_api.register(_CustomStrategyDataModel)
+        class _DecoratedStrategy(_CustomStrategy):
+            pass
+
+        assert ACTUAL_MAP[_CustomStrategyDataModel] is _DecoratedStrategy
+
+        dm = _CustomStrategyDataModel(domain=_make_domain())
+        result = strategies_api.map(dm)
+        assert isinstance(result, _DecoratedStrategy)
+
+        # cleanup
+        ACTUAL_MAP.pop(_CustomStrategyDataModel, None)
+
+    def test_register_decorator_meta(self):
+        import bofire.strategies.api as strategies_api
+        from bofire.strategies.mapper_meta import STRATEGY_MAP as META_MAP
+
+        META_MAP.pop(_CustomStrategyDataModel, None)
+
+        @strategies_api.register(_CustomStrategyDataModel, meta=True)
+        class _DecoratedMetaStrategy(_CustomStrategy):
+            pass
+
+        assert META_MAP[_CustomStrategyDataModel] is _DecoratedMetaStrategy
+
+        dm = _CustomStrategyDataModel(domain=_make_domain())
+        result = strategies_api.map(dm)
+        assert isinstance(result, _DecoratedMetaStrategy)
+
+        # cleanup
+        META_MAP.pop(_CustomStrategyDataModel, None)
+
     def test_register_exported_from_api(self):
         from bofire.strategies.api import register
 
@@ -202,6 +244,56 @@ class TestRegisterSurrogate:
 
         # cleanup
         SURROGATE_MAP.pop(_CustomSurrogateDataModel, None)
+
+    def test_register_decorator_syntax(self):
+        import bofire.surrogates.api as surrogates_api
+        from bofire.surrogates.mapper import SURROGATE_MAP
+
+        SURROGATE_MAP.pop(_CustomSurrogateDataModel, None)
+
+        @surrogates_api.register(_CustomSurrogateDataModel)
+        class _DecoratedSurrogate(_CustomSurrogate):
+            pass
+
+        assert SURROGATE_MAP[_CustomSurrogateDataModel] is _DecoratedSurrogate
+
+        dm = _CustomSurrogateDataModel()
+        result = surrogates_api.map(dm)
+        assert isinstance(result, _DecoratedSurrogate)
+
+        # cleanup
+        SURROGATE_MAP.pop(_CustomSurrogateDataModel, None)
+
+    def test_register_decorator_with_transform(self):
+        import bofire.surrogates.api as surrogates_api
+        from bofire.surrogates.mapper import DATA_MODEL_MAP, SURROGATE_MAP
+
+        SURROGATE_MAP.pop(_CustomSurrogateDataModel, None)
+        DATA_MODEL_MAP.pop(_CustomSurrogateDataModel, None)
+
+        transform_called = []
+
+        def my_transform(dm):
+            transform_called.append(dm)
+            return dm
+
+        @surrogates_api.register(
+            _CustomSurrogateDataModel, data_model_transform=my_transform
+        )
+        class _DecoratedSurrogate(_CustomSurrogate):
+            pass
+
+        assert SURROGATE_MAP[_CustomSurrogateDataModel] is _DecoratedSurrogate
+        assert DATA_MODEL_MAP[_CustomSurrogateDataModel] is my_transform
+
+        dm = _CustomSurrogateDataModel()
+        result = surrogates_api.map(dm)
+        assert isinstance(result, _DecoratedSurrogate)
+        assert len(transform_called) == 1
+
+        # cleanup
+        SURROGATE_MAP.pop(_CustomSurrogateDataModel, None)
+        DATA_MODEL_MAP.pop(_CustomSurrogateDataModel, None)
 
     def test_register_exported_from_api(self):
         from bofire.surrogates.api import register
@@ -332,3 +424,370 @@ class TestRegisterBotorchSurrogate:
         assert isinstance(result, _CustomBotorchSurrogate)
 
         self._cleanup()
+
+    def test_register_decorator_syntax(self):
+        """Decorator syntax should also trigger botorch registration."""
+        import bofire.surrogates.api as surrogates_api
+        from bofire.data_models.surrogates.botorch_surrogates import (
+            _BOTORCH_SURROGATE_TYPES,
+        )
+
+        self._cleanup()
+
+        @surrogates_api.register(_CustomBotorchSurrogateDataModel)
+        class _DecoratedBotorchSurrogate(_CustomBotorchSurrogate):
+            pass
+
+        assert _CustomBotorchSurrogateDataModel in _BOTORCH_SURROGATE_TYPES
+
+        dm = _CustomBotorchSurrogateDataModel(
+            inputs=_INPUTS,
+            outputs=_OUTPUTS,
+        )
+        result = surrogates_api.map(dm)
+        assert isinstance(result, _DecoratedBotorchSurrogate)
+
+        self._cleanup()
+
+
+# ---------------------------------------------------------------------------
+# Stub data models for kernels and priors
+# ---------------------------------------------------------------------------
+
+
+class _CustomKernelDataModel(KernelDataModel):
+    type: str = "CustomKernel"
+
+
+class _CustomPriorDataModel(PriorDataModel):
+    type: str = "CustomPrior"
+
+
+# ---------------------------------------------------------------------------
+# Kernel registration tests
+# ---------------------------------------------------------------------------
+
+
+class TestRegisterKernel:
+    def test_register_and_map(self):
+        import bofire.kernels.api as kernels_api
+        from bofire.kernels.mapper import KERNEL_MAP
+
+        KERNEL_MAP.pop(_CustomKernelDataModel, None)
+
+        sentinel = MagicMock(name="gpytorch_kernel")
+
+        def my_map_fn(data_model, batch_shape, active_dims, features_to_idx_mapper):
+            return sentinel
+
+        kernels_api.register(_CustomKernelDataModel, my_map_fn)
+        assert KERNEL_MAP[_CustomKernelDataModel] is my_map_fn
+
+        import torch
+
+        dm = _CustomKernelDataModel()
+        result = kernels_api.map(dm, torch.Size(), [0], None)
+        assert result is sentinel
+
+        # cleanup
+        KERNEL_MAP.pop(_CustomKernelDataModel, None)
+
+    def test_register_decorator_syntax(self):
+        import bofire.kernels.api as kernels_api
+        from bofire.kernels.mapper import KERNEL_MAP
+
+        KERNEL_MAP.pop(_CustomKernelDataModel, None)
+
+        sentinel = MagicMock(name="gpytorch_kernel")
+
+        @kernels_api.register(_CustomKernelDataModel)
+        def my_map_fn(data_model, batch_shape, active_dims, features_to_idx_mapper):
+            return sentinel
+
+        assert KERNEL_MAP[_CustomKernelDataModel] is my_map_fn
+
+        import torch
+
+        dm = _CustomKernelDataModel()
+        result = kernels_api.map(dm, torch.Size(), [0], None)
+        assert result is sentinel
+
+        # cleanup
+        KERNEL_MAP.pop(_CustomKernelDataModel, None)
+
+    def test_register_exported_from_api(self):
+        from bofire.kernels.api import register
+
+        assert callable(register)
+
+
+# ---------------------------------------------------------------------------
+# Prior registration tests
+# ---------------------------------------------------------------------------
+
+
+class TestRegisterPrior:
+    def test_register_and_map(self):
+        import bofire.priors.api as priors_api
+        from bofire.priors.mapper import PRIOR_MAP
+
+        PRIOR_MAP.pop(_CustomPriorDataModel, None)
+
+        sentinel = MagicMock(name="gpytorch_prior")
+
+        def my_map_fn(data_model, **kwargs):
+            return sentinel
+
+        priors_api.register(_CustomPriorDataModel, my_map_fn)
+        assert PRIOR_MAP[_CustomPriorDataModel] is my_map_fn
+
+        dm = _CustomPriorDataModel()
+        result = priors_api.map(dm)
+        assert result is sentinel
+
+        # cleanup
+        PRIOR_MAP.pop(_CustomPriorDataModel, None)
+
+    def test_register_decorator_syntax(self):
+        import bofire.priors.api as priors_api
+        from bofire.priors.mapper import PRIOR_MAP
+
+        PRIOR_MAP.pop(_CustomPriorDataModel, None)
+
+        sentinel = MagicMock(name="gpytorch_prior")
+
+        @priors_api.register(_CustomPriorDataModel)
+        def my_map_fn(data_model, **kwargs):
+            return sentinel
+
+        assert PRIOR_MAP[_CustomPriorDataModel] is my_map_fn
+
+        dm = _CustomPriorDataModel()
+        result = priors_api.map(dm)
+        assert result is sentinel
+
+        # cleanup
+        PRIOR_MAP.pop(_CustomPriorDataModel, None)
+
+    def test_register_exported_from_api(self):
+        from bofire.priors.api import register
+
+        assert callable(register)
+
+
+# ---------------------------------------------------------------------------
+# Integration tests: custom types accepted by Pydantic validation
+# ---------------------------------------------------------------------------
+
+
+class _IntegrationKernelDataModel(KernelDataModel):
+    type: Literal["_IntegrationKernel"] = "_IntegrationKernel"
+    my_param: float = 1.0
+
+
+class _IntegrationPriorDataModel(PriorDataModel):
+    type: Literal["_IntegrationPrior"] = "_IntegrationPrior"
+    value: float = 1.0
+
+
+class TestKernelPydanticIntegration:
+    """After register_kernel, custom kernel types should pass Pydantic validation
+    in surrogate models and aggregation kernels."""
+
+    def test_custom_kernel_in_surrogate(self):
+        from bofire.data_models.kernels.api import register_kernel
+
+        register_kernel(_IntegrationKernelDataModel)
+
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        s = SingleTaskGPSurrogate(
+            inputs=_INPUTS,
+            outputs=_OUTPUTS,
+            kernel=_IntegrationKernelDataModel(my_param=42.0),
+        )
+        assert isinstance(s.kernel, _IntegrationKernelDataModel)
+        assert s.kernel.my_param == 42.0
+
+    def test_custom_kernel_in_additive_kernel(self):
+        from bofire.data_models.kernels.aggregation import AdditiveKernel
+        from bofire.data_models.kernels.api import register_kernel
+        from bofire.data_models.kernels.continuous import RBFKernel
+
+        register_kernel(_IntegrationKernelDataModel)
+
+        ak = AdditiveKernel(
+            kernels=[RBFKernel(), _IntegrationKernelDataModel(my_param=7.0)]
+        )
+        assert len(ak.kernels) == 2
+        assert isinstance(ak.kernels[1], _IntegrationKernelDataModel)
+
+    def test_custom_kernel_in_scale_kernel(self):
+        from bofire.data_models.kernels.aggregation import ScaleKernel
+        from bofire.data_models.kernels.api import register_kernel
+
+        register_kernel(_IntegrationKernelDataModel)
+
+        sk = ScaleKernel(base_kernel=_IntegrationKernelDataModel(my_param=3.0))
+        assert isinstance(sk.base_kernel, _IntegrationKernelDataModel)
+
+    def test_mapper_register_also_updates_pydantic(self):
+        """The mapper-level register() should trigger data model registration."""
+        import bofire.kernels.api as kernels_api
+        from bofire.data_models.kernels.api import _KERNEL_TYPES
+
+        # Use a fresh class to ensure it's not already registered
+        class _MapperKernel(KernelDataModel):
+            type: Literal["_MapperKernel"] = "_MapperKernel"
+
+        sentinel = MagicMock(name="gpytorch_kernel")
+
+        kernels_api.register(_MapperKernel, lambda *a: sentinel)
+
+        assert _MapperKernel in _KERNEL_TYPES
+
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        s = SingleTaskGPSurrogate(
+            inputs=_INPUTS,
+            outputs=_OUTPUTS,
+            kernel=_MapperKernel(),
+        )
+        assert isinstance(s.kernel, _MapperKernel)
+
+
+class TestPriorPydanticIntegration:
+    """After register_prior, custom prior types should pass Pydantic validation
+    in kernel and surrogate model fields."""
+
+    def test_custom_prior_as_noise_prior(self):
+        from bofire.data_models.priors.api import register_prior
+
+        register_prior(_IntegrationPriorDataModel)
+
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        s = SingleTaskGPSurrogate(
+            inputs=_INPUTS,
+            outputs=_OUTPUTS,
+            noise_prior=_IntegrationPriorDataModel(value=2.0),
+        )
+        assert isinstance(s.noise_prior, _IntegrationPriorDataModel)
+        assert s.noise_prior.value == 2.0
+
+    def test_custom_prior_as_lengthscale_prior(self):
+        from bofire.data_models.kernels.continuous import RBFKernel
+        from bofire.data_models.priors.api import register_prior
+
+        register_prior(_IntegrationPriorDataModel)
+
+        k = RBFKernel(lengthscale_prior=_IntegrationPriorDataModel(value=3.0))
+        assert isinstance(k.lengthscale_prior, _IntegrationPriorDataModel)
+
+    def test_mapper_register_also_updates_pydantic(self):
+        """The mapper-level register() should trigger data model registration."""
+        import bofire.priors.api as priors_api
+        from bofire.data_models.priors.api import _PRIOR_TYPES
+
+        class _MapperPrior(PriorDataModel):
+            type: Literal["_MapperPrior"] = "_MapperPrior"
+
+        priors_api.register(_MapperPrior, lambda dm, **kw: MagicMock())
+
+        assert _MapperPrior in _PRIOR_TYPES
+
+        from bofire.data_models.kernels.continuous import RBFKernel
+
+        k = RBFKernel(lengthscale_prior=_MapperPrior())
+        assert isinstance(k.lengthscale_prior, _MapperPrior)
+
+
+# ---------------------------------------------------------------------------
+# Engineered feature registration tests
+# ---------------------------------------------------------------------------
+
+
+class _IntegrationEngineeredFeature(EngineeredFeature):
+    type: Literal["_IntegrationEngineered"] = "_IntegrationEngineered"
+    order_id = 99
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return 1
+
+
+class TestEngineeredFeatureRegistration:
+    def test_register_data_model(self):
+        from bofire.data_models.domain.features import EngineeredFeatures
+        from bofire.data_models.features.api import register_engineered_feature
+
+        register_engineered_feature(_IntegrationEngineeredFeature)
+
+        ef = EngineeredFeatures(
+            features=[_IntegrationEngineeredFeature(key="test", features=["a", "b"])]
+        )
+        assert isinstance(ef.features[0], _IntegrationEngineeredFeature)
+
+    def test_register_in_surrogate(self):
+        from bofire.data_models.domain.features import EngineeredFeatures
+        from bofire.data_models.features.api import (
+            ContinuousInput,
+            register_engineered_feature,
+        )
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        register_engineered_feature(_IntegrationEngineeredFeature)
+
+        ef = EngineeredFeatures(
+            features=[_IntegrationEngineeredFeature(key="test", features=["a", "b"])]
+        )
+        s = SingleTaskGPSurrogate(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                ]
+            ),
+            outputs=_OUTPUTS,
+            engineered_features=ef,
+        )
+        assert len(s.engineered_features.features) == 1
+
+    def test_mapper_register_decorator(self):
+        from bofire.data_models.features.api import _ENGINEERED_FEATURE_TYPES
+        from bofire.surrogates.engineered_features import AGGREGATE_MAP, register
+
+        class _MapperEngineered(EngineeredFeature):
+            type: Literal["_MapperEngineered"] = "_MapperEngineered"
+            order_id = 100
+
+            @property
+            def n_transformed_inputs(self) -> int:
+                return 1
+
+        sentinel = MagicMock(name="append_features")
+
+        @register(_MapperEngineered)
+        def my_map_fn(inputs, transform_specs, feature):
+            return sentinel
+
+        assert AGGREGATE_MAP[_MapperEngineered] is my_map_fn
+        assert _MapperEngineered in _ENGINEERED_FEATURE_TYPES
+
+    def test_mapper_register_direct_call(self):
+        from bofire.data_models.features.api import _ENGINEERED_FEATURE_TYPES
+        from bofire.surrogates.engineered_features import AGGREGATE_MAP, register
+
+        class _DirectEngineered(EngineeredFeature):
+            type: Literal["_DirectEngineered"] = "_DirectEngineered"
+            order_id = 101
+
+            @property
+            def n_transformed_inputs(self) -> int:
+                return 1
+
+        sentinel = MagicMock(name="append_features")
+        register(_DirectEngineered, lambda i, t, f: sentinel)
+
+        assert _DirectEngineered in AGGREGATE_MAP
+        assert _DirectEngineered in _ENGINEERED_FEATURE_TYPES

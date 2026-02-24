@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable
+from typing import Callable, Optional, Type
 
 import pandas as pd
 import torch
@@ -135,6 +135,49 @@ AGGREGATE_MAP = {
     MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
     CloneFeature: map_clone_feature,
 }
+
+
+def register(
+    data_model_cls: Type[EngineeredFeature],
+    map_fn: Optional[Callable] = None,
+):
+    """Register a custom engineered feature mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyEngineeredFeatureDataModel)
+        def map_my_feature(inputs, transform_specs, feature):
+            return AppendFeatures(...)
+
+        # Direct call form
+        register(MyEngineeredFeatureDataModel, map_my_feature)
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes ``(inputs, transform_specs, feature)``
+            and returns a ``botorch.models.transforms.input.AppendFeatures``
+            instance. If not provided, returns a decorator.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        AGGREGATE_MAP[data_model_cls] = fn
+
+        # Also register with the data model union so Pydantic accepts the type
+        from bofire.data_models.features.api import register_engineered_feature
+
+        register_engineered_feature(data_model_cls)
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
 
 
 def map(
