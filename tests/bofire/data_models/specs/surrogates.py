@@ -1015,7 +1015,6 @@ specs.add_valid(
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "outputscale_prior": THREESIX_SCALE_PRIOR().model_dump(),
         "ard": False,
-        "saas": False,
         "dump": None,
         "engineered_features": EngineeredFeatures().model_dump(),
         "input_preprocessing_specs": {},
