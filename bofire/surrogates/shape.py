@@ -35,7 +35,6 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.noise_prior = data_model.noise_prior
         self.outputscale_prior = data_model.outputscale_prior
         self.ard = data_model.ard
-        self.saas = data_model.saas
 
         idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
         idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
@@ -134,25 +133,25 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 ),
             )
 
-        if self.saas and self.continuous_kernel is None:
-            self.model = botorch.models.map_saas.AdditiveMapSaasSingleTaskGP(
-                train_X=tX,
-                train_Y=tY,
-                outcome_transform=(Standardize(m=tY.shape[-1])),
-                input_transform=self.transform,
-            )  # type: ignore
-        elif self.saas and self.continuous_kernel is not None:
-            raise ValueError(
-                "SAAS is only implemented for shape-only models without continuous kernel."
-            )
-        else:
-            self.model = botorch.models.SingleTaskGP(  # type: ignore
-                train_X=tX,
-                train_Y=tY,
-                covar_module=covar_module,
-                outcome_transform=(Standardize(m=tY.shape[-1])),
-                input_transform=self.transform,
-            )
+        # if self.saas and self.continuous_kernel is None:
+        #     self.model = botorch.models.map_saas.AdditiveMapSaasSingleTaskGP(
+        #         train_X=tX,
+        #         train_Y=tY,
+        #         outcome_transform=(Standardize(m=tY.shape[-1])),
+        #         input_transform=self.transform,
+        #     )  # type: ignore
+        # elif self.saas and self.continuous_kernel is not None:
+        #     raise ValueError(
+        #         "SAAS is only implemented for shape-only models without continuous kernel."
+        #     )
+        # else:
+        self.model = botorch.models.SingleTaskGP(  # type: ignore
+            train_X=tX,
+            train_Y=tY,
+            covar_module=covar_module,
+            outcome_transform=(Standardize(m=tY.shape[-1])),
+            input_transform=self.transform,
+        )
 
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
         self.model.likelihood.noise_covar.raw_noise_constraint = GreaterThan(5e-4)  # type: ignore
@@ -173,7 +172,6 @@ class ExactPiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.noise_prior = data_model.noise_prior
         self.outputscale_prior = data_model.outputscale_prior
         self.ard = data_model.ard
-        self.saas = data_model.saas
 
         idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
         idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
