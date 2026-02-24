@@ -12,10 +12,13 @@ from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.engineered_feature import (
     CloneFeature,
     EngineeredFeature,
+    InterpolateFeature,
     MeanFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.features.feature import Feature, Input, Output
@@ -47,10 +50,13 @@ AnyFeature = Union[
     TaskInput,
     SumFeature,
     MeanFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ContinuousMolecularInput,
     ProductFeature,
+    InterpolateFeature,
     CloneFeature,
 ]
 
@@ -70,9 +76,12 @@ AnyOutput = Union[ContinuousOutput, CategoricalOutput]
 _ENGINEERED_FEATURE_TYPES: List[Type[EngineeredFeature]] = [
     SumFeature,
     MeanFeature,
+    WeightedMeanFeature,
     WeightedSumFeature,
+    MolecularWeightedMeanFeature,
     MolecularWeightedSumFeature,
     ProductFeature,
+    InterpolateFeature,
     CloneFeature,
 ]
 
