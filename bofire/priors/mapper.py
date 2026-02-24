@@ -44,18 +44,12 @@ def register(
         PRIOR_MAP[data_model_cls] = fn
 
         # Also register with the data model unions so Pydantic accepts the type
-        from bofire.data_models.priors.constraint import PriorConstraint
-        from bofire.data_models.priors.interval import Interval
-        from bofire.data_models.priors.prior import Prior
-
-        if issubclass(data_model_cls, Prior):
-            from bofire.data_models.priors.api import register_prior
-
-            register_prior(data_model_cls)
-        elif issubclass(data_model_cls, (PriorConstraint, Interval)):
-            from bofire.data_models.priors.api import register_prior_constraint
-
-            register_prior_constraint(data_model_cls)
+        if issubclass(data_model_cls, data_models.Prior):
+            data_models.register_prior(data_model_cls)
+        elif issubclass(
+            data_model_cls, (data_models.PriorConstraint, data_models.Interval)
+        ):
+            data_models.register_prior_constraint(data_model_cls)
 
         return fn
 

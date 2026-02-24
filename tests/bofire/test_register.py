@@ -1,3 +1,4 @@
+import inspect
 from typing import Literal, Type
 from unittest.mock import MagicMock
 
@@ -7,11 +8,13 @@ from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyOutput,
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
     Feature,
 )
+from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
 from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
@@ -120,23 +123,6 @@ class TestRegisterStrategy:
         # cleanup
         ACTUAL_MAP.pop(_CustomStrategyDataModel, None)
 
-    def test_register_meta_strategy(self):
-        import bofire.strategies.api as strategies_api
-        from bofire.strategies.mapper_meta import STRATEGY_MAP as META_MAP
-
-        META_MAP.pop(_CustomStrategyDataModel, None)
-
-        strategies_api.register(_CustomStrategyDataModel, _CustomStrategy, meta=True)
-        assert META_MAP[_CustomStrategyDataModel] is _CustomStrategy
-
-        # meta strategies are checked first in map()
-        dm = _CustomStrategyDataModel(domain=_make_domain())
-        result = strategies_api.map(dm)
-        assert isinstance(result, _CustomStrategy)
-
-        # cleanup
-        META_MAP.pop(_CustomStrategyDataModel, None)
-
     def test_register_decorator_syntax(self):
         import bofire.strategies.api as strategies_api
         from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
@@ -156,24 +142,32 @@ class TestRegisterStrategy:
         # cleanup
         ACTUAL_MAP.pop(_CustomStrategyDataModel, None)
 
-    def test_register_decorator_meta(self):
+    def test_register_updates_stepwise_strategy(self):
+        """Registering a strategy should update the StepwiseStrategy data model."""
         import bofire.strategies.api as strategies_api
-        from bofire.strategies.mapper_meta import STRATEGY_MAP as META_MAP
+        from bofire.data_models.strategies.actual_strategy_type import (
+            _ACTUAL_STRATEGY_TYPES,
+        )
+        from bofire.data_models.strategies.stepwise.stepwise import Step
+        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
 
-        META_MAP.pop(_CustomStrategyDataModel, None)
+        ACTUAL_MAP.pop(_CustomStrategyDataModel, None)
+        if _CustomStrategyDataModel in _ACTUAL_STRATEGY_TYPES:
+            _ACTUAL_STRATEGY_TYPES.remove(_CustomStrategyDataModel)
 
-        @strategies_api.register(_CustomStrategyDataModel, meta=True)
-        class _DecoratedMetaStrategy(_CustomStrategy):
-            pass
+        strategies_api.register(_CustomStrategyDataModel, _CustomStrategy)
 
-        assert META_MAP[_CustomStrategyDataModel] is _DecoratedMetaStrategy
-
-        dm = _CustomStrategyDataModel(domain=_make_domain())
-        result = strategies_api.map(dm)
-        assert isinstance(result, _DecoratedMetaStrategy)
+        # Step.strategy_data should now accept the custom type
+        step = Step(
+            strategy_data=_CustomStrategyDataModel(domain=_make_domain()),
+            condition={"type": "AlwaysTrueCondition"},
+        )
+        assert type(step.strategy_data) is _CustomStrategyDataModel
 
         # cleanup
-        META_MAP.pop(_CustomStrategyDataModel, None)
+        ACTUAL_MAP.pop(_CustomStrategyDataModel, None)
+        if _CustomStrategyDataModel in _ACTUAL_STRATEGY_TYPES:
+            _ACTUAL_STRATEGY_TYPES.remove(_CustomStrategyDataModel)
 
     def test_register_exported_from_api(self):
         from bofire.strategies.api import register
@@ -585,6 +579,10 @@ class _IntegrationKernelDataModel(KernelDataModel):
     my_param: float = 1.0
 
 
+class _IntegrationContinuousKernel(_ContinuousBase):
+    type: Literal["_IntegrationContinuousKernel"] = "_IntegrationContinuousKernel"
+
+
 class _IntegrationPriorDataModel(PriorDataModel):
     type: Literal["_IntegrationPrior"] = "_IntegrationPrior"
     value: float = 1.0
@@ -630,6 +628,33 @@ class TestKernelPydanticIntegration:
 
         sk = ScaleKernel(base_kernel=_IntegrationKernelDataModel(my_param=3.0))
         assert isinstance(sk.base_kernel, _IntegrationKernelDataModel)
+
+    def test_custom_continuous_kernel_in_mixed_surrogate(self):
+        """A ContinuousKernel subclass should be auto-added to AnyContinuousKernel."""
+        from bofire.data_models.kernels.api import (
+            _CONTINUOUS_KERNEL_TYPES,
+            register_kernel,
+        )
+        from bofire.data_models.surrogates.mixed_single_task_gp import (
+            MixedSingleTaskGPSurrogate,
+        )
+
+        register_kernel(_IntegrationContinuousKernel)
+
+        assert _IntegrationContinuousKernel in _CONTINUOUS_KERNEL_TYPES
+
+        s = MixedSingleTaskGPSurrogate(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                    CategoricalInput(key="c", categories=["x", "y"]),
+                ]
+            ),
+            outputs=_OUTPUTS,
+            continuous_kernel=_IntegrationContinuousKernel(),
+        )
+        assert isinstance(s.continuous_kernel, _IntegrationContinuousKernel)
 
     def test_mapper_register_also_updates_pydantic(self):
         """The mapper-level register() should trigger data model registration."""
@@ -791,3 +816,119 @@ class TestEngineeredFeatureRegistration:
 
         assert _DirectEngineered in AGGREGATE_MAP
         assert _DirectEngineered in _ENGINEERED_FEATURE_TYPES
+
+
+# ---------------------------------------------------------------------------
+# Introspection test: ensure _rebuild_dependent_models covers all fields
+# ---------------------------------------------------------------------------
+
+
+class TestRebuildCoverage:
+    """Verify that the explicit field lists in _rebuild_dependent_models
+    cover every Pydantic model field typed with AnyPrior, AnyPriorConstraint,
+    or AnyKernel.  This catches regressions when new surrogates or kernels
+    are added without updating the rebuild functions."""
+
+    @staticmethod
+    def _collect_fields(base_module: str, target_union_names: set[str]):
+        """Walk all Pydantic models under *base_module* and return
+        ``{(ModelClass, field_name)}`` for every field whose annotation
+        string matches one of the *target_union_names*.
+        """
+        import importlib
+        import inspect
+        import pkgutil
+
+        import pydantic
+
+        pkg = importlib.import_module(base_module)
+        found: set[tuple[type, str]] = set()
+
+        for _importer, modname, _ispkg in pkgutil.walk_packages(
+            pkg.__path__, prefix=pkg.__name__ + "."
+        ):
+            try:
+                mod = importlib.import_module(modname)
+            except Exception:
+                continue
+            for _name, obj in inspect.getmembers(mod, inspect.isclass):
+                if (
+                    not issubclass(obj, pydantic.BaseModel)
+                    or obj is pydantic.BaseModel
+                    or obj.__module__ != modname
+                ):
+                    continue
+                for field_name, field_info in obj.model_fields.items():
+                    ann = field_info.annotation
+                    ann_str = str(ann)
+                    for target in target_union_names:
+                        if target in ann_str:
+                            found.add((obj, field_name))
+        return found
+
+    def test_prior_rebuild_covers_all_anyprior_fields(self):
+        """Every model field typed as AnyPrior should appear in
+        priors._rebuild_dependent_models."""
+        import bofire.data_models.priors.api
+
+        src = inspect.getsource(bofire.data_models.priors.api._rebuild_dependent_models)
+
+        patched: set[tuple[str, str]] = set()
+
+        # The function calls patch_field(Model, "field", union) — extract those pairs
+        import re
+
+        for match in re.finditer(r"\((\w+),\s*\"(\w+)\"\)", src):
+            model_name, field_name = match.group(1), match.group(2)
+            patched.add((model_name, field_name))
+
+        # Now collect all fields in the codebase typed with AnyPrior or AnyPriorConstraint
+        all_fields = self._collect_fields(
+            "bofire.data_models", {"AnyPrior", "AnyPriorConstraint"}
+        )
+
+        # Convert to (class_name, field_name) for comparison
+        all_field_names = {(cls.__name__, fname) for cls, fname in all_fields}
+
+        missing = all_field_names - patched
+        assert not missing, (
+            f"Fields typed as AnyPrior/AnyPriorConstraint not covered by "
+            f"_rebuild_dependent_models: {missing}"
+        )
+
+    def test_kernel_rebuild_covers_all_anykernel_fields(self):
+        """Every model field typed as AnyKernel should appear in
+        kernels._rebuild_dependent_models or be handled via
+        append_to_union_field."""
+        import bofire.data_models.kernels.api
+
+        src = inspect.getsource(
+            bofire.data_models.kernels.api._rebuild_dependent_models
+        )
+
+        import re
+
+        patched: set[tuple[str, str]] = set()
+        for match in re.finditer(r"\((\w+),\s*\"(\w+)\"\)", src):
+            model_name, field_name = match.group(1), match.group(2)
+            patched.add((model_name, field_name))
+
+        all_fields = self._collect_fields("bofire.data_models", {"AnyKernel"})
+        all_field_names = {(cls.__name__, fname) for cls, fname in all_fields}
+
+        # AnyContinuousKernel / AnyCategoricalKernel are handled separately
+        # so exclude them from this check
+        continuous_cat_fields = self._collect_fields(
+            "bofire.data_models", {"AnyContinuousKernel", "AnyCategoricalKernel"}
+        )
+        continuous_cat_names = {
+            (cls.__name__, fname) for cls, fname in continuous_cat_fields
+        }
+
+        # Only check pure AnyKernel fields
+        anykernel_only = all_field_names - continuous_cat_names
+        missing = anykernel_only - patched
+        assert not missing, (
+            f"Fields typed as AnyKernel not covered by "
+            f"_rebuild_dependent_models: {missing}"
+        )

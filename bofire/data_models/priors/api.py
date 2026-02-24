@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, Optional, Type, Union
+from typing import List, Type, Union
 
 from bofire.data_models.priors.constraint import (
     GreaterThan,
@@ -46,22 +46,10 @@ _PRIOR_CONSTRAINT_TYPES: List[Type] = [
 AnyPriorConstraint = Union[tuple(_PRIOR_CONSTRAINT_TYPES)]
 
 
-def _patch_field(model_cls: type, field_name: str, new_union: type) -> None:
-    """Patch a Pydantic model field annotation, preserving Optional wrapping."""
-    import typing
-
-    old = model_cls.model_fields[field_name].annotation
-    args = typing.get_args(old)
-    if type(None) in args:
-        new = Optional[new_union]
-    else:
-        new = new_union
-    model_cls.__annotations__[field_name] = new
-    model_cls.model_fields[field_name].annotation = new
-
-
 def _rebuild_dependent_models() -> None:
     """Rebuild all Pydantic models whose fields reference AnyPrior or AnyPriorConstraint."""
+    from bofire.data_models._register_utils import patch_field
+
     # Lazy imports to avoid circular dependencies
     from bofire.data_models.kernels.aggregation import (
         AdditiveKernel,
@@ -122,7 +110,7 @@ def _rebuild_dependent_models() -> None:
         (LinearSurrogate, "noise_prior"),
         (RobustSingleTaskGPSurrogate, "noise_prior"),
     ]:
-        _patch_field(model_cls, field_name, AnyPrior)
+        patch_field(model_cls, field_name, AnyPrior)
 
     # Patch AnyPriorConstraint fields
     for model_cls, field_name in [
@@ -137,7 +125,7 @@ def _rebuild_dependent_models() -> None:
         (SingleTaskGPHyperconfig, "lengthscale_constraint"),
         (SingleTaskGPHyperconfig, "outputscale_constraint"),
     ]:
-        _patch_field(model_cls, field_name, AnyPriorConstraint)
+        patch_field(model_cls, field_name, AnyPriorConstraint)
 
     # Rebuild in dependency order:
     # 1. Leaf kernel models

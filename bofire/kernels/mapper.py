@@ -54,9 +54,7 @@ def register(
         KERNEL_MAP[data_model_cls] = fn
 
         # Also register with the data model union so Pydantic accepts the type
-        from bofire.data_models.kernels.api import register_kernel
-
-        register_kernel(data_model_cls)
+        data_models.register_kernel(data_model_cls)
 
         return fn
 

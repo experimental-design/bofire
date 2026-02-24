@@ -9,7 +9,6 @@ from bofire.strategies.strategy import Strategy
 def register(
     data_model_cls: Type[data_models.Strategy],
     strategy_cls: Optional[Type[Strategy]] = None,
-    meta: bool = False,
 ):
     """Register a custom strategy mapping from data model to functional class.
 
@@ -27,18 +26,17 @@ def register(
         data_model_cls: The Pydantic data model class.
         strategy_cls: The functional strategy class. If not provided,
             returns a decorator.
-        meta: If True, register as a meta strategy (e.g. compositions
-            of strategies).
 
     Returns:
         The strategy class (unchanged) when used as a decorator, None otherwise.
     """
 
     def _register(cls: Type[Strategy]) -> Type[Strategy]:
-        if meta:
-            META_MAP[data_model_cls] = cls
-        else:
-            ACTUAL_MAP[data_model_cls] = cls
+        ACTUAL_MAP[data_model_cls] = cls
+
+        # Also register with the data model union so Pydantic accepts the type
+        data_models.register_strategy(data_model_cls)
+
         return cls
 
     if strategy_cls is not None:

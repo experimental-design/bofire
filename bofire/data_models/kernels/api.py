@@ -1,5 +1,3 @@
-import typing
-from collections.abc import Sequence
 from typing import List, Type, Union
 
 from bofire.data_models.kernels.aggregation import (
@@ -42,7 +40,7 @@ AbstractKernel = Union[
     AggregationKernel,
 ]
 
-AnyContinuousKernel = Union[
+_CONTINUOUS_KERNEL_TYPES: List[Type[ContinuousKernel]] = [
     MaternKernel,
     LinearKernel,
     PolynomialKernel,
@@ -51,11 +49,15 @@ AnyContinuousKernel = Union[
     InfiniteWidthBNNKernel,
 ]
 
-AnyCategoricalKernel = Union[
+AnyContinuousKernel = Union[tuple(_CONTINUOUS_KERNEL_TYPES)]
+
+_CATEGORICAL_KERNEL_TYPES: List[Type[CategoricalKernel]] = [
     HammingDistanceKernel,
     IndexKernel,
     PositiveIndexKernel,
 ]
+
+AnyCategoricalKernel = Union[tuple(_CATEGORICAL_KERNEL_TYPES)]
 
 AnyMolecularKernel = TanimotoKernel
 
@@ -82,35 +84,25 @@ AnyKernel = Union[tuple(_KERNEL_TYPES)]
 
 
 def _rebuild_dependent_models(new_kernel_cls: Type[Kernel]) -> None:
-    """Rebuild all Pydantic models whose fields reference AnyKernel."""
+    """Rebuild all Pydantic models whose fields reference kernel unions."""
+    from bofire.data_models._register_utils import append_to_union_field, patch_field
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+    from bofire.data_models.surrogates.mixed_single_task_gp import (
+        MixedSingleTaskGPSurrogate,
+    )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
     # Add new kernel type to aggregation kernel inline unions
+    # (handles both Sequence[Union[...]] and plain Union[...])
     for model_cls, field_name in [
         (AdditiveKernel, "kernels"),
         (MultiplicativeKernel, "kernels"),
         (PolynomialFeatureInteractionKernel, "kernels"),
+        (ScaleKernel, "base_kernel"),
     ]:
-        old = model_cls.model_fields[field_name].annotation
-        # Annotation is Sequence[Union[...]]
-        inner = typing.get_args(old)[0]
-        inner_args = typing.get_args(inner)
-        if new_kernel_cls not in inner_args:
-            new_inner = Union[tuple(list(inner_args) + [new_kernel_cls])]
-            new_ann = Sequence[new_inner]
-            model_cls.__annotations__[field_name] = new_ann
-            model_cls.model_fields[field_name].annotation = new_ann
-
-    # ScaleKernel.base_kernel is Union[...] (not Sequence)
-    old = ScaleKernel.model_fields["base_kernel"].annotation
-    args = typing.get_args(old)
-    if new_kernel_cls not in args:
-        new_ann = Union[tuple(list(args) + [new_kernel_cls])]
-        ScaleKernel.__annotations__["base_kernel"] = new_ann
-        ScaleKernel.model_fields["base_kernel"].annotation = new_ann
+        append_to_union_field(model_cls, field_name, new_kernel_cls)
 
     # Rebuild aggregation kernels
     for cls in [
@@ -122,17 +114,30 @@ def _rebuild_dependent_models(new_kernel_cls: Type[Kernel]) -> None:
         cls.model_rebuild(force=True)
 
     # Patch AnyKernel fields on surrogate models
-    any_kernel = AnyKernel
     for model_cls, field_name in [
         (SingleTaskGPSurrogate, "kernel"),
         (MultiTaskGPSurrogate, "kernel"),
         (TanimotoGPSurrogate, "kernel"),
     ]:
-        model_cls.__annotations__[field_name] = any_kernel
-        model_cls.model_fields[field_name].annotation = any_kernel
+        patch_field(model_cls, field_name, AnyKernel)
+
+    # Patch sub-category kernel fields if the new type is a subclass
+    if issubclass(new_kernel_cls, ContinuousKernel):
+        patch_field(
+            MixedSingleTaskGPSurrogate, "continuous_kernel", AnyContinuousKernel
+        )
+    if issubclass(new_kernel_cls, CategoricalKernel):
+        patch_field(
+            MixedSingleTaskGPSurrogate, "categorical_kernel", AnyCategoricalKernel
+        )
 
     # Rebuild surrogate models
-    for cls in [SingleTaskGPSurrogate, MultiTaskGPSurrogate, TanimotoGPSurrogate]:
+    for cls in [
+        SingleTaskGPSurrogate,
+        MultiTaskGPSurrogate,
+        TanimotoGPSurrogate,
+        MixedSingleTaskGPSurrogate,
+    ]:
         cls.model_rebuild(force=True)
 
     # Rebuild BotorchSurrogates
@@ -147,12 +152,25 @@ def register_kernel(data_model_cls: Type[Kernel]) -> None:
     Pydantic models (aggregation kernels, surrogates) so that the new
     type is accepted.
 
+    If the type is a subclass of ``ContinuousKernel`` or ``CategoricalKernel``,
+    it is also added to the corresponding sub-category union
+    (``AnyContinuousKernel`` / ``AnyCategoricalKernel``).
+
     Args:
         data_model_cls: A concrete subclass of ``Kernel``.
     """
-    global AnyKernel
+    global AnyKernel, AnyContinuousKernel, AnyCategoricalKernel
     if data_model_cls in _KERNEL_TYPES:
         return
     _KERNEL_TYPES.append(data_model_cls)
     AnyKernel = Union[tuple(_KERNEL_TYPES)]
+
+    # Auto-detect sub-category from base class
+    if issubclass(data_model_cls, ContinuousKernel):
+        _CONTINUOUS_KERNEL_TYPES.append(data_model_cls)
+        AnyContinuousKernel = Union[tuple(_CONTINUOUS_KERNEL_TYPES)]
+    elif issubclass(data_model_cls, CategoricalKernel):
+        _CATEGORICAL_KERNEL_TYPES.append(data_model_cls)
+        AnyCategoricalKernel = Union[tuple(_CATEGORICAL_KERNEL_TYPES)]
+
     _rebuild_dependent_models(data_model_cls)
