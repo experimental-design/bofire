@@ -12,7 +12,10 @@ from bofire.data_models.kernels.categorical import (
     IndexKernel,
     PositiveIndexKernel,
 )
-from bofire.data_models.kernels.conditional import WedgeKernel
+from bofire.data_models.kernels.conditional import (
+    ConditionalEmbeddingKernel,
+    WedgeKernel,
+)
 from bofire.data_models.kernels.continuous import (
     ContinuousKernel,
     InfiniteWidthBNNKernel,
@@ -101,15 +104,19 @@ def _rebuild_dependent_models(new_kernel_cls: Type[Kernel]) -> None:
         (MultiplicativeKernel, "kernels"),
         (PolynomialFeatureInteractionKernel, "kernels"),
         (ScaleKernel, "base_kernel"),
+        (ConditionalEmbeddingKernel, "base_kernel"),
+        (WedgeKernel, "base_kernel"),
     ]:
         append_to_union_field(model_cls, field_name, new_kernel_cls)
 
-    # Rebuild aggregation kernels
+    # Rebuild aggregation and conditional kernels
     for cls in [
         AdditiveKernel,
         MultiplicativeKernel,
         ScaleKernel,
         PolynomialFeatureInteractionKernel,
+        ConditionalEmbeddingKernel,
+        WedgeKernel,
     ]:
         cls.model_rebuild(force=True)
 

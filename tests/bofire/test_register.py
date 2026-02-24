@@ -656,6 +656,22 @@ class TestKernelPydanticIntegration:
         )
         assert isinstance(s.continuous_kernel, _IntegrationContinuousKernel)
 
+    def test_custom_kernel_in_wedge_kernel(self):
+        """A registered kernel should be usable as WedgeKernel.base_kernel."""
+        from bofire.data_models.kernels.api import register_kernel
+        from bofire.data_models.kernels.conditional import WedgeKernel
+
+        class _WedgeTestKernel(KernelDataModel):
+            type: Literal["_WedgeTestKernel"] = "_WedgeTestKernel"
+
+        register_kernel(_WedgeTestKernel)
+
+        wk = WedgeKernel(
+            base_kernel=_WedgeTestKernel(),
+            conditions=[],
+        )
+        assert isinstance(wk.base_kernel, _WedgeTestKernel)
+
     def test_mapper_register_also_updates_pydantic(self):
         """The mapper-level register() should trigger data model registration."""
         import bofire.kernels.api as kernels_api
@@ -897,10 +913,12 @@ class TestRebuildCoverage:
         )
 
     def test_kernel_rebuild_covers_all_anykernel_fields(self):
-        """Every model field typed as AnyKernel should appear in
-        kernels._rebuild_dependent_models or be handled via
-        append_to_union_field."""
+        """Every model field typed as AnyKernel or as an inline Union of
+        Kernel subclasses should appear in kernels._rebuild_dependent_models
+        or be handled via append_to_union_field."""
+
         import bofire.data_models.kernels.api
+        from bofire.data_models.kernels.kernel import Kernel
 
         src = inspect.getsource(
             bofire.data_models.kernels.api._rebuild_dependent_models
@@ -913,6 +931,7 @@ class TestRebuildCoverage:
             model_name, field_name = match.group(1), match.group(2)
             patched.add((model_name, field_name))
 
+        # Collect AnyKernel-typed fields
         all_fields = self._collect_fields("bofire.data_models", {"AnyKernel"})
         all_field_names = {(cls.__name__, fname) for cls, fname in all_fields}
 
@@ -927,8 +946,90 @@ class TestRebuildCoverage:
 
         # Only check pure AnyKernel fields
         anykernel_only = all_field_names - continuous_cat_names
-        missing = anykernel_only - patched
+
+        # Also find inline Union fields whose members are all Kernel subclasses
+        # (like ConditionalEmbeddingKernel.base_kernel)
+        inline_kernel_fields = self._collect_inline_kernel_union_fields(
+            "bofire.data_models", Kernel
+        )
+        inline_names = {(cls.__name__, fname) for cls, fname in inline_kernel_fields}
+
+        all_kernel_fields = anykernel_only | inline_names
+        missing = all_kernel_fields - patched
         assert not missing, (
-            f"Fields typed as AnyKernel not covered by "
+            f"Fields typed as AnyKernel or inline Union[Kernel, ...] not covered by "
             f"_rebuild_dependent_models: {missing}"
         )
+
+    @staticmethod
+    def _collect_inline_kernel_union_fields(
+        base_module: str, kernel_base: type
+    ) -> set[tuple[type, str]]:
+        """Find inline Union-of-Kernel fields on Kernel container classes.
+
+        Only scans classes that are themselves Kernel subclasses (aggregation
+        and conditional kernels) to find fields like ``base_kernel`` or
+        ``kernels`` that accept kernel instances.  Surrogate models with
+        intentionally restricted kernel fields are excluded because those
+        restrictions are by design.
+
+        Also skips inherited fields (e.g. WedgeKernel.base_kernel inherited
+        from ConditionalEmbeddingKernel) to avoid double-counting.
+        """
+        import importlib
+        import pkgutil
+        import typing
+        from collections.abc import Sequence
+
+        import pydantic
+
+        pkg = importlib.import_module(base_module)
+        found: set[tuple[type, str]] = set()
+
+        for _importer, modname, _ispkg in pkgutil.walk_packages(
+            pkg.__path__, prefix=pkg.__name__ + "."
+        ):
+            try:
+                mod = importlib.import_module(modname)
+            except Exception:
+                continue
+            for _name, obj in inspect.getmembers(mod, inspect.isclass):
+                if (
+                    not issubclass(obj, pydantic.BaseModel)
+                    or obj is pydantic.BaseModel
+                    or obj.__module__ != modname
+                ):
+                    continue
+                # Only check Kernel subclasses (kernel containers)
+                if not issubclass(obj, kernel_base):
+                    continue
+                for field_name, field_info in obj.model_fields.items():
+                    # Skip inherited fields — only check fields declared
+                    # directly on this class
+                    if field_name not in obj.__annotations__:
+                        continue
+
+                    ann = field_info.annotation
+                    ann_str = str(ann)
+                    if "AnyKernel" in ann_str:
+                        continue
+
+                    # Unwrap Sequence[Union[...]] if needed
+                    inner = ann
+                    origin = typing.get_origin(ann)
+                    if origin in (list, Sequence):
+                        inner_args = typing.get_args(ann)
+                        if inner_args:
+                            inner = inner_args[0]
+
+                    # Check if this is a Union whose args are all Kernel subclasses
+                    if typing.get_origin(inner) is not typing.Union:
+                        continue
+                    args = typing.get_args(inner)
+                    non_none = [a for a in args if a is not type(None)]
+                    if non_none and all(
+                        isinstance(a, type) and issubclass(a, kernel_base)
+                        for a in non_none
+                    ):
+                        found.add((obj, field_name))
+        return found
