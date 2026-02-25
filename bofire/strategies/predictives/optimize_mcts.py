@@ -315,6 +315,9 @@ class MCTS:
         pw_k0: Progressive widening base constant (default 2.0)
         pw_alpha: Progressive widening exponent (default 0.6)
         max_rollout_retries: Maximum rollout retries on cache hit (default 3)
+        adaptive_p_stop: Enable adaptive per-group stop probability (default True)
+        p_stop_warmup: Per-group rollout count before full blending (default 20)
+        p_stop_temperature: Sigmoid sharpness for adaptive p_stop (default 0.25)
         seed: Random seed for reproducibility
     """
 
@@ -328,6 +331,9 @@ class MCTS:
         pw_k0: float = 2.0,
         pw_alpha: float = 0.6,
         max_rollout_retries: int = 3,
+        adaptive_p_stop: bool = True,
+        p_stop_warmup: int = 20,
+        p_stop_temperature: float = 0.25,
         seed: Optional[int] = None,
     ):
         self.groups = groups
@@ -338,6 +344,9 @@ class MCTS:
         self.pw_k0 = pw_k0
         self.pw_alpha = pw_alpha
         self.max_rollout_retries = max_rollout_retries
+        self.adaptive_p_stop = adaptive_p_stop
+        self.p_stop_warmup = p_stop_warmup
+        self.p_stop_temperature = p_stop_temperature
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -362,6 +371,13 @@ class MCTS:
         self.global_offsets = self._compute_group_offsets()
         self.rave_stats: dict[int, tuple[int, float]] = {}
 
+        # Adaptive p_stop statistics: (group_idx, cardinality) -> (visits, total_reward)
+        self.cardinality_stats: dict[tuple[int, int], tuple[int, float]] = {}
+        n_nchoosek = len(self.groups.nchooseks)
+        self.group_rollout_counts: list[int] = [0] * n_nchoosek
+        self.reward_min: float = float("inf")
+        self.reward_max: float = float("-inf")
+
     def _compute_group_offsets(self) -> list[int]:
         """Compute offset for each group to create global action IDs."""
         offsets = []
@@ -374,6 +390,94 @@ class MCTS:
     def _global_action_id(self, group_idx: int, local_idx: int) -> int:
         """Convert (group, local_index) to global action ID for RAVE."""
         return self.global_offsets[group_idx] + local_idx
+
+    def _update_cardinality_stats(
+        self, reward: float, selected_features: tuple[int, ...]
+    ) -> None:
+        """Update per-(group, cardinality) stats from a completed rollout.
+
+        Reverse-maps selected_features to per-group cardinalities and updates
+        the cardinality_stats dict and reward range trackers.
+        """
+        # Update reward range
+        if reward < self.reward_min:
+            self.reward_min = reward
+        if reward > self.reward_max:
+            self.reward_max = reward
+
+        selected_set = set(selected_features)
+        for g, nchoosek in enumerate(self.groups.nchooseks):
+            cardinality = sum(1 for f in nchoosek.features if f in selected_set)
+            key = (g, cardinality)
+            v, tot = self.cardinality_stats.get(key, (0, 0.0))
+            self.cardinality_stats[key] = (v + 1, tot + reward)
+            self.group_rollout_counts[g] += 1
+
+    def _compute_adaptive_p_stop(
+        self, group_idx: int, current_cardinality: int
+    ) -> float:
+        """Compute adaptive stop probability for a group at a given cardinality.
+
+        Uses learned cardinality statistics to decide whether stopping is better
+        than continuing. Falls back to fixed p_stop_rollout when disabled,
+        no data is available, reward range is zero, or during warmup.
+
+        Args:
+            group_idx: Index of the NChooseK group
+            current_cardinality: Number of features already selected in this group
+
+        Returns:
+            Stop probability in [0, 1]
+        """
+        if not self.adaptive_p_stop:
+            return self.p_stop_rollout
+
+        nchoosek = self.groups.nchooseks[group_idx]
+        max_count = nchoosek.max_count
+
+        # No data for stopping at this cardinality
+        stop_key = (group_idx, current_cardinality)
+        stop_stats = self.cardinality_stats.get(stop_key)
+        if stop_stats is None or stop_stats[0] == 0:
+            return self.p_stop_rollout
+
+        # E_stop: mean reward when this group stopped at current_cardinality
+        e_stop = stop_stats[1] / stop_stats[0]
+
+        # E_continue: max mean reward among higher cardinalities
+        e_continue = float("-inf")
+        has_continue_data = False
+        for m in range(current_cardinality + 1, max_count + 1):
+            cont_key = (group_idx, m)
+            cont_stats = self.cardinality_stats.get(cont_key)
+            if cont_stats is not None and cont_stats[0] > 0:
+                mean_r = cont_stats[1] / cont_stats[0]
+                if mean_r > e_continue:
+                    e_continue = mean_r
+                has_continue_data = True
+
+        if not has_continue_data:
+            return self.p_stop_rollout
+
+        # Reward range for normalization
+        reward_range = self.reward_max - self.reward_min
+        if reward_range <= 0:
+            return self.p_stop_rollout
+
+        # Sigmoid on normalized difference
+        tau = self.p_stop_temperature
+        logit = (e_stop - e_continue) / (tau * reward_range)
+        logit = max(-10.0, min(10.0, logit))  # clamp
+        p_learned = 1.0 / (1.0 + math.exp(-logit))
+
+        # Warmup blending
+        group_visits = self.group_rollout_counts[group_idx]
+        alpha = (
+            min(1.0, group_visits / self.p_stop_warmup)
+            if self.p_stop_warmup > 0
+            else 1.0
+        )
+        return (1.0 - alpha) * self.p_stop_rollout + alpha * p_learned
 
     def _make_cache_key(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
@@ -527,11 +631,11 @@ class MCTS:
             # For NChooseK groups, prefer STOP with some probability
             g = curr.group_idx
             is_nchoosek = g < len(self.groups.nchooseks)
-            if (
-                is_nchoosek
-                and STOP in legal
-                and self.rng.random() < self.p_stop_rollout
-            ):
+            if is_nchoosek and STOP in legal:
+                p_stop = self._compute_adaptive_p_stop(g, len(curr.partial_by_group[g]))
+            else:
+                p_stop = self.p_stop_rollout
+            if is_nchoosek and STOP in legal and self.rng.random() < p_stop:
                 curr = self._apply_action(curr, STOP)
                 continue
 
@@ -611,6 +715,9 @@ class MCTS:
             if reward > self.best_value:
                 self.best_value = reward
                 self.best_selection = (selected_features, cat_selections)
+
+            if self.adaptive_p_stop:
+                self._update_cardinality_stats(reward, selected_features)
 
             if is_novel:
                 self._backpropagate(path, reward, selected_features, cat_selections)
