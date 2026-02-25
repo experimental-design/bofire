@@ -194,6 +194,7 @@ specs.add_valid(
         "squared": False,
         "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
         "lengthscale_constraint": None,
+        "features": None,
     },
 )
 specs.add_valid(

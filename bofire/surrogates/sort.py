@@ -30,7 +30,6 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.continuous_kernel = data_model.continuous_kernel
         self.noise_prior = data_model.noise_prior
         self.outputscale_prior = data_model.outputscale_prior
-        self.ard = data_model.ard
 
         idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
         idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
@@ -42,10 +41,6 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
 
         self.idx_shape = list(range(len(idx_x) + len(idx_y)))
-        if self.ard:
-            self.ard_dims = len(data_model.x_keys) + len(data_model.y_keys)
-        else:
-            self.ard_dims = None
 
         # get indices of x keys and normalize them
         self.idx_continuous = sorted(
@@ -86,7 +81,6 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 base_kernel=kernels.map(
                     self.continuous_kernel,
                     active_dims=self.idx_continuous,
-                    ard_num_dims=1,
                     batch_shape=torch.Size(),
                     features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                         self.input_preprocessing_specs, feats
@@ -95,7 +89,6 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 * kernels.map(
                     self.shape_kernel,
                     active_dims=self.idx_shape,
-                    ard_num_dims=self.ard_dims,
                     batch_shape=torch.Size(),
                     features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                         self.input_preprocessing_specs, feats
@@ -108,7 +101,6 @@ class SortingGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 base_kernel=kernels.map(
                     self.shape_kernel,
                     active_dims=self.idx_shape,
-                    ard_num_dims=self.ard_dims,
                     batch_shape=torch.Size(),
                     features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
                         self.input_preprocessing_specs, feats

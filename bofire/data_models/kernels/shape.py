@@ -1,10 +1,10 @@
 from typing import List, Literal, Optional
 
-from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
-class WassersteinKernel(Kernel):
+class WassersteinKernel(FeatureSpecificKernel):
     """Kernel based on the Wasserstein distance.
 
     It only works for 1D data that is monotonically increasing, as it is just
@@ -30,7 +30,7 @@ class WassersteinKernel(Kernel):
     lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
 
-class ExactWassersteinKernel(Kernel):
+class ExactWassersteinKernel(FeatureSpecificKernel):
     """Kernel based on the Wasserstein distance.
 
     It only works for 1D data that is monotonically increasing, as it is just
