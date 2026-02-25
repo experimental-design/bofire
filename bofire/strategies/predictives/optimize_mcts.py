@@ -314,6 +314,7 @@ class MCTS:
         p_stop_rollout: Probability of early stop during rollout (default 0.35)
         pw_k0: Progressive widening base constant (default 2.0)
         pw_alpha: Progressive widening exponent (default 0.6)
+        max_rollout_retries: Maximum rollout retries on cache hit (default 3)
         seed: Random seed for reproducibility
     """
 
@@ -326,6 +327,7 @@ class MCTS:
         p_stop_rollout: float = 0.35,
         pw_k0: float = 2.0,
         pw_alpha: float = 0.6,
+        max_rollout_retries: int = 3,
         seed: Optional[int] = None,
     ):
         self.groups = groups
@@ -335,6 +337,7 @@ class MCTS:
         self.p_stop_rollout = p_stop_rollout
         self.pw_k0 = pw_k0
         self.pw_alpha = pw_alpha
+        self.max_rollout_retries = max_rollout_retries
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -488,7 +491,7 @@ class MCTS:
                     v, tot = self.rave_stats.get(glob_id, (0, 0.0))
                     rave_mean = (tot / v) if v > 0 else 0.0
 
-                beta = self.k_rave / (self.k_rave + _node.n_visits)
+                beta = self.k_rave / (self.k_rave + max(1, _node.n_visits))
                 return (1 - beta) * uct_val + beta * rave_mean
 
             if node.children:
@@ -592,15 +595,32 @@ class MCTS:
             if leaf.is_terminal(self.groups):
                 selected_features, cat_selections = self._get_selection(leaf)
             else:
+                # Rollout retry: if the rollout produces a cached terminal,
+                # re-roll to try to discover a novel selection.
                 selected_features, cat_selections = self._rollout(leaf)
+                for _attempt in range(self.max_rollout_retries):
+                    key = self._make_cache_key(selected_features, cat_selections)
+                    if key not in self.value_cache:
+                        break
+                    selected_features, cat_selections = self._rollout(leaf)
 
+            key = self._make_cache_key(selected_features, cat_selections)
+            is_novel = key not in self.value_cache
             reward = self._cached_reward(selected_features, cat_selections)
 
             if reward > self.best_value:
                 self.best_value = reward
                 self.best_selection = (selected_features, cat_selections)
 
-            self._backpropagate(path, reward, selected_features, cat_selections)
+            if is_novel:
+                self._backpropagate(path, reward, selected_features, cat_selections)
+            else:
+                # Virtual loss: increment visits with zero reward so that
+                # (a) PW limits still grow with traffic, and
+                # (b) mean_value drops for over-visited branches, steering
+                #     UCT exploration toward less-exploited parts of the tree.
+                for n in path:
+                    n.n_visits += 1
 
         if self.best_selection is None:
             return (), {}, self.best_value
@@ -632,6 +652,7 @@ def optimize_acqf_mcts(
     num_iterations: int = 100,
     pw_k0: float = 2.0,
     pw_alpha: float = 0.6,
+    max_rollout_retries: int = 3,
     # BoTorch acqf optimization parameters
     q: int = 1,
     raw_samples: int = 1024,
@@ -660,6 +681,7 @@ def optimize_acqf_mcts(
         num_iterations: Number of MCTS iterations
         pw_k0: Progressive widening base constant
         pw_alpha: Progressive widening exponent
+        max_rollout_retries: Maximum rollout retries on cache hit
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
@@ -752,6 +774,7 @@ def optimize_acqf_mcts(
         p_stop_rollout=p_stop_rollout,
         pw_k0=pw_k0,
         pw_alpha=pw_alpha,
+        max_rollout_retries=max_rollout_retries,
         seed=seed,
     )
 
