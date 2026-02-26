@@ -162,6 +162,9 @@ class RandomStrategy(Strategy):
                 reward_fn=lambda x,
                 y: 0.0,  # dummy reward function as we are only using the
                 # rollout to sample combinations, so we only use it for tree traversal.
+                rollout_policy=False,
+                adaptive_p_stop=False,
+                normalize_rewards=False,
             )
 
             # now we sample the combinations
