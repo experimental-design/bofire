@@ -1301,15 +1301,11 @@ class TestAdaptivePStop:
         mcts._update_cardinality_stats(10.0, (0, 3))
         assert mcts.cardinality_stats[(0, 2)] == (1, 10.0)
         assert mcts.group_rollout_counts[0] == 1
-        assert mcts.reward_min == 10.0
-        assert mcts.reward_max == 10.0
 
         # Another update with different cardinality
         mcts._update_cardinality_stats(5.0, (1,))
         assert mcts.cardinality_stats[(0, 1)] == (1, 5.0)
         assert mcts.group_rollout_counts[0] == 2
-        assert mcts.reward_min == 5.0
-        assert mcts.reward_max == 10.0
 
     def test_update_cardinality_stats_multiple_groups(self):
         """_update_cardinality_stats correctly handles multiple NChooseK groups."""
@@ -1410,6 +1406,171 @@ class TestAdaptivePStop:
         assert p_high > 0.5
         # Low temp → more extreme (closer to 1.0)
         assert p_low > p_high
+
+
+# =============================================================================
+# Reward normalization tests
+# =============================================================================
+
+
+class TestRewardNormalization:
+    """Tests for the MCTS reward normalization feature."""
+
+    @staticmethod
+    def _simple_groups() -> Groups:
+        """Single NChooseK group: pick 1-2 from [0,1,2]."""
+        return Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=2)])
+
+    def test_normalize_reward_basic(self):
+        """Verify [0, 1] mapping after seeing min and max rewards."""
+        groups = self._simple_groups()
+        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts.reward_min = 10.0
+        mcts.reward_max = 110.0
+        assert mcts._normalize_reward(10.0) == pytest.approx(0.0)
+        assert mcts._normalize_reward(110.0) == pytest.approx(1.0)
+        assert mcts._normalize_reward(60.0) == pytest.approx(0.5)
+
+    def test_normalize_reward_zero_range(self):
+        """Returns 0.5 when all rewards are identical (range is zero)."""
+        groups = self._simple_groups()
+        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts.reward_min = 42.0
+        mcts.reward_max = 42.0
+        assert mcts._normalize_reward(42.0) == pytest.approx(0.5)
+
+    def test_normalize_reward_negative_rewards(self):
+        """Works correctly with negative reward ranges."""
+        groups = self._simple_groups()
+        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts.reward_min = -100.0
+        mcts.reward_max = -10.0
+        assert mcts._normalize_reward(-100.0) == pytest.approx(0.0)
+        assert mcts._normalize_reward(-10.0) == pytest.approx(1.0)
+        assert mcts._normalize_reward(-55.0) == pytest.approx(0.5)
+
+    def test_normalization_disabled_backpropagates_raw(self):
+        """When normalize_rewards=False, w_total accumulates raw rewards."""
+        groups = self._simple_groups()
+        rewards = iter([50.0, 100.0])
+        mcts = MCTS(
+            groups=groups,
+            reward_fn=lambda f, c: next(rewards),
+            normalize_rewards=False,
+            seed=0,
+        )
+        mcts.run(n_iterations=2)
+        # Root should have accumulated raw rewards
+        assert mcts.root.w_total == pytest.approx(50.0 + 100.0)
+
+    def test_normalization_enabled_backpropagates_normalized(self):
+        """When normalize_rewards=True, w_total accumulates normalized rewards in [0, 1]."""
+        groups = self._simple_groups()
+        call_count = 0
+        reward_values = [50.0, 100.0, 75.0]
+
+        def reward_fn(f, c):
+            nonlocal call_count
+            idx = min(call_count, len(reward_values) - 1)
+            call_count += 1
+            return reward_values[idx]
+
+        mcts = MCTS(
+            groups=groups,
+            reward_fn=reward_fn,
+            normalize_rewards=True,
+            seed=0,
+        )
+        mcts.run(n_iterations=3)
+
+        # All w_total values in the tree should be <= n_visits (since max normalized = 1.0)
+        def check_node(node):
+            if node.n_visits > 0:
+                mean = node.w_total / node.n_visits
+                assert (
+                    0.0 <= mean <= 1.0 + 1e-9
+                ), f"mean_value={mean} out of [0,1] range"
+            for child in node.children.values():
+                check_node(child)
+
+        check_node(mcts.root)
+
+    def test_best_value_stays_raw(self):
+        """best_value must reflect raw reward regardless of normalization flag."""
+        groups = self._simple_groups()
+        raw_reward = 9999.0
+        mcts = MCTS(
+            groups=groups,
+            reward_fn=lambda f, c: raw_reward,
+            normalize_rewards=True,
+            seed=0,
+        )
+        mcts.run(n_iterations=5)
+        assert mcts.best_value == pytest.approx(raw_reward)
+
+    def test_run_with_normalization_finds_optimum(self):
+        """MCTS with normalization still finds the optimum on a simple problem."""
+        g = NChooseK(features=[0, 1, 2, 3, 4], min_count=2, max_count=2)
+        groups = Groups(groups=[g])
+        target = frozenset({1, 3})
+
+        def reward_fn(feats, _cats):
+            return 100.0 if set(feats) == target else 0.0
+
+        mcts = MCTS(
+            groups=groups,
+            reward_fn=reward_fn,
+            normalize_rewards=True,
+            seed=42,
+        )
+        mcts.run(n_iterations=200)
+        assert mcts.best_value == pytest.approx(100.0)
+
+    def test_virtual_loss_with_shifted_rewards(self):
+        """Normalization fixes virtual loss dilution on shifted/negative rewards.
+
+        Without normalization, virtual loss (adding 0 reward on cache hit) dilutes
+        toward 0, which is wrong for shifted rewards. With normalization, the
+        backpropagated values are in [0, 1], so virtual loss dilutes toward 0
+        which is the minimum normalized reward — the correct behavior.
+        """
+        g = NChooseK(features=[0, 1, 2, 3], min_count=1, max_count=2)
+        groups = Groups(groups=[g])
+
+        # All rewards are large positive values; virtual loss of 0 would be
+        # extremely penalizing without normalization
+        def reward_fn(feats, _cats):
+            if set(feats) == {0, 2}:
+                return 1000.0
+            return 900.0 + len(feats)
+
+        # With normalization: virtual loss dilutes toward 0 (= worst normalized)
+        mcts_norm = MCTS(
+            groups=groups,
+            reward_fn=reward_fn,
+            normalize_rewards=True,
+            seed=0,
+        )
+        mcts_norm.run(n_iterations=150)
+
+        # Without normalization: virtual loss dilutes toward 0 (far below 900)
+        mcts_raw = MCTS(
+            groups=groups,
+            reward_fn=reward_fn,
+            normalize_rewards=False,
+            seed=0,
+        )
+        mcts_raw.run(n_iterations=150)
+
+        # Both should find the optimum given enough iterations
+        assert mcts_norm.best_value == pytest.approx(1000.0)
+        assert mcts_raw.best_value == pytest.approx(1000.0)
+
+    def test_normalize_rewards_default_is_false(self):
+        """The default value for normalize_rewards should be False."""
+        groups = self._simple_groups()
+        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
+        assert mcts.normalize_rewards is False
 
 
 # =============================================================================

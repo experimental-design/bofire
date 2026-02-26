@@ -331,6 +331,7 @@ class MCTSConfig:
     adaptive_p_stop: bool = False
     p_stop_warmup: int = 20
     p_stop_temperature: float = 0.25
+    normalize_rewards: bool = False
 
 
 # Effective ways to disable features:
@@ -385,6 +386,23 @@ CONFIGS = [
         pw_k0=2.0,
         pw_alpha=0.6,
         adaptive_p_stop=True,
+    ),
+    MCTSConfig(
+        name="MCTS (norm)",
+        c_uct=0.01,
+        k_rave=300,
+        pw_k0=2.0,
+        pw_alpha=0.6,
+        normalize_rewards=True,
+    ),
+    MCTSConfig(
+        name="MCTS (no RAVE+adpt+norm)",
+        c_uct=0.01,
+        k_rave=0,
+        pw_k0=2.0,
+        pw_alpha=0.6,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
     ),
 ]
 
@@ -444,6 +462,7 @@ def run_mcts_config(problem: Problem, config: MCTSConfig, seed: int) -> ProblemR
         adaptive_p_stop=config.adaptive_p_stop,
         p_stop_warmup=config.p_stop_warmup,
         p_stop_temperature=config.p_stop_temperature,
+        normalize_rewards=config.normalize_rewards,
         seed=seed,
     )
 
@@ -532,6 +551,8 @@ COLOR_MAP = {
     "MCTS (p_stop=0.6)": "#aec7e8",
     "MCTS (adaptive p)": "#ff1493",
     "MCTS (no RAVE+adpt)": "#00ced1",
+    "MCTS (norm)": "#ff6347",
+    "MCTS (no RAVE+adpt+norm)": "#32cd32",
 }
 
 
@@ -598,6 +619,8 @@ def plot_convergence_subsets(problem_name, all_results, n_iterations):
             "MCTS (p_stop=0.6)",
             "MCTS (adaptive p)",
             "MCTS (no RAVE+adpt)",
+            "MCTS (norm)",
+            "MCTS (no RAVE+adpt+norm)",
         ],
     }
     for subset_name, cnames in subsets.items():

@@ -318,6 +318,7 @@ class MCTS:
         adaptive_p_stop: Enable adaptive per-group stop probability (default True)
         p_stop_warmup: Per-group rollout count before full blending (default 20)
         p_stop_temperature: Sigmoid sharpness for adaptive p_stop (default 0.25)
+        normalize_rewards: Normalize rewards to [0, 1] before backpropagation (default False)
         seed: Random seed for reproducibility
     """
 
@@ -334,6 +335,7 @@ class MCTS:
         adaptive_p_stop: bool = True,
         p_stop_warmup: int = 20,
         p_stop_temperature: float = 0.25,
+        normalize_rewards: bool = False,
         seed: Optional[int] = None,
     ):
         self.groups = groups
@@ -347,6 +349,7 @@ class MCTS:
         self.adaptive_p_stop = adaptive_p_stop
         self.p_stop_warmup = p_stop_warmup
         self.p_stop_temperature = p_stop_temperature
+        self.normalize_rewards = normalize_rewards
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -397,14 +400,8 @@ class MCTS:
         """Update per-(group, cardinality) stats from a completed rollout.
 
         Reverse-maps selected_features to per-group cardinalities and updates
-        the cardinality_stats dict and reward range trackers.
+        the cardinality_stats dict.
         """
-        # Update reward range
-        if reward < self.reward_min:
-            self.reward_min = reward
-        if reward > self.reward_max:
-            self.reward_max = reward
-
         selected_set = set(selected_features)
         for g, nchoosek in enumerate(self.groups.nchooseks):
             cardinality = sum(1 for f in nchoosek.features if f in selected_set)
@@ -478,6 +475,16 @@ class MCTS:
             else 1.0
         )
         return (1.0 - alpha) * self.p_stop_rollout + alpha * p_learned
+
+    def _normalize_reward(self, reward: float) -> float:
+        """Normalize reward to [0, 1] using running min-max.
+
+        Returns 0.5 when reward range is zero (all rewards identical).
+        """
+        reward_range = self.reward_max - self.reward_min
+        if reward_range <= 0:
+            return 0.5
+        return (reward - self.reward_min) / reward_range
 
     def _make_cache_key(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
@@ -712,6 +719,12 @@ class MCTS:
             is_novel = key not in self.value_cache
             reward = self._cached_reward(selected_features, cat_selections)
 
+            # Update reward range (used by normalization and adaptive p_stop)
+            if reward < self.reward_min:
+                self.reward_min = reward
+            if reward > self.reward_max:
+                self.reward_max = reward
+
             if reward > self.best_value:
                 self.best_value = reward
                 self.best_selection = (selected_features, cat_selections)
@@ -719,8 +732,13 @@ class MCTS:
             if self.adaptive_p_stop:
                 self._update_cardinality_stats(reward, selected_features)
 
+            # Normalize reward for backpropagation if enabled
+            bp_reward = (
+                self._normalize_reward(reward) if self.normalize_rewards else reward
+            )
+
             if is_novel:
-                self._backpropagate(path, reward, selected_features, cat_selections)
+                self._backpropagate(path, bp_reward, selected_features, cat_selections)
             else:
                 # Virtual loss: increment visits with zero reward so that
                 # (a) PW limits still grow with traffic, and
