@@ -954,13 +954,22 @@ def optimize_acqf_mcts(
     nchooseks: list[tuple[list[int], int, int]] | None = None,
     cat_dims: Mapping[int, Sequence[float]] | None = None,
     # MCTS parameters
-    c_uct: float = 1.0,
-    k_rave: float = 300.0,
+    c_uct: float = 0.01,
+    k_rave: float = 0.0,
     p_stop_rollout: float = 0.35,
     num_iterations: int = 100,
     pw_k0: float = 2.0,
     pw_alpha: float = 0.6,
     max_rollout_retries: int = 3,
+    adaptive_p_stop: bool = True,
+    p_stop_warmup: int = 20,
+    p_stop_temperature: float = 0.25,
+    normalize_rewards: bool = True,
+    rollout_policy: bool = True,
+    rollout_epsilon: float = 0.3,
+    rollout_tau: float = 1.0,
+    rollout_novelty_weight: float = 1.0,
+    context_rave: bool = False,
     # BoTorch acqf optimization parameters
     q: int = 1,
     raw_samples: int = 1024,
@@ -983,13 +992,22 @@ def optimize_acqf_mcts(
             where features is a list of feature indices
         cat_dims: Dictionary mapping categorical dimension indices to allowed values
             (same signature as botorch.optim.optimize_acqf_mixed_alternating)
-        c_uct: UCT exploration constant
-        k_rave: RAVE blending decay parameter
-        p_stop_rollout: Probability of early stop during NChooseK rollout
+        c_uct: UCT exploration constant (default 0.01, paired with normalize_rewards)
+        k_rave: RAVE blending decay parameter (default 0 = disabled)
+        p_stop_rollout: Base probability of early stop during NChooseK rollout
         num_iterations: Number of MCTS iterations
         pw_k0: Progressive widening base constant
         pw_alpha: Progressive widening exponent
         max_rollout_retries: Maximum rollout retries on cache hit
+        adaptive_p_stop: Learn per-group stop probability from cardinality stats
+        p_stop_warmup: Number of rollouts before adaptive p_stop fully activates
+        p_stop_temperature: Sigmoid temperature for adaptive p_stop
+        normalize_rewards: Map rewards to [0, 1] via running min-max
+        rollout_policy: Use learned softmax rollout policy instead of uniform
+        rollout_epsilon: Epsilon for epsilon-greedy blending in rollout policy
+        rollout_tau: Temperature for softmax in rollout policy
+        rollout_novelty_weight: Novelty bonus coefficient for rollout policy
+        context_rave: Use context-aware RAVE instead of global RAVE
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
@@ -1083,6 +1101,15 @@ def optimize_acqf_mcts(
         pw_k0=pw_k0,
         pw_alpha=pw_alpha,
         max_rollout_retries=max_rollout_retries,
+        adaptive_p_stop=adaptive_p_stop,
+        p_stop_warmup=p_stop_warmup,
+        p_stop_temperature=p_stop_temperature,
+        normalize_rewards=normalize_rewards,
+        rollout_policy=rollout_policy,
+        rollout_epsilon=rollout_epsilon,
+        rollout_tau=rollout_tau,
+        rollout_novelty_weight=rollout_novelty_weight,
+        context_rave=context_rave,
         seed=seed,
     )
 
