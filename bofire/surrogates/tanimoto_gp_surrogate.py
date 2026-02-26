@@ -42,14 +42,23 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
         **kwargs,
     ):
         
-        if self.pre_computed_tanimoto:
-            if self.tanimoto_similarity_matrix is None:
-                self.tanimoto_similarity_matrix = "test-123"
-
         if input_transform is not None:
             n_dim = input_transform(tX).shape[-1]
         else:
             n_dim = tX.shape[-1]
+        
+        if self.pre_computed_tanimoto:
+            if self.tanimoto_similarity_matrix is None:
+
+                covar_module=kernels.map(
+                    self.kernel,
+                    batch_shape=torch.Size(),
+                    active_dims=list(range(n_dim)),
+                    features_to_idx_mapper=self.get_feature_indices,
+                )
+                fingerprints = input_transform.encoders[0].encoding
+                self.tanimoto_similarity_matrix = covar_module(fingerprints, fingerprints)
+
 
         self.model = botorch.models.SingleTaskGP(
             train_X=tX,
