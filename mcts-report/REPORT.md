@@ -66,6 +66,7 @@ The `+crave` configs build on `+rpol` and add `context_rave=True` with varying `
 | **mixed_nchoosek_categorical** | 2 NChooseK + 2 Cat | 6 each + 4 vals | 1-3 | ~26,896 | 500 | 30 |
 | **large_sparse** | 4 NChooseK | 10 each | 0-3 | ~960M | 800 | 30 |
 | **graduated_landscape** | 1 NChooseK | 10 | 2-4 | 375 | 300 | 30 |
+| **simple_additive** | 1 NChooseK | 12 | 1-4 | 793 | 300 | 30 |
 
 **Problem descriptions:**
 - **multigroup_interaction**: Optimal requires specific features from all 3 groups with cross-group interaction bonuses (e.g., feature 1 + feature 9 = +12 bonus). Tests whether MCTS can learn multi-group correlations.
@@ -73,6 +74,7 @@ The `+crave` configs build on `+rpol` and add `context_rave=True` with varying `
 - **mixed_nchoosek_categorical**: Feature+categorical interactions (e.g., feature 2 + cat_dim_20=2.0 = +15). Tests handling of mixed discrete types.
 - **large_sparse**: Optimal uses features from only 2 of 4 groups, with a sparsity bonus. The search space is ~960 million. Tests scalability and ability to learn that most groups should be empty.
 - **graduated_landscape**: Smooth quality-based reward (each feature has a fixed quality score). Many near-optimal solutions. Tests exploitation of smooth structure.
+- **simple_additive**: Simplest possible NChooseK problem — each feature contributes a fixed positive value with no interactions. Reward = sum of selected feature values. Tests whether MCTS can identify the highest-value features and the correct cardinality (4).
 
 ---
 
@@ -239,6 +241,26 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (+crave k=100) | 64.7 | 0.5 | 70% | 109 |
 | MCTS (+crave k=300) | 63.9 | 2.2 | 47% | 72 |
 | MCTS (+crave k=500) | 63.0 | 2.9 | 30% | 53 |
+
+#### simple_additive (search space 793, optimum = 65.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|----------|------|----------|-------------|
+| Random | 57.7 | 3.3 | 0% | 115 |
+| MCTS (default) | 61.8 | 3.7 | 37% | 70 |
+| **MCTS (no RAVE)** | **64.0** | 2.0 | **70%** | 167 |
+| MCTS (heavy RAVE) | 52.4 | 6.0 | 0% | 27 |
+| MCTS (p_stop=0.1) | 64.3 | 1.6 | 80% | 100 |
+| MCTS (adaptive p) | 63.3 | 2.1 | 50% | 80 |
+| MCTS (no RAVE+adpt) | 64.1 | 1.7 | 77% | 181 |
+| MCTS (no RAVE+adpt+norm) | 64.1 | 2.2 | 83% | 184 |
+| **MCTS (+rpol)** | **64.1** | 2.2 | **83%** | 187 |
+| MCTS (+rpol ε=0.1) | 64.4 | 1.4 | 83% | 175 |
+| MCTS (+rpol τ=0.5) | 64.1 | 2.1 | 80% | 187 |
+| MCTS (+rpol τ=2) | 64.3 | 1.4 | 77% | 187 |
+| MCTS (+crave k=100) | 64.2 | 1.5 | 77% | 143 |
+| MCTS (+crave k=300) | 63.7 | 2.4 | 67% | 92 |
+| MCTS (+crave k=500) | 62.8 | 2.6 | 40% | 69 |
 
 ### 3.2 Convergence Curves
 
@@ -439,12 +461,12 @@ The default rollout strategy selects actions uniformly at random (with adaptive 
 
 #### Hyperparameter sensitivity
 
-| Variant | multigroup | needle | mixed | large_sparse | graduated | **Mean opt%** |
-|---------|-----------|--------|-------|-------------|-----------|--------------|
-| **+rpol (ε=0.3, τ=1.0)** | 23% | 100% | 77% | 50% | 80% | **66.0%** |
-| +rpol ε=0.1 | 27% | 97% | 60% | 23% | 93% | 60.0% |
-| +rpol τ=0.5 | 20% | 100% | 83% | 50% | 73% | 65.2% |
-| +rpol τ=2 | 23% | 97% | 77% | 43% | 80% | 64.0% |
+| Variant | multigroup | needle | mixed | large_sparse | graduated | additive | **Mean opt%** |
+|---------|-----------|--------|-------|-------------|-----------|----------|--------------|
+| **+rpol (ε=0.3, τ=1.0)** | 23% | 100% | 77% | 50% | 80% | 83% | **68.8%** |
+| +rpol ε=0.1 | 27% | 97% | 60% | 23% | 93% | 83% | 63.8% |
+| +rpol τ=0.5 | 20% | 100% | 83% | 50% | 73% | 80% | 67.7% |
+| +rpol τ=2 | 23% | 97% | 77% | 43% | 80% | 77% | 66.2% |
 
 - **ε=0.1 is dangerous**: Too little uniform exploration causes collapse on hard problems (23% on large_sparse vs 50% for default). It performs well on easy problems (93% on graduated) but this is misleading.
 - **τ=0.5** is strong on mixed (83%) and large_sparse (50%) but drops on multigroup (20%) and graduated (73%). More aggressive exploitation helps when there are many actions per group but hurts when the search space is smaller.
@@ -474,6 +496,7 @@ Global RAVE was identified as harmful (§4.2) because it uses a single value est
 | mixed_nchoosek_categorical | 135.9 / 77% | 131.9 / 70% | **137.7 / 80%** | 132.0 / 70% |
 | large_sparse | **129.8 / 50%** | 128.8 / 50% | 119.1 / 43% | 118.5 / 43% |
 | graduated_landscape | 64.5 / 80% | **64.7 / 70%** | 63.9 / 47% | 63.0 / 30% |
+| simple_additive | **64.1 / 83%** | 64.2 / 77% | 63.7 / 67% | 62.8 / 40% |
 
 #### Problem-specific analysis
 
@@ -486,6 +509,8 @@ Global RAVE was identified as harmful (§4.2) because it uses a single value est
 **large_sparse**: Context RAVE k=100 matches +rpol at 50%, but k=300 and k=500 drop to 43%. In a 960M search space, context statistics are sparse and higher RAVE weight injects noise.
 
 **graduated_landscape**: Context RAVE degrades with higher k values (70%→47%→30%). This small, smooth problem (375 combinations) doesn't need RAVE guidance — the policy and UCT alone are sufficient, and RAVE adds overhead.
+
+**simple_additive**: The simplest problem (independent additive features, no interactions) confirms MCTS solves this easy case reliably. The best configs (+rpol, +rpol ε=0.1, no RAVE+adpt+norm) all achieve 83% optimum rate. Context RAVE k=100 is close at 77%, while higher k values degrade — the additive structure has no context-dependent feature values, so RAVE signal is pure noise.
 
 #### Key insights
 

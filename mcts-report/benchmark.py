@@ -313,6 +313,53 @@ def make_problem_graduated() -> Problem:
     )
 
 
+# ---------------------------------------------------------------------------
+# Problem 6: Simple additive — independent feature values, no interactions
+# ---------------------------------------------------------------------------
+def make_problem_simple_additive() -> Problem:
+    """12 features, pick 1-4. Each feature contributes a fixed positive value.
+
+    No interactions — reward is purely the sum of selected feature values.
+    Features have varying magnitudes so the algorithm must learn to pick
+    the highest-value features and the right cardinality (exactly 4).
+    This is the simplest possible NChooseK problem.
+    """
+    g = NChooseK(features=list(range(12)), min_count=1, max_count=4)
+    gs = Groups(groups=[g])
+
+    values = {
+        0: 1.0,
+        1: 3.0,
+        2: 8.0,
+        3: 2.0,
+        4: 15.0,
+        5: 5.0,
+        6: 12.0,
+        7: 20.0,
+        8: 4.0,
+        9: 10.0,
+        10: 6.0,
+        11: 18.0,
+    }
+    # Optimal: {4, 6, 7, 11} = 15 + 12 + 20 + 18 = 65
+
+    def reward_fn(feats, _cats):
+        return sum(values[f] for f in feats)
+
+    ss = count_nchoosek_combos(12, 1, 4)
+    optimal_val = sum(sorted(values.values(), reverse=True)[:4])  # top 4
+    return Problem(
+        name="simple_additive",
+        description="12 features pick 1-4, independent positive values (no interactions)",
+        groups=gs,
+        reward_fn=reward_fn,
+        optimal_value=optimal_val,
+        search_space_size=ss,
+        n_iterations=300,
+        n_trials=30,
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # MCTS Configurations
 # ═══════════════════════════════════════════════════════════════════════
@@ -937,6 +984,7 @@ def main():
         make_problem_mixed(),
         make_problem_large_sparse(),
         make_problem_graduated(),
+        make_problem_simple_additive(),
     ]
 
     for p in problems:
