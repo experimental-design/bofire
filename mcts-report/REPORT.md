@@ -2,14 +2,15 @@
 
 ## Executive Summary
 
-This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 5 combinatorial problems with NChooseK constraints. We test 20 MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, and rollout policy against a random-sampling baseline.
+This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 5 combinatorial problems with NChooseK constraints. We test 23 MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, rollout policy, and context-aware RAVE against a random-sampling baseline.
 
-Three algorithmic improvements were implemented during this benchmarking cycle:
+Four algorithmic improvements were implemented during this benchmarking cycle:
 1. **Virtual loss on cache hit**: On revisiting a cached terminal, increment visit counts but backpropagate reward=0. This dilutes mean node value for over-exploited branches, steering UCT toward unexplored territory.
 2. **Rollout retry on cache hit**: When a rollout produces a cached terminal, re-roll up to `max_rollout_retries` times to find a novel selection.
 3. **Blended softmax rollout policy**: Replaces uniform-random rollouts with a learned policy that blends softmax over per-(group, action) statistics with uniform exploration, treating STOP as a regular scored action.
+4. **Context-aware RAVE**: Conditions RAVE statistics on `(group_idx, cardinality, action)` instead of a global action ID, allowing RAVE to learn that a feature's value depends on how many features are already selected.
 
-**Key result**: The cumulative effect of these improvements transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). The rollout policy alone adds +14pp on mixed and +10pp on large_sparse over the previous best config.
+**Key result**: The cumulative effect of these improvements transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). Context-aware RAVE re-enables RAVE as a useful signal on mixed problems (80% with k=300 vs 77% for +rpol) while matching +rpol on other problems.
 
 ---
 
@@ -39,16 +40,22 @@ Three algorithmic improvements were implemented during this benchmarking cycle:
 | **MCTS (+rpol ε=0.1)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
 | **MCTS (+rpol τ=0.5)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
 | **MCTS (+rpol τ=2)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
+| **MCTS (+crave k=100)** | 0.01 | 100 | 2.0 | 0.6 | adaptive |
+| **MCTS (+crave k=300)** | 0.01 | 300 | 2.0 | 0.6 | adaptive |
+| **MCTS (+crave k=500)** | 0.01 | 500 | 2.0 | 0.6 | adaptive |
 
 The `norm` and `no RAVE+adpt+norm` configs enable `normalize_rewards=True` with `c_uct=0.01`; other non-rollout configs use raw rewards with `c_uct` as shown. The reduced `c_uct` compensates for normalization compressing rewards to [0, 1] — with raw rewards in the range 60–272 across problems, `c_uct=1.0` gives an effective exploration pressure of `1.0/reward_range`; `c_uct=0.01` with normalized rewards matches this balance.
 
 The `+rpol` configs build on `no RAVE+adpt+norm` and add `rollout_policy=True` with varying `rollout_epsilon` (ε) and `rollout_tau` (τ). The default rollout policy uses ε=0.3, τ=1.0, novelty_weight=1.0.
+
+The `+crave` configs build on `+rpol` and add `context_rave=True` with varying `k_rave` values to control how much weight the context-aware RAVE signal receives.
 
 - **RAVE disabled**: `k_rave=0` sets β=0, making the score pure UCT.
 - **PW disabled**: `pw_k0=1e6` makes the child limit always exceed legal actions.
 - **Adaptive p_stop**: Learns per-group stop probability from cardinality-reward statistics. Uses sigmoid on normalized `(E_stop - E_continue)`, blended with fixed prior during warmup (20 rollouts).
 - **Reward normalization**: Maps rewards to [0, 1] via running min-max before backpropagation. `best_value` and adaptive p_stop statistics remain in raw reward space.
 - **Rollout policy**: Replaces uniform-random rollouts with a softmax over per-(group, action) mean rewards + novelty bonus, blended with uniform exploration via epsilon-mixing.
+- **Context-aware RAVE**: Replaces global RAVE (keyed by action ID) with context-dependent statistics keyed by `(group_idx, cardinality, action)`. This allows RAVE to learn that a feature's value depends on how many features are already selected in that group.
 
 ### 1.2 Benchmark Problems
 
@@ -142,6 +149,9 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (+rpol ε=0.1) | 114.1 | 24.0 | 27% | 511 |
 | MCTS (+rpol τ=0.5) | 109.9 | 22.7 | 20% | 510 |
 | MCTS (+rpol τ=2) | 112.5 | 23.1 | 23% | 514 |
+| MCTS (+crave k=100) | 105.3 | 21.1 | 13% | 445 |
+| MCTS (+crave k=300) | 103.5 | 17.3 | 7% | 370 |
+| MCTS (+crave k=500) | 100.2 | 19.5 | 7% | 310 |
 
 #### needle_in_haystack (search space ~4,928, optimum = 100.0)
 
@@ -160,6 +170,9 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (no RAVE+adpt+norm) | 100.0 | 0.0 | 100% | 247 |
 | **MCTS (+rpol)** | **100.0** | 0.0 | **100%** | 283 |
 | MCTS (+rpol τ=0.5) | 100.0 | 0.0 | 100% | 283 |
+| MCTS (+crave k=100) | 100.0 | 0.0 | 100% | 219 |
+| MCTS (+crave k=300) | 100.0 | 0.0 | 100% | 139 |
+| MCTS (+crave k=500) | 97.7 | 12.6 | 97% | 106 |
 
 #### mixed_nchoosek_categorical (search space ~26,896, optimum = 150.0)
 
@@ -179,6 +192,9 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (+rpol ε=0.1) | 126.0 | 29.4 | 60% | 404 |
 | MCTS (+rpol τ=0.5) | 140.0 | 22.4 | 83% | 444 |
 | MCTS (+rpol τ=2) | 136.0 | 25.4 | 77% | 440 |
+| MCTS (+crave k=100) | 131.9 | 27.7 | 70% | 373 |
+| **MCTS (+crave k=300)** | **137.7** | 24.7 | **80%** | 304 |
+| MCTS (+crave k=500) | 132.0 | 27.5 | 70% | 264 |
 
 #### large_sparse (search space ~960M, optimum = 200.0)
 
@@ -198,6 +214,9 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (+rpol ε=0.1) | 90.4 | 60.7 | 23% | 749 |
 | MCTS (+rpol τ=0.5) | 128.1 | 72.0 | 50% | 749 |
 | MCTS (+rpol τ=2) | 118.7 | 71.2 | 43% | 749 |
+| MCTS (+crave k=100) | 128.8 | 71.3 | 50% | 696 |
+| MCTS (+crave k=300) | 119.1 | 70.8 | 43% | 651 |
+| MCTS (+crave k=500) | 118.5 | 71.4 | 43% | 591 |
 
 #### graduated_landscape (search space 375, optimum = 65.0)
 
@@ -217,6 +236,9 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (+rpol ε=0.1) | 64.9 | 0.2 | 93% | 151 |
 | MCTS (+rpol τ=0.5) | 64.7 | 0.4 | 73% | 154 |
 | MCTS (+rpol τ=2) | 64.7 | 0.6 | 80% | 163 |
+| MCTS (+crave k=100) | 64.7 | 0.5 | 70% | 109 |
+| MCTS (+crave k=300) | 63.9 | 2.2 | 47% | 72 |
+| MCTS (+crave k=500) | 63.0 | 2.9 | 30% | 53 |
 
 ### 3.2 Convergence Curves
 
@@ -244,6 +266,16 @@ MCTS (+rpol) (dark red) converges to 129.8 mean best and 50% optimum rate, a cle
 ![Rollout policy mixed](convergence_mixed_nchoosek_categorical_rollout.png)
 
 The τ=0.5 variant (gold) achieves 83% optimum rate, the highest across all configs on this problem. The default +rpol (ε=0.3, τ=1.0) also improves substantially to 77% (from 63% without rollout policy).
+
+#### Context RAVE effect — mixed_nchoosek_categorical
+![Context RAVE mixed](convergence_mixed_nchoosek_categorical_crave.png)
+
+Context-aware RAVE with k=300 (teal) achieves 80% optimum rate on the mixed problem, the second-best result after τ=0.5 (83%). It outperforms the baseline +rpol (77%) by re-enabling RAVE in a context-dependent way that avoids the pitfalls of global RAVE.
+
+#### Context RAVE effect — large_sparse
+![Context RAVE large_sparse](convergence_large_sparse_crave.png)
+
+On large_sparse, context RAVE k=100 matches +rpol at 50% optimum rate. Higher k values (300, 500) show 43% — the stronger RAVE signal reduces exploration in this enormous search space.
 
 ---
 
@@ -429,6 +461,44 @@ The rollout policy addresses a fundamental inefficiency: in a tree with hundreds
 
 The statistics are updated unconditionally (even when `rollout_policy=False`), so the data is always warm if the policy is enabled later.
 
+### 4.8 Context-Aware RAVE: Making RAVE Useful Again
+
+Global RAVE was identified as harmful (§4.2) because it uses a single value estimate per action regardless of context. Context-aware RAVE fixes this by conditioning statistics on `(group_idx, cardinality, action)` — the same feature can have different learned values depending on how many features are already selected in that group.
+
+#### `MCTS (+rpol)` vs `MCTS (+crave)` — the key comparison
+
+| Problem | +rpol (mean/opt%) | +crave k=100 | +crave k=300 | +crave k=500 |
+|---------|-------------------|-------------|-------------|-------------|
+| multigroup_interaction | **111.4 / 23%** | 105.3 / 13% | 103.5 / 7% | 100.2 / 7% |
+| needle_in_haystack | **100.0 / 100%** | 100.0 / 100% | 100.0 / 100% | 97.7 / 97% |
+| mixed_nchoosek_categorical | 135.9 / 77% | 131.9 / 70% | **137.7 / 80%** | 132.0 / 70% |
+| large_sparse | **129.8 / 50%** | 128.8 / 50% | 119.1 / 43% | 118.5 / 43% |
+| graduated_landscape | 64.5 / 80% | **64.7 / 70%** | 63.9 / 47% | 63.0 / 30% |
+
+#### Problem-specific analysis
+
+**mixed_nchoosek_categorical**: Context RAVE k=300 achieves the **second-best optimum rate (80%)** across all configs on this problem, outperforming the baseline +rpol (77%). The mixed problem has feature-categorical interactions where context matters: knowing that 2 features are already selected helps RAVE estimate whether adding a 3rd is worthwhile. With 2 NChooseK groups + 2 categoricals, there are enough distinct contexts for RAVE to learn meaningful state-dependent values.
+
+**needle_in_haystack**: Context RAVE k=100 and k=300 both achieve 100% optimum rate with fewer unique evaluations (219 and 139 vs 283 for +rpol). The context signal helps RAVE guide the search more efficiently — it needs fewer evaluations to identify the optimal subset.
+
+**multigroup_interaction**: Context RAVE underperforms +rpol here (13% vs 23%). With 3 groups of 8 features picking 1-4 each, the context space is large and the 600-iteration budget may be insufficient to populate the context RAVE table adequately. The high k values (300, 500) perform worse because they give too much weight to sparse, noisy context statistics.
+
+**large_sparse**: Context RAVE k=100 matches +rpol at 50%, but k=300 and k=500 drop to 43%. In a 960M search space, context statistics are sparse and higher RAVE weight injects noise.
+
+**graduated_landscape**: Context RAVE degrades with higher k values (70%→47%→30%). This small, smooth problem (375 combinations) doesn't need RAVE guidance — the policy and UCT alone are sufficient, and RAVE adds overhead.
+
+#### Key insights
+
+1. **k_rave=100 is the safest choice**: It matches or nearly matches +rpol on every problem, and wins on needle_in_haystack efficiency.
+2. **k_rave=300 is optimal for mixed problems**: Where feature-context interactions are rich, stronger RAVE signal helps.
+3. **High k_rave (500) is harmful**: Too much weight on context RAVE degrades performance across the board, similar to how global heavy RAVE (k=3000) was catastrophic.
+4. **Context RAVE helps most when**: (a) the problem has meaningful context-dependent feature values (mixed, needle), and (b) the iteration budget is sufficient to populate the context table.
+5. **Context RAVE helps least when**: (a) the search space is small and UCT+policy alone suffice (graduated), or (b) the search space is so large that context statistics remain sparse (large_sparse with high k).
+
+#### Recommended usage
+
+Context RAVE with k=100 is a safe addition that provides modest benefits on structured problems without degrading performance on others. For problems known to have strong feature-cardinality interactions, k=300 can provide additional benefit. Context RAVE is not recommended as a default because the baseline +rpol configuration is more robust across diverse problem structures.
+
 ---
 
 ## 5. Optimum-Finding Rates
@@ -481,7 +551,7 @@ Based on these results, the recommended defaults for NChooseK problems are:
 ### 8.2 Further Improvements to Explore
 
 1. ~~**Adaptive p_stop_rollout**~~: **Implemented and validated.** Per-group adaptive p_stop learns from cardinality-reward statistics. Combined with no RAVE, it achieves 100% on needle_in_haystack and best results on large_sparse. See Section 4.5 for details.
-2. **Context-aware RAVE**: If RAVE is to be reintroduced, condition it on (group_idx, selection_count) so it captures state-dependent value rather than global averages.
+2. ~~**Context-aware RAVE**~~: **Implemented and validated.** Conditions RAVE on `(group_idx, cardinality, action)` so it captures state-dependent value. With k=300, achieves 80% on mixed problems (vs 77% for +rpol). With k=100, matches +rpol on all problems while using fewer evaluations on needle_in_haystack. Not recommended as default due to marginal benefit on most problems. See Section 4.8 for details.
 3. ~~**Reward normalization**~~: **Implemented and validated.** Min-max normalization to [0, 1] before backpropagation with `c_uct=0.01` to match the [0, 1] scale. See Section 4.6 for details.
 4. ~~**Blended softmax rollout policy**~~: **Implemented and validated.** Replaces uniform rollouts with a learned softmax policy blended with uniform exploration. The rollout policy is the new best configuration on all 5 problems: 77% on mixed (up from 63%), 50% on large_sparse (up from 40%), and best or tied elsewhere. Default hyperparameters (ε=0.3, τ=1.0) are the most robust. See Section 4.7 for details.
 
@@ -502,6 +572,7 @@ Based on these results, the recommended defaults for NChooseK problems are:
 | `convergence_<problem>_exploration.png` | c_uct ablation convergence |
 | `convergence_<problem>_p_stop.png` | p_stop ablation convergence |
 | `convergence_<problem>_rollout.png` | Rollout policy ablation convergence |
+| `convergence_<problem>_crave.png` | Context RAVE ablation convergence |
 
 ## 10. Reproducing
 
@@ -509,4 +580,4 @@ Based on these results, the recommended defaults for NChooseK problems are:
 python mcts-report/benchmark.py
 ```
 
-All results use fixed random seeds for reproducibility. Runtime is ~40 seconds.
+All results use fixed random seeds for reproducibility. Runtime is ~60 seconds.

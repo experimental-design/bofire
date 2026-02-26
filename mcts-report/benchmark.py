@@ -336,6 +336,7 @@ class MCTSConfig:
     rollout_epsilon: float = 0.3
     rollout_tau: float = 1.0
     rollout_novelty_weight: float = 1.0
+    context_rave: bool = False
 
 
 # Effective ways to disable features:
@@ -443,6 +444,33 @@ CONFIGS = [
         rollout_policy=True,
         rollout_tau=2.0,
     ),
+    MCTSConfig(
+        name="MCTS (+crave k=100)",
+        c_uct=0.01,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+        context_rave=True,
+        k_rave=100,
+    ),
+    MCTSConfig(
+        name="MCTS (+crave k=300)",
+        c_uct=0.01,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+        context_rave=True,
+        k_rave=300,
+    ),
+    MCTSConfig(
+        name="MCTS (+crave k=500)",
+        c_uct=0.01,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+        context_rave=True,
+        k_rave=500,
+    ),
 ]
 
 
@@ -507,6 +535,7 @@ def run_mcts_config(problem: Problem, config: MCTSConfig, seed: int) -> ProblemR
         rollout_epsilon=config.rollout_epsilon,
         rollout_tau=config.rollout_tau,
         rollout_novelty_weight=config.rollout_novelty_weight,
+        context_rave=config.context_rave,
         seed=seed,
     )
 
@@ -601,6 +630,9 @@ COLOR_MAP = {
     "MCTS (+rpol ε=0.1)": "#ff4500",
     "MCTS (+rpol τ=0.5)": "#daa520",
     "MCTS (+rpol τ=2)": "#4682b4",
+    "MCTS (+crave k=100)": "#6a0dad",
+    "MCTS (+crave k=300)": "#20b2aa",
+    "MCTS (+crave k=500)": "#dc143c",
 }
 
 
@@ -677,6 +709,14 @@ def plot_convergence_subsets(problem_name, all_results, n_iterations):
             "MCTS (+rpol ε=0.1)",
             "MCTS (+rpol τ=0.5)",
             "MCTS (+rpol τ=2)",
+        ],
+        "crave": [
+            "Random",
+            "MCTS (no RAVE+adpt+norm)",
+            "MCTS (+rpol)",
+            "MCTS (+crave k=100)",
+            "MCTS (+crave k=300)",
+            "MCTS (+crave k=500)",
         ],
     }
     for subset_name, cnames in subsets.items():

@@ -1713,7 +1713,7 @@ class TestRolloutPolicy:
         """Trajectory updates dict correctly."""
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        trajectory = [(0, 1), (0, 2)]
+        trajectory = [(0, 0, 1), (0, 1, 2)]
         mcts._update_rollout_stats(trajectory, 5.0)
         assert mcts.rollout_stats[(0, 1)] == (1, 5.0)
         assert mcts.rollout_stats[(0, 2)] == (1, 5.0)
@@ -1722,8 +1722,8 @@ class TestRolloutPolicy:
         """Multiple updates accumulate."""
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts._update_rollout_stats([(0, 1)], 3.0)
-        mcts._update_rollout_stats([(0, 1)], 7.0)
+        mcts._update_rollout_stats([(0, 0, 1)], 3.0)
+        mcts._update_rollout_stats([(0, 0, 1)], 7.0)
         assert mcts.rollout_stats[(0, 1)] == (2, 10.0)
 
     def test_update_rollout_stats_empty_trajectory(self):
@@ -1757,9 +1757,10 @@ class TestRolloutPolicy:
         )
         _feats, _cats, trajectory = mcts._rollout(mcts.root)
         assert len(trajectory) > 0
-        # All entries are (group_idx, action) tuples
-        for g, a in trajectory:
+        # All entries are (group_idx, cardinality, action) triples
+        for g, c, a in trajectory:
             assert isinstance(g, int)
+            assert isinstance(c, int)
             assert isinstance(a, int)
 
     def test_rollout_policy_disabled_still_records_trajectory(self):
@@ -1869,6 +1870,282 @@ class TestRolloutPolicy:
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
         assert mcts.rollout_policy is True
+
+
+# =============================================================================
+# Context-aware RAVE tests
+# =============================================================================
+
+
+class TestContextRave:
+    """Tests for context-aware RAVE."""
+
+    @staticmethod
+    def _nck_groups() -> Groups:
+        """Single NChooseK group: 5 features, pick 1-3."""
+        return Groups(
+            groups=[NChooseK(features=[0, 1, 2, 3, 4], min_count=1, max_count=3)]
+        )
+
+    @staticmethod
+    def _two_nck_groups() -> Groups:
+        """Two NChooseK groups."""
+        g1 = NChooseK(features=[0, 1, 2], min_count=1, max_count=2)
+        g2 = NChooseK(features=[10, 11, 12], min_count=1, max_count=2)
+        return Groups(groups=[g1, g2])
+
+    # ---- _extract_tree_actions ----
+
+    def test_extract_tree_actions_basic(self):
+        """Path of 3 nodes yields correct (g, cardinality, action) tuples."""
+        root = Node(
+            partial_by_group=((), ()),
+            stopped_by_group=(False, False),
+            group_idx=0,
+        )
+        child1 = Node(
+            partial_by_group=((0,), ()),
+            stopped_by_group=(False, False),
+            group_idx=0,
+        )
+        child2 = Node(
+            partial_by_group=((0, 2), ()),
+            stopped_by_group=(False, False),
+            group_idx=1,
+        )
+        path = [root, child1, child2]
+        actions = MCTS._extract_tree_actions(path)
+        # root -> child1: group 0, cardinality 0 (empty), action 0
+        # child1 -> child2: group 0, cardinality 1 (has 0), action 2
+        assert actions == [(0, 0, 0), (0, 1, 2)]
+
+    def test_extract_tree_actions_with_stop(self):
+        """STOP action extracted correctly."""
+        parent = Node(
+            partial_by_group=((1,),),
+            stopped_by_group=(False,),
+            group_idx=0,
+        )
+        child = Node(
+            partial_by_group=((1,),),
+            stopped_by_group=(True,),
+            group_idx=1,
+        )
+        path = [parent, child]
+        actions = MCTS._extract_tree_actions(path)
+        assert actions == [(0, 1, STOP)]
+
+    def test_extract_tree_actions_single_node(self):
+        """Single-node path returns empty list."""
+        root = Node(
+            partial_by_group=((),),
+            stopped_by_group=(False,),
+            group_idx=0,
+        )
+        actions = MCTS._extract_tree_actions([root])
+        assert actions == []
+
+    # ---- _update_context_rave_stats ----
+
+    def test_update_context_rave_stats_basic(self):
+        """Dict updated correctly."""
+        gs = self._nck_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts._update_context_rave_stats([(0, 0, 1), (0, 1, 3)], 5.0)
+        assert mcts.context_rave_stats[(0, 0, 1)] == (1, 5.0)
+        assert mcts.context_rave_stats[(0, 1, 3)] == (1, 5.0)
+
+    def test_update_context_rave_stats_accumulates(self):
+        """Multiple updates accumulate."""
+        gs = self._nck_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts._update_context_rave_stats([(0, 0, 1)], 3.0)
+        mcts._update_context_rave_stats([(0, 0, 1)], 7.0)
+        assert mcts.context_rave_stats[(0, 0, 1)] == (2, 10.0)
+
+    def test_update_context_rave_stats_empty(self):
+        """No-op for empty list."""
+        gs = self._nck_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts._update_context_rave_stats([], 5.0)
+        assert mcts.context_rave_stats == {}
+
+    # ---- combined_score with context RAVE ----
+
+    def test_context_rave_combined_score_uses_context(self):
+        """When context_rave=True, combined_score uses context_rave_stats."""
+        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=1)])
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            context_rave=True,
+            k_rave=1000.0,
+            seed=0,
+        )
+        # Seed context stats: at cardinality 0, action 2 is much better
+        mcts.context_rave_stats[(0, 0, 0)] = (10, 10.0)  # mean=1.0
+        mcts.context_rave_stats[(0, 0, 1)] = (10, 10.0)  # mean=1.0
+        mcts.context_rave_stats[(0, 0, 2)] = (10, 100.0)  # mean=10.0
+
+        # Expand all 3 children from root
+        for action in [0, 1, 2]:
+            child = mcts._apply_action(mcts.root, action)
+            child.n_visits = 1
+            child.w_total = 0.5
+            mcts.root.children[action] = child
+        mcts.root.n_visits = 3
+
+        # Select should prefer action 2 due to high context RAVE
+        leaf, path = mcts._select_and_expand()
+        # The selected child should be the one with action 2
+        selected_action = None
+        for action, child in mcts.root.children.items():
+            if child is path[-1]:
+                selected_action = action
+                break
+        assert selected_action == 2
+
+    def test_context_rave_combined_score_includes_stop(self):
+        """STOP gets non-zero RAVE when context_rave=True."""
+        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=2)])
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            context_rave=True,
+            k_rave=1000.0,
+            seed=0,
+        )
+        # Seed: STOP at cardinality 1 has high value
+        mcts.context_rave_stats[(0, 1, STOP)] = (10, 100.0)  # mean=10.0
+        mcts.context_rave_stats[(0, 1, 1)] = (10, 10.0)  # mean=1.0
+        mcts.context_rave_stats[(0, 1, 2)] = (10, 10.0)  # mean=1.0
+
+        # Create a node at group 0 with one feature selected (cardinality=1)
+        node = Node(
+            partial_by_group=((0,),),
+            stopped_by_group=(False,),
+            group_idx=0,
+        )
+        node.n_visits = 3
+
+        # Expand children: STOP, 1, 2
+        for action in [STOP, 1, 2]:
+            child = mcts._apply_action(node, action)
+            child.n_visits = 1
+            child.w_total = 0.5
+            node.children[action] = child
+
+        # Replace root with our custom node for selection
+        mcts.root = node
+        leaf, path = mcts._select_and_expand()
+        # Should prefer STOP due to high context RAVE
+        selected_action = None
+        for action, child in node.children.items():
+            if child is path[-1]:
+                selected_action = action
+                break
+        assert selected_action == STOP
+
+    def test_context_rave_disabled_uses_global(self):
+        """When context_rave=False, global RAVE is used (not context)."""
+        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=1)])
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            context_rave=False,
+            k_rave=1000.0,
+            seed=0,
+        )
+        # Seed global RAVE: action 2 has high value
+        glob_id = mcts._global_action_id(0, 2)
+        mcts.rave_stats[glob_id] = (10, 100.0)
+
+        # Context stats say action 0 is best (should be ignored)
+        mcts.context_rave_stats[(0, 0, 0)] = (10, 1000.0)
+        mcts.context_rave_stats[(0, 0, 2)] = (10, 1.0)
+
+        # Expand all children
+        for action in [0, 1, 2]:
+            child = mcts._apply_action(mcts.root, action)
+            child.n_visits = 1
+            child.w_total = 0.5
+            mcts.root.children[action] = child
+        mcts.root.n_visits = 3
+
+        leaf, path = mcts._select_and_expand()
+        selected_action = None
+        for action, child in mcts.root.children.items():
+            if child is path[-1]:
+                selected_action = action
+                break
+        # Should select action 2 (global RAVE), not action 0 (context RAVE)
+        assert selected_action == 2
+
+    # ---- Trajectory includes cardinality ----
+
+    def test_trajectory_includes_cardinality(self):
+        """Rollout trajectory is 3-tuples with correct cardinality."""
+        gs = self._nck_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            rollout_policy=True,
+            seed=42,
+        )
+        _feats, _cats, trajectory = mcts._rollout(mcts.root)
+        assert len(trajectory) > 0
+        for g, card, a in trajectory:
+            assert isinstance(g, int)
+            assert isinstance(card, int)
+            assert isinstance(a, int)
+            assert card >= 0
+        # First action in group 0 should have cardinality 0
+        first_g0 = [t for t in trajectory if t[0] == 0]
+        if first_g0:
+            assert first_g0[0][1] == 0  # cardinality starts at 0
+            # Cardinalities should be non-decreasing for same group (except STOP)
+            cards = [t[1] for t in first_g0 if t[2] != STOP]
+            for i in range(1, len(cards)):
+                assert cards[i] >= cards[i - 1]
+
+    # ---- Integration ----
+
+    def test_context_rave_stats_populated_after_run(self):
+        """context_rave_stats is non-empty after run() with context_rave=True."""
+        gs = self._nck_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: float(len(f)),
+            context_rave=True,
+            k_rave=300.0,
+            seed=0,
+        )
+        mcts.run(n_iterations=50)
+        assert len(mcts.context_rave_stats) > 0
+
+    def test_run_with_context_rave_converges(self):
+        """Convergence on needle problem with context_rave=True, k_rave>0."""
+        g = NChooseK(features=list(range(10)), min_count=2, max_count=3)
+        gs = Groups(groups=[g])
+        target = {3, 7}
+
+        def reward_fn(feats, _cats):
+            feat_set = set(feats)
+            if feat_set == target:
+                return 100.0
+            overlap = len(feat_set & target)
+            extras = len(feat_set - target)
+            return overlap * 20.0 - extras * 5.0
+
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=reward_fn,
+            context_rave=True,
+            k_rave=300.0,
+            seed=42,
+        )
+        _feats, _cats, val = mcts.run(n_iterations=300)
+        assert val == 100.0
 
 
 # =============================================================================
