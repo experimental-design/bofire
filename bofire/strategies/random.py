@@ -190,7 +190,6 @@ class RandomStrategy(Strategy):
                 candidate_count / min(candidate_count, self.max_combinations)
             )
 
-            print(combinations)
             for combo, n in combinations.items():
                 # create new domain without the nchoosekconstraints
                 domain = deepcopy(self.domain)
@@ -377,7 +376,6 @@ class RandomStrategy(Strategy):
                 if feat.key not in fixed_features
             ]
 
-            print(free_continuals)
             # setup the output
             samples = pd.DataFrame(
                 data=candidates.detach().numpy(),
