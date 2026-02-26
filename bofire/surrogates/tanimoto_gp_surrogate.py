@@ -50,15 +50,19 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
         if self.pre_computed_tanimoto:
             if self.tanimoto_similarity_matrix is None:
 
-                covar_module=kernels.map(
+                covar_module_pre_calc=kernels.map(
                     self.kernel,
                     batch_shape=torch.Size(),
                     active_dims=list(range(n_dim)),
                     features_to_idx_mapper=self.get_feature_indices,
-                )
+                    pre_computed_tanimoto=False
+                )  # temporary kernel to compute the tanimoto similarity matrix
                 fingerprints = input_transform.encoders[0].encoding
-                self.tanimoto_similarity_matrix = covar_module.forward(fingerprints, fingerprints)
+                self.tanimoto_similarity_matrix = covar_module_pre_calc.forward(fingerprints, fingerprints)
 
+            input_transform_use = None  # We will only pass index-based inputs to the model
+        else:
+            input_transform_use = input_transform
 
         self.model = botorch.models.SingleTaskGP(
             train_X=tX,
@@ -66,11 +70,13 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
-                active_dims=list(range(n_dim)),
+                active_dims=list(range(n_dim)) if not self.pre_computed_tanimoto else [0],  # active dims are not needed if using pre-computed tanimoto
                 features_to_idx_mapper=self.get_feature_indices,
+                pre_computed_tanimoto=self.pre_computed_tanimoto,
+                tanimoto_similarity_matrix=self.tanimoto_similarity_matrix,
             ),
             outcome_transform=outcome_transform,
-            input_transform=input_transform,
+            input_transform=input_transform_use,
         )
 
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)

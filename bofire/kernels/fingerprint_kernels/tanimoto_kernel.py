@@ -31,7 +31,6 @@ import torch
 
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 
-
 class TanimotoKernel(BitKernel):
     r"""Computes a covariance matrix based on the Tanimoto kernel between inputs `x1` and `x2`:
 
@@ -72,12 +71,35 @@ class TanimotoKernel(BitKernel):
 
     def forward(self, x1, x2, diag=False, **params):
 
-        # if self.pre_computed_tanimoto and self.tanimoto_similarity_matrix is not None:
-        #     if diag:
-        #         assert x1.size() == x2.size() and torch.equal(x1, x2)
-        #         return torch.diag(self.tanimoto_similarity_matrix)
-        #     else:
-        #         return self.tanimoto_similarity_matrix
+        if self.pre_computed_tanimoto and self.tanimoto_similarity_matrix is not None:
+            
+            # Infer shapes
+            batch_shape = x1.shape[:-2]
+            n1, d = x1.shape[-2], x1.shape[-1]
+            n2 = x2.shape[-2]
+            assert (
+                d == 1
+            ), f"Tanimoto kernel only supports single input dimension, but got {d}."
+
+            # Sum contributions for each feature index along the last dim
+            D = self.tanimoto_similarity_matrix  # [Ni, Ni], precomputed distances for feature idx
+
+            # Gather integer indices for this feature from x1 and x2 (keep batch dims)
+            x1_idx = (
+                x1[..., 0].to(torch.long).to(D.device)
+            )  # shape: batch_shape × n1
+            x2_idx = (
+                x2[..., 0].to(torch.long).to(D.device)
+            )  # shape: batch_shape × n2
+
+            # Build submatrix via broadcasting advanced indexing:
+            # Result shape: batch_shape × n1 × n2
+            cov = D[x1_idx.unsqueeze(-1), x2_idx.unsqueeze(-2)]
+
+            if diag:
+                # Return diagonal along the last two dims: shape batch_shape × n1
+                return cov.diagonal(dim1=-2, dim2=-1)
+            return cov
 
 
         if diag:
