@@ -1007,9 +1007,6 @@ class SortTransform(InputTransform, Module):
         x = X[..., self.idx_x]
         y = X[..., self.idx_y]
 
-        # print('X before sorting', x)
-        # print('Y before sorting', y)
-
         if X.dim() == 3:
             x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
             y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
@@ -1018,14 +1015,10 @@ class SortTransform(InputTransform, Module):
         y, _ = torch.sort(y, dim=-1)
 
         y = y / 100.0
-        # print('X after sorting before norm', x)
 
         # divide x by the max of each row
         x_max = x.max(dim=-1, keepdim=True).values
         x = x / torch.clamp(x_max, min=1e-8)
-
-        # print('X after sorting after norm', x)
-        # print('Y after sorting', y)
 
         if X.dim() == 3:
             x = x.reshape((shapeX[0], shapeX[1], x.shape[-1]))
