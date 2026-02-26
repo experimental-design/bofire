@@ -332,6 +332,10 @@ class MCTSConfig:
     p_stop_warmup: int = 20
     p_stop_temperature: float = 0.25
     normalize_rewards: bool = False
+    rollout_policy: bool = False
+    rollout_epsilon: float = 0.3
+    rollout_tau: float = 1.0
+    rollout_novelty_weight: float = 1.0
 
 
 # Effective ways to disable features:
@@ -404,6 +408,41 @@ CONFIGS = [
         adaptive_p_stop=True,
         normalize_rewards=True,
     ),
+    MCTSConfig(
+        name="MCTS (+rpol)",
+        c_uct=0.01,
+        k_rave=0,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+    ),
+    MCTSConfig(
+        name="MCTS (+rpol ε=0.1)",
+        c_uct=0.01,
+        k_rave=0,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+        rollout_epsilon=0.1,
+    ),
+    MCTSConfig(
+        name="MCTS (+rpol τ=0.5)",
+        c_uct=0.01,
+        k_rave=0,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+        rollout_tau=0.5,
+    ),
+    MCTSConfig(
+        name="MCTS (+rpol τ=2)",
+        c_uct=0.01,
+        k_rave=0,
+        adaptive_p_stop=True,
+        normalize_rewards=True,
+        rollout_policy=True,
+        rollout_tau=2.0,
+    ),
 ]
 
 
@@ -418,6 +457,7 @@ def run_random_baseline(problem: Problem, seed: int) -> ProblemResult:
     mcts_tmp = MCTS(
         groups=problem.groups,
         reward_fn=lambda f, c: 0.0,
+        rollout_policy=False,
         seed=seed,
     )
     rng = random.Random(seed)
@@ -428,7 +468,7 @@ def run_random_baseline(problem: Problem, seed: int) -> ProblemResult:
 
     for _ in range(problem.n_iterations):
         mcts_tmp.rng = rng
-        feats, cats = mcts_tmp._rollout(mcts_tmp.root)
+        feats, cats, _traj = mcts_tmp._rollout(mcts_tmp.root)
         val = problem.reward_fn(feats, cats)
         key = (feats, frozenset(cats.items()))
         seen.add(key)
@@ -463,6 +503,10 @@ def run_mcts_config(problem: Problem, config: MCTSConfig, seed: int) -> ProblemR
         p_stop_warmup=config.p_stop_warmup,
         p_stop_temperature=config.p_stop_temperature,
         normalize_rewards=config.normalize_rewards,
+        rollout_policy=config.rollout_policy,
+        rollout_epsilon=config.rollout_epsilon,
+        rollout_tau=config.rollout_tau,
+        rollout_novelty_weight=config.rollout_novelty_weight,
         seed=seed,
     )
 
@@ -553,6 +597,10 @@ COLOR_MAP = {
     "MCTS (no RAVE+adpt)": "#00ced1",
     "MCTS (norm)": "#ff6347",
     "MCTS (no RAVE+adpt+norm)": "#32cd32",
+    "MCTS (+rpol)": "#8b0000",
+    "MCTS (+rpol ε=0.1)": "#ff4500",
+    "MCTS (+rpol τ=0.5)": "#daa520",
+    "MCTS (+rpol τ=2)": "#4682b4",
 }
 
 
@@ -621,6 +669,14 @@ def plot_convergence_subsets(problem_name, all_results, n_iterations):
             "MCTS (no RAVE+adpt)",
             "MCTS (norm)",
             "MCTS (no RAVE+adpt+norm)",
+        ],
+        "rollout": [
+            "Random",
+            "MCTS (no RAVE+adpt+norm)",
+            "MCTS (+rpol)",
+            "MCTS (+rpol ε=0.1)",
+            "MCTS (+rpol τ=0.5)",
+            "MCTS (+rpol τ=2)",
         ],
     }
     for subset_name, cnames in subsets.items():

@@ -309,7 +309,7 @@ class MCTS:
     Args:
         constraints: Collection of NChooseK and categorical constraints
         reward_fn: Function mapping (selected_features, categorical_selections) to reward
-        c_uct: UCT exploration constant (default 1.0)
+        c_uct: UCT exploration constant (default 0.01)
         k_rave: RAVE blending decay parameter (default 300.0)
         p_stop_rollout: Probability of early stop during rollout (default 0.35)
         pw_k0: Progressive widening base constant (default 2.0)
@@ -318,7 +318,11 @@ class MCTS:
         adaptive_p_stop: Enable adaptive per-group stop probability (default True)
         p_stop_warmup: Per-group rollout count before full blending (default 20)
         p_stop_temperature: Sigmoid sharpness for adaptive p_stop (default 0.25)
-        normalize_rewards: Normalize rewards to [0, 1] before backpropagation (default False)
+        normalize_rewards: Normalize rewards to [0, 1] before backpropagation (default True)
+        rollout_policy: Enable learned softmax rollout policy (default False)
+        rollout_epsilon: Epsilon-mix weight for uniform exploration (default 0.3)
+        rollout_tau: Softmax temperature for rollout policy (default 1.0)
+        rollout_novelty_weight: Novelty bonus coefficient beta/sqrt(n+1) (default 1.0)
         seed: Random seed for reproducibility
     """
 
@@ -326,7 +330,7 @@ class MCTS:
         self,
         groups: Groups,
         reward_fn: Callable[[tuple[int, ...], dict[int, float]], float],
-        c_uct: float = 1.0,
+        c_uct: float = 0.01,
         k_rave: float = 300.0,
         p_stop_rollout: float = 0.35,
         pw_k0: float = 2.0,
@@ -335,7 +339,11 @@ class MCTS:
         adaptive_p_stop: bool = True,
         p_stop_warmup: int = 20,
         p_stop_temperature: float = 0.25,
-        normalize_rewards: bool = False,
+        normalize_rewards: bool = True,
+        rollout_policy: bool = True,
+        rollout_epsilon: float = 0.3,
+        rollout_tau: float = 1.0,
+        rollout_novelty_weight: float = 1.0,
         seed: Optional[int] = None,
     ):
         self.groups = groups
@@ -350,6 +358,10 @@ class MCTS:
         self.p_stop_warmup = p_stop_warmup
         self.p_stop_temperature = p_stop_temperature
         self.normalize_rewards = normalize_rewards
+        self.rollout_policy = rollout_policy
+        self.rollout_epsilon = rollout_epsilon
+        self.rollout_tau = rollout_tau
+        self.rollout_novelty_weight = rollout_novelty_weight
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -380,6 +392,9 @@ class MCTS:
         self.group_rollout_counts: list[int] = [0] * n_nchoosek
         self.reward_min: float = float("inf")
         self.reward_max: float = float("-inf")
+
+        # Rollout policy statistics: (group_idx, action) -> (visits, total_reward)
+        self.rollout_stats: dict[tuple[int, int], tuple[int, float]] = {}
 
     def _compute_group_offsets(self) -> list[int]:
         """Compute offset for each group to create global action IDs."""
@@ -485,6 +500,88 @@ class MCTS:
         if reward_range <= 0:
             return 0.5
         return (reward - self.reward_min) / reward_range
+
+    def _score_rollout_actions(
+        self, group_idx: int, legal_actions: list[int]
+    ) -> dict[int, float]:
+        """Score legal rollout actions using learned statistics.
+
+        For each action, computes mean_reward + novelty_weight / sqrt(visits + 1).
+        Actions with no stats get score = novelty_weight (encouraging exploration).
+
+        Args:
+            group_idx: Index of the current group
+            legal_actions: List of legal action indices (may include STOP)
+
+        Returns:
+            Dictionary mapping each action to its score
+        """
+        scores: dict[int, float] = {}
+        for action in legal_actions:
+            key = (group_idx, action)
+            stats = self.rollout_stats.get(key)
+            if stats is not None and stats[0] > 0:
+                visits, total_reward = stats
+                mean_reward = total_reward / visits
+                novelty = self.rollout_novelty_weight / math.sqrt(visits + 1)
+                scores[action] = mean_reward + novelty
+            else:
+                scores[action] = self.rollout_novelty_weight
+        return scores
+
+    def _sample_rollout_action(self, group_idx: int, legal_actions: list[int]) -> int:
+        """Sample a rollout action using softmax policy blended with uniform.
+
+        Computes p(a) = (1 - epsilon) * softmax(score/tau) + epsilon * uniform.
+
+        Args:
+            group_idx: Index of the current group
+            legal_actions: List of legal action indices (may include STOP)
+
+        Returns:
+            Selected action index
+        """
+        scores = self._score_rollout_actions(group_idx, legal_actions)
+        n = len(legal_actions)
+
+        # Compute softmax probabilities
+        tau = self.rollout_tau
+        max_score = max(scores.values())
+        exp_scores = []
+        for a in legal_actions:
+            exp_scores.append(math.exp((scores[a] - max_score) / tau))
+        z = sum(exp_scores)
+
+        # Blend with uniform
+        eps = self.rollout_epsilon
+        uniform = 1.0 / n
+        probs = []
+        for i, _a in enumerate(legal_actions):
+            p_policy = exp_scores[i] / z
+            probs.append((1.0 - eps) * p_policy + eps * uniform)
+
+        # Sample
+        r = self.rng.random()
+        cumsum = 0.0
+        for i, p in enumerate(probs):
+            cumsum += p
+            if r < cumsum:
+                return legal_actions[i]
+        return legal_actions[-1]
+
+    def _update_rollout_stats(
+        self, trajectory: list[tuple[int, int]], reward: float
+    ) -> None:
+        """Update rollout policy statistics from a completed trajectory.
+
+        Args:
+            trajectory: List of (group_idx, action) pairs from the rollout
+            reward: Raw reward obtained from the terminal evaluation
+        """
+        for group_idx, action in trajectory:
+            key = (group_idx, action)
+            v, tot = self.rollout_stats.get(key, (0, 0.0))
+            self.rollout_stats[key] = (v + 1, tot + reward)
 
     def _make_cache_key(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
@@ -616,13 +713,21 @@ class MCTS:
 
         return node, path
 
-    def _rollout(self, node: Node) -> tuple[tuple[int, ...], dict[int, float]]:
-        """Random rollout to terminal state, return selection."""
+    def _rollout(
+        self, node: Node
+    ) -> tuple[tuple[int, ...], dict[int, float], list[tuple[int, int]]]:
+        """Random rollout to terminal state, return selection and trajectory.
+
+        Returns:
+            Tuple of (selected_features, cat_selections, trajectory) where
+            trajectory is a list of (group_idx, action) pairs taken during rollout.
+        """
         curr = Node(
             partial_by_group=tuple(node.partial_by_group),
             stopped_by_group=tuple(node.stopped_by_group),
             group_idx=node.group_idx,
         )
+        trajectory: list[tuple[int, int]] = []
 
         while not curr.is_terminal(self.groups):
             legal = self._legal_actions(curr)
@@ -635,27 +740,37 @@ class MCTS:
                 )
                 continue
 
-            # For NChooseK groups, prefer STOP with some probability
             g = curr.group_idx
-            is_nchoosek = g < len(self.groups.nchooseks)
-            if is_nchoosek and STOP in legal:
-                p_stop = self._compute_adaptive_p_stop(g, len(curr.partial_by_group[g]))
+
+            if self.rollout_policy:
+                # Learned softmax policy: STOP is scored like any other action
+                action = self._sample_rollout_action(g, legal)
             else:
-                p_stop = self.p_stop_rollout
-            if is_nchoosek and STOP in legal and self.rng.random() < p_stop:
-                curr = self._apply_action(curr, STOP)
-                continue
+                # Original logic: adaptive p_stop for NChooseK, uniform for features
+                is_nchoosek = g < len(self.groups.nchooseks)
+                if is_nchoosek and STOP in legal:
+                    p_stop = self._compute_adaptive_p_stop(
+                        g, len(curr.partial_by_group[g])
+                    )
+                    if self.rng.random() < p_stop:
+                        trajectory.append((g, STOP))
+                        curr = self._apply_action(curr, STOP)
+                        continue
 
-            # Choose uniformly among non-STOP actions
-            choices = [a for a in legal if a != STOP]
-            if not choices:
-                curr = self._apply_action(curr, STOP)
-                continue
+                # Choose uniformly among non-STOP actions
+                choices = [a for a in legal if a != STOP]
+                if not choices:
+                    trajectory.append((g, STOP))
+                    curr = self._apply_action(curr, STOP)
+                    continue
 
-            action = self.rng.choice(choices)
+                action = self.rng.choice(choices)
+
+            trajectory.append((g, action))
             curr = self._apply_action(curr, action)
 
-        return self._get_selection(curr)
+        selected_features, cat_selections = self._get_selection(curr)
+        return selected_features, cat_selections, trajectory
 
     def _backpropagate(
         self,
@@ -705,15 +820,16 @@ class MCTS:
 
             if leaf.is_terminal(self.groups):
                 selected_features, cat_selections = self._get_selection(leaf)
+                trajectory: list[tuple[int, int]] = []
             else:
                 # Rollout retry: if the rollout produces a cached terminal,
                 # re-roll to try to discover a novel selection.
-                selected_features, cat_selections = self._rollout(leaf)
+                selected_features, cat_selections, trajectory = self._rollout(leaf)
                 for _attempt in range(self.max_rollout_retries):
                     key = self._make_cache_key(selected_features, cat_selections)
                     if key not in self.value_cache:
                         break
-                    selected_features, cat_selections = self._rollout(leaf)
+                    selected_features, cat_selections, trajectory = self._rollout(leaf)
 
             key = self._make_cache_key(selected_features, cat_selections)
             is_novel = key not in self.value_cache
@@ -746,6 +862,8 @@ class MCTS:
                 #     UCT exploration toward less-exploited parts of the tree.
                 for n in path:
                     n.n_visits += 1
+
+            self._update_rollout_stats(trajectory, reward)
 
         if self.best_selection is None:
             return (), {}, self.best_value

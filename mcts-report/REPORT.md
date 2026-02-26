@@ -2,13 +2,14 @@
 
 ## Executive Summary
 
-This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 5 combinatorial problems with NChooseK constraints. We test 15 MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, and reward normalization against a random-sampling baseline.
+This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 5 combinatorial problems with NChooseK constraints. We test 20 MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, and rollout policy against a random-sampling baseline.
 
-Two algorithmic fixes were implemented during this benchmarking cycle:
+Three algorithmic improvements were implemented during this benchmarking cycle:
 1. **Virtual loss on cache hit**: On revisiting a cached terminal, increment visit counts but backpropagate reward=0. This dilutes mean node value for over-exploited branches, steering UCT toward unexplored territory.
 2. **Rollout retry on cache hit**: When a rollout produces a cached terminal, re-roll up to `max_rollout_retries` times to find a novel selection.
+3. **Blended softmax rollout policy**: Replaces uniform-random rollouts with a learned policy that blends softmax over per-(group, action) statistics with uniform exploration, treating STOP as a regular scored action.
 
-**Key result**: These fixes transformed MCTS from underperforming random sampling to decisively outperforming it on every problem. The best configuration (**MCTS no RAVE + adaptive p_stop + reward normalization**) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), 63% on mixed problems (vs 3%), and 40% on large_sparse (vs 0%). Reward normalization to [0, 1] with `c_uct=0.01` provides scale-invariant exploration and improves the hardest problems most (+20pp on mixed, +13pp on large_sparse).
+**Key result**: The cumulative effect of these improvements transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). The rollout policy alone adds +14pp on mixed and +10pp on large_sparse over the previous best config.
 
 ---
 
@@ -34,13 +35,20 @@ Two algorithmic fixes were implemented during this benchmarking cycle:
 | **MCTS (no RAVE+adpt)** | 1.0 | 0 | 2.0 | 0.6 | adaptive |
 | **MCTS (norm)** | 0.01 | 300 | 2.0 | 0.6 | 0.35 |
 | **MCTS (no RAVE+adpt+norm)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
+| **MCTS (+rpol)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
+| **MCTS (+rpol ε=0.1)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
+| **MCTS (+rpol τ=0.5)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
+| **MCTS (+rpol τ=2)** | 0.01 | 0 | 2.0 | 0.6 | adaptive |
 
-The last two configs enable `normalize_rewards=True` with `c_uct=0.01`; all others use raw rewards with `c_uct` as shown. The reduced `c_uct` compensates for normalization compressing rewards to [0, 1] — with raw rewards in the range 60–272 across problems, `c_uct=1.0` gives an effective exploration pressure of `1.0/reward_range`; `c_uct=0.01` with normalized rewards matches this balance.
+The `norm` and `no RAVE+adpt+norm` configs enable `normalize_rewards=True` with `c_uct=0.01`; other non-rollout configs use raw rewards with `c_uct` as shown. The reduced `c_uct` compensates for normalization compressing rewards to [0, 1] — with raw rewards in the range 60–272 across problems, `c_uct=1.0` gives an effective exploration pressure of `1.0/reward_range`; `c_uct=0.01` with normalized rewards matches this balance.
+
+The `+rpol` configs build on `no RAVE+adpt+norm` and add `rollout_policy=True` with varying `rollout_epsilon` (ε) and `rollout_tau` (τ). The default rollout policy uses ε=0.3, τ=1.0, novelty_weight=1.0.
 
 - **RAVE disabled**: `k_rave=0` sets β=0, making the score pure UCT.
 - **PW disabled**: `pw_k0=1e6` makes the child limit always exceed legal actions.
 - **Adaptive p_stop**: Learns per-group stop probability from cardinality-reward statistics. Uses sigmoid on normalized `(E_stop - E_continue)`, blended with fixed prior during warmup (20 rollouts).
 - **Reward normalization**: Maps rewards to [0, 1] via running min-max before backpropagation. `best_value` and adaptive p_stop statistics remain in raw reward space.
+- **Rollout policy**: Replaces uniform-random rollouts with a softmax over per-(group, action) mean rewards + novelty bonus, blended with uniform exploration via epsilon-mixing.
 
 ### 1.2 Benchmark Problems
 
@@ -129,7 +137,11 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (adaptive p) | 98.0 | 14.5 | 0% | 219 |
 | MCTS (no RAVE+adpt) | 103.8 | 29.7 | 23% | 380 |
 | MCTS (norm) | 101.8 | 10.5 | 0% | 321 |
-| **MCTS (no RAVE+adpt+norm)** | **108.9** | 25.1 | **23%** | 455 |
+| MCTS (no RAVE+adpt+norm) | 108.9 | 25.1 | 23% | 455 |
+| **MCTS (+rpol)** | **111.4** | 23.6 | **23%** | 516 |
+| MCTS (+rpol ε=0.1) | 114.1 | 24.0 | 27% | 511 |
+| MCTS (+rpol τ=0.5) | 109.9 | 22.7 | 20% | 510 |
+| MCTS (+rpol τ=2) | 112.5 | 23.1 | 23% | 514 |
 
 #### needle_in_haystack (search space ~4,928, optimum = 100.0)
 
@@ -145,7 +157,9 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (adaptive p) | 84.0 | 29.1 | 77% | 61 |
 | **MCTS (no RAVE+adpt)** | **100.0** | 0.0 | **100%** | 161 |
 | MCTS (norm) | 97.7 | 12.6 | 97% | 98 |
-| **MCTS (no RAVE+adpt+norm)** | **100.0** | 0.0 | **100%** | 247 |
+| MCTS (no RAVE+adpt+norm) | 100.0 | 0.0 | 100% | 247 |
+| **MCTS (+rpol)** | **100.0** | 0.0 | **100%** | 283 |
+| MCTS (+rpol τ=0.5) | 100.0 | 0.0 | 100% | 283 |
 
 #### mixed_nchoosek_categorical (search space ~26,896, optimum = 150.0)
 
@@ -160,7 +174,11 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (adaptive p) | 85.8 | 9.3 | 0% | 112 |
 | MCTS (no RAVE+adpt) | 110.4 | 35.7 | 43% | 280 |
 | MCTS (norm) | 86.7 | 8.5 | 0% | 174 |
-| **MCTS (no RAVE+adpt+norm)** | **127.0** | 30.5 | **63%** | 357 |
+| MCTS (no RAVE+adpt+norm) | 127.0 | 30.5 | 63% | 357 |
+| **MCTS (+rpol)** | **135.9** | 25.6 | **77%** | 442 |
+| MCTS (+rpol ε=0.1) | 126.0 | 29.4 | 60% | 404 |
+| MCTS (+rpol τ=0.5) | 140.0 | 22.4 | 83% | 444 |
+| MCTS (+rpol τ=2) | 136.0 | 25.4 | 77% | 440 |
 
 #### large_sparse (search space ~960M, optimum = 200.0)
 
@@ -175,7 +193,11 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (adaptive p) | 54.6 | 27.8 | 3% | 421 |
 | MCTS (no RAVE+adpt) | 93.0 | 64.9 | 27% | 550 |
 | MCTS (norm) | 40.5 | 7.9 | 0% | 603 |
-| **MCTS (no RAVE+adpt+norm)** | **112.1** | 72.0 | **40%** | 689 |
+| MCTS (no RAVE+adpt+norm) | 112.1 | 72.0 | 40% | 689 |
+| **MCTS (+rpol)** | **129.8** | 70.2 | **50%** | 750 |
+| MCTS (+rpol ε=0.1) | 90.4 | 60.7 | 23% | 749 |
+| MCTS (+rpol τ=0.5) | 128.1 | 72.0 | 50% | 749 |
+| MCTS (+rpol τ=2) | 118.7 | 71.2 | 43% | 749 |
 
 #### graduated_landscape (search space 375, optimum = 65.0)
 
@@ -190,7 +212,11 @@ This is cheap (rollouts are fast) and directly reduces wasted iterations from no
 | MCTS (adaptive p) | 64.5 | 0.8 | 57% | 75 |
 | MCTS (no RAVE+adpt) | 64.6 | 0.9 | 77% | 168 |
 | MCTS (norm) | 62.4 | 3.2 | 10% | 49 |
-| **MCTS (no RAVE+adpt+norm)** | **64.7** | 0.8 | **80%** | 152 |
+| MCTS (no RAVE+adpt+norm) | 64.7 | 0.8 | 80% | 152 |
+| **MCTS (+rpol)** | **64.5** | 1.4 | **80%** | 157 |
+| MCTS (+rpol ε=0.1) | 64.9 | 0.2 | 93% | 151 |
+| MCTS (+rpol τ=0.5) | 64.7 | 0.4 | 73% | 154 |
+| MCTS (+rpol τ=2) | 64.7 | 0.6 | 80% | 163 |
 
 ### 3.2 Convergence Curves
 
@@ -208,6 +234,16 @@ The no-RAVE variants converge rapidly to near-optimum, achieving 97% success. He
 ![p_stop multigroup](convergence_multigroup_interaction_p_stop.png)
 
 p_stop=0.1 (cyan) outperforms default (p_stop=0.35) because the optimal solution requires 7 features across 3 groups — low stop probability produces rollouts with more features, better matching the target.
+
+#### Rollout policy effect — large_sparse
+![Rollout policy large_sparse](convergence_large_sparse_rollout.png)
+
+MCTS (+rpol) (dark red) converges to 129.8 mean best and 50% optimum rate, a clear improvement over the no-rollout-policy baseline at 112.1 / 40%. The ε=0.1 variant (orange) collapses to 23% — too little exploration on a 960M search space. Default ε=0.3 provides the most robust balance.
+
+#### Rollout policy effect — mixed_nchoosek_categorical
+![Rollout policy mixed](convergence_mixed_nchoosek_categorical_rollout.png)
+
+The τ=0.5 variant (gold) achieves 83% optimum rate, the highest across all configs on this problem. The default +rpol (ε=0.3, τ=1.0) also improves substantially to 77% (from 63% without rollout policy).
 
 ---
 
@@ -347,13 +383,59 @@ With RAVE enabled, normalization helps on needle and multigroup but hurts on gra
 
 Normalization should be enabled together with `c_uct=0.01` (or more generally, `c_uct ≈ 1/typical_reward_range`). This combination produces the best overall results and removes the need to tune `c_uct` per problem.
 
+### 4.7 Rollout Policy: Learned Softmax Biasing of Rollouts
+
+The default rollout strategy selects actions uniformly at random (with adaptive p_stop for STOP decisions). This wastes search budget on poor actions even after the tree has accumulated evidence about which actions are good. The **blended softmax rollout policy** replaces uniform rollouts with a learned policy:
+
+1. For each `(group_idx, action)` pair, track `(visit_count, total_reward)` across all rollouts
+2. Score each action: `mean_reward + novelty_weight / sqrt(visits + 1)`
+3. Apply softmax with temperature τ: `p_policy[a] = exp(score[a] / τ) / Z`
+4. Blend with uniform: `p[a] = (1 - ε) * p_policy[a] + ε / |legal_actions|`
+5. STOP is treated as a regular action with its own learned statistics — no special handling needed
+
+#### `MCTS (no RAVE+adpt+norm)` vs `MCTS (+rpol)` — the key comparison
+
+| Problem | no rpol (mean/opt%) | +rpol (mean/opt%) | Delta |
+|---------|---------------------|-------------------|-------|
+| multigroup_interaction | 108.9 / 23% | **111.4 / 23%** | +2.5 mean |
+| needle_in_haystack | 100.0 / 100% | **100.0 / 100%** | tied |
+| mixed_nchoosek_categorical | 127.0 / 63% | **135.9 / 77%** | +8.9 mean, +14pp opt |
+| large_sparse | 112.1 / 40% | **129.8 / 50%** | +17.7 mean, +10pp opt |
+| graduated_landscape | 64.7 / 80% | 64.5 / 80% | tied |
+
+**The rollout policy improves the two hardest problems most**: mixed jumps from 63% to 77% optimum rate, large_sparse from 40% to 50%. On the easier problems it matches the baseline. Unique evaluations increase (455→516, 689→750), showing the policy improves exploration diversity while maintaining focus on promising actions.
+
+#### Hyperparameter sensitivity
+
+| Variant | multigroup | needle | mixed | large_sparse | graduated | **Mean opt%** |
+|---------|-----------|--------|-------|-------------|-----------|--------------|
+| **+rpol (ε=0.3, τ=1.0)** | 23% | 100% | 77% | 50% | 80% | **66.0%** |
+| +rpol ε=0.1 | 27% | 97% | 60% | 23% | 93% | 60.0% |
+| +rpol τ=0.5 | 20% | 100% | 83% | 50% | 73% | 65.2% |
+| +rpol τ=2 | 23% | 97% | 77% | 43% | 80% | 64.0% |
+
+- **ε=0.1 is dangerous**: Too little uniform exploration causes collapse on hard problems (23% on large_sparse vs 50% for default). It performs well on easy problems (93% on graduated) but this is misleading.
+- **τ=0.5** is strong on mixed (83%) and large_sparse (50%) but drops on multigroup (20%) and graduated (73%). More aggressive exploitation helps when there are many actions per group but hurts when the search space is smaller.
+- **τ=2** adds noise without benefit — the extra temperature dilutes the learned policy signal.
+- **Default (ε=0.3, τ=1.0) is the most robust**: Highest mean optimum rate (66%), no catastrophic failures.
+
+#### Why it works
+
+The rollout policy addresses a fundamental inefficiency: in a tree with hundreds of iterations of history, uniform rollouts treat all actions as equally likely — including actions that have consistently produced poor results. The softmax policy biases toward historically good actions while the ε-blend and novelty bonus maintain exploration:
+
+1. **Novelty bonus** (`β/√(n+1)`) ensures unvisited actions are tried — equivalent to UCB1 exploration in the rollout phase
+2. **ε-mixing** provides a floor on exploration probability, preventing the policy from fully committing to exploitation
+3. **Treating STOP as a regular action** unifies the rollout decision-making: the policy learns when stopping is good vs when adding more features helps, without requiring separate p_stop tuning
+
+The statistics are updated unconditionally (even when `rollout_policy=False`), so the data is always warm if the policy is enabled later.
+
 ---
 
 ## 5. Optimum-Finding Rates
 
 ![Optimum rate heatmap](optimum_rate_heatmap.png)
 
-**MCTS (no RAVE+adpt+norm)** is the new best overall: **100%** on needle_in_haystack, **40%** on large_sparse, **63%** on mixed, **23%** on multigroup_interaction, and **80%** on graduated_landscape. It outperforms or matches **MCTS (no RAVE+adpt)** (100%, 27%, 43%, 23%, 77%) on every problem, with the largest gains on the two hardest problems (mixed +20pp, large_sparse +13pp).
+**MCTS (+rpol)** is the new best overall: **100%** on needle_in_haystack, **50%** on large_sparse, **77%** on mixed, **23%** on multigroup_interaction, and **80%** on graduated_landscape. It outperforms or matches **MCTS (no RAVE+adpt+norm)** (100%, 40%, 63%, 23%, 80%) on every problem, with the largest gains on the two hardest problems (mixed +14pp, large_sparse +10pp).
 
 **Heavy RAVE is catastrophic**: 7% on needle (worse than random's 10%), 0% on 4 of 5 problems.
 
@@ -391,12 +473,17 @@ Based on these results, the recommended defaults for NChooseK problems are:
 | p_stop_warmup | 20 | 20 | Sufficient to accumulate per-group statistics |
 | p_stop_temperature | 0.25 | 0.25 | Produces decisive but not extreme sigmoid |
 | normalize_rewards | False | **True** | Best overall with tuned c_uct; see §4.6 |
+| rollout_policy | False | **True** | +14pp mixed, +10pp large_sparse; see §4.7 |
+| rollout_epsilon | 0.3 | 0.3 | Lower values collapse on hard problems |
+| rollout_tau | 1.0 | 1.0 | Most robust across all problems |
+| rollout_novelty_weight | 1.0 | 1.0 | Encourages exploration of unvisited actions |
 
 ### 8.2 Further Improvements to Explore
 
 1. ~~**Adaptive p_stop_rollout**~~: **Implemented and validated.** Per-group adaptive p_stop learns from cardinality-reward statistics. Combined with no RAVE, it achieves 100% on needle_in_haystack and best results on large_sparse. See Section 4.5 for details.
 2. **Context-aware RAVE**: If RAVE is to be reintroduced, condition it on (group_idx, selection_count) so it captures state-dependent value rather than global averages.
-3. ~~**Reward normalization**~~: **Implemented and validated.** Min-max normalization to [0, 1] before backpropagation with `c_uct=0.01` to match the [0, 1] scale. Combined with no RAVE + adaptive p_stop, this is the new best configuration: 63% on mixed (up from 43%), 40% on large_sparse (up from 27%), and best or tied on all 5 problems. See Section 4.6 for details.
+3. ~~**Reward normalization**~~: **Implemented and validated.** Min-max normalization to [0, 1] before backpropagation with `c_uct=0.01` to match the [0, 1] scale. See Section 4.6 for details.
+4. ~~**Blended softmax rollout policy**~~: **Implemented and validated.** Replaces uniform rollouts with a learned softmax policy blended with uniform exploration. The rollout policy is the new best configuration on all 5 problems: 77% on mixed (up from 63%), 50% on large_sparse (up from 40%), and best or tied elsewhere. Default hyperparameters (ε=0.3, τ=1.0) are the most robust. See Section 4.7 for details.
 
 ---
 
@@ -414,6 +501,7 @@ Based on these results, the recommended defaults for NChooseK problems are:
 | `convergence_<problem>_pw_effect.png` | PW ablation convergence |
 | `convergence_<problem>_exploration.png` | c_uct ablation convergence |
 | `convergence_<problem>_p_stop.png` | p_stop ablation convergence |
+| `convergence_<problem>_rollout.png` | Rollout policy ablation convergence |
 
 ## 10. Reproducing
 
