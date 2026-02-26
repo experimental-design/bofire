@@ -40,6 +40,7 @@ def map_RBFKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> gpytorch.kernels.RBFKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.RBFKernel(
@@ -64,6 +65,7 @@ def map_MaternKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> gpytorch.kernels.MaternKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.MaternKernel(
@@ -89,6 +91,7 @@ def map_InfiniteWidthBNNKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> InfiniteWidthBNNKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return InfiniteWidthBNNKernel(
@@ -103,6 +106,7 @@ def map_LinearKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> gpytorch.kernels.LinearKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.LinearKernel(
@@ -121,6 +125,7 @@ def map_PolynomialKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> gpytorch.kernels.PolynomialKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return gpytorch.kernels.PolynomialKernel(
@@ -140,6 +145,7 @@ def map_AdditiveKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> gpytorch.kernels.AdditiveKernel:
     return gpytorch.kernels.AdditiveKernel(
         *[
@@ -148,6 +154,7 @@ def map_AdditiveKernel(
                 batch_shape=batch_shape,
                 active_dims=active_dims,
                 features_to_idx_mapper=features_to_idx_mapper,
+                **kwargs,
             )
             for k in data_model.kernels
         ],
@@ -159,6 +166,7 @@ def map_MultiplicativeKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> gpytorch.kernels.ProductKernel:
     return gpytorch.kernels.ProductKernel(
         *[
@@ -167,6 +175,7 @@ def map_MultiplicativeKernel(
                 batch_shape=batch_shape,
                 active_dims=active_dims,
                 features_to_idx_mapper=features_to_idx_mapper,
+                **kwargs,
             )
             for k in data_model.kernels
         ],
@@ -178,6 +187,7 @@ def map_ScaleKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> gpytorch.kernels.ScaleKernel:
     return gpytorch.kernels.ScaleKernel(
         base_kernel=map(
@@ -185,6 +195,7 @@ def map_ScaleKernel(
             batch_shape=batch_shape,
             active_dims=active_dims,
             features_to_idx_mapper=features_to_idx_mapper,
+            **kwargs,
         ),
         outputscale_prior=(
             priors.map(data_model.outputscale_prior)
@@ -204,12 +215,17 @@ def map_TanimotoKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    pre_computed_tanimoto: bool = True,
+    tanimoto_similarity_matrix: Optional[torch.Tensor] = None,
+    **kwargs,
 ) -> TanimotoKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return TanimotoKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
+        pre_computed_tanimoto=pre_computed_tanimoto,
+        tanimoto_similarity_matrix=tanimoto_similarity_matrix,
     )
 
 
@@ -218,6 +234,7 @@ def map_HammingDistanceKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return CategoricalKernel(
@@ -242,6 +259,7 @@ def map_IndexKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return IndexKernel(
@@ -263,6 +281,7 @@ def map_PositiveIndexKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return PositiveIndexKernel(
@@ -296,6 +315,7 @@ def map_WassersteinKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> WassersteinKernel:
     return WassersteinKernel(
         squared=data_model.squared,
@@ -313,6 +333,7 @@ def map_PolynomialFeatureInteractionKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> PolynomialFeatureInteractionKernel:
     ks = [
         map(
@@ -320,6 +341,7 @@ def map_PolynomialFeatureInteractionKernel(
             active_dims=active_dims,
             batch_shape=batch_shape,
             features_to_idx_mapper=features_to_idx_mapper,
+            **kwargs,
         )
         for k in data_model.kernels
     ]
@@ -341,6 +363,7 @@ def map_WedgeKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> WedgeKernel:
     indicator_func = build_indicator_func(data_model.conditions, features_to_idx_mapper)
     base_kernel_active_dims = compute_base_kernel_active_dims(
@@ -356,6 +379,7 @@ def map_WedgeKernel(
         batch_shape=batch_shape,
         active_dims=base_kernel_active_dims,
         features_to_idx_mapper=features_to_idx_mapper,
+        **kwargs
     )
     return WedgeKernel(
         base_kernel,
@@ -388,6 +412,7 @@ def map_SphericalLinearKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> SphericalLinearKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return SphericalLinearKernel(
@@ -433,10 +458,12 @@ def map(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs
 ) -> GpytorchKernel:
     return KERNEL_MAP[data_model.__class__](
         data_model,
         batch_shape,
         active_dims,
         features_to_idx_mapper,
+        **kwargs
     )

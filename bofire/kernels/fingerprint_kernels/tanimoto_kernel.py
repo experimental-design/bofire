@@ -25,6 +25,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from typing import Optional
+
 import torch
 
 from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
@@ -61,11 +63,23 @@ class TanimotoKernel(BitKernel):
     is_stationary = False
     has_lengthscale = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, pre_computed_tanimoto: bool = True, tanimoto_similarity_matrix: Optional[torch.Tensor] = None, **kwargs):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
+        self.pre_computed_tanimoto = pre_computed_tanimoto
+        self.tanimoto_similarity_matrix = tanimoto_similarity_matrix
+
     def forward(self, x1, x2, diag=False, **params):
+
+        # if self.pre_computed_tanimoto and self.tanimoto_similarity_matrix is not None:
+        #     if diag:
+        #         assert x1.size() == x2.size() and torch.equal(x1, x2)
+        #         return torch.diag(self.tanimoto_similarity_matrix)
+        #     else:
+        #         return self.tanimoto_similarity_matrix
+
+
         if diag:
             assert x1.size() == x2.size() and torch.equal(x1, x2)
             return torch.ones(
