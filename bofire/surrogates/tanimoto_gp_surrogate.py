@@ -57,7 +57,7 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
                     features_to_idx_mapper=self.get_feature_indices,
                 )
                 fingerprints = input_transform.encoders[0].encoding
-                self.tanimoto_similarity_matrix = covar_module(fingerprints, fingerprints)
+                self.tanimoto_similarity_matrix = covar_module.forward(fingerprints, fingerprints)
 
 
         self.model = botorch.models.SingleTaskGP(
