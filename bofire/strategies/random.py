@@ -167,7 +167,7 @@ class RandomStrategy(Strategy):
             # now we sample the combinations
             combinations: dict[tuple[str, ...], int] = {}
             for _ in range(min(self.max_combinations, candidate_count)):
-                combo, _ = mcts._rollout(mcts.root)
+                combo, _, _trajectory = mcts._rollout(mcts.root)
                 # combo is a tuple of feature indices, we convert it to feature keys
                 combo = tuple(idx2features[idx] for idx in combo)
                 if combo in combinations:
