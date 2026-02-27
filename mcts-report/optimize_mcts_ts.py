@@ -8,7 +8,8 @@ Rollout modes: uniform, TS per (group,action), TS per (group,cardinality,action)
 or softmax fallback (pure-math, no torch).
 
 Bayesian update (weak prior, estimated variance):
-    Prior: N(mu0, sigma0^2), mu0 = running global mean, sigma0^2 = ts_prior_var, n0 = 1
+    Prior: N(mu0, sigma0^2), mu0 = running global mean, n0 = 1
+        sigma0^2 = ts_prior_var (fixed) or empirical reward variance (adaptive)
     After n observations:
         x_bar = sum_rewards / n
         s^2 = max(sum_sq_rewards/n - x_bar^2, 1e-8)
@@ -87,7 +88,10 @@ class MCTS_TS:
     Args:
         groups: Collection of NChooseK and categorical constraints
         reward_fn: Function mapping (selected_features, cat_selections) to reward
-        ts_prior_var: Prior variance for Normal posterior (default 1.0)
+        ts_prior_var: Prior variance for Normal posterior (default 1.0); used as
+            fallback when adaptive_prior_var=True and fewer than 2 rewards observed
+        adaptive_prior_var: If True, set prior variance to the running empirical
+            variance of all observed rewards instead of the fixed ts_prior_var
         cache_hit_mode: How to handle cache hits: "no_update" or "variance_inflation"
         variance_decay: Decay factor for variance inflation mode (default 0.95)
         rollout_mode: Rollout policy: "uniform", "ts_group_action",
@@ -111,6 +115,7 @@ class MCTS_TS:
         groups: Groups,
         reward_fn: Callable[[tuple[int, ...], dict[int, float]], float],
         ts_prior_var: float = 1.0,
+        adaptive_prior_var: bool = False,
         cache_hit_mode: str = "no_update",
         variance_decay: float = 0.95,
         rollout_mode: str = "uniform",
@@ -131,6 +136,7 @@ class MCTS_TS:
         self.groups = groups
         self.reward_fn = reward_fn
         self.ts_prior_var = ts_prior_var
+        self.adaptive_prior_var = adaptive_prior_var
         self.cache_hit_mode = cache_hit_mode
         self.variance_decay = variance_decay
         self.rollout_mode = rollout_mode
@@ -166,8 +172,9 @@ class MCTS_TS:
         self.cache_hits = 0
         self.cache_misses = 0
 
-        # Global reward tracking for TS prior center
+        # Global reward tracking for TS prior center and adaptive variance
         self._novel_reward_sum: float = 0.0
+        self._novel_reward_sq_sum: float = 0.0
         self._novel_reward_count: int = 0
 
         # Rollout TS statistics: key -> TSActionStats
@@ -194,12 +201,28 @@ class MCTS_TS:
             return 0.0
         return self._novel_reward_sum / self._novel_reward_count
 
+    def _prior_var(self) -> float:
+        """Prior variance sigma0^2, either fixed or adaptive.
+
+        When adaptive_prior_var=True, returns the running empirical variance
+        of all novel rewards once at least 2 observations exist. This
+        auto-calibrates the prior to the problem's reward scale — the TS
+        analogue of reward normalization for UCT.
+        """
+        if not self.adaptive_prior_var or self._novel_reward_count < 2:
+            return self.ts_prior_var
+        mean = self._global_mean()
+        empirical_var = (
+            self._novel_reward_sq_sum / self._novel_reward_count - mean * mean
+        )
+        return max(empirical_var, 1e-8)
+
     # ─── Thompson Sampling ──────────────────────────────────────────
 
     def _ts_sample_score(self, node: TSNode) -> float:
         """Sample from node's Normal posterior for tree selection."""
         mu0 = self._global_mean()
-        sigma0_sq = self.ts_prior_var
+        sigma0_sq = self._prior_var()
         n0 = 1  # pseudo-count
 
         n = node.n_obs
@@ -217,7 +240,7 @@ class MCTS_TS:
     def _ts_sample_action_score(self, stats: TSActionStats) -> float:
         """Sample from a TSActionStats posterior (for rollout actions)."""
         mu0 = self._global_mean()
-        sigma0_sq = self.ts_prior_var
+        sigma0_sq = self._prior_var()
         n0 = 1
 
         n = stats.n_obs
@@ -645,9 +668,10 @@ class MCTS_TS:
                 self.best_value = reward
                 self.best_selection = (selected_features, cat_selections)
 
-            # Update global mean for TS prior
+            # Update global stats for TS prior (mean and adaptive variance)
             if is_novel:
                 self._novel_reward_sum += reward
+                self._novel_reward_sq_sum += reward * reward
                 self._novel_reward_count += 1
 
             # Backpropagate (raw reward, no normalization for TS tree)

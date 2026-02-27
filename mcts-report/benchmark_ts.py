@@ -60,6 +60,7 @@ class TSConfig:
 
     name: str
     ts_prior_var: float = 1.0
+    adaptive_prior_var: bool = False
     cache_hit_mode: str = "no_update"
     variance_decay: float = 0.95
     rollout_mode: str = "uniform"
@@ -144,6 +145,23 @@ TS_CONFIGS = [
         adaptive_p_stop=True,
         normalize_rewards=True,
     ),
+    # Adaptive prior variance configs
+    TSConfig(
+        name="TS + uniform + adpt_pv",
+        rollout_mode="uniform",
+        adaptive_prior_var=True,
+    ),
+    TSConfig(
+        name="TS + TS(g,a) + adpt_pv",
+        rollout_mode="ts_group_action",
+        adaptive_prior_var=True,
+    ),
+    TSConfig(
+        name="TS + TS(g,a) + vi + apv",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="variance_inflation",
+        adaptive_prior_var=True,
+    ),
 ]
 
 ALL_CONFIG_NAMES = (
@@ -195,6 +213,7 @@ def run_ts_config(problem: Problem, config: TSConfig, seed: int) -> ProblemResul
         groups=problem.groups,
         reward_fn=problem.reward_fn,
         ts_prior_var=config.ts_prior_var,
+        adaptive_prior_var=config.adaptive_prior_var,
         cache_hit_mode=config.cache_hit_mode,
         variance_decay=config.variance_decay,
         rollout_mode=config.rollout_mode,
@@ -309,6 +328,9 @@ COLOR_MAP = {
     "TS + TS(g,c,a)": "#8c564b",
     "TS + TS(g,c,a) + var_infl": "#e377c2",
     "TS + softmax rpol": "#17becf",
+    "TS + uniform + adpt_pv": "#bcbd22",
+    "TS + TS(g,a) + adpt_pv": "#7f7f7f",
+    "TS + TS(g,a) + vi + apv": "#aec7e8",
 }
 
 
@@ -387,6 +409,17 @@ def plot_convergence_subsets(problem_name, all_results, n_iterations):
                 "TS + TS(g,c,a) + var_infl",
             ],
             "title": "Variance Inflation Effect",
+        },
+        "adaptive_prior_var": {
+            "configs": [
+                "Random",
+                "UCT (+rpol)",
+                "TS + uniform",
+                "TS + uniform + adpt_pv",
+                "TS + TS(g,a) + var_infl",
+                "TS + TS(g,a) + vi + apv",
+            ],
+            "title": "Adaptive Prior Variance Effect",
         },
     }
 
