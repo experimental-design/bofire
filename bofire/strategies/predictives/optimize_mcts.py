@@ -10,7 +10,7 @@ import random
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable, NamedTuple, Optional
 
 import torch
 from botorch.optim import optimize_acqf
@@ -18,6 +18,27 @@ from torch import Tensor
 
 
 STOP = -1  # Sentinel for stopping selection in a group
+
+
+class ActionStats(NamedTuple):
+    """Visit count and total accumulated reward."""
+
+    visits: int
+    total: float
+
+
+class TrajectoryStep(NamedTuple):
+    """One rollout step: which group and what action."""
+
+    group: int
+    action: int
+
+
+class Selection(NamedTuple):
+    """Terminal result: active features and categorical values."""
+
+    features: tuple[int, ...]
+    categoricals: dict[int, float]
 
 
 # =============================================================================
@@ -294,7 +315,7 @@ class MCTS:
         # Example: ((0, 2, 5), {3: 1.0, 4: 0.0}) means features 0, 2, 5 are
         # active (from NChooseK groups), dim 3 has categorical value 1.0, and
         # dim 4 has categorical value 0.0.
-        self.best_selection: Optional[tuple[tuple[int, ...], dict[int, float]]] = None
+        self.best_selection: Optional[Selection] = None
         self.best_value: float = float("-inf")
 
         # Cache for terminal evaluations
@@ -304,14 +325,14 @@ class MCTS:
         self.cache_misses = 0
 
         # Adaptive p_stop statistics: (group_idx, cardinality) -> (visits, total_reward)
-        self.cardinality_stats: dict[tuple[int, int], tuple[int, float]] = {}
+        self.cardinality_stats: dict[tuple[int, int], ActionStats] = {}
         n_nchoosek = len(self.groups.nchooseks)
         self.group_rollout_counts: list[int] = [0] * n_nchoosek
         self.reward_min: float = float("inf")
         self.reward_max: float = float("-inf")
 
         # Rollout policy statistics: (group_idx, action) -> (visits, total_reward)
-        self.rollout_stats: dict[tuple[int, int], tuple[int, float]] = {}
+        self.rollout_stats: dict[tuple[int, int], ActionStats] = {}
 
     def _update_cardinality_stats(
         self, reward: float, selected_features: tuple[int, ...]
@@ -325,8 +346,8 @@ class MCTS:
         for g, nchoosek in enumerate(self.groups.nchooseks):
             cardinality = sum(1 for f in nchoosek.features if f in selected_set)
             key = (g, cardinality)
-            v, tot = self.cardinality_stats.get(key, (0, 0.0))
-            self.cardinality_stats[key] = (v + 1, tot + reward)
+            v, tot = self.cardinality_stats.get(key, ActionStats(0, 0.0))
+            self.cardinality_stats[key] = ActionStats(v + 1, tot + reward)
             self.group_rollout_counts[g] += 1
 
     def _compute_adaptive_p_stop(
@@ -358,11 +379,11 @@ class MCTS:
         # No data for stopping at this cardinality
         stop_key = (group_idx, current_cardinality)
         stop_stats = self.cardinality_stats.get(stop_key)
-        if stop_stats is None or stop_stats[0] == 0:
+        if stop_stats is None or stop_stats.visits == 0:
             return self.p_stop_rollout
 
         # E_stop: mean reward when this group stopped at current_cardinality
-        e_stop = stop_stats[1] / stop_stats[0]
+        e_stop = stop_stats.total / stop_stats.visits
 
         # E_continue: max mean reward among higher cardinalities
         e_continue = float("-inf")
@@ -370,8 +391,8 @@ class MCTS:
         for m in range(current_cardinality + 1, max_count + 1):
             cont_key = (group_idx, m)
             cont_stats = self.cardinality_stats.get(cont_key)
-            if cont_stats is not None and cont_stats[0] > 0:
-                mean_r = cont_stats[1] / cont_stats[0]
+            if cont_stats is not None and cont_stats.visits > 0:
+                mean_r = cont_stats.total / cont_stats.visits
                 if mean_r > e_continue:
                     e_continue = mean_r
                 has_continue_data = True
@@ -434,9 +455,9 @@ class MCTS:
         for action in legal_actions:
             key = (group_idx, action)
             stats = self.rollout_stats.get(key)
-            if stats is not None and stats[0] > 0:
-                visits, total_reward = stats
-                mean_reward = total_reward / visits
+            if stats is not None and stats.visits > 0:
+                mean_reward = stats.total / stats.visits
+                visits = stats.visits
                 novelty = self.rollout_novelty_weight / math.sqrt(visits + 1)
                 scores[action] = mean_reward + novelty
             else:
@@ -470,7 +491,7 @@ class MCTS:
         return self.rng.choices(legal_actions, weights=probs.tolist(), k=1)[0]
 
     def _update_rollout_stats(
-        self, trajectory: list[tuple[int, int]], reward: float
+        self, trajectory: list[TrajectoryStep], reward: float
     ) -> None:
         """Update rollout policy statistics from a completed trajectory.
 
@@ -480,8 +501,8 @@ class MCTS:
         """
         for group_idx, action in trajectory:
             key = (group_idx, action)
-            v, tot = self.rollout_stats.get(key, (0, 0.0))
-            self.rollout_stats[key] = (v + 1, tot + reward)
+            v, tot = self.rollout_stats.get(key, ActionStats(0, 0.0))
+            self.rollout_stats[key] = ActionStats(v + 1, tot + reward)
 
     def _make_cache_key(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
@@ -541,7 +562,7 @@ class MCTS:
             group_idx=next_g,
         )
 
-    def _get_selection(self, node: Node) -> tuple[tuple[int, ...], dict[int, float]]:
+    def _get_selection(self, node: Node) -> Selection:
         """Convert node's partial selections to (selected_features, cat_selections)."""
         # Extract NChooseK selections
         selected_features = []
@@ -560,7 +581,7 @@ class MCTS:
                 # partial[0] is the index into cat_group.values
                 cat_selections[cat_group.dim] = cat_group.values[partial[0]]
 
-        return selected_features_tuple, cat_selections
+        return Selection(features=selected_features_tuple, categoricals=cat_selections)
 
     def _select_and_expand(self) -> tuple[Node, list[Node]]:
         """Select path through tree and expand one new node."""
@@ -603,7 +624,7 @@ class MCTS:
 
     def _rollout(
         self, node: Node
-    ) -> tuple[tuple[int, ...], dict[int, float], list[tuple[int, int]]]:
+    ) -> tuple[tuple[int, ...], dict[int, float], list[TrajectoryStep]]:
         """Random rollout to terminal state, return selection and trajectory.
 
         Returns:
@@ -616,7 +637,7 @@ class MCTS:
             stopped_by_group=tuple(node.stopped_by_group),
             group_idx=node.group_idx,
         )
-        trajectory: list[tuple[int, int]] = []
+        trajectory: list[TrajectoryStep] = []
 
         while not curr.is_terminal(self.groups):
             legal = self._legal_actions(curr)
@@ -642,20 +663,20 @@ class MCTS:
                         g, len(curr.partial_by_group[g])
                     )
                     if self.rng.random() < p_stop:
-                        trajectory.append((g, STOP))
+                        trajectory.append(TrajectoryStep(g, STOP))
                         curr = self._apply_action(curr, STOP)
                         continue
 
                 # Choose uniformly among non-STOP actions
                 choices = [a for a in legal if a != STOP]
                 if not choices:
-                    trajectory.append((g, STOP))
+                    trajectory.append(TrajectoryStep(g, STOP))
                     curr = self._apply_action(curr, STOP)
                     continue
 
                 action = self.rng.choice(choices)
 
-            trajectory.append((g, action))
+            trajectory.append(TrajectoryStep(g, action))
             curr = self._apply_action(curr, action)
 
         selected_features, cat_selections = self._get_selection(curr)
@@ -681,7 +702,7 @@ class MCTS:
 
             if leaf.is_terminal(self.groups):
                 selected_features, cat_selections = self._get_selection(leaf)
-                trajectory: list[tuple[int, int]] = []
+                trajectory: list[TrajectoryStep] = []
             else:
                 # Rollout retry: if the rollout produces a cached terminal,
                 # re-roll to try to discover a novel selection.
@@ -704,7 +725,9 @@ class MCTS:
 
             if reward > self.best_value:
                 self.best_value = reward
-                self.best_selection = (selected_features, cat_selections)
+                self.best_selection = Selection(
+                    features=selected_features, categoricals=cat_selections
+                )
 
             if self.adaptive_p_stop:
                 self._update_cardinality_stats(reward, selected_features)
@@ -728,7 +751,11 @@ class MCTS:
 
         if self.best_selection is None:
             return (), {}, self.best_value
-        return self.best_selection[0], self.best_selection[1], self.best_value
+        return (
+            self.best_selection.features,
+            self.best_selection.categoricals,
+            self.best_value,
+        )
 
     def cache_stats(self) -> dict[str, int]:
         """Return cache statistics."""

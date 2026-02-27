@@ -9,10 +9,12 @@ import bofire.strategies.predictives.optimize_mcts as optimize_mcts_mod
 from bofire.strategies.predictives.optimize_mcts import (
     MCTS,
     STOP,
+    ActionStats,
     Categorical,
     Groups,
     NChooseK,
     Node,
+    TrajectoryStep,
     optimize_acqf_mcts,
 )
 
@@ -1063,8 +1065,8 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Even after populating stats, should return fixed value
-        mcts.cardinality_stats[(0, 2)] = (10, 50.0)
-        mcts.cardinality_stats[(0, 3)] = (10, 30.0)
+        mcts.cardinality_stats[(0, 2)] = ActionStats(10, 50.0)
+        mcts.cardinality_stats[(0, 3)] = ActionStats(10, 30.0)
         mcts.reward_min = 0.0
         mcts.reward_max = 10.0
         mcts.group_rollout_counts[0] = 100
@@ -1094,9 +1096,9 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Stopping at cardinality 2 is much better than continuing to 3 or 4
-        mcts.cardinality_stats[(0, 2)] = (50, 500.0)  # mean=10.0
-        mcts.cardinality_stats[(0, 3)] = (50, 100.0)  # mean=2.0
-        mcts.cardinality_stats[(0, 4)] = (50, 50.0)  # mean=1.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 500.0)  # mean=10.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 100.0)  # mean=2.0
+        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 50.0)  # mean=1.0
         mcts.reward_min = 0.0
         mcts.reward_max = 15.0
         mcts.group_rollout_counts[0] = 100
@@ -1115,8 +1117,8 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Stopping at cardinality 2 is much worse than continuing to 3
-        mcts.cardinality_stats[(0, 2)] = (50, 100.0)  # mean=2.0
-        mcts.cardinality_stats[(0, 3)] = (50, 500.0)  # mean=10.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 100.0)  # mean=2.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 500.0)  # mean=10.0
         mcts.reward_min = 0.0
         mcts.reward_max = 15.0
         mcts.group_rollout_counts[0] = 100
@@ -1135,8 +1137,8 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Stop much better than continue → p_learned should be high
-        mcts.cardinality_stats[(0, 2)] = (50, 500.0)  # mean=10.0
-        mcts.cardinality_stats[(0, 3)] = (50, 50.0)  # mean=1.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 500.0)  # mean=10.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 50.0)  # mean=1.0
         mcts.reward_min = 0.0
         mcts.reward_max = 15.0
 
@@ -1168,9 +1170,9 @@ class TestAdaptivePStop:
         # Stopping at 2 gives mean=5.0
         # Continuing to 3 gives mean=3.0, but continuing to 4 gives mean=8.0
         # So E_continue should be 8.0 (max), making continue look better
-        mcts.cardinality_stats[(0, 2)] = (50, 250.0)  # mean=5.0
-        mcts.cardinality_stats[(0, 3)] = (50, 150.0)  # mean=3.0
-        mcts.cardinality_stats[(0, 4)] = (50, 400.0)  # mean=8.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 250.0)  # mean=5.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 150.0)  # mean=3.0
+        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 400.0)  # mean=8.0
         mcts.reward_min = 0.0
         mcts.reward_max = 10.0
         mcts.group_rollout_counts[0] = 100
@@ -1190,7 +1192,7 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Only have data for stopping at cardinality 4 (max), no higher possible
-        mcts.cardinality_stats[(0, 4)] = (50, 250.0)
+        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 250.0)
         mcts.reward_min = 0.0
         mcts.reward_max = 10.0
         mcts.group_rollout_counts[0] = 100
@@ -1206,8 +1208,8 @@ class TestAdaptivePStop:
             p_stop_rollout=0.35,
             seed=0,
         )
-        mcts.cardinality_stats[(0, 2)] = (50, 250.0)
-        mcts.cardinality_stats[(0, 3)] = (50, 250.0)
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 250.0)
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 250.0)
         mcts.reward_min = 5.0
         mcts.reward_max = 5.0  # zero range
         mcts.group_rollout_counts[0] = 100
@@ -1224,12 +1226,12 @@ class TestAdaptivePStop:
         )
         # Features [0, 1, 2, 3, 4], pick 2 features: cardinality = 2
         mcts._update_cardinality_stats(10.0, (0, 3))
-        assert mcts.cardinality_stats[(0, 2)] == (1, 10.0)
+        assert mcts.cardinality_stats[(0, 2)] == ActionStats(1, 10.0)
         assert mcts.group_rollout_counts[0] == 1
 
         # Another update with different cardinality
         mcts._update_cardinality_stats(5.0, (1,))
-        assert mcts.cardinality_stats[(0, 1)] == (1, 5.0)
+        assert mcts.cardinality_stats[(0, 1)] == ActionStats(1, 5.0)
         assert mcts.group_rollout_counts[0] == 2
 
     def test_update_cardinality_stats_multiple_groups(self):
@@ -1244,8 +1246,8 @@ class TestAdaptivePStop:
         # Group 0 features=[0,1,2], Group 1 features=[10,11,12]
         # Select 0 and 1 from group 0 (cardinality=2), 10 from group 1 (cardinality=1)
         mcts._update_cardinality_stats(7.0, (0, 1, 10))
-        assert mcts.cardinality_stats[(0, 2)] == (1, 7.0)
-        assert mcts.cardinality_stats[(1, 1)] == (1, 7.0)
+        assert mcts.cardinality_stats[(0, 2)] == ActionStats(1, 7.0)
+        assert mcts.cardinality_stats[(1, 1)] == ActionStats(1, 7.0)
         assert mcts.group_rollout_counts[0] == 1
         assert mcts.group_rollout_counts[1] == 1
 
@@ -1260,7 +1262,7 @@ class TestAdaptivePStop:
         )
         mcts._update_cardinality_stats(10.0, (0, 3))
         mcts._update_cardinality_stats(6.0, (1, 4))
-        assert mcts.cardinality_stats[(0, 2)] == (2, 16.0)
+        assert mcts.cardinality_stats[(0, 2)] == ActionStats(2, 16.0)
         assert mcts.group_rollout_counts[0] == 2
 
     def test_run_with_adaptive_populates_stats(self):
@@ -1312,8 +1314,8 @@ class TestAdaptivePStop:
         }
 
         def setup_stats(mcts):
-            mcts.cardinality_stats[(0, 2)] = (50, 400.0)  # mean=8.0
-            mcts.cardinality_stats[(0, 3)] = (50, 200.0)  # mean=4.0
+            mcts.cardinality_stats[(0, 2)] = ActionStats(50, 400.0)  # mean=8.0
+            mcts.cardinality_stats[(0, 3)] = ActionStats(50, 200.0)  # mean=4.0
             mcts.reward_min = 0.0
             mcts.reward_max = 10.0
             mcts.group_rollout_counts[0] = 100
@@ -1545,7 +1547,7 @@ class TestRolloutPolicy:
             seed=0,
         )
         # Seed stats: action 0 visited 3 times with total reward 9.0
-        mcts.rollout_stats[(0, 0)] = (3, 9.0)
+        mcts.rollout_stats[(0, 0)] = ActionStats(3, 9.0)
         scores = mcts._score_rollout_actions(0, [0, 1])
         # Action 0: mean=3.0, novelty=1/sqrt(4)=0.5
         assert scores[0] == pytest.approx(3.0 + 0.5)
@@ -1561,7 +1563,7 @@ class TestRolloutPolicy:
             rollout_novelty_weight=1.0,
             seed=0,
         )
-        mcts.rollout_stats[(0, STOP)] = (4, 20.0)
+        mcts.rollout_stats[(0, STOP)] = ActionStats(4, 20.0)
         scores = mcts._score_rollout_actions(0, [0, STOP])
         # STOP: mean=5.0, novelty=1/sqrt(5)
         import math
@@ -1600,7 +1602,7 @@ class TestRolloutPolicy:
             seed=0,
         )
         # Seed stats to make action 0 strongly preferred by policy
-        mcts.rollout_stats[(0, 0)] = (100, 10000.0)
+        mcts.rollout_stats[(0, 0)] = ActionStats(100, 10000.0)
         counts = {0: 0, 1: 0, 2: 0}
         for _ in range(3000):
             a = mcts._sample_rollout_action(0, [0, 1, 2])
@@ -1620,9 +1622,9 @@ class TestRolloutPolicy:
             seed=0,
         )
         # Action 0 is much better
-        mcts.rollout_stats[(0, 0)] = (50, 500.0)  # mean = 10.0
-        mcts.rollout_stats[(0, 1)] = (50, 50.0)  # mean = 1.0
-        mcts.rollout_stats[(0, 2)] = (50, 50.0)  # mean = 1.0
+        mcts.rollout_stats[(0, 0)] = ActionStats(50, 500.0)  # mean = 10.0
+        mcts.rollout_stats[(0, 1)] = ActionStats(50, 50.0)  # mean = 1.0
+        mcts.rollout_stats[(0, 2)] = ActionStats(50, 50.0)  # mean = 1.0
         counts = {0: 0, 1: 0, 2: 0}
         for _ in range(1000):
             a = mcts._sample_rollout_action(0, [0, 1, 2])
@@ -1638,18 +1640,18 @@ class TestRolloutPolicy:
         """Trajectory updates dict correctly."""
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        trajectory = [(0, 1), (0, 2)]
+        trajectory = [TrajectoryStep(0, 1), TrajectoryStep(0, 2)]
         mcts._update_rollout_stats(trajectory, 5.0)
-        assert mcts.rollout_stats[(0, 1)] == (1, 5.0)
-        assert mcts.rollout_stats[(0, 2)] == (1, 5.0)
+        assert mcts.rollout_stats[(0, 1)] == ActionStats(1, 5.0)
+        assert mcts.rollout_stats[(0, 2)] == ActionStats(1, 5.0)
 
     def test_update_rollout_stats_accumulates(self):
         """Multiple updates accumulate."""
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts._update_rollout_stats([(0, 1)], 3.0)
-        mcts._update_rollout_stats([(0, 1)], 7.0)
-        assert mcts.rollout_stats[(0, 1)] == (2, 10.0)
+        mcts._update_rollout_stats([TrajectoryStep(0, 1)], 3.0)
+        mcts._update_rollout_stats([TrajectoryStep(0, 1)], 7.0)
+        assert mcts.rollout_stats[(0, 1)] == ActionStats(2, 10.0)
 
     def test_update_rollout_stats_empty_trajectory(self):
         """No-op for empty trajectory."""
@@ -1711,9 +1713,9 @@ class TestRolloutPolicy:
             seed=0,
         )
         # Make action 2 strongly preferred
-        mcts.rollout_stats[(0, 2)] = (100, 1000.0)  # mean = 10.0
-        mcts.rollout_stats[(0, 0)] = (100, 100.0)  # mean = 1.0
-        mcts.rollout_stats[(0, 1)] = (100, 100.0)  # mean = 1.0
+        mcts.rollout_stats[(0, 2)] = ActionStats(100, 1000.0)  # mean = 10.0
+        mcts.rollout_stats[(0, 0)] = ActionStats(100, 100.0)  # mean = 1.0
+        mcts.rollout_stats[(0, 1)] = ActionStats(100, 100.0)  # mean = 1.0
 
         counts = {0: 0, 1: 0, 2: 0}
         for _ in range(500):
