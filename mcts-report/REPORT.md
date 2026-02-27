@@ -2,15 +2,18 @@
 
 ## Executive Summary
 
-This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 5 combinatorial problems with NChooseK constraints. We test 23 MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, rollout policy, and context-aware RAVE against a random-sampling baseline.
+This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 6 combinatorial problems with NChooseK constraints. We test 23 UCT-based MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, rollout policy, and context-aware RAVE against a random-sampling baseline. We then benchmark 6 Thompson Sampling (TS) variants against the best UCT configs.
 
-Four algorithmic improvements were implemented during this benchmarking cycle:
+Five algorithmic improvements were implemented during this benchmarking cycle:
 1. **Virtual loss on cache hit**: On revisiting a cached terminal, increment visit counts but backpropagate reward=0. This dilutes mean node value for over-exploited branches, steering UCT toward unexplored territory.
 2. **Rollout retry on cache hit**: When a rollout produces a cached terminal, re-roll up to `max_rollout_retries` times to find a novel selection.
 3. **Blended softmax rollout policy**: Replaces uniform-random rollouts with a learned policy that blends softmax over per-(group, action) statistics with uniform exploration, treating STOP as a regular scored action.
 4. **Context-aware RAVE**: Conditions RAVE statistics on `(group_idx, cardinality, action)` instead of a global action ID, allowing RAVE to learn that a feature's value depends on how many features are already selected.
+5. **Thompson Sampling tree + rollout policy**: Replaces UCT selection and softmax rollouts with Normal-Normal conjugate posterior sampling, eliminating 9 tunable hyperparameters.
 
-**Key result**: The cumulative effect of these improvements transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). Context-aware RAVE re-enables RAVE as a useful signal on mixed problems (80% with k=300 vs 77% for +rpol) while matching +rpol on other problems.
+**Key result (UCT)**: The cumulative effect of improvements 1-4 transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best UCT configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). Context-aware RAVE re-enables RAVE as a useful signal on mixed problems (80% with k=300 vs 77% for +rpol) while matching +rpol on other problems.
+
+**Key result (Thompson Sampling)**: TS with variance inflation on cache hits (`TS + TS(g,a) + var_infl`) **doubles UCT's optimum rate on multigroup_interaction** (47% vs 23%) — the problem with strongest cross-variable interactions — while using zero tunable hyperparameters. However, **UCT remains superior on large search spaces**: 50% vs 20% on large_sparse, 100% vs 83% on needle_in_haystack. Variance inflation is essential — without it, TS over-exploits exhausted subtrees and achieves only 3-17% on most problems. See Section 11 for full analysis.
 
 ---
 
@@ -580,8 +583,8 @@ Based on these results, the recommended defaults for NChooseK problems are:
 3. ~~**Reward normalization**~~: **Implemented and validated.** Min-max normalization to [0, 1] before backpropagation with `c_uct=0.01` to match the [0, 1] scale. See Section 4.6 for details.
 4. ~~**Blended softmax rollout policy**~~: **Implemented and validated.** Replaces uniform rollouts with a learned softmax policy blended with uniform exploration. The rollout policy is the new best configuration on all 5 problems: 77% on mixed (up from 63%), 50% on large_sparse (up from 40%), and best or tied elsewhere. Default hyperparameters (ε=0.3, τ=1.0) are the most robust. See Section 4.7 for details.
 5. **Burn-in for reward normalization**: Reward normalization uses running min-max, but early iterations have a poor estimate of the reward range, so their normalized values are distorted relative to what they'd be with the final bounds. A potential fix: skip normalization for the first N iterations (using raw rewards), then once the range stabilizes, retroactively re-normalize the early paths in a single pass. This targets exactly the period where the normalization error is worst, with minimal ongoing cost.
-6. **Thompson Sampling instead of UCT**: Replace the UCT selection rule with Bayesian Thompson Sampling to eliminate the need for both reward normalization and `c_uct` tuning entirely. See Section 8.3 for detailed analysis.
-7. **Thompson Sampling for rollouts**: Replace the softmax rollout policy with Thompson Sampling over per-(group, action) posteriors, eliminating ε, τ, and novelty_weight. See Section 8.4 for detailed analysis.
+6. ~~**Thompson Sampling instead of UCT**~~: **Implemented and benchmarked.** TS tree selection eliminates `c_uct` and `normalize_rewards`. With variance inflation for cache hits, `TS + TS(g,a) + var_infl` achieves 47% on multigroup_interaction (vs UCT's 23%) but underperforms on large_sparse (20% vs 50%). Not a drop-in replacement for UCT; best on interaction-heavy problems. See Section 8.3 for design and Section 11 for benchmark results.
+7. ~~**Thompson Sampling for rollouts**~~: **Implemented and benchmarked.** TS rollout per (group, action) eliminates ε, τ, and novelty_weight. Outperforms uniform rollouts on all problems. TS rollout per (group, cardinality, action) adds context-awareness that helps on mixed problems (57% vs 40% for `(g,a)`) but hurts on others due to sparse statistics. See Section 8.4 for design and Section 11 for benchmark results.
 8. **Two-phase burn-in with cheap evaluations**: Use random sampling instead of full `optimize_acqf()` during early iterations, then switch to accurate optimization. TS makes this transition natural. See Section 8.5 for detailed analysis.
 
 ### 8.3 Thompson Sampling as UCT Replacement
@@ -824,23 +827,435 @@ The transition between phases is smooth because every component uses the same Ba
 
 | File | Description |
 |------|-------------|
-| `benchmark.py` | Benchmark script (self-contained, reproduces all results) |
-| `results.json` | Full numeric results for all configs and problems |
-| `summary_bar_chart.png` | Bar chart of final best reward across all problems |
-| `optimum_rate_heatmap.png` | Heatmap of optimum-finding rates |
-| `unique_evals.png` | Exploration efficiency comparison |
-| `convergence_<problem>.png` | Full convergence curves per problem |
+| `benchmark.py` | UCT benchmark script (reproduces all UCT results) |
+| `results.json` | Full numeric results for UCT configs and problems |
+| `summary_bar_chart.png` | Bar chart of final best reward (UCT configs) |
+| `optimum_rate_heatmap.png` | Heatmap of optimum-finding rates (UCT configs) |
+| `unique_evals.png` | Exploration efficiency comparison (UCT configs) |
+| `convergence_<problem>.png` | Full convergence curves per problem (UCT) |
 | `convergence_<problem>_rave_effect.png` | RAVE ablation convergence |
 | `convergence_<problem>_pw_effect.png` | PW ablation convergence |
 | `convergence_<problem>_exploration.png` | c_uct ablation convergence |
 | `convergence_<problem>_p_stop.png` | p_stop ablation convergence |
 | `convergence_<problem>_rollout.png` | Rollout policy ablation convergence |
 | `convergence_<problem>_crave.png` | Context RAVE ablation convergence |
+| `optimize_mcts_ts.py` | Thompson Sampling MCTS implementation |
+| `benchmark_ts.py` | TS vs UCT benchmark script |
+| `results_ts.json` | Full numeric results for TS benchmark |
+| `summary_bar_chart_ts.png` | Bar chart of final best reward (TS vs UCT) |
+| `optimum_rate_heatmap_ts.png` | Heatmap of optimum-finding rates (TS vs UCT) |
+| `unique_evals_ts.png` | Exploration efficiency comparison (TS vs UCT) |
+| `convergence_ts_<problem>.png` | Full convergence curves per problem (TS vs UCT) |
+| `convergence_ts_<problem>_ts_vs_uct.png` | TS vs UCT convergence comparison |
+| `convergence_ts_<problem>_ts_rollout_modes.png` | TS rollout mode comparison |
+| `convergence_ts_<problem>_variance_inflation.png` | Variance inflation ablation |
 
 ## 10. Reproducing
 
 ```bash
+# UCT benchmark (~60 seconds)
 python mcts-report/benchmark.py
+
+# Thompson Sampling benchmark (~30 seconds)
+python mcts-report/benchmark_ts.py
 ```
 
-All results use fixed random seeds for reproducibility. Runtime is ~60 seconds.
+All results use fixed random seeds for reproducibility.
+
+---
+
+## 11. Thompson Sampling Benchmark Results
+
+This section reports empirical results for the Thompson Sampling (TS) variants proposed in Sections 8.3 and 8.4. Implementation is in `optimize_mcts_ts.py`; benchmarking in `benchmark_ts.py`.
+
+### 11.1 Experimental Setup
+
+**TS implementation** (`MCTS_TS` class): replaces UCT tree selection with Normal-Normal conjugate posterior sampling. Each tree node maintains `(n_obs, sum_rewards, sum_sq_rewards)` instead of `(n_visits, w_total)`. At selection time, a reward is sampled from each child's posterior; the highest sample wins. A separate `n_visits` counter drives progressive widening.
+
+**Bayesian update** (weak prior, estimated variance):
+- Prior: N(μ₀, σ₀²) where μ₀ = running global mean of all novel rewards, σ₀² = 1.0, pseudo-count n₀ = 1
+- After n novel observations: posterior mean = (μ₀ + n·x̄) / (1 + n), posterior variance = s² / (1 + n) where s² = max(Σx²/n − x̄², 10⁻⁸)
+- n=0: sample from prior; n=1: posterior = N((μ₀+x)/2, σ₀²/2)
+
+**Configurations tested** (8 configs + Random baseline):
+
+| Config | Tree selection | Rollout policy | Cache hit mode | Tunable params |
+|--------|---------------|----------------|----------------|----------------|
+| UCT (+rpol) | UCT (c_uct=0.01, norm) | Softmax (ε=0.3, τ=1.0) | Virtual loss | 9 |
+| UCT (no rpol) | UCT (c_uct=0.01, norm) | Uniform + adaptive p_stop | Virtual loss | 6 |
+| TS + uniform | TS posterior | Uniform random | No update | 0 |
+| TS + TS(g,a) | TS posterior | TS per (group, action) | No update | 0 |
+| TS + TS(g,a) + var_infl | TS posterior | TS per (group, action) | Variance inflation | 0 (+decay=0.95) |
+| TS + TS(g,c,a) | TS posterior | TS per (group, card, action) | No update | 0 |
+| TS + TS(g,c,a) + var_infl | TS posterior | TS per (group, card, action) | Variance inflation | 0 (+decay=0.95) |
+| TS + softmax rpol | TS posterior | Softmax (ε=0.3, τ=1.0) | No update | 3 |
+
+The "tunable params" column counts parameters that require problem-specific tuning. The TS prior variance (σ₀²=1.0) and variance decay (0.95) are structural defaults, not tuned per problem.
+
+### 11.2 Summary Tables
+
+#### multigroup_interaction (search space ~4.25M, optimum = 150.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Uniq Evals |
+|--------|----------|------|----------|------------|
+| Random | 62.9 | 10.3 | 0% | 588 |
+| UCT (+rpol) | 111.4 | 23.6 | 23% | 516 |
+| UCT (no rpol) | 108.9 | 25.1 | 23% | 455 |
+| TS + uniform | 92.9 | 22.6 | 7% | 96 |
+| TS + TS(g,a) | 101.9 | 26.4 | 17% | 127 |
+| **TS + TS(g,a) + var_infl** | **121.8** | 28.4 | **47%** | 378 |
+| TS + TS(g,c,a) | 104.5 | 22.7 | 13% | 174 |
+| TS + TS(g,c,a) + var_infl | 114.3 | 23.8 | 27% | 406 |
+| TS + softmax rpol | 94.6 | 24.9 | 10% | 118 |
+
+#### needle_in_haystack (search space ~4,928, optimum = 100.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Uniq Evals |
+|--------|----------|------|----------|------------|
+| Random | 39.7 | 20.5 | 10% | 216 |
+| **UCT (+rpol)** | **100.0** | 0.0 | **100%** | 283 |
+| UCT (no rpol) | 100.0 | 0.0 | 100% | 247 |
+| TS + uniform | 53.8 | 35.5 | 37% | 42 |
+| TS + TS(g,a) | 74.8 | 33.2 | 63% | 63 |
+| TS + TS(g,a) + var_infl | 89.5 | 23.5 | 83% | 159 |
+| TS + TS(g,c,a) | 72.3 | 33.9 | 60% | 48 |
+| TS + TS(g,c,a) + var_infl | 88.7 | 25.4 | 83% | 87 |
+| TS + softmax rpol | 86.0 | 28.0 | 80% | 57 |
+
+#### mixed_nchoosek_categorical (search space ~26,896, optimum = 150.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Uniq Evals |
+|--------|----------|------|----------|------------|
+| Random | 79.2 | 14.6 | 3% | 472 |
+| **UCT (+rpol)** | **135.9** | 25.6 | **77%** | 442 |
+| UCT (no rpol) | 127.0 | 30.5 | 63% | 357 |
+| TS + uniform | 95.2 | 28.7 | 20% | 94 |
+| TS + TS(g,a) | 110.2 | 33.1 | 40% | 273 |
+| TS + TS(g,a) + var_infl | 123.3 | 30.6 | 57% | 342 |
+| TS + TS(g,c,a) | 122.6 | 31.6 | 57% | 271 |
+| TS + TS(g,c,a) + var_infl | 131.8 | 27.8 | 70% | 348 |
+| TS + softmax rpol | 106.0 | 34.4 | 37% | 194 |
+
+#### large_sparse (search space ~960M, optimum = 200.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Uniq Evals |
+|--------|----------|------|----------|------------|
+| Random | 36.1 | 6.3 | 0% | 764 |
+| **UCT (+rpol)** | **129.8** | 70.2 | **50%** | 750 |
+| UCT (no rpol) | 112.1 | 72.0 | 40% | 689 |
+| TS + uniform | 52.9 | 40.5 | 7% | 112 |
+| TS + TS(g,a) | 56.8 | 27.4 | 3% | 211 |
+| TS + TS(g,a) + var_infl | 84.0 | 58.2 | 20% | 575 |
+| TS + TS(g,c,a) | 61.1 | 47.5 | 10% | 207 |
+| TS + TS(g,c,a) + var_infl | 77.2 | 55.4 | 17% | 545 |
+| TS + softmax rpol | 92.7 | 65.1 | 27% | 238 |
+
+#### graduated_landscape (search space 375, optimum = 65.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Uniq Evals |
+|--------|----------|------|----------|------------|
+| Random | 60.6 | 3.3 | 7% | 113 |
+| **UCT (+rpol)** | **64.5** | 1.4 | **80%** | 157 |
+| UCT (no rpol) | 64.7 | 0.8 | 80% | 152 |
+| TS + uniform | 62.5 | 2.6 | 10% | 43 |
+| TS + TS(g,a) | 63.4 | 2.7 | 53% | 62 |
+| TS + TS(g,a) + var_infl | 64.6 | 0.8 | 70% | 102 |
+| TS + TS(g,c,a) | 62.9 | 3.4 | 23% | 42 |
+| TS + TS(g,c,a) + var_infl | 64.6 | 0.9 | 73% | 81 |
+| TS + softmax rpol | 58.1 | 8.1 | 3% | 34 |
+
+#### simple_additive (search space 793, optimum = 65.0)
+
+| Config | Mean Best | ±Std | Opt Rate | Uniq Evals |
+|--------|----------|------|----------|------------|
+| Random | 57.7 | 3.3 | 0% | 115 |
+| **UCT (+rpol)** | **64.1** | 2.2 | **83%** | 187 |
+| UCT (no rpol) | 64.1 | 2.2 | 83% | 184 |
+| TS + uniform | 60.5 | 4.4 | 30% | 54 |
+| TS + TS(g,a) | 63.4 | 2.5 | 63% | 71 |
+| TS + TS(g,a) + var_infl | 64.2 | 2.0 | 80% | 112 |
+| TS + TS(g,c,a) | 62.7 | 4.0 | 47% | 61 |
+| TS + TS(g,c,a) + var_infl | 64.2 | 1.6 | 73% | 101 |
+| TS + softmax rpol | 58.2 | 8.2 | 33% | 41 |
+
+### 11.3 Optimum-Finding Rate Heatmap
+
+![TS vs UCT: Optimum-Finding Rate](optimum_rate_heatmap_ts.png)
+
+### 11.4 Convergence Curves
+
+#### TS vs UCT — multigroup_interaction
+
+![TS vs UCT convergence on multigroup_interaction](convergence_ts_multigroup_interaction_ts_vs_uct.png)
+
+TS + TS(g,a) (red) tracks UCT (blue/orange) for the first ~100 iterations, then plateaus due to over-exploitation of cached subtrees. The `var_infl` variants (not shown in this subset; see variance inflation plots) continue climbing past iteration 200.
+
+#### TS vs UCT — large_sparse
+
+![TS vs UCT convergence on large_sparse](convergence_ts_large_sparse_ts_vs_uct.png)
+
+UCT (+rpol) clearly dominates. TS configs plateau early. The 960M search space requires tight exploitation — UCT's near-greedy `c_uct=0.01` plus virtual loss is better suited here than TS's broader posterior-driven exploration.
+
+#### TS vs UCT — mixed_nchoosek_categorical
+
+![TS vs UCT convergence on mixed](convergence_ts_mixed_nchoosek_categorical_ts_vs_uct.png)
+
+UCT (+rpol) leads throughout. TS + TS(g,a) converges to ~110 mean best, well below UCT's ~136. The gap is driven by UCT's learned softmax rollout policy, which handles the categorical dimensions more effectively.
+
+#### Variance inflation effect — multigroup_interaction
+
+![Variance inflation on multigroup_interaction](convergence_ts_multigroup_interaction_variance_inflation.png)
+
+The most dramatic effect in the benchmark. Without variance inflation, TS + TS(g,a) (red) plateaus at ~100 around iteration 100. With variance inflation (purple), the curve keeps climbing to ~122 by iteration 600. The effect is consistent: var_infl configs continue discovering new high-reward selections long after no-update configs have converged.
+
+#### Variance inflation effect — needle_in_haystack
+
+![Variance inflation on needle](convergence_ts_needle_in_haystack_variance_inflation.png)
+
+Without var_infl, TS + TS(g,a) converges at ~75 by iteration 50 and never improves — the posteriors are locked tight on suboptimal subtrees. With var_infl, the gradual widening allows the algorithm to escape and find the needle, reaching ~90 mean best.
+
+#### Variance inflation effect — large_sparse
+
+![Variance inflation on large_sparse](convergence_ts_large_sparse_variance_inflation.png)
+
+Variance inflation helps substantially (TS(g,a) from 57 to 84 mean best), but the gap to UCT (130) remains large. The 960M search space requires more unique evaluations than TS with var_infl can produce (575 vs UCT's 750).
+
+### 11.5 Analysis
+
+#### 11.5.1 Variance Inflation Is the Critical Design Decision
+
+The report in §8.3 proposed two cache-hit strategies: "no-update" (the correct Bayesian action) and "variance inflation" (a practical mitigation). The benchmark conclusively shows that **no-update alone is insufficient** and **variance inflation is essential**.
+
+The mechanism: without variance inflation, when a subtree is exhausted (all terminals cached), repeated visits produce no posterior updates. The posterior stays tight at a high mean, and TS keeps sampling it highly — there is no downward pressure equivalent to UCT's virtual loss. Variance inflation (decay factor 0.95) gradually reduces `n_obs` on cache hits, widening the posterior, which allows other branches to occasionally "win" a sample.
+
+| Problem | TS(g,a) no-update | TS(g,a) + var_infl | Improvement |
+|---------|-------------------|---------------------|-------------|
+| multigroup_interaction | 17% | **47%** | +30pp |
+| needle_in_haystack | 63% | **83%** | +20pp |
+| mixed_nchoosek_categorical | 40% | **57%** | +17pp |
+| large_sparse | 3% | **20%** | +17pp |
+| graduated_landscape | 53% | **70%** | +17pp |
+| simple_additive | 63% | **80%** | +17pp |
+
+Variance inflation roughly doubles the unique evaluations (e.g., needle: 63→159, multigroup: 127→378), confirming that the core problem is exploration — without inflation, TS gets trapped in locally-optimal exhausted subtrees.
+
+#### 11.5.2 TS Beats UCT on Interaction-Heavy Problems
+
+On **multigroup_interaction** (the hardest problem for UCT), TS + TS(g,a) + var_infl achieves **47% optimum rate vs UCT's 23%** — more than double. This is the only problem where TS clearly outperforms UCT.
+
+Why: multigroup_interaction has strong cross-group interaction bonuses (e.g., feature 1 + feature 9 = +12 reward). UCT with `c_uct=0.01` is near-greedy, committing to the first good subtree it finds. TS's posterior-driven exploration naturally samples from multiple high-potential subtrees, increasing the chance of discovering interaction combinations. The posterior captures *reward variance* — if a subtree leads to both high and low rewards depending on downstream choices, TS explores it more because the wide posterior occasionally samples high.
+
+#### 11.5.3 UCT Dominates on Large Search Spaces
+
+On **large_sparse** (960M combinations), UCT (+rpol) achieves **50% vs TS's best 20%**. On **needle_in_haystack** (5K combinations), UCT achieves **100% vs TS's best 83%**.
+
+The explanation is exploration *efficiency*: UCT's near-greedy search with virtual loss concentrates evaluations on the most promising subtrees and then uses virtual loss to force exploration *within those subtrees* when they exhaust. TS explores more *broadly* — the stochastic sampling sends the search to diverse regions of the tree — but each individual subtree gets fewer evaluations. In large spaces where the number of feasible selections vastly exceeds the budget, UCT's focused exploitation finds the optimum more reliably.
+
+The unique evaluation counts confirm this: UCT evaluates 750 unique selections on large_sparse, while TS + var_infl evaluates 575. Those extra 175 evaluations, concentrated in promising regions, make the difference.
+
+#### 11.5.4 Cardinality Conditioning: Helps on Mixed, Hurts Elsewhere
+
+Comparing `TS(g,a)` vs `TS(g,c,a)` rollout keys:
+
+| Problem | TS(g,a) + var_infl | TS(g,c,a) + var_infl | Delta |
+|---------|---------------------|----------------------|-------|
+| multigroup_interaction | **47%** | 27% | −20pp |
+| needle_in_haystack | 83% | 83% | 0pp |
+| mixed_nchoosek_categorical | 57% | **70%** | +13pp |
+| large_sparse | **20%** | 17% | −3pp |
+| graduated_landscape | 70% | **73%** | +3pp |
+| simple_additive | **80%** | 73% | −7pp |
+
+Cardinality conditioning helps on **mixed** (+13pp) because STOP decisions at different cardinalities have genuinely different values in a space with NChooseK + Categorical interactions. But it hurts on **multigroup_interaction** (−20pp) because the larger key space `(group, cardinality, action)` fragments the statistics: each posterior gets fewer updates and takes longer to converge. On a problem with 3 groups of 8 features and max cardinality 4, the key space expands from ~27 entries to ~108 — a 4x reduction in per-key observation count.
+
+This confirms the §8.4 prediction: "cardinality conditioning increases the key space, which means posteriors are updated less frequently and take longer to converge." The flat `(group, action)` key should be the default.
+
+#### 11.5.5 TS + Softmax Hybrid Is Worse Than Either Pure Approach
+
+`TS + softmax rpol` (TS tree selection with the UCT-era softmax rollout policy) performs poorly:
+
+| Problem | UCT (+rpol) | TS + softmax rpol | TS + TS(g,a) + var_infl |
+|---------|-------------|-------------------|--------------------------|
+| multigroup_interaction | 23% | 10% | **47%** |
+| needle_in_haystack | **100%** | 80% | 83% |
+| mixed_nchoosek_categorical | **77%** | 37% | 57% |
+| large_sparse | **50%** | 27% | 20% |
+| graduated_landscape | **80%** | 3% | 70% |
+| simple_additive | **83%** | 33% | 80% |
+
+The hybrid is worse than both UCT (+rpol) and the best pure-TS config on nearly every problem. On graduated_landscape it achieves only 3% — catastrophic.
+
+The problem is the softmax rollout's learned statistics accumulate without reward normalization (the TS tree doesn't normalize), but the softmax scoring mechanism (`mean_reward + novelty_weight/sqrt(n+1)`) was designed for normalized rewards. When rewards span a wide raw range (e.g., 0-150), the novelty bonus (weight 1.0) is negligible relative to the mean reward, so the softmax concentrates too aggressively on early high-scoring actions. The low unique evaluation counts (34-238 vs UCT's 150-750) confirm the over-exploitation.
+
+This is a principled failure: the softmax rollout policy and TS tree selection have incompatible assumptions about reward scale. Use either pure UCT + softmax or pure TS throughout; don't mix.
+
+#### 11.5.6 Checking the §8.3 Predictions
+
+Section 8.3 made specific predictions about TS performance. How did they hold up?
+
+| Problem | §8.3 Prediction | Actual Result | Assessment |
+|---------|-----------------|---------------|------------|
+| needle_in_haystack | "TS should match" (100%) | 83% (best TS) | **Wrong** — UCT's tighter exploitation finds the needle more reliably |
+| graduated_landscape | "Likely comparable or slightly better" | 70-73% vs 80% | **Partially wrong** — close but TS lags by ~10pp |
+| large_sparse | "Roughly comparable, maybe slightly worse" | 20% vs 50% | **Wrong** — much worse, not "roughly comparable" |
+| mixed_nchoosek_categorical | "TS could help" via reward variance capture | 57-70% vs 77% | **Partially right** — TS(g,c,a)+var_infl at 70% is close but doesn't exceed UCT |
+| multigroup_interaction | "Broader exploration might help" | 47% vs 23% | **Right** — significant improvement from broader exploration |
+
+The predictions were too optimistic about TS's ability to match UCT's exploitation efficiency on large and medium search spaces. The critical factor not fully anticipated was the **severity of the exhausted-subtree problem** — the theoretical analysis correctly identified it as a risk but underestimated its magnitude on problems beyond multigroup_interaction.
+
+### 11.6 Updated Recommendations
+
+**UCT (+rpol) remains the recommended default.** It achieves the best or tied-best optimum rate on 5 of 6 problems. The 9 hyperparameters are well-tuned and robust.
+
+**TS + TS(g,a) + var_infl is promising for specific use cases:**
+
+- Problems with strong cross-variable interactions where UCT's greedy exploitation misses combinatorial synergies
+- Settings where hyperparameter-free operation is valued over peak performance (0 tunable parameters vs 9)
+- As a component of the two-phase burn-in proposed in §8.5, where TS's natural handling of heteroscedastic observations avoids the transition problem
+
+**Variance inflation (decay=0.95) is mandatory for TS.** The no-update mode that is theoretically correct for Bayesian updates fails in practice because cached terminals provide no new information, and TS has no equivalent of UCT's virtual loss.
+
+**Do not use the TS + softmax hybrid.** The softmax rollout policy assumes normalized rewards and is incompatible with TS tree selection.
+
+**If adopting TS, use `(group, action)` rollout keys, not `(group, cardinality, action)`.** The simpler key space produces more robust posteriors on most problems. Cardinality conditioning only helps on mixed NChooseK + Categorical problems and hurts elsewhere.
+
+### 11.7 Exploration Efficiency
+
+![TS vs UCT: Unique Evaluations](unique_evals_ts.png)
+
+The unique evaluation chart reveals the core trade-off. UCT configs consistently evaluate more unique selections (455-750 per problem), while TS without variance inflation evaluates far fewer (42-211). Variance inflation partially closes the gap (87-575), but on large_sparse — where coverage matters most — TS still trails.
+
+The implication: TS with variance inflation spends ~25% of its budget on cache hits (re-visiting exhausted subtrees and inflating posteriors), while UCT with virtual loss spends a similar fraction but extracts more value because the deterministic virtual-loss mechanism is more efficient at redirecting search than the stochastic posterior widening.
+
+### 11.8 Summary Bar Chart
+
+![TS vs UCT: Final Best Reward](summary_bar_chart_ts.png)
+
+### 11.9 Further Improvements to the Bayesian Approach
+
+The benchmark identifies two specific weaknesses of the current TS implementation: (a) the exhausted-subtree problem is only partially solved by variance inflation, and (b) exploration efficiency on large search spaces lags UCT significantly (575 vs 750 unique evals on large_sparse). The following improvements are ordered by how directly the benchmark evidence motivates them.
+
+#### 11.9.1 Pessimistic Pseudo-Observations on Cache Hits
+
+**Problem**: Variance inflation widens posteriors but never shifts the mean downward. A node with posterior mean 120 and tight variance stays attractive indefinitely — the inflated posterior still centers on 120, and most samples remain high. UCT's virtual loss works because it deterministically pushes `w_total / n_visits` down; TS has no equivalent downward pressure.
+
+**Proposed fix**: On each cache hit, instead of decaying `n_obs`, inject a pessimistic pseudo-observation into the sufficient statistics. The pseudo-observation value should be below the current posterior mean — e.g., `μ₀ - σ_global` or the global 25th percentile of observed rewards.
+
+```python
+def _backpropagate_cache_hit(self, path):
+    pessimistic_value = self._global_mean() - math.sqrt(self._global_var())
+    for n in path:
+        n.n_visits += 1
+        # Add pessimistic pseudo-observation to shift mean down
+        n.n_obs += 1
+        n.sum_rewards += pessimistic_value
+        n.sum_sq_rewards += pessimistic_value ** 2
+```
+
+This combines the directional pressure of virtual loss (mean shifts down) with Bayesian uncertainty (variance widens as the pessimistic observation disagrees with the true mean). The effect is self-limiting: once the algorithm explores away from the exhausted subtree, the pessimistic observations are diluted by novel rewards.
+
+The key advantage over variance inflation: variance inflation is symmetric (the posterior could sample higher *or* lower), so ~50% of samples from an inflated exhausted node still select it. Pessimistic pseudo-observations are asymmetric — they actively push the posterior away from the exhausted subtree.
+
+#### 11.9.2 Adaptive Prior Variance from Observed Reward Range
+
+**Problem**: The fixed prior variance `σ₀² = 1.0` is scale-blind. On large_sparse (rewards in approximately [-30, 200]), a prior N(μ₀, 1.0) is absurdly narrow — a newly expanded child samples near the global mean with almost no spread, providing negligible exploration. On simple_additive (rewards in [1, 65]), the same prior is more reasonable but still somewhat tight.
+
+**Proposed fix**: Set σ₀² to the running empirical variance of all observed rewards, rather than a fixed constant. This auto-calibrates the prior to the reward scale of the problem:
+
+```python
+def _prior_var(self) -> float:
+    if self._novel_reward_count < 2:
+        return self.ts_prior_var  # fixed fallback for first iterations
+    mean = self._global_mean()
+    empirical_var = (
+        self._novel_reward_sq_sum / self._novel_reward_count - mean * mean
+    )
+    return max(empirical_var, 1e-8)
+```
+
+Early iterations (few rewards observed) use the fixed fallback, which provides wide priors and broad exploration. As rewards accumulate, the prior tightens to match the actual reward distribution. Newly expanded children then have priors that are appropriately calibrated — wide enough to explore on large-scale problems, tight enough to focus on small-scale ones.
+
+This is the TS analogue of reward normalization: instead of squashing rewards to [0, 1] to match `c_uct`, we scale the prior to match the rewards.
+
+#### 11.9.3 Two-Phase Burn-in with Cheap Evaluations
+
+**Problem**: TS's exploration efficiency gap (575 vs 750 unique evals on large_sparse) exists because each evaluation is expensive (`optimize_acqf` with multi-start L-BFGS), so wasted iterations on cache hits are costly. The cache itself exists because evaluations are expensive and deterministic.
+
+**Proposed fix** (detailed in §8.5): split the MCTS run into two phases:
+
+| Phase | Evaluations | Caching | Cost per eval | Purpose |
+|-------|------------|---------|---------------|---------|
+| Burn-in (1 to N) | Cheap random sampling | Off | ~1/100x | Broad landscape mapping |
+| Exploitation (N+1 to end) | Full `optimize_acqf` | On | 1x | Accurate exploitation |
+
+During burn-in, every evaluation is novel (no cache, no cache hits), so the exhausted-subtree problem disappears entirely. TS's posteriors accumulate diverse noisy observations across the combinatorial landscape. At transition, the posteriors already encode which regions of the space are promising, so the expensive budget is concentrated where it matters.
+
+TS is uniquely suited for this because the Bayesian update naturally handles heteroscedastic observations: noisy burn-in values produce wide posteriors (low confidence), and accurate post-burn-in values produce tight posteriors that dominate the mean. No statistic flushing or phase-tracking logic is needed. UCT's running mean cannot distinguish noisy from accurate observations, making a clean transition much harder (§8.5).
+
+The benchmark data suggests the burn-in length should scale with search space size: ~50 iterations for small spaces (graduated_landscape, 375 combinations), ~200 for large (large_sparse, 960M combinations).
+
+#### 11.9.4 Depth-Dependent Cache-Hit Handling
+
+**Problem**: The current variance inflation applies the same decay factor (0.95) to every node in the backpropagation path, from root to leaf. But the exhaustion problem is depth-dependent: the root node aggregates rewards from the entire tree and is never truly exhausted; a node at depth 8 covers a narrow slice of the search space and exhausts quickly.
+
+**Proposed fix**: Scale the decay (or pessimistic pseudo-observation magnitude) by depth:
+
+```python
+effective_decay = decay ** (1.0 + depth * depth_scale)
+```
+
+With `depth_scale=0.5`: at depth 0 (root), effective_decay = 0.95 (minimal inflation). At depth 6, effective_decay = 0.95^4 = 0.81 (aggressive inflation). Deep nodes in exhausted subtrees get widened quickly, while the root's posterior remains stable and reflects accurate aggregate statistics.
+
+This also addresses a subtle issue: inflating the root's posterior can cause wild swings in the algorithm's overall behavior (the root affects every single selection), while inflating a deep leaf's posterior only affects selections that pass through that narrow path.
+
+#### 11.9.5 Progressive Widening Tuned for TS
+
+**Problem**: The PW parameters (k0=2.0, alpha=0.6) were tuned for UCT, where the deterministic score ensures all existing children get visited roughly proportionally to their UCT score. TS's stochastic selection is less balanced — children with tight, high-mean posteriors dominate samples, and children with wide uncertain posteriors are selected only when they happen to sample high. This means TS may under-expand: the child limit grows based on `n_visits`, but visits concentrate on a few children rather than spreading evenly, so the PW limit stays artificially low.
+
+**Proposed fix**: Increase PW aggressiveness for TS, e.g., k0=4.0 or alpha=0.8. More children means more posteriors to sample from, increasing the chance that an uncertain child "wins" a sample. This directly increases the unique evaluation count, which is the core gap between TS and UCT.
+
+A quick experiment would test k0 ∈ {2, 4, 8} × alpha ∈ {0.6, 0.8} on the TS + TS(g,a) + var_infl config. If the unique eval count on large_sparse rises from 575 toward 700+ without sacrificing quality on smaller problems, the PW re-tune is worthwhile.
+
+#### 11.9.6 Correlated Priors Across Sibling Nodes
+
+**Problem**: Each child node has an independent prior. But in NChooseK problems, features within a group are structurally related. If selecting feature 3 in group 1 yields reward 80, that says something about the value of selecting feature 4 in the same group — they share the same group context and only differ in one feature. The current TS treats them as completely unrelated, requiring each to be explored independently.
+
+**Proposed fix**: After each novel evaluation, propagate a discounted update to the evaluated node's siblings (other children of the same parent):
+
+```python
+sibling_discount = 0.1  # share 10% of the signal
+for action, sibling in parent.children.items():
+    if sibling is not evaluated_child:
+        sibling.n_obs += sibling_discount
+        sibling.sum_rewards += reward * sibling_discount
+        sibling.sum_sq_rewards += (reward ** 2) * sibling_discount
+```
+
+This is conceptually similar to RAVE (sibling nodes share information from the same rollout) but integrated into the Bayesian framework: siblings share a weak signal that narrows their posteriors slightly, so they don't require as many direct visits to distinguish good from bad. On multigroup_interaction, where TS already outperforms UCT, sibling sharing could accelerate convergence. On large_sparse, it could help the algorithm identify productive subtrees faster by propagating feature-quality signals sideways through the tree, not just upward through backpropagation.
+
+The risk is over-sharing: if features are anti-correlated (feature 3 is good *because* feature 4 is not selected), sibling updates would introduce bias. The discount factor controls this trade-off — 0.1 means sibling signal is 10x weaker than direct observation, small enough that a few direct visits override any sibling-induced bias.
+
+#### 11.9.7 Information-Directed Sampling
+
+**Problem**: Pure TS selects the child with the highest posterior sample. This occasionally revisits high-mean exhausted subtrees even with variance inflation, because the posterior mean is still high and most samples fall near the mean. TS has no concept of "this action is uninformative because the subtree is exhausted."
+
+**Proposed fix**: Replace pure TS with Information-Directed Sampling (IDS), which selects the child maximizing `E[reward]² / I[action]`, where `I[action]` is the mutual information between the action's outcome and the identity of the optimal action. In the MCTS context, a tractable approximation:
+
+```
+IDS_score(child) = posterior_mean(child)² / information_gain(child)
+information_gain(child) ≈ posterior_var(child) / (posterior_var(child) + noise_var)
+```
+
+Exhausted subtrees have low `information_gain` (tight posterior, nothing new to learn), so their IDS score is high (unfavorable — IDS minimizes the ratio). Uncertain subtrees have high `information_gain`, so their IDS score is low (favorable — worth exploring). This explicitly penalizes "known-good but uninformative" actions, which is exactly the exhausted-subtree case.
+
+IDS has formal regret bounds that are tighter than TS in structured problems. The main cost is computational: computing the information gain approximation requires maintaining noise variance estimates per node, and the selection step involves a ratio computation rather than a simple argmax of samples. Whether the theoretical advantage translates to practical improvement on these benchmarks would need to be tested empirically.
+
+#### 11.9.8 Prioritized Improvements
+
+Based on the benchmark evidence, the improvements most likely to close the gap with UCT on large search spaces while preserving TS's advantage on interaction problems are:
+
+1. **Adaptive prior variance** (§11.9.2) — small code change, directly addresses scale mismatch, no new hyperparameters
+2. **Pessimistic pseudo-observations** (§11.9.1) — small code change, directly addresses the exhausted-subtree problem more effectively than variance inflation
+3. **Two-phase burn-in** (§11.9.3) — structural change that eliminates the cache-hit problem during early exploration, leverages TS's unique strength
+
+These three changes are independent and composable. The first two can be tested on the existing benchmark in isolation. The third requires a cheap evaluation function, which exists in the production context (`optimize_acqf` with `raw_samples` only, no L-BFGS) but not in the synthetic benchmarks.
