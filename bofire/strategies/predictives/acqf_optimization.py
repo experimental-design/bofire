@@ -365,7 +365,6 @@ class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
     nchooseks: list[tuple[list[int], int, int]] | None
     cat_dims: Dict[int, List[float]] | None
     c_uct: float
-    k_rave: float
     p_stop_rollout: float
     num_iterations: int
     pw_k0: float
@@ -379,7 +378,6 @@ class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
     rollout_epsilon: float
     rollout_tau: float
     rollout_novelty_weight: float
-    context_rave: bool
     q: int
     raw_samples: int
     num_restarts: int
@@ -695,7 +693,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     if feat.key not in fixed_keys
                 },
                 c_uct=0.01,
-                k_rave=0.0,
                 p_stop_rollout=0.35,
                 num_iterations=300,
                 pw_k0=2.0,
@@ -709,7 +706,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 rollout_epsilon=0.3,
                 rollout_tau=1.0,
                 rollout_novelty_weight=1.0,
-                context_rave=False,
                 q=candidate_count,
                 raw_samples=self.n_raw_samples,
                 num_restarts=self.n_restarts,

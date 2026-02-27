@@ -223,14 +223,15 @@ class Node:
 class MCTS:
     """Monte Carlo Tree Search for NChooseK and categorical optimization.
 
-    Uses UCT selection and progressive widening. Selects which features are
-    active and categorical values via tree search, evaluating terminals with
-    a provided reward function.
+    Uses UCT selection, RAVE action value estimation, and progressive widening.
+    Selects which features are active and categorical values via tree search,
+    evaluating terminals with a provided reward function.
 
     Args:
         constraints: Collection of NChooseK and categorical constraints
         reward_fn: Function mapping (selected_features, categorical_selections) to reward
         c_uct: UCT exploration constant (default 0.01)
+        k_rave: RAVE blending decay parameter (default 300.0)
         p_stop_rollout: Probability of early stop during rollout (default 0.35)
         pw_k0: Progressive widening base constant (default 2.0)
         pw_alpha: Progressive widening exponent (default 0.6)
@@ -243,6 +244,7 @@ class MCTS:
         rollout_epsilon: Epsilon-mix weight for uniform exploration (default 0.3)
         rollout_tau: Softmax temperature for rollout policy (default 1.0)
         rollout_novelty_weight: Novelty bonus coefficient beta/sqrt(n+1) (default 1.0)
+        context_rave: Use context-aware RAVE instead of global RAVE (default False)
         seed: Random seed for reproducibility
     """
 
@@ -251,6 +253,7 @@ class MCTS:
         groups: Groups,
         reward_fn: Callable[[tuple[int, ...], dict[int, float]], float],
         c_uct: float = 0.01,
+        k_rave: float = 300.0,
         p_stop_rollout: float = 0.35,
         pw_k0: float = 2.0,
         pw_alpha: float = 0.6,
@@ -263,11 +266,13 @@ class MCTS:
         rollout_epsilon: float = 0.3,
         rollout_tau: float = 1.0,
         rollout_novelty_weight: float = 1.0,
+        context_rave: bool = False,
         seed: Optional[int] = None,
     ):
         self.groups = groups
         self.reward_fn = reward_fn
         self.c_uct = c_uct
+        self.k_rave = k_rave
         self.p_stop_rollout = p_stop_rollout
         self.pw_k0 = pw_k0
         self.pw_alpha = pw_alpha
@@ -280,6 +285,7 @@ class MCTS:
         self.rollout_epsilon = rollout_epsilon
         self.rollout_tau = rollout_tau
         self.rollout_novelty_weight = rollout_novelty_weight
+        self.context_rave = context_rave
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -303,6 +309,10 @@ class MCTS:
         self.cache_hits = 0
         self.cache_misses = 0
 
+        # RAVE statistics: global_id -> (visits, total_reward)
+        self.global_offsets = self._compute_group_offsets()
+        self.rave_stats: dict[int, tuple[int, float]] = {}
+
         # Adaptive p_stop statistics: (group_idx, cardinality) -> (visits, total_reward)
         self.cardinality_stats: dict[tuple[int, int], tuple[int, float]] = {}
         n_nchoosek = len(self.groups.nchooseks)
@@ -312,6 +322,22 @@ class MCTS:
 
         # Rollout policy statistics: (group_idx, action) -> (visits, total_reward)
         self.rollout_stats: dict[tuple[int, int], tuple[int, float]] = {}
+
+        # Context-aware RAVE: (group_idx, cardinality, action) -> (visits, total_reward)
+        self.context_rave_stats: dict[tuple[int, int, int], tuple[int, float]] = {}
+
+    def _compute_group_offsets(self) -> list[int]:
+        """Compute offset for each group to create global action IDs."""
+        offsets = []
+        acc = 0
+        for group in self.groups.groups:
+            offsets.append(acc)
+            acc += group.n_options
+        return offsets
+
+    def _global_action_id(self, group_idx: int, local_idx: int) -> int:
+        """Convert (group, local_index) to global action ID for RAVE."""
+        return self.global_offsets[group_idx] + local_idx
 
     def _update_cardinality_stats(
         self, reward: float, selected_features: tuple[int, ...]
@@ -470,18 +496,65 @@ class MCTS:
         return self.rng.choices(legal_actions, weights=probs.tolist(), k=1)[0]
 
     def _update_rollout_stats(
-        self, trajectory: list[tuple[int, int]], reward: float
+        self, trajectory: list[tuple[int, int, int]], reward: float
     ) -> None:
         """Update rollout policy statistics from a completed trajectory.
 
         Args:
-            trajectory: List of (group_idx, action) pairs from the rollout
+            trajectory: List of (group_idx, cardinality, action) triples from
+                the rollout
             reward: Raw reward obtained from the terminal evaluation
         """
-        for group_idx, action in trajectory:
+        for group_idx, _cardinality, action in trajectory:
             key = (group_idx, action)
             v, tot = self.rollout_stats.get(key, (0, 0.0))
             self.rollout_stats[key] = (v + 1, tot + reward)
+
+    @staticmethod
+    def _extract_tree_actions(path: list[Node]) -> list[tuple[int, int, int]]:
+        """Extract (group_idx, cardinality, action) from consecutive node pairs.
+
+        For each parent-child pair in the tree path, determines which action
+        was taken (feature selection or STOP) and records the context
+        (group index and cardinality at the time of the action).
+
+        Args:
+            path: List of nodes from root to leaf in the tree traversal
+
+        Returns:
+            List of (group_idx, cardinality, action) triples
+        """
+        context_actions: list[tuple[int, int, int]] = []
+        for i in range(len(path) - 1):
+            parent = path[i]
+            child = path[i + 1]
+            g = parent.group_idx
+            cardinality = len(parent.partial_by_group[g])
+            if child.stopped_by_group[g] and not parent.stopped_by_group[g]:
+                action = STOP
+            else:
+                child_partial = child.partial_by_group[g]
+                parent_partial = parent.partial_by_group[g]
+                if len(child_partial) > len(parent_partial):
+                    action = child_partial[-1]
+                else:
+                    continue
+            context_actions.append((g, cardinality, action))
+        return context_actions
+
+    def _update_context_rave_stats(
+        self, context_actions: list[tuple[int, int, int]], reward: float
+    ) -> None:
+        """Update context-aware RAVE statistics.
+
+        Args:
+            context_actions: List of (group_idx, cardinality, action) triples
+            reward: Normalized reward to accumulate
+        """
+        for group_idx, cardinality, action in context_actions:
+            key = (group_idx, cardinality, action)
+            v, tot = self.context_rave_stats.get(key, (0, 0.0))
+            self.context_rave_stats[key] = (v + 1, tot + reward)
 
     def _make_cache_key(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
@@ -581,14 +654,32 @@ class MCTS:
                 path.append(child)
                 return child, path
 
-            # UCT selection among existing children
+            # UCT + RAVE selection among existing children
             # Bind node via default argument to avoid B023 closure issue
             def combined_score(action: int, child: Node, _node: Node = node) -> float:
                 parent_visits = max(1, _node.n_visits)
                 child_visits = max(1, child.n_visits)
-                return (child.w_total / child_visits) + self.c_uct * math.sqrt(
+                uct_val = (child.w_total / child_visits) + self.c_uct * math.sqrt(
                     math.log(parent_visits) / child_visits
                 )
+
+                if self.context_rave:
+                    g = _node.group_idx
+                    cardinality = len(_node.partial_by_group[g])
+                    ctx_key = (g, cardinality, action)
+                    v, tot = self.context_rave_stats.get(ctx_key, (0, 0.0))
+                    rave_mean = (tot / v) if v > 0 else 0.0
+                else:
+                    if action == STOP:
+                        rave_mean = 0.0
+                    else:
+                        g = _node.group_idx
+                        glob_id = self._global_action_id(g, action)
+                        v, tot = self.rave_stats.get(glob_id, (0, 0.0))
+                        rave_mean = (tot / v) if v > 0 else 0.0
+
+                beta = self.k_rave / (self.k_rave + max(1, _node.n_visits))
+                return (1 - beta) * uct_val + beta * rave_mean
 
             if node.children:
                 best_action, best_child = max(
@@ -603,20 +694,20 @@ class MCTS:
 
     def _rollout(
         self, node: Node
-    ) -> tuple[tuple[int, ...], dict[int, float], list[tuple[int, int]]]:
+    ) -> tuple[tuple[int, ...], dict[int, float], list[tuple[int, int, int]]]:
         """Random rollout to terminal state, return selection and trajectory.
 
         Returns:
             Tuple of (selected_features, cat_selections, trajectory) where
-            trajectory is a list of (group_idx, action) pairs taken during
-            rollout.
+            trajectory is a list of (group_idx, cardinality, action) triples
+            taken during rollout.
         """
         curr = Node(
             partial_by_group=tuple(node.partial_by_group),
             stopped_by_group=tuple(node.stopped_by_group),
             group_idx=node.group_idx,
         )
-        trajectory: list[tuple[int, int]] = []
+        trajectory: list[tuple[int, int, int]] = []
 
         while not curr.is_terminal(self.groups):
             legal = self._legal_actions(curr)
@@ -642,30 +733,58 @@ class MCTS:
                         g, len(curr.partial_by_group[g])
                     )
                     if self.rng.random() < p_stop:
-                        trajectory.append((g, STOP))
+                        trajectory.append((g, len(curr.partial_by_group[g]), STOP))
                         curr = self._apply_action(curr, STOP)
                         continue
 
                 # Choose uniformly among non-STOP actions
                 choices = [a for a in legal if a != STOP]
                 if not choices:
-                    trajectory.append((g, STOP))
+                    trajectory.append((g, len(curr.partial_by_group[g]), STOP))
                     curr = self._apply_action(curr, STOP)
                     continue
 
                 action = self.rng.choice(choices)
 
-            trajectory.append((g, action))
+            trajectory.append((g, len(curr.partial_by_group[g]), action))
             curr = self._apply_action(curr, action)
 
         selected_features, cat_selections = self._get_selection(curr)
         return selected_features, cat_selections, trajectory
 
-    def _backpropagate(self, path: list[Node], reward: float) -> None:
-        """Backpropagate reward through path."""
+    def _backpropagate(
+        self,
+        path: list[Node],
+        reward: float,
+        selected_features: tuple[int, ...],
+        cat_selections: dict[int, float],
+    ) -> None:
+        """Backpropagate reward through path and update RAVE statistics."""
         for n in path:
             n.n_visits += 1
             n.w_total += reward
+
+        # Update RAVE stats for NChooseK selections
+        selected_set = set(selected_features)
+        for g, nchoosek in enumerate(self.groups.nchooseks):
+            for local_idx, feat_idx in enumerate(nchoosek.features):
+                if feat_idx in selected_set:
+                    glob_id = self._global_action_id(g, local_idx)
+                    v, tot = self.rave_stats.get(glob_id, (0, 0.0))
+                    self.rave_stats[glob_id] = (v + 1, tot + reward)
+
+        # Update RAVE stats for categorical selections
+        n_nchoosek = len(self.groups.nchooseks)
+        for i, cat_group in enumerate(self.groups.categoricals):
+            g = n_nchoosek + i
+            if cat_group.dim in cat_selections:
+                selected_value = cat_selections[cat_group.dim]
+                for local_idx, value in enumerate(cat_group.values):
+                    if value == selected_value:
+                        glob_id = self._global_action_id(g, local_idx)
+                        v, tot = self.rave_stats.get(glob_id, (0, 0.0))
+                        self.rave_stats[glob_id] = (v + 1, tot + reward)
+                        break
 
     def run(self, n_iterations: int) -> tuple[tuple[int, ...], dict[int, float], float]:
         """Run MCTS for specified number of iterations.
@@ -681,7 +800,7 @@ class MCTS:
 
             if leaf.is_terminal(self.groups):
                 selected_features, cat_selections = self._get_selection(leaf)
-                trajectory: list[tuple[int, int]] = []
+                trajectory: list[tuple[int, int, int]] = []
             else:
                 # Rollout retry: if the rollout produces a cached terminal,
                 # re-roll to try to discover a novel selection.
@@ -715,7 +834,11 @@ class MCTS:
             )
 
             if is_novel:
-                self._backpropagate(path, bp_reward)
+                self._backpropagate(path, bp_reward, selected_features, cat_selections)
+                if self.context_rave:
+                    tree_actions = self._extract_tree_actions(path)
+                    all_context_actions = tree_actions + trajectory
+                    self._update_context_rave_stats(all_context_actions, bp_reward)
             else:
                 # Virtual loss: increment visits with zero reward so that
                 # (a) PW limits still grow with traffic, and
@@ -751,6 +874,7 @@ def optimize_acqf_mcts(
     cat_dims: Mapping[int, Sequence[float]] | None = None,
     # MCTS parameters
     c_uct: float = 0.01,
+    k_rave: float = 0.0,
     p_stop_rollout: float = 0.35,
     num_iterations: int = 100,
     pw_k0: float = 2.0,
@@ -764,6 +888,7 @@ def optimize_acqf_mcts(
     rollout_epsilon: float = 0.3,
     rollout_tau: float = 1.0,
     rollout_novelty_weight: float = 1.0,
+    context_rave: bool = False,
     # BoTorch acqf optimization parameters
     q: int = 1,
     raw_samples: int = 1024,
@@ -787,6 +912,7 @@ def optimize_acqf_mcts(
         cat_dims: Dictionary mapping categorical dimension indices to allowed values
             (same signature as botorch.optim.optimize_acqf_mixed_alternating)
         c_uct: UCT exploration constant (default 0.01, paired with normalize_rewards)
+        k_rave: RAVE blending decay parameter (default 0 = disabled)
         p_stop_rollout: Base probability of early stop during NChooseK rollout
         num_iterations: Number of MCTS iterations
         pw_k0: Progressive widening base constant
@@ -800,6 +926,7 @@ def optimize_acqf_mcts(
         rollout_epsilon: Epsilon for epsilon-greedy blending in rollout policy
         rollout_tau: Temperature for softmax in rollout policy
         rollout_novelty_weight: Novelty bonus coefficient for rollout policy
+        context_rave: Use context-aware RAVE instead of global RAVE
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
@@ -888,6 +1015,7 @@ def optimize_acqf_mcts(
         groups=groups,
         reward_fn=reward_fn,
         c_uct=c_uct,
+        k_rave=k_rave,
         p_stop_rollout=p_stop_rollout,
         pw_k0=pw_k0,
         pw_alpha=pw_alpha,
@@ -900,6 +1028,7 @@ def optimize_acqf_mcts(
         rollout_epsilon=rollout_epsilon,
         rollout_tau=rollout_tau,
         rollout_novelty_weight=rollout_novelty_weight,
+        context_rave=context_rave,
         seed=seed,
     )
 

@@ -20,14 +20,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from bofire.strategies.predictives.optimize_mcts import (
-    MCTS,
-    Categorical,
-    Groups,
-    NChooseK,
-)
+from optimize_mcts_full import MCTS, Categorical, Groups, NChooseK
 
 
 OUTPUT_DIR = Path(__file__).parent
