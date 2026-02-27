@@ -579,6 +579,244 @@ Based on these results, the recommended defaults for NChooseK problems are:
 2. ~~**Context-aware RAVE**~~: **Implemented and validated.** Conditions RAVE on `(group_idx, cardinality, action)` so it captures state-dependent value. With k=300, achieves 80% on mixed problems (vs 77% for +rpol). With k=100, matches +rpol on all problems while using fewer evaluations on needle_in_haystack. Not recommended as default due to marginal benefit on most problems. See Section 4.8 for details.
 3. ~~**Reward normalization**~~: **Implemented and validated.** Min-max normalization to [0, 1] before backpropagation with `c_uct=0.01` to match the [0, 1] scale. See Section 4.6 for details.
 4. ~~**Blended softmax rollout policy**~~: **Implemented and validated.** Replaces uniform rollouts with a learned softmax policy blended with uniform exploration. The rollout policy is the new best configuration on all 5 problems: 77% on mixed (up from 63%), 50% on large_sparse (up from 40%), and best or tied elsewhere. Default hyperparameters (ε=0.3, τ=1.0) are the most robust. See Section 4.7 for details.
+5. **Burn-in for reward normalization**: Reward normalization uses running min-max, but early iterations have a poor estimate of the reward range, so their normalized values are distorted relative to what they'd be with the final bounds. A potential fix: skip normalization for the first N iterations (using raw rewards), then once the range stabilizes, retroactively re-normalize the early paths in a single pass. This targets exactly the period where the normalization error is worst, with minimal ongoing cost.
+6. **Thompson Sampling instead of UCT**: Replace the UCT selection rule with Bayesian Thompson Sampling to eliminate the need for both reward normalization and `c_uct` tuning entirely. See Section 8.3 for detailed analysis.
+7. **Thompson Sampling for rollouts**: Replace the softmax rollout policy with Thompson Sampling over per-(group, action) posteriors, eliminating ε, τ, and novelty_weight. See Section 8.4 for detailed analysis.
+8. **Two-phase burn-in with cheap evaluations**: Use random sampling instead of full `optimize_acqf()` during early iterations, then switch to accurate optimization. TS makes this transition natural. See Section 8.5 for detailed analysis.
+
+### 8.3 Thompson Sampling as UCT Replacement
+
+#### Motivation
+
+The current UCT selection rule is:
+
+```
+score = w_total/n_visits + c_uct * sqrt(log(parent_visits) / child_visits)
+```
+
+The exploitation term (mean reward) is in the scale of the rewards; the exploration term is in the scale of `c_uct`. For the balance to work, `c_uct` must be matched to the reward scale. This is why reward normalization exists — it compresses rewards to [0, 1] so `c_uct=0.01` has a consistent meaning across problems (§4.6).
+
+But min-max normalization introduces its own problem: early iterations have a poor estimate of the reward range, so their normalized values are distorted relative to what they'd be with the final bounds. The current best config (+rpol) runs ~100-500 iterations, and the range typically stabilizes within the first ~10-20 iterations, meaning ~10-20% of all backpropagated values in the tree carry normalization error that never gets corrected.
+
+Thompson Sampling (TS) eliminates both `c_uct` and reward normalization by replacing the deterministic UCT score with a Bayesian posterior.
+
+#### How it works
+
+Each child node maintains a posterior distribution over its expected reward (e.g., Normal with estimated mean and variance). At selection time:
+
+1. Sample a value from each child's posterior
+2. Select the child with the highest sample
+3. After evaluation, update the selected child's posterior with the observed reward
+
+Exploration happens automatically: children with few visits have wide posteriors, so they occasionally sample high values and get selected. As visits accumulate, the posterior tightens and exploitation dominates. There is no exploration constant to tune — the posterior's uncertainty naturally adapts to whatever reward range is observed.
+
+#### Why it eliminates normalization
+
+UCT needs normalization because `c_uct` is an absolute scale parameter. TS has no such parameter. If rewards are in [0, 1000], posteriors are wide in that scale; if rewards are in [0, 0.001], posteriors are wide in that scale. The exploration-exploitation balance is driven by the *relative* uncertainty between children, which is scale-invariant.
+
+This kills two sources of fragility at once:
+- The early-iteration min-max distortion (no normalization needed at all)
+- The `c_uct`-to-reward-scale coupling (§4.6: "using c_uct=1.0 with normalization massively over-explores")
+
+#### Expected behavior on benchmarks
+
+The current best config (+rpol) is very exploitation-heavy: `c_uct=0.01` with rewards in [0, 1] means the exploration term is tiny. UCT is almost greedy, relying on virtual loss and the rollout policy to provide diversity. TS would explore more in the first ~20-30 iterations (wide posteriors leading to near-uniform selection), then tighten as observations accumulate.
+
+- **needle_in_haystack** (currently 100%): TS should match. The search space is small (~5K) and TS's natural exploration finds the needle easily. The posterior quickly locks onto the optimal region.
+- **graduated_landscape** (currently 80%): Likely comparable or slightly better. The smooth reward structure means posterior means accurately reflect the landscape, and TS naturally concentrates on the top region.
+- **large_sparse** (currently 50%): The most uncertain case. The 960M search space benefits from exploitation-heavy search, and TS's wider early exploration could waste budget. But TS also avoids the min-max distortion that hurts early iterations. Expected: roughly comparable — maybe slightly worse initially but more robust across seeds (lower variance).
+- **mixed_nchoosek_categorical** (currently 77%): TS could help here because the posterior captures reward *variance*, not just the mean. If a child leads to both high and low rewards (multi-modal due to downstream categorical interactions), TS naturally explores it more. UCT only sees the mean and might prematurely abandon it.
+- **multigroup_interaction** (currently 23%): TS's broader early exploration might help discover the cross-group interaction bonuses, but the search space (~4.25M) is large enough that undirected exploration is costly.
+
+#### Cache hit handling — the key design decision
+
+With UCT, cache hits require the virtual loss hack: backpropagate zero reward to dilute `mean_value` and steer exploration away from exhausted branches (§2.2). With TS, the situation is fundamentally different because selection is stochastic.
+
+**On novel evaluation**: standard Bayesian update — add the observed reward to the child's posterior (increase observation count, update sufficient statistics).
+
+**On cache hit**: do not update the posterior. No new information was gained, so no update is the correct Bayesian action. The critical insight is that TS is *stochastic* — the next iteration draws fresh samples from each posterior, so a different selection path naturally occurs without any need to artificially distort statistics. This is a fundamental advantage over UCT, where not updating means the deterministic score is unchanged and the algorithm deterministically repeats the same path forever.
+
+Progressive widening still needs a visit counter, but it should be separated from the posterior's observation count: increment the PW counter on every visit (novel or cached) so the child limit grows normally, but only update the posterior on novel evaluations.
+
+**The over-exploitation risk**: if a subtree is "exhausted" (all terminals cached) and its posterior mean is high, TS will keep sampling it highly — it keeps visiting but never gets novel evaluations. The posterior stays tight at a high mean with no downward pressure. Unlike virtual loss, there's nothing actively discouraging revisits.
+
+Two mitigations:
+
+1. **Variance inflation on cache hits** (recommended first attempt): on each cache hit, slightly inflate the posterior variance (e.g., scale the effective observation count down by a decay factor). This gradually widens the posterior, making it possible for other children to "win" a sample. This is analogous to virtual loss but more principled — it says "repeated observations of the same cached value reduce your confidence rather than increase it," because the evidence is stale.
+
+2. **Cache hit rate tracking**: track `cache_hits / total_visits` per child. If this ratio exceeds a threshold (e.g., 0.8), the subtree is likely exhausted — force-widen the posterior or add a penalty to the posterior mean. This is more targeted than blanket variance inflation.
+
+#### Interaction with existing components
+
+- **Rollout policy** (§4.7): orthogonal to tree selection. TS replaces UCT in the selection phase; the softmax rollout policy operates independently during rollouts. No changes needed.
+- **Adaptive p_stop** (§4.5): unchanged. It operates during rollouts and uses its own cardinality statistics, independent of tree selection.
+- **Progressive widening**: works as before, but the visit counter for PW must be separated from the posterior observation count (see cache hit handling above).
+
+#### Summary
+
+The main win is eliminating reward normalization and `c_uct` tuning entirely, which also kills the early-iteration distortion problem. The main risk is that TS's exploration is less controllable — there is no knob equivalent to `c_uct` to dial exploitation up or down. For a system that needs robust defaults across diverse problems without per-problem tuning, that tradeoff is favorable. The cache hit problem has a clean solution (no-update + variance inflation) that is simpler and more principled than the current virtual loss mechanism.
+
+### 8.4 Thompson Sampling for Rollouts
+
+#### Current rollout policy recap
+
+The best configuration (+rpol) uses a learned softmax rollout policy (§4.7) that:
+
+1. Maintains `(visits, total_reward)` per `(group_idx, action)` pair — STOP included as a regular action
+2. Scores each action: `mean_reward + novelty_weight / sqrt(visits + 1)`
+3. Applies softmax with temperature τ: `p_policy[a] = exp(score[a] / τ) / Z`
+4. Blends with uniform: `p[a] = (1 - ε) * p_policy[a] + ε / |legal_actions|`
+
+This requires three hyperparameters: `rollout_epsilon` (ε=0.3), `rollout_tau` (τ=1.0), `rollout_novelty_weight` (1.0).
+
+#### An important subtlety: adaptive p_stop is dead code in the best config
+
+When `rollout_policy=True`, the rollout code takes the `_sample_rollout_action` path for all actions including STOP:
+
+```python
+if self.rollout_policy:
+    # Learned softmax policy: STOP is scored like any other action
+    action = self._sample_rollout_action(g, legal)
+else:
+    # Original logic: adaptive p_stop for NChooseK, uniform for features
+    ...
+```
+
+The `_compute_adaptive_p_stop` code path is never reached during rollouts. The `adaptive_p_stop=True` flag still causes `_update_cardinality_stats` to run in `run()`, but those cardinality statistics are never read — the rollout policy scores STOP via `rollout_stats[(group_idx, STOP)]` using the same `(group, action)` key as any feature action, **without cardinality conditioning**.
+
+This means adaptive p_stop is effectively dead code in the best config. The rollout policy already handles STOP decisions without cardinality awareness, and it outperforms the adaptive p_stop mechanism: +rpol achieves 77% on mixed (vs 43% for no RAVE+adpt without rollout policy) and 50% on large_sparse (vs 27%).
+
+#### Proposed change: Thompson Sampling over (group, action) posteriors
+
+Replace the softmax + ε-blend + novelty weight with Thompson Sampling over the same `(group, action)` statistics:
+
+1. Each `(group_idx, action)` pair maintains a Normal posterior over its expected reward, initialized with a wide prior centered on the global mean reward
+2. At each rollout step, for each legal action `a`, sample `r̃(a) ~ N(μ_a, σ²_a / n_a)` from the posterior. For unseen actions, sample from the prior (wide Normal)
+3. Pick the action with the highest sample
+4. After terminal evaluation, update all `(group, action)` posteriors in the trajectory with the observed reward
+
+This eliminates three hyperparameters (ε, τ, novelty_weight) → 0 tunable parameters for the rollout policy.
+
+#### Why it works
+
+The posterior **is** the exploration mechanism:
+
+- **Few visits** → wide posterior → occasionally samples very high → gets explored. This replaces the `1/sqrt(n+1)` novelty bonus, which is a frequentist approximation of exactly this effect.
+- **Many visits** → tight posterior → concentrates near the true mean → exploitation. This replaces the softmax temperature, which controls how sharply the policy concentrates on high-scoring actions.
+- **Unseen actions** → prior (maximum uncertainty) → high probability of sampling highest. This replaces the ε-uniform blend, which guarantees a floor on exploration probability.
+
+All three mechanisms in the current approach (novelty bonus, temperature, epsilon) are heuristic approximations of what Thompson Sampling does naturally through posterior uncertainty.
+
+#### Credit assignment
+
+The terminal reward is attributed to all `(group, action)` pairs in the trajectory equally. This is the same confounding the current approach has — the mean reward for `(group=0, action=3)` reflects not just the value of picking feature 3, but everything else that happened in that rollout. TS doesn't fix this, but it handles the resulting noise better: with few observations, the wide posterior prevents premature commitment, whereas `mean + 1/sqrt(n)` can be quite brittle when n is small.
+
+This confounding matters most on **multigroup_interaction** (cross-group interactions dominate) and least on **simple_additive** (features contribute independently).
+
+#### Cardinality conditioning: optional, not necessary
+
+One could key the posteriors on `(group, cardinality, action)` instead of `(group, action)`, so STOP at cardinality 2 has a separate posterior from STOP at cardinality 4. This would add context-awareness for STOP decisions and could theoretically subsume the adaptive p_stop mechanism.
+
+However, the evidence suggests this isn't necessary: the current best config (+rpol) already outperforms adaptive p_stop on every problem without any cardinality conditioning. The rollout policy's flat `(group, action)` statistics capture enough signal. Cardinality conditioning increases the key space (e.g., from ~33 entries to ~108 on multigroup_interaction), which means posteriors are updated less frequently and take longer to converge.
+
+If future benchmarks reveal problems where STOP decisions are highly cardinality-dependent and the flat key space isn't sufficient, cardinality conditioning can be added as a straightforward extension. But it should not be the default.
+
+#### Interaction with TS for tree selection (§8.3)
+
+If Thompson Sampling is adopted for both tree selection and rollouts, the entire MCTS system uses a single principle — posterior sampling — with no hand-tuned exploration constants anywhere. The full hyperparameter reduction would be:
+
+| Eliminated parameter | Current value | Replaced by |
+|---------------------|---------------|-------------|
+| `c_uct` | 0.01 | Tree TS posterior |
+| `normalize_rewards` | True | Not needed (TS is scale-invariant) |
+| `rollout_epsilon` | 0.3 | Rollout TS posterior |
+| `rollout_tau` | 1.0 | Rollout TS posterior |
+| `rollout_novelty_weight` | 1.0 | Rollout TS posterior |
+| `adaptive_p_stop` | True (dead code) | Can be removed |
+| `p_stop_rollout` | 0.35 | Can be removed |
+| `p_stop_warmup` | 20 | Can be removed |
+| `p_stop_temperature` | 0.25 | Can be removed |
+
+That is 9 hyperparameters reduced to 0 (or 1 if counting the prior variance, which can be set to a large value and forgotten). The only remaining MCTS hyperparameters would be structural: `pw_k0`, `pw_alpha`, `max_rollout_retries`, and the iteration budget.
+
+### 8.5 Two-Phase Burn-in with Cheap Evaluations
+
+#### Motivation
+
+Each terminal evaluation currently calls `optimize_acqf()` with BoTorch — multi-start L-BFGS optimization with `num_restarts=20` and `raw_samples=1024`. This is the dominant cost per MCTS iteration. The evaluation cache exists precisely because these calls are expensive and deterministic: once a feature combination is evaluated, re-evaluating it would produce the same result and waste computation.
+
+But the cache also creates the over-exploitation problem (§2.1): cached rewards get re-backpropagated, reinforcing exploitation bias. The virtual loss mechanism (§2.2) and rollout retry (§2.3) are workarounds for a problem that exists because evaluations are expensive enough to need caching.
+
+The idea: use cheap, noisy evaluations during a burn-in phase to explore the combinatorial landscape broadly, then switch to full `optimize_acqf()` for accurate evaluations of the most promising regions.
+
+#### Why this doesn't work well with UCT
+
+If you replace `optimize_acqf()` with random sampling during burn-in, the same feature combination evaluated twice gives different rewards (depending on which random points were drawn). UCT assumes stationary rewards — its `w_total / n_visits` running mean mixes noisy early values with accurate late values in a way that cannot be disentangled. At the transition point, you'd need to flush or discount the tree statistics, which is messy and wastes the structural information the tree learned during burn-in.
+
+Worse, the noisy early rewards corrupt the UCT scores. A feature combination that happened to get a lucky random sample during burn-in would have an inflated mean, and UCT would over-exploit it in the accurate phase. There's no mechanism in UCT to say "those early observations were noisier, weight them less."
+
+#### Why Thompson Sampling makes it work
+
+With TS, each node has a posterior distribution. The Bayesian update naturally handles heteroscedastic observations — noisy early values and accurate late values for the same tree branches:
+
+- **Noisy burn-in observations** produce a wide posterior (high uncertainty). The tree explores broadly because wide posteriors occasionally sample very high values for under-explored branches.
+- **Accurate post-burn-in observations** have much lower variance. When a combination is re-evaluated with full `optimize_acqf()`, the tight observation dominates the posterior — the mean shifts toward the true value without needing to discard the burn-in data.
+- **The transition requires no special logic**. The Bayesian update correctly weights high-variance and low-variance observations automatically. No statistic flushing, no phase tracking, no manual reweighting.
+
+During burn-in, the noise is actually *beneficial*: it keeps posteriors wide, which means TS explores broadly. This is exactly what you want early on — cheap, broad exploration to map out the combinatorial landscape, then expensive, accurate exploitation to confirm the best regions.
+
+#### Cheap evaluation function
+
+The cheap evaluation is essentially the initialization phase of `optimize_acqf()` without the gradient refinement:
+
+```python
+def cheap_reward_fn(selected_features, cat_selections, acq_function, bounds):
+    # Build fixed_features dict (same as full evaluation)
+    combined_fixed = build_fixed_features(selected_features, cat_selections)
+
+    # Generate random points respecting bounds and fixed features
+    # Evaluate acq_function at those points, return the best
+    X_random = draw_sobol_samples(bounds, n=raw_samples, fixed_features=combined_fixed)
+    acq_values = acq_function(X_random)
+    return acq_values.max().item()
+```
+
+This is roughly 100x cheaper than full `optimize_acqf()` — just forward passes through the acquisition function at quasi-random points, no multi-start L-BFGS. The quality is lower (the maximum over random samples underestimates the true subspace optimum), but for the purpose of ranking feature combinations against each other, the relative ordering is usually preserved.
+
+#### Cache behavior changes
+
+| Phase | Caching | Rationale |
+|-------|---------|-----------|
+| Burn-in | Off | Evaluations are cheap; re-evaluating the same combination with different random samples produces genuinely new information that helps the posterior. The cache hit problem disappears. |
+| Post-burn-in | On | Full `optimize_acqf()` is expensive and deterministic; caching prevents wasted computation. The TS variance inflation mechanism from §8.3 handles exhausted subtrees. |
+
+During burn-in, the cache hit problem that motivated virtual loss (§2.2) and rollout retry (§2.3) effectively dissolves: every evaluation produces a fresh noisy observation, even for previously visited combinations. The tree accumulates diverse reward signals across the combinatorial space without any wasted iterations.
+
+#### Two-phase structure
+
+| Phase | Iterations | Evaluation | Cost per eval | Caching | Purpose |
+|-------|-----------|------------|---------------|---------|---------|
+| Burn-in | 1 to N | Random sampling | ~1x (cheap) | Off | Broad exploration, learn tree structure and feature rankings |
+| Exploitation | N+1 to end | Full `optimize_acqf()` | ~100x (expensive) | On | Accurate evaluation of promising regions |
+
+Optionally, at the transition point, re-evaluate the top-K combinations from burn-in with full optimization to calibrate the posteriors and ensure the most promising branches have accurate statistics before the exploitation phase begins.
+
+#### How many burn-in iterations?
+
+The benchmarks provide guidance. Looking at unique evaluations for +rpol: multigroup_interaction uses 516 unique evals out of 600 budget, large_sparse uses 750 out of 800. Most iterations produce novel terminals, meaning the combinatorial landscape is large enough that the early iterations are primarily about coverage.
+
+A burn-in of 50–100 cheap iterations would broadly map the combinatorial landscape — identifying which groups of features tend to produce high acquisition values, which cardinalities are promising, and which categorical values interact well. The remaining budget goes to accurate evaluations of the most promising combinations. The total wall-clock time drops substantially since the first 50–100 iterations cost ~1/100th each.
+
+For the largest search space (large_sparse, ~960M combinations, 800 budget), a longer burn-in (e.g., 150–200 iterations) might be justified since the cheap phase can cover more of the space. For smaller spaces (graduated_landscape, 375 combinations, 300 budget), a short burn-in (e.g., 30–50) suffices since even cheap evaluations cover a significant fraction of the space.
+
+#### Combined effect with full TS adoption
+
+If TS is adopted for tree selection (§8.3), rollouts (§8.4), and two-phase evaluation (this section), the system becomes:
+
+1. **Burn-in phase**: TS tree selection with wide posteriors → TS rollouts with wide posteriors → cheap noisy evaluation → posterior update. The entire system is in "broad exploration" mode with minimal cost per iteration.
+2. **Exploitation phase**: TS tree selection with tightening posteriors → TS rollouts with learned preferences → accurate `optimize_acqf()` evaluation → cache for deterministic results → variance inflation on cache hits. The system converges on the best feature combinations with accurate reward signals.
+
+The transition between phases is smooth because every component uses the same Bayesian posterior framework. No statistics need to be flushed, no exploration constants need to be re-tuned, no special logic is required at the boundary.
 
 ---
 
