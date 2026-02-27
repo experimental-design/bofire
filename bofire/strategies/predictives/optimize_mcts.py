@@ -17,85 +17,6 @@ from botorch.optim import optimize_acqf
 from torch import Tensor
 
 
-# Ideas to improve MCTS performance / robustness in tree-like NChooseK spaces:
-# 1) Multi-fidelity reward evaluation:
-#    - Use cheap optimize_acqf settings early (smaller raw_samples / num_restarts),
-#      and expensive settings only for promising regions.
-#    - Even cheaper early-phase option: skip full optimize_acqf and estimate reward
-#      by drawing feasible samples (e.g., Sobol/random under fixed discrete choices),
-#      evaluating acq_function on them, and using max/top-k mean as a proxy.
-#      Then switch to full optimize_acqf for promising branches / final ranking.
-#    - Keep RAVE and rollout policy learning active in both sampling and full-opt
-#      phases, but make updates fidelity-dependent (e.g., lower update weight for
-#      proxy/sample rewards, full weight for optimize_acqf rewards).
-#    - Apply fidelity-dependent weighting to backprop / node updates as well
-#      (e.g., weighted reward accumulation and effective visits), so low-fidelity
-#      proxy rewards do not dominate UCT node values.
-# 2) Progressive optimization budget by node visits:
-#    - Increase optimize_acqf budget as a function of node.n_visits to stay broad
-#      early and become accurate later.
-# 3) Reward normalization for stable UCT/RAVE:
-#    - Backpropagate normalized rewards (running min/max or mean/std) to reduce
-#      scale sensitivity and outlier lock-in.
-# 4) Noise-aware value estimates:
-#    - Re-evaluate promising leaves multiple times and backpropagate averaged
-#      rewards (optionally track uncertainty).
-# 5) Policy-guided rollouts:
-#    - Replace uniform rollout actions with priors from RAVE stats and/or
-#      feature-level heuristics (e.g., variance gain proxies).
-#    - Practical v1 recommendation: learn rollout priors online with minimal
-#      overhead using per-(group_idx, action) running statistics.
-#    - Keep rollout_stats[(group_idx, action)] = (visits, total_reward), update
-#      from terminal rewards of rollout trajectories.
-#    - Score legal rollout actions with a blended heuristic such as:
-#        score(a) = w_r * rave_mean(a) + w_l * local_mean(a)
-#                   + w_n / sqrt(local_visits(a) + 1)
-#      where rave_mean uses existing global RAVE stats, local_mean comes from
-#      rollout_stats, and the novelty term preserves exploration.
-#    - Convert scores to probabilities via softmax temperature τ and mix with
-#      uniform exploration:
-#        p(a) = (1 - ε) * softmax(score/τ) + ε * uniform
-#      with annealing schedules (high τ/ε early, lower τ/ε later).
-#    - Include STOP in the same policy when legal (NChooseK), rather than only
-#      fixed p_stop_rollout, so stopping behavior can be learned from rewards.
-#    - Optional next step: make rollout_stats context-aware (e.g., bucket by
-#      selected-count/depth) for better state-conditional rollout decisions.
-#    - State-aware keys (recommended v1.5): replace global keys
-#      rollout_stats[(group_idx, action)] with
-#      rollout_stats[(state_bucket, action)], where state_bucket is a coarse
-#      summary such as (group_idx, min(selected_count, 3), min(depth, 5),
-#      stop_legal_flag). This lets the same action have different learned value
-#      in different contexts (e.g., early vs late picks), while keeping table
-#      size bounded via bucketing.
-#    Better rollout policy ideas (specific to this item):
-#    - RAVE-guided sampling: score legal actions by RAVE mean and sample with
-#      softmax probabilities p(a) ∝ exp(score(a)/τ), with temperature annealing.
-#    - Epsilon-mix with uniform: p = (1-ε) * p_policy + ε * p_uniform to avoid
-#      over-committing to noisy priors (anneal ε over search).
-#    - Adaptive STOP behavior in NChooseK rollouts: infer stop preference from
-#      historical marginal gains instead of relying only on fixed p_stop_rollout.
-#    - Action novelty bonus: add β/sqrt(n_a + 1) to prefer under-explored actions
-#      in rollout while preserving exploitation.
-#    - Categorical priors per dimension/value: keep simple running means for each
-#      categorical value and use them as rollout priors instead of uniform choice.
-#    - Depth-aware exploration: use higher τ/ε near root and lower τ/ε near leaves.
-# 6) Top-K final refinement:
-#    - Keep K best MCTS terminal selections and run a final high-fidelity
-#      optimize_acqf pass for improved reliability.
-# 7) Parallel MCTS with virtual loss:
-#    - Evaluate multiple leaves concurrently while discouraging duplicate branch
-#      selection during expansion.
-# 8) Categorical robustness:
-#    - Prefer tracking categorical indices in statistics/updates rather than
-#      float-value equality checks.
-# 9) Non-MCTS alternative: Cross-Entropy Method (CEM):
-#    - Maintain a sampling distribution over feasible NChooseK selections and
-#      categorical choices, sample a population, evaluate via optimize_acqf,
-#      keep elite samples, and update the distribution toward elites.
-#    - Often competitive or better when reward is terminal-only and expensive,
-#      especially with batched/parallel evaluations.
-
-
 STOP = -1  # Sentinel for stopping selection in a group
 
 
@@ -375,7 +296,10 @@ class MCTS:
             group_idx=0,
         )
 
-        # Best found so far
+        # Best found so far: (selected_features, categorical_selections)
+        # Example: ((0, 2, 5), {3: 1.0, 4: 0.0}) means features 0, 2, 5 are
+        # active (from NChooseK groups), dim 3 has categorical value 1.0, and
+        # dim 4 has categorical value 0.0.
         self.best_selection: Optional[tuple[tuple[int, ...], dict[int, float]]] = None
         self.best_value: float = float("-inf")
 
@@ -437,8 +361,12 @@ class MCTS:
         """Compute adaptive stop probability for a group at a given cardinality.
 
         Uses learned cardinality statistics to decide whether stopping is better
-        than continuing. Falls back to fixed p_stop_rollout when disabled,
-        no data is available, reward range is zero, or during warmup.
+        than continuing. Returns fixed p_stop_rollout when disabled, no data is
+        available, or reward range is zero. During warmup, the learned probability
+        is linearly blended with p_stop_rollout:
+            p = (1 - alpha) * p_stop_rollout + alpha * p_learned
+        where alpha = min(1, group_visits / p_stop_warmup), so the learned signal
+        gradually replaces the fixed prior as more data is collected.
 
         Args:
             group_idx: Index of the NChooseK group
@@ -500,7 +428,9 @@ class MCTS:
     def _normalize_reward(self, reward: float) -> float:
         """Normalize reward to [0, 1] using running min-max.
 
-        Returns 0.5 when reward range is zero (all rewards identical).
+        Returns 0.5 when reward range is zero, which covers the initial
+        rollouts where only one distinct reward has been observed (min == max)
+        as well as degenerate cases where all rewards are identical.
         """
         reward_range = self.reward_max - self.reward_min
         if reward_range <= 0:
@@ -512,8 +442,12 @@ class MCTS:
     ) -> dict[int, float]:
         """Score legal rollout actions using learned statistics.
 
-        For each action, computes mean_reward + novelty_weight / sqrt(visits + 1).
-        Actions with no stats get score = novelty_weight (encouraging exploration).
+        For each action, computes:
+            score(a) = mean_reward(a) + novelty_weight / sqrt(visits(a) + 1)
+
+        The 1/sqrt(visits) term is a UCB-style exploration bonus that decays as
+        an action is visited more, encouraging under-explored actions to be tried.
+        Actions with no stats get score = novelty_weight (maximum exploration).
 
         Args:
             group_idx: Index of the current group
@@ -550,30 +484,16 @@ class MCTS:
         scores = self._score_rollout_actions(group_idx, legal_actions)
         n = len(legal_actions)
 
-        # Compute softmax probabilities
-        tau = self.rollout_tau
-        max_score = max(scores.values())
-        exp_scores = []
-        for a in legal_actions:
-            exp_scores.append(math.exp((scores[a] - max_score) / tau))
-        z = sum(exp_scores)
+        # Compute softmax probabilities with temperature
+        logits = torch.tensor([scores[a] for a in legal_actions], dtype=torch.float64)
+        policy_probs = torch.softmax(logits / self.rollout_tau, dim=0)
 
-        # Blend with uniform
+        # Blend with uniform: p(a) = (1 - eps) * softmax + eps * uniform
         eps = self.rollout_epsilon
-        uniform = 1.0 / n
-        probs = []
-        for i, _a in enumerate(legal_actions):
-            p_policy = exp_scores[i] / z
-            probs.append((1.0 - eps) * p_policy + eps * uniform)
+        probs = (1.0 - eps) * policy_probs + eps / n
 
-        # Sample
-        r = self.rng.random()
-        cumsum = 0.0
-        for i, p in enumerate(probs):
-            cumsum += p
-            if r < cumsum:
-                return legal_actions[i]
-        return legal_actions[-1]
+        # Sample using weighted choice
+        return self.rng.choices(legal_actions, weights=probs.tolist(), k=1)[0]
 
     def _update_rollout_stats(
         self, trajectory: list[tuple[int, int, int]], reward: float
@@ -681,10 +601,9 @@ class MCTS:
             stoppeds[g] = True
             next_g = g + 1
         else:
-            new_partial = partials[g] + (action,)
-            partials[g] = new_partial
+            partials[g] += (action,)
             # Check if group is complete
-            if group.is_complete(new_partial, stoppeds[g]):
+            if group.is_complete(partials[g], stoppeds[g]):
                 next_g = g + 1
             else:
                 next_g = g

@@ -660,6 +660,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             # Convert NChooseKConstraint to tuples for MCTS
             nchoosek_constraints = domain.constraints.get([NChooseKConstraint])
             nchooseks_list = []
+            nchoosek_feature_keys: set[str] = set()
             for constraint in nchoosek_constraints:
                 # Get feature indices for the constraint
                 feature_indices = [
@@ -669,11 +670,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 nchooseks_list.append(
                     (feature_indices, constraint.min_count, constraint.max_count)
                 )
-            # for OPTIMIZE_ACQF_MCTS, continuous features with allow_zero=True are treated
-            # as NChooseK constraints where min_count=0 and max_count=1
+                nchoosek_feature_keys.update(constraint.features)
+            # Continuous features with allow_zero=True are treated as NChooseK
+            # constraints where min_count=0 and max_count=1, but only if they
+            # are not already part of an explicit NChooseK constraint.
             for feat in domain.inputs.get(ContinuousInput):
                 assert isinstance(feat, ContinuousInput)
-                if feat.allow_zero:
+                if feat.allow_zero and feat.key not in nchoosek_feature_keys:
                     feature_index = features2idx[feat.key][0]
                     nchooseks_list.append(([feature_index], 0, 1))
 

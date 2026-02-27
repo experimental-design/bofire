@@ -136,6 +136,7 @@ class RandomStrategy(Strategy):
             for feat in self.domain.inputs.get(ContinuousInput)
         ):
             groups = []
+            nchoosek_feature_keys: set[str] = set()
             for constraint in self.domain.constraints.get(NChooseKConstraint):
                 assert isinstance(constraint, NChooseKConstraint)
                 groups.append(
@@ -145,9 +146,12 @@ class RandomStrategy(Strategy):
                         max_count=constraint.max_count,
                     )
                 )
+                nchoosek_feature_keys.update(constraint.features)
+            # Only create single-feature groups for allow_zero features
+            # that are not already part of an NChooseK constraint.
             for feat in self.domain.inputs.get(ContinuousInput):
                 assert isinstance(feat, ContinuousInput)
-                if feat.allow_zero:
+                if feat.allow_zero and feat.key not in nchoosek_feature_keys:
                     groups.append(
                         NChooseK(
                             features=[features2idx[feat.key][0]],
@@ -155,13 +159,14 @@ class RandomStrategy(Strategy):
                             max_count=1,
                         )
                     )
+                    nchoosek_feature_keys.add(feat.key)
 
             mcts = MCTS(
                 groups=Groups(groups=groups),
                 seed=self._get_seed(),
-                reward_fn=lambda x,
-                y: 0.0,  # dummy reward function as we are only using the
-                # rollout to sample combinations, so we only use it for tree traversal.
+                # Dummy reward function — we only use MCTS for tree traversal
+                # to sample valid NChooseK combinations.
+                reward_fn=lambda x, y: 0.0,
                 rollout_policy=False,
                 adaptive_p_stop=False,
                 normalize_rewards=False,
@@ -178,12 +183,6 @@ class RandomStrategy(Strategy):
                 else:
                     combinations[combo] = 1
 
-            nchoosek_features = {
-                key
-                for constraint in self.domain.constraints.get(NChooseKConstraint)
-                for key in constraint.features
-            }
-
             samples = []
 
             sampling_multiplier = math.ceil(
@@ -194,11 +193,13 @@ class RandomStrategy(Strategy):
                 # create new domain without the nchoosekconstraints
                 domain = deepcopy(self.domain)
                 domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-                unselected_features = nchoosek_features - set(combo)
-                # fix the unused features
+                unselected_features = nchoosek_feature_keys - set(combo)
+                # fix the unused features to zero
                 for key in unselected_features:
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
+                    if feat.allow_zero:
+                        feat.allow_zero = False
                     feat.bounds = [0.0, 0.0]
                 # setup then sampler for this situation
                 samples.append(
