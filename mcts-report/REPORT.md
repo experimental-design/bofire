@@ -1478,7 +1478,102 @@ This also addresses a subtle issue: inflating the root's posterior can cause wil
 
 A quick experiment would test k0 ∈ {2, 4, 8} × alpha ∈ {0.6, 0.8} on the TS + TS(g,a) + var_infl config. If the unique eval count on large_sparse rises from 575 toward 700+ without sacrificing quality on smaller problems, the PW re-tune is worthwhile.
 
-#### 11.12.6 Correlated Priors Across Sibling Nodes
+#### 11.12.6 Normal-Inverse-Gamma Posterior (Proper Conjugate Update)
+
+**Problem**: The current TS implementation uses a Normal-Normal conjugate update that treats the reward variance σ² as a known plug-in estimate (`s² = max(sum_sq/n - x̄², 1e-8)`). This is reasonable when n is moderate, but it breaks down at low observation counts — exactly the regime that matters most for exploration:
+
+- With n=1: `s² = max(x²/1 - x², 1e-8) = 1e-8` — variance collapses to the floor. The posterior becomes absurdly tight around a single observation.
+- With n=2: sample variance is based on just 2 points — unreliable.
+- With n=0: we fall back to the prior, which is a Normal distribution.
+
+The consequence is **premature commitment**: a node that receives one good observation gets a tight posterior with a high mean, and TS keeps selecting it. A node that receives one bad observation is abandoned. Neither has enough data to justify such confidence.
+
+**Root cause**: The Normal-Normal model assumes known variance. The proper conjugate prior for Normal with *both* unknown mean and unknown variance is the **Normal-Inverse-Gamma (NIG)** distribution:
+
+```
+Prior: (μ, σ²) ~ NIG(μ₀, n₀, α₀, β₀)
+
+μ₀  = prior mean (global running mean, same as now)
+n₀  = prior pseudo-count (confidence in the mean)
+α₀  = shape parameter for variance prior (e.g., 1 = weak)
+β₀  = scale parameter for variance prior (e.g., σ₀² = adaptive prior var)
+```
+
+After n observations with sample mean x̄ and sum of squared deviations S = Σ(xᵢ - x̄)²:
+
+```
+n₀' = n₀ + n
+μ₀' = (n₀·μ₀ + n·x̄) / n₀'
+α₀' = α₀ + n/2
+β₀' = β₀ + S/2 + (n₀·n·(x̄ - μ₀)²) / (2·n₀')
+```
+
+The marginal posterior for μ (integrating out σ²) is a **Student-t distribution**:
+
+```
+μ | data ~ t_{2α₀'}(location=μ₀', scale=sqrt(β₀' / (α₀' · n₀')))
+```
+
+**Why this fixes the premature commitment problem**: The Student-t has heavier tails than the Normal, especially at low degrees of freedom (df = 2α₀'). With n=1 and α₀=1, df=3 — the distribution has *much* wider tails than a Normal, reflecting genuine uncertainty about both the mean and the variance. As observations accumulate, df grows, and the t-distribution converges to Normal — exactly recovering the current behavior at moderate-to-large n.
+
+| Observations | Current (Normal) | NIG (Student-t) |
+|-------------|-----------------|-----------------|
+| n=0 | Sample from N(μ₀, σ₀²) | Sample from t₂(μ₀, β₀/α₀) — heavier tails |
+| n=1 | Tight N near single obs (s²≈0) | Wide t₃ — high uncertainty persists |
+| n=2 | N with noisy variance estimate | t₄ — still wider than Normal |
+| n=20+ | Approximately N(x̄, s²/n) | Approximately N(x̄, s²/n) — same |
+
+**Sufficient statistics**: The NIG update requires `(n_obs, sum_rewards, sum_sq_deviations)`. We already track `n_obs` and `sum_rewards`. We currently track `sum_sq_rewards` (sum of x²), from which sum of squared deviations can be computed as `S = sum_sq_rewards - n·x̄²`. No additional per-node storage is needed.
+
+**Sampling from Student-t**: `t_df(loc, scale)` can be sampled as `loc + scale * (Z / sqrt(V/df))` where Z ~ N(0,1) and V ~ χ²(df). Python's `random` module doesn't have a direct t-distribution, but it can be computed from Normal and Gamma samples, or approximated via the inverse CDF. For df > 30, the Normal approximation is sufficient.
+
+**Interaction with existing mechanisms**: NIG is orthogonal to the cache-hit handling (combined mode) and adaptive prior variance. APV would set β₀ to the empirical reward variance (same role as σ₀² currently). The combined mode's variance inflation would decay n₀' (widening the t-posterior) and add pessimistic observations (shifting the location). The NIG posterior simply replaces the sampling distribution from Normal to Student-t, with the most impact at low observation counts.
+
+**Expected impact**: The main benefit is on large search spaces (large_sparse, multigroup) where many nodes have few observations. These nodes currently have artificially tight posteriors that cause premature commitment. With NIG, their posteriors are genuinely wide (heavy-tailed t), so TS naturally explores them more before committing. On small spaces (graduated, simple_additive) where most nodes accumulate many observations, the impact is minimal — the t-distribution converges to Normal quickly. This is exactly the right behavior: the fix is strongest where the problem is worst.
+
+**No new hyperparameters**: α₀=1 (standard weak prior for variance) is the canonical choice. n₀ and β₀ map directly to the existing prior pseudo-count and prior variance. The implementation is a drop-in replacement for `_ts_sample_score` and `_ts_sample_action_score`.
+
+#### 11.12.7 Adaptive Pseudo-Count n₀ from Branching Factor
+
+**Problem**: The prior pseudo-count n₀ is fixed at 1, meaning a single observation contributes 50% to the posterior mean. On a problem with a high branching factor (many legal actions per node), the algorithm visits each child infrequently — one observation per child is common during early exploration. With n₀=1, that single observation immediately collapses the posterior, causing premature commitment to whichever child happened to get a good first evaluation.
+
+**Proposed fix**: Set n₀ proportional to the local branching factor:
+
+```python
+def _adaptive_n0(self, node: TSNode) -> float:
+    n_actions = len(self._legal_actions(node))
+    return 1.0 + math.log(max(n_actions, 2))
+```
+
+With 2 legal actions: n₀ ≈ 1.7. With 11 actions (large_sparse root): n₀ ≈ 3.4. With 30 actions: n₀ ≈ 4.4.
+
+Higher n₀ means more observations are needed before the posterior departs significantly from the prior. On large_sparse (many actions, sparse visits), this keeps posteriors centered on the global mean for longer, preventing over-commitment to early observations. On graduated (few actions, dense visits), n₀ is barely above 1 — minimal change.
+
+This is fully automatic — zero new hyperparameters, reads the problem structure directly. It is orthogonal to adaptive prior variance (which controls σ₀², not n₀) and complements it: APV calibrates the *scale* of the prior, adaptive n₀ calibrates the *confidence*.
+
+**Interaction with NIG**: If the NIG posterior (§11.12.6) is implemented, adaptive n₀ feeds directly into the NIG update as the prior pseudo-count, affecting both the posterior mean and the degrees of freedom of the Student-t. The two ideas compose naturally.
+
+**Expected impact**: Moderate improvement on large_sparse and multigroup (where branching factor is high and visits are sparse), minimal change on small problems. Lower priority than NIG because NIG fixes the more fundamental issue (incorrect variance estimation) while adaptive n₀ is a tuning refinement.
+
+#### 11.12.8 Adaptive Pessimistic Strength from Local Exhaustion
+
+**Problem**: The pessimistic pseudo-observation in combined mode uses a fixed value of `global_mean - global_std` for every node in the backpropagation path. But exhaustion varies across the tree: a subtree with 90% cache-hit rate is severely exhausted and needs aggressive pessimism; a subtree with 10% cache-hit rate is mostly novel and needs almost none. The fixed strength over-penalizes fresh subtrees and under-penalizes exhausted ones.
+
+**Proposed fix**: Scale the pessimistic offset by the node's local exhaustion rate, measured as `1 - (n_obs / n_visits)`:
+
+```python
+novelty_rate = node.n_obs / max(1, node.n_visits)
+exhaustion = 1.0 - novelty_rate  # 0 = fully novel, 1 = fully exhausted
+pess_value = global_mean - exhaustion * global_std
+```
+
+When a subtree is fresh (high novelty rate, most visits produce new evaluations), the pessimistic observation is mild (close to the global mean — barely shifts the posterior). When exhausted (low novelty rate, most visits are cache hits), the pessimistic observation is aggressive (full `mean - std` — strong downward pressure).
+
+This uses information already tracked (`n_obs` and `n_visits` per node) and requires no new hyperparameters.
+
+**Expected impact**: The main benefit is reducing the penalty on fresh subtrees. The current combined mode applies the same pessimistic strength everywhere, which can push the algorithm away from subtrees that still have novel evaluations to discover. On multigroup (where `comb` gets 33% vs `vi+apv`'s 47%), the pessimistic component is hurting fresh subtrees that need stochastic exploration for interaction discovery. Adaptive strength would reduce this damage while preserving the full pessimistic force on genuinely exhausted subtrees. This could narrow the gap between `comb` and `vi+apv` on interaction-heavy problems without sacrificing `comb`'s advantages on other problems.
+
+#### 11.12.9 Correlated Priors Across Sibling Nodes
 
 **Problem**: Each child node has an independent prior. But in NChooseK problems, features within a group are structurally related. If selecting feature 3 in group 1 yields reward 80, that says something about the value of selecting feature 4 in the same group — they share the same group context and only differ in one feature. The current TS treats them as completely unrelated, requiring each to be explored independently.
 
@@ -1497,7 +1592,7 @@ This is conceptually similar to RAVE (sibling nodes share information from the s
 
 The risk is over-sharing: if features are anti-correlated (feature 3 is good *because* feature 4 is not selected), sibling updates would introduce bias. The discount factor controls this trade-off — 0.1 means sibling signal is 10x weaker than direct observation, small enough that a few direct visits override any sibling-induced bias.
 
-#### 11.12.7 Information-Directed Sampling
+#### 11.12.10 Information-Directed Sampling
 
 **Problem**: Pure TS selects the child with the highest posterior sample. This occasionally revisits high-mean exhausted subtrees even with variance inflation, because the posterior mean is still high and most samples fall near the mean. TS has no concept of "this action is uninformative because the subtree is exhausted."
 
@@ -1512,7 +1607,7 @@ Exhausted subtrees have low `information_gain` (tight posterior, nothing new to 
 
 IDS has formal regret bounds that are tighter than TS in structured problems. The main cost is computational: computing the information gain approximation requires maintaining noise variance estimates per node, and the selection step involves a ratio computation rather than a simple argmax of samples. Whether the theoretical advantage translates to practical improvement on these benchmarks would need to be tested empirically.
 
-#### 11.12.8 Warm-Starting Trees for Batch Candidate Generation
+#### 11.12.11 Warm-Starting Trees for Batch Candidate Generation
 
 **Problem**: In batch Bayesian optimization we need q > 1 candidates per iteration. With sequential greedy strategies (e.g., qLogEI), we generate candidate 1, set it as pending (fantasized) on the acquisition function, then re-optimize to generate candidate 2, and so on. Each re-optimization currently builds an MCTS tree from scratch, discarding all structural knowledge accumulated for the previous candidate.
 
@@ -1564,14 +1659,25 @@ After decay, every posterior is wide (low confidence) but centered on its old me
 
 **Composition with two-phase burn-in** (§11.12.3): If candidate 1 uses a cheap burn-in phase, the resulting tree has broad coverage of the combinatorial landscape. For candidate 2, skip burn-in entirely, warm-restart with decay, and go straight to expensive evaluations. The burn-in cost is amortized across the entire batch of q candidates.
 
-#### 11.12.9 Prioritized Improvements
+#### 11.12.12 Prioritized Improvements
 
-Based on the benchmark evidence, the improvements most likely to close the gap with UCT on large search spaces while preserving TS's advantage on interaction problems are:
+Based on the benchmark evidence, the improvements are grouped by status and expected impact:
 
-1. **~~Adaptive prior variance~~ — Implemented** (§11.9) — directly addresses scale mismatch, no new hyperparameters. Results: +7pp on simple_additive, +13pp on large_sparse, +4pp on needle when combined with variance inflation.
+**Implemented and benchmarked:**
+
+1. **~~Adaptive prior variance~~ — Implemented** (§11.9) — auto-calibrates σ₀² from empirical reward variance. Results: +7pp on simple_additive, +13pp on large_sparse, +4pp on needle.
 2. **~~Pessimistic pseudo-observations~~ — Implemented** (§11.10) — asymmetric downward pressure on exhausted subtrees. Results: 93% on graduated, 100% on needle with uniform rollout.
 3. **~~Combined cache-hit mode~~ — Implemented** (§11.11) — applies both variance inflation and pessimistic on each cache hit. Results: 97% on graduated (highest of any config), 37% on large_sparse (best TS result). Recommended as the default TS cache-hit strategy.
-4. **Two-phase burn-in** (§11.12.3) — structural change that eliminates the cache-hit problem during early exploration, leverages TS's unique strength
-5. **Warm-starting trees for batch generation** (§11.12.8) — reuses tree structure across candidates in q > 1 batches, amortizes exploration cost; composes with two-phase burn-in
 
-Items 1-3 are implemented and benchmarked. Item 4 requires a cheap evaluation function, which exists in the production context (`optimize_acqf` with `raw_samples` only, no L-BFGS) but not in the synthetic benchmarks. Item 5 requires integration with the batch BO loop in the production strategy.
+**Highest priority — single-fidelity improvements to close the gap with UCT:**
+
+4. **Normal-Inverse-Gamma posterior** (§11.12.6) — replaces the Normal-Normal conjugate with the proper conjugate for unknown mean and variance. Fixes premature commitment at low observation counts by sampling from a heavy-tailed Student-t instead of a Normal. The most fundamental improvement: fixes the statistical model itself rather than adding compensating mechanisms. Zero new hyperparameters, drop-in replacement for the sampling functions.
+5. **Adaptive pessimistic strength** (§11.12.8) — scales the pessimistic offset by local exhaustion rate (1 - n_obs/n_visits). Fresh subtrees get mild pessimism, exhausted subtrees get aggressive pessimism. Directly addresses the multigroup gap where the combined mode's fixed pessimistic strength hurts interaction discovery in fresh subtrees. Zero new hyperparameters.
+6. **Adaptive pseudo-count n₀** (§11.12.7) — sets n₀ proportional to log(branching_factor), so nodes with many legal actions require more observations before departing from the prior. Complements NIG; lower priority if NIG is implemented (NIG's Student-t already handles the low-n regime).
+
+**Structural changes (require production integration):**
+
+7. **Two-phase burn-in** (§11.12.3) — eliminates cache hits during early exploration with cheap evaluations. Leverages TS's unique ability to handle heteroscedastic observations.
+8. **Warm-starting trees for batch generation** (§11.12.11) — reuses tree structure across candidates in q > 1 batches, amortizes exploration cost; composes with two-phase burn-in.
+
+Items 1-3 are implemented and benchmarked. Items 4-6 can be implemented and tested on the existing synthetic benchmarks. Items 7-8 require production integration (cheap evaluation function, batch BO loop).
