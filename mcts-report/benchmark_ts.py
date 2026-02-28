@@ -162,6 +162,36 @@ TS_CONFIGS = [
         cache_hit_mode="variance_inflation",
         adaptive_prior_var=True,
     ),
+    # Pessimistic pseudo-observation configs
+    TSConfig(
+        name="TS + TS(g,a) + pess",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="pessimistic",
+    ),
+    TSConfig(
+        name="TS + TS(g,a) + pess + apv",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="pessimistic",
+        adaptive_prior_var=True,
+    ),
+    TSConfig(
+        name="TS + uniform + pess + apv",
+        rollout_mode="uniform",
+        cache_hit_mode="pessimistic",
+        adaptive_prior_var=True,
+    ),
+    # Combined (variance inflation + pessimistic) configs
+    TSConfig(
+        name="TS + TS(g,a) + comb",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="combined",
+    ),
+    TSConfig(
+        name="TS + TS(g,a) + comb + apv",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="combined",
+        adaptive_prior_var=True,
+    ),
 ]
 
 ALL_CONFIG_NAMES = (
@@ -331,6 +361,11 @@ COLOR_MAP = {
     "TS + uniform + adpt_pv": "#bcbd22",
     "TS + TS(g,a) + adpt_pv": "#7f7f7f",
     "TS + TS(g,a) + vi + apv": "#aec7e8",
+    "TS + TS(g,a) + pess": "#ff9896",
+    "TS + TS(g,a) + pess + apv": "#c5b0d5",
+    "TS + uniform + pess + apv": "#ffbb78",
+    "TS + TS(g,a) + comb": "#98df8a",
+    "TS + TS(g,a) + comb + apv": "#c49c94",
 }
 
 
@@ -420,6 +455,28 @@ def plot_convergence_subsets(problem_name, all_results, n_iterations):
                 "TS + TS(g,a) + vi + apv",
             ],
             "title": "Adaptive Prior Variance Effect",
+        },
+        "pessimistic": {
+            "configs": [
+                "Random",
+                "UCT (+rpol)",
+                "TS + TS(g,a) + var_infl",
+                "TS + TS(g,a) + vi + apv",
+                "TS + TS(g,a) + pess",
+                "TS + TS(g,a) + pess + apv",
+            ],
+            "title": "Pessimistic vs Variance Inflation",
+        },
+        "combined": {
+            "configs": [
+                "Random",
+                "UCT (+rpol)",
+                "TS + TS(g,a) + vi + apv",
+                "TS + TS(g,a) + pess",
+                "TS + TS(g,a) + comb",
+                "TS + TS(g,a) + comb + apv",
+            ],
+            "title": "Combined (VI + Pessimistic)",
         },
     }
 

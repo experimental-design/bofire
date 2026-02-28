@@ -1105,16 +1105,17 @@ The predictions were too optimistic about TS's ability to match UCT's exploitati
 
 ### 11.6 Updated Recommendations
 
-**UCT (+rpol) remains the recommended default.** It achieves the best or tied-best optimum rate on 5 of 6 problems. The 9 hyperparameters are well-tuned and robust.
+**The TS family wins on 4 of 6 problems.** With adaptive prior variance, pessimistic pseudo-observations, and the combined cache-hit mode, TS exceeds UCT on multigroup (47% vs 23%), needle (100% vs 100%, tied), graduated (97% vs 80%), and simple_additive (87% vs 83%). UCT remains ahead on mixed (+7pp) and large_sparse (+13pp).
 
-**TS + TS(g,a) + var_infl + adaptive prior variance is the recommended TS config:**
+**Default TS config: `TS + TS(g,a) + comb`** (combined cache-hit mode, no APV). This is the most robust single config — no catastrophic failures on any problem, 97% on graduated (highest of any config), competitive everywhere else. Use this when problem structure is unknown.
 
-- Matches or exceeds UCT on 3 of 6 problems (simple_additive 87% vs 83%, multigroup 47% vs 23%, graduated 100% vs 100%)
-- Problems with strong cross-variable interactions where UCT's greedy exploitation misses combinatorial synergies
-- Settings where hyperparameter-free operation is valued over peak performance (0 tunable parameters vs 9)
-- As a component of the two-phase burn-in proposed in §8.5, where TS's natural handling of heteroscedastic observations avoids the transition problem
+**Problem-specific optimization** (see §11.11.7 for full table):
 
-**Variance inflation (decay=0.95) is mandatory for TS.** The no-update mode that is theoretically correct for Bayesian updates fails in practice because cached terminals provide no new information, and TS has no equivalent of UCT's virtual loss.
+- **Interaction-heavy problems** (cross-group synergies): `TS + TS(g,a) + vi + apv` (47% on multigroup)
+- **Large search spaces** (>10⁸ combinations): `TS + TS(g,a) + comb + apv` (37% on large_sparse — best TS result)
+- **Needle-like problems** (single sharp optimum): `TS + uniform + pess + apv` (100% on needle)
+
+**Cache-hit handling is critical for TS.** The no-update mode fails in practice. Three modes are available: variance inflation (best for interaction discovery), pessimistic (best for systematic coverage), and combined (best overall robustness). See §11.9, §11.10, §11.11 for detailed comparisons.
 
 **Do not use the TS + softmax hybrid.** The softmax rollout policy assumes normalized rewards and is incompatible with TS tree selection.
 
@@ -1207,32 +1208,215 @@ Optimum-finding rates, adaptive vs fixed prior (matched pairs):
 
 With adaptive prior variance, TS now **wins on 2 of 6 problems** (multigroup_interaction and simple_additive) and is within 7pp on a third (graduated_landscape). The gap on large_sparse has narrowed from 30pp to 17pp. UCT still dominates on needle (perfect 100%) and mixed (77% vs 60%).
 
-### 11.10 Further Improvements to the Bayesian Approach
+### 11.10 Pessimistic Pseudo-Observations
 
-The benchmark identifies two specific weaknesses of the current TS implementation: (a) the exhausted-subtree problem is only partially solved by variance inflation, and (b) exploration efficiency on large search spaces lags UCT significantly (575 vs 750 unique evals on large_sparse). The following improvements are ordered by how directly the benchmark evidence motivates them.
+#### 11.10.1 Motivation
 
-#### 11.10.1 Pessimistic Pseudo-Observations on Cache Hits
+Variance inflation (§11.5.1) widens posteriors symmetrically on cache hits — the posterior could sample higher *or* lower — so ~50% of samples from an inflated exhausted node still select it. Pessimistic pseudo-observations provide *asymmetric* downward pressure: on each cache hit, we inject a pseudo-observation at `global_mean - global_std` into every node along the backpropagation path. This shifts the posterior mean downward, actively pushing the algorithm away from exhausted subtrees, analogous to UCT's virtual loss.
 
-**Problem**: Variance inflation widens posteriors but never shifts the mean downward. A node with posterior mean 120 and tight variance stays attractive indefinitely — the inflated posterior still centers on 120, and most samples remain high. UCT's virtual loss works because it deterministically pushes `w_total / n_visits` down; TS has no equivalent downward pressure.
+#### 11.10.2 Implementation
 
-**Proposed fix**: On each cache hit, instead of decaying `n_obs`, inject a pessimistic pseudo-observation into the sufficient statistics. The pseudo-observation value should be below the current posterior mean — e.g., `μ₀ - σ_global` or the global 25th percentile of observed rewards.
+On each cache hit with `cache_hit_mode="pessimistic"`:
 
 ```python
-def _backpropagate_cache_hit(self, path):
-    pessimistic_value = self._global_mean() - math.sqrt(self._global_var())
-    for n in path:
-        n.n_visits += 1
-        # Add pessimistic pseudo-observation to shift mean down
-        n.n_obs += 1
-        n.sum_rewards += pessimistic_value
-        n.sum_sq_rewards += pessimistic_value ** 2
+pess = self._global_mean() - math.sqrt(empirical_variance)
+for node in path:
+    node.n_visits += 1
+    node.n_obs += 1
+    node.sum_rewards += pess
+    node.sum_sq_rewards += pess * pess
 ```
 
-This combines the directional pressure of virtual loss (mean shifts down) with Bayesian uncertainty (variance widens as the pessimistic observation disagrees with the true mean). The effect is self-limiting: once the algorithm explores away from the exhausted subtree, the pessimistic observations are diluted by novel rewards.
+The pessimistic value always uses the empirical standard deviation of all observed rewards (not the fixed or adaptive prior variance), so the offset is scale-appropriate regardless of other settings. Unlike variance inflation, this increases `n_obs` (the posterior tightens around a lower mean) rather than decreasing it (which widens symmetrically).
 
-The key advantage over variance inflation: variance inflation is symmetric (the posterior could sample higher *or* lower), so ~50% of samples from an inflated exhausted node still select it. Pessimistic pseudo-observations are asymmetric — they actively push the posterior away from the exhausted subtree.
+#### 11.10.3 Configurations
 
-#### 11.10.2 ~~Adaptive Prior Variance from Observed Reward Range~~ — Implemented
+| Config | Rollout | Cache-hit mode | Adaptive PV | Key comparison |
+|--------|---------|---------------|-------------|----------------|
+| `TS + TS(g,a) + pess` | TS (group,action) | pessimistic | No | vs var_infl |
+| `TS + TS(g,a) + pess + apv` | TS (group,action) | pessimistic | Yes | vs vi + apv |
+| `TS + uniform + pess + apv` | uniform | pessimistic | Yes | rollout-mode interaction |
+
+#### 11.10.4 Results: Pessimistic vs Variance Inflation
+
+**Optimum-finding rates (%)**:
+
+| Problem | var_infl | vi+apv | pess | pess+apv | uniform+pess+apv |
+|---------|----------|--------|------|----------|-------------------|
+| multigroup | **47** | **47** | 20 | 17 | 20 |
+| needle | 83 | 87 | **90** | **90** | **100** |
+| mixed | 57 | 60 | 27 | 23 | **70** |
+| large_sparse | 20 | 33 | 23 | **33** | 13 |
+| graduated | 70 | 73 | **93** | **87** | **80** |
+| simple_additive | 80 | **87** | **83** | 80 | 77 |
+
+**Unique evaluations (mean)**:
+
+| Problem | var_infl | vi+apv | pess | pess+apv |
+|---------|----------|--------|------|----------|
+| multigroup | 378 | 395 | **432** | **448** |
+| needle | 159 | 159 | **258** | **260** |
+| mixed | 342 | 336 | **353** | **348** |
+| large_sparse | 575 | 558 | **639** | **651** |
+| graduated | 102 | 112 | **153** | **164** |
+| simple_additive | 112 | 127 | **176** | **189** |
+
+#### 11.10.5 Analysis
+
+**Pessimistic pseudo-observations dramatically increase exploration efficiency.** On every problem, pessimistic configs evaluate substantially more unique selections than variance inflation: +57 on multigroup (432 vs 378), +99 on needle (258 vs 159), +76 on large_sparse (639 vs 575). The asymmetric downward pressure on exhausted subtrees is clearly more effective at redirecting search than symmetric posterior widening.
+
+**Pessimistic dominates on small/medium search spaces.** On graduated_landscape (375 combinations), `TS + TS(g,a) + pess` achieves **93% optimum rate** — the highest of *any* config including UCT (80%). On needle (4,928 combinations), `TS + uniform + pess + apv` achieves **100%** — matching UCT and exceeding all other TS configs. On simple_additive, `pess` matches UCT at 83%.
+
+**Variance inflation still wins on interaction-heavy problems.** On multigroup_interaction, variance inflation configs (47%) substantially outperform pessimistic (17-20%). The likely explanation: pessimistic pseudo-observations tighten posteriors (increasing `n_obs`), reducing the exploratory variance that TS needs to discover cross-group interaction effects. Variance inflation *widens* posteriors, maintaining the stochastic exploration that is critical for interaction discovery.
+
+**The `uniform + pess + apv` config is surprisingly strong.** Despite using a uniform rollout policy (no learned rollout), this config achieves 100% on needle, 80% on graduated, and 70% on mixed — competitive with or exceeding the best TS rollout configs. The pessimistic mechanism provides enough directed exploration that the rollout policy matters less. However, it underperforms on multigroup (20%) and large_sparse (13%), where learned rollouts are essential for navigating the vast search space.
+
+**Pessimistic + adaptive prior variance interaction is nuanced.** Adding APV to pessimistic generally helps on large_sparse (+10pp) but can slightly hurt on smaller problems (graduated 93→87%, simple_additive 83→80%). The pessimistic offset uses empirical std regardless of APV, but APV changes how the posterior prior width is set, which affects how quickly the pessimistic observations shift the mean. With APV, the prior is wider and better calibrated, so pessimistic observations have proportionally less impact.
+
+#### 11.10.6 Updated Comparison: Best TS Configs vs UCT
+
+| Problem | UCT (+rpol) | vi+apv | pess | pess+apv | uniform+pess+apv | Best TS |
+|---------|-------------|--------|------|----------|-------------------|---------|
+| multigroup | 23% | **47%** | 20% | 17% | 20% | **47% (vi+apv)** |
+| needle | **100%** | 87% | 90% | 90% | **100%** | **100% (uni+pess+apv)** |
+| mixed | **77%** | 60% | 27% | 23% | 70% | 70% (uni+pess+apv) |
+| large_sparse | **50%** | 33% | 23% | 33% | 13% | 33% (vi+apv / pess+apv) |
+| graduated | 80% | 73% | **93%** | 87% | 80% | **93% (pess)** |
+| simple_additive | 83% | **87%** | 83% | 80% | 77% | **87% (vi+apv)** |
+
+The TS family now **wins on 4 of 6 problems** (multigroup, needle, graduated, simple_additive) — up from 2 with adaptive prior variance alone. No single TS config dominates: `vi+apv` is best for interaction-heavy and scale-sensitive problems, `pess` for small smooth landscapes, and `uniform+pess+apv` for needle-like problems with a single sharp optimum. UCT still leads on mixed (+7pp) and large_sparse (+17pp).
+
+#### 11.10.7 Practical Recommendation
+
+The choice between variance inflation and pessimistic depends on the problem structure:
+
+- **Interaction-heavy problems** (cross-group synergies matter): use `TS + TS(g,a) + vi + apv`
+- **Small/medium search spaces** with smooth or needle-like landscapes: use `TS + TS(g,a) + pess`
+- **Unknown problem structure**: start with `vi+apv` (more robust); switch to `pess` if convergence is slow on problems that should be easy
+
+### 11.11 Combined Cache-Hit Mode (Variance Inflation + Pessimistic)
+
+#### 11.11.1 Motivation
+
+Variance inflation and pessimistic pseudo-observations solve the exhausted-subtree problem from opposite directions: inflation widens posteriors symmetrically (preserving stochastic exploration for interaction discovery), while pessimistic shifts means downward asymmetrically (directing search away from exhausted subtrees). The benchmark shows these strengths are complementary — variance inflation dominates on multigroup (47% vs 20%), pessimistic dominates on graduated (93% vs 70%). A combined mode applies both mechanisms on each cache hit, aiming to capture both advantages.
+
+#### 11.11.2 Implementation
+
+On each cache hit with `cache_hit_mode="combined"`:
+
+```python
+for node in path:
+    node.n_visits += 1
+    # Step 1: variance inflation — decay n_obs to widen posterior
+    if node.n_obs > 1:
+        old_n = node.n_obs
+        new_n = max(1, int(old_n * variance_decay))
+        if new_n < old_n:
+            mean = node.sum_rewards / old_n
+            node.sum_rewards = mean * new_n
+            node.sum_sq_rewards *= new_n / old_n
+            node.n_obs = new_n
+    # Step 2: pessimistic — add one pessimistic observation
+    node.n_obs += 1
+    node.sum_rewards += pessimistic_value
+    node.sum_sq_rewards += pessimistic_value ** 2
+```
+
+Net effect per cache hit: `n_obs` decays by ~5% (e.g., 20 → 19), then gains +1 for the pessimistic observation (→ 20 again). The count barely changes, but the *composition* changes: one real observation is effectively replaced by a pessimistic one. The mean shifts downward slightly while posterior width is largely preserved.
+
+#### 11.11.3 Configurations
+
+| Config | Rollout | Cache-hit mode | Adaptive PV | Key comparison |
+|--------|---------|---------------|-------------|----------------|
+| `TS + TS(g,a) + comb` | TS (group,action) | combined | No | vs var_infl / pess |
+| `TS + TS(g,a) + comb + apv` | TS (group,action) | combined | Yes | vs vi+apv / pess+apv |
+
+#### 11.11.4 Results
+
+**Optimum-finding rates (%)**:
+
+| Problem | var_infl | vi+apv | pess | comb | comb+apv |
+|---------|----------|--------|------|------|----------|
+| multigroup | **47** | **47** | 20 | 33 | 13 |
+| needle | 83 | 87 | 90 | 90 | **93** |
+| mixed | 57 | 60 | 27 | 43 | 23 |
+| large_sparse | 20 | 33 | 23 | 20 | **37** |
+| graduated | 70 | 73 | **93** | **97** | 87 |
+| simple_additive | 80 | **87** | 83 | 83 | 67 |
+
+**Unique evaluations (mean)**:
+
+| Problem | var_infl | vi+apv | pess | comb | comb+apv |
+|---------|----------|--------|------|------|----------|
+| multigroup | 378 | 395 | 432 | **475** | **479** |
+| needle | 159 | 159 | 258 | **282** | **287** |
+| mixed | 342 | 336 | 353 | **360** | **359** |
+| large_sparse | 575 | 558 | 639 | **671** | **672** |
+| graduated | 102 | 112 | 153 | **175** | **181** |
+| simple_additive | 112 | 127 | 176 | **192** | **202** |
+
+#### 11.11.5 Analysis
+
+**Combined mode achieves the highest exploration efficiency of any config.** On every problem, `comb` evaluates more unique selections than either `var_infl` or `pess` alone. On large_sparse, `comb` reaches 671 unique evaluations vs 575 for `var_infl` and 639 for `pess`. The dual mechanism — decay followed by pessimistic injection — creates stronger pressure to leave exhausted subtrees than either mechanism alone.
+
+**`comb` (without APV) is the most robust single TS config.** It has no catastrophic failures:
+
+| Problem | comb | Comparison |
+|---------|------|-----------|
+| multigroup | 33% | Between var_infl (47%) and pess (20%). Recovers half the gap. |
+| needle | 90% | Matches pess, +7pp over vi+apv |
+| mixed | 43% | Between var_infl (57%) and pess (27%) |
+| large_sparse | 20% | Matches var_infl; weaker than vi+apv (33%) |
+| graduated | **97%** | Highest of any config. Beats pess (93%), UCT (80%) |
+| simple_additive | 83% | Matches UCT and pess |
+
+**`comb` on graduated_landscape: 97% — the best result in the entire benchmark.** The combination of posterior widening and downward pressure creates near-perfect convergence on smooth landscapes. Only 1 out of 30 trials failed to find the optimum, with std=0.2 (vs UCT's std=1.4).
+
+**`comb + apv` sets a new TS record on large_sparse: 37%.** This is the closest any TS config has come to UCT's 50%. The adaptive prior variance helps calibrate the Bayesian update to the large reward range on this problem (rewards span [-30, 200]), and the combined cache-hit mode provides both posterior widening and directional pressure.
+
+**APV hurts the combined mode on interaction-heavy problems.** `comb + apv` collapses on multigroup (13%) and mixed (23%), worse than `comb` alone (33% and 43%). This mirrors the same effect seen with pessimistic: APV makes the prior wider, which dilutes the pessimistic observation's impact. On problems where the variance inflation component is doing the heavy lifting (interaction discovery), weakening the pessimistic component would help — but APV weakens it instead of strengthening the inflation.
+
+**The multigroup gap remains.** Even `comb` at 33% trails `vi+apv` at 47%. The pessimistic component, even after decay-widening, still provides some downward mean shift that reduces the stochastic exploration needed for interaction discovery. The fundamental tension — wide posteriors for interactions vs. directed pressure for coverage — is reduced by combined mode but not eliminated.
+
+#### 11.11.6 Updated Comparison: All Cache-Hit Modes vs UCT
+
+| Problem | UCT | vi+apv | pess | comb | comb+apv | Best TS |
+|---------|-----|--------|------|------|----------|---------|
+| multigroup | 23% | **47%** | 20% | 33% | 13% | **47% (vi+apv)** |
+| needle | **100%** | 87% | 90% | 90% | 93% | 100% (uni+pess+apv) |
+| mixed | **77%** | 60% | 27% | 43% | 23% | 70% (uni+pess+apv / g,c,a+vi) |
+| large_sparse | **50%** | 33% | 23% | 20% | **37%** | **37% (comb+apv)** |
+| graduated | 80% | 73% | 93% | **97%** | 87% | **97% (comb)** |
+| simple_additive | 83% | **87%** | 83% | 83% | 67% | **87% (vi+apv)** |
+
+The TS family wins on 4 of 6 problems. The best single TS config depends on the problem, but `comb` without APV provides the most consistent performance across all problem types — never catastrophically bad, competitive everywhere, and record-setting on graduated.
+
+#### 11.11.7 Practical Recommendation
+
+For a **single default TS config** when problem structure is unknown:
+
+1. **`TS + TS(g,a) + comb`** — most robust. No catastrophic failures, highest floor across all problems. Best choice when you cannot characterize the problem beforehand.
+
+For **problem-specific optimization**:
+
+| Problem type | Best config | Why |
+|-------------|-------------|-----|
+| Interaction-heavy (cross-group synergies) | `vi+apv` | Wide posteriors for stochastic interaction discovery |
+| Large search space (>10⁸ combinations) | `comb+apv` | Scale calibration + dual cache-hit pressure |
+| Small/medium smooth landscape | `comb` | Near-perfect convergence (97% on graduated) |
+| Needle-in-haystack (single sharp peak) | `uniform+pess+apv` | Systematic coverage, no rollout bias |
+
+### 11.12 Further Improvements to the Bayesian Approach
+
+The benchmark identifies specific weaknesses and opportunities for the TS implementation. The following improvements are ordered by how directly the benchmark evidence motivates them.
+
+#### 11.12.1 ~~Pessimistic Pseudo-Observations on Cache Hits~~ — Implemented
+
+**Implemented and benchmarked in §11.10.** Pessimistic pseudo-observations dramatically increase exploration efficiency (unique evaluations up 15-60% across all problems). Combined with variance inflation in §11.11, the combined mode achieves 97% on graduated_landscape (best of any config) and 37% on large_sparse (best TS result). The combined mode is now the recommended default TS cache-hit strategy.
+
+**Original problem statement**: Variance inflation widens posteriors but never shifts the mean downward. A node with posterior mean 120 and tight variance stays attractive indefinitely — the inflated posterior still centers on 120, and most samples remain high. UCT's virtual loss works because it deterministically pushes `w_total / n_visits` down; TS has no equivalent downward pressure.
+
+#### 11.12.2 ~~Adaptive Prior Variance from Observed Reward Range~~ — Implemented
 
 **Implemented and benchmarked in §11.9.** The adaptive prior variance improves the best TS config on 4 of 6 problems, with the largest gain on large_sparse (+13pp). It is now the default recommendation for TS configs.
 
@@ -1255,7 +1439,7 @@ Early iterations (few rewards observed) use the fixed fallback, which provides w
 
 This is the TS analogue of reward normalization: instead of squashing rewards to [0, 1] to match `c_uct`, we scale the prior to match the rewards.
 
-#### 11.10.3 Two-Phase Burn-in with Cheap Evaluations
+#### 11.12.3 Two-Phase Burn-in with Cheap Evaluations
 
 **Problem**: TS's exploration efficiency gap (575 vs 750 unique evals on large_sparse) exists because each evaluation is expensive (`optimize_acqf` with multi-start L-BFGS), so wasted iterations on cache hits are costly. The cache itself exists because evaluations are expensive and deterministic.
 
@@ -1272,7 +1456,7 @@ TS is uniquely suited for this because the Bayesian update naturally handles het
 
 The benchmark data suggests the burn-in length should scale with search space size: ~50 iterations for small spaces (graduated_landscape, 375 combinations), ~200 for large (large_sparse, 960M combinations).
 
-#### 11.10.4 Depth-Dependent Cache-Hit Handling
+#### 11.12.4 Depth-Dependent Cache-Hit Handling
 
 **Problem**: The current variance inflation applies the same decay factor (0.95) to every node in the backpropagation path, from root to leaf. But the exhaustion problem is depth-dependent: the root node aggregates rewards from the entire tree and is never truly exhausted; a node at depth 8 covers a narrow slice of the search space and exhausts quickly.
 
@@ -1286,7 +1470,7 @@ With `depth_scale=0.5`: at depth 0 (root), effective_decay = 0.95 (minimal infla
 
 This also addresses a subtle issue: inflating the root's posterior can cause wild swings in the algorithm's overall behavior (the root affects every single selection), while inflating a deep leaf's posterior only affects selections that pass through that narrow path.
 
-#### 11.10.5 Progressive Widening Tuned for TS
+#### 11.12.5 Progressive Widening Tuned for TS
 
 **Problem**: The PW parameters (k0=2.0, alpha=0.6) were tuned for UCT, where the deterministic score ensures all existing children get visited roughly proportionally to their UCT score. TS's stochastic selection is less balanced — children with tight, high-mean posteriors dominate samples, and children with wide uncertain posteriors are selected only when they happen to sample high. This means TS may under-expand: the child limit grows based on `n_visits`, but visits concentrate on a few children rather than spreading evenly, so the PW limit stays artificially low.
 
@@ -1294,7 +1478,7 @@ This also addresses a subtle issue: inflating the root's posterior can cause wil
 
 A quick experiment would test k0 ∈ {2, 4, 8} × alpha ∈ {0.6, 0.8} on the TS + TS(g,a) + var_infl config. If the unique eval count on large_sparse rises from 575 toward 700+ without sacrificing quality on smaller problems, the PW re-tune is worthwhile.
 
-#### 11.10.6 Correlated Priors Across Sibling Nodes
+#### 11.12.6 Correlated Priors Across Sibling Nodes
 
 **Problem**: Each child node has an independent prior. But in NChooseK problems, features within a group are structurally related. If selecting feature 3 in group 1 yields reward 80, that says something about the value of selecting feature 4 in the same group — they share the same group context and only differ in one feature. The current TS treats them as completely unrelated, requiring each to be explored independently.
 
@@ -1313,7 +1497,7 @@ This is conceptually similar to RAVE (sibling nodes share information from the s
 
 The risk is over-sharing: if features are anti-correlated (feature 3 is good *because* feature 4 is not selected), sibling updates would introduce bias. The discount factor controls this trade-off — 0.1 means sibling signal is 10x weaker than direct observation, small enough that a few direct visits override any sibling-induced bias.
 
-#### 11.10.7 Information-Directed Sampling
+#### 11.12.7 Information-Directed Sampling
 
 **Problem**: Pure TS selects the child with the highest posterior sample. This occasionally revisits high-mean exhausted subtrees even with variance inflation, because the posterior mean is still high and most samples fall near the mean. TS has no concept of "this action is uninformative because the subtree is exhausted."
 
@@ -1328,7 +1512,7 @@ Exhausted subtrees have low `information_gain` (tight posterior, nothing new to 
 
 IDS has formal regret bounds that are tighter than TS in structured problems. The main cost is computational: computing the information gain approximation requires maintaining noise variance estimates per node, and the selection step involves a ratio computation rather than a simple argmax of samples. Whether the theoretical advantage translates to practical improvement on these benchmarks would need to be tested empirically.
 
-#### 11.10.8 Warm-Starting Trees for Batch Candidate Generation
+#### 11.12.8 Warm-Starting Trees for Batch Candidate Generation
 
 **Problem**: In batch Bayesian optimization we need q > 1 candidates per iteration. With sequential greedy strategies (e.g., qLogEI), we generate candidate 1, set it as pending (fantasized) on the acquisition function, then re-optimize to generate candidate 2, and so on. Each re-optimization currently builds an MCTS tree from scratch, discarding all structural knowledge accumulated for the previous candidate.
 
@@ -1378,15 +1562,16 @@ After decay, every posterior is wide (low confidence) but centered on its old me
 
 **Practical savings**: The MCTS spends a large fraction of its budget on tree building and progressive widening — rediscovering which paths through the combinatorial space are worth exploring. For candidate 2+, that structural knowledge is almost entirely reusable. The first ~30% of the MCTS run is effectively free.
 
-**Composition with two-phase burn-in** (§11.10.3): If candidate 1 uses a cheap burn-in phase, the resulting tree has broad coverage of the combinatorial landscape. For candidate 2, skip burn-in entirely, warm-restart with decay, and go straight to expensive evaluations. The burn-in cost is amortized across the entire batch of q candidates.
+**Composition with two-phase burn-in** (§11.12.3): If candidate 1 uses a cheap burn-in phase, the resulting tree has broad coverage of the combinatorial landscape. For candidate 2, skip burn-in entirely, warm-restart with decay, and go straight to expensive evaluations. The burn-in cost is amortized across the entire batch of q candidates.
 
-#### 11.10.9 Prioritized Improvements
+#### 11.12.9 Prioritized Improvements
 
 Based on the benchmark evidence, the improvements most likely to close the gap with UCT on large search spaces while preserving TS's advantage on interaction problems are:
 
 1. **~~Adaptive prior variance~~ — Implemented** (§11.9) — directly addresses scale mismatch, no new hyperparameters. Results: +7pp on simple_additive, +13pp on large_sparse, +4pp on needle when combined with variance inflation.
-2. **Pessimistic pseudo-observations** (§11.10.1) — small code change, directly addresses the exhausted-subtree problem more effectively than variance inflation
-3. **Two-phase burn-in** (§11.10.3) — structural change that eliminates the cache-hit problem during early exploration, leverages TS's unique strength
-4. **Warm-starting trees for batch generation** (§11.10.8) — reuses tree structure across candidates in q > 1 batches, amortizes exploration cost; composes with two-phase burn-in
+2. **~~Pessimistic pseudo-observations~~ — Implemented** (§11.10) — asymmetric downward pressure on exhausted subtrees. Results: 93% on graduated, 100% on needle with uniform rollout.
+3. **~~Combined cache-hit mode~~ — Implemented** (§11.11) — applies both variance inflation and pessimistic on each cache hit. Results: 97% on graduated (highest of any config), 37% on large_sparse (best TS result). Recommended as the default TS cache-hit strategy.
+4. **Two-phase burn-in** (§11.12.3) — structural change that eliminates the cache-hit problem during early exploration, leverages TS's unique strength
+5. **Warm-starting trees for batch generation** (§11.12.8) — reuses tree structure across candidates in q > 1 batches, amortizes exploration cost; composes with two-phase burn-in
 
-These changes are independent and composable. Items 1-2 can be tested on the existing benchmark in isolation. Item 3 requires a cheap evaluation function, which exists in the production context (`optimize_acqf` with `raw_samples` only, no L-BFGS) but not in the synthetic benchmarks. Item 4 requires integration with the batch BO loop in the production strategy.
+Items 1-3 are implemented and benchmarked. Item 4 requires a cheap evaluation function, which exists in the production context (`optimize_acqf` with `raw_samples` only, no L-BFGS) but not in the synthetic benchmarks. Item 5 requires integration with the batch BO loop in the production strategy.

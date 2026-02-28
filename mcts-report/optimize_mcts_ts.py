@@ -92,7 +92,8 @@ class MCTS_TS:
             fallback when adaptive_prior_var=True and fewer than 2 rewards observed
         adaptive_prior_var: If True, set prior variance to the running empirical
             variance of all observed rewards instead of the fixed ts_prior_var
-        cache_hit_mode: How to handle cache hits: "no_update" or "variance_inflation"
+        cache_hit_mode: How to handle cache hits: "no_update", "variance_inflation",
+            "pessimistic", or "combined" (variance inflation + pessimistic)
         variance_decay: Decay factor for variance inflation mode (default 0.95)
         rollout_mode: Rollout policy: "uniform", "ts_group_action",
             "ts_group_card_action", or "softmax"
@@ -216,6 +217,21 @@ class MCTS_TS:
             self._novel_reward_sq_sum / self._novel_reward_count - mean * mean
         )
         return max(empirical_var, 1e-8)
+
+    def _pessimistic_value(self) -> float:
+        """Pessimistic pseudo-observation value for cache hit handling.
+
+        Returns global_mean - global_std. Uses empirical std when available
+        (>= 2 observations), regardless of adaptive_prior_var setting, so that
+        the pessimistic offset is always scale-appropriate.
+        """
+        mean = self._global_mean()
+        if self._novel_reward_count < 2:
+            return mean - math.sqrt(self.ts_prior_var)
+        empirical_var = (
+            self._novel_reward_sq_sum / self._novel_reward_count - mean * mean
+        )
+        return mean - math.sqrt(max(empirical_var, 1e-8))
 
     # ─── Thompson Sampling ──────────────────────────────────────────
 
@@ -586,6 +602,15 @@ class MCTS_TS:
         Cache hit (no_update): only increment n_visits.
         Cache hit (variance_inflation): increment n_visits, decay n_obs
             to gradually widen posterior for exhausted subtrees.
+        Cache hit (pessimistic): increment n_visits and inject a pessimistic
+            pseudo-observation (global_mean - global_std) to shift the
+            posterior mean downward — asymmetric pressure away from
+            exhausted subtrees.
+        Cache hit (combined): apply variance inflation first (preserves
+            posterior width for interaction discovery), then add a pessimistic
+            pseudo-observation (asymmetric downward shift). Net effect: one
+            real observation is effectively replaced by a pessimistic one,
+            shifting the mean down while largely preserving posterior width.
         """
         if is_novel:
             for n in path:
@@ -595,6 +620,9 @@ class MCTS_TS:
                 n.n_visits += 1
         else:
             # Cache hit
+            if self.cache_hit_mode in ("pessimistic", "combined"):
+                pess = self._pessimistic_value()
+
             for n in path:
                 n.n_visits += 1
 
@@ -608,6 +636,25 @@ class MCTS_TS:
                             n.sum_rewards = mean * new_n
                             n.sum_sq_rewards *= new_n / old_n
                             n.n_obs = new_n
+                elif self.cache_hit_mode == "pessimistic":
+                    # Inject pessimistic pseudo-observation to shift mean down
+                    n.n_obs += 1
+                    n.sum_rewards += pess
+                    n.sum_sq_rewards += pess * pess
+                elif self.cache_hit_mode == "combined":
+                    # Step 1: variance inflation — decay n_obs to widen posterior
+                    if n.n_obs > 1:
+                        old_n = n.n_obs
+                        new_n = max(1, int(old_n * self.variance_decay))
+                        if new_n < old_n:
+                            mean = n.sum_rewards / old_n
+                            n.sum_rewards = mean * new_n
+                            n.sum_sq_rewards *= new_n / old_n
+                            n.n_obs = new_n
+                    # Step 2: mild pessimistic — add one pessimistic observation
+                    n.n_obs += 1
+                    n.sum_rewards += pess
+                    n.sum_sq_rewards += pess * pess
 
     def _update_rollout_ts_stats(
         self, trajectory: list[tuple[int, int, int]], reward: float
