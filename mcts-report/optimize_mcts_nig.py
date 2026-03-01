@@ -588,6 +588,16 @@ class MCTS_NIG:
         else:
             if self.cache_hit_mode in ("pessimistic", "combined"):
                 pess = self._pessimistic_value()
+            if self.cache_hit_mode in ("adaptive_pessimistic", "adaptive_combined"):
+                g_mean = self._global_mean()
+                if self._novel_reward_count < 2:
+                    g_std = math.sqrt(self.ts_prior_var)
+                else:
+                    emp_var = (
+                        self._novel_reward_sq_sum / self._novel_reward_count
+                        - g_mean * g_mean
+                    )
+                    g_std = math.sqrt(max(emp_var, 1e-8))
 
             for n in path:
                 n.n_visits += 1
@@ -617,6 +627,30 @@ class MCTS_NIG:
                     n.n_obs += 1
                     n.sum_rewards += pess
                     n.sum_sq_rewards += pess * pess
+                elif self.cache_hit_mode == "adaptive_pessimistic":
+                    novelty_rate = n.n_obs / max(1, n.n_visits)
+                    exhaustion = 1.0 - novelty_rate
+                    pess_value = g_mean - exhaustion * g_std
+                    n.n_obs += 1
+                    n.sum_rewards += pess_value
+                    n.sum_sq_rewards += pess_value * pess_value
+                elif self.cache_hit_mode == "adaptive_combined":
+                    # Variance inflation (same as combined)
+                    if n.n_obs > 1:
+                        old_n = n.n_obs
+                        new_n = max(1, int(old_n * self.variance_decay))
+                        if new_n < old_n:
+                            mean = n.sum_rewards / old_n
+                            n.sum_rewards = mean * new_n
+                            n.sum_sq_rewards *= new_n / old_n
+                            n.n_obs = new_n
+                    # Adaptive pessimistic
+                    novelty_rate = n.n_obs / max(1, n.n_visits)
+                    exhaustion = 1.0 - novelty_rate
+                    pess_value = g_mean - exhaustion * g_std
+                    n.n_obs += 1
+                    n.sum_rewards += pess_value
+                    n.sum_sq_rewards += pess_value * pess_value
 
     def _update_rollout_ts_stats(
         self, trajectory: list[tuple[int, int, int]], reward: float
