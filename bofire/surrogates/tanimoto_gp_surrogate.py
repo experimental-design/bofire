@@ -28,10 +28,15 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
 
     @property
     def re_init_kwargs(self) -> dict:
-        return {
-            "pre_computed_tanimoto": self.pre_computed_tanimoto,
-            "tanimoto_similarity_matrix": self.tanimoto_similarity_matrix,
-        }
+
+        re_init_kwargs = super().re_init_kwargs
+        re_init_kwargs.update(
+            {
+                "pre_computed_tanimoto": self.pre_computed_tanimoto,
+                "tanimoto_similarity_matrix": self.tanimoto_similarity_matrix,
+            }
+        )
+        return re_init_kwargs
 
     def _fit_botorch(
         self,
