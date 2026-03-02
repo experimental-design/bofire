@@ -376,9 +376,6 @@ class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
     pw_k0: float
     pw_alpha: float
     max_rollout_retries: int
-    adaptive_p_stop: bool
-    p_stop_warmup: int
-    p_stop_temperature: float
     q: int
     raw_samples: int
     num_restarts: int
@@ -705,9 +702,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 pw_k0=2.0,
                 pw_alpha=0.6,
                 max_rollout_retries=3,
-                adaptive_p_stop=True,
-                p_stop_warmup=20,
-                p_stop_temperature=0.25,
                 q=candidate_count,
                 raw_samples=self.n_raw_samples,
                 num_restarts=self.n_restarts,

@@ -168,7 +168,6 @@ class RandomStrategy(Strategy):
                 # to sample valid NChooseK combinations.
                 reward_fn=lambda x, y: 0.0,
                 rollout_mode="uniform",
-                adaptive_p_stop=False,
             )
 
             # now we sample the combinations
