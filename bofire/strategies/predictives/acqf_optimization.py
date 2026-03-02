@@ -364,7 +364,13 @@ class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
     bounds: Tensor
     nchooseks: list[tuple[list[int], int, int]] | None
     cat_dims: Dict[int, List[float]] | None
-    c_uct: float
+    nig_alpha0: float
+    ts_prior_var: float
+    adaptive_prior_var: bool
+    cache_hit_mode: str
+    variance_decay: float
+    rollout_mode: str
+    adaptive_n0: bool
     p_stop_rollout: float
     num_iterations: int
     pw_k0: float
@@ -373,11 +379,6 @@ class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
     adaptive_p_stop: bool
     p_stop_warmup: int
     p_stop_temperature: float
-    normalize_rewards: bool
-    rollout_policy: bool
-    rollout_epsilon: float
-    rollout_tau: float
-    rollout_novelty_weight: float
     q: int
     raw_samples: int
     num_restarts: int
@@ -692,7 +693,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
                 },
-                c_uct=0.01,
+                nig_alpha0=1.0,
+                ts_prior_var=1.0,
+                adaptive_prior_var=True,
+                cache_hit_mode="variance_inflation",
+                variance_decay=0.95,
+                rollout_mode="ts_group_action",
+                adaptive_n0=False,
                 p_stop_rollout=0.35,
                 num_iterations=300,
                 pw_k0=2.0,
@@ -701,11 +708,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 adaptive_p_stop=True,
                 p_stop_warmup=20,
                 p_stop_temperature=0.25,
-                normalize_rewards=True,
-                rollout_policy=True,
-                rollout_epsilon=0.3,
-                rollout_tau=1.0,
-                rollout_novelty_weight=1.0,
                 q=candidate_count,
                 raw_samples=self.n_raw_samples,
                 num_restarts=self.n_restarts,

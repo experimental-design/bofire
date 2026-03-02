@@ -1,5 +1,6 @@
-"""Tests for optimize_mcts module."""
+"""Tests for optimize_mcts module (NIG Thompson Sampling version)."""
 
+import math
 import random as stdlib_random
 
 import pytest
@@ -344,7 +345,9 @@ class TestNode:
             group_idx=0,
         )
         assert node.n_visits == 0
-        assert node.w_total == 0.0
+        assert node.n_obs == 0
+        assert node.sum_rewards == 0.0
+        assert node.sum_sq_rewards == 0.0
         assert node.children == {}
 
     def test_explicit_values(self):
@@ -352,14 +355,18 @@ class TestNode:
             partial_by_group=((0, 1), (0,)),
             stopped_by_group=(True, False),
             group_idx=2,
+            n_obs=5,
+            sum_rewards=10.0,
+            sum_sq_rewards=30.0,
             n_visits=10,
-            w_total=5.5,
         )
         assert node.partial_by_group == ((0, 1), (0,))
         assert node.stopped_by_group == (True, False)
         assert node.group_idx == 2
+        assert node.n_obs == 5
+        assert node.sum_rewards == 10.0
+        assert node.sum_sq_rewards == 30.0
         assert node.n_visits == 10
-        assert node.w_total == 5.5
 
     # --- is_terminal ---
 
@@ -423,46 +430,6 @@ class TestNode:
         assert node_before.is_terminal(gs) is False
         assert node_after.is_terminal(gs) is True
 
-    # --- mean_value ---
-
-    def test_mean_value_zero_visits(self):
-        node = Node(
-            partial_by_group=((),),
-            stopped_by_group=(False,),
-            group_idx=0,
-        )
-        assert node.mean_value() == 0.0
-
-    def test_mean_value_with_visits(self):
-        node = Node(
-            partial_by_group=((),),
-            stopped_by_group=(False,),
-            group_idx=0,
-            n_visits=4,
-            w_total=10.0,
-        )
-        assert node.mean_value() == pytest.approx(2.5)
-
-    def test_mean_value_negative_reward(self):
-        node = Node(
-            partial_by_group=((),),
-            stopped_by_group=(False,),
-            group_idx=0,
-            n_visits=2,
-            w_total=-6.0,
-        )
-        assert node.mean_value() == pytest.approx(-3.0)
-
-    def test_mean_value_single_visit(self):
-        node = Node(
-            partial_by_group=((),),
-            stopped_by_group=(False,),
-            group_idx=0,
-            n_visits=1,
-            w_total=7.0,
-        )
-        assert node.mean_value() == pytest.approx(7.0)
-
     # --- children dict ---
 
     def test_children_independent_per_node(self):
@@ -510,7 +477,7 @@ class TestNode:
 
     # --- mutability ---
 
-    def test_mutable_n_visits_and_w_total(self):
+    def test_mutable_nig_stats(self):
         """Node is a regular (non-frozen) dataclass, so stats are mutable."""
         node = Node(
             partial_by_group=((),),
@@ -518,9 +485,13 @@ class TestNode:
             group_idx=0,
         )
         node.n_visits += 1
-        node.w_total += 3.5
+        node.n_obs += 1
+        node.sum_rewards += 3.5
+        node.sum_sq_rewards += 3.5 * 3.5
         assert node.n_visits == 1
-        assert node.w_total == 3.5
+        assert node.n_obs == 1
+        assert node.sum_rewards == 3.5
+        assert node.sum_sq_rewards == pytest.approx(12.25)
 
 
 # =============================================================================
@@ -568,7 +539,11 @@ class TestMCTS:
     def test_init_defaults(self):
         gs = self._nck_only_groups()
         mcts = MCTS(groups=gs, reward_fn=self._constant_reward())
-        assert mcts.c_uct == 0.01
+        assert mcts.nig_alpha0 == 1.0
+        assert mcts.ts_prior_var == 1.0
+        assert mcts.adaptive_prior_var is True
+        assert mcts.cache_hit_mode == "variance_inflation"
+        assert mcts.rollout_mode == "ts_group_action"
         assert mcts.p_stop_rollout == 0.35
         assert mcts.pw_k0 == 2.0
         assert mcts.pw_alpha == 0.6
@@ -580,13 +555,19 @@ class TestMCTS:
         mcts = MCTS(
             groups=gs,
             reward_fn=self._constant_reward(),
-            c_uct=2.0,
+            nig_alpha0=2.0,
+            ts_prior_var=0.5,
+            cache_hit_mode="pessimistic",
+            rollout_mode="uniform",
             p_stop_rollout=0.5,
             pw_k0=3.0,
             pw_alpha=0.7,
             seed=42,
         )
-        assert mcts.c_uct == 2.0
+        assert mcts.nig_alpha0 == 2.0
+        assert mcts.ts_prior_var == 0.5
+        assert mcts.cache_hit_mode == "pessimistic"
+        assert mcts.rollout_mode == "uniform"
         assert mcts.p_stop_rollout == 0.5
         assert mcts.pw_k0 == 3.0
         assert mcts.pw_alpha == 0.7
@@ -821,8 +802,6 @@ class TestMCTS:
     def test_get_selection_empty_partial(self):
         gs = self._nck_only_groups()
         mcts = MCTS(groups=gs, reward_fn=self._constant_reward())
-        # Stopped immediately with no picks (min_count=1 wouldn't normally allow
-        # this, but _get_selection doesn't validate)
         node = Node(partial_by_group=((),), stopped_by_group=(True,), group_idx=1)
         feats, cats = mcts._get_selection(node)
         assert feats == ()
@@ -878,27 +857,50 @@ class TestMCTS:
 
     # ---- _backpropagate ----
 
-    def test_backpropagate_updates_visits_and_reward(self):
+    def test_backpropagate_novel_updates_all_stats(self):
         gs = self._nck_only_groups()
         mcts = MCTS(groups=gs, reward_fn=self._constant_reward())
         root = mcts.root
         child = Node(partial_by_group=((0,),), stopped_by_group=(False,), group_idx=0)
         path = [root, child]
-        mcts._backpropagate(path, reward=3.0)
+        mcts._backpropagate(path, reward=3.0, is_novel=True)
         assert root.n_visits == 1
-        assert root.w_total == 3.0
+        assert root.n_obs == 1
+        assert root.sum_rewards == 3.0
+        assert root.sum_sq_rewards == pytest.approx(9.0)
         assert child.n_visits == 1
-        assert child.w_total == 3.0
+        assert child.n_obs == 1
 
-    def test_backpropagate_accumulates(self):
+    def test_backpropagate_novel_accumulates(self):
         gs = self._nck_only_groups()
         mcts = MCTS(groups=gs, reward_fn=self._constant_reward())
         root = mcts.root
         path = [root]
-        mcts._backpropagate(path, reward=2.0)
-        mcts._backpropagate(path, reward=5.0)
+        mcts._backpropagate(path, reward=2.0, is_novel=True)
+        mcts._backpropagate(path, reward=5.0, is_novel=True)
         assert root.n_visits == 2
-        assert root.w_total == pytest.approx(7.0)
+        assert root.n_obs == 2
+        assert root.sum_rewards == pytest.approx(7.0)
+        assert root.sum_sq_rewards == pytest.approx(4.0 + 25.0)
+
+    def test_backpropagate_cache_hit_no_update(self):
+        """cache_hit_mode='no_update' only increments n_visits."""
+        gs = self._nck_only_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=self._constant_reward(),
+            cache_hit_mode="no_update",
+        )
+        root = mcts.root
+        path = [root]
+        # First a novel observation
+        mcts._backpropagate(path, reward=5.0, is_novel=True)
+        assert root.n_obs == 1
+        assert root.n_visits == 1
+        # Cache hit
+        mcts._backpropagate(path, reward=5.0, is_novel=False)
+        assert root.n_obs == 1  # unchanged
+        assert root.n_visits == 2  # incremented
 
     # ---- _select_and_expand ----
 
@@ -923,7 +925,7 @@ class TestMCTS:
         # Expand several times, backpropagating to allow further expansion
         for _ in range(3):
             leaf, path = mcts._select_and_expand()
-            mcts._backpropagate(path, reward=1.0)
+            mcts._backpropagate(path, reward=1.0, is_novel=True)
         # Root should have up to 3 children (one per expansion)
         assert len(mcts.root.children) >= 2
 
@@ -984,8 +986,6 @@ class TestMCTS:
         n_iter = 25
         mcts = MCTS(groups=gs, reward_fn=self._constant_reward(), seed=0)
         mcts.run(n_iterations=n_iter)
-        # Root visits equals the number of novel (non-cached) evaluations,
-        # which is at most n_iter (cache hits skip backpropagation).
         assert 0 < mcts.root.n_visits <= n_iter
 
     def test_run_populates_cache(self):
@@ -1065,8 +1065,8 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Even after populating stats, should return fixed value
-        mcts.cardinality_stats[(0, 2)] = ActionStats(10, 50.0)
-        mcts.cardinality_stats[(0, 3)] = ActionStats(10, 30.0)
+        mcts.cardinality_stats[(0, 2)] = ActionStats(10, 50.0, 0.0)
+        mcts.cardinality_stats[(0, 3)] = ActionStats(10, 30.0, 0.0)
         mcts.reward_min = 0.0
         mcts.reward_max = 10.0
         mcts.group_rollout_counts[0] = 100
@@ -1096,9 +1096,9 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Stopping at cardinality 2 is much better than continuing to 3 or 4
-        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 500.0)  # mean=10.0
-        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 100.0)  # mean=2.0
-        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 50.0)  # mean=1.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 500.0, 0.0)  # mean=10.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 100.0, 0.0)  # mean=2.0
+        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 50.0, 0.0)  # mean=1.0
         mcts.reward_min = 0.0
         mcts.reward_max = 15.0
         mcts.group_rollout_counts[0] = 100
@@ -1117,8 +1117,8 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Stopping at cardinality 2 is much worse than continuing to 3
-        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 100.0)  # mean=2.0
-        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 500.0)  # mean=10.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 100.0, 0.0)  # mean=2.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 500.0, 0.0)  # mean=10.0
         mcts.reward_min = 0.0
         mcts.reward_max = 15.0
         mcts.group_rollout_counts[0] = 100
@@ -1136,9 +1136,9 @@ class TestAdaptivePStop:
             p_stop_warmup=100,
             seed=0,
         )
-        # Stop much better than continue → p_learned should be high
-        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 500.0)  # mean=10.0
-        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 50.0)  # mean=1.0
+        # Stop much better than continue -> p_learned should be high
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 500.0, 0.0)  # mean=10.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 50.0, 0.0)  # mean=1.0
         mcts.reward_min = 0.0
         mcts.reward_max = 15.0
 
@@ -1170,14 +1170,14 @@ class TestAdaptivePStop:
         # Stopping at 2 gives mean=5.0
         # Continuing to 3 gives mean=3.0, but continuing to 4 gives mean=8.0
         # So E_continue should be 8.0 (max), making continue look better
-        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 250.0)  # mean=5.0
-        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 150.0)  # mean=3.0
-        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 400.0)  # mean=8.0
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 250.0, 0.0)  # mean=5.0
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 150.0, 0.0)  # mean=3.0
+        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 400.0, 0.0)  # mean=8.0
         mcts.reward_min = 0.0
         mcts.reward_max = 10.0
         mcts.group_rollout_counts[0] = 100
         p = mcts._compute_adaptive_p_stop(0, 2)
-        # Since E_continue=8.0 > E_stop=5.0, should favor continuing → p < 0.5
+        # Since E_continue=8.0 > E_stop=5.0, should favor continuing -> p < 0.5
         assert p < 0.5
 
     def test_adaptive_p_stop_no_continue_data_returns_prior(self):
@@ -1192,7 +1192,7 @@ class TestAdaptivePStop:
             seed=0,
         )
         # Only have data for stopping at cardinality 4 (max), no higher possible
-        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 250.0)
+        mcts.cardinality_stats[(0, 4)] = ActionStats(50, 250.0, 0.0)
         mcts.reward_min = 0.0
         mcts.reward_max = 10.0
         mcts.group_rollout_counts[0] = 100
@@ -1208,8 +1208,8 @@ class TestAdaptivePStop:
             p_stop_rollout=0.35,
             seed=0,
         )
-        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 250.0)
-        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 250.0)
+        mcts.cardinality_stats[(0, 2)] = ActionStats(50, 250.0, 0.0)
+        mcts.cardinality_stats[(0, 3)] = ActionStats(50, 250.0, 0.0)
         mcts.reward_min = 5.0
         mcts.reward_max = 5.0  # zero range
         mcts.group_rollout_counts[0] = 100
@@ -1226,12 +1226,14 @@ class TestAdaptivePStop:
         )
         # Features [0, 1, 2, 3, 4], pick 2 features: cardinality = 2
         mcts._update_cardinality_stats(10.0, (0, 3))
-        assert mcts.cardinality_stats[(0, 2)] == ActionStats(1, 10.0)
+        assert mcts.cardinality_stats[(0, 2)].n_obs == 1
+        assert mcts.cardinality_stats[(0, 2)].sum_rewards == 10.0
         assert mcts.group_rollout_counts[0] == 1
 
         # Another update with different cardinality
         mcts._update_cardinality_stats(5.0, (1,))
-        assert mcts.cardinality_stats[(0, 1)] == ActionStats(1, 5.0)
+        assert mcts.cardinality_stats[(0, 1)].n_obs == 1
+        assert mcts.cardinality_stats[(0, 1)].sum_rewards == 5.0
         assert mcts.group_rollout_counts[0] == 2
 
     def test_update_cardinality_stats_multiple_groups(self):
@@ -1246,8 +1248,10 @@ class TestAdaptivePStop:
         # Group 0 features=[0,1,2], Group 1 features=[10,11,12]
         # Select 0 and 1 from group 0 (cardinality=2), 10 from group 1 (cardinality=1)
         mcts._update_cardinality_stats(7.0, (0, 1, 10))
-        assert mcts.cardinality_stats[(0, 2)] == ActionStats(1, 7.0)
-        assert mcts.cardinality_stats[(1, 1)] == ActionStats(1, 7.0)
+        assert mcts.cardinality_stats[(0, 2)].n_obs == 1
+        assert mcts.cardinality_stats[(0, 2)].sum_rewards == 7.0
+        assert mcts.cardinality_stats[(1, 1)].n_obs == 1
+        assert mcts.cardinality_stats[(1, 1)].sum_rewards == 7.0
         assert mcts.group_rollout_counts[0] == 1
         assert mcts.group_rollout_counts[1] == 1
 
@@ -1262,7 +1266,8 @@ class TestAdaptivePStop:
         )
         mcts._update_cardinality_stats(10.0, (0, 3))
         mcts._update_cardinality_stats(6.0, (1, 4))
-        assert mcts.cardinality_stats[(0, 2)] == ActionStats(2, 16.0)
+        assert mcts.cardinality_stats[(0, 2)].n_obs == 2
+        assert mcts.cardinality_stats[(0, 2)].sum_rewards == 16.0
         assert mcts.group_rollout_counts[0] == 2
 
     def test_run_with_adaptive_populates_stats(self):
@@ -1314,8 +1319,8 @@ class TestAdaptivePStop:
         }
 
         def setup_stats(mcts):
-            mcts.cardinality_stats[(0, 2)] = ActionStats(50, 400.0)  # mean=8.0
-            mcts.cardinality_stats[(0, 3)] = ActionStats(50, 200.0)  # mean=4.0
+            mcts.cardinality_stats[(0, 2)] = ActionStats(50, 400.0, 0.0)  # mean=8.0
+            mcts.cardinality_stats[(0, 3)] = ActionStats(50, 200.0, 0.0)  # mean=4.0
             mcts.reward_min = 0.0
             mcts.reward_max = 10.0
             mcts.group_rollout_counts[0] = 100
@@ -1331,339 +1336,380 @@ class TestAdaptivePStop:
         # Both should be > 0.5 (stopping is better)
         assert p_low > 0.5
         assert p_high > 0.5
-        # Low temp → more extreme (closer to 1.0)
+        # Low temp -> more extreme (closer to 1.0)
         assert p_low > p_high
 
 
 # =============================================================================
-# Reward normalization tests
+# NIG Sampling tests
 # =============================================================================
 
 
-class TestRewardNormalization:
-    """Tests for the MCTS reward normalization feature."""
+class TestNIGSampling:
+    """Tests for the NIG Thompson Sampling methods."""
 
     @staticmethod
     def _simple_groups() -> Groups:
-        """Single NChooseK group: pick 1-2 from [0,1,2]."""
         return Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=2)])
 
-    def test_normalize_reward_basic(self):
-        """Verify [0, 1] mapping after seeing min and max rewards."""
-        groups = self._simple_groups()
-        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts.reward_min = 10.0
-        mcts.reward_max = 110.0
-        assert mcts._normalize_reward(10.0) == pytest.approx(0.0)
-        assert mcts._normalize_reward(110.0) == pytest.approx(1.0)
-        assert mcts._normalize_reward(60.0) == pytest.approx(0.5)
+    def test_student_t_sample_returns_float(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=42)
+        sample = mcts._student_t_sample(df=4.0, loc=5.0, scale=1.0)
+        assert isinstance(sample, float)
 
-    def test_normalize_reward_zero_range(self):
-        """Returns 0.5 when all rewards are identical (range is zero)."""
-        groups = self._simple_groups()
-        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts.reward_min = 42.0
-        mcts.reward_max = 42.0
-        assert mcts._normalize_reward(42.0) == pytest.approx(0.5)
+    def test_student_t_sample_deterministic_seed(self):
+        gs = self._simple_groups()
+        samples = []
+        for _ in range(2):
+            mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=42)
+            samples.append(mcts._student_t_sample(df=4.0, loc=5.0, scale=1.0))
+        assert samples[0] == samples[1]
 
-    def test_normalize_reward_negative_rewards(self):
-        """Works correctly with negative reward ranges."""
-        groups = self._simple_groups()
-        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts.reward_min = -100.0
-        mcts.reward_max = -10.0
-        assert mcts._normalize_reward(-100.0) == pytest.approx(0.0)
-        assert mcts._normalize_reward(-10.0) == pytest.approx(1.0)
-        assert mcts._normalize_reward(-55.0) == pytest.approx(0.5)
+    def test_student_t_sample_centered(self):
+        """Student-t samples should be centered around loc."""
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        loc = 10.0
+        samples = [
+            mcts._student_t_sample(df=10.0, loc=loc, scale=1.0) for _ in range(5000)
+        ]
+        mean = sum(samples) / len(samples)
+        assert abs(mean - loc) < 0.5  # should be close to loc
 
-    def test_normalization_disabled_backpropagates_raw(self):
-        """When normalize_rewards=False, w_total accumulates raw rewards."""
-        groups = self._simple_groups()
-        rewards = iter([50.0, 100.0])
+    def test_nig_sample_prior_only(self):
+        """With no observations, _nig_sample returns from the prior."""
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=42)
+        sample = mcts._nig_sample(n_obs=0, sum_rewards=0.0, sum_sq_rewards=0.0)
+        assert isinstance(sample, float)
+
+    def test_nig_sample_with_data_concentrates(self):
+        """With many consistent observations, samples should cluster near mean."""
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        # Simulate 100 observations of reward=5.0
+        n = 100
+        mean_reward = 5.0
+        sum_r = n * mean_reward
+        sum_sq = n * mean_reward * mean_reward
+        samples = [mcts._nig_sample(n, sum_r, sum_sq) for _ in range(1000)]
+        sample_mean = sum(samples) / len(samples)
+        assert abs(sample_mean - mean_reward) < 0.5
+
+    def test_nig_sample_wide_with_few_observations(self):
+        """With few observations, samples should be more spread out."""
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        # 2 observations with different values
+        samples_few = [mcts._nig_sample(2, 10.0, 52.0) for _ in range(1000)]
+        # 100 observations tightly clustered around 5.0
+        samples_many = [mcts._nig_sample(100, 500.0, 2500.0) for _ in range(1000)]
+        var_few = sum((s - sum(samples_few) / 1000) ** 2 for s in samples_few) / 1000
+        var_many = sum((s - sum(samples_many) / 1000) ** 2 for s in samples_many) / 1000
+        assert var_few > var_many
+
+    def test_global_mean_no_data(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        assert mcts._global_mean() == 0.0
+
+    def test_global_mean_with_data(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        mcts._novel_reward_sum = 30.0
+        mcts._novel_reward_count = 3
+        assert mcts._global_mean() == pytest.approx(10.0)
+
+    def test_prior_var_fixed(self):
+        gs = self._simple_groups()
         mcts = MCTS(
-            groups=groups,
-            reward_fn=lambda f, c: next(rewards),
-            normalize_rewards=False,
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            adaptive_prior_var=False,
+            ts_prior_var=2.5,
             seed=0,
         )
-        mcts.run(n_iterations=2)
-        # Root should have accumulated raw rewards
-        assert mcts.root.w_total == pytest.approx(50.0 + 100.0)
+        assert mcts._prior_var() == 2.5
 
-    def test_normalization_enabled_backpropagates_normalized(self):
-        """When normalize_rewards=True, w_total accumulates normalized rewards in [0, 1]."""
-        groups = self._simple_groups()
-        call_count = 0
-        reward_values = [50.0, 100.0, 75.0]
-
-        def reward_fn(f, c):
-            nonlocal call_count
-            idx = min(call_count, len(reward_values) - 1)
-            call_count += 1
-            return reward_values[idx]
-
+    def test_prior_var_adaptive_insufficient_data(self):
+        gs = self._simple_groups()
         mcts = MCTS(
-            groups=groups,
-            reward_fn=reward_fn,
-            normalize_rewards=True,
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            adaptive_prior_var=True,
+            ts_prior_var=2.5,
             seed=0,
         )
-        mcts.run(n_iterations=3)
+        # Only 1 observation => not enough for empirical variance
+        mcts._novel_reward_count = 1
+        mcts._novel_reward_sum = 5.0
+        mcts._novel_reward_sq_sum = 25.0
+        assert mcts._prior_var() == 2.5
 
-        # All w_total values in the tree should be <= n_visits (since max normalized = 1.0)
-        def check_node(node):
-            if node.n_visits > 0:
-                mean = node.w_total / node.n_visits
-                assert (
-                    0.0 <= mean <= 1.0 + 1e-9
-                ), f"mean_value={mean} out of [0,1] range"
-            for child in node.children.values():
-                check_node(child)
-
-        check_node(mcts.root)
-
-    def test_best_value_stays_raw(self):
-        """best_value must reflect raw reward regardless of normalization flag."""
-        groups = self._simple_groups()
-        raw_reward = 9999.0
+    def test_prior_var_adaptive_with_data(self):
+        gs = self._simple_groups()
         mcts = MCTS(
-            groups=groups,
-            reward_fn=lambda f, c: raw_reward,
-            normalize_rewards=True,
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            adaptive_prior_var=True,
+            ts_prior_var=2.5,
             seed=0,
         )
-        mcts.run(n_iterations=5)
-        assert mcts.best_value == pytest.approx(raw_reward)
+        # 4 observations: [2, 4, 6, 8] => mean=5, var=5
+        mcts._novel_reward_count = 4
+        mcts._novel_reward_sum = 20.0
+        mcts._novel_reward_sq_sum = 120.0  # 4+16+36+64
+        # empirical_var = 120/4 - 5^2 = 30 - 25 = 5
+        assert mcts._prior_var() == pytest.approx(5.0)
 
-    def test_run_with_normalization_finds_optimum(self):
-        """MCTS with normalization still finds the optimum on a simple problem."""
-        g = NChooseK(features=[0, 1, 2, 3, 4], min_count=2, max_count=2)
-        groups = Groups(groups=[g])
-        target = frozenset({1, 3})
+    def test_compute_n0_fixed(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, adaptive_n0=False, seed=0)
+        assert mcts._compute_n0(10) == 1.0
 
-        def reward_fn(feats, _cats):
-            return 100.0 if set(feats) == target else 0.0
+    def test_compute_n0_adaptive(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, adaptive_n0=True, seed=0)
+        n0 = mcts._compute_n0(10)
+        assert n0 == pytest.approx(1.0 + math.log(10))
 
-        mcts = MCTS(
-            groups=groups,
-            reward_fn=reward_fn,
-            normalize_rewards=True,
-            seed=42,
-        )
-        mcts.run(n_iterations=200)
-        assert mcts.best_value == pytest.approx(100.0)
+    def test_pessimistic_value_no_data(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, ts_prior_var=4.0, seed=0)
+        # With no data: mean=0, std=sqrt(4)=2 => pessimistic=-2
+        assert mcts._pessimistic_value() == pytest.approx(-2.0)
 
-    def test_virtual_loss_with_shifted_rewards(self):
-        """Normalization fixes virtual loss dilution on shifted/negative rewards.
-
-        Without normalization, virtual loss (adding 0 reward on cache hit) dilutes
-        toward 0, which is wrong for shifted rewards. With normalization, the
-        backpropagated values are in [0, 1], so virtual loss dilutes toward 0
-        which is the minimum normalized reward — the correct behavior.
-        """
-        g = NChooseK(features=[0, 1, 2, 3], min_count=1, max_count=2)
-        groups = Groups(groups=[g])
-
-        # All rewards are large positive values; virtual loss of 0 would be
-        # extremely penalizing without normalization
-        def reward_fn(feats, _cats):
-            if set(feats) == {0, 2}:
-                return 1000.0
-            return 900.0 + len(feats)
-
-        # With normalization: virtual loss dilutes toward 0 (= worst normalized)
-        mcts_norm = MCTS(
-            groups=groups,
-            reward_fn=reward_fn,
-            normalize_rewards=True,
-            seed=0,
-        )
-        mcts_norm.run(n_iterations=150)
-
-        # Without normalization: virtual loss dilutes toward 0 (far below 900)
-        mcts_raw = MCTS(
-            groups=groups,
-            reward_fn=reward_fn,
-            normalize_rewards=False,
-            seed=0,
-        )
-        mcts_raw.run(n_iterations=150)
-
-        # Both should find the optimum given enough iterations
-        assert mcts_norm.best_value == pytest.approx(1000.0)
-        assert mcts_raw.best_value == pytest.approx(1000.0)
-
-    def test_normalize_rewards_default_is_true(self):
-        """The default value for normalize_rewards should be True."""
-        groups = self._simple_groups()
-        mcts = MCTS(groups=groups, reward_fn=lambda f, c: 0.0, seed=0)
-        assert mcts.normalize_rewards is True
+    def test_pessimistic_value_with_data(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        # Observations: mean=10, empirical_var=4, std=2
+        mcts._novel_reward_count = 10
+        mcts._novel_reward_sum = 100.0
+        mcts._novel_reward_sq_sum = 1040.0  # 10*10^2 + 10*4 = 1040 => var=104-100=4
+        pess = mcts._pessimistic_value()
+        assert pess == pytest.approx(10.0 - 2.0)
 
 
 # =============================================================================
-# Rollout policy tests
+# NIG Backpropagation tests
 # =============================================================================
 
 
-class TestRolloutPolicy:
-    """Tests for the blended softmax rollout policy."""
+class TestNIGBackpropagation:
+    """Tests for NIG-aware backpropagation with various cache-hit modes."""
+
+    @staticmethod
+    def _simple_groups() -> Groups:
+        return Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=2)])
+
+    def test_novel_updates_all_fields(self):
+        gs = self._simple_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
+        node = Node(partial_by_group=((),), stopped_by_group=(False,), group_idx=0)
+        path = [node]
+        mcts._backpropagate(path, reward=3.0, is_novel=True)
+        assert node.n_obs == 1
+        assert node.sum_rewards == 3.0
+        assert node.sum_sq_rewards == pytest.approx(9.0)
+        assert node.n_visits == 1
+
+    def test_cache_hit_variance_inflation(self):
+        gs = self._simple_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            cache_hit_mode="variance_inflation",
+            variance_decay=0.5,
+            seed=0,
+        )
+        node = Node(
+            partial_by_group=((),),
+            stopped_by_group=(False,),
+            group_idx=0,
+            n_obs=10,
+            sum_rewards=50.0,
+            sum_sq_rewards=300.0,
+            n_visits=10,
+        )
+        path = [node]
+        mcts._backpropagate(path, reward=5.0, is_novel=False)
+        # n_visits incremented
+        assert node.n_visits == 11
+        # n_obs decayed: int(10 * 0.5) = 5
+        assert node.n_obs == 5
+        # sum_rewards rescaled: mean=5.0, new_sum=5.0*5=25.0
+        assert node.sum_rewards == pytest.approx(25.0)
+
+    def test_cache_hit_pessimistic(self):
+        gs = self._simple_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            cache_hit_mode="pessimistic",
+            ts_prior_var=1.0,
+            seed=0,
+        )
+        # Set some novel reward stats so pessimistic_value is defined
+        mcts._novel_reward_count = 10
+        mcts._novel_reward_sum = 100.0
+        mcts._novel_reward_sq_sum = 1010.0  # var=1, std=1
+        pess = mcts._pessimistic_value()  # 10 - 1 = 9
+
+        node = Node(
+            partial_by_group=((),),
+            stopped_by_group=(False,),
+            group_idx=0,
+            n_obs=5,
+            sum_rewards=50.0,
+            sum_sq_rewards=510.0,
+            n_visits=5,
+        )
+        path = [node]
+        mcts._backpropagate(path, reward=10.0, is_novel=False)
+        assert node.n_visits == 6
+        assert node.n_obs == 6
+        assert node.sum_rewards == pytest.approx(50.0 + pess)
+        assert node.sum_sq_rewards == pytest.approx(510.0 + pess * pess)
+
+    def test_cache_hit_no_update_leaves_stats(self):
+        gs = self._simple_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            cache_hit_mode="no_update",
+            seed=0,
+        )
+        node = Node(
+            partial_by_group=((),),
+            stopped_by_group=(False,),
+            group_idx=0,
+            n_obs=5,
+            sum_rewards=50.0,
+            sum_sq_rewards=300.0,
+            n_visits=5,
+        )
+        path = [node]
+        mcts._backpropagate(path, reward=10.0, is_novel=False)
+        assert node.n_visits == 6
+        assert node.n_obs == 5  # unchanged
+        assert node.sum_rewards == 50.0  # unchanged
+
+    def test_cache_hit_combined(self):
+        """Combined mode does both variance inflation and pessimistic."""
+        gs = self._simple_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: 0.0,
+            cache_hit_mode="combined",
+            variance_decay=0.5,
+            ts_prior_var=1.0,
+            seed=0,
+        )
+        mcts._novel_reward_count = 10
+        mcts._novel_reward_sum = 100.0
+        mcts._novel_reward_sq_sum = 1010.0  # var=1, pessimistic_value = 10 - 1 = 9
+
+        node = Node(
+            partial_by_group=((),),
+            stopped_by_group=(False,),
+            group_idx=0,
+            n_obs=10,
+            sum_rewards=100.0,
+            sum_sq_rewards=1010.0,
+            n_visits=10,
+        )
+        path = [node]
+        mcts._backpropagate(path, reward=10.0, is_novel=False)
+        assert node.n_visits == 11
+        # Variance inflation: n_obs 10 -> 5, then pessimistic adds 1 -> 6
+        assert node.n_obs == 6
+
+
+# =============================================================================
+# NIG Rollout tests
+# =============================================================================
+
+
+class TestNIGRollout:
+    """Tests for NIG Thompson Sampling rollout."""
 
     @staticmethod
     def _nck_groups() -> Groups:
-        """Single NChooseK group: 5 features, pick 1-3."""
         return Groups(
             groups=[NChooseK(features=[0, 1, 2, 3, 4], min_count=1, max_count=3)]
         )
 
     @staticmethod
     def _mixed_groups() -> Groups:
-        """NChooseK([0,1,2], 1, 2) + Categorical(dim=3, [0.0, 1.0])."""
         nck = NChooseK(features=[0, 1, 2], min_count=1, max_count=2)
         cat = Categorical(dim=3, values=[0.0, 1.0])
         return Groups(groups=[nck, cat])
 
-    # ---- Scoring tests ----
-
-    def test_score_rollout_actions_no_stats(self):
-        """With no stats, all scores equal novelty_weight."""
+    def test_ts_rollout_returns_legal_action(self):
         gs = self._nck_groups()
         mcts = MCTS(
             groups=gs,
             reward_fn=lambda f, c: 0.0,
-            rollout_novelty_weight=2.0,
-            seed=0,
+            rollout_mode="ts_group_action",
+            seed=42,
         )
-        scores = mcts._score_rollout_actions(0, [0, 1, 2, STOP])
-        for a in [0, 1, 2, STOP]:
-            assert scores[a] == pytest.approx(2.0)
-
-    def test_score_rollout_actions_with_stats(self):
-        """Mean + novelty bonus computed correctly."""
-        gs = self._nck_groups()
-        mcts = MCTS(
-            groups=gs,
-            reward_fn=lambda f, c: 0.0,
-            rollout_novelty_weight=1.0,
-            seed=0,
-        )
-        # Seed stats: action 0 visited 3 times with total reward 9.0
-        mcts.rollout_stats[(0, 0)] = ActionStats(3, 9.0)
-        scores = mcts._score_rollout_actions(0, [0, 1])
-        # Action 0: mean=3.0, novelty=1/sqrt(4)=0.5
-        assert scores[0] == pytest.approx(3.0 + 0.5)
-        # Action 1: no stats, score = novelty_weight = 1.0
-        assert scores[1] == pytest.approx(1.0)
-
-    def test_score_rollout_actions_includes_stop(self):
-        """STOP is scored like any other action."""
-        gs = self._nck_groups()
-        mcts = MCTS(
-            groups=gs,
-            reward_fn=lambda f, c: 0.0,
-            rollout_novelty_weight=1.0,
-            seed=0,
-        )
-        mcts.rollout_stats[(0, STOP)] = ActionStats(4, 20.0)
-        scores = mcts._score_rollout_actions(0, [0, STOP])
-        # STOP: mean=5.0, novelty=1/sqrt(5)
-        import math
-
-        assert scores[STOP] == pytest.approx(5.0 + 1.0 / math.sqrt(5))
-        # Action 0: no stats
-        assert scores[0] == pytest.approx(1.0)
-
-    # ---- Sampling tests ----
-
-    def test_sample_rollout_action_returns_legal(self):
-        """Returned action is in legal_actions."""
-        gs = self._nck_groups()
-        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=42)
         legal = [0, 1, 2, STOP]
         for _ in range(20):
-            action = mcts._sample_rollout_action(0, legal)
+            action = mcts._ts_sample_rollout_action(0, legal)
             assert action in legal
 
-    def test_sample_rollout_action_deterministic_seed(self):
-        """Same seed produces same action."""
-        gs = self._nck_groups()
-        actions = []
-        for _ in range(2):
-            mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=77)
-            actions.append(mcts._sample_rollout_action(0, [0, 1, 2]))
-        assert actions[0] == actions[1]
-
-    def test_sample_rollout_action_respects_epsilon(self):
-        """With epsilon=1.0, distribution is uniform."""
-        gs = self._nck_groups()
+    def test_ts_rollout_biases_toward_high_reward(self):
+        """After seeding TS stats, rollout should favor high-reward actions."""
+        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=1)])
         mcts = MCTS(
             groups=gs,
             reward_fn=lambda f, c: 0.0,
-            rollout_epsilon=1.0,
-            seed=0,
+            rollout_mode="ts_group_action",
+            seed=None,
         )
-        # Seed stats to make action 0 strongly preferred by policy
-        mcts.rollout_stats[(0, 0)] = ActionStats(100, 10000.0)
+        # Make action 2 strongly preferred (many observations with high reward)
+        mcts.rollout_ts_stats[(0, 2)] = ActionStats(100, 1000.0, 10000.0)  # mean=10
+        mcts.rollout_ts_stats[(0, 0)] = ActionStats(100, 100.0, 100.0)  # mean=1
+        mcts.rollout_ts_stats[(0, 1)] = ActionStats(100, 100.0, 100.0)  # mean=1
+        # Set global stats so NIG prior is reasonable
+        mcts._novel_reward_count = 300
+        mcts._novel_reward_sum = 1200.0
+        mcts._novel_reward_sq_sum = 10200.0
+
         counts = {0: 0, 1: 0, 2: 0}
-        for _ in range(3000):
-            a = mcts._sample_rollout_action(0, [0, 1, 2])
-            counts[a] += 1
-        # With epsilon=1.0, should be roughly uniform (each ~1000)
-        for a in [0, 1, 2]:
-            assert counts[a] > 700, f"Action {a} count {counts[a]} too low for uniform"
+        for _ in range(500):
+            feats, _cats, _traj = mcts._rollout(mcts.root)
+            for f in feats:
+                counts[f] += 1
+        assert counts[2] > counts[0]
+        assert counts[2] > counts[1]
 
-    def test_sample_rollout_action_respects_tau(self):
-        """Low tau concentrates on the best action."""
-        gs = self._nck_groups()
-        mcts = MCTS(
-            groups=gs,
-            reward_fn=lambda f, c: 0.0,
-            rollout_epsilon=0.0,
-            rollout_tau=0.01,  # Very low temperature
-            seed=0,
-        )
-        # Action 0 is much better
-        mcts.rollout_stats[(0, 0)] = ActionStats(50, 500.0)  # mean = 10.0
-        mcts.rollout_stats[(0, 1)] = ActionStats(50, 50.0)  # mean = 1.0
-        mcts.rollout_stats[(0, 2)] = ActionStats(50, 50.0)  # mean = 1.0
-        counts = {0: 0, 1: 0, 2: 0}
-        for _ in range(1000):
-            a = mcts._sample_rollout_action(0, [0, 1, 2])
-            counts[a] += 1
-        # Action 0 should dominate
-        assert (
-            counts[0] > 900
-        ), f"Action 0 should dominate with low tau, got {counts[0]}"
-
-    # ---- Stats update tests ----
-
-    def test_update_rollout_stats_basic(self):
-        """Trajectory updates dict correctly."""
+    def test_update_rollout_ts_stats(self):
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
         trajectory = [TrajectoryStep(0, 1), TrajectoryStep(0, 2)]
-        mcts._update_rollout_stats(trajectory, 5.0)
-        assert mcts.rollout_stats[(0, 1)] == ActionStats(1, 5.0)
-        assert mcts.rollout_stats[(0, 2)] == ActionStats(1, 5.0)
+        mcts._update_rollout_ts_stats(trajectory, 5.0)
+        assert mcts.rollout_ts_stats[(0, 1)] == ActionStats(1, 5.0, 25.0)
+        assert mcts.rollout_ts_stats[(0, 2)] == ActionStats(1, 5.0, 25.0)
 
-    def test_update_rollout_stats_accumulates(self):
-        """Multiple updates accumulate."""
+    def test_update_rollout_ts_stats_accumulates(self):
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts._update_rollout_stats([TrajectoryStep(0, 1)], 3.0)
-        mcts._update_rollout_stats([TrajectoryStep(0, 1)], 7.0)
-        assert mcts.rollout_stats[(0, 1)] == ActionStats(2, 10.0)
+        mcts._update_rollout_ts_stats([TrajectoryStep(0, 1)], 3.0)
+        mcts._update_rollout_ts_stats([TrajectoryStep(0, 1)], 7.0)
+        stats = mcts.rollout_ts_stats[(0, 1)]
+        assert stats.n_obs == 2
+        assert stats.sum_rewards == 10.0
+        assert stats.sum_sq_rewards == pytest.approx(9.0 + 49.0)
 
-    def test_update_rollout_stats_empty_trajectory(self):
-        """No-op for empty trajectory."""
+    def test_update_rollout_ts_stats_empty_trajectory(self):
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        mcts._update_rollout_stats([], 5.0)
-        assert mcts.rollout_stats == {}
-
-    # ---- Rollout integration tests ----
+        mcts._update_rollout_ts_stats([], 5.0)
+        assert mcts.rollout_ts_stats == {}
 
     def test_rollout_returns_three_tuple(self):
-        """Rollout always returns (feats, cats, trajectory)."""
         gs = self._mixed_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=42)
         result = mcts._rollout(mcts.root)
@@ -1674,71 +1720,61 @@ class TestRolloutPolicy:
         assert isinstance(trajectory, list)
 
     def test_rollout_trajectory_records_actions(self):
-        """Trajectory is non-empty for non-trivial groups."""
         gs = self._nck_groups()
         mcts = MCTS(
             groups=gs,
             reward_fn=lambda f, c: 0.0,
-            rollout_policy=True,
+            rollout_mode="ts_group_action",
             seed=42,
         )
         _feats, _cats, trajectory = mcts._rollout(mcts.root)
         assert len(trajectory) > 0
-        # All entries are (group_idx, action) pairs
         for g, a in trajectory:
             assert isinstance(g, int)
             assert isinstance(a, int)
 
-    def test_rollout_policy_disabled_still_records_trajectory(self):
-        """Trajectory collected even when rollout_policy=False."""
+    def test_uniform_rollout_records_trajectory(self):
+        """Trajectory collected in uniform rollout mode too."""
         gs = self._nck_groups()
         mcts = MCTS(
             groups=gs,
             reward_fn=lambda f, c: 0.0,
-            rollout_policy=False,
+            rollout_mode="uniform",
             seed=42,
         )
         _feats, _cats, trajectory = mcts._rollout(mcts.root)
         assert len(trajectory) > 0
 
-    def test_rollout_policy_uses_learned_stats(self):
-        """After seeding stats, policy biases toward good actions."""
-        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=1)])
+    def test_rollout_ts_stats_populated_after_run(self):
+        """rollout_ts_stats is non-empty after run() with ts_group_action mode."""
+        gs = self._nck_groups()
         mcts = MCTS(
             groups=gs,
-            reward_fn=lambda f, c: 0.0,
-            rollout_policy=True,
-            rollout_epsilon=0.0,
-            rollout_tau=0.01,
+            reward_fn=lambda f, c: float(len(f)),
+            rollout_mode="ts_group_action",
             seed=0,
         )
-        # Make action 2 strongly preferred
-        mcts.rollout_stats[(0, 2)] = ActionStats(100, 1000.0)  # mean = 10.0
-        mcts.rollout_stats[(0, 0)] = ActionStats(100, 100.0)  # mean = 1.0
-        mcts.rollout_stats[(0, 1)] = ActionStats(100, 100.0)  # mean = 1.0
+        mcts.run(n_iterations=50)
+        assert len(mcts.rollout_ts_stats) > 0
 
-        counts = {0: 0, 1: 0, 2: 0}
-        for _ in range(500):
-            mcts_i = MCTS(
-                groups=gs,
-                reward_fn=lambda f, c: 0.0,
-                rollout_policy=True,
-                rollout_epsilon=0.0,
-                rollout_tau=0.01,
-                seed=None,
-            )
-            mcts_i.rollout_stats = dict(mcts.rollout_stats)
-            feats, _cats, _traj = mcts_i._rollout(mcts_i.root)
-            for f in feats:
-                counts[f] += 1
-        # Action 2 (feature 2) should be picked most often
-        assert counts[2] > counts[0]
-        assert counts[2] > counts[1]
+    def test_run_with_uniform_rollout(self):
+        """Verify MCTS works with uniform rollout mode."""
+        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=2)])
 
-    # ---- End-to-end tests ----
+        def reward_fn(feats, _cats):
+            return float(len(feats)) * 10.0
 
-    def test_run_with_rollout_policy_converges(self):
-        """Convergence on needle problem with rollout policy enabled."""
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=reward_fn,
+            rollout_mode="uniform",
+            seed=42,
+        )
+        _f, _c, val = mcts.run(n_iterations=50)
+        assert val == 20.0
+
+    def test_run_with_ts_rollout_converges(self):
+        """Convergence on needle problem with TS rollout."""
         g = NChooseK(features=list(range(10)), min_count=2, max_count=3)
         gs = Groups(groups=[g])
         target = {3, 7}
@@ -1754,48 +1790,16 @@ class TestRolloutPolicy:
         mcts = MCTS(
             groups=gs,
             reward_fn=reward_fn,
-            rollout_policy=True,
-            rollout_epsilon=0.3,
-            rollout_tau=1.0,
+            rollout_mode="ts_group_action",
             seed=42,
         )
         _feats, _cats, val = mcts.run(n_iterations=300)
         assert val == 100.0
 
-    def test_rollout_stats_populated_after_run(self):
-        """rollout_stats is non-empty after run()."""
-        gs = self._nck_groups()
-        mcts = MCTS(
-            groups=gs,
-            reward_fn=lambda f, c: float(len(f)),
-            rollout_policy=True,
-            seed=0,
-        )
-        mcts.run(n_iterations=50)
-        assert len(mcts.rollout_stats) > 0
-
-    def test_run_without_rollout_policy_unchanged(self):
-        """With rollout_policy=False, results match old behavior (seed-deterministic)."""
-        gs = Groups(groups=[NChooseK(features=[0, 1, 2], min_count=1, max_count=2)])
-
-        def reward_fn(feats, _cats):
-            return float(len(feats)) * 10.0
-
-        # Run with rollout_policy=False (default)
-        mcts1 = MCTS(groups=gs, reward_fn=reward_fn, rollout_policy=False, seed=42)
-        _f1, _c1, val1 = mcts1.run(n_iterations=50)
-
-        # Run again with same seed
-        mcts2 = MCTS(groups=gs, reward_fn=reward_fn, rollout_policy=False, seed=42)
-        _f2, _c2, val2 = mcts2.run(n_iterations=50)
-
-        assert val1 == val2
-
-    def test_rollout_policy_default_is_true(self):
-        """The default value for rollout_policy should be True."""
+    def test_rollout_mode_default_is_ts_group_action(self):
         gs = self._nck_groups()
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
-        assert mcts.rollout_policy is True
+        assert mcts.rollout_mode == "ts_group_action"
 
 
 # =============================================================================
@@ -1807,11 +1811,7 @@ class TestMCTSConvergence:
     """Integration tests verifying that MCTS converges to known optima."""
 
     def test_nchoosek_single_optimum(self):
-        """5-choose-2 problem where exactly one pair is optimal.
-
-        Features [0..4], pick exactly 2.  Reward = 100 iff {1, 3} selected,
-        else 0.  MCTS must find this needle.
-        """
+        """5-choose-2 problem where exactly one pair is optimal."""
         nck = NChooseK(features=[0, 1, 2, 3, 4], min_count=2, max_count=2)
         gs = Groups(groups=[nck])
 
@@ -1848,7 +1848,6 @@ class TestMCTSConvergence:
         gs = Groups(groups=[nck, cat])
 
         def reward_fn(feats, cats):
-            # Optimum: select features {0, 3} and categorical dim 5 = 2.0
             if set(feats) == {0, 3} and cats.get(5) == 2.0:
                 return 100.0
             return 1.0
@@ -1865,7 +1864,6 @@ class TestMCTSConvergence:
         gs = Groups(groups=[nck])
 
         def reward_fn(feats, _cats):
-            # Best: {1, 2, 4} => reward 100
             if set(feats) == {1, 2, 4}:
                 return 100.0
             return float(len(feats))
@@ -1877,19 +1875,12 @@ class TestMCTSConvergence:
             mcts.run(n_iterations=40)
             best_values.append(mcts.best_value)
 
-        # best_value must be monotonically non-decreasing across stages
         for i in range(1, len(best_values)):
             assert best_values[i] >= best_values[i - 1]
-        # Should find the optimum within 200 total iterations
         assert best_values[-1] == 100.0
 
     def test_variable_count_optimum(self):
-        """Optimum requires a specific count of features (not max).
-
-        Pick 1-4 from [0..5]. Reward is 80 for exactly {2, 5}, and
-        len(feats) otherwise. MCTS should discover that picking fewer
-        features can be better than picking more.
-        """
+        """Optimum requires a specific count of features (not max)."""
         nck = NChooseK(features=[0, 1, 2, 3, 4, 5], min_count=1, max_count=4)
         gs = Groups(groups=[nck])
 
@@ -1904,10 +1895,7 @@ class TestMCTSConvergence:
         assert set(feats) == {2, 5}
 
     def test_large_categorical_space(self):
-        """Three categoricals with 4 values each (64 combinations).
-
-        Only one combination is optimal.
-        """
+        """Three categoricals with 4 values each (64 combinations)."""
         cat1 = Categorical(dim=0, values=[0.0, 1.0, 2.0, 3.0])
         cat2 = Categorical(dim=1, values=[0.0, 1.0, 2.0, 3.0])
         cat3 = Categorical(dim=2, values=[0.0, 1.0, 2.0, 3.0])
@@ -1918,7 +1906,6 @@ class TestMCTSConvergence:
         def reward_fn(_feats, cats):
             if cats == target:
                 return 100.0
-            # Partial credit: +10 per matching dim
             return sum(10.0 for d in target if cats.get(d) == target[d])
 
         mcts = MCTS(groups=gs, reward_fn=reward_fn, seed=99)
@@ -1934,7 +1921,6 @@ class TestMCTSConvergence:
         gs = Groups(groups=[nck1, nck2])
 
         def reward_fn(feats, _cats):
-            # Optimum: feature 2 from group 1, feature 11 from group 2
             if set(feats) == {2, 11}:
                 return 100.0
             score = 0.0
@@ -1950,12 +1936,7 @@ class TestMCTSConvergence:
         assert set(feats) == {2, 11}
 
     def test_convergence_with_noisy_reward(self):
-        """Reward has a noise floor but the optimum still dominates.
-
-        Verifies MCTS handles reward variance and still identifies the best.
-        """
-        import random as stdlib_random
-
+        """Reward has a noise floor but the optimum still dominates."""
         rng = stdlib_random.Random(12345)
         nck = NChooseK(features=[0, 1, 2], min_count=1, max_count=1)
         gs = Groups(groups=[nck])
@@ -1970,21 +1951,12 @@ class TestMCTSConvergence:
 
         mcts = MCTS(groups=gs, reward_fn=reward_fn, seed=42)
         feats, _cats, val = mcts.run(n_iterations=150)
-        # The best encountered value should come from feature 2
         assert 2 in feats
-        assert val >= 49.0  # 50 - max noise
+        assert val >= 49.0
 
     def test_mcts_outperforms_random_rollouts(self):
-        """MCTS with UCT/backprop should achieve higher average best
-        reward than pure random rollouts on a structured problem.
-
-        Problem: pick 1-4 features from a pool of 10.  The search space
-        includes all subsets of size 1 through 4, which is
-        C(10,1)+C(10,2)+C(10,3)+C(10,4) = 10+45+120+210 = 385
-        combinations.  The optimal subset {2, 7} has size 2 (not the max),
-        so MCTS must learn both *which* features and *how many* to select.
-        Partial credit steers MCTS toward the right features.
-        """
+        """MCTS with NIG-TS should achieve higher average best reward
+        than pure random rollouts on a structured problem."""
         nck = NChooseK(features=list(range(10)), min_count=1, max_count=4)
         gs = Groups(groups=[nck])
         optimal = {2, 7}
@@ -1994,14 +1966,18 @@ class TestMCTSConvergence:
             feat_set = set(feats)
             if feat_set == optimal:
                 return 100.0
-            # Partial credit: reward correct features, penalise extras
             overlap = len(feat_set & optimal)
             extras = len(feat_set - optimal)
             return float(overlap * 30 - extras * 10)
 
-        # --- random baseline: repeated rollouts from root, keep best ---
         def random_search(seed: int) -> float:
-            mcts_tmp = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=seed)
+            mcts_tmp = MCTS(
+                groups=gs,
+                reward_fn=lambda f, c: 0.0,
+                rollout_mode="uniform",
+                adaptive_p_stop=False,
+                seed=seed,
+            )
             rng = stdlib_random.Random(seed)
             best = float("-inf")
             for _ in range(budget):
@@ -2017,30 +1993,23 @@ class TestMCTSConvergence:
         random_best_vals = []
 
         for trial_seed in range(n_trials):
-            # MCTS run
             mcts = MCTS(groups=gs, reward_fn=reward_fn, seed=trial_seed)
             _feats, _cats, mcts_val = mcts.run(n_iterations=budget)
             mcts_best_vals.append(mcts_val)
 
-            # Random baseline with separate seed space
             random_val = random_search(seed=trial_seed + 1000)
             random_best_vals.append(random_val)
 
         mcts_mean = sum(mcts_best_vals) / n_trials
         random_mean = sum(random_best_vals) / n_trials
 
-        # MCTS should achieve a meaningfully higher average best reward
         assert mcts_mean > random_mean, (
             f"MCTS mean best {mcts_mean:.1f} should beat "
             f"random mean best {random_mean:.1f}"
         )
 
     def test_mcts_outperforms_random_mixed_problem(self):
-        """Mixed NChooseK + Categorical problem where MCTS should beat random.
-
-        2 NChooseK groups + 2 categoricals = large combinatorial space.
-        MCTS should exploit partial-credit structure to converge faster.
-        """
+        """Mixed NChooseK + Categorical problem where MCTS should beat random."""
         nck1 = NChooseK(features=[0, 1, 2, 3], min_count=1, max_count=2)
         nck2 = NChooseK(features=[10, 11, 12, 13], min_count=1, max_count=2)
         cat1 = Categorical(dim=20, values=[0.0, 1.0, 2.0, 3.0])
@@ -2053,12 +2022,9 @@ class TestMCTSConvergence:
 
         def reward_fn(feats, cats):
             feat_set = set(feats)
-            # Partial credit: 10 per correct feature, 15 per correct categorical
             score = sum(10.0 for f in target_feats if f in feat_set)
             score += sum(15.0 for d, v in target_cats.items() if cats.get(d) == v)
-            # Penalty for wrong features
             score -= 5.0 * len(feat_set - target_feats)
-            # Bonus for exact match
             if feat_set == target_feats and cats == target_cats:
                 score = 100.0
             return score
@@ -2068,14 +2034,16 @@ class TestMCTSConvergence:
         random_best_vals = []
 
         for trial_seed in range(n_trials):
-            # MCTS
             mcts = MCTS(groups=gs, reward_fn=reward_fn, seed=trial_seed)
             _f, _c, mcts_val = mcts.run(n_iterations=budget)
             mcts_best_vals.append(mcts_val)
 
-            # Random baseline
             mcts_tmp = MCTS(
-                groups=gs, reward_fn=lambda f, c: 0.0, seed=trial_seed + 500
+                groups=gs,
+                reward_fn=lambda f, c: 0.0,
+                rollout_mode="uniform",
+                adaptive_p_stop=False,
+                seed=trial_seed + 500,
             )
             rng = stdlib_random.Random(trial_seed + 500)
             best_rand = float("-inf")
@@ -2102,23 +2070,15 @@ class TestMCTSConvergence:
 
 
 def _make_mock_optimize_acqf(d: int, q: int = 1):
-    """Create a mock for botorch.optim.optimize_acqf.
-
-    Returns (mock_fn, call_log) where call_log is a list that collects
-    the keyword arguments of every call.  The mock returns random
-    candidates and uses the sum of non-fixed dimensions as the acq value
-    so different fixed-feature configs yield different rewards.
-    """
+    """Create a mock for botorch.optim.optimize_acqf."""
     call_log: list[dict] = []
 
     def mock_fn(**kwargs):
         call_log.append(kwargs)
         fixed = kwargs.get("fixed_features") or {}
-        # Build a candidate tensor respecting fixed features
         cand = torch.rand(q, d)
         for dim, val in fixed.items():
             cand[:, dim] = val
-        # Reward = sum of candidate values (so fixing dims to 0 lowers it)
         acq_val = cand.sum()
         return cand, acq_val
 
@@ -2182,7 +2142,6 @@ class TestOptimizeAcqfMcts:
             num_iterations=0,
             seed=0,
         )
-        # No iterations => optimize_acqf never called
         assert len(call_log) == 0
         assert candidates.shape == (1, d)
         assert torch.all(candidates == 0)
@@ -2191,7 +2150,6 @@ class TestOptimizeAcqfMcts:
     # ---- NChooseK: inactive features fixed to zero ----
 
     def test_inactive_features_fixed_to_zero(self, monkeypatch):
-        """Verify that features NOT selected by MCTS are fixed to 0.0."""
         d = 5
         mock_fn, call_log = _make_mock_optimize_acqf(d)
         monkeypatch.setattr(optimize_mcts_mod, "optimize_acqf", mock_fn)
@@ -2209,14 +2167,11 @@ class TestOptimizeAcqfMcts:
         assert len(call_log) > 0
         for call_kwargs in call_log:
             fixed = call_kwargs["fixed_features"]
-            # Every nchoosek feature is either fixed to 0 (inactive) or
-            # absent from fixed (active and free to optimize)
             for f in nchoosek_features:
                 if f in fixed:
                     assert fixed[f] == 0.0
 
     def test_active_features_not_fixed(self, monkeypatch):
-        """At least one call should leave some features free (not in fixed)."""
         d = 4
         mock_fn, call_log = _make_mock_optimize_acqf(d)
         monkeypatch.setattr(optimize_mcts_mod, "optimize_acqf", mock_fn)
@@ -2231,12 +2186,11 @@ class TestOptimizeAcqfMcts:
             seed=0,
         )
 
-        # In every call, at least min_count features should be free
         for call_kwargs in call_log:
             fixed = call_kwargs["fixed_features"]
             n_fixed_nck = sum(1 for f in nchoosek_features if f in fixed)
             n_free = len(nchoosek_features) - n_fixed_nck
-            assert n_free >= 1  # min_count = 1
+            assert n_free >= 1
 
     # ---- Categorical: dims fixed to selected value ----
 
@@ -2258,7 +2212,6 @@ class TestOptimizeAcqfMcts:
         assert len(call_log) > 0
         for call_kwargs in call_log:
             fixed = call_kwargs["fixed_features"]
-            # Every categorical dim should be fixed to one of its allowed values
             for dim, allowed in cat_dims.items():
                 assert dim in fixed, f"Categorical dim {dim} not in fixed_features"
                 assert fixed[dim] in allowed, (
@@ -2289,10 +2242,8 @@ class TestOptimizeAcqfMcts:
         assert len(call_log) > 0
         for call_kwargs in call_log:
             fixed = call_kwargs["fixed_features"]
-            # Categorical dims are always fixed
             assert 4 in fixed
             assert 5 in fixed
-            # NChooseK features are either active (free) or fixed to 0
             for f in nchoosek_features:
                 if f in fixed:
                     assert fixed[f] == 0.0
@@ -2317,7 +2268,6 @@ class TestOptimizeAcqfMcts:
 
         for call_kwargs in call_log:
             fixed = call_kwargs["fixed_features"]
-            # User's fixed feature should always be present
             assert fixed[4] == 99.0
 
     # ---- Constraints are forwarded ----
@@ -2397,8 +2347,8 @@ class TestOptimizeAcqfMcts:
         monkeypatch.setattr(optimize_mcts_mod, "optimize_acqf", mock_fn)
         bounds = torch.stack([torch.zeros(d), torch.ones(d)])
         nchooseks = [
-            ([0, 1, 2], 1, 2),  # group 1
-            ([3, 4, 5], 1, 1),  # group 2
+            ([0, 1, 2], 1, 2),
+            ([3, 4, 5], 1, 1),
         ]
 
         candidates, acq_val = optimize_acqf_mcts(
@@ -2413,18 +2363,15 @@ class TestOptimizeAcqfMcts:
         all_nck_features = {0, 1, 2, 3, 4, 5}
         for call_kwargs in call_log:
             fixed = call_kwargs["fixed_features"]
-            # Each NChooseK feature is either fixed to 0 or free
             for f in all_nck_features:
                 if f in fixed:
                     assert fixed[f] == 0.0
-            # Group 2 requires exactly 1 free feature from [3,4,5]
             n_free_g2 = sum(1 for f in [3, 4, 5] if f not in fixed)
             assert n_free_g2 == 1
 
     # ---- No constraints at all (only bounds) ----
 
     def test_no_nchoosek_no_categoricals(self, monkeypatch):
-        """With neither NChooseK nor categoricals, optimize_acqf is still called."""
         d = 3
         mock_fn, call_log = _make_mock_optimize_acqf(d)
         monkeypatch.setattr(optimize_mcts_mod, "optimize_acqf", mock_fn)
@@ -2438,19 +2385,14 @@ class TestOptimizeAcqfMcts:
         )
 
         assert candidates.shape == (1, d)
-        # With no groups, every MCTS iteration is immediately terminal
-        # so optimize_acqf should be called on every iteration
         assert len(call_log) > 0
         for call_kwargs in call_log:
-            # No features should be fixed (no NChooseK, no categoricals)
             fixed = call_kwargs["fixed_features"]
             assert fixed == {}
 
     # ---- Best candidate is from the call with highest acq value ----
 
     def test_best_candidate_tracks_highest_acq_value(self, monkeypatch):
-        """The returned candidates should come from the optimize_acqf call
-        with the highest acquisition value."""
         d = 3
         call_count = 0
         best_cand = torch.tensor([[0.1, 0.2, 0.3]])
@@ -2458,7 +2400,6 @@ class TestOptimizeAcqfMcts:
         def mock_fn(**kwargs):
             nonlocal call_count
             call_count += 1
-            # Return a high value on the 3rd call, low otherwise
             if call_count == 3:
                 return best_cand, torch.tensor(999.0)
             return torch.rand(1, d), torch.tensor(1.0)
@@ -2480,7 +2421,6 @@ class TestOptimizeAcqfMcts:
     # ---- dtype preserved ----
 
     def test_dtype_preserved_on_zero_iterations(self, monkeypatch):
-        """When num_iterations=0, the fallback zeros should match bounds dtype."""
         d = 3
 
         def noop(**kwargs):

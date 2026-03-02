@@ -1,8 +1,34 @@
 """MCTS-based acquisition function optimization for NChooseK and categorical constraints.
 
-Uses Monte Carlo Tree Search to select which features are active (non-zero) and
-categorical values, then runs BoTorch acquisition function optimization with
-inactive features fixed to zero and categoricals fixed to selected values.
+Uses Monte Carlo Tree Search with Normal-Inverse-Gamma (NIG) Thompson Sampling
+to select which features are active (non-zero) and categorical values, then runs
+BoTorch acquisition function optimization with inactive features fixed to zero
+and categoricals fixed to selected values.
+
+The NIG conjugate prior models rewards as drawn from Normal(mu, sigma^2) with
+both mean and variance unknown. The marginal posterior for the mean is a
+Student-t distribution with heavier tails at low observation counts, which
+naturally handles the low-n regime without extra heuristics.
+
+NIG prior: (mu, sigma^2) ~ NIG(mu0, n0, alpha0, beta0)
+    mu0 = _global_mean() (running mean of novel rewards)
+    n0 = pseudo-count (default 1.0, or adaptive from branching factor)
+    alpha0 = nig_alpha0 parameter (default 1.0)
+    beta0 = alpha0 * _prior_var() (so E[sigma^2] = prior_var)
+
+After n observations with sufficient stats (n_obs, sum_rewards, sum_sq_rewards):
+    x_bar = sum_rewards / n
+    S = sum_sq_rewards - n * x_bar^2
+
+    n0' = n0 + n
+    mu0' = (n0 * mu0 + n * x_bar) / n0'
+    alpha0' = alpha0 + n / 2
+    beta0' = beta0 + S / 2 + (n0 * n * (x_bar - mu0)^2) / (2 * n0')
+
+Marginal posterior for mu: Student-t with
+    df = 2 * alpha0'
+    location = mu0'
+    scale = sqrt(beta0' / (alpha0' * n0'))
 """
 
 import math
@@ -21,10 +47,17 @@ STOP = -1  # Sentinel for stopping selection in a group
 
 
 class ActionStats(NamedTuple):
-    """Visit count and total accumulated reward."""
+    """Sufficient statistics for an action.
 
-    visits: int
-    total: float
+    Args:
+        n_obs: Number of observations
+        sum_rewards: Sum of observed rewards
+        sum_sq_rewards: Sum of squared observed rewards
+    """
+
+    n_obs: int
+    sum_rewards: float
+    sum_sq_rewards: float
 
 
 class TrajectoryStep(NamedTuple):
@@ -209,14 +242,20 @@ class Groups:
 
 @dataclass
 class Node:
-    """MCTS tree node.
+    """MCTS tree node with NIG sufficient statistics.
+
+    Each node tracks Bayesian sufficient statistics (n_obs, sum_rewards,
+    sum_sq_rewards) for the Normal-Inverse-Gamma posterior update, plus
+    n_visits (which includes cache hits) for progressive widening.
 
     Args:
         partial_by_group: Partial selection per group (indices into group's options)
         stopped_by_group: Whether each group has stopped selecting (for NChooseK)
         group_idx: Current group being filled
-        n_visits: Visit count for this node
-        w_total: Total accumulated reward
+        n_obs: Novel observation count (for NIG posterior updates)
+        sum_rewards: Sum of observed rewards from novel evaluations
+        sum_sq_rewards: Sum of squared rewards from novel evaluations
+        n_visits: Total visits including cache hits (for progressive widening)
         children: Child nodes keyed by action (int index or STOP)
     """
 
@@ -224,34 +263,47 @@ class Node:
     stopped_by_group: tuple[bool, ...]
     group_idx: int
 
+    n_obs: int = 0
+    sum_rewards: float = 0.0
+    sum_sq_rewards: float = 0.0
     n_visits: int = 0
-    w_total: float = 0.0
 
     children: dict[int, "Node"] = field(default_factory=dict)
 
     def is_terminal(self, groups: Groups) -> bool:
         return self.group_idx >= len(groups)
 
-    def mean_value(self) -> float:
-        return self.w_total / self.n_visits if self.n_visits > 0 else 0.0
-
 
 # =============================================================================
-# MCTS Implementation
+# MCTS Implementation with NIG Thompson Sampling
 # =============================================================================
 
 
 class MCTS:
-    """Monte Carlo Tree Search for NChooseK and categorical optimization.
+    """Monte Carlo Tree Search with Normal-Inverse-Gamma Thompson Sampling.
 
-    Uses UCT selection and progressive widening. Selects which features are
-    active and categorical values via tree search, evaluating terminals with
-    a provided reward function.
+    Uses NIG conjugate posteriors for tree selection. The marginal posterior
+    for the mean is a Student-t distribution with heavier tails at low
+    observation counts, naturally preventing premature commitment.
 
     Args:
-        constraints: Collection of NChooseK and categorical constraints
+        groups: Collection of NChooseK and categorical constraints
         reward_fn: Function mapping (selected_features, categorical_selections) to reward
-        c_uct: UCT exploration constant (default 0.01)
+        nig_alpha0: NIG shape prior (default 1.0); lower = heavier tails at low n
+        ts_prior_var: Prior variance (default 1.0); used to set beta0 = alpha0 * prior_var
+        adaptive_prior_var: If True, use running empirical variance as prior variance
+        cache_hit_mode: How to handle cache hits during backpropagation. Options:
+            "no_update" - only increment n_visits (default virtual loss)
+            "variance_inflation" - decay n_obs to widen posterior
+            "pessimistic" - add pessimistic pseudo-observations
+            "combined" - variance_inflation + pessimistic
+            "adaptive_pessimistic" - pessimistic with exhaustion-scaled strength
+            "adaptive_combined" - variance_inflation + adaptive_pessimistic
+        variance_decay: Decay factor for variance inflation mode (default 0.95)
+        rollout_mode: Rollout action selection policy. Options:
+            "ts_group_action" - NIG Thompson Sampling per (group, action)
+            "uniform" - adaptive p_stop for NChooseK STOP, then uniform among non-STOP
+        adaptive_n0: If True, set pseudo-count n0 = 1 + log(branching_factor)
         p_stop_rollout: Probability of early stop during rollout (default 0.35)
         pw_k0: Progressive widening base constant (default 2.0)
         pw_alpha: Progressive widening exponent (default 0.6)
@@ -259,11 +311,6 @@ class MCTS:
         adaptive_p_stop: Enable adaptive per-group stop probability (default True)
         p_stop_warmup: Per-group rollout count before full blending (default 20)
         p_stop_temperature: Sigmoid sharpness for adaptive p_stop (default 0.25)
-        normalize_rewards: Normalize rewards to [0, 1] before backpropagation (default True)
-        rollout_policy: Enable learned softmax rollout policy (default False)
-        rollout_epsilon: Epsilon-mix weight for uniform exploration (default 0.3)
-        rollout_tau: Softmax temperature for rollout policy (default 1.0)
-        rollout_novelty_weight: Novelty bonus coefficient beta/sqrt(n+1) (default 1.0)
         seed: Random seed for reproducibility
     """
 
@@ -271,7 +318,13 @@ class MCTS:
         self,
         groups: Groups,
         reward_fn: Callable[[tuple[int, ...], dict[int, float]], float],
-        c_uct: float = 0.01,
+        nig_alpha0: float = 1.0,
+        ts_prior_var: float = 1.0,
+        adaptive_prior_var: bool = True,
+        cache_hit_mode: str = "variance_inflation",
+        variance_decay: float = 0.95,
+        rollout_mode: str = "ts_group_action",
+        adaptive_n0: bool = False,
         p_stop_rollout: float = 0.35,
         pw_k0: float = 2.0,
         pw_alpha: float = 0.6,
@@ -279,16 +332,17 @@ class MCTS:
         adaptive_p_stop: bool = True,
         p_stop_warmup: int = 20,
         p_stop_temperature: float = 0.25,
-        normalize_rewards: bool = True,
-        rollout_policy: bool = True,
-        rollout_epsilon: float = 0.3,
-        rollout_tau: float = 1.0,
-        rollout_novelty_weight: float = 1.0,
         seed: Optional[int] = None,
     ):
         self.groups = groups
         self.reward_fn = reward_fn
-        self.c_uct = c_uct
+        self.nig_alpha0 = nig_alpha0
+        self.ts_prior_var = ts_prior_var
+        self.adaptive_prior_var = adaptive_prior_var
+        self.cache_hit_mode = cache_hit_mode
+        self.variance_decay = variance_decay
+        self.rollout_mode = rollout_mode
+        self.adaptive_n0 = adaptive_n0
         self.p_stop_rollout = p_stop_rollout
         self.pw_k0 = pw_k0
         self.pw_alpha = pw_alpha
@@ -296,11 +350,6 @@ class MCTS:
         self.adaptive_p_stop = adaptive_p_stop
         self.p_stop_warmup = p_stop_warmup
         self.p_stop_temperature = p_stop_temperature
-        self.normalize_rewards = normalize_rewards
-        self.rollout_policy = rollout_policy
-        self.rollout_epsilon = rollout_epsilon
-        self.rollout_tau = rollout_tau
-        self.rollout_novelty_weight = rollout_novelty_weight
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -311,28 +360,211 @@ class MCTS:
             group_idx=0,
         )
 
-        # Best found so far: (selected_features, categorical_selections)
-        # Example: ((0, 2, 5), {3: 1.0, 4: 0.0}) means features 0, 2, 5 are
-        # active (from NChooseK groups), dim 3 has categorical value 1.0, and
-        # dim 4 has categorical value 0.0.
+        # Best found so far
         self.best_selection: Optional[Selection] = None
         self.best_value: float = float("-inf")
 
         # Cache for terminal evaluations
-        # Key: (selected_features_tuple, frozenset of categorical items)
         self.value_cache: dict[tuple, float] = {}
         self.cache_hits = 0
         self.cache_misses = 0
 
-        # Adaptive p_stop statistics: (group_idx, cardinality) -> (visits, total_reward)
+        # Global novel reward tracking for NIG prior
+        self._novel_reward_sum: float = 0.0
+        self._novel_reward_sq_sum: float = 0.0
+        self._novel_reward_count: int = 0
+
+        # Rollout TS statistics: (group_idx, action) -> ActionStats
+        self.rollout_ts_stats: dict[tuple[int, int], ActionStats] = {}
+
+        # Adaptive p_stop statistics: (group_idx, cardinality) -> ActionStats
         self.cardinality_stats: dict[tuple[int, int], ActionStats] = {}
         n_nchoosek = len(self.groups.nchooseks)
         self.group_rollout_counts: list[int] = [0] * n_nchoosek
         self.reward_min: float = float("inf")
         self.reward_max: float = float("-inf")
 
-        # Rollout policy statistics: (group_idx, action) -> (visits, total_reward)
-        self.rollout_stats: dict[tuple[int, int], ActionStats] = {}
+    # =========================================================================
+    # NIG prior methods
+    # =========================================================================
+
+    def _global_mean(self) -> float:
+        """Running mean of all novel rewards, used as the NIG prior center mu0."""
+        if self._novel_reward_count == 0:
+            return 0.0
+        return self._novel_reward_sum / self._novel_reward_count
+
+    def _prior_var(self) -> float:
+        """Prior variance for the NIG model.
+
+        When adaptive_prior_var is True and at least 2 novel rewards have been
+        observed, returns the running empirical variance. Otherwise returns the
+        fixed ts_prior_var.
+        """
+        if not self.adaptive_prior_var or self._novel_reward_count < 2:
+            return self.ts_prior_var
+        mean = self._global_mean()
+        empirical_var = (
+            self._novel_reward_sq_sum / self._novel_reward_count - mean * mean
+        )
+        return max(empirical_var, 1e-8)
+
+    def _pessimistic_value(self) -> float:
+        """Pessimistic pseudo-observation value: global_mean - global_std.
+
+        Used by pessimistic and combined cache-hit modes to inject a
+        below-average pseudo-observation that discourages over-visited branches.
+        """
+        mean = self._global_mean()
+        if self._novel_reward_count < 2:
+            return mean - math.sqrt(self.ts_prior_var)
+        empirical_var = (
+            self._novel_reward_sq_sum / self._novel_reward_count - mean * mean
+        )
+        return mean - math.sqrt(max(empirical_var, 1e-8))
+
+    def _compute_n0(self, n_actions: int) -> float:
+        """Compute pseudo-count n0 for the NIG prior.
+
+        With adaptive_n0, n0 = 1 + log(branching_factor). Higher branching
+        means each child is visited rarely early on, so more observations
+        are needed before departing from the prior.
+        """
+        if not self.adaptive_n0:
+            return 1.0
+        return 1.0 + math.log(max(n_actions, 2))
+
+    # =========================================================================
+    # NIG Thompson Sampling
+    # =========================================================================
+
+    def _student_t_sample(self, df: float, loc: float, scale: float) -> float:
+        """Sample from a Student-t distribution.
+
+        Uses the representation: loc + scale * Z / sqrt(V / df)
+        where Z ~ N(0,1) and V ~ chi-squared(df) = Gamma(df/2, 2).
+        """
+        z = self.rng.gauss(0, 1)
+        v = self.rng.gammavariate(df / 2, 2)  # chi-squared(df)
+        return loc + scale * z / math.sqrt(v / df)
+
+    def _nig_sample(
+        self,
+        n_obs: int,
+        sum_rewards: float,
+        sum_sq_rewards: float,
+        n0: float = 1.0,
+    ) -> float:
+        """Sample from the NIG posterior (marginal Student-t for the mean).
+
+        Computes the Normal-Inverse-Gamma posterior update from sufficient
+        statistics and draws a sample from the marginal Student-t distribution.
+
+        The NIG prior is parameterized as:
+            mu0 = _global_mean(), n0 = n0, alpha0 = nig_alpha0,
+            beta0 = alpha0 * _prior_var()
+
+        After n observations with sample mean x_bar and sum-of-squared-
+        deviations S = sum(x_i^2) - n * x_bar^2, the posterior parameters are:
+            n0' = n0 + n
+            mu0' = (n0 * mu0 + n * x_bar) / n0'
+            alpha0' = alpha0 + n/2
+            beta0' = beta0 + S/2 + n0*n*(x_bar - mu0)^2 / (2*n0')
+
+        The marginal posterior for mu is Student-t(df=2*alpha0', loc=mu0',
+        scale=sqrt(beta0' / (alpha0' * n0'))).
+
+        Args:
+            n_obs: Number of novel observations
+            sum_rewards: Sum of observed rewards
+            sum_sq_rewards: Sum of squared observed rewards
+            n0: Prior pseudo-count (default 1.0)
+
+        Returns:
+            A sample from the posterior predictive distribution for the mean
+        """
+        mu0 = self._global_mean()
+        prior_var = self._prior_var()
+        alpha0 = self.nig_alpha0
+        beta0 = alpha0 * prior_var
+
+        if n_obs == 0:
+            # Prior: Student-t(df=2*alpha0, loc=mu0, scale=sqrt(beta0/(alpha0*n0)))
+            df = 2 * alpha0
+            scale = math.sqrt(beta0 / (alpha0 * n0))
+            return self._student_t_sample(df, mu0, scale)
+
+        x_bar = sum_rewards / n_obs
+        s = sum_sq_rewards - n_obs * x_bar * x_bar
+        s = max(s, 0.0)  # numerical safety
+
+        # Posterior update
+        n0_post = n0 + n_obs
+        mu0_post = (n0 * mu0 + n_obs * x_bar) / n0_post
+        alpha0_post = alpha0 + n_obs / 2
+        beta0_post = beta0 + s / 2 + (n0 * n_obs * (x_bar - mu0) ** 2) / (2 * n0_post)
+
+        df = 2 * alpha0_post
+        scale = math.sqrt(beta0_post / (alpha0_post * n0_post))
+        return self._student_t_sample(df, mu0_post, scale)
+
+    # =========================================================================
+    # Rollout TS methods
+    # =========================================================================
+
+    def _ts_sample_rollout_action(
+        self, group_idx: int, legal_actions: list[int]
+    ) -> int:
+        """Sample rollout action using per-(group, action) NIG posteriors.
+
+        For each legal action, draws a sample from the NIG posterior using the
+        per-action sufficient statistics, then picks the action with the highest
+        sample. STOP is scored like any other action.
+
+        Args:
+            group_idx: Index of the current group
+            legal_actions: List of legal action indices (may include STOP)
+
+        Returns:
+            Selected action index
+        """
+        n0 = self._compute_n0(len(legal_actions))
+        best_action = legal_actions[0]
+        best_score = float("-inf")
+
+        for action in legal_actions:
+            key = (group_idx, action)
+            stats = self.rollout_ts_stats.get(key, ActionStats(0, 0.0, 0.0))
+            score = self._nig_sample(
+                stats.n_obs, stats.sum_rewards, stats.sum_sq_rewards, n0
+            )
+            if score > best_score:
+                best_score = score
+                best_action = action
+
+        return best_action
+
+    def _update_rollout_ts_stats(
+        self, trajectory: list[TrajectoryStep], reward: float
+    ) -> None:
+        """Update per-(group, action) NIG sufficient stats from a completed rollout.
+
+        Args:
+            trajectory: List of (group_idx, action) pairs from the rollout
+            reward: Raw reward obtained from the terminal evaluation
+        """
+        for group_idx, action in trajectory:
+            key = (group_idx, action)
+            old = self.rollout_ts_stats.get(key, ActionStats(0, 0.0, 0.0))
+            self.rollout_ts_stats[key] = ActionStats(
+                n_obs=old.n_obs + 1,
+                sum_rewards=old.sum_rewards + reward,
+                sum_sq_rewards=old.sum_sq_rewards + reward * reward,
+            )
+
+    # =========================================================================
+    # Adaptive p_stop (shared between uniform rollout and cardinality stats)
+    # =========================================================================
 
     def _update_cardinality_stats(
         self, reward: float, selected_features: tuple[int, ...]
@@ -346,8 +578,10 @@ class MCTS:
         for g, nchoosek in enumerate(self.groups.nchooseks):
             cardinality = sum(1 for f in nchoosek.features if f in selected_set)
             key = (g, cardinality)
-            v, tot = self.cardinality_stats.get(key, ActionStats(0, 0.0))
-            self.cardinality_stats[key] = ActionStats(v + 1, tot + reward)
+            old = self.cardinality_stats.get(key, ActionStats(0, 0.0, 0.0))
+            self.cardinality_stats[key] = ActionStats(
+                old.n_obs + 1, old.sum_rewards + reward, 0.0
+            )
             self.group_rollout_counts[g] += 1
 
     def _compute_adaptive_p_stop(
@@ -358,10 +592,7 @@ class MCTS:
         Uses learned cardinality statistics to decide whether stopping is better
         than continuing. Returns fixed p_stop_rollout when disabled, no data is
         available, or reward range is zero. During warmup, the learned probability
-        is linearly blended with p_stop_rollout:
-            p = (1 - alpha) * p_stop_rollout + alpha * p_learned
-        where alpha = min(1, group_visits / p_stop_warmup), so the learned signal
-        gradually replaces the fixed prior as more data is collected.
+        is linearly blended with p_stop_rollout.
 
         Args:
             group_idx: Index of the NChooseK group
@@ -376,23 +607,20 @@ class MCTS:
         nchoosek = self.groups.nchooseks[group_idx]
         max_count = nchoosek.max_count
 
-        # No data for stopping at this cardinality
         stop_key = (group_idx, current_cardinality)
         stop_stats = self.cardinality_stats.get(stop_key)
-        if stop_stats is None or stop_stats.visits == 0:
+        if stop_stats is None or stop_stats.n_obs == 0:
             return self.p_stop_rollout
 
-        # E_stop: mean reward when this group stopped at current_cardinality
-        e_stop = stop_stats.total / stop_stats.visits
+        e_stop = stop_stats.sum_rewards / stop_stats.n_obs
 
-        # E_continue: max mean reward among higher cardinalities
         e_continue = float("-inf")
         has_continue_data = False
         for m in range(current_cardinality + 1, max_count + 1):
             cont_key = (group_idx, m)
             cont_stats = self.cardinality_stats.get(cont_key)
-            if cont_stats is not None and cont_stats.visits > 0:
-                mean_r = cont_stats.total / cont_stats.visits
+            if cont_stats is not None and cont_stats.n_obs > 0:
+                mean_r = cont_stats.sum_rewards / cont_stats.n_obs
                 if mean_r > e_continue:
                     e_continue = mean_r
                 has_continue_data = True
@@ -400,18 +628,15 @@ class MCTS:
         if not has_continue_data:
             return self.p_stop_rollout
 
-        # Reward range for normalization
         reward_range = self.reward_max - self.reward_min
         if reward_range <= 0:
             return self.p_stop_rollout
 
-        # Sigmoid on normalized difference
         tau = self.p_stop_temperature
         logit = (e_stop - e_continue) / (tau * reward_range)
-        logit = max(-10.0, min(10.0, logit))  # clamp
+        logit = max(-10.0, min(10.0, logit))
         p_learned = 1.0 / (1.0 + math.exp(-logit))
 
-        # Warmup blending
         group_visits = self.group_rollout_counts[group_idx]
         alpha = (
             min(1.0, group_visits / self.p_stop_warmup)
@@ -420,89 +645,9 @@ class MCTS:
         )
         return (1.0 - alpha) * self.p_stop_rollout + alpha * p_learned
 
-    def _normalize_reward(self, reward: float) -> float:
-        """Normalize reward to [0, 1] using running min-max.
-
-        Returns 0.5 when reward range is zero, which covers the initial
-        rollouts where only one distinct reward has been observed (min == max)
-        as well as degenerate cases where all rewards are identical.
-        """
-        reward_range = self.reward_max - self.reward_min
-        if reward_range <= 0:
-            return 0.5
-        return (reward - self.reward_min) / reward_range
-
-    def _score_rollout_actions(
-        self, group_idx: int, legal_actions: list[int]
-    ) -> dict[int, float]:
-        """Score legal rollout actions using learned statistics.
-
-        For each action, computes:
-            score(a) = mean_reward(a) + novelty_weight / sqrt(visits(a) + 1)
-
-        The 1/sqrt(visits) term is a UCB-style exploration bonus that decays as
-        an action is visited more, encouraging under-explored actions to be tried.
-        Actions with no stats get score = novelty_weight (maximum exploration).
-
-        Args:
-            group_idx: Index of the current group
-            legal_actions: List of legal action indices (may include STOP)
-
-        Returns:
-            Dictionary mapping each action to its score
-        """
-        scores: dict[int, float] = {}
-        for action in legal_actions:
-            key = (group_idx, action)
-            stats = self.rollout_stats.get(key)
-            if stats is not None and stats.visits > 0:
-                mean_reward = stats.total / stats.visits
-                visits = stats.visits
-                novelty = self.rollout_novelty_weight / math.sqrt(visits + 1)
-                scores[action] = mean_reward + novelty
-            else:
-                scores[action] = self.rollout_novelty_weight
-        return scores
-
-    def _sample_rollout_action(self, group_idx: int, legal_actions: list[int]) -> int:
-        """Sample a rollout action using softmax policy blended with uniform.
-
-        Computes p(a) = (1 - epsilon) * softmax(score/tau) + epsilon * uniform.
-
-        Args:
-            group_idx: Index of the current group
-            legal_actions: List of legal action indices (may include STOP)
-
-        Returns:
-            Selected action index
-        """
-        scores = self._score_rollout_actions(group_idx, legal_actions)
-        n = len(legal_actions)
-
-        # Compute softmax probabilities with temperature
-        logits = torch.tensor([scores[a] for a in legal_actions], dtype=torch.float64)
-        policy_probs = torch.softmax(logits / self.rollout_tau, dim=0)
-
-        # Blend with uniform: p(a) = (1 - eps) * softmax + eps * uniform
-        eps = self.rollout_epsilon
-        probs = (1.0 - eps) * policy_probs + eps / n
-
-        # Sample using weighted choice
-        return self.rng.choices(legal_actions, weights=probs.tolist(), k=1)[0]
-
-    def _update_rollout_stats(
-        self, trajectory: list[TrajectoryStep], reward: float
-    ) -> None:
-        """Update rollout policy statistics from a completed trajectory.
-
-        Args:
-            trajectory: List of (group_idx, action) pairs from the rollout
-            reward: Raw reward obtained from the terminal evaluation
-        """
-        for group_idx, action in trajectory:
-            key = (group_idx, action)
-            v, tot = self.rollout_stats.get(key, ActionStats(0, 0.0))
-            self.rollout_stats[key] = ActionStats(v + 1, tot + reward)
+    # =========================================================================
+    # Tree infrastructure
+    # =========================================================================
 
     def _make_cache_key(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
@@ -578,20 +723,28 @@ class MCTS:
             g = n_nchoosek + i
             partial = node.partial_by_group[g]
             if partial:
-                # partial[0] is the index into cat_group.values
                 cat_selections[cat_group.dim] = cat_group.values[partial[0]]
 
         return Selection(features=selected_features_tuple, categoricals=cat_selections)
 
+    # =========================================================================
+    # Tree selection with NIG Thompson Sampling
+    # =========================================================================
+
     def _select_and_expand(self) -> tuple[Node, list[Node]]:
-        """Select path through tree and expand one new node."""
+        """Select path through tree using NIG-TS and expand one new node.
+
+        At each internal node, draws a Thompson sample from each child's NIG
+        posterior and follows the child with the highest sample. When progressive
+        widening allows expansion, expands a random unexplored action instead.
+        """
         node = self.root
         path = [node]
 
         while not node.is_terminal(self.groups):
             legal = self._legal_actions(node)
             limit = self._child_limit(node)
-            unexpanded = [a for a in legal if a not in node.children.keys()]
+            unexpanded = [a for a in legal if a not in node.children]
             can_expand = len(node.children) < limit
 
             if can_expand and unexpanded:
@@ -602,35 +755,41 @@ class MCTS:
                 path.append(child)
                 return child, path
 
-            # UCT selection among existing children
-            # Bind node via default argument to avoid B023 closure issue
-            def combined_score(action: int, child: Node, _node: Node = node) -> float:
-                parent_visits = max(1, _node.n_visits)
-                child_visits = max(1, child.n_visits)
-                return (child.w_total / child_visits) + self.c_uct * math.sqrt(
-                    math.log(parent_visits) / child_visits
-                )
-
+            # NIG Thompson Sampling selection among existing children
             if node.children:
-                best_action, best_child = max(
-                    node.children.items(), key=lambda kv: combined_score(kv[0], kv[1])
-                )
-                node = best_child
+                n0 = self._compute_n0(len(node.children))
+                best_action = None
+                best_score = float("-inf")
+                for action, child in node.children.items():
+                    score = self._nig_sample(
+                        child.n_obs, child.sum_rewards, child.sum_sq_rewards, n0
+                    )
+                    if score > best_score:
+                        best_score = score
+                        best_action = action
+
+                node = node.children[best_action]
                 path.append(node)
             else:
                 break
 
         return node, path
 
+    # =========================================================================
+    # Rollout
+    # =========================================================================
+
     def _rollout(
         self, node: Node
     ) -> tuple[tuple[int, ...], dict[int, float], list[TrajectoryStep]]:
-        """Random rollout to terminal state, return selection and trajectory.
+        """Rollout to terminal state with mode-dependent action selection.
+
+        Supports two rollout modes:
+        - "ts_group_action": NIG Thompson Sampling per (group, action)
+        - "uniform": adaptive p_stop for NChooseK STOP, then uniform among non-STOP
 
         Returns:
-            Tuple of (selected_features, cat_selections, trajectory) where
-            trajectory is a list of (group_idx, action) pairs taken during
-            rollout.
+            Tuple of (selected_features, cat_selections, trajectory)
         """
         curr = Node(
             partial_by_group=tuple(node.partial_by_group),
@@ -652,11 +811,12 @@ class MCTS:
 
             g = curr.group_idx
 
-            if self.rollout_policy:
-                # Learned softmax policy: STOP is scored like any other action
-                action = self._sample_rollout_action(g, legal)
-            else:
-                # Original logic: adaptive p_stop for NChooseK, uniform for features
+            if self.rollout_mode == "ts_group_action":
+                # NIG Thompson Sampling: STOP scored like any other action
+                action = self._ts_sample_rollout_action(g, legal)
+
+            elif self.rollout_mode == "uniform":
+                # Adaptive p_stop for NChooseK STOP, then uniform
                 is_nchoosek = g < len(self.groups.nchooseks)
                 if is_nchoosek and STOP in legal:
                     p_stop = self._compute_adaptive_p_stop(
@@ -675,6 +835,8 @@ class MCTS:
                     continue
 
                 action = self.rng.choice(choices)
+            else:
+                raise ValueError(f"Unknown rollout_mode: {self.rollout_mode}")
 
             trajectory.append(TrajectoryStep(g, action))
             curr = self._apply_action(curr, action)
@@ -682,11 +844,114 @@ class MCTS:
         selected_features, cat_selections = self._get_selection(curr)
         return selected_features, cat_selections, trajectory
 
-    def _backpropagate(self, path: list[Node], reward: float) -> None:
-        """Backpropagate reward through path."""
+    # =========================================================================
+    # Backpropagation with NIG cache-hit modes
+    # =========================================================================
+
+    def _backpropagate(self, path: list[Node], reward: float, is_novel: bool) -> None:
+        """Backpropagate reward through path with NIG-aware cache-hit handling.
+
+        For novel evaluations: updates n_obs, sum_rewards, sum_sq_rewards,
+        and n_visits on each node in the path.
+
+        For cache hits: always increments n_visits (for progressive widening),
+        then applies the configured cache_hit_mode:
+        - "no_update": only increment n_visits
+        - "variance_inflation": decay n_obs to widen the NIG posterior
+        - "pessimistic": add a pessimistic pseudo-observation
+        - "combined": variance_inflation + pessimistic
+        - "adaptive_pessimistic": pessimistic with exhaustion-scaled strength
+        - "adaptive_combined": variance_inflation + adaptive_pessimistic
+
+        Args:
+            path: List of nodes from root to leaf
+            reward: Raw reward value
+            is_novel: Whether this is a novel (non-cached) evaluation
+        """
+        if is_novel:
+            for n in path:
+                n.n_obs += 1
+                n.sum_rewards += reward
+                n.sum_sq_rewards += reward * reward
+                n.n_visits += 1
+            return
+
+        # Cache hit handling
+        if self.cache_hit_mode in ("pessimistic", "combined"):
+            pess = self._pessimistic_value()
+
+        if self.cache_hit_mode in ("adaptive_pessimistic", "adaptive_combined"):
+            g_mean = self._global_mean()
+            if self._novel_reward_count < 2:
+                g_std = math.sqrt(self.ts_prior_var)
+            else:
+                emp_var = (
+                    self._novel_reward_sq_sum / self._novel_reward_count
+                    - g_mean * g_mean
+                )
+                g_std = math.sqrt(max(emp_var, 1e-8))
+
         for n in path:
             n.n_visits += 1
-            n.w_total += reward
+
+            if self.cache_hit_mode == "no_update":
+                pass
+
+            elif self.cache_hit_mode == "variance_inflation":
+                if n.n_obs > 1:
+                    old_n = n.n_obs
+                    new_n = max(1, int(old_n * self.variance_decay))
+                    if new_n < old_n:
+                        mean = n.sum_rewards / old_n
+                        n.sum_rewards = mean * new_n
+                        n.sum_sq_rewards *= new_n / old_n
+                        n.n_obs = new_n
+
+            elif self.cache_hit_mode == "pessimistic":
+                n.n_obs += 1
+                n.sum_rewards += pess
+                n.sum_sq_rewards += pess * pess
+
+            elif self.cache_hit_mode == "combined":
+                if n.n_obs > 1:
+                    old_n = n.n_obs
+                    new_n = max(1, int(old_n * self.variance_decay))
+                    if new_n < old_n:
+                        mean = n.sum_rewards / old_n
+                        n.sum_rewards = mean * new_n
+                        n.sum_sq_rewards *= new_n / old_n
+                        n.n_obs = new_n
+                n.n_obs += 1
+                n.sum_rewards += pess
+                n.sum_sq_rewards += pess * pess
+
+            elif self.cache_hit_mode == "adaptive_pessimistic":
+                novelty_rate = n.n_obs / max(1, n.n_visits)
+                exhaustion = 1.0 - novelty_rate
+                pess_value = g_mean - exhaustion * g_std
+                n.n_obs += 1
+                n.sum_rewards += pess_value
+                n.sum_sq_rewards += pess_value * pess_value
+
+            elif self.cache_hit_mode == "adaptive_combined":
+                if n.n_obs > 1:
+                    old_n = n.n_obs
+                    new_n = max(1, int(old_n * self.variance_decay))
+                    if new_n < old_n:
+                        mean = n.sum_rewards / old_n
+                        n.sum_rewards = mean * new_n
+                        n.sum_sq_rewards *= new_n / old_n
+                        n.n_obs = new_n
+                novelty_rate = n.n_obs / max(1, n.n_visits)
+                exhaustion = 1.0 - novelty_rate
+                pess_value = g_mean - exhaustion * g_std
+                n.n_obs += 1
+                n.sum_rewards += pess_value
+                n.sum_sq_rewards += pess_value * pess_value
+
+    # =========================================================================
+    # Main loop
+    # =========================================================================
 
     def run(self, n_iterations: int) -> tuple[tuple[int, ...], dict[int, float], float]:
         """Run MCTS for specified number of iterations.
@@ -717,7 +982,7 @@ class MCTS:
             is_novel = key not in self.value_cache
             reward = self._cached_reward(selected_features, cat_selections)
 
-            # Update reward range (used by normalization and adaptive p_stop)
+            # Update reward range (used by adaptive p_stop)
             if reward < self.reward_min:
                 self.reward_min = reward
             if reward > self.reward_max:
@@ -729,25 +994,22 @@ class MCTS:
                     features=selected_features, categoricals=cat_selections
                 )
 
+            # Track novel reward statistics for NIG prior
+            if is_novel:
+                self._novel_reward_sum += reward
+                self._novel_reward_sq_sum += reward * reward
+                self._novel_reward_count += 1
+
+            # Backpropagate with NIG cache-hit handling
+            self._backpropagate(path, reward, is_novel)
+
+            # Update rollout TS stats
+            if self.rollout_mode == "ts_group_action":
+                self._update_rollout_ts_stats(trajectory, reward)
+
+            # Update adaptive p_stop cardinality stats
             if self.adaptive_p_stop:
                 self._update_cardinality_stats(reward, selected_features)
-
-            # Normalize reward for backpropagation if enabled
-            bp_reward = (
-                self._normalize_reward(reward) if self.normalize_rewards else reward
-            )
-
-            if is_novel:
-                self._backpropagate(path, bp_reward)
-            else:
-                # Virtual loss: increment visits with zero reward so that
-                # (a) PW limits still grow with traffic, and
-                # (b) mean_value drops for over-visited branches, steering
-                #     UCT exploration toward less-exploited parts of the tree.
-                for n in path:
-                    n.n_visits += 1
-
-            self._update_rollout_stats(trajectory, reward)
 
         if self.best_selection is None:
             return (), {}, self.best_value
@@ -776,8 +1038,14 @@ def optimize_acqf_mcts(
     bounds: Tensor,
     nchooseks: list[tuple[list[int], int, int]] | None = None,
     cat_dims: Mapping[int, Sequence[float]] | None = None,
-    # MCTS parameters
-    c_uct: float = 0.01,
+    # MCTS NIG parameters
+    nig_alpha0: float = 1.0,
+    ts_prior_var: float = 1.0,
+    adaptive_prior_var: bool = True,
+    cache_hit_mode: str = "variance_inflation",
+    variance_decay: float = 0.95,
+    rollout_mode: str = "ts_group_action",
+    adaptive_n0: bool = False,
     p_stop_rollout: float = 0.35,
     num_iterations: int = 100,
     pw_k0: float = 2.0,
@@ -786,11 +1054,6 @@ def optimize_acqf_mcts(
     adaptive_p_stop: bool = True,
     p_stop_warmup: int = 20,
     p_stop_temperature: float = 0.25,
-    normalize_rewards: bool = True,
-    rollout_policy: bool = True,
-    rollout_epsilon: float = 0.3,
-    rollout_tau: float = 1.0,
-    rollout_novelty_weight: float = 1.0,
     # BoTorch acqf optimization parameters
     q: int = 1,
     raw_samples: int = 1024,
@@ -802,18 +1065,22 @@ def optimize_acqf_mcts(
 ) -> tuple[Tensor, float]:
     """Optimize acquisition function with NChooseK and categorical constraints using MCTS.
 
-    Uses MCTS to select which features are active (non-zero) and categorical values,
-    then runs BoTorch optimization with inactive features fixed to zero and
-    categoricals fixed to their selected values.
+    Uses MCTS with NIG Thompson Sampling to select which features are active
+    (non-zero) and categorical values, then runs BoTorch optimization with
+    inactive features fixed to zero and categoricals fixed to their selected values.
 
     Args:
         acq_function: BoTorch acquisition function to optimize
         bounds: 2 x d tensor of (lower, upper) bounds for each dimension
         nchooseks: List of NChooseK constraints as tuples of (features, min_count, max_count)
-            where features is a list of feature indices
         cat_dims: Dictionary mapping categorical dimension indices to allowed values
-            (same signature as botorch.optim.optimize_acqf_mixed_alternating)
-        c_uct: UCT exploration constant (default 0.01, paired with normalize_rewards)
+        nig_alpha0: NIG shape prior (default 1.0)
+        ts_prior_var: Prior variance for NIG model (default 1.0)
+        adaptive_prior_var: Use running empirical variance as prior variance
+        cache_hit_mode: Cache hit handling strategy
+        variance_decay: Decay factor for variance inflation mode
+        rollout_mode: Rollout action selection policy ("ts_group_action" or "uniform")
+        adaptive_n0: Adapt pseudo-count from branching factor
         p_stop_rollout: Base probability of early stop during NChooseK rollout
         num_iterations: Number of MCTS iterations
         pw_k0: Progressive widening base constant
@@ -822,11 +1089,6 @@ def optimize_acqf_mcts(
         adaptive_p_stop: Learn per-group stop probability from cardinality stats
         p_stop_warmup: Number of rollouts before adaptive p_stop fully activates
         p_stop_temperature: Sigmoid temperature for adaptive p_stop
-        normalize_rewards: Map rewards to [0, 1] via running min-max
-        rollout_policy: Use learned softmax rollout policy instead of uniform
-        rollout_epsilon: Epsilon for epsilon-greedy blending in rollout policy
-        rollout_tau: Temperature for softmax in rollout policy
-        rollout_novelty_weight: Novelty bonus coefficient for rollout policy
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
@@ -914,7 +1176,13 @@ def optimize_acqf_mcts(
     mcts = MCTS(
         groups=groups,
         reward_fn=reward_fn,
-        c_uct=c_uct,
+        nig_alpha0=nig_alpha0,
+        ts_prior_var=ts_prior_var,
+        adaptive_prior_var=adaptive_prior_var,
+        cache_hit_mode=cache_hit_mode,
+        variance_decay=variance_decay,
+        rollout_mode=rollout_mode,
+        adaptive_n0=adaptive_n0,
         p_stop_rollout=p_stop_rollout,
         pw_k0=pw_k0,
         pw_alpha=pw_alpha,
@@ -922,11 +1190,6 @@ def optimize_acqf_mcts(
         adaptive_p_stop=adaptive_p_stop,
         p_stop_warmup=p_stop_warmup,
         p_stop_temperature=p_stop_temperature,
-        normalize_rewards=normalize_rewards,
-        rollout_policy=rollout_policy,
-        rollout_epsilon=rollout_epsilon,
-        rollout_tau=rollout_tau,
-        rollout_novelty_weight=rollout_novelty_weight,
         seed=seed,
     )
 

@@ -167,9 +167,8 @@ class RandomStrategy(Strategy):
                 # Dummy reward function — we only use MCTS for tree traversal
                 # to sample valid NChooseK combinations.
                 reward_fn=lambda x, y: 0.0,
-                rollout_policy=False,
+                rollout_mode="uniform",
                 adaptive_p_stop=False,
-                normalize_rewards=False,
             )
 
             # now we sample the combinations
