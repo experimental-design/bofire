@@ -101,6 +101,7 @@ class MCTS_NIG:
         p_stop_rollout: float = 0.35,
         p_stop_warmup: int = 20,
         p_stop_temperature: float = 0.25,
+        adaptive_n0: bool = False,
     ):
         self.groups = groups
         self.reward_fn = reward_fn
@@ -124,6 +125,7 @@ class MCTS_NIG:
         self.p_stop_rollout = p_stop_rollout
         self.p_stop_warmup = p_stop_warmup
         self.p_stop_temperature = p_stop_temperature
+        self.adaptive_n0 = adaptive_n0
 
         # Initialize root node
         n_groups = len(groups)
@@ -188,6 +190,17 @@ class MCTS_NIG:
         )
         return mean - math.sqrt(max(empirical_var, 1e-8))
 
+    def _compute_n0(self, n_actions: int) -> float:
+        """Compute pseudo-count n₀ from branching factor.
+
+        With adaptive_n0, n₀ = 1 + log(branching_factor). Higher branching
+        means each child is visited rarely early on, so we need more
+        observations before departing from the prior.
+        """
+        if not self.adaptive_n0:
+            return 1.0
+        return 1.0 + math.log(max(n_actions, 2))
+
     # --- NIG Student-t sampling ----------------------------------------------
 
     def _student_t_sample(self, df: float, loc: float, scale: float) -> float:
@@ -200,11 +213,10 @@ class MCTS_NIG:
         v = self.rng.gammavariate(df / 2, 2)  # chi-squared(df)
         return loc + scale * z / math.sqrt(v / df)
 
-    def _nig_sample_score(self, node: TSNode) -> float:
+    def _nig_sample_score(self, node: TSNode, n0: float = 1.0) -> float:
         """Sample from node's NIG posterior (marginal Student-t) for tree selection."""
         mu0 = self._global_mean()
         prior_var = self._prior_var()
-        n0 = 1  # pseudo-count
         alpha0 = self.nig_alpha0
         beta0 = alpha0 * prior_var  # E[sigma^2] = beta0/alpha0 = prior_var
 
@@ -229,11 +241,10 @@ class MCTS_NIG:
         scale = math.sqrt(beta0_post / (alpha0_post * n0_post))
         return self._student_t_sample(df, mu0_post, scale)
 
-    def _nig_sample_action_score(self, stats: TSActionStats) -> float:
+    def _nig_sample_action_score(self, stats: TSActionStats, n0: float = 1.0) -> float:
         """Sample from a TSActionStats NIG posterior (for rollout actions)."""
         mu0 = self._global_mean()
         prior_var = self._prior_var()
-        n0 = 1
         alpha0 = self.nig_alpha0
         beta0 = alpha0 * prior_var
 
@@ -363,10 +374,11 @@ class MCTS_NIG:
 
             # NIG Thompson Sampling selection among existing children
             if node.children:
+                n0 = self._compute_n0(len(node.children))
                 best_action = None
                 best_score = float("-inf")
                 for action, child in node.children.items():
-                    score = self._nig_sample_score(child)
+                    score = self._nig_sample_score(child, n0=n0)
                     if score > best_score:
                         best_score = score
                         best_action = action
@@ -384,6 +396,7 @@ class MCTS_NIG:
         self, group_idx: int, cardinality: int, legal_actions: list[int]
     ) -> int:
         """Sample rollout action using per-action NIG posteriors."""
+        n0 = self._compute_n0(len(legal_actions))
         best_action = legal_actions[0]
         best_score = float("-inf")
 
@@ -394,7 +407,7 @@ class MCTS_NIG:
                 key = (group_idx, cardinality, action)
 
             stats = self.rollout_ts_stats.get(key, TSActionStats(0, 0.0, 0.0))
-            score = self._nig_sample_action_score(stats)
+            score = self._nig_sample_action_score(stats, n0=n0)
             if score > best_score:
                 best_score = score
                 best_action = action

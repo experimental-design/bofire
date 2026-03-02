@@ -1,32 +1,34 @@
-"""Benchmark: Normal-Inverse-Gamma (NIG) MCTS vs Normal-TS vs UCT.
+"""Benchmark: Adaptive Pseudo-Count n0 from Branching Factor.
 
-Compares NIG-based MCTS (Student-t posterior) against the best Normal-TS
-and UCT configurations on 6 combinatorial NChooseK benchmark problems.
+Tests adaptive n0 = 1 + log(branching_factor), where branching_factor is the
+number of legal actions at the parent node. Higher branching means each child
+is visited rarely during early exploration, so n0 > 1 keeps the posterior
+closer to the prior until enough observations accumulate.
+
+With 2 actions: n0 ~ 1.7.  With 11 actions (large_sparse root): n0 ~ 3.4.
+With 30 actions: n0 ~ 4.4.  Zero new hyperparameters.
 
 Configurations tested:
-  Reference baselines (3):
+  Reference baselines (4):
     1. Random
-    2. UCT (+rpol) — best UCT config
-    3. TS + TS(g,a) + comb — best Normal-TS config (current recommended default)
+    2. UCT (+rpol) -- best UCT config
+    3. NIG + TS(g,a) + vi + apv -- current default
+    4. NIG + TS(g,a) + apess -- best on large_sparse
 
-  NIG variants (8):
-    1. NIG + uniform — minimal NIG, uniform rollout
-    2. NIG + TS(g,a) — NIG + learned rollout
-    3. NIG + TS(g,a) + comb — NIG + best cache-hit mode
-    4. NIG + TS(g,a) + comb + apv — NIG + combined + adaptive variance
-    5. NIG + TS(g,a) + vi + apv — NIG + variance inflation + adaptive variance
-    6. NIG + TS(g,a) + pess — NIG + pessimistic only
-    7. NIG + uniform + pess + apv — NIG + pessimistic + adaptive variance
-    8. NIG + TS(g,a) + comb (a0=2) — higher alpha0 = lighter tails
+  Adaptive n0 configs (5):
+    5. NIG + TS(g,a) + vi + apv + an0 -- variance inflation + adaptive n0
+    6. NIG + TS(g,a) + apess + an0 -- adaptive pessimistic + adaptive n0
+    7. NIG + TS(g,a) + acomb + an0 -- adaptive combined + adaptive n0
+    8. NIG + TS(g,a) + an0 -- no cache-hit update + adaptive n0
+    9. NIG + uniform + an0 -- uniform rollout + adaptive n0
 
 Usage:
-    python mcts-report/benchmark_nig.py
+    python mcts-report/benchmark_nig_adaptive_n0.py
 """
 
 import json
 import sys
 import time
-from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -37,7 +39,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from benchmark import (
     Problem,
-    ProblemResult,
     make_problem_graduated,
     make_problem_large_sparse,
     make_problem_mixed,
@@ -46,8 +47,8 @@ from benchmark import (
     make_problem_simple_additive,
     run_random_baseline,
 )
-from benchmark_ts import TSConfig, UCTConfig, run_ts_config, run_uct_config
-from optimize_mcts_nig import MCTS_NIG
+from benchmark_nig import NIGConfig, run_nig_config
+from benchmark_ts import UCTConfig, run_uct_config
 
 
 OUTPUT_DIR = Path(__file__).parent
@@ -56,32 +57,6 @@ OUTPUT_DIR = Path(__file__).parent
 # ======================================================================
 # Configurations
 # ======================================================================
-
-
-@dataclass
-class NIGConfig:
-    """Configuration for MCTS_NIG benchmarking."""
-
-    name: str
-    nig_alpha0: float = 1.0
-    ts_prior_var: float = 1.0
-    adaptive_prior_var: bool = False
-    cache_hit_mode: str = "no_update"
-    variance_decay: float = 0.95
-    rollout_mode: str = "uniform"
-    pw_k0: float = 2.0
-    pw_alpha: float = 0.6
-    # Softmax fallback params
-    rollout_epsilon: float = 0.3
-    rollout_tau: float = 1.0
-    rollout_novelty_weight: float = 1.0
-    normalize_rewards: bool = True
-    adaptive_p_stop: bool = True
-    p_stop_rollout: float = 0.35
-    p_stop_warmup: int = 20
-    p_stop_temperature: float = 0.25
-    adaptive_n0: bool = False
-
 
 # UCT reference
 UCT_REF = UCTConfig(
@@ -93,104 +68,62 @@ UCT_REF = UCTConfig(
     rollout_policy=True,
 )
 
-# Normal-TS reference (best config from benchmark_ts)
-TS_REF = TSConfig(
-    name="TS + TS(g,a) + comb",
+# NIG reference baselines (best fixed configs)
+NIG_VI_APV = NIGConfig(
+    name="NIG + TS(g,a) + vi + apv",
     rollout_mode="ts_group_action",
-    cache_hit_mode="combined",
+    cache_hit_mode="variance_inflation",
+    adaptive_prior_var=True,
 )
 
-# NIG configs
-NIG_CONFIGS = [
+NIG_APESS = NIGConfig(
+    name="NIG + TS(g,a) + apess",
+    rollout_mode="ts_group_action",
+    cache_hit_mode="adaptive_pessimistic",
+)
+
+# Adaptive n0 configs
+ADAPTIVE_N0_CONFIGS = [
     NIGConfig(
-        name="NIG + uniform",
-        rollout_mode="uniform",
-    ),
-    NIGConfig(
-        name="NIG + TS(g,a)",
-        rollout_mode="ts_group_action",
-    ),
-    NIGConfig(
-        name="NIG + TS(g,a) + comb",
-        rollout_mode="ts_group_action",
-        cache_hit_mode="combined",
-    ),
-    NIGConfig(
-        name="NIG + TS(g,a) + comb + apv",
-        rollout_mode="ts_group_action",
-        cache_hit_mode="combined",
-        adaptive_prior_var=True,
-    ),
-    NIGConfig(
-        name="NIG + TS(g,a) + vi + apv",
+        name="NIG + TS(g,a) + vi + apv + an0",
         rollout_mode="ts_group_action",
         cache_hit_mode="variance_inflation",
         adaptive_prior_var=True,
+        adaptive_n0=True,
     ),
     NIGConfig(
-        name="NIG + TS(g,a) + pess",
+        name="NIG + TS(g,a) + apess + an0",
         rollout_mode="ts_group_action",
-        cache_hit_mode="pessimistic",
+        cache_hit_mode="adaptive_pessimistic",
+        adaptive_n0=True,
     ),
     NIGConfig(
-        name="NIG + uniform + pess + apv",
+        name="NIG + TS(g,a) + acomb + an0",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="adaptive_combined",
+        adaptive_n0=True,
+    ),
+    NIGConfig(
+        name="NIG + TS(g,a) + an0",
+        rollout_mode="ts_group_action",
+        cache_hit_mode="no_update",
+        adaptive_n0=True,
+    ),
+    NIGConfig(
+        name="NIG + uniform + an0",
         rollout_mode="uniform",
-        cache_hit_mode="pessimistic",
-        adaptive_prior_var=True,
-    ),
-    NIGConfig(
-        name="NIG + TS(g,a) + comb (a0=2)",
-        nig_alpha0=2.0,
-        rollout_mode="ts_group_action",
-        cache_hit_mode="combined",
+        cache_hit_mode="no_update",
+        adaptive_n0=True,
     ),
 ]
 
-ALL_CONFIG_NAMES = ["Random", UCT_REF.name, TS_REF.name] + [c.name for c in NIG_CONFIGS]
+NIG_REFS = [NIG_VI_APV, NIG_APESS]
 
-
-# ======================================================================
-# Run functions
-# ======================================================================
-
-
-def run_nig_config(problem: Problem, config: NIGConfig, seed: int) -> ProblemResult:
-    """Run NIG MCTS with given config, tracking best value per iteration."""
-    mcts = MCTS_NIG(
-        groups=problem.groups,
-        reward_fn=problem.reward_fn,
-        nig_alpha0=config.nig_alpha0,
-        ts_prior_var=config.ts_prior_var,
-        adaptive_prior_var=config.adaptive_prior_var,
-        cache_hit_mode=config.cache_hit_mode,
-        variance_decay=config.variance_decay,
-        rollout_mode=config.rollout_mode,
-        pw_k0=config.pw_k0,
-        pw_alpha=config.pw_alpha,
-        seed=seed,
-        rollout_epsilon=config.rollout_epsilon,
-        rollout_tau=config.rollout_tau,
-        rollout_novelty_weight=config.rollout_novelty_weight,
-        normalize_rewards=config.normalize_rewards,
-        adaptive_p_stop=config.adaptive_p_stop,
-        p_stop_rollout=config.p_stop_rollout,
-        p_stop_warmup=config.p_stop_warmup,
-        p_stop_temperature=config.p_stop_temperature,
-        adaptive_n0=config.adaptive_n0,
-    )
-
-    best_values = []
-    for _ in range(problem.n_iterations):
-        mcts.run(n_iterations=1)
-        best_values.append(mcts.best_value)
-
-    stats = mcts.cache_stats()
-    return ProblemResult(
-        best_values_over_time=best_values,
-        final_best=mcts.best_value,
-        found_optimum=abs(mcts.best_value - problem.optimal_value) < 1e-6,
-        n_unique_evals=stats["misses"],
-    )
+ALL_CONFIG_NAMES = (
+    ["Random", UCT_REF.name]
+    + [c.name for c in NIG_REFS]
+    + [c.name for c in ADAPTIVE_N0_CONFIGS]
+)
 
 
 # ======================================================================
@@ -222,7 +155,7 @@ def run_benchmark(problems: list[Problem]):
         success_rate = sum(r.found_optimum for r in results) / prob.n_trials
         mean_best = np.mean([r.final_best for r in results])
         print(
-            f"  {'Random':30s} | best={mean_best:7.1f} | "
+            f"  {'Random':40s} | best={mean_best:7.1f} | "
             f"opt_rate={success_rate:.0%} | {elapsed:.1f}s"
         )
 
@@ -238,28 +171,12 @@ def run_benchmark(problems: list[Problem]):
         success_rate = sum(r.found_optimum for r in results) / prob.n_trials
         mean_best = np.mean([r.final_best for r in results])
         print(
-            f"  {UCT_REF.name:30s} | best={mean_best:7.1f} | "
+            f"  {UCT_REF.name:40s} | best={mean_best:7.1f} | "
             f"opt_rate={success_rate:.0%} | {elapsed:.1f}s"
         )
 
-        # Normal-TS reference
-        key = (prob.name, TS_REF.name)
-        results = []
-        t0 = time.time()
-        for trial in range(prob.n_trials):
-            r = run_ts_config(prob, TS_REF, seed=trial)
-            results.append(r)
-        elapsed = time.time() - t0
-        all_results[key] = results
-        success_rate = sum(r.found_optimum for r in results) / prob.n_trials
-        mean_best = np.mean([r.final_best for r in results])
-        print(
-            f"  {TS_REF.name:30s} | best={mean_best:7.1f} | "
-            f"opt_rate={success_rate:.0%} | {elapsed:.1f}s"
-        )
-
-        # NIG configs
-        for cfg in NIG_CONFIGS:
+        # NIG references
+        for cfg in NIG_REFS:
             key = (prob.name, cfg.name)
             results = []
             t0 = time.time()
@@ -271,7 +188,24 @@ def run_benchmark(problems: list[Problem]):
             success_rate = sum(r.found_optimum for r in results) / prob.n_trials
             mean_best = np.mean([r.final_best for r in results])
             print(
-                f"  {cfg.name:30s} | best={mean_best:7.1f} | "
+                f"  {cfg.name:40s} | best={mean_best:7.1f} | "
+                f"opt_rate={success_rate:.0%} | {elapsed:.1f}s"
+            )
+
+        # Adaptive n0 configs
+        for cfg in ADAPTIVE_N0_CONFIGS:
+            key = (prob.name, cfg.name)
+            results = []
+            t0 = time.time()
+            for trial in range(prob.n_trials):
+                r = run_nig_config(prob, cfg, seed=trial)
+                results.append(r)
+            elapsed = time.time() - t0
+            all_results[key] = results
+            success_rate = sum(r.found_optimum for r in results) / prob.n_trials
+            mean_best = np.mean([r.final_best for r in results])
+            print(
+                f"  {cfg.name:40s} | best={mean_best:7.1f} | "
                 f"opt_rate={success_rate:.0%} | {elapsed:.1f}s"
             )
 
@@ -285,15 +219,13 @@ def run_benchmark(problems: list[Problem]):
 COLOR_MAP = {
     "Random": "#888888",
     "UCT (+rpol)": "#1f77b4",
-    "TS + TS(g,a) + comb": "#98df8a",
-    "NIG + uniform": "#2ca02c",
-    "NIG + TS(g,a)": "#d62728",
-    "NIG + TS(g,a) + comb": "#9467bd",
-    "NIG + TS(g,a) + comb + apv": "#8c564b",
     "NIG + TS(g,a) + vi + apv": "#e377c2",
-    "NIG + TS(g,a) + pess": "#ff9896",
-    "NIG + uniform + pess + apv": "#ffbb78",
-    "NIG + TS(g,a) + comb (a0=2)": "#17becf",
+    "NIG + TS(g,a) + apess": "#98df8a",
+    "NIG + TS(g,a) + vi + apv + an0": "#d62728",
+    "NIG + TS(g,a) + apess + an0": "#2ca02c",
+    "NIG + TS(g,a) + acomb + an0": "#ff7f0e",
+    "NIG + TS(g,a) + an0": "#9467bd",
+    "NIG + uniform + an0": "#17becf",
 }
 
 
@@ -330,7 +262,7 @@ def plot_convergence(
     ax.legend(fontsize=8, loc="lower right", ncol=2)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fname = f"convergence_nig_{problem_name}"
+    fname = f"convergence_nig_adaptive_n0_{problem_name}"
     if suffix:
         fname += f"_{suffix}"
     path = OUTPUT_DIR / f"{fname}.png"
@@ -340,39 +272,17 @@ def plot_convergence(
 
 
 def plot_convergence_subsets(problem_name, all_results, n_iterations):
-    """Plot focused subset comparisons for NIG analysis."""
+    """Plot focused subset: adaptive n0 vs fixed n0 for matched configs."""
     subsets = {
-        "nig_vs_normal_ts": {
+        "n0_effect": {
             "configs": [
-                "Random",
                 "UCT (+rpol)",
-                "TS + TS(g,a) + comb",
-                "NIG + uniform",
-                "NIG + TS(g,a)",
-                "NIG + TS(g,a) + comb",
-            ],
-            "title": "NIG vs Normal-TS vs UCT",
-        },
-        "nig_cache_modes": {
-            "configs": [
-                "Random",
-                "NIG + TS(g,a)",
-                "NIG + TS(g,a) + comb",
                 "NIG + TS(g,a) + vi + apv",
-                "NIG + TS(g,a) + pess",
-                "NIG + uniform + pess + apv",
+                "NIG + TS(g,a) + vi + apv + an0",
+                "NIG + TS(g,a) + apess",
+                "NIG + TS(g,a) + apess + an0",
             ],
-            "title": "NIG Cache-Hit Modes",
-        },
-        "nig_alpha": {
-            "configs": [
-                "Random",
-                "TS + TS(g,a) + comb",
-                "NIG + TS(g,a) + comb",
-                "NIG + TS(g,a) + comb (a0=2)",
-                "NIG + TS(g,a) + comb + apv",
-            ],
-            "title": "NIG Alpha0 & APV Effect",
+            "title": "Adaptive n0 vs Fixed n0",
         },
     }
 
@@ -437,9 +347,9 @@ def plot_summary_bar_chart(
         ax.legend(fontsize=8)
         ax.grid(True, axis="x", alpha=0.3)
 
-    fig.suptitle("NIG vs Normal-TS vs UCT: Final Best Reward", fontsize=14, y=1.02)
+    fig.suptitle("Adaptive n0: Final Best Reward", fontsize=14, y=1.02)
     fig.tight_layout()
-    path = OUTPUT_DIR / "summary_bar_chart_nig.png"
+    path = OUTPUT_DIR / "summary_bar_chart_nig_adaptive_n0.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {path}")
@@ -480,10 +390,10 @@ def plot_optimum_rate_heatmap(
                 j, i, f"{val:.0%}", ha="center", va="center", fontsize=9, color=color
             )
 
-    ax.set_title("NIG vs Normal-TS vs UCT: Optimum-Finding Rate", fontsize=13)
+    ax.set_title("Adaptive n0: Optimum-Finding Rate", fontsize=13)
     fig.colorbar(im, ax=ax, label="Rate", shrink=0.8)
     fig.tight_layout()
-    path = OUTPUT_DIR / "optimum_rate_heatmap_nig.png"
+    path = OUTPUT_DIR / "optimum_rate_heatmap_nig_adaptive_n0.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {path}")
@@ -527,11 +437,9 @@ def plot_unique_evals(
         ax.set_title(prob.name, fontsize=11)
         ax.grid(True, axis="x", alpha=0.3)
 
-    fig.suptitle(
-        "NIG vs Normal-TS vs UCT: Unique Selections Evaluated", fontsize=14, y=1.02
-    )
+    fig.suptitle("Adaptive n0: Unique Selections Evaluated", fontsize=14, y=1.02)
     fig.tight_layout()
-    path = OUTPUT_DIR / "unique_evals_nig.png"
+    path = OUTPUT_DIR / "unique_evals_nig_adaptive_n0.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"Saved: {path}")
@@ -559,7 +467,7 @@ def save_summary_json(problems, all_results, config_names):
             }
         summary[prob.name] = prob_summary
 
-    path = OUTPUT_DIR / "results_nig.json"
+    path = OUTPUT_DIR / "results_nig_adaptive_n0.json"
     with open(path, "w") as f:
         json.dump(summary, f, indent=2)
     print(f"Saved: {path}")
@@ -572,7 +480,7 @@ def save_summary_json(problems, all_results, config_names):
 
 
 def main():
-    print("MCTS Normal-Inverse-Gamma (NIG) Benchmark")
+    print("MCTS NIG Adaptive Pseudo-Count n0 Benchmark")
     print("=" * 70)
 
     problems = [
@@ -609,25 +517,25 @@ def main():
     summary = save_summary_json(problems, all_results, ALL_CONFIG_NAMES)
 
     # Print summary table
-    print("\n" + "=" * 90)
+    print("\n" + "=" * 95)
     print("SUMMARY TABLE")
-    print("=" * 90)
+    print("=" * 95)
     for prob in problems:
         print(
             f"\n{prob.name} (search space: ~{prob.search_space_size:,}, "
             f"optimum: {prob.optimal_value})"
         )
         print(
-            f"  {'Config':<35s} {'Mean Best':>10s} {'+-Std':>8s} "
+            f"  {'Config':<45s} {'Mean Best':>10s} {'+-Std':>8s} "
             f"{'Opt Rate':>10s} {'Uniq Evals':>12s}"
         )
-        print(f"  {'-'*75}")
+        print(f"  {'-'*85}")
         for cname in ALL_CONFIG_NAMES:
             d = summary[prob.name].get(cname)
             if d is None:
                 continue
             print(
-                f"  {cname:<35s} {d['mean_best']:10.1f} {d['std_best']:8.1f} "
+                f"  {cname:<45s} {d['mean_best']:10.1f} {d['std_best']:8.1f} "
                 f"{d['optimum_rate']:10.0%} {d['mean_unique_evals']:12.0f}"
             )
 

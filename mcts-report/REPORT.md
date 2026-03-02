@@ -4,7 +4,7 @@
 
 This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 6 combinatorial problems with NChooseK constraints. We test 23 UCT-based MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, rollout policy, and context-aware RAVE against a random-sampling baseline. We then benchmark Thompson Sampling (TS) variants with Normal and Normal-Inverse-Gamma (NIG) posteriors against the best UCT configs.
 
-Seven algorithmic improvements were implemented during this benchmarking cycle:
+Eight algorithmic improvements were implemented during this benchmarking cycle:
 1. **Virtual loss on cache hit**: On revisiting a cached terminal, increment visit counts but backpropagate reward=0. This dilutes mean node value for over-exploited branches, steering UCT toward unexplored territory.
 2. **Rollout retry on cache hit**: When a rollout produces a cached terminal, re-roll up to `max_rollout_retries` times to find a novel selection.
 3. **Blended softmax rollout policy**: Replaces uniform-random rollouts with a learned policy that blends softmax over per-(group, action) statistics with uniform exploration, treating STOP as a regular scored action.
@@ -12,6 +12,7 @@ Seven algorithmic improvements were implemented during this benchmarking cycle:
 5. **Thompson Sampling tree + rollout policy**: Replaces UCT selection and softmax rollouts with Normal-Normal conjugate posterior sampling, eliminating 9 tunable hyperparameters.
 6. **Normal-Inverse-Gamma posterior**: Replaces the Normal-Normal conjugate with the proper Bayesian conjugate for unknown mean and variance. The marginal posterior for the mean is a Student-t distribution with heavier tails at low observation counts, naturally preventing premature commitment.
 7. **Adaptive pessimistic strength**: Scales the pessimistic pseudo-observation by each node's local exhaustion rate (1 - n_obs/n_visits). Fresh nodes get mild pessimism; exhausted nodes get full pessimism. Zero new hyperparameters.
+8. **Adaptive pseudo-count n₀ (negative result)**: Sets n₀ = 1 + log(branching_factor) so nodes with many siblings require more observations before departing from the prior. Tested but found harmful — over-corrects by making posteriors too conservative for the available budget.
 
 **Key result (UCT)**: The cumulative effect of improvements 1-4 transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best UCT configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). Context-aware RAVE re-enables RAVE as a useful signal on mixed problems (80% with k=300 vs 77% for +rpol) while matching +rpol on other problems.
 
@@ -1556,27 +1557,26 @@ The marginal posterior for μ (integrating out σ²) is a **Student-t distributi
 
 **No new hyperparameters**: α₀=1 (standard weak prior for variance) is the canonical choice. n₀ and β₀ map directly to the existing prior pseudo-count and prior variance. The implementation is a drop-in replacement for `_ts_sample_score` and `_ts_sample_action_score`.
 
-#### 11.12.7 Adaptive Pseudo-Count n₀ from Branching Factor
+#### 11.12.7 ~~Adaptive Pseudo-Count n₀ from Branching Factor~~ — Implemented (Negative Result)
 
-**Problem**: The prior pseudo-count n₀ is fixed at 1, meaning a single observation contributes 50% to the posterior mean. On a problem with a high branching factor (many legal actions per node), the algorithm visits each child infrequently — one observation per child is common during early exploration. With n₀=1, that single observation immediately collapses the posterior, causing premature commitment to whichever child happened to get a good first evaluation.
+**Implemented and benchmarked in §11.15.** Adaptive n₀ = 1 + log(branching_factor) was tested across 5 configurations on all 6 problems. The result is **negative**: adaptive n₀ does not improve performance on any problem where it was hypothesized to help. On multigroup_interaction, the best adaptive n₀ config (vi+apv+an₀) achieves 57% vs 80% for fixed n₀ (vi+apv) — a 23pp regression. On large_sparse, apess+an₀ achieves 47% vs 53% for apess — a 6pp regression. The higher n₀ over-corrects by making the posterior too conservative, slowing convergence within the available budget. The one bright spot is `acomb+an₀` achieving 100% on graduated_landscape and simple_additive, but these were already mostly solved by existing configs.
 
-**Proposed fix**: Set n₀ proportional to the local branching factor:
+**Original problem statement**: The prior pseudo-count n₀ is fixed at 1, meaning a single observation contributes 50% to the posterior mean. On a problem with a high branching factor (many legal actions per node), the algorithm visits each child infrequently — one observation per child is common during early exploration. With n₀=1, that single observation immediately collapses the posterior, causing premature commitment to whichever child happened to get a good first evaluation.
+
+**Implemented fix**: Set n₀ proportional to the local branching factor:
 
 ```python
-def _adaptive_n0(self, node: TSNode) -> float:
-    n_actions = len(self._legal_actions(node))
+def _compute_n0(self, n_actions: int) -> float:
+    if not self.adaptive_n0:
+        return 1.0
     return 1.0 + math.log(max(n_actions, 2))
 ```
 
 With 2 legal actions: n₀ ≈ 1.7. With 11 actions (large_sparse root): n₀ ≈ 3.4. With 30 actions: n₀ ≈ 4.4.
 
-Higher n₀ means more observations are needed before the posterior departs significantly from the prior. On large_sparse (many actions, sparse visits), this keeps posteriors centered on the global mean for longer, preventing over-commitment to early observations. On graduated (few actions, dense visits), n₀ is barely above 1 — minimal change.
+The n₀ value is computed from the number of siblings (tree selection) or legal actions (rollout) and passed to the NIG sampling functions. This is fully automatic — zero new hyperparameters.
 
-This is fully automatic — zero new hyperparameters, reads the problem structure directly. It is orthogonal to adaptive prior variance (which controls σ₀², not n₀) and complements it: APV calibrates the *scale* of the prior, adaptive n₀ calibrates the *confidence*.
-
-**Interaction with NIG**: If the NIG posterior (§11.12.6) is implemented, adaptive n₀ feeds directly into the NIG update as the prior pseudo-count, affecting both the posterior mean and the degrees of freedom of the Student-t. The two ideas compose naturally.
-
-**Expected impact**: Moderate improvement on large_sparse and multigroup (where branching factor is high and visits are sparse), minimal change on small problems. Lower priority than NIG because NIG fixes the more fundamental issue (incorrect variance estimation) while adaptive n₀ is a tuning refinement.
+**Why it failed**: The NIG posterior's Student-t tails already handle the low-n regime well enough. Adding higher n₀ on top of that makes the posterior *too* conservative — it takes more observations to shift away from the prior, but the available budget (600–800 iterations) isn't large enough to recover from the slower learning. The intuition that "higher n₀ prevents premature commitment" over-corrects when the Student-t's heavy tails are already providing sufficient exploration pressure.
 
 #### 11.12.8 ~~Adaptive Pessimistic Strength from Local Exhaustion~~ — Implemented
 
@@ -1698,16 +1698,14 @@ Based on the benchmark evidence, the improvements are grouped by status and expe
 
 5. **~~Adaptive pessimistic strength~~ — Implemented** (§11.14) — scales the pessimistic offset by local exhaustion rate (1 - n_obs/n_visits). Did not resolve the vi-vs-comb tradeoff on interaction problems, but **no-APV adaptive modes achieved 53% on large_sparse** — first configs to exceed UCT's 50%. Revealed that APV hurts on massive search spaces.
 
-**Remaining improvements:**
-
-6. **Adaptive pseudo-count n₀** (§11.12.7) — sets n₀ proportional to log(branching_factor), so nodes with many legal actions require more observations before departing from the prior. Complements NIG; lower priority now that NIG's Student-t already handles the low-n regime.
+6. **~~Adaptive pseudo-count n₀~~ — Implemented (Negative Result)** (§11.15) — sets n₀ = 1 + log(branching_factor) so nodes with many siblings require more observations before departing from the prior. **Result: harmful.** Regresses multigroup from 80% to 57% and large_sparse from 53% to 47%. The NIG Student-t already handles the low-n regime; higher n₀ over-corrects by making posteriors too conservative for the available budget.
 
 **Structural changes (require production integration):**
 
 7. **Two-phase burn-in** (§11.12.3) — eliminates cache hits during early exploration with cheap evaluations. Leverages TS's unique ability to handle heteroscedastic observations.
 8. **Warm-starting trees for batch generation** (§11.12.11) — reuses tree structure across candidates in q > 1 batches, amortizes exploration cost; composes with two-phase burn-in.
 
-Items 1-5 are implemented and benchmarked. Item 6 can be implemented and tested on the existing synthetic benchmarks. Items 7-8 require production integration (cheap evaluation function, batch BO loop).
+Items 1-5 are implemented and benchmarked with positive results. Item 6 is implemented and benchmarked with negative results (adaptive n₀ hurts performance). Items 7-8 require production integration (cheap evaluation function, batch BO loop).
 
 ---
 
@@ -2216,3 +2214,182 @@ The adaptive pessimistic benchmark reveals that **no single config dominates all
 NIG now **surpasses UCT on large_sparse** for the first time. The gap has inverted from -30pp to +3pp across the benchmark iterations.
 
 **If forced to pick one config for all problems**: **NIG + TS(g,a) + vi + apv** remains the safest default. It achieves 80% on the hardest problem (multigroup), 100% on needle and mixed, 47% on large_sparse, 83% on simple_additive, and 77% on graduated. The only weakness is graduated (77% vs 100%), which is acceptable for a universal default. For production use where the problem type is known, selecting between `vi+apv` (interaction problems) and `apess` without APV (massive sparse spaces) would be optimal.
+
+### 11.15 Adaptive Pseudo-Count n₀ Benchmark Results (Negative Result)
+
+The adaptive pseudo-count n₀ idea (described in §11.12.7) sets n₀ = 1 + log(branching_factor) at each node, where branching_factor is the number of legal actions (siblings competing for selection). With fixed n₀=1, a single observation contributes 50% to the posterior mean. On high-branching nodes where each child is visited rarely, this causes premature commitment. Higher n₀ should keep posteriors closer to the prior until enough observations accumulate.
+
+Implementation: `MCTS_NIG._compute_n0(n_actions)` computes n₀ from the branching factor and passes it to `_nig_sample_score` (tree selection) and `_nig_sample_action_score` (rollout). Enabled via `adaptive_n0=True`. Zero new hyperparameters.
+
+Benchmark: `benchmark_nig_adaptive_n0.py` with 30 trials per config per problem.
+
+#### 11.15.1 Motivation
+
+The NIG benchmarks (§11.13, §11.14) showed that the best configs still struggle on high-branching problems:
+
+- **multigroup_interaction**: 3 groups × 8 features = up to 8 legal actions per node. vi+apv achieves 80%, but 20% of trials fail.
+- **large_sparse**: 4 groups × 10 features = up to 11 legal actions at root. apess achieves 53%, leaving 47% failure.
+
+The hypothesis: with 8-11 siblings competing, each child gets visited ~1-2 times during early exploration. At n₀=1, those 1-2 observations dominate the posterior. Setting n₀ = 1 + log(11) ≈ 3.4 means ~3-4 observations are needed before the posterior significantly departs from the prior, preventing premature lock-in.
+
+#### 11.15.2 Configurations Tested
+
+**Reference baselines** (4):
+
+| # | Config | Notes |
+|---|--------|-------|
+| 1 | Random | Uniform random sampling |
+| 2 | UCT (+rpol) | Best UCT config |
+| 3 | NIG + TS(g,a) + vi + apv | Current default (80% multigroup, 47% large_sparse) |
+| 4 | NIG + TS(g,a) + apess | Best on large_sparse (53%) |
+
+**Adaptive n₀ configs** (5):
+
+| # | Config | Cache Hit | APV | an₀ |
+|---|--------|-----------|-----|-----|
+| 5 | NIG + TS(g,a) + vi + apv + an₀ | variance_inflation | Yes | Yes |
+| 6 | NIG + TS(g,a) + apess + an₀ | adaptive_pessimistic | No | Yes |
+| 7 | NIG + TS(g,a) + acomb + an₀ | adaptive_combined | No | Yes |
+| 8 | NIG + TS(g,a) + an₀ | no_update | No | Yes |
+| 9 | NIG + uniform + an₀ | no_update | No | Yes |
+
+#### 11.15.3 Summary Tables
+
+**multigroup_interaction** (~4.3M combinations, optimum: 150.0, 600 iterations × 30 trials)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|-----------|------|----------|-------------|
+| Random | 62.9 | 10.3 | 0% | 588 |
+| UCT (+rpol) | 111.4 | 23.6 | 23% | 516 |
+| NIG + TS(g,a) + vi + apv | **141.3** | 17.6 | **80%** | 532 |
+| NIG + TS(g,a) + apess | 122.3 | 21.8 | 37% | 475 |
+| NIG + TS(g,a) + vi + apv + an₀ | 130.5 | 22.8 | 57% | 542 |
+| NIG + TS(g,a) + apess + an₀ | 124.8 | 24.7 | 47% | 468 |
+| NIG + TS(g,a) + acomb + an₀ | 126.0 | 23.3 | 47% | 527 |
+| NIG + TS(g,a) + an₀ | 121.1 | 23.2 | 37% | 323 |
+| NIG + uniform + an₀ | 97.2 | 33.3 | 23% | 195 |
+
+**needle_in_haystack** (~4.9K combinations, optimum: 100.0, 400 iterations × 30 trials)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|-----------|------|----------|-------------|
+| Random | 39.7 | 20.5 | 10% | 216 |
+| UCT (+rpol) | **100.0** | 0.0 | **100%** | 283 |
+| NIG + TS(g,a) + vi + apv | **100.0** | 0.0 | **100%** | 182 |
+| NIG + TS(g,a) + apess | 98.0 | 10.8 | 97% | 207 |
+| NIG + TS(g,a) + vi + apv + an₀ | **100.0** | 0.0 | **100%** | 191 |
+| NIG + TS(g,a) + apess + an₀ | **100.0** | 0.0 | **100%** | 205 |
+| NIG + TS(g,a) + acomb + an₀ | **100.0** | 0.0 | **100%** | 262 |
+| NIG + TS(g,a) + an₀ | 86.3 | 27.4 | 80% | 106 |
+| NIG + uniform + an₀ | 62.7 | 34.9 | 47% | 79 |
+
+**mixed_nchoosek_categorical** (~26.9K combinations, optimum: 150.0, 500 iterations × 30 trials)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|-----------|------|----------|-------------|
+| Random | 79.2 | 14.6 | 3% | 472 |
+| UCT (+rpol) | 135.9 | 25.6 | 77% | 442 |
+| NIG + TS(g,a) + vi + apv | **150.0** | 0.0 | **100%** | 385 |
+| NIG + TS(g,a) + apess | 146.0 | 15.0 | 93% | 380 |
+| NIG + TS(g,a) + vi + apv + an₀ | 148.0 | 10.8 | 97% | 388 |
+| NIG + TS(g,a) + apess + an₀ | 142.0 | 20.4 | 87% | 385 |
+| NIG + TS(g,a) + acomb + an₀ | 146.0 | 15.0 | 93% | 391 |
+| NIG + TS(g,a) + an₀ | 144.0 | 18.0 | 90% | 386 |
+| NIG + uniform + an₀ | 116.0 | 32.1 | 47% | 165 |
+
+**large_sparse** (~960M combinations, optimum: 200.0, 800 iterations × 30 trials)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|-----------|------|----------|-------------|
+| Random | 36.1 | 6.3 | 0% | 764 |
+| UCT (+rpol) | 129.8 | 70.2 | 50% | 750 |
+| NIG + TS(g,a) + vi + apv | 123.3 | 71.9 | 47% | 750 |
+| NIG + TS(g,a) + apess | **134.4** | 70.2 | **53%** | 688 |
+| NIG + TS(g,a) + vi + apv + an₀ | 118.3 | 71.5 | 43% | 741 |
+| NIG + TS(g,a) + apess + an₀ | 122.9 | 72.3 | 47% | 679 |
+| NIG + TS(g,a) + acomb + an₀ | 107.7 | 70.4 | 37% | 723 |
+| NIG + TS(g,a) + an₀ | 78.9 | 54.3 | 17% | 589 |
+| NIG + uniform + an₀ | 66.7 | 52.9 | 13% | 367 |
+
+**graduated_landscape** (~375 combinations, optimum: 65.0, 300 iterations × 30 trials)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|-----------|------|----------|-------------|
+| Random | 60.6 | 3.3 | 7% | 113 |
+| UCT (+rpol) | 64.5 | 1.4 | 80% | 157 |
+| NIG + TS(g,a) + vi + apv | 64.8 | 0.4 | 77% | 123 |
+| NIG + TS(g,a) + apess | 64.9 | 0.3 | 87% | 129 |
+| NIG + TS(g,a) + vi + apv + an₀ | 64.7 | 0.4 | 73% | 126 |
+| NIG + TS(g,a) + apess + an₀ | 64.8 | 0.4 | 83% | 132 |
+| NIG + TS(g,a) + acomb + an₀ | **65.0** | 0.0 | **100%** | 166 |
+| NIG + TS(g,a) + an₀ | 64.5 | 0.5 | 50% | 90 |
+| NIG + uniform + an₀ | 63.9 | 1.4 | 27% | 69 |
+
+**simple_additive** (~793 combinations, optimum: 65.0, 300 iterations × 30 trials)
+
+| Config | Mean Best | ±Std | Opt Rate | Unique Evals |
+|--------|-----------|------|----------|-------------|
+| Random | 57.7 | 3.3 | 0% | 115 |
+| UCT (+rpol) | 64.1 | 2.2 | 83% | 187 |
+| NIG + TS(g,a) + vi + apv | 64.7 | 0.7 | 83% | 136 |
+| NIG + TS(g,a) + apess | **65.0** | 0.0 | **100%** | 148 |
+| NIG + TS(g,a) + vi + apv + an₀ | 64.4 | 1.2 | 73% | 139 |
+| NIG + TS(g,a) + apess + an₀ | 64.9 | 0.4 | 97% | 148 |
+| NIG + TS(g,a) + acomb + an₀ | **65.0** | 0.0 | **100%** | 174 |
+| NIG + TS(g,a) + an₀ | 64.2 | 1.5 | 73% | 101 |
+| NIG + uniform + an₀ | 63.4 | 1.9 | 53% | 90 |
+
+#### 11.15.4 Optimum-Finding Rate Heatmap
+
+![Optimum-Finding Rate Heatmap](optimum_rate_heatmap_nig_adaptive_n0.png)
+
+#### 11.15.5 Convergence Curves
+
+All configs on each problem:
+
+![multigroup_interaction](convergence_nig_adaptive_n0_multigroup_interaction.png)
+![needle_in_haystack](convergence_nig_adaptive_n0_needle_in_haystack.png)
+![mixed_nchoosek_categorical](convergence_nig_adaptive_n0_mixed_nchoosek_categorical.png)
+![large_sparse](convergence_nig_adaptive_n0_large_sparse.png)
+![graduated_landscape](convergence_nig_adaptive_n0_graduated_landscape.png)
+![simple_additive](convergence_nig_adaptive_n0_simple_additive.png)
+
+Focused comparison — adaptive n₀ vs fixed n₀ for matched configs:
+
+![multigroup — n₀ effect](convergence_nig_adaptive_n0_multigroup_interaction_n0_effect.png)
+![large_sparse — n₀ effect](convergence_nig_adaptive_n0_large_sparse_n0_effect.png)
+![graduated — n₀ effect](convergence_nig_adaptive_n0_graduated_landscape_n0_effect.png)
+
+#### 11.15.6 Analysis
+
+**Adaptive n₀ is uniformly harmful on the hardest problems.** The head-to-head comparisons show clear regressions:
+
+| Problem | Fixed n₀ Config | Opt Rate | + an₀ | Opt Rate | Delta |
+|---------|----------------|----------|-------|----------|-------|
+| multigroup | vi + apv | **80%** | vi + apv + an₀ | 57% | **-23pp** |
+| multigroup | apess | 37% | apess + an₀ | 47% | +10pp |
+| large_sparse | apess | **53%** | apess + an₀ | 47% | **-6pp** |
+| large_sparse | vi + apv | 47% | vi + apv + an₀ | 43% | **-4pp** |
+| mixed | vi + apv | **100%** | vi + apv + an₀ | 97% | -3pp |
+| needle | apess | 97% | apess + an₀ | **100%** | +3pp |
+| graduated | apess | 87% | acomb + an₀ | **100%** | +13pp |
+| simple_additive | apess | **100%** | apess + an₀ | 97% | -3pp |
+
+The largest regression is on **multigroup_interaction** (-23pp for vi+apv), the problem with the strongest cross-group interactions. The second-largest is on **large_sparse** (-6pp for apess), the massive search space where adaptive n₀ was expected to help most.
+
+**Why it failed — over-correction on top of an already good solution.** The NIG posterior's Student-t distribution already has heavier tails at low observation counts than the Normal distribution. At n=1 with α₀=1, the Student-t has df=3 — much heavier tails than a Normal. This already provides substantial protection against premature commitment from a single observation. Adding n₀ ≈ 3.4 (for 11 actions) on top of the heavy-tailed Student-t makes the posterior excessively conservative: the algorithm requires ~3-4 observations per child before posteriors differentiate, but with 11 children and 800 iterations, many children never reach that threshold.
+
+**Budget-limited regime.** The fundamental issue is that adaptive n₀ trades convergence speed for robustness to premature commitment, but the benchmarks operate in a budget-limited regime (600-800 iterations). With unlimited budget, higher n₀ would eventually converge to the same answer. Within the available budget, the slower convergence means fewer iterations in the exploitation phase, reducing the chance of finding the optimum.
+
+**Small-problem exception.** On graduated_landscape (375 combinations, 300 iterations), `acomb + an₀` achieves 100% — the only improvement. Here the search space is small enough that even with conservative posteriors, the algorithm explores exhaustively. But this problem was already solved by other configs (comb+apv, acomb both at 100% in §11.14).
+
+**The no-cache-hit modes (an₀, uniform + an₀) are weak.** Without cache-hit handling, adaptive n₀ alone achieves only 37% on multigroup and 17% on large_sparse. Adaptive n₀ cannot substitute for proper cache-hit strategies.
+
+#### 11.15.7 Conclusion
+
+Adaptive pseudo-count n₀ from branching factor is a **negative result**. The NIG Student-t posterior already provides sufficient protection against premature commitment at low observation counts, and inflating n₀ further only slows convergence. The existing recommendations remain unchanged:
+
+- **Default**: NIG + TS(g,a) + vi + apv (80% multigroup, 100% needle/mixed, 47% large_sparse)
+- **Massive sparse spaces**: NIG + TS(g,a) + apess without APV (53% large_sparse)
+
+The adaptive n₀ code remains available (`adaptive_n0=True`) but is not recommended for any problem type tested.
