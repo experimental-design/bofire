@@ -18,11 +18,10 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
     def __init__(
         self,
         data_model: DataModel,
-        tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed",
         tanimoto_similarity_matrix: Optional[torch.Tensor] = None,
         **kwargs,
     ):
-        self.tanimoto_calculation_mode = tanimoto_calculation_mode
+        self.tanimoto_calculation_mode = data_model.tanimoto_calculation_mode
         self.tanimoto_similarity_matrix = tanimoto_similarity_matrix
         super().__init__(data_model=data_model, **kwargs)
 
@@ -32,7 +31,6 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
         re_init_kwargs = super().re_init_kwargs
         re_init_kwargs.update(
             {
-                "tanimoto_calculation_mode": self.tanimoto_calculation_mode,
                 "tanimoto_similarity_matrix": self.tanimoto_similarity_matrix,
             }
         )
