@@ -30,6 +30,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed"
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

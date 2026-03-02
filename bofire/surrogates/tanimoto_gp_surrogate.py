@@ -1,5 +1,5 @@
 
-from typing import Any, Optional
+from typing import Any, Optional, Literal
 
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -18,11 +18,11 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
     def __init__(
         self,
         data_model: DataModel,
-        pre_computed_tanimoto: bool = True,
+        tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed",
         tanimoto_similarity_matrix: Optional[torch.Tensor] = None,
         **kwargs,
     ):
-        self.pre_computed_tanimoto = pre_computed_tanimoto
+        self.tanimoto_calculation_mode = tanimoto_calculation_mode
         self.tanimoto_similarity_matrix = tanimoto_similarity_matrix
         super().__init__(data_model=data_model, **kwargs)
 
@@ -32,7 +32,7 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
         re_init_kwargs = super().re_init_kwargs
         re_init_kwargs.update(
             {
-                "pre_computed_tanimoto": self.pre_computed_tanimoto,
+                "tanimoto_calculation_mode": self.tanimoto_calculation_mode,
                 "tanimoto_similarity_matrix": self.tanimoto_similarity_matrix,
             }
         )
@@ -52,7 +52,7 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
         else:
             n_dim = tX.shape[-1]
         
-        if self.pre_computed_tanimoto:
+        if self.tanimoto_calculation_mode == "pre_computed":
             if self.tanimoto_similarity_matrix is None:
 
                 covar_module_pre_calc=kernels.map(
@@ -75,9 +75,9 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
-                active_dims=list(range(n_dim)) if not self.pre_computed_tanimoto else [0],  # active dims are not needed if using pre-computed tanimoto
+                active_dims=list(range(n_dim)) if not (self.tanimoto_calculation_mode=="pre_computed") else [0],  # active dims are not needed if using pre-computed tanimoto
                 features_to_idx_mapper=self.get_feature_indices,
-                pre_computed_tanimoto=self.pre_computed_tanimoto,
+                pre_computed_tanimoto=(self.tanimoto_calculation_mode=="pre_computed"),
                 tanimoto_similarity_matrix=self.tanimoto_similarity_matrix,
             ),
             outcome_transform=outcome_transform,

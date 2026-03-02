@@ -71,24 +71,6 @@ def map_MixedSingleTaskGPSurrogate(
         kernel=kernel,
     )
 
-
-# def map_TanimotoGPSurrogate(
-#     data_model: data_models.TanimotoGPSurrogate,
-# ) -> data_models.SingleTaskGPSurrogate:
-#     return data_models.SingleTaskGPSurrogate(
-#         inputs=data_model.inputs,
-#         outputs=data_model.outputs,
-#         input_preprocessing_specs=data_model.input_preprocessing_specs,
-#         categorical_encodings=data_model.categorical_encodings,
-#         dump=data_model.dump,
-#         scaler=None,
-#         output_scaler=data_model.output_scaler,
-#         noise_prior=data_model.noise_prior,
-#         hyperconfig=None,
-#         kernel=data_model.kernel,
-#     )
-
-
 DATA_MODEL_MAP: Dict[
     Type[data_models.MixedSingleTaskGPSurrogate],
     Callable[[data_models.MixedSingleTaskGPSurrogate], data_models.AnySurrogate],
