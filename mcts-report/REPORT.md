@@ -1465,6 +1465,8 @@ This is the TS analogue of reward normalization: instead of squashing rewards to
 
 **Problem**: TS's exploration efficiency gap (575 vs 750 unique evals on large_sparse) exists because each evaluation is expensive (`optimize_acqf` with multi-start L-BFGS), so wasted iterations on cache hits are costly. The cache itself exists because evaluations are expensive and deterministic.
 
+**Empirical validation**: §11.16 confirms that polytope samples rank subsets with Spearman ρ > 0.97 at 26x lower cost on constrained problems (64 samples per subset). The ranking is near-perfect even though absolute values are pessimistically biased — exactly what NIG-TS needs.
+
 **Proposed fix** (detailed in §8.5): split the MCTS run into two phases:
 
 | Phase | Evaluations | Caching | Cost per eval | Purpose |
@@ -1702,10 +1704,10 @@ Based on the benchmark evidence, the improvements are grouped by status and expe
 
 **Structural changes (require production integration):**
 
-7. **Two-phase burn-in** (§11.12.3) — eliminates cache hits during early exploration with cheap evaluations. Leverages TS's unique ability to handle heteroscedastic observations.
+7. **Two-phase burn-in** (§11.12.3) — eliminates cache hits during early exploration with cheap evaluations. Leverages TS's unique ability to handle heteroscedastic observations. **Empirical gap analysis in §11.16** confirms that polytope samples preserve subset ranking (Spearman ρ > 0.97) at 26x lower cost per evaluation — validates the core assumption.
 8. **Warm-starting trees for batch generation** (§11.12.11) — reuses tree structure across candidates in q > 1 batches, amortizes exploration cost; composes with two-phase burn-in.
 
-Items 1-5 are implemented and benchmarked with positive results. Item 6 is implemented and benchmarked with negative results (adaptive n₀ hurts performance). Items 7-8 require production integration (cheap evaluation function, batch BO loop).
+Items 1-6 are implemented and benchmarked (1-5 positive, 6 negative). Item 7 has an empirical gap analysis (§11.16) confirming feasibility; production integration and full BO-loop validation remain. Item 8 requires production integration.
 
 ---
 
@@ -2393,3 +2395,119 @@ Adaptive pseudo-count n₀ from branching factor is a **negative result**. The N
 - **Massive sparse spaces**: NIG + TS(g,a) + apess without APV (53% large_sparse)
 
 The adaptive n₀ code remains available (`adaptive_n0=True`) but is not recommended for any problem type tested.
+
+---
+
+### 11.16 Sampling vs Optimizing: Empirical Gap Analysis
+
+This section presents the first empirical investigation toward the two-phase burn-in (§8.5, §11.12.3). The central question: **can cheap polytope samples replace expensive `optimize_acqf` calls for the purpose of ranking NChooseK subsets?** If so, MCTS could use cheap samples during burn-in to build tree structure, then run full optimization only on the winner.
+
+#### 11.16.1 Setup
+
+Two benchmarks test complementary regimes:
+
+| Benchmark | Dim | Subsets | Constraints | Continuous optimization |
+|-----------|-----|---------|-------------|------------------------|
+| `Hartmann(dim=6, allowed_k=4)` | 6 | 57 | NChooseK only (box bounds) | Easy — unconstrained per subset |
+| `FormulationWrapper(Hartmann(), max_count=4)` | 7 | 57 | NChooseK + sum-to-1 equality + box | Hard — simplex-constrained per subset |
+
+For each benchmark:
+1. Fit a GP via `SoboStrategy` on 20–30 random initial points
+2. Extract the acquisition function (qLogEI) and bounds
+3. For every NChooseK subset (57 total), compute:
+   - **Optimized value**: `optimize_acqf` with 20 restarts, 2048 raw samples (gold standard)
+   - **Sample-best value**: best of N polytope samples (hit-and-run via `sample_q_batches_from_polytope`), varying N ∈ {64, 256, 1024, 2048}
+4. Compare rankings (Spearman rho, top-k overlap) and absolute gaps across 5 seeds
+
+The "optimized" baseline represents what the current MCTS reward function computes. The "sample-best" represents what a cheap burn-in evaluation would return.
+
+#### 11.16.2 Results: Unconstrained (Hartmann, box bounds)
+
+| n_samples | time | Spearman ρ | top-1 | top-3 | top-5 | mean gap | winner gap |
+|-----------|------|-----------|-------|-------|-------|----------|------------|
+| 64 | 0.2s | 0.972 | 0% | 40% | 56% | 0.803 | 0.239 |
+| 128 | 0.3s | 0.971 | 20% | 53% | 56% | 0.685 | 0.123 |
+| 256 | 0.4s | 0.972 | 0% | 47% | 52% | 0.662 | 0.058 |
+| 512 | 0.8s | 0.980 | 0% | 47% | 64% | 0.595 | 0.049 |
+| 1024 | 1.6s | 0.979 | 0% | 47% | 60% | 0.256 | 0.043 |
+| 2048 | 3.2s | 0.981 | 0% | 53% | 72% | 0.239 | 0.024 |
+
+**Exhaustive optimization time**: ~4.5s (57 subsets × `optimize_acqf`).
+
+**Timing**: Sobol sampling is simple box-uniform sampling — no constraints. At 64 samples: **23x faster** per subset. At 2048: **1.4x faster** (diminishing returns). The cost is dominated by acqf forward passes, which scale linearly with sample count.
+
+**Pearson r**: 1.0000 — optimized and sample-best values are perfectly linearly correlated.
+
+**Gap scales with subset dimensionality**:
+
+| |subset| | n subsets | mean gap @2048 | median gap | max gap |
+|----------|----------|---------------|------------|---------|
+| 0 | 1 | 0.000 | 0.000 | 0.000 |
+| 1 | 6 | 0.000 | 0.000 | 0.001 |
+| 2 | 15 | 0.009 | 0.002 | 0.085 |
+| 3 | 20 | 0.026 | 0.009 | 0.190 |
+| 4 | 15 | 0.047 | 0.015 | 0.225 |
+
+More free dimensions = harder to find the optimum by sampling, but the ranking is preserved regardless.
+
+#### 11.16.3 Results: Constrained (FormulationWrapper, simplex)
+
+| n_samples | time | Spearman ρ | top-1 | top-3 | top-5 | mean gap | winner gap |
+|-----------|------|-----------|-------|-------|-------|----------|------------|
+| 64 | 5.3s | 0.970 | 20% | 47% | 60% | 0.502 | 0.166 |
+| 256 | 15.4s | 0.978 | 0% | 53% | 72% | 0.118 | 0.104 |
+| 1024 | 55.9s | 0.986 | 20% | 53% | 68% | 0.059 | 0.061 |
+| 2048 | 109.9s | 0.987 | 0% | 53% | 60% | 0.042 | 0.039 |
+
+**Exhaustive optimization time**: ~140.9s (57 subsets × `optimize_acqf` with linear constraints).
+
+**Timing**: Polytope sampling uses hit-and-run (MCMC), which is far more expensive than box-uniform. At 64 samples: **26x faster** (5.3s vs 140.9s). At 2048: **1.3x faster** (109.9s vs 140.9s) — barely any speedup because `optimize_acqf` itself spends most of its time generating constrained initial points via the same hit-and-run sampler.
+
+**Pearson r**: 1.0000.
+
+**Gap scales with subset dimensionality**:
+
+| |subset| | n subsets | mean gap @2048 | median gap | max gap |
+|----------|----------|---------------|------------|---------|
+| 0 | 1 | 0.000 | 0.000 | 0.000 |
+| 1 | 6 | 0.000 | 0.000 | 0.001 |
+| 2 | 15 | 0.004 | 0.003 | 0.019 |
+| 3 | 20 | 0.036 | 0.004 | 0.224 |
+| 4 | 15 | 0.063 | 0.025 | 0.203 |
+
+#### 11.16.4 Low Top-1 Match Is Misleading
+
+Across both benchmarks, top-1 match is 0–20% despite ρ > 0.97. This is entirely due to **tied tiers**: the top 4–5 subsets often have nearly identical optimized values (differing by < 0.005). For example, seed 1 of the constrained benchmark has top-4 all at -4.2452. The sample ranking picks a different member of this tied group, but the actual acqf difference is negligible. The sample-based MCTS would converge to the same quality solution.
+
+#### 11.16.5 Key Findings
+
+1. **Ranking is near-perfect** (ρ = 0.97–0.99) even at just 64 samples per subset. The NIG-TS tree would make essentially the same explore/exploit decisions whether rewards come from optimization or sampling.
+
+2. **Values have systematic downward bias** — sample-best is always ≤ optimized. But NIG-TS adapts to the reward scale; it only needs correct *relative ordering*, not correct absolute values.
+
+3. **The bias is order-preserving** (Pearson r = 1.0). This means during burn-in, the NIG posteriors will rank subsets correctly even though the absolute values are pessimistic. After switching to accurate optimization, the accurate values dominate the posterior (as described in §8.5).
+
+4. **For constrained problems, the speedup ceiling is low at high sample counts**. The bottleneck shifts from L-BFGS to the hit-and-run sampler itself: at 2048 samples, polytope sampling costs 110s vs 141s for full optimization — only 1.3x faster. The implication: **use few samples per subset (64–128) to maximize the cost ratio**.
+
+5. **64 samples is the practical sweet spot for burn-in**:
+   - Unconstrained: 23x faster, ρ = 0.97, top-5 overlap = 56%
+   - Constrained: 26x faster, ρ = 0.97, top-5 overlap = 60%
+   - The ranking accuracy at 64 is nearly as good as at 2048, while the cost is 20x lower
+
+#### 11.16.6 Implications for Two-Phase Burn-in
+
+These results validate the two-phase burn-in design from §8.5:
+
+**Cost model for MCTS with burn-in** (constrained case, 57 subsets):
+
+| Approach | Cost per novel eval | Unique evals | Total cost |
+|----------|-------------------|--------------|------------|
+| Current (all optimize_acqf) | ~2.5s | ~40 | ~100s |
+| All sampling (64/subset) | ~0.09s | ~40 | ~3.6s |
+| Burn-in (64 samples) → 1× optimize on winner | ~0.09s burn-in + 2.5s final | ~40 + 1 | ~6.1s |
+
+The burn-in + single optimization approach is **~16x cheaper** than the current all-optimization approach for the constrained Hartmann problem, while identifying the same top subset tier.
+
+**Important caveat**: These numbers assume the acquisition surface is smooth and unimodal per subset (true for GP-based EI on Hartmann). On rougher surfaces with narrow peaks that only L-BFGS finds, the gap could widen. The empirical test on real BO loops (running full MCTS with sample-based vs optimization-based rewards, comparing final regret) is the necessary next step.
+
+**Script**: `mcts-report/investigate_sampling_vs_optimizing.py`
