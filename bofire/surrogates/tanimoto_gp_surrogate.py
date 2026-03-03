@@ -9,7 +9,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.api import TanimotoGPSurrogate as DataModel
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 
 
