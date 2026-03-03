@@ -73,5 +73,5 @@ specs.add_invalid(
         ],
     },
     error=ValueError,
-    message="Only one `TaskInput` is allowed, got 2.",
+    message="Only one `CategoricalTaskInput` is allowed, got 2.",
 )

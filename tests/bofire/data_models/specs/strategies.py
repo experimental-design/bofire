@@ -37,7 +37,11 @@ from bofire.data_models.strategies.api import (
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
 )
-from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
+from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
+    LinearDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+)
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -1036,55 +1040,6 @@ specs.add_invalid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    ContinuousTaskInput(key="task", bounds=(0, 1)),
-                ]
-            ),
-            outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="alpha"),
-                    ContinuousOutput(key="beta"),
-                ]
-            ),
-        ).model_dump(),
-        **strategy_commons,
-        "acquisition_function": qMFHVKG().model_dump(),
-        "fidelity_cost_output_key": "fidelity_cost",
-    },
-    error=ValueError,
-    message="Must provide an Output corresponding to the fidelity cost",
-)
-
-specs.add_invalid(
-    strategies.MultiFidelityHVKGStrategy,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key="a", bounds=(0, 1)),
-                    ContinuousTaskInput(key="task", bounds=(0, 1)),
-                ]
-            ),
-            outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="alpha"),
-                    ContinuousOutput(key="beta"),
-                ]
-            ),
-        ).model_dump(),
-        **strategy_commons,
-        "acquisition_function": qMFHVKG().model_dump(),
-    },
-    error=ValueError,
-    message="Output corresponding to the fidelity cost must have no objective",
-)
-
-specs.add_invalid(
-    strategies.MultiFidelityHVKGStrategy,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key="a", bounds=(0, 1)),
                     CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
                     ),
@@ -1123,4 +1078,69 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Must provide at least one fidelity",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_model_spec": LinearDeterministicSurrogate(
+            inputs=Inputs(
+                features=[ContinuousInput(key="a", bounds=(0, 1))],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="cost")]),
+            coefficients={"a": 1.0},
+            intercept=1.0,
+        ),
+    },
+    error=ValueError,
+    message="inputs to the cost model are not fidelities",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task_other", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_model_spec": LinearDeterministicSurrogate(
+            inputs=Inputs(
+                features=[ContinuousTaskInput(key="task", bounds=(0, 1))],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="cost")]),
+            coefficients={"task": 1.0},
+            intercept=1.0,
+        ),
+    },
+    error=ValueError,
+    message="All fidelities should be included in the cost model",
 )

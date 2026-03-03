@@ -46,9 +46,6 @@ from bofire.data_models.surrogates.api import (
 from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 
 
-DEFAULT_FIDELITY_COST_KEY = "Experiment cost"
-
-
 def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
     yield kernel
     if isinstance(kernel, ScaleKernel):
@@ -76,7 +73,7 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
             raise ValueError("Must provide at least one fidelity.")
 
         if len(cat_task_inputs) > 0:
-            raise ValueError("MFHVKG only supports continuous/discrete fidelities.")
+            raise ValueError("MFHVKG only supports continuous fidelities.")
 
         return domain
 
