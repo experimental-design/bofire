@@ -82,12 +82,13 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
 
     @model_validator(mode="after")
     def validate_fidelity_cost_model_spec(self):
-        fidelity_cost_model_spec = (
-            MultiFidelityHVKGStrategy._generate_fidelity_cost_model_spec(
-                self.domain, self.fidelity_cost_model_spec
+        if self.fidelity_cost_model_spec is None:  # required to prevent RecursionError
+            self.fidelity_cost_model_spec = (
+                MultiFidelityHVKGStrategy._generate_fidelity_cost_model_spec(
+                    self.domain, self.fidelity_cost_model_spec
+                )
             )
-        )
-        fidelity_inputs = fidelity_cost_model_spec.inputs
+        fidelity_inputs = self.fidelity_cost_model_spec.inputs
         if len(fidelity_inputs.get(ContinuousTaskInput)) != len(fidelity_inputs):
             raise ValueError("Some inputs to the cost model are not fidelities.")
 

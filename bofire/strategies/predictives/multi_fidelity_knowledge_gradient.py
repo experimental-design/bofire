@@ -19,7 +19,9 @@ from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import ModelList
+from botorch.posteriors.posterior_list import PosteriorList
 from botorch.sampling.get_sampler import get_sampler
+from botorch.sampling.list_sampler import ListSampler
 from pydantic import PositiveInt
 from torch import Tensor
 from typing_extensions import Self
@@ -274,11 +276,31 @@ def get_acquisition_function_qMFHVKG(
         seed=int(seeds[0]),
     )
 
-    sampler = get_sampler(
-        posterior=model.posterior(X_observed[:1]),  # type: ignore
-        sample_shape=torch.Size([num_fantasies]),
-        seed=int(seeds[1]),
-    )
+    # `sampler` must be a ListSampler
+    # type returned by `get_sampler` depends if `model` is ModelList or ModelListGP
+    posterior = model.posterior(X_observed[:1])
+    if isinstance(posterior, PosteriorList):
+        sampler = get_sampler(
+            posterior=posterior,  # type: ignore
+            sample_shape=torch.Size([num_fantasies]),
+            seed=int(seeds[1]),
+        )
+    else:
+        # TODO: BoTorch issue #2658 replaced Sobol samplers in ListSampler with IID
+        # samplers, in `get_sampler`. However, they didn't make the same change in
+        # the default sampler for `qHypervolumeKnowledgeGradient`. Below copies the
+        # sampler from that acqf, but this may not be correct behaviour.
+
+        # see https://github.com/meta-pytorch/botorch/issues/2658
+        samplers = [
+            get_sampler(
+                posterior=m.posterior(X_observed[:1]),
+                sample_shape=torch.Size([num_fantasies]),
+                seed=int(seeds[1]),
+            )
+            for m in model.models  # type: ignore
+        ]
+        sampler = ListSampler(*samplers)
 
     return qMultiFidelityHypervolumeKnowledgeGradient(
         model=model,

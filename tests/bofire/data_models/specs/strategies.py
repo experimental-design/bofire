@@ -1021,13 +1021,11 @@ specs.add_valid(
                 features=[
                     ContinuousOutput(key="alpha"),
                     ContinuousOutput(key="beta"),
-                    ContinuousOutput(key="fidelity_cost", objective=None),
                 ]
             ),
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qMFHVKG().model_dump(),
-        "fidelity_cost_output_key": "fidelity_cost",
     },
 )
 
@@ -1070,15 +1068,11 @@ specs.add_invalid(
                 features=[
                     ContinuousOutput(key="alpha"),
                     ContinuousOutput(key="beta"),
-                    ContinuousOutput(
-                        key="fidelity_cost", objective=MaximizeObjective()
-                    ),
                 ]
             ),
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qMFHVKG().model_dump(),
-        "fidelity_cost_output_key": "fidelity_cost",
     },
     error=ValueError,
     message="Output corresponding to the fidelity cost must have no objective",
@@ -1100,13 +1094,11 @@ specs.add_invalid(
                 features=[
                     ContinuousOutput(key="alpha"),
                     ContinuousOutput(key="beta"),
-                    ContinuousOutput(key="fidelity_cost", objective=None),
                 ]
             ),
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qMFHVKG().model_dump(),
-        "fidelity_cost_output_key": "fidelity_cost",
     },
     error=ValueError,
     message="only supports continuous fidelities",

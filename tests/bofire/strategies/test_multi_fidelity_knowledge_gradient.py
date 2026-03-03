@@ -26,7 +26,6 @@ def test_mfhvkg_fidelity_selection():
             maxiter=10,
         ),
         seed=0,
-        fidelity_cost_output_key="fidelity_cost",
     )
 
     strategy.tell(experiments)
@@ -37,11 +36,7 @@ def test_mfhvkg_fidelity_selection():
     candidates = strategy.ask(candidate_count)
     assert len(candidates) == candidate_count
 
-    cost_data_model = [
-        surr
-        for surr in strategy.surrogate_specs.surrogates
-        if surr.outputs.get_keys() == [strategy.fidelity_cost_output_key]
-    ][0]
+    cost_data_model = strategy.fidelity_cost_model_spec
     task_input: ContinuousTaskInput = strategy.domain.inputs.get(ContinuousTaskInput)[0]
     assert isinstance(cost_data_model, LinearDeterministicSurrogate)
     # when the high fidelity is expensive, MFHVKG will (almost always) evaluate the low fidelity
