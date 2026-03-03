@@ -79,7 +79,7 @@ def _get_domain_with_fixed_task_inputs(
     features2idx: dict[str, tuple[int]],
 ) -> Domain:
     """Create a copy of the domain with task inputs fixed at the highest fidelity."""
-    fixed_inputs = domain.inputs.get().model_copy()
+    fixed_inputs = domain.inputs.get().model_copy(deep=True)
 
     for feat in fixed_inputs.get(ContinuousTaskInput):
         target = target_fidelities[features2idx[feat.key][0]]

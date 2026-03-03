@@ -7,7 +7,7 @@ This tutorial shows how to set up a multi-fidelity problem that has multiple obj
 This approach uses the Multi-fidelity Hypervolume Knowledge Gradient acquisition function [1],
 which supports:
 - Multiple objectives, optimizing their pareto front
-- Multiple fidelities (both continuous and discrete), which can correspond to the quality
+- Multiple fidelities, which can correspond to the quality
 of a function evaluation. For example, when running a computer simulation, one can control
 the resolution or the duration, each of which trade-off between quality and cost.
 - A cost-weighting, which determines how expensive an experiment is to carry out given
@@ -16,7 +16,7 @@ the fidelity.
 For a deeper look at how this acquisition function works, see the corresponding paper
 or the [BoTorch tutorial](https://botorch.org/docs/tutorials/Multi_objective_multi_fidelity_BO).
 
-[1] S. Daulton, M. Balandat, and E. Bakshy. Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information. ICML, 2023.
+[1] S. Daulton, M. Balandat, and E. Bakshy. [Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information](https://proceedings.mlr.press/v202/daulton23a.html). ICML, 2023.
 
 ```{python}
 from bofire.data_models.acquisition_functions.api import qMFHVKG
@@ -27,6 +27,32 @@ from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
 from bofire.strategies.api import MultiFidelityHVKGStrategy, RandomStrategy
 import pandas as pd
 import numpy as np
+import os
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+```
+
+```{python}
+if SMOKE_TEST:
+    acqf_optimizer = BotorchOptimizer(
+        n_raw_samples=32,
+        maxiter=10,
+        n_restarts=2,
+    )
+    acqf = qMFHVKG(
+        num_fantasies=2,
+        num_pareto=3
+    )
+else:
+    acqf_optimizer = BotorchOptimizer(
+        n_raw_samples=256,
+        maxiter=100,
+        n_restarts=10,
+    )
+    acqf = qMFHVKG(
+        num_fantasies=4,
+        num_pareto=5
+    )
 ```
 
 ## Problem definition
@@ -56,9 +82,6 @@ def simulation_black_box(experiments: pd.DataFrame, fixed_simulation_cost: float
     optimal_surface_area = pd.DataFrame([[10.0, 1.0]], columns=["height", "radius"])
     surface_area = 10.0 - 0.1*((experiments[["height", "radius"]] - optimal_surface_area) ** 2).sum(axis=1)
 
-    # Cost is linear wrt both resolution and simulation time, plus some fixed cost
-    cost = experiments[["sim_resolution", "sim_duration"]].sum(axis=1) + fixed_simulation_cost
-
     # By terminating the simulation early, the packing doesn't settle - we underestimate
     # the pressure drop, and the specific surface area has some noisy bias
     pressure_drop += 0.2 * (experiments["sim_duration"] - 1.0)
@@ -71,7 +94,6 @@ def simulation_black_box(experiments: pd.DataFrame, fixed_simulation_cost: float
     return pd.DataFrame({
         "pressure_drop": pressure_drop,
         "surface_area": surface_area,
-        "cost": cost,
     })
 ```
 
@@ -89,13 +111,12 @@ class SimulationBenchmark(Benchmark):
             feature_api.ContinuousInput(key="height", bounds=(1.0, 10.0)),
             feature_api.ContinuousInput(key="radius", bounds=(1.0, 10.0)),
             feature_api.ContinuousTaskInput(key="sim_duration", bounds=(0.1, 1.0)),
-            feature_api.ContinuousTaskInput(key="sim_resolution", values=[0.2, 0.4, 0.8]),
+            feature_api.ContinuousTaskInput(key="sim_resolution", bounds=(0.2, 1.0)),
         ])
 
         outputs = domain_api.Outputs(features=[
             feature_api.ContinuousOutput(key="pressure_drop", objective=objective_api.MinimizeObjective()),
             feature_api.ContinuousOutput(key="surface_area", objective=objective_api.MaximizeObjective()),
-            feature_api.ContinuousOutput(key="cost", objective=None),
         ])
 
         self._domain = domain_api.Domain(
@@ -122,7 +143,52 @@ from bofire.strategies.api import MultiFidelityHVKGStrategy
 
 strategy = MultiFidelityHVKGStrategy.make(
     domain=benchmark.domain,
-    fidelity_cost_output_key="cost",
+    acquisition_function=acqf,
+    acquisition_optimizer=acqf_optimizer
+)
+
+strategy.tell(experiments)
+strategy.ask(1)
+```
+
+### Defining the cost weighting
+
+A key piece of information that we omitted in the above cells is the *cost* function -
+how much does an experiment cost to run? This is highly relevant in multi-fidelity
+settings, since if all experiments cost the same, then there is no reason to not query
+at the highest fidelity.
+
+By default, we assume that an experiment at the lowest fidelity costs `1.0` units, and
+scales linearly with the task features with coefficients `1.0`. However, this should be
+explicitly defined as a part of the strategy. Note that currently, BoFire only supports
+linear costs.
+
+In our example, increasing the duration of the simulation will increase the cost by a
+large coefficient. However (eg. due to parallelization of the simulation), increasing
+the resolution incurs a smaller cost. We can explicitly include this in the model. We
+would then expect the strategy to propose experiments at full resolution (since there is
+no significant cost savings to reducing the resolution), but not necessarily at the full
+duration.
+
+```{python}
+from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
+
+cost_model = LinearDeterministicSurrogate(
+    inputs=benchmark.domain.inputs.get(ContinuousTaskInput),
+    outputs=domain_api.Outputs(features=[
+        feature_api.ContinuousOutput(key="cost", objective=None)
+    ]),
+    coefficients={
+        "sim_duration": 2.0,
+        "sim_resolution": 0.1,
+    },
+    intercept=1.0  # fixed cost of lowest fidelity
+)
+
+strategy = MultiFidelityHVKGStrategy.make(
+    domain=benchmark.domain,
+    acquisition_function=acqf,
+    acquisition_optimizer=acqf_optimizer
 )
 
 strategy.tell(experiments)
