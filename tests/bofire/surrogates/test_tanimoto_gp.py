@@ -115,18 +115,14 @@ def test_passing_of_tanimoto_sim_matrices(
         pd.concat((X, Y), axis=1)
     )  # computation of tanimoto distances happens here
     id_tensor_1 = id(
-        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices[
-            "molecules"
-        ]
+        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.tanimoto_similarity_matrix
     )
 
     strategy.tell(
         pd.concat((X, Y), axis=1)
     )  # computation of tanimoto distances happens here
     id_tensor_2 = id(
-        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.sim_matrices[
-            "molecules"
-        ]
+        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.tanimoto_similarity_matrix
     )
 
     assert (
