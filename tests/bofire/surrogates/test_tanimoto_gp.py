@@ -81,7 +81,7 @@ def test_tanimoto_calculation(
     prediction1 = surrogate1.model.forward(fingerprints)
     prediction2 = surrogate2.model.forward(x)
     mean1 = prediction1.mean.detach().numpy()
-    cov1 = prediction1.covariance_matrix.detach().numpy()   
+    cov1 = prediction1.covariance_matrix.detach().numpy()
     mean2 = prediction2.mean.detach().numpy()
     cov2 = prediction2.covariance_matrix.detach().numpy()
 
@@ -113,14 +113,18 @@ def test_passing_of_tanimoto_sim_matrices(
         pd.concat((X, Y), axis=1)
     )  # computation of tanimoto distances happens here
     id_tensor_1 = id(
-        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.tanimoto_similarity_matrix
+        strategy.surrogates.surrogates[
+            0
+        ].model.covar_module.base_kernel.tanimoto_similarity_matrix
     )
 
     strategy.tell(
         pd.concat((X, Y), axis=1)
     )  # computation of tanimoto distances happens here
     id_tensor_2 = id(
-        strategy.surrogates.surrogates[0].model.covar_module.base_kernel.tanimoto_similarity_matrix
+        strategy.surrogates.surrogates[
+            0
+        ].model.covar_module.base_kernel.tanimoto_similarity_matrix
     )
 
     assert (

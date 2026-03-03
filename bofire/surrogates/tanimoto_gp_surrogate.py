@@ -1,20 +1,19 @@
+from typing import Optional
 
-from typing import Any, Optional, Literal
-
+import botorch
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-import botorch
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 
-class TanimotoGPSurrogate(SingleTaskGPSurrogate):
 
+class TanimotoGPSurrogate(SingleTaskGPSurrogate):
     def __init__(
         self,
         data_model: DataModel,
@@ -27,7 +26,6 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
 
     @property
     def re_init_kwargs(self) -> dict:
-
         re_init_kwargs = super().re_init_kwargs
         re_init_kwargs.update(
             {
@@ -44,21 +42,19 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ):
-        
         if input_transform is not None:
             n_dim = input_transform(tX).shape[-1]
         else:
             n_dim = tX.shape[-1]
-        
+
         if self.tanimoto_calculation_mode == "pre_computed":
             if self.tanimoto_similarity_matrix is None:
-
-                covar_module_pre_calc=kernels.map(
+                covar_module_pre_calc = kernels.map(
                     self.kernel,
                     batch_shape=torch.Size(),
                     active_dims=list(range(n_dim)),
                     features_to_idx_mapper=self.get_feature_indices,
-                    pre_computed_tanimoto=False
+                    pre_computed_tanimoto=False,
                 )  # temporary kernel to compute the tanimoto similarity matrix
                 fingerprints = input_transform.encoders[0].encoding
                 cov_module = covar_module_pre_calc
@@ -67,7 +63,9 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
                 cov = cov_module.forward(fingerprints, fingerprints)
                 self.tanimoto_similarity_matrix = cov.detach()
 
-            input_transform_use = None  # We will only pass index-based inputs to the model
+            input_transform_use = (
+                None  # We will only pass index-based inputs to the model
+            )
         else:
             input_transform_use = input_transform
 
@@ -77,9 +75,13 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
-                active_dims=list(range(n_dim)) if not (self.tanimoto_calculation_mode=="pre_computed") else [0],  # active dims are not needed if using pre-computed tanimoto
+                active_dims=list(range(n_dim))
+                if not (self.tanimoto_calculation_mode == "pre_computed")
+                else [0],  # active dims are not needed if using pre-computed tanimoto
                 features_to_idx_mapper=self.get_feature_indices,
-                pre_computed_tanimoto=(self.tanimoto_calculation_mode=="pre_computed"),
+                pre_computed_tanimoto=(
+                    self.tanimoto_calculation_mode == "pre_computed"
+                ),
                 tanimoto_similarity_matrix=self.tanimoto_similarity_matrix,
             ),
             outcome_transform=outcome_transform,

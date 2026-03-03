@@ -22,8 +22,8 @@ from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.robust_single_task_gp import RobustSingleTaskGPSurrogate
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
-from bofire.surrogates.tanimoto_gp_surrogate import TanimotoGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
+from bofire.surrogates.tanimoto_gp_surrogate import TanimotoGPSurrogate
 
 
 def map_MixedSingleTaskGPSurrogate(
@@ -70,6 +70,7 @@ def map_MixedSingleTaskGPSurrogate(
         hyperconfig=None,
         kernel=kernel,
     )
+
 
 DATA_MODEL_MAP: Dict[
     Type[data_models.MixedSingleTaskGPSurrogate],

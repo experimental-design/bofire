@@ -44,7 +44,6 @@ class MolFeatures(BaseModel):
         pass
 
     def remove_correlated_descriptors(self, molecules: List[str]):
-
         if not self.filter_descriptors:
             self._descriptors = self._get_descriptor_names()
             return self._descriptors

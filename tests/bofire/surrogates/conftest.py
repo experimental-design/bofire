@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -9,14 +8,6 @@ from bofire.data_models.features import api as features_api
 @pytest.fixture
 def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]:
     mols1 = ["CCC", "CCCC", "C(C)CC", "C(N)CC"]
-    mols2 = [
-        "NCC(=O)O",
-        "CC(C(=O)O)N",
-        "CC(C)C(C(=O)O)N",
-        "CC(C(C(=O)O)N)O",
-        "C1=CC=C(C=C1)CC(C(=O)O)N",
-        "C1=CC=C2C(=C1)C(=CN2)CC(C(=O)O)N",
-    ]
 
     domain = domain_api.Domain(
         inputs=domain_api.Inputs(
