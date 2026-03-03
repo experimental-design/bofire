@@ -308,6 +308,9 @@ class MCTS:
         pw_k0: Progressive widening base constant (default 2.0)
         pw_alpha: Progressive widening exponent (default 0.6)
         max_rollout_retries: Maximum rollout retries on cache hit (default 3)
+        use_cache: If True (default), cache reward evaluations. If False, every
+            call to reward_fn is fresh (no caching), and every observation is
+            treated as novel. Useful for noisy/sampling-based reward functions.
         seed: Random seed for reproducibility
     """
 
@@ -326,6 +329,7 @@ class MCTS:
         pw_k0: float = 2.0,
         pw_alpha: float = 0.6,
         max_rollout_retries: int = 3,
+        use_cache: bool = True,
         seed: Optional[int] = None,
     ):
         self.groups = groups
@@ -341,6 +345,7 @@ class MCTS:
         self.pw_k0 = pw_k0
         self.pw_alpha = pw_alpha
         self.max_rollout_retries = max_rollout_retries
+        self.use_cache = use_cache
         self.rng = random.Random(seed)
 
         # Initialize root node
@@ -559,7 +564,13 @@ class MCTS:
     def _cached_reward(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
     ) -> float:
-        """Get cached reward or compute and cache it."""
+        """Get cached reward or compute and cache it.
+
+        When use_cache is False, always calls reward_fn fresh (no caching).
+        """
+        if not self.use_cache:
+            self.cache_misses += 1
+            return self.reward_fn(selected_features, cat_selections)
         key = self._make_cache_key(selected_features, cat_selections)
         if key in self.value_cache:
             self.cache_hits += 1
@@ -867,17 +878,24 @@ class MCTS:
                 selected_features, cat_selections = self._get_selection(leaf)
                 trajectory: list[TrajectoryStep] = []
             else:
+                selected_features, cat_selections, trajectory = self._rollout(leaf)
                 # Rollout retry: if the rollout produces a cached terminal,
                 # re-roll to try to discover a novel selection.
-                selected_features, cat_selections, trajectory = self._rollout(leaf)
-                for _attempt in range(self.max_rollout_retries):
-                    key = self._make_cache_key(selected_features, cat_selections)
-                    if key not in self.value_cache:
-                        break
-                    selected_features, cat_selections, trajectory = self._rollout(leaf)
+                # Skip when use_cache=False since the cache is always empty.
+                if self.use_cache:
+                    for _attempt in range(self.max_rollout_retries):
+                        key = self._make_cache_key(selected_features, cat_selections)
+                        if key not in self.value_cache:
+                            break
+                        selected_features, cat_selections, trajectory = self._rollout(
+                            leaf
+                        )
 
-            key = self._make_cache_key(selected_features, cat_selections)
-            is_novel = key not in self.value_cache
+            if self.use_cache:
+                key = self._make_cache_key(selected_features, cat_selections)
+                is_novel = key not in self.value_cache
+            else:
+                is_novel = True
             reward = self._cached_reward(selected_features, cat_selections)
 
             if reward > self.best_value:
@@ -939,6 +957,7 @@ def optimize_acqf_mcts(
     pw_k0: float = 2.0,
     pw_alpha: float = 0.6,
     max_rollout_retries: int = 3,
+    use_cache: bool = True,
     # BoTorch acqf optimization parameters
     q: int = 1,
     raw_samples: int = 1024,
@@ -971,6 +990,8 @@ def optimize_acqf_mcts(
         pw_k0: Progressive widening base constant
         pw_alpha: Progressive widening exponent
         max_rollout_retries: Maximum rollout retries on cache hit
+        use_cache: If True (default), cache reward evaluations. If False, every
+            evaluation calls reward_fn fresh and is treated as novel.
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
@@ -1069,6 +1090,7 @@ def optimize_acqf_mcts(
         pw_k0=pw_k0,
         pw_alpha=pw_alpha,
         max_rollout_retries=max_rollout_retries,
+        use_cache=use_cache,
         seed=seed,
     )
 

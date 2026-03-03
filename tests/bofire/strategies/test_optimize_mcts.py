@@ -1494,6 +1494,78 @@ class TestNIGRollout:
         mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=0)
         assert mcts.rollout_mode == "ts_group_action"
 
+    # ---- use_cache=False (no-cache mode) ----
+
+    def test_no_cache_default_is_true(self):
+        """Default use_cache=True preserves existing behavior."""
+        gs = self._nck_groups()
+        mcts = MCTS(groups=gs, reward_fn=lambda f, c: 0.0, seed=42)
+        assert mcts.use_cache is True
+
+    def test_no_cache_always_novel(self):
+        """With use_cache=False, every evaluation is novel (no cache hits)."""
+        call_count = 0
+
+        def counting_reward(feats, cats):
+            nonlocal call_count
+            call_count += 1
+            return sum(feats) * 1.0
+
+        gs = self._nck_groups()
+        mcts = MCTS(groups=gs, reward_fn=counting_reward, use_cache=False, seed=42)
+        mcts.run(n_iterations=20)
+        stats = mcts.cache_stats()
+        assert stats["hits"] == 0  # no cache hits ever
+        assert stats["size"] == 0  # cache stays empty
+        assert stats["misses"] == call_count  # every call tracked as miss
+        assert call_count == 20  # reward_fn called every iteration
+
+    def test_no_cache_noisy_rewards(self):
+        """No-cache mode accumulates noisy observations correctly."""
+        rng = stdlib_random.Random(42)
+
+        def noisy_reward(feats, _cats):
+            base = sum(feats) * 10.0
+            return base + rng.gauss(0, 1.0)
+
+        gs = self._nck_groups()
+        mcts = MCTS(groups=gs, reward_fn=noisy_reward, use_cache=False, seed=42)
+        mcts.run(n_iterations=50)
+        # Should still find reasonable best value
+        assert mcts.best_value > 0
+        # Novel count should equal total iterations
+        assert mcts._novel_reward_count == 50
+
+    def test_cache_true_has_hits(self):
+        """With use_cache=True (default), the cache is populated and hit."""
+        gs = self._nck_groups()
+        mcts = MCTS(
+            groups=gs,
+            reward_fn=lambda f, c: sum(f) * 1.0,
+            seed=42,
+        )
+        mcts.run(n_iterations=30)
+        stats = mcts.cache_stats()
+        assert stats["size"] > 0  # cache populated
+        # With 5-choose-1-to-3 and 30 iterations, should have hits
+        assert stats["hits"] > 0
+
+    def test_no_cache_reward_fn_called_every_time(self):
+        """With use_cache=False, reward_fn is called on every iteration even for
+        the same selection."""
+        calls = []
+
+        def tracking_reward(feats, cats):
+            calls.append((feats, cats))
+            return 1.0
+
+        # Deterministic group with only one possible selection
+        gs = Groups(groups=[NChooseK(features=[0], min_count=1, max_count=1)])
+        mcts = MCTS(groups=gs, reward_fn=tracking_reward, use_cache=False, seed=0)
+        mcts.run(n_iterations=10)
+        # Every iteration should call reward_fn even though same selection
+        assert len(calls) == 10
+
 
 # =============================================================================
 # MCTS convergence / integration tests
