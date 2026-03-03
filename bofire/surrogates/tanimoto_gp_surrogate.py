@@ -56,7 +56,7 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
                     features_to_idx_mapper=self.get_feature_indices,
                     pre_computed_tanimoto=False,
                 )  # temporary kernel to compute the tanimoto similarity matrix
-                fingerprints = input_transform.encoders[0].encoding
+                fingerprints = input_transform.encoders[0].encoding  # type: ignore[index]
                 cov_module = covar_module_pre_calc
                 while not hasattr(cov_module, "pre_computed_tanimoto"):
                     cov_module = cov_module.base_kernel
