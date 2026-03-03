@@ -5,7 +5,6 @@ from pydantic import model_validator
 
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.feature import Input
 
 
@@ -38,8 +37,3 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
 class ContinuousTaskInput(TaskInput, ContinuousInput):
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
-
-
-class DiscreteTaskInput(TaskInput, DiscreteInput):
-    order_id: ClassVar[int] = 12
-    type: Literal["DiscreteTaskInput"] = "DiscreteTaskInput"  # type: ignore

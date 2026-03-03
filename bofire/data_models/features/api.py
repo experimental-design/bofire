@@ -25,7 +25,6 @@ from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.features.task import (
     CategoricalTaskInput,
     ContinuousTaskInput,
-    DiscreteTaskInput,
     TaskInput,
 )
 
@@ -50,7 +49,6 @@ AnyFeature = Union[
     CategoricalMolecularInput,
     CategoricalTaskInput,
     ContinuousTaskInput,
-    DiscreteTaskInput,
     SumFeature,
     MeanFeature,
     WeightedSumFeature,

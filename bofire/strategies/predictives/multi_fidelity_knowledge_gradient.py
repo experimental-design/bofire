@@ -26,7 +26,7 @@ from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import qMFHVKG
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import ContinuousTaskInput, DiscreteTaskInput
+from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
@@ -47,9 +47,7 @@ def _map_cost_model_to_botorch(
 ) -> tuple[AffineFidelityCostModel, dict[int, float]]:
     """Convert the task inputs to a cost model for the cost-weighted utility."""
 
-    def _target_fidelity(
-        task_input: ContinuousTaskInput | DiscreteTaskInput, weight: float
-    ) -> float:
+    def _target_fidelity(task_input: ContinuousTaskInput, weight: float) -> float:
         # if the cost is positive, then the upper bound is the highest fidelity.
         return task_input.upper_bound if weight > 0 else task_input.lower_bound
 
@@ -79,17 +77,11 @@ def _get_domain_with_fixed_task_inputs(
     features2idx: dict[str, tuple[int]],
 ) -> Domain:
     """Create a copy of the domain with task inputs fixed at the highest fidelity."""
-    fixed_inputs = domain.inputs.get(excludes=DiscreteTaskInput).model_copy()
+    fixed_inputs = domain.inputs.get().model_copy()
 
     for feat in fixed_inputs.get(ContinuousTaskInput):
         target = target_fidelities[features2idx[feat.key][0]]
         feat.bounds = (target, target)
-
-    # fixed discrete features aren't supported - we must create new fixed continuous features
-    for feat in domain.inputs.get(DiscreteTaskInput):
-        target = target_fidelities[features2idx[feat.key][0]]
-        new_fixed_feat = ContinuousTaskInput(key=feat.key, bounds=(target, target))
-        fixed_inputs += [new_fixed_feat]
 
     return domain.model_copy(update={"inputs": fixed_inputs})
 
@@ -104,9 +96,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
-        self.task_feature_keys = self.domain.inputs.get_keys(
-            [ContinuousTaskInput, DiscreteTaskInput]
-        )
+        self.task_feature_keys = self.domain.inputs.get_keys(ContinuousTaskInput)
         self.acquisition_function = data_model.acquisition_function
 
         # assert isinstance(data_model.ref_point, ExplicitReferencePoint)

@@ -89,7 +89,7 @@ class SimulationBenchmark(Benchmark):
             feature_api.ContinuousInput(key="height", bounds=(1.0, 10.0)),
             feature_api.ContinuousInput(key="radius", bounds=(1.0, 10.0)),
             feature_api.ContinuousTaskInput(key="sim_duration", bounds=(0.1, 1.0)),
-            feature_api.DiscreteTaskInput(key="sim_resolution", values=[0.2, 0.4, 0.8]),
+            feature_api.ContinuousTaskInput(key="sim_resolution", values=[0.2, 0.4, 0.8]),
         ])
 
         outputs = domain_api.Outputs(features=[
