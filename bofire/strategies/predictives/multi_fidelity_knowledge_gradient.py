@@ -25,7 +25,7 @@ from torch import Tensor
 from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import qMFHVKG
-from bofire.data_models.domain.api import Domain, Outputs
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
@@ -103,8 +103,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         assert not isinstance(data_model.ref_point, dict)
         self.ref_point: ExplicitReferencePoint | None = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
-
-        self.fidelity_cost_output_key: str = data_model.fidelity_cost_output_key
+        self.fidelity_cost_model_spec = data_model.fidelity_cost_model_spec
 
     def _get_acqfs(self, n: PositiveInt) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
@@ -117,24 +116,13 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         # generate fantasies, since determinstic models do not have a `.fantasize`
         # method.
         assert self.model is not None
-        model = ModelList(
-            *[
-                m
-                for m, k in zip(self.model.models, self.domain.outputs.get_keys())
-                if k != self.fidelity_cost_output_key
-            ]  # type: ignore
-        )
-        objective = self._get_objective(exclude_task_cost=True)
+        objective = self._get_objective()
 
         features2idx, _ = self.domain.inputs._get_transform_info(
             self.input_preprocessing_specs
         )
 
-        cost_data_model = [
-            surr
-            for surr in self.surrogate_specs.surrogates
-            if surr.outputs.get_keys() == [self.fidelity_cost_output_key]
-        ][0]
+        cost_data_model = self.fidelity_cost_model_spec
         assert isinstance(cost_data_model, LinearDeterministicSurrogate)
         cost_function, target_fidelities = _map_cost_model_to_botorch(
             cost_data_model, features2idx
@@ -145,7 +133,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         current_value = self.get_current_value(target_fidelities)
 
         acqf = get_acquisition_function_qMFHVKG(
-            model,
+            self.model,
             ref_point=self.get_adjusted_refpoint(),
             current_value=current_value,
             objective=objective,
@@ -160,24 +148,11 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         )
         return [acqf]
 
-    def _get_objective(
-        self, exclude_task_cost: bool = False
-    ) -> GenericMCMultiOutputObjective:
+    def _get_objective(self) -> GenericMCMultiOutputObjective:
         assert self.experiments is not None
 
-        outputs = self.domain.outputs
-        if exclude_task_cost:
-            # we filter task cost from Outputs, since this is filtered from `self.model`
-            # (to work with fantasize), and so must be filtered here as well so that
-            # indices are compatible
-            outputs = Outputs(
-                features=[
-                    f for f in outputs.get() if f.key != self.fidelity_cost_output_key
-                ]
-            )
-
         objective = get_multiobjective_objective(
-            outputs=outputs,
+            outputs=self.domain.outputs,
             experiments=self.experiments,
         )
         return GenericMCMultiOutputObjective(objective=objective)
@@ -251,7 +226,7 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         domain: Domain,
         ref_point: ExplicitReferencePoint | dict[str, float] | None = None,
         acquisition_function: qMFHVKG | None = None,
-        fidelity_cost_output_key: str | None = None,
+        fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         outlier_detection_specs: OutlierDetections | None = None,

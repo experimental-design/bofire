@@ -4,8 +4,12 @@ from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.acquisition_functions.acquisition_function import qMFHVKG
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import CategoricalOutput, Feature
-from bofire.data_models.features.task import CategoricalTaskInput, TaskInput
+from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput, Feature
+from bofire.data_models.features.task import (
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    TaskInput,
+)
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     AnyKernel,
@@ -61,7 +65,7 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
-    fidelity_cost_output_key: str = DEFAULT_FIDELITY_COST_KEY
+    fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None
 
     @field_validator("domain", mode="after")
     @classmethod
@@ -77,21 +81,44 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
         return domain
 
     @model_validator(mode="after")
-    def validate_domain_has_fidelity_cost_output(self):
-        try:
-            self.domain.outputs.get_by_key(self.fidelity_cost_output_key)
-        except KeyError:
-            msg = (
-                f"Must provide an Output corresponding to the fidelity cost, with "
-                f"key name {self.fidelity_cost_output_key}"
+    def validate_fidelity_cost_model_spec(self):
+        fidelity_cost_model_spec = (
+            MultiFidelityHVKGStrategy._generate_fidelity_cost_model_spec(
+                self.domain, self.fidelity_cost_model_spec
             )
-            if self.fidelity_cost_output_key == DEFAULT_FIDELITY_COST_KEY:
-                msg += (
-                    " (the key name can be changed with the `fidelity_cost_output_key` "
-                    f"argument of {self.type})"
-                )
-            raise ValueError(msg)
+        )
+        fidelity_inputs = fidelity_cost_model_spec.inputs
+        if len(fidelity_inputs.get(ContinuousTaskInput)) != len(fidelity_inputs):
+            raise ValueError("Some inputs to the cost model are not fidelities.")
+
+        if (
+            self.domain.inputs.get_keys(ContinuousTaskInput)
+            != fidelity_inputs.get_keys()
+        ):
+            raise ValueError("All fidelities should be included in the cost model.")
+
         return self
+
+    @staticmethod
+    def _generate_fidelity_cost_model_spec(
+        domain: Domain,
+        fidelity_cost_model_spec: LinearDeterministicSurrogate | None,
+    ) -> LinearDeterministicSurrogate:
+        if fidelity_cost_model_spec is not None:
+            return fidelity_cost_model_spec
+
+        fidelity_inputs = domain.inputs.get(TaskInput)
+        fidelity_outputs = Outputs(
+            features=[ContinuousOutput(key="fidelity cost", objective=None)]
+        )
+        coefficients = {key: 1.0 for key in fidelity_inputs.get_keys()}
+
+        return LinearDeterministicSurrogate(
+            inputs=fidelity_inputs,
+            outputs=fidelity_outputs,
+            coefficients=coefficients,
+            intercept=1.0,
+        )
 
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
@@ -99,7 +126,6 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
         MultiFidelityHVKGStrategy._generate_surrogate_specs(
             self.domain,
             self.surrogate_specs,
-            self.fidelity_cost_output_key,
         )
 
         def _validate_surrogate(m: AnyBotorchSurrogate):
@@ -122,22 +148,8 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
                         "Fidelity kernel can only operate on task features."
                     )
 
-        def _validate_cost_model(m: AnyBotorchSurrogate):
-            if not isinstance(m, LinearDeterministicSurrogate):
-                raise ValueError(
-                    f"Must use a LinearDeterministicSurrogate for the fidelity cost of {self.type}."
-                )
-
-            if m.outputs.get()[0].objective is not None:
-                raise ValueError(
-                    "The fidelity cost output must not have any objective."
-                )
-
         for m in self.surrogate_specs.surrogates:
-            if m.outputs.get_keys() == [self.fidelity_cost_output_key]:
-                _validate_cost_model(m)
-            else:
-                _validate_surrogate(m)
+            _validate_surrogate(m)
 
         self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
@@ -147,14 +159,12 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     def _generate_surrogate_specs(
         domain: Domain,
         surrogate_specs: BotorchSurrogates,
-        fidelity_cost_output_key: str = DEFAULT_FIDELITY_COST_KEY,
     ) -> BotorchSurrogates:
         """Method to generate multi-task model specifications when no model specs are passed
         As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
         Args:
             domain (Domain): The domain defining the problem to be optimized with the strategy
             surrogate_specs (BotorchSurrogates, optional): List of model specification classes specifying the models to be used in the strategy. Defaults to None.
-            fidelity_cost_output_key (str): The Output key that corresponds to the cost of evaluating the experiment, due to the choice of fidelity.
         Raises:
             KeyError: if there is a model spec for an unknown output feature
             KeyError: if a model spec has an unknown input feature
@@ -187,28 +197,15 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
         )
 
         for output_feature in non_exisiting_keys:
-            if output_feature == fidelity_cost_output_key:
-                _surrogate_specs.append(
-                    LinearDeterministicSurrogate(
-                        inputs=domain.inputs.get(includes=TaskInput),
-                        outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)]
-                        ),
-                        coefficients={task_key: 1.0 for task_key in task_keys},
-                        intercept=1.0,
-                    )
+            _surrogate_specs.append(
+                SingleTaskGPSurrogate(
+                    inputs=domain.inputs,
+                    outputs=Outputs(
+                        features=[domain.outputs.get_by_key(output_feature)]
+                    ),
+                    kernel=surrogate_kernel,
                 )
-
-            else:
-                _surrogate_specs.append(
-                    SingleTaskGPSurrogate(
-                        inputs=domain.inputs,
-                        outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)]
-                        ),
-                        kernel=surrogate_kernel,
-                    )
-                )
+            )
         surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
