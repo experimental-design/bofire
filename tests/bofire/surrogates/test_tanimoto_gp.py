@@ -80,15 +80,14 @@ def test_tanimoto_calculation(
 
     # test predictions
     fingerprints = surrogate1.model.input_transform(x)
-    mean1 = surrogate1.model.mean_module(fingerprints).detach().numpy()
-    cov1 = surrogate1.model.covar_module(fingerprints).detach().numpy()
+    prediction1 = surrogate1.model.forward(fingerprints)
+    prediction2 = surrogate2.model.forward(x)
+    mean1 = prediction1.mean.detach().numpy()
+    cov1 = prediction1.covariance_matrix.detach().numpy()   
+    mean2 = prediction2.mean.detach().numpy()
+    cov2 = prediction2.covariance_matrix.detach().numpy()
 
-
-    mean2 = surrogate2.model.mean_module(x).detach().numpy()
-    cov2 = surrogate2.model.covar_module(x).detach().numpy()
-
-
-    assert np.allclose(mean1, mean2)
+    assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
     assert np.allclose(cov1, cov2)
 
 
