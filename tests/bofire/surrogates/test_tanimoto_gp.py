@@ -45,11 +45,9 @@ def mol_feature_data_model(request, n_bits) -> MolFeatures:
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_tanimoto_calculation(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
-    #mol_feature_data_model: MolFeatures,
+    mol_feature_data_model: MolFeatures,
 ):
     domain, X, Y = chem_domain_simple
-
-    mol_feature_data_model = Fingerprints(bond_radius=3, n_bits=24)
 
     surrogate_data_model_no_pre_computation = TanimotoGPSurrogate(
         inputs=domain.inputs,
