@@ -68,7 +68,7 @@ We can also decrease the fidelity in two different ways, each reducing the cost 
 - reduce the resolution of the simulation.
 
 ```{python}
-def simulation_black_box(experiments: pd.DataFrame, fixed_simulation_cost: float = 1.0) -> pd.DataFrame:
+def simulation_black_box(experiments: pd.DataFrame) -> pd.DataFrame:
     """Toy function representing a rigid-body simulation of reactor packing.
 
     For the sake of this tutorial, we provide simple expressions to represent the various
@@ -76,11 +76,12 @@ def simulation_black_box(experiments: pd.DataFrame, fixed_simulation_cost: float
 
     # Pressure drop is minimized for near-spherical cylinders
     aspect_ratio = experiments["height"] / (2 * experiments["radius"])
-    pressure_drop = np.exp((1 - np.log(aspect_ratio)).abs())
+    pressure_drop = 0.4 * np.exp(np.abs(np.log(aspect_ratio)))
 
     # Specific surface area is maximized for tall, thin cylinders
-    optimal_surface_area = pd.DataFrame([[10.0, 1.0]], columns=["height", "radius"])
-    surface_area = 10.0 - 0.1*((experiments[["height", "radius"]] - optimal_surface_area) ** 2).sum(axis=1)
+    optimal_shape_for_surface_area = {"height": 10.0, "radius": 1.0}
+    dist = experiments[["height", "radius"]].sub(optimal_shape_for_surface_area).to_numpy()
+    surface_area = 3.5 - 0.02 * (dist ** 2).sum(axis=1)
 
     # By terminating the simulation early, the packing doesn't settle - we underestimate
     # the pressure drop, and the specific surface area has some noisy bias
@@ -89,6 +90,8 @@ def simulation_black_box(experiments: pd.DataFrame, fixed_simulation_cost: float
 
     # By decreasing the resolution, the computed mesh starts combining adjacent particles
     # to fill voids. This causes large decrease in specific surface area for small resolution.
+    # To make this more realistic, you may want to make this effect a function of the
+    # geometry, since a smaller geometry would require a higher resolution.
     surface_area += -0.2 * np.exp(2.0 * (1.0 - experiments["sim_resolution"]) - 1.0)
 
     return pd.DataFrame({
@@ -104,9 +107,8 @@ import bofire.data_models.features.api as feature_api
 import bofire.data_models.objectives.api as objective_api
 
 class SimulationBenchmark(Benchmark):
-    def __init__(self, fixed_simulation_cost: float = 1.0, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fixed_simulation_cost = fixed_simulation_cost
         inputs = domain_api.Inputs(features=[
             feature_api.ContinuousInput(key="height", bounds=(1.0, 10.0)),
             feature_api.ContinuousInput(key="radius", bounds=(1.0, 10.0)),
@@ -125,24 +127,109 @@ class SimulationBenchmark(Benchmark):
         )
 
     def _f(self, candidates: pd.DataFrame):
-        return simulation_black_box(candidates, self.fixed_simulation_cost)
+        return simulation_black_box(candidates)
 ```
 
+Let's plot the objective function. First, we show the surface at the highest fidelity, varying the height+radius parameters. The objective surface is quite smooth, and unimodal, so this problem shouldn't be too difficult.
+
 ```{python}
-benchmark = SimulationBenchmark(fixed_simulation_cost=1.0)
+import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+
+target_fidelity = {"sim_duration": 1.0, "sim_resolution": 1.0}
+
+fig, axs = plt.subplots(ncols=2, sharex=True, sharey=True)
+NUM_PLOT = 20
+hs, rs = np.meshgrid(np.linspace(1.0, 10.0, NUM_PLOT), np.linspace(1.0, 10.0, NUM_PLOT))
+data = pd.DataFrame({"height": hs.flatten(), "radius": rs.flatten(), **target_fidelity})
+res = simulation_black_box(data)
+norm = Normalize(vmin=0.0, vmax=3.5)
+axs[0].contourf(hs, rs, res["pressure_drop"].to_numpy().reshape(NUM_PLOT, NUM_PLOT), norm=norm, levels=30)
+axs[1].contourf(hs, rs, res["surface_area"].to_numpy().reshape(NUM_PLOT, NUM_PLOT), norm=norm, levels=20)
+
+fig.suptitle("Simulation outputs at highest fidelity")
+axs[0].set_title("Pressure drop")
+axs[1].set_title("Surface area")
+for ax in axs:
+    ax.set_xlabel("height")
+    ax.set_ylabel("radius")
+```
+
+We can also plot the pareto front below, keeping in mind that we want to minimize the
+pressure drop, and maximize the surface area. We color the observations according to
+the radius, and scale their size according to the height.
+
+```{python}
+def get_pareto_idcs(data: pd.DataFrame) -> list[int]:
+    dominating_points: list[int] = []
+    cur_max_surface_area = -np.inf
+    for idx, row in res.sort_values(by="pressure_drop").iterrows():
+        if row["surface_area"] > cur_max_surface_area:
+            cur_max_surface_area = row["surface_area"]
+            dominating_points.append(idx)
+    return dominating_points
+
+fig, ax = plt.subplots()
+ax.scatter(res["pressure_drop"],  res["surface_area"], label="Observations", c=data["radius"], s=2.0*data["height"])
+dominating_points = get_pareto_idcs(res)
+ax.plot(res.loc[dominating_points, "pressure_drop"],  res.loc[dominating_points, "surface_area"], color="C1", linewidth=3, label="Pareto front")
+
+ax.set_title("Pareto plot of objective values")
+ax.set_xlabel(r"Pressure drop ($\downarrow$)")
+ax.set_ylabel(r"Surface area ($\uparrow$)")
+
+fig.legend()
+```
+
+We also show the impact of varying the fidelity parameters, for a fixed height+radius. This shows the scale of bias that is introduced when changing the fidelities.
+
+```{python}
+from matplotlib.colors import CenteredNorm
+
+fixed_shape = {"height": 7.5, "radius": 5.0}
+
+fig, axs = plt.subplots(ncols=2, sharex=True, sharey=True)
+durs, ress = np.meshgrid(np.linspace(0.1, 1.0, NUM_PLOT), np.linspace(0.2, 1.0, NUM_PLOT))
+data = pd.DataFrame({"sim_duration": durs.flatten(), "sim_resolution": ress.flatten(), **fixed_shape})
+res = simulation_black_box(data)
+# the last datapoint corresponds to the highest fidelity
+# we subtract the highest fidelity to plot differences
+res = res.sub(res.iloc[-1])
+norm = CenteredNorm()
+axs[0].contourf(hs, rs, res["pressure_drop"].to_numpy().reshape(NUM_PLOT, NUM_PLOT), cmap="RdBu", norm=norm)
+cf = axs[1].contourf(hs, rs, res["surface_area"].to_numpy().reshape(NUM_PLOT, NUM_PLOT), cmap="RdBu", norm=norm, levels=30)
+
+fig.suptitle(f"Difference in simulation outputs due to varying fidelities (for a fixed geometry)")
+axs[0].set_title("Pressure drop difference")
+axs[1].set_title("Surface area difference")
+for ax in axs:
+    ax.set_xlabel("sim_duration")
+    ax.set_ylabel("sim_resolution")
+
+fig.colorbar(cf, ax=axs[1])
+```
+
+## Creating the strategy
+
+Now that the problem has been defined, we can sample some experiments from the problem,
+and define the strategy that we will use to ask for points.
+
+```{python}
+benchmark = SimulationBenchmark()
 samples = benchmark.domain.inputs.sample(10, seed=0)
 experiments = benchmark.f(samples, return_complete=True)
 experiments.head()
 ```
-
-
-We now need to create the strategy to solve this problem.
 
 ```{python}
 from bofire.strategies.api import MultiFidelityHVKGStrategy
 
 strategy = MultiFidelityHVKGStrategy.make(
     domain=benchmark.domain,
+    # We manually pass in `acqf` and the `acqf_optimizer` below so that we can
+    # reduce the computation time by changing hyperparameters. The default
+    # hyperparameters should be a good trade-off between speed and quality, but
+    # can be changed to suit your needs.
     acquisition_function=acqf,
     acquisition_optimizer=acqf_optimizer
 )
