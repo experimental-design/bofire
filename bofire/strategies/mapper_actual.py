@@ -8,6 +8,9 @@ from bofire.strategies.predictives.active_learning import ActiveLearningStrategy
 from bofire.strategies.predictives.enting import EntingStrategy
 from bofire.strategies.predictives.mobo import MoboStrategy
 from bofire.strategies.predictives.multi_fidelity import MultiFidelityStrategy
+from bofire.strategies.predictives.multi_fidelity_knowledge_gradient import (
+    MultiFidelityHVKGStrategy,
+)
 from bofire.strategies.predictives.qparego import QparegoStrategy
 from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -30,6 +33,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.MultiplicativeAdditiveSoboStrategy: MultiplicativeAdditiveSoboStrategy,
     data_models.CustomSoboStrategy: CustomSoboStrategy,
     data_models.MultiFidelityStrategy: MultiFidelityStrategy,
+    data_models.MultiFidelityHVKGStrategy: MultiFidelityHVKGStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
     data_models.EntingStrategy: EntingStrategy,
     data_models.DoEStrategy: DoEStrategy,

@@ -1,4 +1,4 @@
-from typing import Dict, Generator, Literal, Optional, Type, Union
+from typing import Generator, Literal, Type
 
 from pydantic import Field, field_validator, model_validator
 
@@ -60,7 +60,7 @@ def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
 
 class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
-    ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
+    ref_point: ExplicitReferencePoint | dict[str, float] | None = None
     acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
     fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None
 
