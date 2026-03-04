@@ -208,18 +208,39 @@ class BotorchStrategy(PredictiveStrategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
+        """Check if sufficient feasible experiments are available.
+
+        This method checks both that experiments have valid outputs AND
+        that they satisfy the domain constraints (including nonlinear constraints)
+        within the validation tolerance.
+
+        Returns:
+            bool: True if number of feasible experiments is sufficient (>1), False otherwise
+        """
         if self.experiments is None:
             return False
-        if (
-            len(
-                self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                    experiments=self.experiments,
-                ),
+
+        # First, filter by valid outputs
+        valid_experiments = (
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                experiments=self.experiments,
             )
-            > 1
-        ):
-            return True
-        return False
+        )
+
+        # If no valid experiments, return False early
+        if len(valid_experiments) == 0:
+            return False
+
+        # Then, filter by constraint fulfillment (including nonlinear constraints)
+        feasible_mask = self.domain.constraints.is_fulfilled(
+            experiments=valid_experiments,
+            tol=self._validation_tol,
+        )
+
+        # Check if we have more than 1 feasible experiment
+        feasible_experiments = valid_experiments[feasible_mask]
+
+        return len(feasible_experiments) > 1
 
     def get_acqf_input_tensors(self):
         """
@@ -244,7 +265,7 @@ class BotorchStrategy(PredictiveStrategy):
             # input constraints are fulfilled, output constraints are handled directly
             # in botorch
             fulfilled_experiments = clean_experiments[
-                self.domain.is_fulfilled(clean_experiments)
+                self.domain.is_fulfilled(clean_experiments, tol=self._validation_tol)
             ].copy()
             if len(fulfilled_experiments) == 0:
                 warnings.warn(

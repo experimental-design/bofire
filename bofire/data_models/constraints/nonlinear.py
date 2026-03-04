@@ -53,6 +53,12 @@ class NonlinearConstraint(IntrapointConstraint):
     )
 
     def validate_inputs(self, inputs: Inputs):
+        """Validate that all constraint features are continuous inputs.
+        Args:
+            inputs (Inputs): Input feature collection from the domain.
+        Raises:
+            ValueError: If any feature is not a ContinuousInput.
+        """
         keys = inputs.get_keys(ContinuousInput)
         for f in self.features:
             if f not in keys:
@@ -62,6 +68,7 @@ class NonlinearConstraint(IntrapointConstraint):
 
     @model_validator(mode="after")
     def validate_features(self):
+        """Validate that provided features match callable expression arguments."""
         if isinstance(self.expression, Callable):
             features = list(inspect.getfullargspec(self.expression).args)
             if set(features) != set(self.features):
@@ -73,6 +80,13 @@ class NonlinearConstraint(IntrapointConstraint):
     @field_validator("jacobian_expression")
     @classmethod
     def set_jacobian_expression(cls, jacobian_expression, info) -> Union[str, Callable]:
+        """Auto-compute Jacobian using SymPy for string expressions if not provided.
+        Args:
+            jacobian_expression: User-provided Jacobian or None.
+            info: Pydantic validation context.
+        Returns:
+            Union[str, Callable]: Jacobian expression.
+        """
         if (
             jacobian_expression is None
             and "features" in info.data.keys()
@@ -102,6 +116,12 @@ class NonlinearConstraint(IntrapointConstraint):
     @field_validator("hessian_expression")
     @classmethod
     def set_hessian_expression(cls, hessian_expression, info) -> Union[str, Callable]:
+        """Auto-compute Hessian using SymPy for string expressions if not provided.
+        Args:            hessian_expression: User-provided Hessian or None.
+            info: Pydantic validation context.
+        Returns:
+            Union[str, Callable]: Hessian expression.
+        """
         if (
             hessian_expression is None
             and "features" in info.data.keys()
@@ -374,22 +394,20 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
         Returns:
             Boolean Series indicating whether each candidate fulfills the constraint
         """
-        violation = self(experiments)
-        result = (violation >= -tol) & (violation <= tol)
 
-        # DEBUG: Print detailed information
+        violation = self(experiments)
+        # Small epsilon to handle floating-point boundary cases
+        # e.g. violation = -0.001 with tol = 0.001 should pass
+        eps = max(tol * 1e-9, 1e-15)
+        result = pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
+        # DEBUG — remove before merging to main
         print("\n=== NonlinearEqualityConstraint.is_fulfilled DEBUG ===")
         print(f"Expression: {self.expression}")
-        print(f"Tolerance (tol): {tol}")
+        print(f"Tolerance (tol): {tol}  eps: {eps}")
         print(f"Violation values: {violation.values}")
-        print(f"Violation dtype: {violation.dtype}")
-        print(f"Check (violation >= -tol): {(violation >= -tol).values}")
-        print(f"Check (violation <= tol): {(violation <= tol).values}")
-        print(f"Combined result: {result.values}")
-        print(f"Result dtype: {result.dtype}")
+        print(f"Check (|violation| <= tol+eps): {result.values}")
         print("=" * 50)
-        eps = max(tol * 1e-9, 1e-15)
-        return pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
+        return result
 
 
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):

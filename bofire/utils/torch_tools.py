@@ -314,7 +314,7 @@ def get_nonlinear_constraints(
                 def constraint_fn(x: Tensor) -> Tensor:
                     # c.__call__ expects x with shape (batch_size, n_features)
                     # Returns a tensor of shape (batch_size,) with values <= 0 for feasible points
-                    return c(x)
+                    return -c(x)
 
                 return constraint_fn
 
@@ -330,11 +330,13 @@ def get_nonlinear_constraints(
             def make_equality_constraint_pair(c, tol):
                 # First inequality: f(x) - tolerance <= 0
                 def constraint_fn_upper(x: Tensor) -> Tensor:
-                    return tol - c(x)  # - tol
+                    return tol - c(x)  # c(x)-tol
 
                 # Second inequality: -f(x) - tolerance <= 0
                 def constraint_fn_lower(x: Tensor) -> Tensor:
-                    return c(x) + tol
+                    return (
+                        c(x) + tol
+                    )  # tol -c(x).  Bofrire feasibility >=0 Botorch 0<=feasibility
 
                 return constraint_fn_upper, constraint_fn_lower
 

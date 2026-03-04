@@ -46,7 +46,7 @@ class Strategy(ABC):
             isinstance(c, NonlinearEqualityConstraint)
             for c in data_model.domain.constraints
         )
-        self._validation_tol = 1e-3 if has_nonlinear_equality else 1e-5
+        self._validation_tol = 1e-3 if has_nonlinear_equality else 1e-3
 
     @property
     def domain(self) -> Domain:

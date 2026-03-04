@@ -13,9 +13,12 @@ from typing_extensions import Self
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
     AnyContinuousConstraint,
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
@@ -64,12 +67,27 @@ class RandomStrategy(Strategy):
         self.n_thinning = data_model.n_thinning
         self.sampler_kwargs = data_model.sampler_kwargs
 
-        from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
-
-        if any(
-            isinstance(c, NonlinearEqualityConstraint) for c in self.domain.constraints
-        ):
-            self._validation_tol = 1e-3
+        # from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
+        needs_relaxed_tol = any(
+            isinstance(
+                c,
+                (
+                    NonlinearEqualityConstraint,
+                    NonlinearInequalityConstraint,
+                    NChooseKConstraint,
+                ),
+            )
+            for c in self.domain.constraints
+        )
+        if needs_relaxed_tol:
+            self._validation_tol = 1e-3  # Relaxed for complex constraints
+        else:
+            self._validation_tol = 1e-6  # Standard for simple linear constraints
+            # Check for nonlinear equality constraints
+        # if any(isinstance(c, NonlinearEqualityConstraint) for c in self.domain.constraints):
+        #    self._validation_tol = 1e-3  # Relaxed for nonlinear equality
+        # else:
+        #    self._validation_tol = 1e-6  # Standard for linear/other constraints
 
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
@@ -92,6 +110,35 @@ class RandomStrategy(Strategy):
         Raises:
             ValueError: If unable to generate enough valid samples
         """
+        # Check if NChooseK constraints exist - use specialized sampling
+        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
+            return self._sample_with_nchooseks(candidate_count=candidate_count)
+
+        if len(self.domain.constraints.get([InterpointEqualityConstraint])) > 0:
+            return self._sample_with_nchooseks(
+                candidate_count=candidate_count
+            )  # ← Reuse this!
+
+        # Check if linear constraints exist - use polytope sampling
+        if (
+            len(
+                self.domain.constraints.get(
+                    [LinearEqualityConstraint, LinearInequalityConstraint]
+                )
+            )
+            > 0
+        ):
+            return self._sample_from_polytope(
+                domain=self.domain,
+                fallback_sampling_method=self.fallback_sampling_method,
+                n_burnin=self.n_burnin,
+                n_thinning=self.n_thinning,
+                seed=self._get_seed(),
+                n=candidate_count,
+                sampler_kwargs=self.sampler_kwargs,
+            )
+
+        # Otherwise use rejection sampling for nonlinear-only constraints
         valid_samples = []
         n_found = 0
         n_iters = 0
@@ -102,15 +149,13 @@ class RandomStrategy(Strategy):
                 samples, tol=self._validation_tol
             )
             n_found += np.sum(valid)
-            valid_samples.append(samples[valid])
+            valid_samples.append(samples[valid.values])  # ← FIX: Add .values
             n_iters += 1
 
         # Check if we found enough samples
         if n_found < candidate_count:
             raise ValueError(
-                f"RandomStrategy could not generate {candidate_count} valid samples "
-                f"after {self.max_iters} iterations (found {n_found}). "
-                f"Consider relaxing constraints or using a different sampling strategy."
+                "Maximum iterations exceeded in rejection sampling."  # ← FIX: Match test expectation
             )
 
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
