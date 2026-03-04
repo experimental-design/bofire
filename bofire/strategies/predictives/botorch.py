@@ -10,6 +10,7 @@ from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
 from torch import Tensor
 
+from bofire.data_models.constraints.api import Constraint, InterpointEqualityConstraint
 from bofire.data_models.features.api import Input
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
@@ -231,11 +232,20 @@ class BotorchStrategy(PredictiveStrategy):
         if len(valid_experiments) == 0:
             return False
 
-        # Then, filter by constraint fulfillment (including nonlinear constraints)
-        feasible_mask = self.domain.constraints.is_fulfilled(
+        # Then, filter by constraint fulfillment (excluding interpoint constraints,
+        # which apply to the batch of candidates we ask for, not to past experiments).
+        non_interpoint = self.domain.constraints.get(
+            Constraint, excludes=[InterpointEqualityConstraint]
+        )
+        feasible_mask = non_interpoint.is_fulfilled(
             experiments=valid_experiments,
             tol=self._validation_tol,
         )
+        # Align mask index with valid_experiments before boolean indexing
+        if hasattr(feasible_mask, "reindex"):
+            feasible_mask = feasible_mask.reindex(
+                valid_experiments.index, fill_value=False
+            )
 
         # Check if we have more than 1 feasible experiment
         feasible_experiments = valid_experiments[feasible_mask]

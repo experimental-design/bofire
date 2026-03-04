@@ -518,7 +518,35 @@ def main():
     strategy.tell(experiments)
 
     print("\nAsking for 3 new candidate experiments...")
-    candidates = strategy.ask(3)
+    # With callable nonlinear constraints, the optimizer does not enforce them internally,
+    # so we ask without raising on validation and keep only feasible candidates (with retries).
+    n_want = 3
+    max_attempts = 10
+    candidates = None
+    for _ in range(max_attempts):
+        raw = strategy.ask(n_want, raise_validation_error=False, add_pending=False)
+        fulfilled = domain.constraints.is_fulfilled(raw, tol=1e-3)
+        if fulfilled.all():
+            candidates = raw
+            break
+        feasible = raw[fulfilled]
+        if len(feasible) >= n_want:
+            candidates = feasible.head(n_want)
+            break
+        if candidates is None:
+            candidates = feasible
+        else:
+            candidates = pd.concat(
+                [candidates, feasible], ignore_index=True
+            ).drop_duplicates()
+        if len(candidates) >= n_want:
+            candidates = candidates.head(n_want)
+            break
+    if candidates is None or len(candidates) < n_want:
+        raise RuntimeError(
+            f"Could not obtain {n_want} feasible candidates after {max_attempts} attempts. "
+            "Try relaxing constraints or increasing initial samples."
+        )
 
     print("\nProposed candidates (first 5):")
     print(candidates.head())

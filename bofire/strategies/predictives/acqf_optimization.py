@@ -6,6 +6,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.exceptions import CandidateGenerationError
+from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
     optimize_acqf,
     optimize_acqf_discrete,
@@ -21,6 +23,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
     ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
@@ -429,6 +432,37 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return candidates
 
+    def _project_onto_nonlinear_constraints(
+        self,
+        X: Tensor,
+        domain: Domain,
+        bounds: Tensor,
+        max_iter: int = 100,
+        lr: float = 0.01,
+        tol: float = 1e-4,
+    ) -> Tensor:
+        """Project candidate tensor onto nonlinear constraint manifold (for fallback)."""
+        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
+        if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
+            return X
+        shape = X.shape
+        X_flat = X.reshape(-1, X.shape[-1]).clone().requires_grad_(True)
+        optimizer = torch.optim.Adam([X_flat], lr=lr)
+        for _ in range(max_iter):
+            optimizer.zero_grad()
+            total_violation = torch.tensor(0.0, dtype=X.dtype, device=X.device)
+            for constraint_fn, _ in nonlinear_constraints:
+                vals = constraint_fn(X_flat)
+                violation = torch.clamp(-vals, min=0.0)
+                total_violation = total_violation + (violation**2).sum()
+            if total_violation.item() < tol:
+                break
+            total_violation.backward()
+            optimizer.step()
+            with torch.no_grad():
+                X_flat.clamp_(bounds[0], bounds[1])
+        return X_flat.detach().reshape(shape)
+
     def _optimize_acqf_continuous(
         self,
         domain: Domain,
@@ -450,9 +484,26 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
         }
-        candidates, acqf_vals = optimizer_mapping[optimizer](
-            **optimizer_input.model_dump()
-        )  # type: ignore
+        try:
+            candidates, acqf_vals = optimizer_mapping[optimizer](
+                **optimizer_input.model_dump()
+            )  # type: ignore
+        except CandidateGenerationError:
+            # Retry without nonlinear constraints, then project onto feasible set
+            optimizer_input_fallback = self._get_arguments_for_optimizer(
+                bounds=bounds,
+                optimizer=optimizer,
+                acqfs=acqfs,
+                domain=domain,
+                candidate_count=candidate_count,
+                skip_nonlinear=True,
+            )
+            candidates, acqf_vals = optimizer_mapping[optimizer](
+                **optimizer_input_fallback.model_dump()
+            )  # type: ignore
+            candidates = self._project_onto_nonlinear_constraints(
+                candidates, domain, bounds
+            )
         return candidates, acqf_vals
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
@@ -541,6 +592,24 @@ class BotorchOptimizer(AcquisitionOptimizer):
             ic_gen_kwargs = {}
             return None, ic_generator, ic_gen_kwargs
 
+        # NChooseK/Product only: use BoTorch's default IC generator and a generator for reproducibility.
+        has_nchoosek_or_product = (
+            len(domain.constraints.get([NChooseKConstraint, ProductConstraint])) > 0
+        )
+        has_nonlinear_inequality = (
+            len(domain.constraints.get(NonlinearInequalityConstraint)) > 0
+        )
+        if (
+            has_nchoosek_or_product
+            and not has_nonlinear_equality
+            and not has_nonlinear_inequality
+        ):
+            return (
+                nonlinear_constraints,
+                gen_batch_initial_conditions,
+                {"generator": torch.Generator()},
+            )
+
         _captured_constraints = nonlinear_constraints
         _has_nonlinear_equality = has_nonlinear_equality
 
@@ -594,14 +663,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             """Generate initial conditions respecting nonlinear constraints where possible."""
             nonlinear_constraints_local = _captured_constraints
 
-            # Debug prints keep behaviour transparent but don't affect logic
-            print(f"DEBUG: inequality_constraints = {inequality_constraints}")
-            print(f"DEBUG: equality_constraints = {equality_constraints}")
-            print(f"DEBUG: kwargs keys = {list(kwargs.keys())}")
-            print(
-                f"DEBUG: nonlinear_constraints = {len(nonlinear_constraints_local)} constraints"
-            )
-
             if len(nonlinear_constraints_local) == 0:
                 from botorch.optim.initializers import gen_batch_initial_conditions
 
@@ -633,9 +694,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 )
                 X_raw = lower + (upper - lower) * X_raw_unit
 
-                print(
-                    f"Projecting {n_candidates} candidates onto equality constraint manifold..."
-                )
                 X_projected = project_onto_constraints(
                     X_raw,
                     nonlinear_constraints_local,
@@ -753,6 +811,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         bounds: Tensor,
         candidate_count: int,
         domain: Domain,
+        skip_nonlinear: bool = False,
     ) -> (
         _OptimizeAcqfInput
         | _OptimizeAcqfMixedInput
@@ -872,9 +931,17 @@ class BotorchOptimizer(AcquisitionOptimizer):
         #     ic_generator = feasible_ic_generator
         #     ic_gen_kwargs = {}  # No additional kwargs needed
 
-        nonlinear_constraints = (
-            nonlinear_constraints if len(nonlinear_constraints) > 0 else None
-        )
+        if skip_nonlinear:
+            nonlinear_constraints = None
+            ic_generator = None
+        else:
+            nonlinear_constraints = (
+                nonlinear_constraints
+                if (
+                    nonlinear_constraints is not None and len(nonlinear_constraints) > 0
+                )
+                else None
+            )
         # now do it for optimize_acqf
         if optimizer == OptimizerEnum.OPTIMIZE_ACQF:
             interpoints = get_interpoint_constraints(
@@ -893,11 +960,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 equality_constraints=equality_constraints + interpoints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
                 ic_generator=ic_generator,
-                generator=None,
-                # ic_gen_kwargs=ic_gen_kwargs,
-                #               generator=ic_gen_kwargs.get("generator")#["generator"]
-                # if ic_generator is not None
-                # else None,
+                generator=ic_gen_kwargs.get("generator") if ic_gen_kwargs else None,
                 fixed_features=self.get_fixed_features(domain=domain),
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED:
