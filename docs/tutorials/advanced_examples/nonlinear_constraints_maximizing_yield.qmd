@@ -1,0 +1,222 @@
+---
+title: Competing Reactions — Maximizing Yield with Nonlinear Constraints
+jupyter: python3
+---
+
+This tutorial optimizes a reaction system where **A + B → P** (desired) and **P + B → W** (waste). Goals: maximize yield of P, minimize W, subject to selectivity, conversion, and heat-generation constraints expressed as **callable** nonlinear constraints.
+
+## Problem
+
+- **Variables:** temperature, residence time, feed ratio (B:A), pressure.
+- **Objectives:** Maximize yield of P, minimize yield of W.
+- **Constraints:** Selectivity S ≥ 4.5, conversion X_A ≥ 0.85, heat generation Q ≤ 1300 W/L.
+
+## Reaction kinetics model
+
+```{python}
+import numpy as np
+import pandas as pd
+import torch
+
+from bofire.data_models.constraints.api import NonlinearInequalityConstraint
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+
+
+class CompetingReactionsModel:
+    """Kinetic model: A + B → P (k1), P + B → W (k2). Arrhenius kinetics."""
+
+    def __init__(self):
+        self.A1, self.A2 = 1e8, 5e6
+        self.Ea1, self.Ea2 = 65000, 75000
+        self.R = 8.314
+        self.dH1, self.dH2 = -85000, -45000
+        self.C_A0 = 2.0
+
+    def rate_constant(self, T, A, Ea):
+        return A * np.exp(-Ea / (self.R * T))
+
+    def simulate_batch(self, T, tau, feed_ratio, pressure):
+        k1 = self.rate_constant(T, self.A1, self.Ea1)
+        k2 = self.rate_constant(T, self.A2, self.Ea2)
+        C_A = self.C_A0 * (pressure / 1.0)
+        C_B = C_A * feed_ratio
+        C_P, C_W = 0.0, 0.0
+        dt, steps = 0.01, int(tau / dt)
+        for _ in range(steps):
+            r1 = k1 * C_A * C_B
+            r2 = k2 * C_P * C_B
+            C_A = max(C_A - r1 * dt, 0)
+            C_B = max(C_B - (r1 + r2) * dt, 0)
+            C_P = max(C_P + (r1 - r2) * dt, 0)
+            C_W += r2 * dt
+        X_A = 1 - C_A / (self.C_A0 * pressure)
+        Y_P = C_P / (self.C_A0 * pressure)
+        Y_W = C_W / (self.C_A0 * pressure)
+        S = C_P / C_W if C_W > 1e-6 else 100.0
+        Q = abs(self.dH1 * r1 + self.dH2 * r2) / 60
+        return {"X_A": X_A, "Y_P": Y_P, "Y_W": Y_W, "S": S, "Q": Q, "C_A": C_A, "C_B": C_B, "C_P": C_P, "C_W": C_W}
+```
+
+## Callable constraint functions
+
+Constraints are implemented as Torch-callable functions (keyword args match feature keys).
+
+```{python}
+def selectivity_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    R = 8.314
+    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
+    k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
+    C_A0 = 2.0 * pressure
+    C_B0 = C_A0 * feed_ratio
+    tau_factor = torch.sqrt(residence_time / 20.0)
+    S = (k1 / k2) * torch.sqrt(C_B0 / C_A0) * tau_factor
+    return 4.5 - S
+
+
+def conversion_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    R = 8.314
+    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
+    C_A0 = 2.0 * pressure
+    C_B0 = C_A0 * feed_ratio
+    X_A = 1.0 - torch.exp(-k1 * C_B0 * residence_time)
+    return 0.85 - X_A
+
+
+def heat_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    R = 8.314
+    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
+    k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
+    C_A0, C_B0 = 2.0 * pressure, 2.0 * pressure * feed_ratio
+    dH1, dH2 = -85000, -45000
+    r1 = k1 * C_A0 * C_B0 * torch.exp(-k1 * C_B0 * residence_time)
+    r2 = k2 * (C_A0 / 2.0) * C_B0
+    Q = torch.abs(dH1 * r1 + dH2 * r2) / 60
+    return Q - 1300
+```
+
+## Domain and feasible sample generation
+
+```{python}
+inputs = [
+    ContinuousInput(key="temperature", bounds=(310, 380)),
+    ContinuousInput(key="residence_time", bounds=(5, 40)),
+    ContinuousInput(key="feed_ratio", bounds=(1.0, 3.0)),
+    ContinuousInput(key="pressure", bounds=(1.0, 3.0)),
+]
+outputs = [
+    ContinuousOutput(key="yield_P", objective=MaximizeObjective()),
+    ContinuousOutput(key="yield_W", objective=MinimizeObjective()),
+]
+constraints = [
+    NonlinearInequalityConstraint(
+        expression=selectivity_constraint,
+        features=["temperature", "residence_time", "feed_ratio", "pressure"],
+    ),
+    NonlinearInequalityConstraint(
+        expression=conversion_constraint,
+        features=["temperature", "residence_time", "feed_ratio", "pressure"],
+    ),
+    NonlinearInequalityConstraint(
+        expression=heat_constraint,
+        features=["temperature", "residence_time", "feed_ratio", "pressure"],
+    ),
+]
+domain = Domain(inputs=inputs, outputs=outputs, constraints=constraints)
+
+
+def generate_feasible_samples(n_samples=20):
+    model = CompetingReactionsModel()
+    samples = []
+    attempts, max_attempts = 0, n_samples * 10
+    while len(samples) < n_samples and attempts < max_attempts:
+        attempts += 1
+        T = np.random.uniform(320, 360)
+        tau = np.random.uniform(10, 30)
+        feed_ratio = np.random.uniform(1.2, 2.0)
+        pressure = np.random.uniform(1.5, 2.5)
+        result = model.simulate_batch(T, tau, feed_ratio, pressure)
+        if result["S"] >= 4.5 and result["X_A"] >= 0.85 and result["Q"] <= 1300:
+            samples.append({"temperature": T, "residence_time": tau, "feed_ratio": feed_ratio, "pressure": pressure})
+    return pd.DataFrame(samples)
+```
+
+## Initial experiments and constraint check
+
+```{python}
+initial_samples = generate_feasible_samples(n_samples=20)
+model = CompetingReactionsModel()
+results = []
+for _, row in initial_samples.iterrows():
+    r = model.simulate_batch(
+        T=row["temperature"], tau=row["residence_time"],
+        feed_ratio=row["feed_ratio"], pressure=row["pressure"],
+    )
+    results.append({"yield_P": r["Y_P"], "yield_W": r["Y_W"]})
+experiments = pd.concat([initial_samples, pd.DataFrame(results)], axis=1)
+print("Initial samples:", len(initial_samples))
+print(initial_samples.head())
+for i, constraint in enumerate(constraints, 1):
+    violations = constraint(initial_samples)
+    print(f"Constraint {i} satisfied: {(violations <= 1e-3).sum()} / {len(initial_samples)}")
+```
+
+## Multi-objective optimization and feasible candidates
+
+With callable constraints, the optimizer does not enforce them internally. We ask with `raise_validation_error=False` and keep only feasible candidates.
+
+```{python}
+from bofire.data_models.strategies.api import MoboStrategy as MoboStrategyDataModel
+from bofire.data_models.strategies.predictives.acqf_optimization import BotorchOptimizer
+from bofire.strategies.api import MoboStrategy
+
+strategy_data = MoboStrategyDataModel(
+    domain=domain,
+    acquisition_optimizer=BotorchOptimizer(batch_limit=1, n_restarts=2, n_raw_samples=64),
+)
+strategy = MoboStrategy(data_model=strategy_data)
+strategy.tell(experiments)
+
+n_want = 3
+max_attempts = 10
+candidates = None
+for _ in range(max_attempts):
+    raw = strategy.ask(n_want, raise_validation_error=False, add_pending=False)
+    fulfilled = domain.constraints.is_fulfilled(raw, tol=1e-3)
+    if fulfilled.all():
+        candidates = raw
+        break
+    feasible = raw[fulfilled]
+    if len(feasible) >= n_want:
+        candidates = feasible.head(n_want)
+        break
+    candidates = feasible if candidates is None else pd.concat([candidates, feasible], ignore_index=True).drop_duplicates()
+    if len(candidates) >= n_want:
+        candidates = candidates.head(n_want)
+        break
+if candidates is None or len(candidates) < n_want:
+    raise RuntimeError(f"Could not obtain {n_want} feasible candidates after {max_attempts} attempts.")
+print("Proposed candidates:")
+print(candidates.head())
+```
+
+## Candidate verification and performance
+
+```{python}
+for i, constraint in enumerate(domain.constraints, 1):
+    fulfilled = constraint.is_fulfilled(candidates, tol=1e-3)
+    violations = constraint(candidates)
+    print(f"Constraint {i}: satisfied {fulfilled.sum()} / {len(candidates)}, max violation {violations.max():.6f}")
+
+candidate_results = []
+for _, row in candidates.iterrows():
+    r = model.simulate_batch(
+        T=row["temperature"], tau=row["residence_time"],
+        feed_ratio=row["feed_ratio"], pressure=row["pressure"],
+    )
+    candidate_results.append(r)
+performance = pd.DataFrame(candidate_results)
+print("\nPerformance (X_A, Y_P, Y_W, S, Q):")
+print(performance[["X_A", "Y_P", "Y_W", "S", "Q"]])
+```

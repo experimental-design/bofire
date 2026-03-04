@@ -31,3 +31,9 @@ Using Random Forest as a surrogate model instead of Gaussian Processes.
 
 ### [Transfer Learning BO](transfer_learning_bo.qmd)
 Applying transfer learning techniques to Bayesian optimization.
+
+### [Advanced Nonlinear Constraints](nonlinear_advanced.qmd)
+Nonconvex regions, physics-based constraints, and high-dimensional nonlinear constraints.
+
+### [Competing Reactions — Maximizing Yield](nonlinear_constraints_maximizing_yield.qmd)
+Multi-objective optimization with callable selectivity, conversion, and heat constraints.
