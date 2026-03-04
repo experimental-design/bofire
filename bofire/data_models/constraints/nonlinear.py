@@ -400,13 +400,6 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
         # e.g. violation = -0.001 with tol = 0.001 should pass
         eps = max(tol * 1e-9, 1e-15)
         result = pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
-        # DEBUG — remove before merging to main
-        print("\n=== NonlinearEqualityConstraint.is_fulfilled DEBUG ===")
-        print(f"Expression: {self.expression}")
-        print(f"Tolerance (tol): {tol}  eps: {eps}")
-        print(f"Violation values: {violation.values}")
-        print(f"Check (|violation| <= tol+eps): {result.values}")
-        print("=" * 50)
         return result
 
 
