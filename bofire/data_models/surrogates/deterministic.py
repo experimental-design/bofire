@@ -1,7 +1,8 @@
 from typing import Annotated, Dict, Literal, Type
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 
+from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -66,6 +67,9 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
 
 class LinearDeterministicSurrogate(BotorchSurrogate):
     type: Literal["LinearDeterministicSurrogate"] = "LinearDeterministicSurrogate"
+    engineered_features: EngineeredFeatures = Field(
+        default_factory=lambda: EngineeredFeatures()
+    )
     coefficients: Annotated[Dict[str, float], Field(min_length=1)]
     intercept: float
 
@@ -87,8 +91,24 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
             )
         return self
 
+    @field_validator("engineered_features")
+    @classmethod
+    def validate_engineered_features(cls, engineered_features, info):
+        for feat in engineered_features.get():
+            if feat.n_transformed_inputs != 1:
+                raise ValueError(
+                    "Only engineered feature that create one output are supported."
+                )
+            if feat.keep_features is False:
+                raise ValueError(
+                    "Invalid engineered feature: LinearDeterministicSurrogate requires keep_features=True for all engineered features."
+                )
+        return engineered_features
+
     @model_validator(mode="after")
     def validate_coefficients(self):
-        if sorted(self.inputs.get_keys()) != sorted(self.coefficients.keys()):
+        if sorted(
+            self.inputs.get_keys() + self.engineered_features.get_keys()
+        ) != sorted(self.coefficients.keys()):
             raise ValueError("coefficient keys do not match input feature keys.")
         return self

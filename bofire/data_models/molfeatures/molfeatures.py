@@ -87,7 +87,7 @@ class MolFeatures(BaseModel):
             # Find and remove highly correlated descriptors
             to_remove = set()
             for idx in remaining_descriptors:
-                if correlation_matrix.iloc[current_idx, idx] > self.correlation_cutoff:  # type: ignore
+                if correlation_matrix.iloc[current_idx, idx] > self.correlation_cutoff:
                     to_remove.add(idx)
 
             remaining_descriptors -= to_remove

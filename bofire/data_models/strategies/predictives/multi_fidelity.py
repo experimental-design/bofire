@@ -17,7 +17,7 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     def validate_tasks_and_fidelity_thresholds(self):
         """Ensures that there is one threshold per fidelity"""
         task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
-        num_tasks = len(task_input.categories)  # type: ignore
+        num_tasks = len(task_input.categories)  # ty: ignore[possibly-missing-attribute]
 
         if (
             isinstance(self.fidelity_thresholds, list)
@@ -33,7 +33,10 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     def validate_only_one_target_fidelity(self):
         """Ensures that there is only one target fidelity (task where fidelity==0)."""
         task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
-        num_target = sum(t == 0 for t in task_input.fidelities)  # type: ignore
+        num_target = sum(
+            t == 0
+            for t in task_input.fidelities  # ty: ignore[unresolved-attribute]
+        )
         if num_target != 1:
             raise ValueError(
                 f"Only one task can be the target fidelity (got {num_target})."

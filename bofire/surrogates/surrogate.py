@@ -56,7 +56,7 @@ class Surrogate(ABC):
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
-            columns=pred_cols + sd_cols,  # type: ignore
+            columns=pred_cols + sd_cols,
         )
         # append predictions for categorical cases
         predictions = postprocess_categorical_predictions(

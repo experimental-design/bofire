@@ -117,7 +117,7 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         predictions = self.predict(experiments)
 
         # get the datapoint specific noise level
-        rhos = self.model.likelihood.noise_covar.rho.cpu().detach().numpy()  # type: ignore
+        rhos = self.model.likelihood.noise_covar.rho.cpu().detach().numpy()
 
         # convert rhos to a DataFrame, this loop is not necessary because we only fit on one output, but possibly future proof.
         rho_df = pd.DataFrame(

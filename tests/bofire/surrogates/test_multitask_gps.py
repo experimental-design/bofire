@@ -5,7 +5,7 @@ import pytest
 import torch
 from botorch.models import MultiTaskGP
 from botorch.models.transforms.input import InputStandardize, Normalize
-from botorch.models.transforms.outcome import Standardize
+from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -27,6 +27,8 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
 )
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
+from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
@@ -102,9 +104,16 @@ def test_MultiTask_input_preprocessing():
 @pytest.mark.parametrize(
     "kernel, scaler, output_scaler, task_prior",
     [
-        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, None),
-        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE, None),
-        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY, LKJ_PRIOR()),
+        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE, None),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE, None),
+        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY, LKJ_PRIOR()),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.LOG, None),
+        (
+            RBFKernel(ard=False),
+            StandardizeScaler(),
+            ScalerEnum.CHAINED_LOG_STANDARDIZE,
+            None,
+        ),
     ],
 )
 def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
@@ -161,11 +170,15 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     assert isinstance(model.model, MultiTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.LOG:
+        assert isinstance(model.model.outcome_transform, Log)
+    elif output_scaler == ScalerEnum.CHAINED_LOG_STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, ChainedOutcomeTransform)
     elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(model.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(model.model.input_transform, InputStandardize)
     else:
         assert not hasattr(model.model, "input_transform")

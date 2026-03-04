@@ -4,7 +4,7 @@ jupyter: python3
 ---
 
 
-This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.
+This notebooks shows how to setup and analyze models trained with BoFire.
 
 
 ## Imports
@@ -12,17 +12,25 @@ This notebooks shows how to setup and analyze models trained with BoFire. It is 
 ```{python}
 #| papermill: {duration: 2.690868, end_time: '2024-10-10T20:34:24.683197', exception: false, start_time: '2024-10-10T20:34:21.992329', status: completed}
 #| tags: []
+import numpy as np
+import pandas as pd
+import shap
+
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.plot.cv_folds import plot_cv_folds_plotly
 from bofire.plot.feature_importance import plot_feature_importance_by_feature_plotly
+from bofire.plot.gp_slice import plot_gp_slice_plotly
 from bofire.surrogates.feature_importance import (
     combine_lengthscale_importances,
     combine_permutation_importances,
     lengthscale_importance_hook,
     permutation_importance_hook,
+    shap_importance,
+    shap_importance_hook,
 )
 ```
 
@@ -33,7 +41,6 @@ For didactic purposes, we sample data from a Himmelblau benchmark function and u
 ```{python}
 #| papermill: {duration: 0.010285, end_time: '2024-10-10T20:34:24.696815', exception: false, start_time: '2024-10-10T20:34:24.686530', status: completed}
 #| tags: []
-# TODO: replace this after JDs PR is ready.
 input_features = Inputs(
     features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)],
 )
@@ -41,6 +48,8 @@ output_features = Outputs(features=[ContinuousOutput(key="y")])
 experiments = input_features.sample(n=50)
 experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
 experiments["valid_y"] = 1
+
+experiments["labcode"] = "exp_" + experiments.index.astype(str)
 ```
 
 ## Cross Validation
@@ -58,16 +67,32 @@ model = surrogates.map(data_model=data_model)
 train_cv, test_cv, pi = model.cross_validate(
     experiments,
     folds=5,
+    include_X = True,
+    include_labcodes = True,
     hooks={
         "permutation_importance": permutation_importance_hook,
         "lengthscale_importance": lengthscale_importance_hook,
+        "shap_importance": shap_importance_hook,
     },
 )
 ```
 
+### Plot feature importance
+
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
 #| tags: []
+shap_folds = pi["shap_importance"]  # list[dict[str, shap.Explanation]]
+shap_mean_abs_per_fold = pd.DataFrame(
+    [
+        pd.Series(
+            np.mean(np.abs(fold["y"].values), axis=0),
+            index=fold["y"].feature_names,
+        )
+        for fold in shap_folds
+    ]
+)
+
 combined_importances = {
     m.name: combine_permutation_importances(pi["permutation_importance"], m).describe()
     for m in RegressionMetricsEnum
@@ -75,24 +100,24 @@ combined_importances = {
 combined_importances["lengthscale"] = combine_lengthscale_importances(
     pi["lengthscale_importance"],
 ).describe()
+combined_importances["shap"] = shap_mean_abs_per_fold.describe()
+
 plot_feature_importance_by_feature_plotly(
     combined_importances,
     relative=False,
-    caption="Permutation Feature Importances",
+    caption="Feature Importances",
     show_std=True,
-    importance_measure="Permutation Feature Importance",
+    importance_measure="Importance",
 )
 ```
 
 ### Analyze the cross validation
 
-Plots are added in a future PR.
-
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
 #| tags: []
 # Performance on test sets
-test_cv.get_metrics(combine_folds=True)
+test_cv.get_metrics(combine_folds=False)
 ```
 
 ```{python}
@@ -100,4 +125,56 @@ test_cv.get_metrics(combine_folds=True)
 #| tags: []
 display(test_cv.get_metrics(combine_folds=False))
 display(test_cv.get_metrics(combine_folds=False).describe())
+```
+
+### Plot Folds
+
+```{python}
+plot_cv_folds_plotly(test_cv, plot_X=True, plot_labcodes=True, plot_uncertainties=True)
+```
+
+### Plot a slice of the GP
+
+In this slice plot, we vary the inputs x_1 and x_2 across their full bounds to create a grid, while keeping x_3 fixed at a selected value.
+
+The outputs are two Plotly figures: one showing the GP's predicted mean (fig_mean) and the other showing the predicted standard deviation or uncertainty (fig_sd) over the slice.
+
+If observed_data=experiments is provided, the mean plot will also display the measured data points, with those matching the fixed value of x_3 highlighted separately.
+
+```{python}
+fixed_input_features = [model.inputs.get_by_key("x_3")]
+fixed_values = [0.0]
+varied_input_features = [
+    model.inputs.get_by_key("x_1"),
+    model.inputs.get_by_key("x_2"),
+]
+output_feature = model.outputs.get_by_key("y")
+
+fixed_values = [experiments.iloc[0]["x_3"]]
+fig_mean, fig_sd = plot_gp_slice_plotly(
+    surrogate=model,
+    fixed_input_features=fixed_input_features,
+    fixed_values=fixed_values,
+    varied_input_features=varied_input_features,
+    output_feature=output_feature,
+    resolution=80,
+    observed_data=experiments,
+)
+display(fig_mean)
+display(fig_sd)
+```
+
+### Shapley Plots
+
+```{python}
+shap_explanations = shap_importance(
+    predictor=model,
+    experiments=experiments,
+    bg_experiments=experiments,   # background for KernelSHAP
+    bg_sample_size=50,
+    seed=42,
+)
+
+exp = shap_explanations['y']
+shap.summary_plot(exp.values, exp.data, feature_names=exp.feature_names)
 ```

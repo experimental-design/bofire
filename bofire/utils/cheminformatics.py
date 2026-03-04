@@ -43,7 +43,7 @@ def smiles2mol(smiles: str):
         rdkit.Mol: rdkit.mol object
 
     """
-    mol = MolFromSmiles(smiles)  # type: ignore
+    mol = MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"{smiles} is not a valid smiles string.")
     return mol
@@ -67,7 +67,9 @@ def smiles2fingerprints(
     """
     rdkit_mols = [smiles2mol(m) for m in smiles]
     fps = [
-        AllChem.GetMorganFingerprintAsBitVect(mol, radius=bond_radius, nBits=n_bits)  # type: ignore
+        AllChem.GetMorganFingerprintAsBitVect(  # ty: ignore[unresolved-attribute]
+            mol, radius=bond_radius, nBits=n_bits
+        )
         for mol in rdkit_mols
     ]
 
@@ -89,9 +91,7 @@ def smiles2fragments(
 
     """
     rdkit_fragment_list = [
-        item
-        for item in Descriptors.descList
-        if item[0].startswith("fr_")  # type: ignore
+        item for item in Descriptors.descList if item[0].startswith("fr_")
     ]
     if fragments_list is None:
         fragments = {d[0]: d[1] for d in rdkit_fragment_list}
@@ -123,18 +123,18 @@ def smiles2mordred(
     """
     mols = [smiles2mol(smi) for smi in smiles]
 
-    calc = Calculator(descriptors, ignore_3D=ignore_3D)  # type: ignore
+    calc = Calculator(descriptors, ignore_3D=ignore_3D)
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
     descriptors_temp_df = calc.pandas(mols, quiet=True)
     descriptors_df = descriptors_temp_df.astype(float).fillna(0)
     nan_list = [
-        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()  # type: ignore
+        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()
         for col in descriptors_df.columns
     ]
     if any(nan_list):
         raise ValueError(
-            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}",  # type: ignore
+            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}",
         )
 
     return descriptors_df.astype(float).values

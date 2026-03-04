@@ -29,7 +29,7 @@ class OutlierPrior(BaseModel):
 
 
 class UniformOutlierPrior(OutlierPrior):
-    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"  # type: ignore
+    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
     bounds: Tuple[float, float]
 
     def sample(self, n_samples: int) -> np.ndarray:
@@ -40,7 +40,7 @@ class UniformOutlierPrior(OutlierPrior):
 
 
 class NormalOutlierPrior(OutlierPrior):
-    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"  # type: ignore
+    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
     loc: float
     scale: PositiveFloat
 
@@ -92,7 +92,7 @@ class Benchmark:
 
     @property
     def domain(self) -> Domain:
-        return self._domain  # type: ignore
+        return self._domain  # ty: ignore[unresolved-attribute]
 
 
 class GenericBenchmark(Benchmark):
@@ -189,7 +189,7 @@ class FormulationWrapper(Benchmark):
             )
         )
         if max_count is not None:
-            constraints.append(  # type: ignore
+            constraints.append(
                 NChooseKConstraint(
                     features=[
                         key
@@ -208,11 +208,11 @@ class FormulationWrapper(Benchmark):
             outputs=self._benchmark.domain.outputs,
         )
         self._mins = np.array(
-            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]  # type: ignore
+            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]
         )
         self._scales = np.array(
             [
-                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                feat.bounds[1] - feat.bounds[0]
                 for feat in self._benchmark.domain.inputs.get()
             ]
         )
@@ -230,9 +230,9 @@ class FormulationWrapper(Benchmark):
 
         # drop original columns, only keep latent ones
         X = X.drop(columns=self.domain.inputs.get_keys())
-        X = X / self._scales_new  # type: ignore
+        X = X / self._scales_new
 
-        return self._mins + self._scales * X  # type: ignore
+        return self._mins + self._scales * X
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
         X_transformed = self._transform(candidates)
@@ -251,11 +251,11 @@ class SpuriousFeaturesWrapper(Benchmark):
         self._benchmark = benchmark
         self._domain = Domain(
             inputs=Inputs(
-                features=benchmark.domain.inputs.features
+                features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
                 + [
                     ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
                     for i in range(n_spurious_features)
-                ]  # type: ignore
+                ]
             ),
             outputs=self._benchmark.domain.outputs,
             constraints=self._benchmark.domain.constraints,
@@ -303,7 +303,7 @@ class SyntheticBoTorch(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=b)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=b)
                     for i, b in enumerate(self.test_function._bounds)
                 ]
             ),

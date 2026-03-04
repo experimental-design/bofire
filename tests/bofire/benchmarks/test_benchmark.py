@@ -128,7 +128,7 @@ def test_formulation_wrapper_latent():
     descriptor_vals = [[1, 0], [0, 1]]
     for i in range(2):
         for j in range(3):
-            feat = wrapped.domain.inputs.get_by_key(f"x_{i+1}_{j}")
+            feat = wrapped.domain.inputs.get_by_key(f"x_{i + 1}_{j}")
             assert feat.descriptors == benchmark.domain.inputs.get_keys()
             assert feat.values == [
                 1 if k == i else 0 for k in range(len(benchmark.domain.inputs))

@@ -64,11 +64,11 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 self.categorical_encodings, self.features_to_warp
             )
             if len(self.features_to_warp) > 0
-            else None,  # type: ignore
+            else None,
         )
 
         fit_fully_bayesian_model_nuts(
-            self.model,  # type: ignore
+            self.model,
             warmup_steps=self.warmup_steps,
             num_samples=self.num_samples,
             thinning=self.thinning,
@@ -79,7 +79,7 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+            posterior = self.model.posterior(X=X, observation_noise=True)
 
         preds = posterior.mixture_mean.detach().numpy()
         stds = np.sqrt(posterior.mixture_variance.detach().numpy())

@@ -37,3 +37,6 @@ Nonconvex regions, physics-based constraints, and high-dimensional nonlinear con
 
 ### [Competing Reactions — Maximizing Yield](nonlinear_constraints_maximizing_yield.qmd)
 Multi-objective optimization with callable selectivity, conversion, and heat constraints.
+
+### [Conditional Features BO](conditional_features_bo.qmd)
+Define input features that are conditionally active.

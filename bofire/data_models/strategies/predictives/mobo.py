@@ -170,7 +170,7 @@ class ExplicitReferencePoint(ReferencePoint):
 
 
 class MoboStrategy(MultiobjectiveStrategy):
-    type: Literal["MoboStrategy"] = "MoboStrategy"  # type: ignore
+    type: Literal["MoboStrategy"] = "MoboStrategy"
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
         default_factory=lambda: qLogNEHVI(),

@@ -83,10 +83,12 @@ def get_linear_constraints(
             idx = domain.inputs.get_keys(Input).index(featkey)
             feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():
-                rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
+                fixed = feat.fixed_value()
+                assert fixed is not None
+                rhs -= fixed[0] * c.coefficients[i]
             else:
-                lower.append(feat.lower_bound)  # type: ignore
-                upper.append(feat.upper_bound)  # type: ignore
+                lower.append(feat.lower_bound)
+                upper.append(feat.upper_bound)
                 indices.append(idx)
                 coefficients.append(
                     c.coefficients[i],
@@ -815,7 +817,7 @@ def get_multiplicative_botorch_objective(
         val = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val = val * c(samples, None) ** w
-        return val  # type: ignore
+        return val
 
     return objective
 
@@ -836,7 +838,7 @@ def get_additive_botorch_objective(
         val = torch.tensor(0.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val = val + c(samples, None) * w
-        return val  # type: ignore
+        return val
 
     return objective
 
@@ -1009,7 +1011,7 @@ def get_initial_conditions_generator(
     return generator
 
 
-@torch.jit.script  # type: ignore
+@torch.jit.script
 def interp1d(
     x: torch.Tensor,
     y: torch.Tensor,
@@ -1124,7 +1126,7 @@ class InterpolateTransform(InputTransform, Module):
             x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
             y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
 
-        new_x = self.new_x.expand(x.shape[0], -1)  # type: ignore
+        new_x = self.new_x.expand(x.shape[0], -1)
         new_y = torch.vmap(interp1d)(x, y, new_x)
 
         if X.dim() == 3:
@@ -1218,7 +1220,7 @@ def get_NumericToCategorical_input_transform(
 ) -> Optional[NumericToCategoricalEncoding]:
     encoders = {
         inputs.get_keys().index(feat.key): get_categorical_encoder(
-            feat,  # type: ignore
+            feat,
             transform_specs[feat.key],
         )
         for feat in inputs.get(CategoricalInput)

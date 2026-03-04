@@ -15,7 +15,7 @@ from bofire.surrogates.trainable import TrainableSurrogate
 
 
 class BotorchSurrogates:
-    surrogates: Any  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
+    surrogates: Any
 
     def __init__(
         self,
@@ -28,7 +28,7 @@ class BotorchSurrogates:
         self.surrogates = [
             map_surrogate(model, **kwargs_)
             for (model, kwargs_) in zip(data_model.surrogates, re_init_kwargs)
-        ]  # type: ignore  # pyright: ignore[reportGeneralTypeIssues]
+        ]
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:

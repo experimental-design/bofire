@@ -63,7 +63,7 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
             [
                 feat(
                     valid_experiments[feat.key],
-                    valid_experiments[feat.key],  # type: ignore
+                    valid_experiments[feat.key],
                 )
                 for feat in constrained_outputs
             ],

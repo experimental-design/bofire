@@ -26,7 +26,7 @@ Why BoFire? BoFire ...
 
 ## Getting started
 
-In our [docs](https://experimental-design.github.io/bofire/), you can find all different options for the [BoFire installation](https://experimental-design.github.io/bofire/install/). For basic BoFire Bayesian optimization features using [BoTorch](https://botorch.org/) which depends on
+In our [docs](https://experimental-design.github.io/bofire/), you can find all different options for the [BoFire installation](https://experimental-design.github.io/bofire/install.html). For basic BoFire Bayesian optimization features using [BoTorch](https://botorch.org/) which depends on
 [PyTorch](https://pytorch.org/), you need to run
 
 ```
@@ -36,8 +36,6 @@ pip install bofire[optimization]
 For a more complete introduction to BoFire, please look in our [docs](https://experimental-design.github.io/bofire/).
 
 ### Optimization problem
-
-You will find a notebook covering the described example below in our [tutorials](https://github.com/experimental-design/bofire/tree/main/tutorials/quick_start) section to run the code yourself.
 
 Let us consider a test function for single-objective optimization - the [Himmelblau's function](https://en.wikipedia.org/wiki/Himmelblau%27s_function). The Himmelblau's function has four identical local minima used to test the performance of optimization algorithms. The optimization domain of the Himmelblau's function is illustrated below together with the four minima marked red.
 
@@ -155,7 +153,7 @@ sobo_strategy = SoboStrategy.make(
 
 It is possible to separate BoFire into serializable parameters and a functional part. We call the serializable parameters usually data models.
 This is especially helpful when working with REST APIs.
-See the respective sections in our [docs](https://experimental-design.github.io/bofire/data_models_functionals/).
+See the respective sections in our [docs](https://experimental-design.github.io/bofire/docs/userguides/data_models_functionals.html).
 
 
 ### Run the optimization loop
@@ -194,16 +192,17 @@ Documentation including a section on how to get started can be found under https
 
 ## Reference
 
-We would love for you to use BoFire in your work! If you do, please cite [our paper](https://arxiv.org/abs/2408.05040):
+We would love for you to use BoFire in your work! If you do, please cite [our paper](http://jmlr.org/papers/v26/24-1540.html):
 
-    @misc{durholt2024bofire,
-      title={BoFire: Bayesian Optimization Framework Intended for Real Experiments},
-      author={Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Wagner Steuer Costa and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and David Walz and Niklas Wulkow and Behrang Shafei},
-      year={2024},
-      eprint={2408.05040},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2408.05040},
+    @article{durholt2024bofire,
+      author  = {Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and Wagner Steuer Costa and David Walz and Niklas Wulkow and Behrang Shafei},
+      title   = {BoFire: Bayesian Optimization Framework Intended for Real Experiments},
+      journal = {Journal of Machine Learning Research},
+      year    = {2025},
+      volume  = {26},
+      number  = {204},
+      pages   = {1--7},
+      url     = {http://jmlr.org/papers/v26/24-1540.html}
     }
 
 Bayesian optimization in BoFire is based on META's [BoTorch library](https://botorch.org/). For BoTorch, please cite also the [botorch paper](https://proceedings.neurips.cc/paper_files/paper/2020/hash/f5b1b89d98b7286673128a5fb112cb9a-Abstract.html):

@@ -8,7 +8,7 @@ from bofire.data_models.features.api import (
     CategoricalOutput,
     ContinuousOutput,
 )
-from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.scaler import AnyScaler, ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -29,7 +29,7 @@ class MLPEnsemble(TrainableBotorchSurrogate):
 class RegressionMLPEnsemble(MLPEnsemble):
     type: Literal["RegressionMLPEnsemble"] = "RegressionMLPEnsemble"
     final_activation: Literal["identity"] = "identity"
-    scaler: ScalerEnum = ScalerEnum.IDENTITY
+    scaler: AnyScaler = None
     output_scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     @classmethod
@@ -46,7 +46,7 @@ class RegressionMLPEnsemble(MLPEnsemble):
 class ClassificationMLPEnsemble(MLPEnsemble):
     type: Literal["ClassificationMLPEnsemble"] = "ClassificationMLPEnsemble"
     final_activation: Literal["softmax"] = "softmax"
-    scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
+    scaler: AnyScaler = None
     output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
 
     @classmethod

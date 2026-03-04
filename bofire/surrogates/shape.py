@@ -7,7 +7,7 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import ChainedInputTransform, Normalize
 from botorch.models.transforms.outcome import Standardize
-from gpytorch.kernels import ScaleKernel
+from gpytorch.constraints.constraints import GreaterThan
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -92,39 +92,32 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             torch.from_numpy(Y.values).to(**tkwargs),
         )
         if self.continuous_kernel is not None:
-            covar_module = ScaleKernel(
-                base_kernel=kernels.map(
-                    self.continuous_kernel,
-                    active_dims=self.idx_continuous,
-                    batch_shape=torch.Size(),
-                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                        self.input_preprocessing_specs, feats
-                    ),
-                )
-                * kernels.map(
-                    self.shape_kernel,
-                    active_dims=self.idx_shape,
-                    batch_shape=torch.Size(),
-                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                        self.input_preprocessing_specs, feats
-                    ),
+            covar_module = kernels.map(
+                self.continuous_kernel,
+                active_dims=self.idx_continuous,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
                 ),
-                outputscale_prior=priors.map(self.outputscale_prior),
+            ) * kernels.map(
+                self.shape_kernel,
+                active_dims=self.idx_shape,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
+                ),
             )
         else:
-            covar_module = ScaleKernel(
-                base_kernel=kernels.map(
-                    self.shape_kernel,
-                    active_dims=self.idx_shape,
-                    batch_shape=torch.Size(),
-                    features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
-                        self.input_preprocessing_specs, feats
-                    ),
+            covar_module = kernels.map(
+                self.shape_kernel,
+                active_dims=self.idx_shape,
+                batch_shape=torch.Size(),
+                features_to_idx_mapper=lambda feats: self.inputs.get_feature_indices(
+                    self.input_preprocessing_specs, feats
                 ),
-                outputscale_prior=priors.map(self.outputscale_prior),
             )
 
-        self.model = botorch.models.SingleTaskGP(  # type: ignore
+        self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
             covar_module=covar_module,
@@ -132,7 +125,8 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=self.transform,
         )
 
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
+        self.model.likelihood.noise_covar.raw_noise_constraint = GreaterThan(5e-4)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)

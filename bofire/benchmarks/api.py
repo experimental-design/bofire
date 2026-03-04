@@ -1,6 +1,5 @@
 from typing import Union
 
-from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
 from bofire.benchmarks.benchmark import (
     Benchmark,
     FormulationWrapper,

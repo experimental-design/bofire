@@ -69,7 +69,7 @@ def build_indicator_func(
         )
 
     thresholds = [
-        _conditional_feature_to_indicator(cond_tuple, features_to_idx_mapper)  # type: ignore
+        _conditional_feature_to_indicator(cond_tuple, features_to_idx_mapper)
         for cond_tuple in conditions
     ]
 
@@ -216,23 +216,23 @@ class WedgeKernel(Kernel):
 
     @property
     def angle(self):
-        return self.raw_angle_constraint.transform(self.raw_angle)  # type: ignore
+        return self.raw_angle_constraint.transform(self.raw_angle)
 
     @angle.setter
     def angle(self, value):
         if not torch.is_tensor(value):
-            value = torch.as_tensor(value).to(self.raw_angle)  # type: ignore
-        self.initialize(raw_angle=self.raw_angle_constraint.inverse_transform(value))  # type: ignore
+            value = torch.as_tensor(value).to(self.raw_angle)
+        self.initialize(raw_angle=self.raw_angle_constraint.inverse_transform(value))
 
     @property
     def radius(self):
-        return self.raw_radius_constraint.transform(self.raw_radius)  # type: ignore
+        return self.raw_radius_constraint.transform(self.raw_radius)
 
     @radius.setter
     def radius(self, value):
         if not isinstance(value, Tensor):
-            value = torch.as_tensor(value).to(self.raw_radius)  # type: ignore
-        self.initialize(raw_radius=self.raw_radius_constraint.inverse_transform(value))  # type: ignore
+            value = torch.as_tensor(value).to(self.raw_radius)
+        self.initialize(raw_radius=self.raw_radius_constraint.inverse_transform(value))
 
     def embedding(self, x):
         # this assumes that x has been normalized to [0, 1]

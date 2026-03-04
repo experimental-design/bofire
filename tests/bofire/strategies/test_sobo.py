@@ -160,11 +160,21 @@ def test_get_acqf_input_tensors_infeasible(include_infeasible):
         benchmark.domain.inputs.sample(10),
         return_complete=True,
     )
-    for feat in benchmark.domain.inputs.get():
-        feat.bounds = (100, 200)
+
+    # Create a new domain with bounds (100, 200) - all experiments are outside these bounds
+    infeasible_domain = Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="x_1", bounds=(100, 200)),
+                ContinuousInput(key="x_2", bounds=(100, 200)),
+            ]
+        ),
+        outputs=benchmark.domain.outputs,
+    )
 
     strategy = SoboStrategy.make(
-        domain=benchmark.domain, include_infeasible_exps_in_acqf_calc=include_infeasible
+        domain=infeasible_domain,
+        include_infeasible_exps_in_acqf_calc=include_infeasible,
     )
     strategy._experiments = experiments
     if not include_infeasible:
@@ -179,23 +189,39 @@ def test_get_acqf_input_tensors_infeasible(include_infeasible):
         assert X_train.shape[0] == len(experiments)
 
     if not include_infeasible:
-        for feat in benchmark.domain.inputs.get():
-            feat.bounds = (-6, 0)
-        strategy = SoboStrategy.make(domain=benchmark.domain)
-        # we do this to make the test more robust and not depend on the random sampling
+        # Create a new domain with bounds (-6, 0) - some experiments may be outside
+        partial_infeasible_domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=(-6, 0)),
+                    ContinuousInput(key="x_2", bounds=(-6, 0)),
+                ]
+            ),
+            outputs=benchmark.domain.outputs,
+        )
+        strategy = SoboStrategy.make(domain=partial_infeasible_domain)
+        # Add one experiment that's definitely infeasible (x_1=6, x_2=6 is outside bounds)
+        # and one that's definitely feasible (x_1=-3, x_2=-3 is inside bounds)
+        # This ensures the test doesn't depend on random sampling
         experiments = pd.concat(
             [
                 experiments,
                 pd.DataFrame(
-                    {"x_1": [6.0], "x_2": [6.0], "y": [700.0], "valid_y": [1]}
+                    {
+                        "x_1": [6.0, -3.0],
+                        "x_2": [6.0, -3.0],
+                        "y": [700.0, 100.0],
+                        "valid_y": [1, 1],
+                    }
                 ),
             ],
             ignore_index=True,
         )
-        assert len(experiments) == 11
+        assert len(experiments) == 12
         strategy._experiments = experiments
         filtered_experiments, _ = strategy.get_acqf_input_tensors()
-        assert filtered_experiments.shape[0] < 11
+        # At least the (6, 6) experiment should be filtered out
+        assert filtered_experiments.shape[0] < 12
 
 
 @pytest.mark.parametrize(

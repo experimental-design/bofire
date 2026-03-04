@@ -38,7 +38,7 @@ class Constraints(BaseModel, Generic[C]):
         else:
             other_constraints = other.constraints
         constraints = list(chain(self.constraints, other_constraints))
-        return Constraints(constraints=constraints)
+        return Constraints(constraints=constraints)  # ty: ignore[invalid-return-type]
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Numerically evaluate all constraints
@@ -89,7 +89,9 @@ class Constraints(BaseModel, Generic[C]):
 
     def get(
         self,
-        includes: Union[Type[CIncludes], Sequence[Type[CIncludes]]] = Constraint,
+        includes: Union[
+            Type[CIncludes], Sequence[Type[CIncludes]]
+        ] = Constraint,  # ty: ignore[invalid-parameter-default]
         excludes: Optional[Union[Type[CExcludes], List[Type[CExcludes]]]] = None,
         exact: bool = False,
     ) -> "Constraints[CIncludes]":
