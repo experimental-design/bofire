@@ -303,6 +303,7 @@ class MCTS:
         rollout_mode: Rollout action selection policy. Options:
             "ts_group_action" - NIG Thompson Sampling per (group, action)
             "uniform" - fixed p_stop for NChooseK STOP, then uniform among non-STOP
+            "uniform_subset" - complete NChooseK groups with uniform random subsets
         adaptive_n0: If True, set pseudo-count n0 = 1 + log(branching_factor)
         p_stop_rollout: Probability of early stop during uniform rollout (default 0.35)
         pw_k0: Progressive widening base constant (default 2.0)
@@ -696,9 +697,10 @@ class MCTS:
     ) -> tuple[tuple[int, ...], dict[int, float], list[TrajectoryStep]]:
         """Rollout to terminal state with mode-dependent action selection.
 
-        Supports two rollout modes:
+        Supports three rollout modes:
         - "ts_group_action": NIG Thompson Sampling per (group, action)
         - "uniform": adaptive p_stop for NChooseK STOP, then uniform among non-STOP
+        - "uniform_subset": complete NChooseK groups with uniform random subsets
 
         Returns:
             Tuple of (selected_features, cat_selections, trajectory)
@@ -744,6 +746,49 @@ class MCTS:
                     continue
 
                 action = self.rng.choice(choices)
+
+            elif self.rollout_mode == "uniform_subset":
+                is_nchoosek = g < len(self.groups.nchooseks)
+                if is_nchoosek:
+                    group = self.groups.groups[g]
+                    partial = curr.partial_by_group[g]
+                    m = len(partial)
+                    last = partial[-1] if partial else -1
+                    available = list(range(last + 1, group.n_features))
+                    min_remaining = max(0, group.min_count - m)
+                    max_remaining = group.max_count - m
+
+                    # Determine count: sample how many features to add
+                    if min_remaining == max_remaining or not available:
+                        k = min(min_remaining, len(available))
+                    else:
+                        # Geometric-like: for each slot beyond min, stop with p_stop
+                        k = min_remaining
+                        for _ in range(
+                            min_remaining, min(max_remaining, len(available))
+                        ):
+                            if self.rng.random() < self.p_stop_rollout:
+                                break
+                            k += 1
+
+                    # Sample k features uniformly from available
+                    k = min(k, len(available))
+                    chosen = sorted(self.rng.sample(available, k))
+
+                    # Build completed node directly
+                    new_partial = list(curr.partial_by_group)
+                    new_stopped = list(curr.stopped_by_group)
+                    new_partial[g] = partial + tuple(chosen)
+                    new_stopped[g] = True  # group is complete
+                    curr = Node(
+                        partial_by_group=tuple(new_partial),
+                        stopped_by_group=tuple(new_stopped),
+                        group_idx=g + 1,
+                    )
+                    continue
+                else:
+                    # Categorical: pick uniformly (same as "uniform" mode)
+                    action = self.rng.choice(legal)
             else:
                 raise ValueError(f"Unknown rollout_mode: {self.rollout_mode}")
 
@@ -935,6 +980,105 @@ class MCTS:
 
 
 # =============================================================================
+# Two-phase Sobol screening helpers
+# =============================================================================
+
+
+def _sobol_evaluate_acqf(
+    acq_function,
+    bounds: Tensor,
+    combined_fixed: dict[int, float],
+    n_sobol_samples: int,
+    q: int = 1,
+) -> float:
+    """Evaluate acquisition function using Sobol quasi-random sampling.
+
+    Generates quasi-random points in the free (non-fixed) dimensions, constructs
+    full candidate tensors with fixed dims filled in, and returns the maximum
+    acquisition value found.
+
+    Args:
+        acq_function: BoTorch acquisition function to evaluate
+        bounds: 2 x d tensor of (lower, upper) bounds
+        combined_fixed: Dictionary mapping dimension indices to fixed values
+        n_sobol_samples: Number of Sobol samples to draw
+        q: Batch size for acquisition function evaluation
+
+    Returns:
+        Maximum acquisition value across all Sobol samples
+    """
+    d = bounds.shape[1]
+    free_dims = [i for i in range(d) if i not in combined_fixed]
+
+    if not free_dims:
+        # All dims fixed: evaluate the single point
+        point = torch.zeros(1, q, d, dtype=bounds.dtype, device=bounds.device)
+        for dim_idx, val in combined_fixed.items():
+            point[0, :, dim_idx] = val
+        with torch.no_grad():
+            return acq_function(point).max().item()
+
+    n_free = len(free_dims)
+    sobol = torch.quasirandom.SobolEngine(dimension=n_free, scramble=True)
+    unit_samples = sobol.draw(n_sobol_samples).to(
+        dtype=bounds.dtype, device=bounds.device
+    )
+
+    # Scale from [0,1] to bounds of free dims
+    lower = bounds[0, free_dims]
+    upper = bounds[1, free_dims]
+    scaled = lower + (upper - lower) * unit_samples  # (n_sobol_samples, n_free)
+
+    # Build full (n_sobol_samples, q, d) tensor
+    candidates = torch.zeros(
+        n_sobol_samples, q, d, dtype=bounds.dtype, device=bounds.device
+    )
+    for j, dim_idx in enumerate(free_dims):
+        candidates[:, :, dim_idx] = scaled[:, j].unsqueeze(1)
+    for dim_idx, val in combined_fixed.items():
+        candidates[:, :, dim_idx] = val
+
+    with torch.no_grad():
+        values = acq_function(candidates)  # (n_sobol_samples,)
+
+    return values.max().item()
+
+
+class _SelectionTracker:
+    """Wraps a reward function to record the best reward per unique selection.
+
+    Used in the Sobol screening phase to track which feature/categorical
+    selections yield the highest rewards, so the top-k can be refined
+    with expensive optimize_acqf calls.
+    """
+
+    def __init__(
+        self,
+        inner_fn: Callable[[tuple[int, ...], dict[int, float]], float],
+    ):
+        self.inner_fn = inner_fn
+        self.best_rewards: dict[tuple, float] = {}
+        self.selections: dict[tuple, tuple[tuple[int, ...], dict[int, float]]] = {}
+
+    def __call__(
+        self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
+    ) -> float:
+        reward = self.inner_fn(selected_features, cat_selections)
+        key = (selected_features, frozenset(cat_selections.items()))
+        if key not in self.best_rewards or reward > self.best_rewards[key]:
+            self.best_rewards[key] = reward
+            self.selections[key] = (selected_features, cat_selections)
+        return reward
+
+    def top_k(self, k: int) -> list[tuple[tuple[int, ...], dict[int, float]]]:
+        """Return the top-k selections sorted by best reward (descending)."""
+        sorted_keys = sorted(
+            self.best_rewards, key=self.best_rewards.__getitem__, reverse=True
+        )
+        return [self.selections[key] for key in sorted_keys[:k]]
+
+
+# =============================================================================
 # Main optimization function
 # =============================================================================
 
@@ -958,6 +1102,10 @@ def optimize_acqf_mcts(
     pw_alpha: float = 0.6,
     max_rollout_retries: int = 3,
     use_cache: bool = True,
+    # Two-phase Sobol screening parameters
+    n_sobol_samples: int = 0,
+    top_k_refine: int = 8,
+    screening_num_iterations: int | None = None,
     # BoTorch acqf optimization parameters
     q: int = 1,
     raw_samples: int = 1024,
@@ -992,6 +1140,14 @@ def optimize_acqf_mcts(
         max_rollout_retries: Maximum rollout retries on cache hit
         use_cache: If True (default), cache reward evaluations. If False, every
             evaluation calls reward_fn fresh and is treated as novel.
+        n_sobol_samples: Number of Sobol quasi-random samples per evaluation in the
+            screening phase. 0 (default) disables two-phase mode and uses original
+            optimize_acqf-per-step behavior. The production path via
+            _get_arguments_for_optimizer sets this to 64.
+        top_k_refine: Number of top unique selections from screening to refine with
+            expensive optimize_acqf in the refinement phase.
+        screening_num_iterations: Number of MCTS iterations for the screening phase.
+            If None, defaults to 500 when two-phase mode is active.
         q: Batch size for acquisition function optimization
         raw_samples: Number of raw samples for initialization
         num_restarts: Number of optimization restarts
@@ -1028,78 +1184,150 @@ def optimize_acqf_mcts(
     # All feature indices covered by NChooseK constraints
     nchoosek_features = set(groups.all_nchoosek_features)
 
-    # Storage for best result across all MCTS evaluations
-    best_candidates: Optional[Tensor] = None
-    best_acq_value: float = float("-inf")
-
-    def reward_fn(
+    def _build_combined_fixed(
         selected_features: tuple[int, ...], cat_selections: dict[int, float]
-    ) -> float:
-        nonlocal best_candidates, best_acq_value
-
-        selected_set = set(selected_features)
-
-        # Build fixed_features dict
-        combined_fixed = {}
-
-        # First add user-provided fixed features
+    ) -> dict[int, float]:
+        """Build fixed_features dict from selection."""
+        combined_fixed: dict[int, float] = {}
         if fixed_features is not None:
             combined_fixed.update(fixed_features)
-
-        # Fix inactive NChooseK features to 0
-        inactive_features = nchoosek_features - selected_set
+        inactive_features = nchoosek_features - set(selected_features)
         for idx in inactive_features:
             combined_fixed[idx] = 0.0
-
-        # Fix categorical dimensions to selected values
         for dim, value in cat_selections.items():
             combined_fixed[dim] = value
+        return combined_fixed
 
-        candidates, acq_value = optimize_acqf(
-            acq_function=acq_function,
-            bounds=bounds,
-            q=q,
-            num_restarts=num_restarts,
-            raw_samples=raw_samples,
-            fixed_features=combined_fixed,
-            inequality_constraints=inequality_constraints,
-            equality_constraints=equality_constraints,
+    if n_sobol_samples > 0:
+        # =================================================================
+        # Phase 1: Sobol Screening — cheap quasi-random evaluation
+        # =================================================================
+        screening_iters = (
+            screening_num_iterations if screening_num_iterations is not None else 500
         )
 
-        value = acq_value.item()
+        def sobol_reward_fn(
+            selected_features: tuple[int, ...], cat_selections: dict[int, float]
+        ) -> float:
+            combined_fixed = _build_combined_fixed(selected_features, cat_selections)
+            return _sobol_evaluate_acqf(
+                acq_function, bounds, combined_fixed, n_sobol_samples, q
+            )
 
-        # Track best
-        if value > best_acq_value:
-            best_acq_value = value
-            best_candidates = candidates
+        tracker = _SelectionTracker(sobol_reward_fn)
 
-        return value
+        mcts = MCTS(
+            groups=groups,
+            reward_fn=tracker,
+            nig_alpha0=nig_alpha0,
+            ts_prior_var=ts_prior_var,
+            adaptive_prior_var=adaptive_prior_var,
+            cache_hit_mode=cache_hit_mode,
+            variance_decay=variance_decay,
+            rollout_mode="uniform_subset",
+            adaptive_n0=adaptive_n0,
+            p_stop_rollout=p_stop_rollout,
+            pw_k0=pw_k0,
+            pw_alpha=pw_alpha,
+            max_rollout_retries=max_rollout_retries,
+            use_cache=False,  # Sobol is inherently noisy; NIG handles variance
+            seed=seed,
+        )
 
-    # Run MCTS
-    mcts = MCTS(
-        groups=groups,
-        reward_fn=reward_fn,
-        nig_alpha0=nig_alpha0,
-        ts_prior_var=ts_prior_var,
-        adaptive_prior_var=adaptive_prior_var,
-        cache_hit_mode=cache_hit_mode,
-        variance_decay=variance_decay,
-        rollout_mode=rollout_mode,
-        adaptive_n0=adaptive_n0,
-        p_stop_rollout=p_stop_rollout,
-        pw_k0=pw_k0,
-        pw_alpha=pw_alpha,
-        max_rollout_retries=max_rollout_retries,
-        use_cache=use_cache,
-        seed=seed,
-    )
+        mcts.run(n_iterations=screening_iters)
 
-    mcts.run(n_iterations=num_iterations)
+        # =================================================================
+        # Phase 2: Refinement — expensive optimize_acqf on top-k selections
+        # =================================================================
+        top_selections = tracker.top_k(top_k_refine)
 
-    # Handle case where no valid solution was found
-    if best_candidates is None:
-        # Return zeros with -inf value
-        best_candidates = torch.zeros(q, d, dtype=bounds.dtype, device=bounds.device)
-        best_acq_value = float("-inf")
+        best_candidates: Optional[Tensor] = None
+        best_acq_value: float = float("-inf")
 
-    return best_candidates, best_acq_value
+        for selected_features, cat_selections in top_selections:
+            combined_fixed = _build_combined_fixed(selected_features, cat_selections)
+
+            candidates, acq_value = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                fixed_features=combined_fixed,
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+            )
+
+            value = acq_value.item()
+            if value > best_acq_value:
+                best_acq_value = value
+                best_candidates = candidates
+
+        if best_candidates is None:
+            best_candidates = torch.zeros(
+                q, d, dtype=bounds.dtype, device=bounds.device
+            )
+            best_acq_value = float("-inf")
+
+        return best_candidates, best_acq_value
+
+    else:
+        # =================================================================
+        # Original behavior: optimize_acqf per MCTS step
+        # =================================================================
+        best_candidates: Optional[Tensor] = None
+        best_acq_value: float = float("-inf")
+
+        def reward_fn(
+            selected_features: tuple[int, ...], cat_selections: dict[int, float]
+        ) -> float:
+            nonlocal best_candidates, best_acq_value
+
+            combined_fixed = _build_combined_fixed(selected_features, cat_selections)
+
+            candidates, acq_value = optimize_acqf(
+                acq_function=acq_function,
+                bounds=bounds,
+                q=q,
+                num_restarts=num_restarts,
+                raw_samples=raw_samples,
+                fixed_features=combined_fixed,
+                inequality_constraints=inequality_constraints,
+                equality_constraints=equality_constraints,
+            )
+
+            value = acq_value.item()
+
+            if value > best_acq_value:
+                best_acq_value = value
+                best_candidates = candidates
+
+            return value
+
+        mcts = MCTS(
+            groups=groups,
+            reward_fn=reward_fn,
+            nig_alpha0=nig_alpha0,
+            ts_prior_var=ts_prior_var,
+            adaptive_prior_var=adaptive_prior_var,
+            cache_hit_mode=cache_hit_mode,
+            variance_decay=variance_decay,
+            rollout_mode=rollout_mode,
+            adaptive_n0=adaptive_n0,
+            p_stop_rollout=p_stop_rollout,
+            pw_k0=pw_k0,
+            pw_alpha=pw_alpha,
+            max_rollout_retries=max_rollout_retries,
+            use_cache=use_cache,
+            seed=seed,
+        )
+
+        mcts.run(n_iterations=num_iterations)
+
+        if best_candidates is None:
+            best_candidates = torch.zeros(
+                q, d, dtype=bounds.dtype, device=bounds.device
+            )
+            best_acq_value = float("-inf")
+
+        return best_candidates, best_acq_value
