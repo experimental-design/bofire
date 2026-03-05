@@ -242,9 +242,11 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         return make_strategy(cls, DataModel, locals())
 
 
-def get_project(target_fidelities: dict[int, float]) -> Callable[[Tensor], Tensor]:
+def get_project(
+    target_fidelities: dict[int, float], d: int
+) -> Callable[[Tensor], Tensor]:
     def project(X):
-        return project_to_target_fidelity(X=X, target_fidelities=target_fidelities)
+        return project_to_target_fidelity(X=X, target_fidelities=target_fidelities, d=d)
 
     return project
 
@@ -318,5 +320,5 @@ def get_acquisition_function_qMFHVKG(
         X_pending_evaluation_mask=None,
         current_value=current_value,
         cost_aware_utility=cost_aware_utility,
-        project=get_project(target_fidelities),
+        project=get_project(target_fidelities, X_observed.shape[-1]),
     )
