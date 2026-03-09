@@ -21,9 +21,6 @@ from bofire.kernels.shape import WassersteinKernel
 from bofire.kernels.spherical_kernels import SphericalLinearKernel
 
 
-KERNEL_MAP = {}
-
-
 def register(
     data_model_cls: Type[data_models.Kernel],
     map_fn: Optional[Callable] = None,
@@ -79,7 +76,6 @@ def _compute_active_dims(
     return active_dims
 
 
-@register(data_models.RBFKernel)
 def map_RBFKernel(
     data_model: data_models.RBFKernel,
     batch_shape: torch.Size,
@@ -104,7 +100,6 @@ def map_RBFKernel(
     )
 
 
-@register(data_models.MaternKernel)
 def map_MaternKernel(
     data_model: data_models.MaternKernel,
     batch_shape: torch.Size,
@@ -130,7 +125,6 @@ def map_MaternKernel(
     )
 
 
-@register(data_models.InfiniteWidthBNNKernel)
 def map_InfiniteWidthBNNKernel(
     data_model: data_models.InfiniteWidthBNNKernel,
     batch_shape: torch.Size,
@@ -145,7 +139,6 @@ def map_InfiniteWidthBNNKernel(
     )
 
 
-@register(data_models.LinearKernel)
 def map_LinearKernel(
     data_model: data_models.LinearKernel,
     batch_shape: torch.Size,
@@ -164,7 +157,6 @@ def map_LinearKernel(
     )
 
 
-@register(data_models.PolynomialKernel)
 def map_PolynomialKernel(
     data_model: data_models.PolynomialKernel,
     batch_shape: torch.Size,
@@ -184,7 +176,6 @@ def map_PolynomialKernel(
     )
 
 
-@register(data_models.AdditiveKernel)
 def map_AdditiveKernel(
     data_model: data_models.AdditiveKernel,
     batch_shape: torch.Size,
@@ -204,7 +195,6 @@ def map_AdditiveKernel(
     )
 
 
-@register(data_models.MultiplicativeKernel)
 def map_MultiplicativeKernel(
     data_model: data_models.MultiplicativeKernel,
     batch_shape: torch.Size,
@@ -224,7 +214,6 @@ def map_MultiplicativeKernel(
     )
 
 
-@register(data_models.ScaleKernel)
 def map_ScaleKernel(
     data_model: data_models.ScaleKernel,
     batch_shape: torch.Size,
@@ -251,7 +240,6 @@ def map_ScaleKernel(
     )
 
 
-@register(data_models.TanimotoKernel)
 def map_TanimotoKernel(
     data_model: data_models.TanimotoKernel,
     batch_shape: torch.Size,
@@ -266,7 +254,6 @@ def map_TanimotoKernel(
     )
 
 
-@register(data_models.HammingDistanceKernel)
 def map_HammingDistanceKernel(
     data_model: data_models.HammingDistanceKernel,
     batch_shape: torch.Size,
@@ -291,7 +278,6 @@ def map_HammingDistanceKernel(
     )
 
 
-@register(data_models.IndexKernel)
 def map_IndexKernel(
     data_model: data_models.IndexKernel,
     batch_shape: torch.Size,
@@ -313,7 +299,6 @@ def map_IndexKernel(
     )
 
 
-@register(data_models.PositiveIndexKernel)
 def map_PositiveIndexKernel(
     data_model: data_models.PositiveIndexKernel,
     batch_shape: torch.Size,
@@ -347,7 +332,6 @@ def map_PositiveIndexKernel(
     )
 
 
-@register(data_models.WassersteinKernel)
 def map_WassersteinKernel(
     data_model: data_models.WassersteinKernel,
     batch_shape: torch.Size,
@@ -365,7 +349,6 @@ def map_WassersteinKernel(
     )
 
 
-@register(data_models.PolynomialFeatureInteractionKernel)
 def map_PolynomialFeatureInteractionKernel(
     data_model: data_models.PolynomialFeatureInteractionKernel,
     batch_shape: torch.Size,
@@ -394,7 +377,6 @@ def map_PolynomialFeatureInteractionKernel(
     )
 
 
-@register(data_models.WedgeKernel)
 def map_WedgeKernel(
     data_model: data_models.WedgeKernel,
     batch_shape: torch.Size,
@@ -442,7 +424,6 @@ def map_WedgeKernel(
     )
 
 
-@register(data_models.SphericalLinearKernel)
 def map_SphericalLinearKernel(
     data_model: data_models.SphericalLinearKernel,
     batch_shape: torch.Size,
@@ -466,6 +447,26 @@ def map_SphericalLinearKernel(
         ),
         bounds=data_model.bounds,
     )
+
+
+KERNEL_MAP = {
+    data_models.RBFKernel: map_RBFKernel,
+    data_models.MaternKernel: map_MaternKernel,
+    data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
+    data_models.LinearKernel: map_LinearKernel,
+    data_models.PolynomialKernel: map_PolynomialKernel,
+    data_models.AdditiveKernel: map_AdditiveKernel,
+    data_models.MultiplicativeKernel: map_MultiplicativeKernel,
+    data_models.ScaleKernel: map_ScaleKernel,
+    data_models.TanimotoKernel: map_TanimotoKernel,
+    data_models.HammingDistanceKernel: map_HammingDistanceKernel,
+    data_models.IndexKernel: map_IndexKernel,
+    data_models.PositiveIndexKernel: map_PositiveIndexKernel,
+    data_models.WassersteinKernel: map_WassersteinKernel,
+    data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
+    data_models.WedgeKernel: map_WedgeKernel,
+    data_models.SphericalLinearKernel: map_SphericalLinearKernel,
+}
 
 
 def map(

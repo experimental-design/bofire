@@ -885,9 +885,9 @@ class TestRebuildCoverage:
     def test_prior_rebuild_covers_all_anyprior_fields(self):
         """Every model field typed as AnyPrior should appear in
         priors._rebuild_dependent_models."""
-        import bofire.data_models.priors.api
+        from bofire.data_models.priors._register import _rebuild_dependent_models
 
-        src = inspect.getsource(bofire.data_models.priors.api._rebuild_dependent_models)
+        src = inspect.getsource(_rebuild_dependent_models)
 
         patched: set[tuple[str, str]] = set()
 
@@ -917,12 +917,10 @@ class TestRebuildCoverage:
         Kernel subclasses should appear in kernels._rebuild_dependent_models
         or be handled via append_to_union_field."""
 
-        import bofire.data_models.kernels.api
+        from bofire.data_models.kernels._register import _rebuild_dependent_models
         from bofire.data_models.kernels.kernel import Kernel
 
-        src = inspect.getsource(
-            bofire.data_models.kernels.api._rebuild_dependent_models
-        )
+        src = inspect.getsource(_rebuild_dependent_models)
 
         import re
 

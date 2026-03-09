@@ -12,8 +12,6 @@ Constraint = Union[
     Positive, GreaterThan, LessThan, LogTransformedInterval, NonTransformedInterval
 ]
 
-PRIOR_MAP = {}
-
 
 def register(
     data_model_cls: Type,
@@ -60,7 +58,6 @@ def register(
     return _register
 
 
-@register(data_models.NormalPrior)
 def map_NormalPrior(
     data_model: data_models.NormalPrior,
     **kwargs,
@@ -68,7 +65,6 @@ def map_NormalPrior(
     return gpytorch.priors.NormalPrior(loc=data_model.loc, scale=data_model.scale)
 
 
-@register(data_models.GammaPrior)
 def map_GammaPrior(
     data_model: data_models.GammaPrior,
     **kwargs,
@@ -79,7 +75,6 @@ def map_GammaPrior(
     )
 
 
-@register(data_models.LKJPrior)
 def map_LKJPrior(
     data_model: data_models.LKJPrior,
     **kwargs,
@@ -91,7 +86,6 @@ def map_LKJPrior(
     )
 
 
-@register(data_models.LogNormalPrior)
 def map_LogNormalPrior(
     data_model: data_models.LogNormalPrior,
     **kwargs,
@@ -99,7 +93,6 @@ def map_LogNormalPrior(
     return gpytorch.priors.LogNormalPrior(loc=data_model.loc, scale=data_model.scale)
 
 
-@register(data_models.DimensionalityScaledLogNormalPrior)
 def map_DimensionalityScaledLogNormalPrior(
     data_model: data_models.DimensionalityScaledLogNormalPrior,
     d: int,
@@ -110,7 +103,6 @@ def map_DimensionalityScaledLogNormalPrior(
     )
 
 
-@register(data_models.NonTransformedInterval)
 def map_NonTransformedInterval(
     data_model: data_models.NonTransformedInterval,
 ) -> NonTransformedInterval:
@@ -121,7 +113,6 @@ def map_NonTransformedInterval(
     )
 
 
-@register(data_models.LogTransformedInterval)
 def map_LogTransformedInterval(
     data_model: data_models.LogTransformedInterval,
 ) -> LogTransformedInterval:
@@ -132,25 +123,36 @@ def map_LogTransformedInterval(
     )
 
 
-@register(data_models.Positive)
 def map_Positive(
     data_model: data_models.Positive,
 ) -> Positive:
     return Positive()
 
 
-@register(data_models.GreaterThan)
 def map_GreaterThan(
     data_model: data_models.GreaterThan,
 ) -> GreaterThan:
     return GreaterThan(lower_bound=data_model.lower_bound, transform=None)
 
 
-@register(data_models.LessThan)
 def map_LessThan(
     data_model: data_models.LessThan,
 ) -> LessThan:
     return LessThan(upper_bound=data_model.upper_bound, transform=None)
+
+
+PRIOR_MAP = {
+    data_models.NormalPrior: map_NormalPrior,
+    data_models.GammaPrior: map_GammaPrior,
+    data_models.LKJPrior: map_LKJPrior,
+    data_models.LogNormalPrior: map_LogNormalPrior,
+    data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
+    data_models.NonTransformedInterval: map_NonTransformedInterval,
+    data_models.LogTransformedInterval: map_LogTransformedInterval,
+    data_models.Positive: map_Positive,
+    data_models.GreaterThan: map_GreaterThan,
+    data_models.LessThan: map_LessThan,
+}
 
 
 def map(

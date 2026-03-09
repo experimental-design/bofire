@@ -22,9 +22,6 @@ from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import interp1d
 
 
-AGGREGATE_MAP = {}
-
-
 def register(
     data_model_cls: Type[EngineeredFeature],
     map_fn: Optional[Callable] = None,
@@ -254,7 +251,6 @@ def map_interpolate_feature(
     )
 
 
-@register(CloneFeature)
 def map_clone_feature(
     inputs: Inputs,
     transform_specs: InputTransformSpecs,
@@ -273,7 +269,6 @@ def map_clone_feature(
     )
 
 
-# Mapper bindings via partial + register
 map_sum_feature = partial(_map_reduction_feature, reducer=torch.sum)
 map_product_feature = partial(_map_reduction_feature, reducer=torch.prod)
 map_mean_feature = partial(_map_reduction_feature, reducer=torch.mean)
@@ -286,14 +281,17 @@ map_molecular_weighted_mean_feature = partial(
     _map_molecular_weighted_feature, normalize=True
 )
 
-register(SumFeature, map_sum_feature)
-register(ProductFeature, map_product_feature)
-register(MeanFeature, map_mean_feature)
-register(WeightedSumFeature, map_weighted_sum_feature)
-register(WeightedMeanFeature, map_weighted_mean_feature)
-register(MolecularWeightedSumFeature, map_molecular_weighted_sum_feature)
-register(MolecularWeightedMeanFeature, map_molecular_weighted_mean_feature)
-register(InterpolateFeature, map_interpolate_feature)
+AGGREGATE_MAP = {
+    SumFeature: map_sum_feature,
+    ProductFeature: map_product_feature,
+    MeanFeature: map_mean_feature,
+    WeightedSumFeature: map_weighted_sum_feature,
+    WeightedMeanFeature: map_weighted_mean_feature,
+    MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
+    MolecularWeightedMeanFeature: map_molecular_weighted_mean_feature,
+    InterpolateFeature: map_interpolate_feature,
+    CloneFeature: map_clone_feature,
+}
 
 
 def map(
