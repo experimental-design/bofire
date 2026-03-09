@@ -77,7 +77,6 @@ DATA_MODEL_MAP: Dict[
     Callable[[data_models.MixedSingleTaskGPSurrogate], data_models.AnySurrogate],
 ] = {
     data_models.MixedSingleTaskGPSurrogate: map_MixedSingleTaskGPSurrogate,
-    # data_models.TanimotoGPSurrogate: map_TanimotoGPSurrogate,
 }
 
 
