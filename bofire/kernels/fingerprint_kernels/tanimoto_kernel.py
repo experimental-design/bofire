@@ -65,18 +65,16 @@ class TanimotoKernel(BitKernel):
 
     def __init__(
         self,
-        pre_computed_tanimoto: bool = True,
         tanimoto_similarity_matrix: Optional[torch.Tensor] = None,
         **kwargs,
     ):
         super(TanimotoKernel, self).__init__(**kwargs)
         self.metric = "tanimoto"
 
-        self.pre_computed_tanimoto = pre_computed_tanimoto
         self.tanimoto_similarity_matrix = tanimoto_similarity_matrix
 
     def forward(self, x1, x2, diag=False, **params):
-        if self.pre_computed_tanimoto and self.tanimoto_similarity_matrix is not None:
+        if self.tanimoto_similarity_matrix is not None:
             # Infer shapes
             d = x1.shape[-1]
             assert (

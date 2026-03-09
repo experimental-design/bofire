@@ -54,7 +54,6 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
                     batch_shape=torch.Size(),
                     active_dims=list(range(n_dim)),
                     features_to_idx_mapper=self.get_feature_indices,
-                    pre_computed_tanimoto=False,
                 )  # temporary kernel to compute the tanimoto similarity matrix
                 fingerprints = input_transform.encoders[0].encoding  # type: ignore[index]
                 cov_module = covar_module_pre_calc
@@ -79,9 +78,6 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
                 if not (self.tanimoto_calculation_mode == "pre_computed")
                 else [0],  # active dims are not needed if using pre-computed tanimoto
                 features_to_idx_mapper=self.get_feature_indices,
-                pre_computed_tanimoto=(
-                    self.tanimoto_calculation_mode == "pre_computed"
-                ),
                 tanimoto_similarity_matrix=self.tanimoto_similarity_matrix,
             ),
             outcome_transform=outcome_transform,
