@@ -707,6 +707,7 @@ specs.add_valid(
         },
         "dump": None,
         "hyperconfig": None,
+        "tanimoto_calculation_mode": "pre_computed",
     },
 )
 
