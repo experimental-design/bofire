@@ -6,6 +6,7 @@ from bofire.data_models.kernels.categorical import (
     IndexKernel,
     PositiveIndexKernel,
 )
+from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -34,6 +35,7 @@ class AdditiveKernel(AggregationKernel):
             PositiveIndexKernel,
             TanimotoKernel,
             DownsamplingKernel,
+            WedgeKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
             "ScaleKernel",
@@ -56,6 +58,7 @@ class MultiplicativeKernel(AggregationKernel):
             AdditiveKernel,
             TanimotoKernel,
             DownsamplingKernel,
+            WedgeKernel,
             "MultiplicativeKernel",
             "ScaleKernel",
         ]
@@ -76,6 +79,7 @@ class ScaleKernel(AggregationKernel):
         MultiplicativeKernel,
         TanimotoKernel,
         DownsamplingKernel,
+        WedgeKernel,
         "ScaleKernel",
         WassersteinKernel,
     ]
