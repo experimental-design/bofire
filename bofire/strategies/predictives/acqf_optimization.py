@@ -455,8 +455,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
         }
+        # TODO: does this break anything?
+        # exclude None since some acqfs (eg. HVKG) do not support generator args
         candidates, acqf_vals = optimizer_mapping[optimizer](
-            **optimizer_input.model_dump()
+            **optimizer_input.model_dump(exclude_none=True)
         )
         return candidates, acqf_vals
 

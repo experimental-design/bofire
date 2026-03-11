@@ -25,7 +25,11 @@ from bofire.data_models.features.molecular import (
     ContinuousMolecularInput,
 )
 from bofire.data_models.features.numerical import NumericalInput
-from bofire.data_models.features.task import TaskInput
+from bofire.data_models.features.task import (
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    TaskInput,
+)
 
 
 AbstractFeature = Union[
@@ -33,6 +37,7 @@ AbstractFeature = Union[
     Input,
     Output,
     NumericalInput,
+    TaskInput,
 ]
 
 # TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
@@ -45,7 +50,8 @@ AnyFeature = Union[
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    CategoricalTaskInput,
+    ContinuousTaskInput,
     SumFeature,
     MeanFeature,
     WeightedMeanFeature,
@@ -65,7 +71,8 @@ AnyInput = Union[
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    ContinuousTaskInput,
+    CategoricalTaskInput,
     ContinuousMolecularInput,
 ]
 

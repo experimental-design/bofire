@@ -15,7 +15,7 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Ackley, Benchmark, Branin
 from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 ```
 
@@ -73,7 +73,7 @@ class BraninMultiTask(Benchmark):
         super().__init__(**kwargs)
         self._branin = Branin()
         self._ackley = Ackley()
-        task_input = TaskInput(
+        task_input = CategoricalTaskInput(
             key="task",
             categories=["task_hf", "task_lf"],
             allowed=[True, low_fidelity_allowed],

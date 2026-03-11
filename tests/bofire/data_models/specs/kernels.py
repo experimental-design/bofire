@@ -334,3 +334,31 @@ specs.add_valid(
         "conditions": [],
     },
 )
+specs.add_valid(
+    kernels.DownsamplingKernel,
+    lambda: {
+        "features": ["task_1"],
+        "offset_prior": priors.valid().obj().model_dump(),
+        "offset_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "power_prior": priors.valid().obj().model_dump(),
+        "power_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+    },
+)
+
+specs.add_invalid(
+    kernels.DownsamplingKernel,
+    lambda: {"features": None},
+    error=ValueError,
+    message="DownsamplingKernel requires a single task feature to be provided",
+)
+
+specs.add_invalid(
+    kernels.DownsamplingKernel,
+    lambda: {"features": ["task_1", "task_2"]},
+    error=ValueError,
+    message="DownsamplingKernel requires a single task feature to be provided",
+)

@@ -17,7 +17,11 @@ import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
+from bofire.data_models.features.api import (
+    CategoricalTaskInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.predictives.mobo import (
@@ -325,7 +329,9 @@ def test_mobo_with_multitask(acqf, target_task):
 
     input_features = [
         ContinuousInput(key="x", bounds=(0, 1)),
-        TaskInput(key="task", categories=["task_1", "task_2"], allowed=allowed),
+        CategoricalTaskInput(
+            key="task", categories=["task_1", "task_2"], allowed=allowed
+        ),
     ]
 
     objective = MaximizeObjective(w=1)
