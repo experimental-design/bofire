@@ -102,6 +102,7 @@ class MCTS_NIG:
         p_stop_warmup: int = 20,
         p_stop_temperature: float = 0.25,
         adaptive_n0: bool = False,
+        use_cache: bool = True,
     ):
         self.groups = groups
         self.reward_fn = reward_fn
@@ -126,6 +127,7 @@ class MCTS_NIG:
         self.p_stop_warmup = p_stop_warmup
         self.p_stop_temperature = p_stop_temperature
         self.adaptive_n0 = adaptive_n0
+        self.use_cache = use_cache
 
         # Initialize root node
         n_groups = len(groups)
@@ -278,7 +280,13 @@ class MCTS_NIG:
     def _cached_reward(
         self, selected_features: tuple[int, ...], cat_selections: dict[int, float]
     ) -> float:
-        """Get cached reward or compute and cache it."""
+        """Get cached reward or compute and cache it.
+
+        With use_cache=False, always calls reward_fn fresh (for stochastic rewards).
+        """
+        if not self.use_cache:
+            self.cache_misses += 1
+            return self.reward_fn(selected_features, cat_selections)
         key = self._make_cache_key(selected_features, cat_selections)
         if key in self.value_cache:
             self.cache_hits += 1
@@ -703,14 +711,20 @@ class MCTS_NIG:
                 trajectory: list[tuple[int, int, int]] = []
             else:
                 selected_features, cat_selections, trajectory = self._rollout(leaf)
-                for _attempt in range(self.max_rollout_retries):
-                    key = self._make_cache_key(selected_features, cat_selections)
-                    if key not in self.value_cache:
-                        break
-                    selected_features, cat_selections, trajectory = self._rollout(leaf)
+                if self.use_cache:
+                    for _attempt in range(self.max_rollout_retries):
+                        key = self._make_cache_key(selected_features, cat_selections)
+                        if key not in self.value_cache:
+                            break
+                        selected_features, cat_selections, trajectory = self._rollout(
+                            leaf
+                        )
 
-            key = self._make_cache_key(selected_features, cat_selections)
-            is_novel = key not in self.value_cache
+            if self.use_cache:
+                key = self._make_cache_key(selected_features, cat_selections)
+                is_novel = key not in self.value_cache
+            else:
+                is_novel = True
             reward = self._cached_reward(selected_features, cat_selections)
 
             if reward < self.reward_min:

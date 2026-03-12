@@ -376,6 +376,10 @@ class _OptimizeAcqfMctsInput(_OptimizeAcqfInputBase):
     pw_k0: float
     pw_alpha: float
     max_rollout_retries: int
+    use_cache: bool
+    n_sobol_samples: int
+    top_k_refine: int
+    screening_num_iterations: int | None
     q: int
     raw_samples: int
     num_restarts: int
@@ -702,6 +706,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 pw_k0=2.0,
                 pw_alpha=0.6,
                 max_rollout_retries=3,
+                use_cache=True,
+                n_sobol_samples=64,
+                top_k_refine=8,
+                screening_num_iterations=None,
                 q=candidate_count,
                 raw_samples=self.n_raw_samples,
                 num_restarts=self.n_restarts,

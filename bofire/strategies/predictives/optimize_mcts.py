@@ -312,6 +312,12 @@ class MCTS:
         use_cache: If True (default), cache reward evaluations. If False, every
             call to reward_fn is fresh (no caching), and every observation is
             treated as novel. Useful for noisy/sampling-based reward functions.
+        shuffle_features: If True (default), randomly permute the feature ordering
+            within each NChooseK group to eliminate structural tree bias. The
+            canonical strictly-increasing order creates asymmetric subtrees where
+            high-index features get concentrated visits (up to 6x over-selection).
+            Shuffling randomizes which features sit at which tree depth, so over
+            multiple MCTS runs the bias averages out.
         seed: Random seed for reproducibility
     """
 
@@ -331,8 +337,30 @@ class MCTS:
         pw_alpha: float = 0.6,
         max_rollout_retries: int = 3,
         use_cache: bool = True,
+        shuffle_features: bool = True,
         seed: Optional[int] = None,
     ):
+        # Initialize RNG first (needed for shuffle)
+        self.rng = random.Random(seed)
+
+        # Shuffle NChooseK feature orderings to remove structural tree bias
+        if shuffle_features:
+            shuffled_groups = []
+            for g in groups.groups:
+                if isinstance(g, NChooseK):
+                    feats = list(g.features)
+                    self.rng.shuffle(feats)
+                    shuffled_groups.append(
+                        NChooseK(
+                            features=feats,
+                            min_count=g.min_count,
+                            max_count=g.max_count,
+                        )
+                    )
+                else:
+                    shuffled_groups.append(g)
+            groups = Groups(groups=shuffled_groups)
+
         self.groups = groups
         self.reward_fn = reward_fn
         self.nig_alpha0 = nig_alpha0
@@ -347,7 +375,6 @@ class MCTS:
         self.pw_alpha = pw_alpha
         self.max_rollout_retries = max_rollout_retries
         self.use_cache = use_cache
-        self.rng = random.Random(seed)
 
         # Initialize root node
         n_groups = len(groups)
@@ -1102,6 +1129,7 @@ def optimize_acqf_mcts(
     pw_alpha: float = 0.6,
     max_rollout_retries: int = 3,
     use_cache: bool = True,
+    shuffle_features: bool = True,
     # Two-phase Sobol screening parameters
     n_sobol_samples: int = 0,
     top_k_refine: int = 8,
@@ -1231,6 +1259,7 @@ def optimize_acqf_mcts(
             pw_alpha=pw_alpha,
             max_rollout_retries=max_rollout_retries,
             use_cache=False,  # Sobol is inherently noisy; NIG handles variance
+            shuffle_features=shuffle_features,
             seed=seed,
         )
 
@@ -1319,6 +1348,7 @@ def optimize_acqf_mcts(
             pw_alpha=pw_alpha,
             max_rollout_retries=max_rollout_retries,
             use_cache=use_cache,
+            shuffle_features=shuffle_features,
             seed=seed,
         )
 

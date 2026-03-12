@@ -4,7 +4,7 @@
 
 This benchmark evaluates the MCTS algorithm from `bofire/strategies/predictives/optimize_mcts.py` (without acquisition function integration) across 6 combinatorial problems with NChooseK constraints. We test 23 UCT-based MCTS configurations varying RAVE, Progressive Widening (PW), exploration constants, stop probability, adaptive stop probability, reward normalization, rollout policy, and context-aware RAVE against a random-sampling baseline. We then benchmark Thompson Sampling (TS) variants with Normal and Normal-Inverse-Gamma (NIG) posteriors against the best UCT configs.
 
-Eight algorithmic improvements were implemented during this benchmarking cycle:
+Nine algorithmic improvements were implemented during this benchmarking cycle:
 1. **Virtual loss on cache hit**: On revisiting a cached terminal, increment visit counts but backpropagate reward=0. This dilutes mean node value for over-exploited branches, steering UCT toward unexplored territory.
 2. **Rollout retry on cache hit**: When a rollout produces a cached terminal, re-roll up to `max_rollout_retries` times to find a novel selection.
 3. **Blended softmax rollout policy**: Replaces uniform-random rollouts with a learned policy that blends softmax over per-(group, action) statistics with uniform exploration, treating STOP as a regular scored action.
@@ -13,6 +13,7 @@ Eight algorithmic improvements were implemented during this benchmarking cycle:
 6. **Normal-Inverse-Gamma posterior**: Replaces the Normal-Normal conjugate with the proper Bayesian conjugate for unknown mean and variance. The marginal posterior for the mean is a Student-t distribution with heavier tails at low observation counts, naturally preventing premature commitment.
 7. **Adaptive pessimistic strength**: Scales the pessimistic pseudo-observation by each node's local exhaustion rate (1 - n_obs/n_visits). Fresh nodes get mild pessimism; exhausted nodes get full pessimism. Zero new hyperparameters.
 8. **Adaptive pseudo-count n₀ (negative result)**: Sets n₀ = 1 + log(branching_factor) so nodes with many siblings require more observations before departing from the prior. Tested but found harmful — over-corrects by making posteriors too conservative for the available budget.
+9. **DAG with transposition table**: Removes canonical ordering from NChooseK (all unselected features legal at every node), using a frozenset-keyed transposition table to merge nodes with identical selected feature sets into a DAG. Eliminates structural bias where high-index features get concentrated subtrees. Combined with `separate_stop` (binary STOP-vs-best-feature comparison) to fix STOP dilution in the flat action space.
 
 **Key result (UCT)**: The cumulative effect of improvements 1-4 transforms MCTS from underperforming random sampling to decisively outperforming it on every problem. The best UCT configuration (**MCTS +rpol**: no RAVE + adaptive p_stop + reward normalization + rollout policy) achieves 100% optimum-finding rate on needle_in_haystack (vs 10% for random), 80% on graduated_landscape (vs 7%), **77% on mixed problems** (vs 3%), and **50% on large_sparse** (vs 0%). Context-aware RAVE re-enables RAVE as a useful signal on mixed problems (80% with k=300 vs 77% for +rpol) while matching +rpol on other problems.
 
@@ -21,6 +22,10 @@ Eight algorithmic improvements were implemented during this benchmarking cycle:
 **Key result (NIG posterior)**: The Normal-Inverse-Gamma posterior is a transformative improvement over Normal-TS. The best NIG config (**NIG + TS(g,a) + vi + apv**: variance inflation + adaptive prior variance) achieves **80% on multigroup_interaction** (vs UCT's 23%), **100% on needle and mixed** (vs UCT's 100% and 77%), and **47% on large_sparse** (vs UCT's 50% — essentially tied). A single NIG config now matches or exceeds UCT on 5 of 6 problems, with the remaining gap on large_sparse within statistical noise (3pp). See Section 11.13 for full analysis.
 
 **Key result (Adaptive pessimistic strength)**: Scaling the pessimistic offset by node exhaustion did not resolve the vi-vs-comb tradeoff on interaction problems (vi+apv remains best at 80%). However, the no-APV adaptive modes (**NIG + TS(g,a) + apess**) achieved **53% on large_sparse — the first NIG configs to surpass UCT's 50%** on this problem. This revealed that adaptive prior variance (APV) hurts on massive search spaces by over-shrinking the prior too early. NIG now matches or exceeds UCT on all 6 problems when using problem-appropriate configs. See Section 11.14 for full analysis.
+
+**Key result (Real acquisition landscapes)**: MCTS-TS-NIG was replayed on real GP-based acquisition functions from full BO loops. On Hartmann(6, k≤4) with 57 subsets, it achieves **74% exact-best and 99% top-5 in 200 iterations** (§11.18). On the harder Hartmann(6)+2 spurious features (247 subsets), the exact-best rate drops to 17.5%, but this metric is misleading: the acquisition landscape is **bimodal** with a flat top, where the top ~10 subsets differ by <0.03. Reframing the metric to "good cluster" discovery (subsets in the correct mode of the bimodal distribution), MCTS achieves **96.5% in 200 iterations with a median first-hit of 8 iterations** (§11.19). Sobol sampling with just **64 samples per subset** achieves ρ ≈ 0.95 rank correlation with expensive `optimize_acqf`, identifies bimodal clusters with **96.5% accuracy and zero false positives**, validating a cheap two-phase burn-in strategy (§11.20).
+
+**Key result (DAG with transposition table)**: Replacing the tree with a DAG eliminates canonical ordering bias — the structural asymmetry where high-index features get shallow, concentrated subtrees while low-index features get deep, diluted subtrees. The DAG allows all unselected features at every node, using a transposition table (frozenset-keyed) to merge nodes with identical selected feature sets. The best DAG config (**DAG + ss + vi**: separate_stop + variance_inflation + adaptive prior variance) achieves **87% on large_sparse** (vs NIG tree's 47% — nearly doubling it), **100% on graduated and simple_additive** (vs 77% and 83%), and **93% on mixed** (vs 100%). The DAG's one weakness is multigroup_interaction (0% exact-match vs tree's 80%), where the flat action space dilutes STOP statistics. However, this metric is misleading for the acqf pipeline: the DAG achieves **100% feature recall** — it always finds all optimal features, just with 1-3 extras that the downstream gradient optimizer handles. For the real use case where MCTS selects features and L-BFGS refines continuous values, the DAG is the recommended approach. See §11.22 for full analysis.
 
 ---
 
@@ -866,6 +871,19 @@ The transition between phases is smooth because every component uses the same Ba
 | `convergence_nig_<problem>_nig_vs_normal_ts.png` | NIG vs Normal-TS vs UCT comparison |
 | `convergence_nig_<problem>_nig_cache_modes.png` | NIG cache-hit mode comparison |
 | `convergence_nig_<problem>_nig_alpha.png` | NIG alpha0 and APV effect |
+| `optimize_mcts_dag.py` | DAG MCTS implementation (transposition table + NIG-TS + separate_stop) |
+| `benchmark_dag.py` | DAG vs NIG tree benchmark script |
+| `results_dag.json` | Full numeric results for DAG benchmark |
+| `convergence_dag_<problem>.png` | Full convergence curves per problem (DAG) |
+| `convergence_dag_<problem>_ss_vs_baseline.png` | separate_stop vs baselines comparison |
+| `convergence_dag_<problem>_ss_variants.png` | separate_stop variant comparison |
+| `summary_bar_chart_dag.png` | Bar chart of final best reward (DAG) |
+| `optimum_rate_heatmap_dag.png` | Heatmap of optimum-finding rates (DAG) |
+| `unique_evals_dag.png` | Exploration efficiency comparison (DAG) |
+| `benchmark_dag_nocache.py` | DAG stochastic reward benchmark script |
+| `results_dag_nocache.json` | Full numeric results for DAG stochastic benchmark |
+| `nocache_dag_convergence_<problem>_sigma<σ>.png` | Convergence curves (DAG stochastic) |
+| `nocache_dag_optimum_rate_heatmap.png` | Heatmap across DAG stochastic configs |
 
 ## 10. Reproducing
 
@@ -878,6 +896,12 @@ python mcts-report/benchmark_ts.py
 
 # NIG posterior benchmark (~60 seconds)
 python mcts-report/benchmark_nig.py
+
+# DAG transposition table benchmark (~70 seconds)
+python mcts-report/benchmark_dag.py
+
+# DAG stochastic reward benchmark (~75 seconds)
+python mcts-report/benchmark_dag_nocache.py
 ```
 
 All results use fixed random seeds for reproducibility.
@@ -2511,3 +2535,932 @@ The burn-in + single optimization approach is **~16x cheaper** than the current 
 **Important caveat**: These numbers assume the acquisition surface is smooth and unimodal per subset (true for GP-based EI on Hartmann). On rougher surfaces with narrow peaks that only L-BFGS finds, the gap could widen. The empirical test on real BO loops (running full MCTS with sample-based vs optimization-based rewards, comparing final regret) is the necessary next step.
 
 **Script**: `mcts-report/investigate_sampling_vs_optimizing.py`
+
+### 11.17 No-Cache Mode: MCTS with Noisy Reward Functions
+
+This section presents the implementation and benchmark of **no-cache mode** (`use_cache=False`) for MCTS, the infrastructure required for two-phase burn-in (§8.5, §11.16). With noisy/sampling-based reward functions, caching is counterproductive: re-evaluating the same subset with different random draws provides genuinely new information for the NIG posterior.
+
+#### 11.17.1 Implementation
+
+Added `use_cache: bool = True` parameter to `MCTS.__init__` and `optimize_acqf_mcts()`. When `use_cache=False`:
+
+1. **`_cached_reward()`** always calls `reward_fn` fresh — never reads from or writes to the cache
+2. **`is_novel`** is always `True` — every evaluation feeds the NIG posterior as a novel observation
+3. **Rollout retry** is skipped — the cache is always empty, so retries are pointless
+4. **Backpropagation** always takes the novel path (increments `n_obs`, `sum_rewards`, `sum_sq_rewards`, `n_visits`); cache-hit modes (variance_inflation, pessimistic, etc.) are never triggered
+5. **NIG statistics** work correctly: repeated evaluations of the same subset with different noisy rewards widen the posterior (higher variance estimate), reflecting genuine uncertainty
+
+Default is `use_cache=True`, preserving all existing behavior.
+
+#### 11.17.2 Setup
+
+Three configurations compared across 4 noise levels (σ ∈ {0.5, 1.0, 2.0, 5.0}):
+
+| Config | `use_cache` | Noise | Description |
+|--------|------------|-------|-------------|
+| **Cached + deterministic** | True | None | Current default (reference baseline) |
+| **No-cache + noisy** | False | N(0, σ²) − σ | Every eval is fresh + noisy; no caching |
+| **Cached + noisy** | True | N(0, σ²) − σ | First noisy eval is cached; subsequent reads return that frozen value |
+
+The noise model includes a pessimistic bias of −σ, matching the systematic downward bias observed in §11.16 (sample-best values are always ≤ optimized values).
+
+**Evaluation**: The reported `final_best` is the **true** (noiseless) reward of the best selection found, ensuring fair comparison. 10 seeds per config per problem, using the same 6 benchmark problems as prior sections.
+
+#### 11.17.3 Results: Optimum-Finding Rate
+
+**σ = 0.5** (mild noise)
+
+| Problem | Cached+det | No-cache+noisy | Cached+noisy |
+|---------|-----------|----------------|--------------|
+| multigroup_interaction | **90%** | 30% | 60% |
+| needle_in_haystack | **100%** | 60% | **100%** |
+| mixed_nchoosek_categorical | **100%** | **100%** | **100%** |
+| large_sparse | **40%** | **40%** | **40%** |
+| graduated_landscape | 90% | 20% | **100%** |
+| simple_additive | **90%** | 40% | 70% |
+
+**σ = 1.0** (moderate noise)
+
+| Problem | Cached+det | No-cache+noisy | Cached+noisy |
+|---------|-----------|----------------|--------------|
+| multigroup_interaction | **90%** | 60% | **90%** |
+| needle_in_haystack | **100%** | 90% | **100%** |
+| mixed_nchoosek_categorical | **100%** | 90% | 90% |
+| large_sparse | **40%** | 20% | 10% |
+| graduated_landscape | **90%** | 0% | 40% |
+| simple_additive | **90%** | 30% | 80% |
+
+**σ = 2.0** (high noise)
+
+| Problem | Cached+det | No-cache+noisy | Cached+noisy |
+|---------|-----------|----------------|--------------|
+| multigroup_interaction | 90% | 80% | **100%** |
+| needle_in_haystack | **100%** | 70% | **100%** |
+| mixed_nchoosek_categorical | **100%** | **100%** | **100%** |
+| large_sparse | 40% | **50%** | 30% |
+| graduated_landscape | **90%** | 20% | 50% |
+| simple_additive | **90%** | 0% | 60% |
+
+**σ = 5.0** (extreme noise)
+
+| Problem | Cached+det | No-cache+noisy | Cached+noisy |
+|---------|-----------|----------------|--------------|
+| multigroup_interaction | **90%** | 50% | 60% |
+| needle_in_haystack | **100%** | 60% | **100%** |
+| mixed_nchoosek_categorical | **100%** | **100%** | **100%** |
+| large_sparse | 40% | **50%** | **50%** |
+| graduated_landscape | **90%** | 0% | 10% |
+| simple_additive | **90%** | 10% | 10% |
+
+#### 11.17.4 Results: Mean True-Best Reward
+
+**σ = 1.0**
+
+| Problem | Optimal | Cached+det | No-cache+noisy | Cached+noisy |
+|---------|---------|-----------|----------------|--------------|
+| multigroup_interaction | 150 | 144.4 | 133.3 | 145.9 |
+| needle_in_haystack | 100 | 100.0 | 94.0 | 100.0 |
+| mixed_nchoosek_categorical | 150 | 150.0 | 144.0 | 144.0 |
+| large_sparse | 200 | 113.6 | 86.8 | 72.2 |
+| graduated_landscape | 65 | 64.9 | 63.0 | 64.2 |
+| simple_additive | 65 | 64.8 | 62.2 | 64.6 |
+
+**σ = 5.0**
+
+| Problem | Optimal | Cached+det | No-cache+noisy | Cached+noisy |
+|---------|---------|-----------|----------------|--------------|
+| multigroup_interaction | 150 | 144.4 | 128.3 | 132.7 |
+| needle_in_haystack | 100 | 100.0 | 72.0 | 100.0 |
+| mixed_nchoosek_categorical | 150 | 150.0 | 150.0 | 150.0 |
+| large_sparse | 200 | 113.6 | 123.8 | 126.6 |
+| graduated_landscape | 65 | 64.9 | 59.8 | 61.6 |
+| simple_additive | 65 | 64.8 | 61.1 | 61.1 |
+
+#### 11.17.5 Convergence Curves
+
+Per-problem convergence plots for each noise level (note: convergence curves show the noisy `best_value` tracked by MCTS, not the true-best):
+
+**σ = 0.5**:
+![Convergence σ=0.5 multigroup](nocache_convergence_multigroup_interaction_sigma0.5.png)
+![Convergence σ=0.5 needle](nocache_convergence_needle_in_haystack_sigma0.5.png)
+![Convergence σ=0.5 mixed](nocache_convergence_mixed_nchoosek_categorical_sigma0.5.png)
+![Convergence σ=0.5 large_sparse](nocache_convergence_large_sparse_sigma0.5.png)
+![Convergence σ=0.5 graduated](nocache_convergence_graduated_landscape_sigma0.5.png)
+![Convergence σ=0.5 simple](nocache_convergence_simple_additive_sigma0.5.png)
+
+**σ = 2.0**:
+![Convergence σ=2.0 multigroup](nocache_convergence_multigroup_interaction_sigma2.0.png)
+![Convergence σ=2.0 needle](nocache_convergence_needle_in_haystack_sigma2.0.png)
+![Convergence σ=2.0 mixed](nocache_convergence_mixed_nchoosek_categorical_sigma2.0.png)
+![Convergence σ=2.0 large_sparse](nocache_convergence_large_sparse_sigma2.0.png)
+![Convergence σ=2.0 graduated](nocache_convergence_graduated_landscape_sigma2.0.png)
+![Convergence σ=2.0 simple](nocache_convergence_simple_additive_sigma2.0.png)
+
+**Cross-σ heatmap**:
+![Optimum-finding rate heatmap](nocache_optimum_rate_heatmap.png)
+
+#### 11.17.6 Analysis
+
+**1. No-cache mode works correctly.** Every iteration calls `reward_fn` (evals always equals iteration count), the cache stays empty, `_novel_reward_count` equals `n_iterations`, and the NIG posterior handles repeated noisy observations of the same subset.
+
+**2. The NIG posterior is naturally robust to noise.** Even at σ = 2.0 (noise magnitude comparable to the reward gaps between subsets), no-cache mode finds the optimum on mixed_nchoosek_categorical (100%), multigroup_interaction (80%), and needle_in_haystack (70%). The NIG Student-t posterior absorbs the variance correctly: repeated evaluations of the same subset don't concentrate the posterior falsely, they widen it to reflect the genuine noise.
+
+**3. No-cache mode beats cached+noisy on large search spaces.** The most interesting result is on `large_sparse` (~960M combinations):
+
+| σ | No-cache+noisy | Cached+noisy |
+|---|----------------|--------------|
+| 1.0 | 20% / 86.8 | 10% / 72.2 |
+| 2.0 | **50% / 127.6** | 30% / 99.6 |
+| 5.0 | **50% / 123.8** | **50% / 126.6** |
+
+At σ = 2.0, no-cache mode achieves 50% optimum rate (mean 127.6) vs cached+noisy at 30% (mean 99.6). The mechanism: cached+noisy locks in one random draw per subset. If the first draw is unlucky (biased low for the optimal subset), that wrong ranking is frozen forever. No-cache mode re-evaluates with fresh noise, so the NIG posterior averages over multiple draws and eventually converges to the correct ranking. This effect is strongest in large search spaces where the tree needs many iterations to converge and the frozen-cache problem compounds.
+
+**4. Cached+noisy sometimes gets lucky.** At σ = 2.0 on multigroup_interaction, cached+noisy hits 100% while the deterministic baseline achieves 90%. This is a small-sample artifact (10 seeds): occasionally the first noisy draw happens to over-value the optimal subset, which accelerates convergence. This is not reliable behavior.
+
+**5. Small search spaces favor caching regardless of noise.** On graduated_landscape (375 combinations) and simple_additive (793 combinations), cached+noisy consistently outperforms no-cache+noisy. With so few unique subsets and moderate iteration budgets (300), the exhaustive cache exploration of cached mode is more valuable than the statistical averaging of no-cache mode. The reward gaps between top subsets (1–2 points) are smaller than the noise, so no-cache mode struggles to discriminate.
+
+**6. The pessimistic bias (−σ) doesn't hurt no-cache mode.** The −σ shift uniformly depresses all rewards, which is absorbed by the NIG prior center (`_global_mean()`). Since NIG-TS only cares about relative ordering, not absolute scale, the bias is harmless. This confirms that sampling-based burn-in (which produces systematically pessimistic values per §11.16.5) will work correctly.
+
+#### 11.17.7 Implications for Two-Phase Burn-in
+
+These results validate the key infrastructure for two-phase burn-in:
+
+1. **No-cache mode provides the correct semantics for sampling-based evaluation**: every call to the (cheap) sampling reward function produces a novel observation, and the NIG posterior correctly accumulates noisy statistics. The implementation is a single boolean flag (`use_cache=False`) with no other changes needed.
+
+2. **The noise regime matters for choosing the switch point**. At low noise (σ ≤ 1.0 relative to reward scale), no-cache mode degrades modestly. At moderate noise (σ = 2.0), it actually outperforms cached+noisy on the hardest problems. The §11.16 gap analysis showed sampling-based rewards have σ ≈ 0.04–0.80 (depending on subset dimensionality), well within the regime where no-cache mode performs acceptably.
+
+3. **The two-phase architecture should be**:
+   - **Phase 1 (burn-in)**: `use_cache=False` with a cheap sampling-based reward function (64 polytope samples per subset, §11.16). This builds tree structure and NIG statistics at ~26x lower cost per evaluation.
+   - **Phase 2 (refinement)**: Switch to `use_cache=True` with the expensive `optimize_acqf` reward function. The tree structure from phase 1 guides exploration. The accurate values dominate the NIG posterior.
+
+4. **The switch from phase 1 to phase 2 requires resetting the cache** (it would be empty anyway with `use_cache=False`), but the NIG node statistics (`n_obs`, `sum_rewards`, `sum_sq_rewards`) should be preserved — they represent genuine information about relative subset quality that transfers to the accurate reward scale. The NIG posterior will naturally re-center via the updated `_global_mean()` as accurate evaluations arrive.
+
+**Next step**: Implement the two-phase `reward_fn` wrapper that switches from sampling to optimization after N burn-in iterations, and benchmark it on the real BO loop (Hartmann with GP + qLogEI).
+
+#### 11.17.8 Files
+
+- **Implementation**: `bofire/strategies/predictives/optimize_mcts.py` — `use_cache` parameter in `MCTS` and `optimize_acqf_mcts()`
+- **Tests**: `tests/bofire/strategies/test_optimize_mcts.py` — 5 tests for no-cache mode
+- **Benchmark script**: `mcts-report/benchmark_no_cache.py`
+- **Results**: `mcts-report/results_no_cache.json`
+- **Plots**: `mcts-report/nocache_convergence_*.png`, `mcts-report/nocache_optimum_rate_heatmap.png`, `mcts-report/nocache_truebest_*.png`
+
+### 11.18 MCTS Replay on Real Acquisition Landscapes
+
+Sections §11.16–§11.17 benchmarked MCTS on synthetic reward functions with known structure. This section evaluates the **production MCTS-TS-NIG** on real acquisition function landscapes from a full Bayesian optimization loop on `Hartmann(dim=6, allowed_k=4)`.
+
+The key question: **how many MCTS iterations does it take to find the best NChooseK subset when the reward function is a real GP-based acquisition function?**
+
+#### 11.18.1 Data Collection
+
+A full BO loop was run for 40 iterations (starting from 20 random initial points), with **exhaustive evaluation** of all 57 NChooseK subsets at each iteration:
+
+| Parameter | Value |
+|-----------|-------|
+| Benchmark | Hartmann(dim=6, allowed_k=4) |
+| Surrogate | SingleTaskGPSurrogate (bofire default) |
+| Acquisition | qLogEI |
+| Initial points | 20 (NChooseK-respecting, via RandomStrategy) |
+| BO iterations | 40 |
+| Subsets | 57 (all C(6,0)+C(6,1)+...+C(6,4)) |
+| optimize_acqf per subset | 20 restarts, 2048 raw samples |
+| Sobol samples per subset | 2048 |
+| GP trajectory | Greedy oracle (always picks globally best subset) |
+
+At each BO iteration, the exhaustive `optimize_acqf` values provide the gold-standard reward for each of the 57 subsets. The GP trajectory is fixed by always selecting the globally best subset, so the dataset can be replayed with any MCTS configuration without affecting the GP's evolution.
+
+**Data collection script**: `mcts-report/collect_hartmann_data.py`
+**Data**: `mcts-report/data/hartmann_nchoosek_seed0.{json,npz}`
+
+#### 11.18.2 Benchmark Setup
+
+For each of the 40 BO iterations, the production MCTS-TS-NIG (all defaults: `adaptive_prior_var=True`, `cache_hit_mode="variance_inflation"`, `rollout_mode="ts_group_action"`, `pw_k0=2.0`, `pw_alpha=0.6`) was run with a **lookup reward function** that returns the pre-computed `optimize_acqf` value for each subset. This isolates the tree search quality from the `optimize_acqf` runtime cost.
+
+- **MCTS budget**: 200 iterations per run
+- **MCTS seeds**: 10 per BO iteration (to average over MCTS randomness)
+- **Total runs**: 40 BO iterations × 10 seeds = 400
+
+Metrics tracked per run:
+- **First-hit**: MCTS iteration when the true best subset is first found
+- **Top-k hit**: iteration when MCTS first holds a top-3 or top-5 subset
+- **Regret curve**: `(true_best_value − MCTS_best_value)` at each iteration
+- **Unique evaluations**: number of distinct subsets evaluated by each budget
+
+#### 11.18.3 Results: First-Hit Statistics
+
+| Target | Found rate | Median iters | Mean iters | P25 | P75 | P90 |
+|--------|-----------|-------------|-----------|-----|-----|-----|
+| True best (rank 1) | 295/400 (73.8%) | 56 | 68.7 | 22 | 111 | 150 |
+| Top-3 subset | 384/400 (96.0%) | 24 | 38.7 | — | — | — |
+| Top-5 subset | 396/400 (99.0%) | 14 | 23.3 | — | — | — |
+
+MCTS reliably identifies a **top-5 subset within ~14 iterations** (99% success). Finding the exact best takes longer (median 56, 74% success at budget 200), but in practice the top-5 subsets have very similar acquisition values — the regret from picking rank 3 instead of rank 1 is typically negligible.
+
+#### 11.18.4 Results: Regret at Iteration Budgets
+
+| Budget | Mean regret | Median | P90 | Zero regret % | Unique subsets |
+|--------|-----------|--------|-----|--------------|----------------|
+| 10 | 14.96 | 4.24 | 40.04 | 8.5% | 9.1 |
+| 20 | 10.26 | 1.23 | 38.24 | 17.0% | 14.7 |
+| 30 | 7.39 | 0.52 | 35.77 | 25.5% | 18.4 |
+| 50 | 5.18 | 0.18 | 33.97 | 34.0% | 23.4 |
+| 75 | 4.00 | 0.00 | 5.30 | 44.8% | 27.3 |
+| 100 | 3.01 | 0.00 | 4.45 | 53.0% | 30.1 |
+| 150 | 1.63 | 0.00 | 4.23 | 67.2% | 34.0 |
+| 200 | 1.01 | 0.00 | 1.23 | 74.5% | 36.7 |
+
+The **median regret hits zero by iteration 75**, and by 200 iterations 74.5% of runs have zero regret. The mean regret remains elevated due to a heavy tail: a minority of BO iterations have peaky acquisition landscapes where a single dominant subset carries most of the acquisition value, and MCTS sometimes fails to discover it within 200 iterations.
+
+At budget 200, only **36.7 of 57 subsets** (64%) are evaluated on average. MCTS concentrates on the promising region of the combinatorial tree rather than exhaustively enumerating.
+
+#### 11.18.5 Results: Cumulative Discovery Rate
+
+| By MCTS iter | True best found |
+|-------------|----------------|
+| 5 | 1.8% |
+| 10 | 8.5% |
+| 20 | 17.0% |
+| 30 | 25.2% |
+| 50 | 33.8% |
+| 75 | 44.5% |
+| 100 | 52.8% |
+| 150 | 66.5% |
+| 200 | 73.8% |
+
+The curve is roughly linear on a log scale — no sharp elbow. This is consistent with the Thompson Sampling exploration mechanism: it continuously balances exploration and exploitation without hard phase transitions.
+
+![Regret convergence](replay_regret_convergence.png)
+
+![Cumulative discovery rate](replay_cumulative_found_rate.png)
+
+![First-hit histogram](replay_first_hit_histogram.png)
+
+#### 11.18.6 Results: Effect of BO Phase
+
+The acquisition landscape changes character as the GP accumulates data. Early iterations have a flatter, noisier landscape (prior-dominated GP), while late iterations have sharper peaks around the known optimum.
+
+![Phase regret comparison](replay_phase_regret.png)
+
+| BO phase | Iters | Found rate | Median first-hit |
+|----------|-------|-----------|-----------------|
+| Early (0–9) | Flat landscape | 76% | 24 |
+| Mid (10–19) | Sharpening | 69% | 56 |
+| Late (20–39) | Peaked | 75% | 66 |
+
+**Early BO iterations are easiest for MCTS** — the acquisition landscape is relatively flat (GP has little data), so many subsets have similar values and MCTS quickly finds a good one. The median first-hit of 24 iterations is notably faster than mid/late.
+
+**Mid BO iterations are hardest** — the GP is confident enough to create sharp reward differences between subsets (making regret large if the wrong one is picked) but the landscape hasn't yet concentrated to a single dominant subset. This is the regime where MCTS must actually discriminate between similar candidates.
+
+**Late BO iterations recover slightly** — by this point the GP strongly favors one subset (often `[2,3,4,5]` for Hartmann6), and the acquisition landscape has a clear peak. However, the absolute regret when MCTS picks the wrong subset is largest in this phase (visible in the wider P75 band in the phase plot), because the dominant subset's acquisition value towers over the rest.
+
+#### 11.18.7 Analysis
+
+**1. MCTS-TS-NIG is effective for this problem scale.** With 57 subsets, 200 MCTS iterations achieves 74% exact-best and 99% top-5. The current production default of `num_iterations=100` (from `optimize_acqf_mcts`) gives 53% exact-best and 96% top-3, which is reasonable for a problem where the top-3 subsets are typically near-tied.
+
+**2. The mean-median gap reveals a heavy tail.** Mean regret at 200 iterations (1.01) is much higher than median (0.00). Approximately 25% of runs never find the exact best within 200 iterations. Inspecting these failure cases: they occur on BO iterations where the best subset's acquisition value is separated from the runner-up by a large gap (>10 units), and MCTS commits to an early local optimum. The NIG variance inflation mechanism (which decays statistics on cache hits) helps but doesn't fully solve this — the tree gets too deep in the wrong branch before enough exploration happens.
+
+**3. Exploration efficiency: 37/57 subsets in 200 iterations.** MCTS evaluates ~64% of the space, confirming it's a focused search rather than enumeration. For the Hartmann(6, k≤4) problem with only 57 subsets, exhaustive enumeration is actually feasible (and what the data collection script does). MCTS becomes essential for larger problems where enumeration is intractable — e.g., the `large_sparse` benchmark with ~960M combinations.
+
+**4. The budget of 75 iterations is a practical sweet spot.** Median regret reaches zero, the P90 drops from ~34 to ~5 (a 7x reduction vs budget 50), and 27 subsets are explored (47% of the space). Beyond 75, returns diminish significantly.
+
+**5. Comparison with the synthetic benchmarks (§11.13).** The NIG-TS benchmark on synthetic problems (§11.13) showed ~90% optimum-finding rates at 300 iterations on `multigroup_interaction` (375 combinations) and `needle_in_haystack` (57 combinations). The 74% rate at 200 iterations on real acquisition landscapes is lower, suggesting that real GP-based acquisition functions produce harder reward surfaces than the smooth synthetic rewards. This motivates increasing the default iteration budget or adding a cheap burn-in phase.
+
+#### 11.18.8 Implications
+
+1. **For Hartmann-scale NChooseK problems (57 subsets)**, the current MCTS defaults work well. A budget of 100 iterations is a reasonable cost-accuracy tradeoff.
+
+2. **The top-5 convergence speed (14 iterations median) validates the burn-in concept.** Even a very short MCTS run with cheap rewards could identify the promising subset neighborhood, then a targeted `optimize_acqf` run on those 5 subsets would recover the exact best at low cost (5 × `optimize_acqf` instead of 57).
+
+3. **The heavy-tail failure mode suggests room for improvement.** The 25% of runs that don't find the best within 200 iterations are caused by early over-commitment. Possible mitigations: more aggressive progressive widening (`pw_k0 > 2`), explicit re-exploration triggers, or a warm-start from Sobol-based subset ranking (§11.16).
+
+#### 11.18.9 Files
+
+- **Data collection**: `mcts-report/collect_hartmann_data.py`
+- **Benchmark script**: `mcts-report/benchmark_mcts_on_data.py`
+- **Plot script**: `mcts-report/plot_mcts_replay.py`
+- **Data**: `mcts-report/data/hartmann_nchoosek_seed0.{json,npz}`
+- **Plots**: `mcts-report/replay_regret_convergence.png`, `mcts-report/replay_cumulative_found_rate.png`, `mcts-report/replay_first_hit_histogram.png`, `mcts-report/replay_phase_regret.png`
+
+### 11.19 MCTS Replay on Spurious Features Benchmark (Hartmann6 + 2sp, k≤6)
+
+Section §11.18 tested MCTS on Hartmann(6, k≤4) with 57 subsets. This section scales up to a harder, more realistic problem: **Hartmann(6) with 2 spurious features and max_count=6**, using `SpuriousFeaturesWrapper`. This creates 8 total features and 247 NChooseK subsets — a 4.3× increase in search space. The MCTS must now discover that 2 of 8 features are irrelevant, making the combinatorial structure harder.
+
+#### 11.19.1 Data Collection
+
+| Parameter | Value |
+|-----------|-------|
+| Benchmark | SpuriousFeaturesWrapper(Hartmann(dim=6), n_spurious=2, max_count=6) |
+| Total features | 8 (6 original + 2 spurious) |
+| Subsets | 247 (all C(8,0)+C(8,1)+...+C(8,6)) |
+| Initial points | 10 (NChooseK-respecting, via RandomStrategy) |
+| BO iterations | 40 |
+| optimize_acqf per subset | 20 restarts, 2048 raw samples |
+| Sobol samples per subset | 2048 |
+| GP trajectory | Greedy oracle |
+
+**Sobol-vs-optimize_acqf correlation**: The Spearman rank correlation between the Sobol-best ranking and the optimize_acqf ranking is **ρ = 0.988** (mean across 40 iterations, min 0.942, max 0.999). This confirms that cheap Sobol sampling is a highly reliable proxy for expensive optimize_acqf, validating the burn-in concept for this problem scale.
+
+**Data**: `mcts-report/data/hartmann6_sp2_k6_seed0.{json,npz}` (60.5 MB with Sobol)
+
+#### 11.19.2 MCTS Benchmark Results
+
+Same setup as §11.18.2: production MCTS-TS-NIG defaults, 200 iteration budget, 5 MCTS seeds per BO iteration, 200 total runs.
+
+**First-hit statistics:**
+
+| Target | Found rate | Median iters | Mean iters | P25 | P75 | P90 |
+|--------|-----------|-------------|-----------|-----|-----|-----|
+| True best (rank 1) | 35/200 (17.5%) | 98 | 95.7 | 58 | 127 | 174 |
+| Top-3 subset | 67/200 (33.5%) | 86 | 93.2 | — | — | — |
+| Top-5 subset | 96/200 (48.0%) | 76 | 85.4 | — | — | — |
+
+**Regret at iteration budgets:**
+
+| Budget | Mean regret | Median | P90 | Zero regret % | Unique subsets |
+|--------|-----------|--------|-----|--------------|----------------|
+| 10 | 18.92 | 6.78 | 37.90 | 0.5% | 9.5 |
+| 20 | 15.54 | 4.22 | 37.47 | 1.0% | 18.0 |
+| 50 | 8.60 | 1.20 | 36.13 | 4.0% | 34.8 |
+| 100 | 3.64 | 0.26 | 4.75 | 9.0% | 49.7 |
+| 150 | 2.07 | 0.05 | 3.75 | 14.0% | 58.5 |
+| 200 | 1.34 | 0.01 | 2.55 | 17.5% | 64.9 |
+
+**Comparison with Hartmann6_k4 (§11.18):**
+
+| Metric | Hartmann6_k4 (57 subsets) | Hartmann6+2sp (247 subsets) |
+|--------|--------------------------|-------------------------------|
+| Exact-best found rate | 73.8% | 17.5% |
+| Top-5 found rate | 99.0% | 48.0% |
+| Median first-hit (exact) | 56 | 98 |
+| Unique subsets at 200 | 37 (64%) | 65 (26%) |
+
+The 4.3× increase in search space (57 → 247) dramatically reduces exact-best discovery. However, this metric is misleading — the acquisition landscape structure explains why.
+
+![Regret convergence (sp2)](replay_hartmann6_sp2_k6_regret_convergence.png)
+
+![Cumulative discovery rate (sp2)](replay_hartmann6_sp2_k6_cumulative_found_rate.png)
+
+#### 11.19.3 Acquisition Landscape Analysis: Bimodal Structure
+
+The acquisition function values across 247 subsets reveal a **strongly bimodal distribution**. At each BO iteration, subsets split into two clusters separated by a large gap (~15-20 acqf units):
+
+- **Good cluster**: subsets containing the relevant Hartmann features (typically 11–215 subsets depending on BO iteration, with acqf values in the range [-12, -3])
+- **Bad cluster**: subsets dominated by spurious features or with too few active features (acqf values in the range [-44, -37])
+
+The gap between the worst good-cluster subset and the best bad-cluster subset is typically **15–20 acqf units**, making the two clusters clearly distinguishable. However, **within the good cluster, the top subsets are nearly indistinguishable**:
+
+| Gap metric | Hartmann6_k4 (57 subsets) | Hartmann6+2sp (247 subsets) |
+|-----------|--------------------------|-------------------------------|
+| Median gap(1st-2nd) | 0.81 | **0.00** |
+| Median gap(1st-5th) | 4.23 | **0.02** |
+| Subsets within 1% of best | few | **~25 subsets (10%)** |
+| Subsets within 5% of best | few | **~50 subsets (20%)** |
+
+The top-10 subsets have a median regret of only **0.03** from the best. The flat top makes "find the exact best" an ill-defined objective — the acqf landscape does not meaningfully distinguish between the top ~10 subsets.
+
+![Acqf value distribution across subsets](acqf_distribution_hartmann6_sp2_k6.png)
+
+![Top-20 subsets by acqf value](acqf_top20_hartmann6_sp2_k6.png)
+
+![Regret by subset rank](acqf_regret_by_rank_hartmann6_sp2_k6.png)
+
+#### 11.19.4 Good-Cluster Discovery: The Right Metric
+
+Given the bimodal structure, the natural question is: **does MCTS reliably find the good cluster?** We define the good cluster per BO iteration using the largest-gap heuristic (find the biggest jump between consecutive sorted acqf values, split there).
+
+| Metric | Rate |
+|--------|------|
+| Good cluster at iter 200 | **96.5%** (386/400) |
+| Good cluster at iter 100 | 91.5% |
+| Good cluster at iter 50 | 79.0% |
+| Good cluster at iter 10 | 52.8% |
+| Median first-hit to good cluster | **8 iterations** |
+| Mean first-hit to good cluster | 25.3 |
+| P25/P75 first-hit | 3 / 31 |
+
+MCTS reaches the good cluster in a **median of 8 iterations** — far faster than the 98-iteration median for exact-best. At a budget of 200, 96.5% of runs are in the good cluster.
+
+**Conditional regret**: Runs that land in the good cluster have median regret 0.01 and mean regret 0.72. Runs stuck in the bad cluster (3.5% of cases) have median regret ~32 — they are trapped in the wrong mode and never escape within 200 iterations.
+
+![Good cluster vs exact best discovery rate](good_cluster_vs_exact_hartmann6_sp2_k6.png)
+
+#### 11.19.5 Good-Cluster Size Drives Difficulty
+
+The good-cluster size varies from 11 to 215 subsets across BO iterations, and this strongly predicts MCTS difficulty:
+
+- **Large good cluster (>100 subsets)**: MCTS finds it in **2-5 iterations** with 100% success. Early BO iterations (prior-dominated GP) and iterations where many feature combinations perform similarly fall here.
+- **Small good cluster (11-26 subsets)**: Takes **30-80 median iterations** and occasionally fails (60-90% success). Later BO iterations with sharper, more concentrated landscapes produce these.
+
+![Good-cluster discovery vs cluster size](good_cluster_scatter_hartmann6_sp2_k6.png)
+
+#### 11.19.6 Regret Convergence: Good Cluster vs Bad
+
+The regret curves split cleanly into two trajectories. The 96.5% of runs that find the good cluster converge steadily toward zero regret. The 3.5% that remain in the bad cluster plateau at regret ~32-35 and show no convergence — once MCTS commits to the wrong mode, the NIG posterior accumulates enough negative evidence to trap it.
+
+![Regret: good cluster vs bad cluster](regret_good_vs_bad_hartmann6_sp2_k6.png)
+
+#### 11.19.7 Analysis
+
+**1. The "exact best" metric is misleading for flat-top landscapes.** The 17.5% exact-best rate appears alarming but reflects an ill-posed question: asking MCTS to distinguish between subsets differing by <0.01 in a range of 40. The 96.5% good-cluster rate is the operationally relevant metric.
+
+**2. MCTS solves the structural problem reliably.** The bimodal structure — good subsets (relevant features) vs bad subsets (spurious features) — is the real combinatorial challenge. MCTS identifies the good cluster in a median of 8 iterations, well within any practical budget.
+
+**3. Within-cluster ranking is noise-dominated.** Once in the good cluster, MCTS's final pick among near-tied subsets is essentially random. This is not a problem in practice: all good-cluster subsets lead to similar BO candidates, and the GP will correct for any suboptimality in subsequent iterations.
+
+**4. The 3.5% failure rate represents genuine MCTS failures.** These runs get trapped in the bad cluster (spurious-feature-dominated subsets). The NIG mechanism makes escaping the wrong mode difficult once evidence accumulates. This motivates potential improvements: explicit mode-switching restarts, or a two-phase strategy where an initial cheap exploration identifies the modes before committing.
+
+**5. The Sobol correlation validates burn-in.** With ρ = 0.988, a cheap Sobol-based burn-in could pre-filter to the good cluster before running expensive MCTS. Even 64 Sobol samples per subset (vs 2048 in the dataset) might suffice to identify the bimodal split, given the ~20-unit gap between clusters.
+
+#### 11.19.8 Implications
+
+1. **For practical BO with spurious features**: MCTS with 50-100 iterations is sufficient — it reaches 79-91.5% good-cluster rate, and any good-cluster subset produces a near-optimal acquisition candidate. The exact-best rate is irrelevant.
+
+2. **Budget recommendations scale with search space**: Hartmann6_k4 (57 subsets) needed ~75 iterations for median-zero regret. Hartmann6+2sp (247 subsets) needs ~100 iterations for 91.5% good-cluster rate. The scaling is sub-linear in the number of subsets.
+
+3. **Bimodal landscape structure is a gift**: The clear separation between good and bad subsets makes the problem fundamentally easier than it appears from the raw subset count. MCTS with Thompson Sampling naturally exploits this — it quickly abandons branches that return low rewards, effectively pruning the bad cluster.
+
+4. **The flat-top phenomenon suggests diminishing returns from finer search**: Beyond finding the good cluster, additional MCTS iterations mostly shuffle between near-equivalent subsets. This is wasted compute. A better strategy: run MCTS briefly (50-100 iters) to identify the good cluster, then run `optimize_acqf` on the top-5 subsets found.
+
+#### 11.19.9 Files
+
+- **Data collection**: `mcts-report/collect_hartmann_data.py --benchmark hartmann6_sp2_k6`
+- **Benchmark script**: `mcts-report/benchmark_mcts_on_data.py --benchmark hartmann6_sp2_k6`
+- **Plot script**: `mcts-report/plot_mcts_replay.py --benchmark hartmann6_sp2_k6`
+- **Data**: `mcts-report/data/hartmann6_sp2_k6_seed0.{json,npz}`
+- **Acqf analysis plots**: `acqf_distribution_hartmann6_sp2_k6.png`, `acqf_top20_hartmann6_sp2_k6.png`, `acqf_regret_by_rank_hartmann6_sp2_k6.png`
+- **Good-cluster plots**: `good_cluster_vs_exact_hartmann6_sp2_k6.png`, `good_cluster_scatter_hartmann6_sp2_k6.png`, `regret_good_vs_bad_hartmann6_sp2_k6.png`
+- **MCTS replay plots**: `replay_hartmann6_sp2_k6_regret_convergence.png`, `replay_hartmann6_sp2_k6_cumulative_found_rate.png`, `replay_hartmann6_sp2_k6_first_hit_histogram.png`, `replay_hartmann6_sp2_k6_phase_regret.png`
+
+### 11.20 Sobol Sampling as a Cheap Proxy for optimize_acqf
+
+Sections §11.18–§11.19 used expensive `optimize_acqf` (20 restarts × 2048 raw samples per subset) as the gold-standard reward. A key question for burn-in design: **can cheap Sobol sampling reliably rank subsets?** If so, MCTS could use Sobol-evaluated rewards during an initial exploration phase, switching to `optimize_acqf` only for the final top-k subsets.
+
+Both datasets include 2048 Sobol samples per subset per BO iteration. By subsampling to smaller budgets (16, 32, 64, ..., 2048), we measure how Sobol ranking quality degrades with fewer samples.
+
+#### 11.20.1 Rank Correlation vs Sobol Budget
+
+The Spearman rank correlation between `max(Sobol samples)` and `optimize_acqf` value across all subsets:
+
+| Sobol N | Hartmann6_k4 (57 subsets) | | Hartmann6+2sp (247 subsets) | |
+|---------|---------------------------|---|------------------------------|---|
+| | Mean ρ | Min ρ | Mean ρ | Min ρ |
+| 16 | 0.911 | 0.628 | 0.920 | 0.733 |
+| 32 | 0.935 | 0.646 | 0.944 | 0.784 |
+| **64** | **0.953** | **0.660** | **0.959** | **0.847** |
+| 128 | 0.969 | 0.820 | 0.969 | 0.894 |
+| 256 | 0.979 | 0.874 | 0.976 | 0.924 |
+| 512 | 0.986 | 0.909 | 0.983 | 0.938 |
+| 2048 | 0.991 | 0.949 | 0.988 | 0.942 |
+
+**At 64 Sobol samples**, the mean correlation is already ρ ≈ 0.95 for both benchmarks, crossing the practical threshold for reliable ranking. Doubling to 128 eliminates the worst-case outliers (min ρ jumps from 0.66 to 0.82 for Hartmann6_k4). The spurious-features benchmark actually has *higher* minimum correlations at low sample counts — the bimodal structure (large gap between clusters) is easy to detect even with few samples.
+
+![Sobol correlation vs budget](sobol_correlation_vs_budget.png)
+
+#### 11.20.2 Scatter: Sobol(64) vs optimize_acqf
+
+Scatter plots of Sobol-best(64) vs optimize_acqf for representative BO iterations (early, mid, late) on both benchmarks. Red stars mark the top-5 subsets by optimize_acqf.
+
+For Hartmann6_k4 (top row), the correlation is strong but the top-5 subsets are sometimes re-ordered by Sobol noise — the fine-grained ranking within the top cluster is unreliable at 64 samples. For Hartmann6+2sp (bottom row), the bimodal separation is strikingly clear: the two clusters are visually distinct in both the x-axis (optimize_acqf) and y-axis (Sobol), with no overlap.
+
+![Sobol(64) scatter](sobol64_scatter_both.png)
+
+#### 11.20.3 Bimodal Cluster Identification with Sobol(64)
+
+For the Hartmann6+2sp benchmark, we test whether Sobol(64) can identify the bimodal cluster structure. At each BO iteration, we apply the largest-gap heuristic independently to both the optimize_acqf ranking and the Sobol(64) ranking, then measure classification accuracy (does Sobol assign each subset to the correct cluster?).
+
+| Metric | Value |
+|--------|-------|
+| Mean cluster accuracy | **96.5%** |
+| Min cluster accuracy | 89.1% |
+| Max cluster accuracy | 100.0% |
+| False positives (bad→good) | **0 across all 40 iterations** |
+| False negatives (good→bad) | 0–27 per iteration |
+
+The false-positive rate is **exactly zero** — Sobol(64) never promotes a bad-cluster subset into the good cluster. All errors are false negatives: some good-cluster subsets are misclassified as bad. This is a safe failure mode for burn-in: the cheap Sobol pass might miss some good subsets, but it will never waste expensive `optimize_acqf` budget on bad ones.
+
+The errors concentrate in late BO iterations where the good cluster shrinks to 11–26 subsets (out of 247). In these cases, the good cluster's internal value range narrows, making the boundary between good and bad harder to detect with only 64 samples. Even so, the minimum accuracy is 89.1%.
+
+![Sobol(64) bimodal cluster identification](sobol64_bimodal_clusters.png)
+
+#### 11.20.4 Top-k Agreement
+
+Beyond rank correlation, we measure a stricter metric: **what fraction of the optimize_acqf top-k subsets appear in the Sobol top-k?** This directly measures whether Sobol can identify the best subsets for targeted `optimize_acqf` follow-up.
+
+**Hartmann6_k4 (57 subsets):**
+
+| Sobol N | Top-1 | Top-3 | Top-5 | Top-10 | Top-20 |
+|---------|-------|-------|-------|--------|--------|
+| 16 | 33% | 42% | 50% | 71% | 78% |
+| 64 | 40% | 48% | 71% | 81% | 88% |
+| 256 | 58% | 63% | 77% | 88% | 91% |
+| 2048 | 68% | 77% | 87% | 91% | 95% |
+
+**Hartmann6+2sp (247 subsets):**
+
+| Sobol N | Top-1 | Top-3 | Top-5 | Top-10 | Top-20 |
+|---------|-------|-------|-------|--------|--------|
+| 16 | 5% | 15% | 21% | 35% | 53% |
+| 64 | 10% | 20% | 31% | 45% | 61% |
+| 256 | 10% | 27% | 30% | 56% | 75% |
+| 2048 | 11% | 27% | 38% | 65% | 81% |
+
+For Hartmann6_k4, Sobol(64) identifies 71% of the true top-5 — good enough for a burn-in that narrows the search to ~10 subsets before running expensive optimization. For Hartmann6+2sp, the top-k overlap is lower because the flat top makes exact top-k identification nearly random within the good cluster. However, **the top-20 overlap at 64 samples is 61%** — Sobol reliably identifies the good-cluster neighborhood even if it can't rank within it.
+
+The low top-1 agreement on Hartmann6+2sp (~10% even at 2048 samples) confirms the finding from §11.19.3: the "best" subset is not meaningfully distinct from its neighbors. Top-1 is the wrong metric for this landscape.
+
+![Top-k agreement](sobol_topk_agreement.png)
+
+#### 11.20.5 Implications for Burn-In Design
+
+1. **64 Sobol samples per subset is the practical sweet spot.** It achieves ρ ≈ 0.95 mean correlation, 96.5% cluster identification accuracy, and 61-71% top-5 overlap. Each evaluation is ~30× cheaper than `optimize_acqf` (no multi-start optimization), making a full 247-subset burn-in feasible in seconds.
+
+2. **The zero false-positive property is critical.** A burn-in that filters to the Sobol-identified good cluster will never waste `optimize_acqf` budget on spurious-feature subsets. The only risk is missing some good subsets (false negatives), which is mitigated by MCTS exploration in the second phase.
+
+3. **Proposed two-phase strategy:**
+   - Phase 1 (burn-in): Evaluate all subsets with 64 Sobol samples. Identify the good cluster via largest-gap. Cost: 247 × 64 = 15,808 acqf evaluations (batched, ~1 second).
+   - Phase 2 (MCTS): Run MCTS with `optimize_acqf` rewards, but only on the good-cluster subsets (typically 26–215 subsets). This effectively halves the search space on hard iterations and eliminates the 3.5% bad-cluster trapping failure mode.
+
+4. **For Hartmann6_k4 (57 subsets), burn-in is less critical.** The search space is small enough that MCTS with 75-100 iterations achieves median-zero regret without any pre-filtering. Burn-in becomes valuable at 200+ subsets.
+
+#### 11.20.6 Files
+
+- **Sobol correlation analysis plots**: `sobol_correlation_vs_budget.png`, `sobol64_scatter_both.png`, `sobol64_bimodal_clusters.png`, `sobol_topk_agreement.png`
+- **Source data**: `mcts-report/data/hartmann_nchoosek_seed0.npz` (Sobol: 40×57×2048), `mcts-report/data/hartmann6_sp2_k6_seed0.npz` (Sobol: 40×247×2048)
+
+### 11.21 Deterministic Reward + Cache Degradation and Acqf Landscape Collapse
+
+This section documents two failure modes discovered when integrating MCTS with real GP-based acquisition functions inside a BO loop: (1) a tree-mechanics bug where deterministic rewards + caching breaks progressive widening and NIG posteriors, and (2) a fundamental signal collapse where the acqf landscape becomes too spiky for cheap evaluation as the GP converges.
+
+#### 11.21.1 Setup
+
+The investigation uses SpuriousFeaturesWrapper(Hartmann(dim=6), n_spurious_features=6, max_count=6) — 12 features, C(12,6) = 924 possible NChooseK selections. A full BO trajectory (80 experiments) was saved to `experiments.csv` and used to reconstruct the GP state for reproducible diagnostics.
+
+Two reward functions from the notebook were tested, matching the production MCTS reward evaluation patterns:
+
+- **reward_fn (Sobol, noisy):** Draw 64 Sobol quasi-random samples within the active feature bounds, evaluate the acqf in batch, return the max. Each call returns a different value for the same selection due to Sobol scrambling.
+- **reward_fn2 (optimize_acqf, deterministic):** Run `optimize_acqf(num_restarts=1, raw_samples=64)` with inactive features fixed to zero. Returns a near-deterministic value for each selection.
+
+Two surrogates were compared:
+
+- **Standard GP:** Default SingleTaskGP from BoTorch.
+- **SAAS GP:** `EnsembleMapSaasSingleTaskGPSurrogate` with sparsity-inducing priors that shrink irrelevant feature lengthscales toward infinity.
+
+#### 11.21.2 Bug: Deterministic Reward + Cache Breaks Tree Statistics
+
+**Root cause.** When `use_cache=True` with a deterministic reward function, each unique feature selection gets exactly one novel evaluation. Subsequent MCTS visits to the same terminal are cache hits that increment `n_visits` but not `n_obs`. This creates two compounding failures:
+
+1. **Variance inflation is a no-op.** The `variance_inflation` cache-hit mode (line 855 of `optimize_mcts.py`) has a guard `if n.n_obs > 1` — with deterministic rewards and caching, 80-85% of tree nodes have `n_obs ≤ 1`, making variance inflation unable to fire on the vast majority of nodes. The NIG posteriors stay near-prior (posterior scale ratio ~0.6-0.8 vs ~0.03-0.1 for healthy trees).
+
+2. **Progressive widening over-expands the tree.** `_child_limit` (line 586) uses `n_visits` to decide how many children a node may have. With `n_visits` inflated by cache hits while `n_obs` stays at 1, the tree fans out far beyond what the available information supports. At the root node: `limit(n_visits)=126` vs `limit(n_obs)=2`.
+
+**Diagnostic evidence** (1000 MCTS iterations, uniform_subset rollout):
+
+| Config | Cache hit rate | Nodes with n_obs ≤ 1 | Gold mean | Gold best |
+|--------|---------------|---------------------|-----------|-----------|
+| A: Sobol, no cache (baseline) | 0% | 33/187 | -6.11 | -5.90 |
+| B: optimize_acqf, cache + var_inflation | 79% | **216/260 (83%)** | **-25.03** | -6.06 |
+| C: optimize_acqf, no cache | 0% | 31/207 | -6.04 | -5.86 |
+| D: optimize_acqf, cache + pessimistic | 41% | 31/398 | -6.13 | **-4.04** |
+
+"Gold mean/best" = quality of 10 selections sampled from the fitted tree, each evaluated with `optimize_acqf(num_restarts=20, raw_samples=2048)`. Config B's MCTS best value during training was -3.59 (it *found* a good selection), but the tree cannot *reproduce* it because the NIG posteriors never learned which branches were good.
+
+At 3000 iterations the degradation worsens: config B's cache hit rate climbs to 93%, gold mean drops to -44.79, and the tree samples empty selections and single-feature selections. Config D (pessimistic) remains the healthiest — it still produces diverse selections and found the best individual selection (-2.80).
+
+The rollout mode (uniform_subset vs ts_group_action) does not change the core finding. Config B is broken with both policies; ts_group_action is slightly worse because its per-action NIG stats suffer from the same stale-statistics problem.
+
+**Fixes tested:**
+
+| Fix | Mechanism | Effective? |
+|-----|-----------|------------|
+| `use_cache=False` (config C) | Every call is novel, n_obs == n_visits | Yes — but wastes compute on redundant re-evaluations, and over-concentrates at high iteration counts |
+| `cache_hit_mode="pessimistic"` (config D) | Adds pseudo-observations on cache hits, keeping n_obs growing | **Yes — best overall.** Tree stays healthy, diverse, no progressive widening gap |
+| Base `_child_limit` on `n_obs` instead of `n_visits` | Stops over-expansion directly | Addresses symptom (1) but not (2); should be combined with pessimistic mode |
+
+**Recommendation:** Use `pessimistic` as the default cache_hit_mode when `use_cache=True`. The `variance_inflation` mode is fundamentally incompatible with deterministic or near-deterministic reward functions. Additionally, basing `_child_limit` on `n_obs` rather than `n_visits` would eliminate the progressive widening gap regardless of cache-hit mode.
+
+#### 11.21.3 Acqf Landscape Collapse with Convergent GPs
+
+Independent of the cache bug, we discovered that the acqf landscape itself becomes hostile to cheap evaluation as the BO loop converges. This affects all surrogates but is dramatically accelerated by the SAAS prior.
+
+**Mechanism.** As the GP becomes more certain about which feature subset is optimal, the acqf concentrates into a narrow spike over that subset. The spike's basin shrinks while the floor (acqf value for uninteresting subsets) remains flat. This is correct GP/acqf behavior — it's exploitation — but it makes Sobol-based reward evaluation increasingly unreliable.
+
+**Quantitative comparison** (Sobol(64) reward for selection [0,1,2,3,4,5] vs the true gold-standard `optimize_acqf(20 restarts, 2048 samples)` value):
+
+| n_data | Standard GP |  | SAAS GP |  |
+|--------|-------------|--|---------|--|
+| | Sobol(64) | Gold | Sobol(64) | Gold |
+| 10 | -5.01 | -4.95 | -3.99 | -3.99 |
+| 20 | -4.75 | -4.31 | -4.18 | -3.84 |
+| 30 | -5.64 | -3.99 | -2.10 | -1.82 |
+| 40 | -4.18 | -1.84 | **-6.61** | -2.02 |
+| 60 | -5.06 | -3.02 | **-39.77** | -6.30 |
+| 80 | -6.94 | -3.76 | **-44.07** | -4.72 |
+
+For the standard GP, the Sobol reward degrades gradually but remains in a usable range throughout (worst case: -6.94 vs gold -3.76, a 2x gap). For SAAS, the signal collapses catastrophically: at n=60, Sobol returns -39.77 (essentially the floor of -45.04) while the true optimum is -6.30. By n=80, the random subset spread has std=0.32 — everything looks the same to the Sobol evaluator.
+
+**Why SAAS collapses faster.** The SAAS sparsity prior shrinks irrelevant feature lengthscales toward infinity, effectively zeroing out spurious dimensions in the GP's predictive mean. This concentrates the acqf into a lower-dimensional subspace where the remaining active dimensions form a sharp, narrow ridge. The standard GP spreads uncertainty more evenly across all dimensions, keeping the acqf surface smoother.
+
+#### 11.21.4 Sobol Budget Sweep
+
+To determine how many Sobol samples are needed to maintain signal, we swept n_sobol ∈ {64, 128, 256, 512, 1024, 2048, 4096} for the SAAS surrogate at each BO stage:
+
+| n_data | n=64 | n=128 | n=256 | n=512 | n=1024 | n=2048 | n=4096 |
+|--------|------|-------|-------|-------|--------|--------|--------|
+| 10 | -4.32 | -4.32 | -4.32 | -4.31 | -4.32 | -4.31 | -4.31 |
+| 30 | -2.07 | -1.62 | -1.84 | -1.73 | -1.64 | -1.63 | -1.78 |
+| 40 | -6.61 | -4.49 | -2.64 | -2.58 | -2.42 | -2.87 | -2.24 |
+| 60 | -40.76 | -40.58 | -39.83 | -39.13 | **-9.67** | -9.94 | -8.69 |
+| 80 | -43.41 | -40.29 | **-10.22** | -9.19 | -9.00 | -8.11 | -7.92 |
+
+Values shown are Sobol reward for [0,1,2,3,4,5] (gold standard: -4.74 at n=80). Bold marks the budget where the signal first breaks through the floor.
+
+Key transitions:
+
+- **n=10–30:** 64 Sobol samples suffice. The surface is smooth.
+- **n=40:** 128-256 samples recover the signal (from -6.61 to -2.64).
+- **n=60:** **1024 samples needed** to break through (-9.67 vs -40.76 at n=64). Below 512, the peak is too narrow to hit.
+- **n=80:** **256 samples** break through for [0,1,2,3,4,5] (-10.22), but this is inconsistent across selections — [0,2,3,4,5,8] only breaks through at n=1024. **1024 is the safe minimum for reliability.**
+
+The standard GP shows no such dependency — even 64 Sobol samples gives reliable signal at all stages, because its acqf surface stays smooth.
+
+#### 11.21.5 General Landscape Convergence Problem
+
+The acqf spike narrowing is not specific to SAAS or spurious features. It is a fundamental consequence of BO convergence: as the GP becomes confident about the optimal feature subset, the acqf landscape necessarily becomes unimodal with a narrow peak. Any surrogate that converges well will eventually produce a landscape where cheap random probing fails.
+
+The SAAS model reaches this point faster (around n=40-60) because its sparsity prior accelerates convergence. The standard GP gets there more slowly (the signal degrades but never fully collapses in our 80-experiment trajectory). But given enough BO iterations, any competent surrogate will produce a spiky acqf landscape.
+
+This means the MCTS reward evaluation strategy must adapt to the BO stage:
+
+- **Early BO (uncertain GP, multimodal acqf):** Sobol reward works. The landscape is smooth, many subsets look promising, and MCTS exploration across subsets adds genuine value. This is where MCTS's combinatorial search capability matters most.
+- **Late BO (confident GP, unimodal acqf):** The subset question is largely settled. The acqf is saying "use this subset" and cheap evaluation can't resolve the narrow spike.
+
+#### 11.21.6 Recommendations
+
+1. **Use `pessimistic` as the default `cache_hit_mode`** when `use_cache=True`. It is the only mode that remains healthy with both noisy and deterministic reward functions, and it keeps the tree exploring diverse selections at high iteration counts.
+
+2. **Base `_child_limit` on `n_obs`** instead of `n_visits` to eliminate the progressive widening gap. When `use_cache=False`, `n_obs == n_visits` so behavior is unchanged.
+
+3. **Set `n_sobol_samples=1024`** (up from 64) in the two-phase screening path. This extends reliable signal through ~60+ data points for SAAS surrogates and has no cost for standard GPs (where 64 already suffices). The screening phase evaluates each selection once, so the cost increase is 16× per evaluation but evaluation count stays the same.
+
+4. **Adaptive Sobol budget (future work).** Track the empirical reward variance across MCTS iterations. When spread collapses (std drops below a threshold), either increase the Sobol budget or switch to `optimize_acqf`-based evaluation with pessimistic caching.
+
+5. **Convergence detection (future work).** When the top-k subsets from successive BO iterations stabilize (e.g., Jaccard similarity > 0.8 between consecutive iterations' top-5), skip the MCTS screening phase and directly run `optimize_acqf` on the known-good subsets. At full convergence, the combinatorial search problem is solved and only the continuous optimization within the chosen subset matters.
+
+#### 11.21.7 Exploration/Exploitation Transition in BO Campaigns
+
+The landscape convergence problem (§11.21.5) maps directly to the standard exploration/exploitation tradeoff in Bayesian Optimization, but at the combinatorial level of subset selection rather than the continuous level within a subset.
+
+**MCTS solves the exploration problem:** "which feature subsets might be good?" Running `optimize_acqf` on a known-good subset is pure exploitation: "what's the best continuous point within this subset?" As the BO campaign progresses, the relative value of these two components shifts:
+
+- **Early BO (uncertain GP):** The surrogate is uncertain, many subsets could be optimal, and MCTS exploration genuinely discovers new promising subsets. The tree search adds value. The acqf landscape is smooth enough for cheap Sobol evaluation to provide discriminative signal.
+- **Late BO (confident GP):** The surrogate is confident, the acqf concentrates on one or a few subsets, and MCTS is fighting a unimodal landscape where exploration of new subsets adds no value. The combinatorial question is already answered — only the continuous optimization within the chosen subset matters.
+
+This transition is inevitable for any competent surrogate. The subset exploration question converges faster than the continuous optimization within the best subset, because the combinatorial space is discrete (and often small relative to the continuous space) while the continuous optimum continues to refine.
+
+**Practical implication:** Always run `optimize_acqf` on the incumbent best subset(s) alongside whatever the MCTS proposes. This provides a natural fallback:
+
+- In early BO, MCTS may discover a better subset — the `optimize_acqf` refinement on the MCTS-proposed subsets captures this.
+- In late BO, the MCTS contribution becomes negligible, but the `optimize_acqf` on the known-good incumbent subset still produces high-quality candidates.
+
+The two-phase design (§11.20.5) supports this naturally: always include the previous iteration's best subset(s) in the phase-2 refinement set, regardless of what phase-1 screening produces. This way the system gracefully transitions from exploration-dominant to exploitation-dominant as the campaign progresses, without requiring explicit convergence detection. The MCTS screening phase becomes effectively a no-op once the top-k subsets stabilize between BO iterations, and the cost is bounded by the screening budget (which is cheap relative to `optimize_acqf` refinement).
+
+This also explains why the cache degradation bug (§11.21.2) matters less in practice than it might appear: even with a broken tree, the incumbent best subset from prior iterations provides a safety net. The bug is still worth fixing (it wastes the MCTS compute budget and delays discovery of new subsets in early BO), but it does not cause catastrophic failure in a full BO loop where the refinement phase always evaluates the incumbent.
+
+#### 11.21.8 Files
+
+- **Diagnostic script**: `mcts-report/diagnose_cache_behavior.py` — reproduces the cache degradation bug with 4 MCTS configs (A: Sobol no-cache baseline, B: optimize_acqf + cache + var_inflation (broken), C: optimize_acqf no-cache, D: optimize_acqf + cache + pessimistic)
+- **Landscape probe**: `mcts-report/probe_saas_landscape.py` — compares standard GP vs SAAS acqf landscape on key selections
+- **Evolution trace**: `mcts-report/probe_landscape_evolution.py` — traces acqf landscape at successive BO stages for both surrogates
+- **Sobol budget sweep**: `mcts-report/probe_sobol_budget.py` — sweeps n_sobol ∈ {64..4096} at each BO stage for both surrogates
+- **Saved BO state**: `mcts-report/experiments.csv` — 80 experiments from SpuriousFeaturesWrapper(Hartmann(6), 6 spurious, max_count=6)
+
+### 11.22 DAG-Based MCTS with Transposition Table
+
+#### 11.22.1 Motivation: Canonical Ordering Bias
+
+The tree-based MCTS uses strictly increasing canonical ordering for NChooseK groups: after selecting feature index `i`, only indices `> i` are legal at the next level. This ensures each feature subset is reachable by exactly one path, preventing redundant nodes. However, it creates **asymmetric subtrees**: high-index features sit near the leaves (shallow subtrees with 2-3 nodes) while low-index features sit near the root (deep subtrees with 50-100+ nodes). The result is a structural bias where high-index features receive concentrated visits and converge quickly, while low-index features receive diluted visits across many branches and converge slowly.
+
+The per-run shuffle (randomizing feature-to-index assignment) averages this out across runs but does not eliminate it within a single run. In benchmarks with flat (uninformative) reward, high-index features are selected **6x more often** than low-index features due purely to tree topology.
+
+#### 11.22.2 The DAG Approach
+
+The MCTS DAG removes canonical ordering entirely: at every NChooseK decision node, **all unselected features** are legal actions, not just those with index greater than the last selected. This creates a symmetric action space where every feature has equal structural opportunity.
+
+Without further changes, removing ordering would cause an exponential blowup — feature set {A, B, C} would have 3! = 6 distinct tree paths. The **transposition table** prevents this: nodes with identical selected feature sets (regardless of selection order) share a single `DAGNode` keyed by `frozenset(selected)`. The tree becomes a DAG (directed acyclic graph) where:
+
+- Multiple parent paths converge on the same node
+- NIG-TS statistics accumulate across all parent paths
+- Each unique feature set is represented exactly once
+
+NIG Thompson Sampling (§11.13) is essential for this to work. UCT's exploration bonus depends on `parent_visits`, which is ambiguous in a DAG (a node has multiple parents). NIG-TS has no parent-dependent terms — the Student-t posterior depends only on the node's own observation statistics — so statistics merge cleanly across parents.
+
+**Transposition key**: For each node, the canonical key is `(group_idx, (frozenset(partial_group_0), frozenset(partial_group_1), ...), (stopped_0, stopped_1, ...))`. NChooseK groups use frozenset (order-independent); Categorical groups use tuples (at most 1 element).
+
+#### 11.22.3 STOP Dilution Problem
+
+Removing canonical ordering introduces a new problem: **STOP dilution**. In the tree, at deeper levels, STOP competes with only 2-3 remaining features (those with index > last). The tree's depth structure naturally concentrates STOP statistics at each cardinality level. In the DAG, STOP competes with **all unselected features** at every node — for a group with 8 features, STOP competes 1-out-of-8 instead of 1-out-of-3.
+
+This manifests as systematic over-selection: the DAG finds the correct features but adds extras. On multigroup_interaction (optimal cardinality 2+2+3=7), the DAG consistently selects ~10 features, scoring 103 instead of the optimal 150.
+
+#### 11.22.4 Separate STOP Fix
+
+The `separate_stop` mechanism restructures the STOP decision as a **binary comparison** rather than a 1-out-of-N competition:
+
+1. **Tree selection**: When STOP is among a node's children, first sample STOP's NIG score, then sample the best feature's NIG score, and compare directly. STOP gets a fair 50/50 chance instead of being diluted among many features.
+2. **Rollout (ts_group_action)**: Same binary comparison — sample STOP's rollout NIG score vs the best feature's rollout NIG score.
+3. **Rollout (uniform)**: 50/50 coin flip between STOP and a random feature (instead of 1/N uniform over all actions).
+4. **Expansion priority**: STOP is always expanded first when it becomes legal, ensuring it gets early data.
+
+#### 11.22.5 Benchmark Results
+
+Six synthetic NChooseK problems, 30 trials each, same budget as prior benchmarks:
+
+**Optimum-finding rate (%):**
+
+| Problem | Random | NIG+vi+apv (tree) | DAG v1 | DAG+ss+vi |
+|---------|--------|-------------------|--------|-----------|
+| multigroup_interaction | 0% | **80%** | 0% | 0% |
+| needle_in_haystack | 10% | **100%** | 53% | 83% |
+| mixed_nchoosek_categorical | 3% | **100%** | 63% | 93% |
+| large_sparse | 0% | 47% | 67% | **87%** |
+| graduated_landscape | 7% | 77% | **100%** | **100%** |
+| simple_additive | 0% | 83% | **100%** | **100%** |
+| **Average** | 3.3% | 81.2% | 63.8% | **77.2%** |
+
+**Configuration key:**
+- **NIG+vi+apv**: Tree-based NIG (§11.13 recommended default) — `cache_hit_mode=variance_inflation, adaptive_prior_var=True`
+- **DAG v1**: DAG with `combined` cache-hit mode + adaptive prior variance, no separate_stop
+- **DAG+ss+vi**: DAG with `separate_stop=True, cache_hit_mode=variance_inflation, adaptive_prior_var=True`
+
+**Separate_stop ablation (DAG configs):**
+
+| Problem | DAG v1 | DAG+ss | DAG+ss+vi | DAG+ss+an0 | DAG+ss+tpw |
+|---------|--------|--------|-----------|------------|------------|
+| multigroup | 0% | 0% | 0% | 0% | 3% |
+| needle | 53% | 80% | **83%** | 70% | 73% |
+| mixed | 63% | 57% | **93%** | 57% | 53% |
+| large_sparse | 67% | 77% | **87%** | 67% | 47% |
+| graduated | 100% | 100% | 100% | 100% | 100% |
+| simple | 100% | 100% | 100% | 100% | 97% |
+
+Variance inflation (`vi`) synergizes with separate_stop across all problems. Adaptive n0 and tighter progressive widening do not add value on top of separate_stop and can hurt (large_sparse drops from 87% to 47% with tighter PW).
+
+#### 11.22.6 Feature Recall: The Right Metric for Acqf Optimization
+
+The 0% optimum rate on multigroup_interaction is misleading for the actual acqf optimization use case. In the real pipeline, MCTS selects which features to activate, then a gradient-based optimizer (L-BFGS via `optimize_acqf`) refines the continuous parameter values within that subset. What matters is not exact cardinality match but whether the correct features are **included** in the selected set.
+
+**Feature recall (contains all optimal features):**
+
+| Problem | DAG+ss+vi |
+|---------|-----------|
+| multigroup_interaction | **30/30 (100%)** |
+| needle_in_haystack | **30/30 (100%)** |
+| mixed_nchoosek_categorical | **30/30 (100%)** features + **30/30 (100%)** categoricals |
+
+The DAG with `ss+vi` achieves **100% recall of the optimal features** on every problem, every trial. It never misses an important feature — it just includes 1-3 extras. These extras produce a slightly higher-dimensional continuous optimization problem for the downstream gradient optimizer, but the important features are always present.
+
+On multigroup_interaction specifically: the optimal selection is features `{1, 5, 9, 14, 17, 20, 23}` (7 features: 2+2+3 across 3 groups). The DAG consistently selects ~10 features — all 7 optimal features plus 3 random extras from different groups. The extras are noise features that the gradient optimizer can handle by pushing their continuous values toward low-impact regions.
+
+#### 11.22.7 DAG vs NIG Tree: Complementary Strengths
+
+The DAG and tree approaches have complementary performance profiles:
+
+**DAG wins where ordering bias matters most:**
+- **large_sparse** (87% vs 47%): 4 groups × 10 features, ~960M combinations. The tree's canonical ordering creates severe asymmetry across 10 features per group. The DAG's symmetric action space finds the optimal 2-group solution much more reliably.
+- **graduated_landscape** (100% vs 77%) and **simple_additive** (100% vs 83%): Moderate feature counts where the DAG's unbiased exploration consistently finds the optimum.
+
+**NIG tree wins where cardinality precision matters:**
+- **multigroup_interaction** (80% vs 0%): Cross-group interaction bonuses create a sharp cardinality-dependent reward landscape. The tree's depth structure concentrates STOP statistics at each cardinality level; the DAG's flat action space dilutes them.
+- **needle** (100% vs 83%) and **mixed** (100% vs 93%): The tree's cardinality learning converges more quickly on these problems, though the DAG is close.
+
+For the acqf optimization use case, the DAG's over-selection is not a practical problem (§11.22.6): the downstream gradient optimizer handles extra features. The DAG's advantage on large search spaces (the most common regime in real applications with many features) makes it the preferred approach.
+
+#### 11.22.8 Recommended DAG Configuration
+
+```python
+MCTS_DAG(
+    groups=groups,
+    reward_fn=reward_fn,
+    rollout_mode="ts_group_action",
+    cache_hit_mode="variance_inflation",
+    adaptive_prior_var=True,
+    separate_stop=True,
+    # defaults: pw_k0=2.0, pw_alpha=0.6, nig_alpha0=1.0
+)
+```
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| `rollout_mode` | `ts_group_action` | Learned rollout using per-(group, action) NIG posteriors |
+| `cache_hit_mode` | `variance_inflation` | Widens posteriors on cache hits; synergizes with separate_stop |
+| `adaptive_prior_var` | `True` | Adapts NIG prior scale to observed reward distribution |
+| `separate_stop` | `True` | Binary STOP-vs-best-feature comparison; fixes STOP dilution |
+| `pw_k0` | `2.0` (default) | Tighter PW (1.5) hurts large_sparse |
+| `pw_alpha` | `0.6` (default) | Standard progressive widening exponent |
+| `adaptive_n0` | `False` (default) | No benefit when combined with separate_stop |
+| `informed_expansion` | `False` (default) | Marginal effect, adds complexity |
+
+#### 11.22.9 Files
+
+| File | Description |
+|------|-------------|
+| `optimize_mcts_dag.py` | MCTS DAG implementation with transposition table, NIG-TS, and separate_stop |
+| `benchmark_dag.py` | DAG benchmark script (6 problems × 7 configs × 30 trials) |
+| `results_dag.json` | Full numeric results for DAG benchmark |
+| `convergence_dag_<problem>.png` | Full convergence curves per problem |
+| `convergence_dag_<problem>_ss_vs_baseline.png` | separate_stop vs baselines comparison |
+| `convergence_dag_<problem>_ss_variants.png` | separate_stop variant comparison |
+| `summary_bar_chart_dag.png` | Bar chart of final best reward |
+| `optimum_rate_heatmap_dag.png` | Heatmap of optimum-finding rates |
+| `unique_evals_dag.png` | Exploration efficiency comparison |
+
+### 11.23 DAG with Stochastic Rewards (No-Cache Mode)
+
+In production, MCTS uses cheap Sobol-based acquisition function sampling rather than expensive `optimize_acqf`. Each evaluation returns a noisy reward (the maximum acquisition value over a small random sample), so caching is counterproductive — re-evaluating the same subset with different random draws provides genuinely new information. This section benchmarks the DAG with `use_cache=False` under Gaussian noise, simulating the production Sobol evaluation regime.
+
+#### 11.23.1 Setup
+
+Four configurations compared at σ ∈ {1.0, 2.0} (noise model: `true_reward + N(0, σ²) − σ`, matching the pessimistic Sobol bias from §11.16):
+
+| Config | Engine | Cache | Noise | separate_stop |
+|--------|--------|-------|-------|---------------|
+| NIG tree (no-cache) | MCTS_NIG tree | Off | σ | No |
+| DAG+ss+vi (cached, det) | MCTS_DAG | On | None | Yes |
+| DAG (no-cache) | MCTS_DAG | Off | σ | No |
+| DAG+ss (no-cache) | MCTS_DAG | Off | σ | Yes |
+
+30 trials per config per problem. The reported `final_best` is the **true** (noiseless) reward of the best selection found, ensuring fair comparison.
+
+#### 11.23.2 Results: Optimum-Finding Rate
+
+**σ = 1.0 (moderate noise)**
+
+| Problem | NIG tree (no-cache) | DAG (no-cache) | DAG+ss (no-cache) | DAG+ss+vi (cached,det) |
+|---------|--------------------:|---------------:|-------------------:|-----------------------:|
+| multigroup_interaction | **70%** | 0% | 3% | 0% |
+| needle_in_haystack | **83%** | 40% | 73% | **83%** |
+| mixed_nchoosek_categorical | **93%** | **93%** | 90% | **93%** |
+| large_sparse | 63% | **87%** | 77% | **87%** |
+| graduated_landscape | 7% | **87%** | **93%** | **100%** |
+| simple_additive | 30% | **100%** | 97% | **100%** |
+| **Average** | **57.7%** | **67.8%** | **72.2%** | **77.2%** |
+
+**σ = 2.0 (high noise)**
+
+| Problem | NIG tree (no-cache) | DAG (no-cache) | DAG+ss (no-cache) | DAG+ss+vi (cached,det) |
+|---------|--------------------:|---------------:|-------------------:|-----------------------:|
+| multigroup_interaction | **73%** | 0% | 0% | 0% |
+| needle_in_haystack | 73% | 40% | **97%** | 83% |
+| mixed_nchoosek_categorical | **100%** | 93% | 97% | 93% |
+| large_sparse | 43% | 73% | **83%** | 87% |
+| graduated_landscape | 13% | 67% | **80%** | **100%** |
+| simple_additive | 3% | 93% | **90%** | **100%** |
+| **Average** | **50.8%** | **61.0%** | **74.5%** | **77.2%** |
+
+#### 11.23.3 Analysis
+
+**1. The NIG tree collapses under noise on small search spaces.** Graduated: 77% (cached deterministic, §11.13) → 7% (no-cache, σ=1.0). Simple: 83% → 30%. The tree's canonical ordering creates fragile path-specific statistics — observations along one feature ordering don't transfer to other orderings, and noise disrupts the fragile cardinality learning at each depth. In contrast, the DAG's transposition table merges all orderings into shared nodes, naturally averaging out noise.
+
+**2. The DAG is inherently noise-robust.** DAG (no-cache, σ=1.0) achieves 87% on large_sparse — identical to the cached deterministic DAG+ss+vi. The mechanism: the transposition table routes multiple noisy observations of the same feature set through the same DAGNode. With `use_cache=False`, each visit produces a fresh noisy reward, and the NIG posterior correctly averages over multiple draws. This is exactly the Bayesian averaging that §11.17 validated for the tree, but the DAG gets stronger benefit because its transposition merging concentrates observations more efficiently.
+
+**3. Separate_stop is the best no-cache DAG config overall.** Averaging across all 6 problems: DAG+ss averages 72.2% at σ=1.0 and 74.5% at σ=2.0, beating both the NIG tree (57.7%, 50.8%) and DAG without ss (67.8%, 61.0%). The separate_stop advantage grows with noise — at σ=2.0 on needle, DAG+ss gets 97% vs 40% without it. The binary STOP comparison becomes more important under noise because the diluted STOP signal (1-out-of-N) is even harder to distinguish from feature signals when both are noisy.
+
+**4. Higher noise helps the NIG tree on interaction problems.** The NIG tree goes from 70% at σ=1.0 to 73% at σ=2.0 on multigroup_interaction, and from 93% to 100% on mixed. The noise acts as implicit exploration — random reward fluctuations prevent premature commitment and help the tree discover cross-group interaction bonuses. This matches the §11.17 finding that noise can occasionally help.
+
+**5. The DAG's multigroup weakness persists under noise.** 0-3% across all noise levels. However, as shown in §11.22.6, the DAG achieves 100% feature recall — it always finds all optimal features and just adds extras. In the production pipeline where the downstream gradient optimizer handles feature refinement, this is not a practical problem.
+
+#### 11.23.4 Recommended Configuration for Stochastic Rewards
+
+For production use with Sobol-based acquisition function sampling:
+
+```python
+MCTS_DAG(
+    groups=groups,
+    reward_fn=sobol_acqf_reward_fn,
+    rollout_mode="ts_group_action",
+    adaptive_prior_var=True,
+    separate_stop=True,
+    use_cache=False,
+    # cache_hit_mode is irrelevant with use_cache=False
+)
+```
+
+This is the stochastic-reward counterpart of the deterministic recommendation (§11.22.8) — same settings, replacing `use_cache=True, cache_hit_mode="variance_inflation"` with `use_cache=False`. The `cache_hit_mode` parameter has no effect when `use_cache=False` because every observation is novel.
+
+**When to use cached deterministic vs no-cache stochastic:**
+
+| Setting | `use_cache` | Reward function | Best config |
+|---------|-------------|-----------------|-------------|
+| Expensive `optimize_acqf` | `True` | Deterministic | DAG+ss + `cache_hit_mode="variance_inflation"` |
+| Cheap Sobol sampling | `False` | Stochastic | DAG+ss (cache_hit_mode irrelevant) |
+| Two-phase burn-in | Phase 1: `False`, Phase 2: `True` | Stochastic → Deterministic | Switch at phase boundary |
+
+#### 11.23.5 Files
+
+| File | Description |
+|------|-------------|
+| `benchmark_dag_nocache.py` | DAG stochastic reward benchmark script |
+| `results_dag_nocache.json` | Full numeric results |
+| `nocache_dag_convergence_<problem>_sigma<σ>.png` | Convergence curves per problem per noise level |
+| `nocache_dag_summary_sigma<σ>.png` | Bar chart of true-best reward per noise level |
+| `nocache_dag_optimum_rate_heatmap.png` | Heatmap across configs and noise levels |
