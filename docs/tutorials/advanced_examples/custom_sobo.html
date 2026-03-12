@@ -327,6 +327,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../../docs/userguides/data_models_functionals.html">
  <span class="dropdown-text">Data Models vs Functionals</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../../docs/userguides/custom_types.html">
+ <span class="dropdown-text">Registering Custom Types</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -731,7 +735,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The <code>CustomSoboStrategy</code> can be used to design custom objectives or objective combinations for optimizations. In this tutorial notebook, it is shown how to use it to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="2677b77c" class="cell" data-execution_count="1">
+<div id="ef3fec70" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -743,7 +747,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-the-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="setup-the-optimization">Setup the optimization</h2>
 <p>For the optimization, we want to subtract the inferred quantity by the value of feature <code>x_0</code>.</p>
-<div id="bcba4afe" class="cell" data-execution_count="2">
+<div id="e709f3d1" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -805,11 +809,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-2.276624</td>
-<td>4.485066</td>
-<td>5.519526</td>
-<td>173.66658</td>
-<td>-5.519526</td>
+<td>1.988445</td>
+<td>0.919694</td>
+<td>72.821076</td>
+<td>248.989183</td>
+<td>-72.821076</td>
 </tr>
 </tbody>
 </table>

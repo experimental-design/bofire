@@ -327,6 +327,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="dropdown-item" href="../../../docs/userguides/data_models_functionals.html">
  <span class="dropdown-text">Data Models vs Functionals</span></a>
   </li>  
+        <li>
+    <a class="dropdown-item" href="../../../docs/userguides/custom_types.html">
+ <span class="dropdown-text">Registering Custom Types</span></a>
+  </li>  
     </ul>
   </li>
   <li class="nav-item dropdown ">
@@ -732,7 +736,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to predict the Motor Octane Number (MON) of a hydrocarbon mixture. The dataset stems from the paper from <a href="https://www.nature.com/articles/s41524-025-01552-2">Chew et al.</a>. It contains 722 experiments of up to 121 componet mixtures of 423 individual molecules. Each molecule is represented by its SMILES string.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="2296d3bf" class="cell" data-execution_count="1">
+<div id="3402fe10" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
@@ -753,7 +757,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="setup-data" class="level2">
 <h2 class="anchored" data-anchor-id="setup-data">Setup Data</h2>
-<div id="69060cf5" class="cell" data-execution_count="2">
+<div id="01a5c912" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df_experiments <span class="op">=</span> get_octane_data()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_experiments[<span class="st">"valid_MON"</span>] <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -768,7 +772,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span>output_key)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_6158/4204084361.py:2: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+<pre><code>/tmp/ipykernel_6226/4204084361.py:2: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
   df_experiments["valid_MON"] = 1</code></pre>
 </div>
 </div>
@@ -776,7 +780,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setup-surrogate-and-perform-cv" class="level2">
 <h2 class="anchored" data-anchor-id="setup-surrogate-and-perform-cv">Setup Surrogate and perform CV</h2>
 <p>We model the high-dimensional problem by using an engineered feature called <code>MolecularWeightedSumFeature</code>. In computes the weighted sum of the molecular descriptors of the original <code>ContinuousMolecularInput</code>s that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</p>
-<div id="d220961b" class="cell" data-execution_count="3">
+<div id="4243eec8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
@@ -826,12 +830,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>4.147103</td>
-<td>66.016373</td>
-<td>0.792446</td>
-<td>4.079740e+14</td>
-<td>0.890218</td>
-<td>0.901643</td>
+<td>3.634691</td>
+<td>52.873223</td>
+<td>0.833768</td>
+<td>4.470635e+14</td>
+<td>0.913222</td>
+<td>0.900759</td>
 <td>5.085529e-119</td>
 </tr>
 </tbody>
