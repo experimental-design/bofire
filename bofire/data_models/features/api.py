@@ -1,5 +1,6 @@
 from typing import Union
 
+from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput
 from bofire.data_models.features.descriptor import (
@@ -71,7 +72,7 @@ AnyInput = Union[
 
 AnyOutput = Union[ContinuousOutput, CategoricalOutput]
 
-AnyEngineeredFeature = Union[
+_ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
     SumFeature,
     MeanFeature,
     WeightedMeanFeature,
@@ -82,3 +83,5 @@ AnyEngineeredFeature = Union[
     InterpolateFeature,
     CloneFeature,
 ]
+
+AnyEngineeredFeature = Union[tuple(_ENGINEERED_FEATURE_TYPES)]

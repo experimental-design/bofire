@@ -158,6 +158,9 @@ invalid-assignment = "warn"
 invalid-return-type = "warn"
 # BoFire intentionally narrows parameter types in subclass overrides.
 invalid-method-override = "warn"
+# Dynamic union rebuilding uses Union[tuple(list)] which is valid at
+# runtime but not statically analysable.
+invalid-type-form = "ignore"
 
 [tool.ty.analysis]
 # Optional dependencies that may not be installed or lack py.typed markers

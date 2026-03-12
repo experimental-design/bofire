@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Type
 
 import gpytorch
 import torch
@@ -19,6 +19,47 @@ from bofire.kernels.conditional import (
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import WassersteinKernel
 from bofire.kernels.spherical_kernels import SphericalLinearKernel
+
+
+def register(
+    data_model_cls: Type[data_models.Kernel],
+    map_fn: Optional[Callable] = None,
+):
+    """Register a custom kernel mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyKernelDataModel)
+        def map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):
+            return MyGpytorchKernel(...)
+
+        # Direct call form
+        register(MyKernelDataModel, map_my_kernel)
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes ``(data_model, batch_shape, active_dims,
+            features_to_idx_mapper)`` and returns a gpytorch kernel. If not
+            provided, returns a decorator.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        KERNEL_MAP[data_model_cls] = fn
+
+        # Also register with the data model union so Pydantic accepts the type
+        data_models.register_kernel(data_model_cls)
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
 
 
 def _compute_active_dims(
@@ -434,22 +475,22 @@ def map_SphericalLinearKernel(
 
 
 KERNEL_MAP = {
-    data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
+    data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.LinearKernel: map_LinearKernel,
     data_models.PolynomialKernel: map_PolynomialKernel,
     data_models.AdditiveKernel: map_AdditiveKernel,
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
-    data_models.SphericalLinearKernel: map_SphericalLinearKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
     data_models.IndexKernel: map_IndexKernel,
     data_models.PositiveIndexKernel: map_PositiveIndexKernel,
-    data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
+    data_models.WassersteinKernel: map_WassersteinKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,
+    data_models.SphericalLinearKernel: map_SphericalLinearKernel,
 }
 
 

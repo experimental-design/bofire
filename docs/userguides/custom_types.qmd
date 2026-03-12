@@ -1,0 +1,219 @@
+# Registering Custom Types
+
+BoFire ships with a collection of built-in strategies, surrogates, kernels, and priors. If you need a component that is not provided out of the box, you can implement your own and **register** it so that BoFire's mapping and serialization infrastructure works with it seamlessly.
+
+Registration does two things:
+
+1. It adds your functional class to the mapper so that `strategies.map()` / `surrogates.map()` can instantiate it.
+2. It updates the Pydantic unions used for validation so that your custom data model is accepted wherever the corresponding built-in types are accepted (e.g. in `BotorchSurrogates`, `StepwiseStrategy`, or surrogate kernel fields).
+
+## Registering a custom strategy
+
+Define a data model (Pydantic) and a functional class, then call `register`:
+
+```python
+from typing import Literal, Type
+
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.data_models.constraints.api import Constraint
+from bofire.data_models.features.api import Feature
+from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
+from bofire.strategies.strategy import Strategy
+
+
+# 1. Data model — holds configuration, is serializable
+class MyStrategyDataModel(StrategyDataModel):
+    type: Literal["MyStrategy"] = "MyStrategy"
+    my_param: float = 1.0
+
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
+        return True
+
+    @classmethod
+    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+        return True
+
+
+# 2. Functional class — implements ask/tell
+class MyStrategy(Strategy):
+    def _ask(self, candidate_count):
+        return pd.DataFrame()
+
+    def has_sufficient_experiments(self) -> bool:
+        return True
+
+
+# 3. Register (direct call)
+strategies.register(MyStrategyDataModel, MyStrategy)
+```
+
+You can also use the decorator form:
+
+```python
+@strategies.register(MyStrategyDataModel)
+class MyStrategy(Strategy):
+    ...
+```
+
+After registration, `strategies.map(MyStrategyDataModel(domain=domain))` returns an instance of `MyStrategy`. The custom type is also accepted inside `StepwiseStrategy` steps.
+
+## Registering a custom surrogate
+
+Surrogate registration follows the same pattern via `surrogates.register()`:
+
+```python
+from typing import Literal, Type
+
+import bofire.surrogates.api as surrogates
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.surrogates.botorch import TrainableBotorchSurrogate as BotorchImpl
+
+
+# 1. Data model
+class MySurrogateDataModel(TrainableBotorchSurrogate):
+    type: Literal["MySurrogate"] = "MySurrogate"
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        return isinstance(my_type, type(ContinuousOutput))
+
+
+# 2. Functional class
+class MySurrogate(BotorchImpl):
+    def _fit(self, train_X, train_Y, **kwargs):
+        ...
+
+    def _predict(self, transformed_X):
+        ...
+
+
+# 3. Register
+surrogates.register(MySurrogateDataModel, MySurrogate)
+```
+
+Because `MySurrogateDataModel` inherits from `BotorchSurrogate`, the registration automatically adds it to the `BotorchSurrogates` collection. This means it can be used as a surrogate specification in any BoTorch-based strategy without extra work:
+
+```python
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+
+specs = BotorchSurrogates(surrogates=[
+    MySurrogateDataModel(inputs=domain.inputs, outputs=domain.outputs),
+])
+```
+
+### Data model transforms
+
+Some surrogates are conceptually a special case of another. For example, `TanimotoGPSurrogate` is converted to a `SingleTaskGPSurrogate` before instantiation. You can do the same with the `data_model_transform` argument:
+
+```python
+def my_transform(data_model):
+    """Convert MySurrogateDataModel to SingleTaskGPSurrogate."""
+    from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+    return SingleTaskGPSurrogate(
+        inputs=data_model.inputs,
+        outputs=data_model.outputs,
+        kernel=data_model.kernel,
+        noise_prior=data_model.noise_prior,
+    )
+
+surrogates.register(
+    MySurrogateDataModel,
+    SingleTaskGPSurrogate,         # functional class after transform
+    data_model_transform=my_transform,
+)
+```
+
+## Registering a custom kernel
+
+Custom GP kernels can be registered so they are accepted in all kernel fields (surrogate models, aggregation kernels, etc.):
+
+```python
+from typing import Literal
+
+import gpytorch
+import torch
+
+import bofire.kernels.api as kernels
+from bofire.data_models.kernels.kernel import Kernel
+
+
+# 1. Data model
+class MyKernelDataModel(Kernel):
+    type: Literal["MyKernel"] = "MyKernel"
+    lengthscale: float = 1.0
+
+
+# 2. Mapping function — returns a gpytorch kernel
+@kernels.register(MyKernelDataModel)
+def map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):
+    k = gpytorch.kernels.RBFKernel(
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+    )
+    k.lengthscale = torch.tensor(data_model.lengthscale)
+    return k
+```
+
+After registration the custom kernel is accepted anywhere a built-in kernel is accepted:
+
+```python
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.kernels.aggregation import ScaleKernel, AdditiveKernel
+
+# As the main kernel of a GP
+surrogate = SingleTaskGPSurrogate(
+    inputs=..., outputs=...,
+    kernel=MyKernelDataModel(lengthscale=2.0),
+)
+
+# Inside aggregation kernels
+additive = AdditiveKernel(kernels=[MyKernelDataModel(), ...])
+scaled = ScaleKernel(base_kernel=MyKernelDataModel())
+```
+
+If the custom kernel subclasses `ContinuousKernel` or `CategoricalKernel`, it is also added to the corresponding sub-union (`AnyContinuousKernel` / `AnyCategoricalKernel`) and accepted in `MixedSingleTaskGPSurrogate`.
+
+## Registering a custom prior
+
+Custom GP priors work the same way:
+
+```python
+from typing import Literal
+
+import gpytorch
+
+import bofire.priors.api as priors
+from bofire.data_models.priors.prior import Prior
+
+
+class MyPriorDataModel(Prior):
+    type: Literal["MyPrior"] = "MyPrior"
+    loc: float = 0.0
+    scale: float = 1.0
+
+
+@priors.register(MyPriorDataModel)
+def map_my_prior(data_model, **kwargs):
+    return gpytorch.priors.NormalPrior(
+        loc=data_model.loc,
+        scale=data_model.scale,
+    )
+```
+
+After registration the custom prior is accepted in all prior fields (`noise_prior`, `lengthscale_prior`, etc.) across all surrogate and kernel data models.
+
+## How it works
+
+BoFire uses [Pydantic discriminated unions](https://docs.pydantic.dev/latest/concepts/unions/) to validate fields such as `SingleTaskGPSurrogate.kernel` or `BotorchSurrogates.surrogates`. These unions are defined as module-level type aliases (e.g. `AnyKernel`, `AnyPrior`, `AnyBotorchSurrogate`).
+
+When you call a `register` function, BoFire:
+
+1. Appends your type to the internal type list backing the union.
+2. Rebuilds the `Union` type alias.
+3. Patches the annotation on every Pydantic model field that references that union.
+4. Calls `model_rebuild(force=True)` on affected models so Pydantic picks up the new validator.
+
+This means registration has a small one-time cost at import time and should be done early — ideally at module level, before creating any data model instances.

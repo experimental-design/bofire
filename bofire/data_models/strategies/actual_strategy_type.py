@@ -23,9 +23,10 @@ from bofire.data_models.strategies.predictives.sobo import (
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.strategy import Strategy
 
 
-ActualStrategy = Union[
+_ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     SoboStrategy,
     AdditiveSoboStrategy,
     ActiveLearningStrategy,
@@ -42,3 +43,5 @@ ActualStrategy = Union[
     ShortestPathStrategy,
     FractionalFactorialStrategy,
 ]
+
+ActualStrategy = Union[tuple(_ACTUAL_STRATEGY_TYPES)]

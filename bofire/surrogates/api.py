@@ -5,7 +5,7 @@ from bofire.surrogates.map_saas import (
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
 )
-from bofire.surrogates.mapper import map
+from bofire.surrogates.mapper import map, register
 from bofire.surrogates.mlp import (
     ClassificationMLPEnsemble,
     MLPEnsemble,

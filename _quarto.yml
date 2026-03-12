@@ -160,6 +160,8 @@ website:
             href: docs/userguides/surrogates.qmd
           - text: "Data Models vs Functionals"
             href: docs/userguides/data_models_functionals.qmd
+          - text: "Registering Custom Types"
+            href: docs/userguides/custom_types.qmd
       - text: "Examples"
         menu:
           - text: "Basic Examples"
@@ -192,6 +194,7 @@ website:
         - docs/userguides/strategies.qmd
         - docs/userguides/surrogates.qmd
         - docs/userguides/data_models_functionals.qmd
+        - docs/userguides/custom_types.qmd
 
     - title: "Examples"
       contents:

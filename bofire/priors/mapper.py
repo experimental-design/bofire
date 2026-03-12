@@ -1,5 +1,5 @@
 import math
-from typing import Union
+from typing import Callable, Optional, Type, Union
 
 import gpytorch
 from botorch.utils.constraints import LogTransformedInterval, NonTransformedInterval
@@ -11,6 +11,51 @@ import bofire.data_models.priors.api as data_models
 Constraint = Union[
     Positive, GreaterThan, LessThan, LogTransformedInterval, NonTransformedInterval
 ]
+
+
+def register(
+    data_model_cls: Type,
+    map_fn: Optional[Callable] = None,
+):
+    """Register a custom prior/constraint mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyPriorDataModel)
+        def map_my_prior(data_model, **kwargs):
+            return MyGpytorchPrior(...)
+
+        # Direct call form
+        register(MyPriorDataModel, map_my_prior)
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes ``(data_model, **kwargs)`` and returns a
+            gpytorch prior or constraint. If not provided, returns a decorator.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        PRIOR_MAP[data_model_cls] = fn
+
+        # Also register with the data model unions so Pydantic accepts the type
+        if issubclass(data_model_cls, data_models.Prior):
+            data_models.register_prior(data_model_cls)
+        elif issubclass(
+            data_model_cls, (data_models.PriorConstraint, data_models.Interval)
+        ):
+            data_models.register_prior_constraint(data_model_cls)
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
 
 
 def map_NormalPrior(
