@@ -1,9 +1,7 @@
 from typing import Union
 
-from bofire.data_models.strategies.actual_strategy_type import (
-    ActualStrategy,
-    register_strategy,
-)
+from bofire.data_models.strategies._register import register_strategy
+from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     AnyOptimalityCriterion,

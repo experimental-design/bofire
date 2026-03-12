@@ -1,5 +1,6 @@
 from typing import Union
 
+from bofire.data_models.kernels._register import register_kernel  # noqa: F401
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
     MultiplicativeKernel,
@@ -81,5 +82,3 @@ _KERNEL_TYPES: list[type[Kernel]] = [
 ]
 
 AnyKernel = Union[tuple(_KERNEL_TYPES)]
-
-from bofire.data_models.kernels._register import register_kernel  # noqa: E402, F401

@@ -1,6 +1,10 @@
 from functools import partial
 from typing import Union
 
+from bofire.data_models.priors._register import (
+    register_prior,
+    register_prior_constraint,
+)
 from bofire.data_models.priors.constraint import (
     GreaterThan,
     LessThan,
@@ -44,11 +48,6 @@ _PRIOR_CONSTRAINT_TYPES: list[type] = [
 ]
 
 AnyPriorConstraint = Union[tuple(_PRIOR_CONSTRAINT_TYPES)]
-
-from bofire.data_models.priors._register import (  # noqa: E402
-    register_prior,
-    register_prior_constraint,
-)
 
 
 # these are priors that are generally applicable

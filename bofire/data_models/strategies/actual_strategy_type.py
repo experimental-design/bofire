@@ -45,7 +45,3 @@ _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
 ]
 
 ActualStrategy = Union[tuple(_ACTUAL_STRATEGY_TYPES)]
-
-from bofire.data_models.strategies._register import (  # noqa: E402
-    register_strategy as register_strategy,
-)
