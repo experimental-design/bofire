@@ -1,7 +1,5 @@
 """Registration utilities for custom engineered feature types."""
 
-import typing
-from collections.abc import Sequence
 from typing import Union
 
 
@@ -24,15 +22,8 @@ def register_engineered_feature(data_model_cls: type) -> None:
         tuple(features_api._ENGINEERED_FEATURE_TYPES)
     ]
 
-    # Lazy import to avoid circular dependencies
+    from bofire.data_models._register_utils import append_to_union_field
     from bofire.data_models.domain.features import EngineeredFeatures
 
-    # Patch the Sequence[Union[...]] annotation on EngineeredFeatures.features
-    old = EngineeredFeatures.model_fields["features"].annotation
-    inner_args = typing.get_args(typing.get_args(old)[0])
-    if data_model_cls not in inner_args:
-        new_inner = Union[tuple(list(inner_args) + [data_model_cls])]
-        new_ann = Sequence[new_inner]
-        EngineeredFeatures.__annotations__["features"] = new_ann
-        EngineeredFeatures.model_fields["features"].annotation = new_ann
+    append_to_union_field(EngineeredFeatures, "features", data_model_cls)
     EngineeredFeatures.model_rebuild(force=True)
