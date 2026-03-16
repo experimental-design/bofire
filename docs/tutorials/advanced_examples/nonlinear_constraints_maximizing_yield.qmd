@@ -43,7 +43,8 @@ class CompetingReactionsModel:
         C_A = self.C_A0 * (pressure / 1.0)
         C_B = C_A * feed_ratio
         C_P, C_W = 0.0, 0.0
-        dt, steps = 0.01, int(tau / dt)
+        dt = 0.01  # min
+        steps = int(tau / dt)
         for _ in range(steps):
             r1 = k1 * C_A * C_B
             r2 = k2 * C_P * C_B
