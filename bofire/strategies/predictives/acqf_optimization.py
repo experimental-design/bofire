@@ -610,7 +610,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             return (
                 nonlinear_constraints,
                 gen_batch_initial_conditions,
-                {"generator": torch.Generator()},
+                {},
             )
 
         _captured_constraints = nonlinear_constraints
