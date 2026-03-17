@@ -488,29 +488,33 @@ class BotorchOptimizer(AcquisitionOptimizer):
         }
         # Prefer principled retries over post-hoc projection/repair:
         # If we get infeasible candidates back from BoTorch, re-run the optimizer a few
-        # times (different random starts inside BoTorch) and only give up afterwards.
-        max_infeasible_retries = 3
+        # times and *escalate* the search (more raw_samples / restarts) for tight
+        # feasible regions.
+        max_infeasible_retries = 4
         nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
 
         for attempt in range(max_infeasible_retries + 1):
+            # Escalate search budget on retries (no change for attempt==0).
+            if attempt == 0:
+                optimizer_input_i = optimizer_input
+            else:
+                factor = 2**attempt
+                optimizer_input_i = optimizer_input.model_copy(
+                    update={
+                        "raw_samples": int(optimizer_input.raw_samples * factor),
+                        "num_restarts": int(optimizer_input.num_restarts * factor),
+                    }
+                )
             try:
                 candidates, acqf_vals = optimizer_mapping[optimizer](
-                    **optimizer_input.model_dump()
+                    **optimizer_input_i.model_dump()
                 )  # type: ignore
-            except CandidateGenerationError:
-                # Retry without nonlinear constraints (BoTorch can fail to generate ICs).
-                optimizer_input_fallback = self._get_arguments_for_optimizer(
-                    bounds=bounds,
-                    optimizer=optimizer,
-                    acqfs=acqfs,
-                    domain=domain,
-                    candidate_count=candidate_count,
-                    skip_nonlinear=True,
-                )
-                candidates, acqf_vals = optimizer_mapping[optimizer](
-                    **optimizer_input_fallback.model_dump()
-                )  # type: ignore
-                return candidates, acqf_vals
+            except (CandidateGenerationError, ValueError):
+                # IC generation / constraint validation failures can surface as ValueError.
+                # Retry with larger budgets rather than disabling constraints.
+                if attempt == max_infeasible_retries:
+                    raise
+                continue
 
             if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
                 return candidates, acqf_vals
@@ -789,38 +793,18 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         break
 
                 if len(all_feasible) == 0:
-                    from botorch.optim.initializers import gen_batch_initial_conditions
-
-                    print(
-                        "WARNING: Could not generate any feasible initial "
-                        "conditions from nonlinear constraints; falling back to "
-                        "unconstrained initial conditions."
-                    )
-                    return gen_batch_initial_conditions(
-                        acq_function=acq_function,
-                        bounds=bounds,
-                        q=q,
-                        num_restarts=num_restarts,
-                        raw_samples=raw_samples,
-                        options=options or {},
+                    # For tight feasible regions, returning unconstrained ICs will
+                    # cause BoTorch to error (`batch_initial_conditions` infeasible).
+                    # Signal failure so the outer optimizer can retry with a larger budget.
+                    raise ValueError(
+                        "Could not generate any feasible initial conditions from nonlinear constraints."
                     )
 
                 X_all = torch.cat(all_feasible)
                 if len(X_all) < n_needed:
-                    from botorch.optim.initializers import gen_batch_initial_conditions
-
-                    print(
-                        f"WARNING: Only {len(X_all)} feasible initial conditions "
-                        f"found (need {n_needed}); falling back to unconstrained "
-                        "initial conditions."
-                    )
-                    return gen_batch_initial_conditions(
-                        acq_function=acq_function,
-                        bounds=bounds,
-                        q=q,
-                        num_restarts=num_restarts,
-                        raw_samples=raw_samples,
-                        options=options or {},
+                    raise ValueError(
+                        f"Could not generate enough feasible initial conditions "
+                        f"({len(X_all)} found, need {n_needed}) from nonlinear constraints."
                     )
 
                 X_selected = X_all[:n_needed]
@@ -864,9 +848,42 @@ class BotorchOptimizer(AcquisitionOptimizer):
             from botorch.utils.sampling import draw_sobol_samples
 
             def _sobol_generator(n: int, q: int, seed: int | None = None):
-                return draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed).to(
+                X = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed).to(
                     device=bounds.device, dtype=bounds.dtype
                 )
+                # If the domain has NChooseK constraints, make the generated initial
+                # conditions feasible by zeroing out the smallest components.
+                # This is used with BoTorch's `gen_batch_initial_conditions`, which
+                # requires `batch_initial_conditions` to satisfy nonlinear constraints.
+                nchooseks = domain.constraints.get(NChooseKConstraint)
+                if len(nchooseks) == 0:
+                    return X
+
+                X_flat = X.reshape(-1, X.shape[-1])
+                cont_keys = domain.inputs.get_keys(ContinuousInput)
+                for c in nchooseks:
+                    # Only enforce the max_count relaxation here (common use case).
+                    if c.max_count >= len(c.features):
+                        continue
+                    feat_indices = torch.tensor(
+                        [cont_keys.index(k) for k in c.features],
+                        device=X_flat.device,
+                        dtype=torch.long,
+                    )
+                    sub = X_flat.index_select(-1, feat_indices)
+                    n_zero = len(c.features) - c.max_count
+                    if n_zero <= 0:
+                        continue
+                    # Set the smallest `n_zero` entries (per row) to zero.
+                    _, small_idx = torch.topk(sub, k=n_zero, largest=False, dim=-1)
+                    rows = torch.arange(sub.shape[0], device=X_flat.device).unsqueeze(
+                        -1
+                    )
+                    sub = sub.clone()
+                    sub[rows, small_idx] = 0.0
+                    X_flat[:, feat_indices] = sub
+
+                return X_flat.reshape_as(X)
 
             ic_gen_kwargs = {**ic_gen_kwargs, "generator": _sobol_generator}
 
