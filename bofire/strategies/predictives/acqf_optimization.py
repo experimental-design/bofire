@@ -610,7 +610,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             return (
                 nonlinear_constraints,
                 gen_batch_initial_conditions,
-                {},
+                {"generator": "sobol"},
             )
 
         _captured_constraints = nonlinear_constraints
@@ -832,6 +832,19 @@ class BotorchOptimizer(AcquisitionOptimizer):
         nonlinear_constraints, ic_generator, ic_gen_kwargs = (
             self._get_nonlinear_constraint_setup(domain)
         )
+
+        # Some BoTorch versions expect a callable `generator(n, q, seed)` in
+        # `gen_batch_initial_conditions`. We use Sobol samples and close over `bounds`
+        # so it works consistently across versions.
+        if ic_gen_kwargs.get("generator") == "sobol":
+            from botorch.utils.sampling import draw_sobol_samples
+
+            def _sobol_generator(n: int, q: int, seed: int | None = None):
+                return draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed).to(
+                    device=bounds.device, dtype=bounds.dtype
+                )
+
+            ic_gen_kwargs = {**ic_gen_kwargs, "generator": _sobol_generator}
 
         # if len(nonlinear_constraints) == 0:
         #     ic_generator = None
