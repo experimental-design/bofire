@@ -1,10 +1,9 @@
 import inspect
 import warnings
-from typing import Callable, Dict, Literal, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-import torch
 from pydantic import Field, field_validator, model_validator
 
 
@@ -15,7 +14,9 @@ try:
 
     torch_tensor = torch.tensor
     torch_diag = torch.diag
+    _TORCH_AVAILABLE = True
 except ImportError:
+    _TORCH_AVAILABLE = False
 
     def error_func(*args, **kwargs):
         raise NotImplementedError("torch must be installed to use this functionality")
@@ -24,6 +25,9 @@ except ImportError:
     torch_tensor = error_func
     torch_diag = error_func
     torch_hessian = error_func  # ty: ignore[invalid-assignment]
+
+if TYPE_CHECKING:  # pragma: no cover
+    import torch as _torch
 
 from bofire.data_models.constraints.constraint import (
     EqualityConstraint,
@@ -168,8 +172,8 @@ class NonlinearConstraint(IntrapointConstraint):
         return hessian_expression
 
     def __call__(
-        self, experiments: Union[pd.DataFrame, torch.Tensor]
-    ) -> Union[pd.Series, torch.Tensor]:
+        self, experiments: Union[pd.DataFrame, "_torch.Tensor"]
+    ) -> Union[pd.Series, "_torch.Tensor"]:
         """Evaluate the constraint.
 
         Args:
@@ -179,7 +183,7 @@ class NonlinearConstraint(IntrapointConstraint):
             Constraint values as Series (for DataFrame) or Tensor (for Tensor input)
         """
         # Handle Tensor input from BoTorch
-        if isinstance(experiments, torch.Tensor):
+        if _TORCH_AVAILABLE and isinstance(experiments, torch.Tensor):
             # Handle 3D tensor from BoTorch: [n_restarts, q, n_features]
             if experiments.ndim == 3:
                 batch_size, q, n_features = experiments.shape
@@ -238,16 +242,31 @@ class NonlinearConstraint(IntrapointConstraint):
         if isinstance(self.expression, str):
             return experiments.eval(self.expression)
         elif isinstance(self.expression, Callable):
-            func_input = {
-                col: torch.tensor(
-                    experiments[col].values, dtype=torch.float64, requires_grad=False
+            # Support both:
+            # - torch installed: pass torch tensors (enables torch-based callables)
+            # - torch not installed: pass numpy arrays (enables numpy-based callables)
+            if _TORCH_AVAILABLE:
+                func_input = {
+                    col: torch.tensor(
+                        experiments[col].values,
+                        dtype=torch.float64,
+                        requires_grad=False,
+                    )
+                    for col in experiments.columns
+                }
+                out = self.expression(**func_input)
+                if hasattr(out, "detach"):
+                    out = out.detach().cpu().numpy()
+                return pd.Series(
+                    np.asarray(out),
+                    index=experiments.index,  # Preserve original indices
                 )
-                for col in experiments.columns
+
+            func_input = {
+                col: experiments[col].to_numpy() for col in experiments.columns
             }
-            return pd.Series(
-                self.expression(**func_input).cpu().numpy(),
-                index=experiments.index,  # Preserves orogonal indices instead of creating new ones.
-            )
+            out = self.expression(**func_input)
+            return pd.Series(np.asarray(out), index=experiments.index)
         raise ValueError("expression must be a string or callable")
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -407,7 +426,9 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
         violation = self(experiments)
         # Small epsilon to handle floating-point boundary cases
         # e.g. violation = -0.001 with tol = 0.001 should pass
-        eps = max(tol * 1e-9, 1e-15)
+        # Add a small absolute epsilon to avoid false negatives when we're right on
+        # the boundary (e.g. 0.0010000000000001 with tol=0.001).
+        eps = max(tol * 1e-9, 1e-15, 1e-9)
         result = pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
         return result
 
