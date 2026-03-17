@@ -39,7 +39,7 @@ input_features = Inputs(
 )
 output_features = Outputs(features=[ContinuousOutput(key="y")])
 experiments = input_features.sample(n=50)
-experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True, backend = "python")
 experiments["valid_y"] = 1
 ```
 

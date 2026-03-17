@@ -145,7 +145,7 @@ def test_constraints_jacobian(constraints, num_candidates):
                 ),
             )
         if isinstance(c, NonlinearConstraint):
-            res = candidates.eval(c.jacobian_expression)
+            res = candidates.eval(c.jacobian_expression, backend="python")
             for j, col in enumerate(res):
                 if not hasattr(col, "__iter__"):
                     res[j] = pd.Series(np.repeat(col, candidates.shape[0]))
