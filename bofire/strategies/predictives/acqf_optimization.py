@@ -486,26 +486,50 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
         }
-        try:
-            candidates, acqf_vals = optimizer_mapping[optimizer](
-                **optimizer_input.model_dump()
-            )  # type: ignore
-        except CandidateGenerationError:
-            # Retry without nonlinear constraints, then project onto feasible set
-            optimizer_input_fallback = self._get_arguments_for_optimizer(
-                bounds=bounds,
-                optimizer=optimizer,
-                acqfs=acqfs,
-                domain=domain,
-                candidate_count=candidate_count,
-                skip_nonlinear=True,
-            )
-            candidates, acqf_vals = optimizer_mapping[optimizer](
-                **optimizer_input_fallback.model_dump()
-            )  # type: ignore
-            candidates = self._project_onto_nonlinear_constraints(
-                candidates, domain, bounds
-            )
+        # Prefer principled retries over post-hoc projection/repair:
+        # If we get infeasible candidates back from BoTorch, re-run the optimizer a few
+        # times (different random starts inside BoTorch) and only give up afterwards.
+        max_infeasible_retries = 3
+        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
+
+        for attempt in range(max_infeasible_retries + 1):
+            try:
+                candidates, acqf_vals = optimizer_mapping[optimizer](
+                    **optimizer_input.model_dump()
+                )  # type: ignore
+            except CandidateGenerationError:
+                # Retry without nonlinear constraints (BoTorch can fail to generate ICs).
+                optimizer_input_fallback = self._get_arguments_for_optimizer(
+                    bounds=bounds,
+                    optimizer=optimizer,
+                    acqfs=acqfs,
+                    domain=domain,
+                    candidate_count=candidate_count,
+                    skip_nonlinear=True,
+                )
+                candidates, acqf_vals = optimizer_mapping[optimizer](
+                    **optimizer_input_fallback.model_dump()
+                )  # type: ignore
+                return candidates, acqf_vals
+
+            if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
+                return candidates, acqf_vals
+
+            # Check feasibility in tensor space: BoTorch-style constraints are feasible when >= 0.
+            X_flat = candidates.reshape(-1, candidates.shape[-1])
+            with torch.no_grad():
+                feasible = True
+                for constraint_fn, _ in nonlinear_constraints:
+                    if torch.any(constraint_fn(X_flat) < 0.0):
+                        feasible = False
+                        break
+
+            if feasible:
+                return candidates, acqf_vals
+
+            # Otherwise retry (unless this was the last attempt).
+            if attempt == max_infeasible_retries:
+                return candidates, acqf_vals
         return candidates, acqf_vals
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:

@@ -192,12 +192,19 @@ for _ in range(max_attempts):
     if len(feasible) >= n_want:
         candidates = feasible.head(n_want)
         break
-    candidates = feasible if candidates is None else pd.concat([candidates, feasible], ignore_index=True).drop_duplicates()
+    candidates = (
+        feasible
+        if candidates is None
+        else pd.concat([candidates, feasible], ignore_index=True).drop_duplicates()
+    )
     if len(candidates) >= n_want:
         candidates = candidates.head(n_want)
         break
 if candidates is None or len(candidates) < n_want:
-    raise RuntimeError(f"Could not obtain {n_want} feasible candidates after {max_attempts} attempts.")
+    raise RuntimeError(
+        f"Could not obtain {n_want} feasible candidates after {max_attempts} attempts. "
+        "Try relaxing constraints or increasing initial samples."
+    )
 print("Proposed candidates:")
 print(candidates.head())
 ```
