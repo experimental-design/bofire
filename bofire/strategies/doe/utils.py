@@ -1,6 +1,7 @@
 import importlib.util
 import re
 import sys
+import warnings
 from copy import copy
 from itertools import combinations
 from typing import List, Optional, Tuple, Union, cast
@@ -82,9 +83,20 @@ def formula_str_to_fully_continuous(
         pattern = r"\b" + re.escape(cat_input.key) + r"\b"
         formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
 
-    return str(
-        Formula(formula)
+    formula = Formula(
+        formula
     )  # formula casting for expansion of terms like (a+b)*(c+d)
+    for _input in inputs.get([DiscreteInput]):
+        for k in range(
+            2, 99
+        ):  # arbitrary upper bound on number of levels of discrete input
+            if (len(_input.values) <= k) and (_input.key + f" ** {k}" in formula.root):
+                warnings.warn(
+                    f"Discrete input {_input.key} with {len(_input.values)} levels can not be represent term of order {k} or higher.",
+                    UserWarning,
+                )
+                break
+    return str(formula)
 
 
 def get_formula_from_string(

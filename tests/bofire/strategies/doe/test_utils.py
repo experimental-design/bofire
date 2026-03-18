@@ -905,6 +905,47 @@ def test_formula_str_to_fully_continuous():
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
 
 
+def test_formula_str_does_not_match_discrete_levels_emmits_warning():
+    # Create a small example problem with categorical, continuous, and discrete variables
+
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[0, 1],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    # This includes interaction between color and material
+    custom_formula = "color + material + temperature + { pressure ** 2 } + color:material + color_intensity"
+    with pytest.warns(
+        UserWarning,
+        match="Discrete input pressure with 2 levels can not be represent term of order 2 or higher.",
+    ):
+        formula_str_to_fully_continuous(
+            formula=custom_formula,
+            inputs=inputs,
+        )
+
+
 def test_formula_str_to_fully_continuous_only_categoricals():
     # Create a small example problem with only categorical variables
     inputs = Inputs(
@@ -988,4 +1029,4 @@ def only_continuous_inputs_formula_str_to_fully_continuous():
 
 
 if __name__ == "__main__":
-    test_formula_discrete_too_few_levels()
+    test_formula_str_does_not_match_discrete_levels_emmits_warning()
