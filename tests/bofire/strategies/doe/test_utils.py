@@ -750,7 +750,7 @@ def test_convert_formula_to_string():
 def test_formula_discrete_handled_like_continuous():
     domain_w_discrete = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
-        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        + [DiscreteInput(key=f"x{i}", values=[0, 1, 2]) for i in range(3, 5)],
         outputs=[ContinuousOutput(key="y")],
     )
     domain_wo_discrete = Domain.from_lists(
@@ -771,6 +771,48 @@ def test_formula_discrete_handled_like_continuous():
         formula_wo_discrete = get_formula_from_string(
             inputs=domain_wo_discrete.inputs, model_type=model_type
         )
+        assert formula_w_discrete == formula_wo_discrete
+
+
+def test_formula_discrete_too_few_levels():
+    domain_w_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    domain_wo_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for model_type in [
+        "linear",
+        "linear-and-interactions",
+    ]:
+        formula_w_discrete = get_formula_from_string(
+            inputs=domain_w_discrete.inputs, model_type=model_type
+        )
+        formula_wo_discrete = get_formula_from_string(
+            inputs=domain_wo_discrete.inputs, model_type=model_type
+        )
+        assert formula_w_discrete == formula_wo_discrete
+
+    for model_type in [
+        "linear-and-quadratic",
+        "fully-quadratic",
+    ]:
+        formula_w_discrete = str(
+            get_formula_from_string(
+                inputs=domain_w_discrete.inputs, model_type=model_type
+            )
+        )
+
+        formula_wo_discrete = str(
+            get_formula_from_string(
+                inputs=domain_wo_discrete.inputs, model_type=model_type
+            )
+        ).replace(" + x3 ** 2 + x4 ** 2", "")
         assert formula_w_discrete == formula_wo_discrete
 
 
@@ -946,6 +988,4 @@ def only_continuous_inputs_formula_str_to_fully_continuous():
 
 
 if __name__ == "__main__":
-    test_formula_str_to_fully_continuous()
-    test_formula_str_to_fully_continuous_only_categoricals()
-    only_continuous_inputs_formula_str_to_fully_continuous()
+    test_formula_discrete_too_few_levels()
