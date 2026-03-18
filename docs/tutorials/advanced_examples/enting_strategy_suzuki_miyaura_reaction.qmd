@@ -277,7 +277,7 @@ print("\n🤖 STEP 4: Initialize EntingStrategy")
 print("-" * 80)
 
 # Create the strategy configuration (data model)
-strategy_data_model = EntingStrategy(
+strategy_data_model = EntingStrategyDataModel(
     domain=domain,
     seed=42  # For reproducibility
 )
