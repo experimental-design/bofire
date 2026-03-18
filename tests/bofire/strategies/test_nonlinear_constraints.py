@@ -14,6 +14,7 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 
 
 # ========== TASK 1.0: BASIC EQUALITY CONSTRAINT ==========
+# Here we test nonlinear constraints
 
 
 def test_nonlinear_equality_constraint_sobo():
