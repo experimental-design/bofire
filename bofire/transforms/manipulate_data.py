@@ -15,7 +15,7 @@ class ManipulateDataTransform(Transform):
             return df
         transformed_df = df.copy()
         for tr in transforms:
-            transformed_df.eval(tr, inplace=True, backend="python")
+            transformed_df.eval(tr, inplace=True, engine="python")
 
         return transformed_df
 

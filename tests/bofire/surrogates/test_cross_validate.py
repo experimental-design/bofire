@@ -30,7 +30,7 @@ def test_model_cross_validate(folds):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
@@ -69,7 +69,7 @@ def test_model_cross_validate_descriptor():
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments.loc[experiments.x_2 == "b", "y"] += 5
     experiments.loc[experiments.x_2 == "c", "y"] += 10
@@ -109,7 +109,7 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
@@ -163,7 +163,7 @@ def test_model_cross_validate_hooks():
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
@@ -221,7 +221,7 @@ def test_model_cross_validate_invalid(folds):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
@@ -249,7 +249,7 @@ def test_model_cross_validate_random_state(folds):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
@@ -600,7 +600,7 @@ def test_model_cross_validate_invalid_group_split_column():
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
@@ -646,7 +646,7 @@ def test_make_cv_split():
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(

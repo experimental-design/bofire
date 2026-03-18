@@ -26,7 +26,7 @@ def test_cv_folds(folds):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)

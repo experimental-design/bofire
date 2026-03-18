@@ -140,7 +140,7 @@ class NonlinearConstraint(IntrapointConstraint):
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         if isinstance(self.expression, str):
-            return experiments.eval(self.expression, backend="python")
+            return experiments.eval(self.expression, engine="python")
         elif isinstance(self.expression, Callable):
             func_input = {
                 col: torch_tensor(experiments[col], requires_grad=False)
@@ -151,7 +151,7 @@ class NonlinearConstraint(IntrapointConstraint):
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self.jacobian_expression is not None:
             if isinstance(self.jacobian_expression, str):
-                res = experiments.eval(self.jacobian_expression, backend="python")
+                res = experiments.eval(self.jacobian_expression, engine="python")
                 for i, col in enumerate(res):
                     if not hasattr(col, "__iter__"):
                         res[i] = pd.Series(np.repeat(col, experiments.shape[0]))
@@ -218,7 +218,7 @@ class NonlinearConstraint(IntrapointConstraint):
         """
         if self.hessian_expression is not None:
             if isinstance(self.hessian_expression, str):
-                res = experiments.eval(self.hessian_expression, backend="python")
+                res = experiments.eval(self.hessian_expression, engine="python")
             else:
                 if not isinstance(self.hessian_expression, Callable):
                     raise ValueError(

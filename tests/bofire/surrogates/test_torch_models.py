@@ -526,7 +526,7 @@ def test_botorch_models_invalid_compatibilize():
     experiments1.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments1["valid_y"] = 1
     data_model1 = data_models.SingleTaskGPSurrogate(
@@ -568,7 +568,7 @@ def test_botorch_models_fit_and_compatibilize():
     experiments1.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments1["valid_y"] = 1
     data_model1 = data_models.SingleTaskGPSurrogate(
@@ -596,7 +596,7 @@ def test_botorch_models_fit_and_compatibilize():
     experiments2.eval(
         "y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
@@ -690,7 +690,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     experiments1.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments1["valid_y"] = 1
     data_model1 = data_models.SingleTaskGPSurrogate(
@@ -718,7 +718,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     experiments2.eval(
         "y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
@@ -821,7 +821,7 @@ def test_empirical_model():
     experiments1.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments1["valid_y"] = 1
     data_model1 = data_models.EmpiricalSurrogate(inputs=inputs, outputs=outputs)
@@ -849,7 +849,7 @@ def test_empirical_model():
     experiments2.eval(
         "y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0

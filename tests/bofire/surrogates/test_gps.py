@@ -100,7 +100,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
@@ -603,7 +603,7 @@ def test_MixedSingletaskGPModel_with_botorch():
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
@@ -682,7 +682,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
@@ -891,7 +891,7 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
     experiments.eval(
         "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
         inplace=True,
-        backend="python",
+        engine="python",
     )
     experiments["valid_y"] = 1
     model = RobustSingleTaskGPSurrogate(
