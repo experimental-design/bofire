@@ -21,5 +21,5 @@ from bofire.strategies.predictives.sobo import (
 )
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
-from bofire.strategies.stepwise.stepwise import StepwiseStrategy
+from bofire.strategies.stepwise.stepwise import OptimizationComplete, StepwiseStrategy
 from bofire.strategies.strategy import Strategy
