@@ -405,7 +405,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="9f0587eb" class="cell" data-execution_count="1">
+<div id="833bf127" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -413,7 +413,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="96cfd087" class="cell" data-execution_count="2">
+<div id="dedefbee" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -441,7 +441,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="63f32f4a" class="cell" data-execution_count="3">
+<div id="75e36a4a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
@@ -455,62 +455,62 @@ Download complete.</code></pre>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># save all the experiments</span></span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>all_experiments <span class="op">=</span> strategy.experiments</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:181: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+<pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:181: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
   torch.from_numpy(Y.values).to(**tkwargs),</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Step 1/3</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
+<pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
   warnings.warn(</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100     x_101     x_102     x_103    x_104  \
-0  0.826582  0.271678  0.127493  0.837353  0.738748  0.953452  0.18695   
+        x_1      x_10    x_100     x_101     x_102     x_103     x_104  \
+0  0.732047  0.308589  0.93653  0.782489  0.981169  0.673896  0.019099   
 
-      x_105     x_106     x_107  ...     x_95      x_96      x_97      x_98  \
-0  0.152946  0.464439  0.311761  ...  0.53644  0.739997  0.833448  0.099662   
+      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.034664  0.033458  0.347629  ...  0.833743  0.875989  0.398598  0.201393   
 
-      x_99    y_pred     y_sd     y_des         y  valid_y  
-0  0.71552  0.236782  0.00201 -0.236782  0.231462        1  
+       x_99    y_pred     y_sd     y_des         y  valid_y  
+0  0.104488  0.236782  0.00201 -0.236782  0.231485        1  
 
 [1 rows x 393 columns]
 Step 2/3</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
+<pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
   warnings.warn(</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100  x_101     x_102     x_103     x_104  x_105  \
-0  0.762476  0.974247  0.545345    1.0  0.285827  0.083441  0.486341    1.0   
+        x_1      x_10     x_100    x_101     x_102     x_103     x_104  \
+0  0.561735  0.599606  0.312395  0.36944  0.650856  0.838431  0.019921   
 
-      x_106     x_107  ...      x_95      x_96      x_97      x_98     x_99  \
-0  0.750325  0.254731  ...  0.580569  0.925144  0.352817  0.614842  0.66392   
+      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.624558  0.428416  0.125635  ...  0.500582  0.146469  0.530409  0.882616   
 
-     y_pred      y_sd     y_des         y  valid_y  
-0  0.205848  0.001989 -0.205848  0.234137        1  
+      x_99    y_pred      y_sd     y_des         y  valid_y  
+0  0.20227  0.236648  0.002025 -0.236648  0.234362        1  
 
 [1 rows x 393 columns]
 Step 3/3</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
+<pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
   warnings.warn(</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-   x_1  x_10     x_100  x_101  x_102  x_103  x_104     x_105     x_106  \
-0  1.0   1.0  0.126734    1.0    0.0    1.0    0.0  0.529237  0.893705   
+        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
+0  0.261999  0.054657  0.187306  0.491781  0.493513  0.309929  0.765092   
 
-      x_107  ...      x_95  x_96      x_97      x_98  x_99    y_pred  \
-0  0.847225  ...  0.968973   1.0  0.373301  0.024165   1.0  0.223986   
+      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.499436  0.306967  0.188983  ...  0.048852  0.145858  0.157673  0.098106   
 
-       y_sd     y_des         y  valid_y  
-0  0.001895 -0.223986  0.235613        1  
+       x_99    y_pred      y_sd     y_des         y  valid_y  
+0  0.274989  0.236592  0.002025 -0.236592  0.226934        1  
 
 [1 rows x 393 columns]</code></pre>
 </div>
