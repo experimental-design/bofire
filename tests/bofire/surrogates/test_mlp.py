@@ -246,7 +246,11 @@ def test_mlp_ensemble_fit_categorical(scaler):
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1

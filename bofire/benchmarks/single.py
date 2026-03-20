@@ -414,6 +414,7 @@ class Himmelblau(Benchmark):
         X_temp = X.eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
             inplace=False,
+            engine="python",
         )
         Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
         return Y
@@ -516,6 +517,7 @@ class MultiTaskHimmelblau(Benchmark):
         X_temp = X.query("task_id == 'task_1'").eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
             inplace=False,
+            engine="python",
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1
@@ -523,6 +525,7 @@ class MultiTaskHimmelblau(Benchmark):
         X_temp = X.query("task_id == 'task_2'").eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2",
             inplace=False,
+            engine="python",
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1

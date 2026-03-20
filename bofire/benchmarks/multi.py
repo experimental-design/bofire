@@ -164,14 +164,22 @@ class BNH(Benchmark):
             )
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        experiments = candidates.eval("f1=4*x1**2 + 4*x2**2", inplace=False)
-        experiments = experiments.eval("f2=(x1-5)**2 + (x2-5)**2", inplace=False)
+        experiments = candidates.eval(
+            "f1=4*x1**2 + 4*x2**2", inplace=False, engine="python"
+        )
+        experiments = experiments.eval(
+            "f2=(x1-5)**2 + (x2-5)**2", inplace=False, engine="python"
+        )
         experiments["valid_f1"] = 1
         experiments["valid_f2"] = 1
         if not self.constraints:
             return experiments[["f1", "f2", "valid_f1", "valid_f2"]].copy()
-        experiments = experiments.eval("c1=(x1-5)**2 + x2**2", inplace=False)
-        experiments = experiments.eval("c2=(x1-8)**2 + (x2+3)**2", inplace=False)
+        experiments = experiments.eval(
+            "c1=(x1-5)**2 + x2**2", inplace=False, engine="python"
+        )
+        experiments = experiments.eval(
+            "c2=(x1-8)**2 + (x2+3)**2", inplace=False, engine="python"
+        )
         experiments["valid_c1"] = 1
         experiments["valid_c2"] = 1
         return experiments[
@@ -206,13 +214,16 @@ class TNK(Benchmark):
         )
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        experiments = candidates.eval("f1=x1", inplace=False)
-        experiments = experiments.eval("f2=x2", inplace=False)
+        experiments = candidates.eval("f1=x1", inplace=False, engine="python")
+        experiments = experiments.eval("f2=x2", inplace=False, engine="python")
         experiments = experiments.eval(
             "c1=x1**2 + x2**2 -1 -0.1*cos(16*arctan(x1/x2))",
             inplace=False,
+            engine="python",
         )
-        experiments = experiments.eval("c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False)
+        experiments = experiments.eval(
+            "c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False, engine="python"
+        )
         experiments["valid_c1"] = 1
         experiments["valid_c2"] = 1
         experiments["valid_f1"] = 1
