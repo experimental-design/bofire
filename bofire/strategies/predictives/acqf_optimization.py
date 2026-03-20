@@ -739,7 +739,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 )
                 for constraint_fn, _ in nonlinear_constraints_local:
                     constraint_vals = constraint_fn(X_projected)
-                    feasible_mask &= constraint_vals >= -5e-4
+                    # BoTorch validates ICs with a (fairly strict) atol; use a
+                    # tight feasibility tolerance to avoid passing slightly
+                    # infeasible ICs, especially for very small feasible regions.
+                    feasible_mask &= constraint_vals >= -1e-6
 
                 X_feasible = X_projected[feasible_mask]
 
@@ -782,7 +785,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     )
                     for constraint_fn, _ in nonlinear_constraints_local:
                         constraint_vals = constraint_fn(X_raw)
-                        feasible_mask &= constraint_vals >= -1e-4
+                        # BoTorch's feasible check is strict; allow only tiny
+                        # numerical slack so `batch_initial_conditions` passes
+                        # validation even for tight constraints.
+                        feasible_mask &= constraint_vals >= -1e-6
 
                     X_feasible = X_raw[feasible_mask]
                     if len(X_feasible) > 0:

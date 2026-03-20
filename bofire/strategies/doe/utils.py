@@ -672,7 +672,8 @@ def _minimize(
         use_cyipopt (bool): Use cyipopt if set to True. Defaults to true if cyipopt is available.
 
     Returns:
-        np.ndarray: The optimized design as flattened numpy array.
+        np.ndarray: The optimized design with shape
+            ``(objective_function.n_experiments, objective_function.n_vars)``.
     """
     if use_cyipopt is None:
         use_cyipopt = CYIPOPT_AVAILABLE
@@ -694,6 +695,11 @@ def _minimize(
             problem.add_option(key, ipopt_options[key])
 
         x, info = problem.solve(x0)
+        x = np.asarray(x)
+        if x.ndim == 1:
+            return x.reshape(
+                objective_function.n_experiments, objective_function.n_vars
+            )
         return x
     else:
         options = {}
@@ -710,4 +716,9 @@ def _minimize(
             jac=objective_function.evaluate_jacobian,
             hess=objective_function.evaluate_hessian if use_hessian else None,
         )
-        return result.x
+        x = np.asarray(result.x)
+        if x.ndim == 1:
+            return x.reshape(
+                objective_function.n_experiments, objective_function.n_vars
+            )
+        return x
