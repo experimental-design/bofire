@@ -1,11 +1,15 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field
 
 # from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
-from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, AnyPrior
+from bofire.data_models.priors.api import (
+    THREESIX_NOISE_PRIOR,
+    AnyPrior,
+    AnyPriorConstraint,
+)
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -14,6 +18,7 @@ class LinearSurrogate(TrainableBotorchSurrogate):
 
     kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    noise_constraint: Optional[AnyPriorConstraint] = None
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

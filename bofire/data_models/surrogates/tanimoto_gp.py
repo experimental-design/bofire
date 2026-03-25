@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
@@ -14,6 +14,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     AnyPrior,
+    AnyPriorConstraint,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -30,6 +31,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    noise_constraint: Optional[AnyPriorConstraint] = None
     tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed"
 
     @classmethod

@@ -83,6 +83,11 @@ def _rebuild_dependent_models() -> None:
         (PositiveIndexKernel, "var_constraint"),
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
+        (SingleTaskGPSurrogate, "noise_constraint"),
+        (MixedSingleTaskGPSurrogate, "noise_constraint"),
+        (TanimotoGPSurrogate, "noise_constraint"),
+        (PolynomialSurrogate, "noise_constraint"),
+        (LinearSurrogate, "noise_constraint"),
         (SingleTaskGPHyperconfig, "lengthscale_constraint"),
         (SingleTaskGPHyperconfig, "outputscale_constraint"),
     ]:
