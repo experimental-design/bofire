@@ -25,6 +25,7 @@ from bofire.data_models.priors.api import (
     MBO_NOISE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
@@ -195,3 +196,28 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     model2.loads(dump)
     preds2 = model2.predict(samples)
     assert_frame_equal(preds, preds2)
+
+
+def test_MultiTaskGPModel_noise_constraint():
+    benchmark = MultiTaskHimmelblau()
+    inputs = benchmark.domain.inputs
+    outputs = benchmark.domain.outputs
+    experiments_task1 = benchmark.f(
+        inputs.sample(5, seed=42).assign(task_id="task_1"), return_complete=True
+    )
+    experiments_task2 = benchmark.f(
+        inputs.sample(5, seed=43).assign(task_id="task_2"), return_complete=True
+    )
+    experiments = pd.concat([experiments_task1, experiments_task2], ignore_index=True)
+
+    model = MultiTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        noise_constraint=GreaterThan(lower_bound=5e-4),
+    )
+    model = surrogates.map(model)
+    model.fit(experiments)
+    lower_bound = float(
+        model.model.likelihood.noise_covar.raw_noise_constraint.lower_bound
+    )
+    assert lower_bound >= 5e-4

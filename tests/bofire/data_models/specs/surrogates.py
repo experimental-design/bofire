@@ -875,6 +875,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,
@@ -910,6 +911,7 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ONE_HOT,
@@ -943,6 +945,7 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,
@@ -977,6 +980,7 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,

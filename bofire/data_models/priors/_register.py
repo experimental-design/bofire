@@ -84,6 +84,7 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
         (SingleTaskGPSurrogate, "noise_constraint"),
+        (MultiTaskGPSurrogate, "noise_constraint"),
         (MixedSingleTaskGPSurrogate, "noise_constraint"),
         (TanimotoGPSurrogate, "noise_constraint"),
         (PolynomialSurrogate, "noise_constraint"),
