@@ -520,7 +520,7 @@ class TestIsNchoosekPruningApplicable:
         assert domain.is_nchoosek_pruning_applicable() is True
 
     def test_nchoosek_with_overlapping_linear_inequality(self):
-        """NChooseK feature in a linear inequality -> False."""
+        """NChooseK feature in a linear inequality -> True (handled via QP)."""
         domain = Domain.from_lists(
             inputs=[
                 ContinuousInput(key="x1", bounds=(0, 1)),
@@ -541,10 +541,11 @@ class TestIsNchoosekPruningApplicable:
                 ),
             ],
         )
-        assert domain.is_nchoosek_pruning_applicable() is False
+        assert domain.is_nchoosek_pruning_applicable() is True
+        assert domain.has_nchoosek_linear_overlap() is True
 
     def test_nchoosek_with_overlapping_linear_equality(self):
-        """NChooseK feature in a linear equality -> False."""
+        """NChooseK feature in a linear equality -> True (handled via QP)."""
         domain = Domain.from_lists(
             inputs=[
                 ContinuousInput(key="x1", bounds=(0, 1)),
@@ -565,10 +566,11 @@ class TestIsNchoosekPruningApplicable:
                 ),
             ],
         )
-        assert domain.is_nchoosek_pruning_applicable() is False
+        assert domain.is_nchoosek_pruning_applicable() is True
+        assert domain.has_nchoosek_linear_overlap() is True
 
     def test_nchoosek_with_non_overlapping_linear(self):
-        """NChooseK features disjoint from linear constraint features -> True."""
+        """NChooseK features partially overlap with linear -> True (x3 shared)."""
         domain = Domain.from_lists(
             inputs=[
                 ContinuousInput(key="x1", bounds=(0, 1)),
@@ -590,10 +592,11 @@ class TestIsNchoosekPruningApplicable:
                 ),
             ],
         )
-        assert domain.is_nchoosek_pruning_applicable() is False
+        assert domain.is_nchoosek_pruning_applicable() is True
+        assert domain.has_nchoosek_linear_overlap() is True
 
     def test_nchoosek_with_truly_disjoint_linear(self):
-        """NChooseK features fully disjoint from linear constraint features -> True."""
+        """NChooseK features fully disjoint from linear constraint features -> True, no QP needed."""
         domain = Domain.from_lists(
             inputs=[
                 ContinuousInput(key="x1", bounds=(0, 1)),
@@ -616,6 +619,7 @@ class TestIsNchoosekPruningApplicable:
             ],
         )
         assert domain.is_nchoosek_pruning_applicable() is True
+        assert domain.has_nchoosek_linear_overlap() is False
 
     def test_nchoosek_with_overlapping_product(self):
         """NChooseK feature in a product constraint -> False."""
@@ -642,8 +646,8 @@ class TestIsNchoosekPruningApplicable:
         )
         assert domain.is_nchoosek_pruning_applicable() is False
 
-    def test_multiple_nchoosek_one_overlapping(self):
-        """Two NChooseK constraints, one overlaps with linear -> False."""
+    def test_multiple_nchoosek_one_overlapping_linear(self):
+        """Two NChooseK constraints, one overlaps with linear -> True (QP handles it)."""
         domain = Domain.from_lists(
             inputs=[
                 ContinuousInput(key="x1", bounds=(0, 1)),
@@ -668,6 +672,38 @@ class TestIsNchoosekPruningApplicable:
                     features=["x3", "x4"],
                     coefficients=[1.0, 1.0],
                     rhs=1.0,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is True
+
+    def test_multiple_nchoosek_one_overlapping_product(self):
+        """Two NChooseK constraints, one overlaps with product -> False."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                ProductInequalityConstraint(
+                    features=["x3", "x4"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
                 ),
             ],
         )

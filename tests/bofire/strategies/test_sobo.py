@@ -639,3 +639,65 @@ def test_nchoosek_pruning_sobo():
     nchoosek = domain.constraints.get(NChooseKConstraint)[0]
     assert isinstance(nchoosek, NChooseKConstraint)
     assert nchoosek.is_fulfilled(candidates[domain.inputs.get_keys()]).all()
+
+
+def test_nchoosek_pruning_with_mixture_constraint():
+    """End-to-end test: SOBO with NChooseK + linear equality (mixture) constraint.
+
+    This tests the QP + local optimize_acqf pruning path.
+    """
+    from bofire.data_models.constraints.api import LinearEqualityConstraint
+
+    domain = Domain(
+        inputs=[  # type: ignore
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+            ContinuousInput(key="x4", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],  # type: ignore
+        constraints=[  # type: ignore
+            NChooseKConstraint(
+                features=["x1", "x2", "x3", "x4"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3", "x4"],
+                coefficients=[1.0, 1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+    assert domain.is_nchoosek_pruning_applicable() is True
+    assert domain.has_nchoosek_linear_overlap() is True
+
+    # Generate feasible training data (sum to 1, at most 2 active)
+    rng = np.random.default_rng(42)
+    experiments_list = []
+    for _ in range(10):
+        x = np.zeros(4)
+        active = rng.choice(4, size=2, replace=False)
+        vals = rng.dirichlet(np.ones(2))
+        x[active] = vals
+        experiments_list.append(x)
+
+    experiments = pd.DataFrame(experiments_list, columns=["x1", "x2", "x3", "x4"])
+    experiments["y"] = rng.standard_normal(10)
+    experiments["valid_y"] = 1
+
+    strategy_data = data_models.SoboStrategy(domain=domain)
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments)
+
+    candidates = strategy.ask(1, raise_validation_error=False)
+
+    # Check NChooseK constraint is fulfilled
+    nchoosek = domain.constraints.get(NChooseKConstraint)[0]
+    assert isinstance(nchoosek, NChooseKConstraint)
+    assert nchoosek.is_fulfilled(candidates[domain.inputs.get_keys()]).all()
+
+    # Check mixture constraint is approximately fulfilled (sum ≈ 1)
+    input_keys = domain.inputs.get_keys()
+    assert np.isclose(candidates[input_keys].sum(axis=1).values[0], 1.0, atol=1e-3)

@@ -13,7 +13,11 @@ from bofire.data_models.constraints.api import (
     AnyConstraint,
     ConstraintNotFulfilledError,
     InterpointConstraint,
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
 from bofire.data_models.domain.features import Inputs, Outputs
@@ -144,8 +148,10 @@ class Domain(BaseModel):
         Based on the BONSAI algorithm (https://arxiv.org/abs/2602.07144).
         Pruning is applicable when:
         1. There is at least one NChooseK constraint in the domain.
-        2. No feature involved in any NChooseK constraint appears in any other
-           constraint (linear, product, nonlinear, interpoint, categorical, etc.).
+        2. No feature involved in any NChooseK constraint appears in any
+           nonlinear (Product, Nonlinear) or interpoint constraint. Overlap
+           with linear equality/inequality constraints is allowed and handled
+           via QP projection + local acquisition function optimization.
 
         Returns:
             bool: True if pruning can be safely applied.
@@ -154,18 +160,41 @@ class Domain(BaseModel):
         if len(nchoosek_constraints) == 0:
             return False
 
-        # Collect all features from non-NChooseK constraints
-        other_constraint_features: set[str] = set()
-        for c in self.constraints.get(excludes=[NChooseKConstraint]):
-            other_constraint_features.update(c.features)
+        # Collect features from constraints that cannot be handled by QP
+        blocking_constraint_features: set[str] = set()
+        for c in self.constraints.get(
+            includes=[ProductConstraint, NonlinearConstraint, InterpointConstraint]
+        ):
+            blocking_constraint_features.update(c.features)
 
-        # Check that no NChooseK feature overlaps with other constraints
+        # Check that no NChooseK feature overlaps with blocking constraints
         for c in nchoosek_constraints:
             assert isinstance(c, NChooseKConstraint)
-            if other_constraint_features.intersection(c.features):
+            if blocking_constraint_features.intersection(c.features):
                 return False
 
         return True
+
+    def has_nchoosek_linear_overlap(self) -> bool:
+        """Check if any NChooseK feature also appears in a linear constraint.
+
+        Used to determine whether QP projection is needed during pruning.
+
+        Returns:
+            bool: True if there is overlap between NChooseK and linear constraints.
+        """
+        nchoosek_features: set[str] = set()
+        for c in self.constraints.get(NChooseKConstraint):
+            assert isinstance(c, NChooseKConstraint)
+            nchoosek_features.update(c.features)
+
+        linear_features: set[str] = set()
+        for c in self.constraints.get(
+            includes=[LinearEqualityConstraint, LinearInequalityConstraint]
+        ):
+            linear_features.update(c.features)
+
+        return bool(nchoosek_features.intersection(linear_features))
 
     # TODO: tidy this up
     def get_nchoosek_combinations(self, exhaustive: bool = False):
