@@ -257,12 +257,15 @@ def get_product_constraints(
 def get_nonlinear_constraints(
     domain: Domain,
     includes: Optional[List[Type[Constraint]]] = None,
+    exclude_nchoosek: bool = False,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
     Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
+        includes: List of constraint types to include. Defaults to NChooseK and ProductInequality.
+        exclude_nchoosek: If True, NChooseK constraints are excluded even if in includes.
 
     Returns:
         List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
@@ -275,7 +278,7 @@ def get_nonlinear_constraints(
     ), "Only NChooseK and ProductInequality constraints are supported."
 
     callables = []
-    if NChooseKConstraint in includes:
+    if NChooseKConstraint in includes and not exclude_nchoosek:
         callables += get_nchoosek_constraints(domain)
     if ProductInequalityConstraint in includes:
         callables += get_product_constraints(domain)

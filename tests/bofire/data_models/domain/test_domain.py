@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.domain.constraints import Constraints
@@ -486,3 +487,214 @@ def test_is_fulfilled():
         domain.is_fulfilled(experiments),
         pd.Series([True, False, False], index=experiments.index),
     )
+
+
+class TestIsNchoosekPruningApplicable:
+    def test_no_nchoosek(self):
+        """No NChooseK constraints -> False."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is False
+
+    def test_nchoosek_only(self):
+        """NChooseK with no other constraints -> True."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is True
+
+    def test_nchoosek_with_overlapping_linear_inequality(self):
+        """NChooseK feature in a linear inequality -> False."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x1", "x2"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is False
+
+    def test_nchoosek_with_overlapping_linear_equality(self):
+        """NChooseK feature in a linear equality -> False."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                LinearEqualityConstraint(
+                    features=["x1", "x2"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is False
+
+    def test_nchoosek_with_non_overlapping_linear(self):
+        """NChooseK features disjoint from linear constraint features -> True."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is False
+
+    def test_nchoosek_with_truly_disjoint_linear(self):
+        """NChooseK features fully disjoint from linear constraint features -> True."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is True
+
+    def test_nchoosek_with_overlapping_product(self):
+        """NChooseK feature in a product constraint -> False."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                ProductInequalityConstraint(
+                    features=["x1", "x2"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is False
+
+    def test_multiple_nchoosek_one_overlapping(self):
+        """Two NChooseK constraints, one overlaps with linear -> False."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is False
+
+    def test_multiple_nchoosek_none_overlapping(self):
+        """Two NChooseK constraints, neither overlaps with other constraints -> True."""
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        assert domain.is_nchoosek_pruning_applicable() is True

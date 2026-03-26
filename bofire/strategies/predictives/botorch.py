@@ -10,6 +10,7 @@ from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
 from torch import Tensor
 
+from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.features.api import Input
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
@@ -188,6 +189,7 @@ class BotorchStrategy(PredictiveStrategy):
             raise ValueError("No experiments have been provided yet.")
 
         acqfs = self._get_acqfs(candidate_count)
+        self._current_acqfs = acqfs
 
         candidates = self.acqf_optimizer.optimize(
             candidate_count,
@@ -200,6 +202,160 @@ class BotorchStrategy(PredictiveStrategy):
 
     def _tell(self) -> None:
         pass
+
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        if self.domain.is_nchoosek_pruning_applicable():
+            candidates = self._prune_nchoosek_candidates(candidates)
+        return super()._postprocess_candidates(candidates)
+
+    def _prune_nchoosek_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Apply greedy pruning to satisfy NChooseK constraints.
+
+        Based on the BONSAI algorithm (https://arxiv.org/abs/2602.07144).
+        For each candidate in the batch, greedily zeros the feature with the
+        smallest acquisition function impact until all NChooseK constraints are
+        satisfied. Later candidates are conditioned on already-pruned ones.
+
+        Currently this is only applicable when no NChooseK feature participates
+        in any other constraint (see Domain.is_nchoosek_pruning_applicable).
+
+        Future work: extend pruning to handle NChooseK features that also
+        appear in linear equality/inequality constraints. The idea is to replace
+        the simple "set x_k = 0" variant construction with:
+        1. Zero feature k and QP-project the candidate onto the feasible set
+           of all linear constraints with x_k = 0 fixed. This serves both as a
+           feasibility check (skip k if infeasible) and as a warm-start.
+        2. Run a local optimize_acqf call with fixed_features={k: 0}, using the
+           QP-projected point as the initial condition, subject to all linear
+           constraints. This finds the best achievable AF value with feature k
+           zeroed, giving a much better signal for the greedy decision than
+           projection alone.
+        3. For q > 1, the local optimization should condition on already-pruned
+           candidates to preserve the joint AF evaluation.
+        The QP infrastructure for step 1 already exists in BoFire's
+        LinearProjection repair function used by the GeneticAlgorithmOptimizer.
+
+        Args:
+            candidates: DataFrame with candidate proposals.
+
+        Returns:
+            DataFrame with pruned candidates satisfying NChooseK constraints.
+        """
+        acqf = self._current_acqfs[0]
+        nchoosek_constraints = self.domain.constraints.get(NChooseKConstraint)
+
+        # Build mapping from feature key to tensor column index
+        features2idx, _ = self.domain.inputs._get_transform_info(
+            self.input_preprocessing_specs,
+        )
+
+        # Collect all NChooseK feature indices and their constraint info
+        nchoosek_feature_indices: list[int] = []
+        for c in nchoosek_constraints:
+            assert isinstance(c, NChooseKConstraint)
+            for feat_key in c.features:
+                for idx in features2idx[feat_key]:
+                    if idx not in nchoosek_feature_indices:
+                        nchoosek_feature_indices.append(idx)
+
+        # Transform candidates to tensor
+        transformed = self.domain.inputs.transform(
+            candidates, self.input_preprocessing_specs
+        )
+        X = torch.from_numpy(transformed.values).to(**tkwargs)  # (q, d)
+
+        q = X.shape[0]
+
+        for i in range(q):
+            # Pruning loop for candidate i
+            remaining_indices = [
+                idx for idx in nchoosek_feature_indices if X[i, idx].abs() > 1e-6
+            ]
+
+            while not self._nchoosek_fulfilled_tensor(
+                X[i], nchoosek_constraints, features2idx
+            ):
+                if len(remaining_indices) == 0:
+                    break
+
+                # Compute base AF value from already-pruned candidates[0:i]
+                if i > 0:
+                    base_X = X[:i].unsqueeze(0)  # (1, i, d)
+                    with torch.no_grad():
+                        base_af_val = acqf(base_X)
+                else:
+                    base_af_val = torch.tensor(0.0, **tkwargs)
+
+                # Compute dense AF value: [pruned_0..i-1, current_candidate_i]
+                dense_X = X[: i + 1].unsqueeze(0)  # (1, i+1, d)
+                with torch.no_grad():
+                    dense_af_val = acqf(dense_X)
+                dense_incremental = (dense_af_val - base_af_val).clamp_min(0)
+
+                # Create variants with each remaining dimension zeroed
+                n_remaining = len(remaining_indices)
+                variants = X[i].unsqueeze(0).expand(n_remaining, -1).clone()
+                for k, idx in enumerate(remaining_indices):
+                    variants[k, idx] = 0.0
+
+                # Evaluate AF on [pruned_0..i-1, variant_k] for each variant
+                if i > 0:
+                    # (n_remaining, i+1, d)
+                    prefix = X[:i].unsqueeze(0).expand(n_remaining, -1, -1)
+                    eval_X = torch.cat([prefix, variants.unsqueeze(1)], dim=1)
+                else:
+                    eval_X = variants.unsqueeze(1)  # (n_remaining, 1, d)
+
+                with torch.no_grad():
+                    variant_af_vals = acqf(eval_X)  # (n_remaining,)
+
+                # Compute AF reduction for each variant
+                if dense_incremental > 0:
+                    variant_incremental = (variant_af_vals - base_af_val).clamp_min(0)
+                    af_reduction = (
+                        dense_incremental - variant_incremental
+                    ) / dense_incremental
+                else:
+                    af_reduction = torch.zeros(n_remaining, **tkwargs)
+
+                # Select dimension with smallest AF reduction
+                min_idx = af_reduction.argmin().item()
+                best_dim = remaining_indices[min_idx]
+
+                # Zero the selected dimension
+                X[i, best_dim] = 0.0
+                remaining_indices.remove(best_dim)
+
+        # Convert back to dataframe
+        df_result = pd.DataFrame(
+            data=X.detach().cpu().numpy(),
+            columns=transformed.columns,
+            index=candidates.index,
+        )
+        df_result = self.domain.inputs.inverse_transform(
+            df_result, self.input_preprocessing_specs
+        )
+        return df_result
+
+    @staticmethod
+    def _nchoosek_fulfilled_tensor(
+        x: Tensor,
+        nchoosek_constraints: list,
+        features2idx: Dict[str, Tuple],
+        tol: float = 1e-6,
+    ) -> bool:
+        """Check if all NChooseK constraints are fulfilled for a single candidate tensor."""
+        for c in nchoosek_constraints:
+            assert isinstance(c, NChooseKConstraint)
+            indices = []
+            for feat_key in c.features:
+                indices.extend(features2idx[feat_key])
+            count = (x[indices].abs() > tol).sum().item()
+            if count > c.max_count:
+                return False
+            if count < c.min_count and not (c.none_also_valid and count == 0):
+                return False
+        return True
 
     @abstractmethod
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
