@@ -1,11 +1,24 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+
+def _format_fixed_feature_value(
+    feature: Union[ContinuousInput, CategoricalInput],
+    value: Union[float, str],
+) -> str:
+    if isinstance(feature, CategoricalInput):
+        return f"{feature.key}={value}"
+    return f"{feature.key}={float(value):.2f}"
 
 
 def _create_contour_slice(
@@ -17,8 +30,8 @@ def _create_contour_slice(
     title: str,
     xaxis_title: str,
     yaxis_title: str,
-    fixed_input_features: List[ContinuousInput],
-    fixed_values: List[float],
+    fixed_input_features: List[Union[ContinuousInput, CategoricalInput]],
+    fixed_values: List[Union[float, str]],
     input_features: List[ContinuousInput],
     output_feature: ContinuousOutput,
     observed_data: Optional[pd.DataFrame] = None,
@@ -123,8 +136,8 @@ def _create_contour_slice(
 
 def plot_gp_slice_plotly(
     surrogate: SingleTaskGPSurrogate,
-    fixed_input_features: List[ContinuousInput],
-    fixed_values: List[float],
+    fixed_input_features: List[Union[ContinuousInput, CategoricalInput]],
+    fixed_values: List[Union[float, str]],
     varied_input_features: List[ContinuousInput],
     output_feature: ContinuousOutput,
     resolution: int = 100,
@@ -137,8 +150,10 @@ def plot_gp_slice_plotly(
 
     Args:
         model: The trained Gaussian Process model.
-        fixed_input_features: A list of ContinuousInput features that are fixed.
-        fixed_values: A list of values for the fixed input features.
+        fixed_input_features: A list of fixed features, which can be a mix of
+            ContinuousInput and CategoricalInput.
+        fixed_values: A list of values for the fixed input features. Continuous values
+            should be floats, categorical values should be strings.
         varied_input_features: A list of two ContinuousInput features that are varied.
         output_feature: a ContinuousOutput.
         resolution: The resolution of the plot.
@@ -164,6 +179,20 @@ def plot_gp_slice_plotly(
         if feature not in surrogate.inputs.features:
             raise ValueError(f"Input feature {feature.key} not in model")
 
+    # check if fixed categorical values are valid
+    for feature, fixed_value in zip(fixed_input_features, fixed_values):
+        if isinstance(feature, CategoricalInput) and not isinstance(fixed_value, str):
+            raise ValueError(
+                f"Fixed value for categorical input feature `{feature.key}` must be a string."
+            )
+        if (
+            isinstance(feature, CategoricalInput)
+            and fixed_value not in feature.categories
+        ):
+            raise ValueError(
+                f"Fixed value `{fixed_value}` is not a valid category for input feature `{feature.key}`."
+            )
+
     # check if output feature is in the model
     if output_feature not in surrogate.outputs.features:
         raise ValueError(f"Output feature {output_feature} not in model")
@@ -173,8 +202,6 @@ def plot_gp_slice_plotly(
         for feature in fixed_input_features + varied_input_features + [output_feature]:
             if feature.key not in observed_data.columns:
                 raise ValueError(f"Feature {feature.key} not in observed data")
-
-    fixed_input_keys = [inp.key for inp in fixed_input_features]
 
     x1 = np.linspace(
         varied_input_features[0].bounds[0],
@@ -214,7 +241,10 @@ def plot_gp_slice_plotly(
         output_max = output_pred.max()
 
     title_mean = f"{output_feature.key} slice with fixed features: " + ", ".join(
-        [f"{key}={value:.2f}" for key, value in zip(fixed_input_keys, fixed_values)]
+        [
+            _format_fixed_feature_value(feature, value)
+            for feature, value in zip(fixed_input_features, fixed_values)
+        ]
     )
     fig_mean = _create_contour_slice(
         X,
@@ -235,7 +265,10 @@ def plot_gp_slice_plotly(
     title_sd = (
         f"{output_feature.key} standard deviation slice with fixed features: "
         + ", ".join(
-            [f"{key}={value:.2f}" for key, value in zip(fixed_input_keys, fixed_values)]
+            [
+                _format_fixed_feature_value(feature, value)
+                for feature, value in zip(fixed_input_features, fixed_values)
+            ]
         )
     )
     fig_sd = _create_contour_slice(
