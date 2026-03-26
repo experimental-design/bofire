@@ -14,6 +14,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Support for custom formulas including discrete and categorical features in the DoE module.
 - Support for pandas 3.0
 - `WeightedMeanFeature` and `MolecularWeightedMeanFeature` engineered features for weighted-mean behavior.
+- Configurable `noise_constraint` support for GP-based surrogates (`SingleTaskGP`, `MixedSingleTaskGP`, `TanimotoGP`, and `MultiTaskGP`) and corresponding linear/polynomial wrappers.
 
 ### Changed
 
