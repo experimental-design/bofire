@@ -469,13 +469,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         """
         assert self.batch_limit is not None
+        pruning_applicable = domain.is_nchoosek_pruning_applicable()
+        constraint_types = [ProductConstraint]
+        if not pruning_applicable:
+            constraint_types.append(NChooseKConstraint)
         return {
             "batch_limit": (
                 self.batch_limit
-                if len(
-                    domain.constraints.get([NChooseKConstraint, ProductConstraint]),
-                )
-                == 0
+                if len(domain.constraints.get(constraint_types)) == 0
                 else 1
             ),
             "maxiter": self.maxiter,
@@ -489,9 +490,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         )
         if n_categorical_combinations == 1:
             return OptimizerEnum.OPTIMIZE_ACQF
+        exclude_nchoosek = domain.is_nchoosek_pruning_applicable()
         if (
             n_categorical_combinations <= ALTERNATING_OPTIMIZER_THRESHOLD
-            or len(get_nonlinear_constraints(domain)) > 0
+            or len(get_nonlinear_constraints(domain, exclude_nchoosek=exclude_nchoosek))
+            > 0
         ):
             return OptimizerEnum.OPTIMIZE_ACQF_MIXED
         return OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
@@ -517,7 +520,15 @@ class BotorchOptimizer(AcquisitionOptimizer):
         equality_constraints = get_linear_constraints(
             domain, constraint=LinearEqualityConstraint
         )
-        if len(nonlinear_constraints := get_nonlinear_constraints(domain)) == 0:
+        exclude_nchoosek = domain.is_nchoosek_pruning_applicable()
+        if (
+            len(
+                nonlinear_constraints := get_nonlinear_constraints(
+                    domain, exclude_nchoosek=exclude_nchoosek
+                )
+            )
+            == 0
+        ):
             ic_generator = None
             ic_gen_kwargs = {}
         else:
