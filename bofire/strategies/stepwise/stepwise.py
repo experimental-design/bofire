@@ -15,6 +15,17 @@ from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.transforms.transform import Transform
 
 
+class OptimizationComplete(Exception):
+    """Raised by StepwiseStrategy when no step's condition is satisfied.
+
+    This signals that the optimization is complete, e.g., because a
+    termination condition (such as UCBLCBRegretBoundCondition) has been met
+    and there is no further step to execute.
+    """
+
+    pass
+
+
 T = TypeVar("T", pd.DataFrame, Domain)
 
 
@@ -43,13 +54,28 @@ class StepwiseStrategy(Strategy):
         return True
 
     def get_step(self) -> Tuple[Strategy, Optional[Transform]]:
-        """Returns the strategy at the current step and the corresponding transform if given."""
+        """Returns the strategy at the current step and the corresponding transform if given.
+
+        The strategy for each step is passed to the condition via the
+        ``strategy`` keyword argument.  This allows conditions like
+        ``UCBLCBRegretBoundCondition`` to access the fitted model.
+
+        Raises:
+            OptimizationComplete: When no step's condition is satisfied,
+                signalling that the optimization is done.
+        """
         for i, condition in enumerate(self.conditions):
-            if condition.evaluate(self.domain, experiments=self.experiments):
+            if condition.evaluate(
+                self.domain,
+                experiments=self.experiments,
+                strategy=self.strategies[i],
+            ):
                 return self.strategies[i], self.transforms[
                     i
                 ]  # ty: ignore[invalid-return-type]
-        raise ValueError("No condition could be satisfied.")
+        raise OptimizationComplete(
+            "No step condition is satisfied. Optimization is complete."
+        )
 
     def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
         strategy, transform = self.get_step()

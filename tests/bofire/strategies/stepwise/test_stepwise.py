@@ -130,6 +130,9 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
         assert strategy.surrogates_specs == _strategy.surrogate_specs  # type: ignore
 
 
+from bofire.strategies.stepwise.stepwise import OptimizationComplete
+
+
 def test_StepWiseStrategy_get_step_invalid():
     benchmark = Himmelblau()
     experiments = benchmark.f(benchmark.domain.inputs.sample(12), return_complete=True)
@@ -151,7 +154,7 @@ def test_StepWiseStrategy_get_step_invalid():
     )
     strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
-    with pytest.raises(ValueError, match="No condition could be satisfied."):
+    with pytest.raises(OptimizationComplete):
         strategy.get_step()
 
 
