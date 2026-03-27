@@ -13,8 +13,11 @@ from bofire.benchmarks.api import (
     SyntheticBoTorch,
 )
 from bofire.benchmarks.multi import ZDT1
-from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.constraints.api import LinearInequalityConstraint
+from bofire.benchmarks.single import Hartmann, Himmelblau
+from bofire.data_models.constraints.api import (
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+)
 from bofire.data_models.features.api import ContinuousDescriptorInput
 from bofire.data_models.objectives.api import MinimizeObjective
 from bofire.data_models.strategies.api import RandomStrategy
@@ -175,6 +178,54 @@ def test_SpuriousFeaturesWrapper():
         }
     )
     # now we test the full evaluation
+    evaled = wrapped.f(candidates, return_complete=False)
+    assert_frame_equal(
+        evaled,
+        benchmark.f(
+            candidates[benchmark.domain.inputs.get_keys()], return_complete=False
+        ),
+    )
+
+
+def test_SpuriousFeaturesWrapper_with_max_count():
+    # Use Hartmann (bounds [0,1]) since NChooseK requires lower bound >= 0
+    benchmark = Hartmann(dim=6)
+    wrapped = SpuriousFeaturesWrapper(
+        benchmark=benchmark, n_spurious_features=4, max_count=3
+    )
+    # 6 original + 4 spurious = 10 inputs
+    assert len(wrapped.domain.inputs) == 10
+    # Should have an NChooseKConstraint
+    nchoosek_constraints = [
+        c
+        for c in wrapped.domain.constraints.constraints
+        if isinstance(c, NChooseKConstraint)
+    ]
+    assert len(nchoosek_constraints) == 1
+    nchoosek = nchoosek_constraints[0]
+    assert nchoosek.max_count == 3
+    assert nchoosek.min_count == 0
+    assert nchoosek.none_also_valid is True
+    assert len(nchoosek.features) == 10  # all features included
+
+    # Without max_count, no NChooseK constraint
+    wrapped_no_nchoosek = SpuriousFeaturesWrapper(
+        benchmark=benchmark, n_spurious_features=4
+    )
+    nchoosek_constraints = [
+        c
+        for c in wrapped_no_nchoosek.domain.constraints.constraints
+        if isinstance(c, NChooseKConstraint)
+    ]
+    assert len(nchoosek_constraints) == 0
+
+    # Evaluation still works (ignores spurious features)
+    candidates = pd.DataFrame(
+        {
+            **{f"x_{i}": [0.5, 0.3] for i in range(6)},
+            **{f"x_spurious_{i}": [0.0, 0.0] for i in range(4)},
+        }
+    )
     evaled = wrapped.f(candidates, return_complete=False)
     assert_frame_equal(
         evaled,
