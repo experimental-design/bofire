@@ -182,10 +182,11 @@ def test_n_zero_eigvals_constrained():
     # thus there was one degree of freedom more if quadratic terms where added.
     # Here, discretes are sampled within their respective domain, thus discrete2==discrete2**2 always
     # thus we have one degree of freedom less.
+    # discrete2**2 (with only two levels) is no longer in the formula so  counts for linear-and quadratic and quadratic are updated accordingly.
     assert n_zero_eigvals(domain, "linear") == 1
-    assert n_zero_eigvals(domain, "linear-and-quadratic") == 2
+    assert n_zero_eigvals(domain, "linear-and-quadratic") == 1
     assert n_zero_eigvals(domain, "linear-and-interactions") == 3
-    assert n_zero_eigvals(domain, "fully-quadratic") == 7
+    assert n_zero_eigvals(domain, "fully-quadratic") == 6
 
     # TODO: NChooseK?
 
@@ -234,7 +235,7 @@ def test_number_of_model_terms():
     formula = get_formula_from_string(
         inputs=domain.inputs, model_type="linear-and-quadratic"
     )
-    assert len(formula) == 11
+    assert len(formula) == 10  # discrete2 has only 2 levels, no quadratic term
 
     formula = get_formula_from_string(
         inputs=domain.inputs,
@@ -245,7 +246,7 @@ def test_number_of_model_terms():
     formula = get_formula_from_string(
         inputs=domain.inputs, model_type="fully-quadratic"
     )
-    assert len(formula) == 21
+    assert len(formula) == 20  # discrete2 has only 2 levels, no quadratic term
 
 
 def test_constraints_as_scipy_constraints():
@@ -938,7 +939,7 @@ def test_formula_str_does_not_match_discrete_levels_emmits_warning():
     custom_formula = "color + material + temperature + { pressure ** 2 } + color:material + color_intensity"
     with pytest.warns(
         UserWarning,
-        match="Discrete input pressure with 2 levels can not be represent term of order 2 or higher.",
+        match="Discrete input pressure with 2 levels cannot represent a term of order 2 or higher.",
     ):
         formula_str_to_fully_continuous(
             formula=custom_formula,

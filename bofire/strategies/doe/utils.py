@@ -92,7 +92,7 @@ def formula_str_to_fully_continuous(
         ):  # arbitrary upper bound on number of levels of discrete input
             if (len(_input.values) <= k) and (_input.key + f" ** {k}" in formula.root):
                 warnings.warn(
-                    f"Discrete input {_input.key} with {len(_input.values)} levels can not be represent term of order {k} or higher.",
+                    f"Discrete input {_input.key} with {len(_input.values)} levels cannot represent a term of order {k} or higher.",
                     UserWarning,
                 )
                 break
@@ -254,10 +254,9 @@ def quadratic_terms(
         A string describing the model that was given as string or keyword.
 
     """
-    _inputs = list(inputs.get([ContinuousInput]))
-    _inputs = [
+    _inputs = list(inputs.get([ContinuousInput])) + [
         input for input in inputs.get([DiscreteInput]) if len(input.values) > 2
-    ] + _inputs
+    ]
 
     formula = "".join(["{" + input.key + "**2} + " for input in _inputs])
     return formula
