@@ -1,4 +1,4 @@
-import warnings
+import logging
 from abc import abstractmethod
 from typing import Literal, Optional, Type, Union
 
@@ -16,6 +16,9 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import BotorchSurrogates
 from bofire.data_models.types import IntPowerOfTwo
+
+
+logger = logging.getLogger(__name__)
 
 
 class AcquisitionOptimizer(BaseModel):
@@ -138,14 +141,40 @@ class BotorchOptimizer(AcquisitionOptimizer):
             constraints.NonlinearInequalityConstraint,
             constraints.NonlinearEqualityConstraint,
         ]:
-            return False
+            return True  # was False
         return True
 
     def validate_domain(self, domain: Domain):
+        def validate_nonlinear_equality_constraints(domain: Domain):
+            """Enforce batch_limit=1 and n_restarts=1 for nonlinear equality constraints."""
+            if any(
+                isinstance(
+                    c,
+                    (
+                        constraints.NonlinearEqualityConstraint,
+                        constraints.NonlinearInequalityConstraint,
+                    ),
+                )
+                for c in domain.constraints
+            ):
+                if self.batch_limit != 1:
+                    logger.info(
+                        "Nonlinear constraints require batch_limit=1. "
+                        "Overriding current value.",
+                    )
+                    # Use object.__setattr__ to bypass Pydantic's frozen model behavior
+                    object.__setattr__(self, "batch_limit", 1)
+                if self.n_restarts != 1:
+                    logger.info(
+                        "Nonlinear constraints require n_restarts=1 "
+                        "to avoid parallel batch optimization. Overriding current value.",
+                    )
+                    object.__setattr__(self, "n_restarts", 1)
+
         def validate_local_search_config(domain: Domain):
             if self.local_search_config is not None:
                 if has_local_search_region(domain) is False:
-                    warnings.warn(
+                    logger.info(
                         "`local_search_region` config is specified, but no local search region is defined in `domain`",
                     )
                 if (
@@ -182,6 +211,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                         "CategoricalExcludeConstraints can only be used with exhaustive search for purely categorical/discrete search spaces.",
                     )
 
+        validate_nonlinear_equality_constraints(domain)
         validate_local_search_config(domain)
         validate_interpoint_constraints(domain)
         validate_exclude_constraints(domain)

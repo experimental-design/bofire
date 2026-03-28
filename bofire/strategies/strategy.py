@@ -39,7 +39,14 @@ class Strategy(ABC):
         self._experiments = None
         self._candidates = None
         # Default validation tolerance - subclasses can override this
-        self._validation_tol = 1e-5
+        # Check if domain has nonlinear equality constraints
+        from bofire.data_models.constraints.api import NonlinearEqualityConstraint
+
+        has_nonlinear_equality = any(
+            isinstance(c, NonlinearEqualityConstraint)
+            for c in data_model.domain.constraints
+        )
+        self._validation_tol = 1e-3 if has_nonlinear_equality else 1e-3
 
     @property
     def domain(self) -> Domain:

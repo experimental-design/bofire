@@ -1,0 +1,229 @@
+---
+title: Advanced Nonlinear Constraints
+jupyter: python3
+---
+
+This tutorial demonstrates advanced uses of nonlinear constraints in BoFire: nonconvex feasible regions, physics-based constraints, constraint violation analysis, and high-dimensional L2 constraints.
+
+## Imports and helper
+
+```{python}
+import numpy as np
+import pandas as pd
+
+import bofire.strategies.api as strategies
+from bofire.data_models.constraints.api import (
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.data_models.strategies.api import MoboStrategy, SoboStrategy
+
+
+def generate_ring_samples(n_samples=20, r_inner=1.0, r_outer=3.0):
+    """Generate samples in a ring (annulus)."""
+    samples = []
+    for _ in range(n_samples):
+        angle = np.random.uniform(0, 2 * np.pi)
+        r = np.random.uniform(r_inner * 1.05, r_outer * 0.95)
+        x1 = r * np.cos(angle)
+        x2 = r * np.sin(angle)
+        samples.append({"x_1": x1, "x_2": x2})
+    return pd.DataFrame(samples)
+```
+
+## Example 1: Nonconvex ring
+
+We optimize in a ring (annulus): $1 \le x_1^2 + x_2^2 \le 9$, using two inequality constraints.
+
+```{python}
+inputs = [
+    ContinuousInput(key="x_1", bounds=(-5, 5)),
+    ContinuousInput(key="x_2", bounds=(-5, 5)),
+]
+outputs = [
+    ContinuousOutput(key="y1", objective=MinimizeObjective()),
+    ContinuousOutput(key="y2", objective=MaximizeObjective()),
+]
+constraints = [
+    NonlinearInequalityConstraint(
+        expression="x_1**2 + x_2**2 - 9",
+        features=["x_1", "x_2"],
+    ),
+    NonlinearInequalityConstraint(
+        expression="1 - x_1**2 - x_2**2",
+        features=["x_1", "x_2"],
+    ),
+]
+domain = Domain(inputs=inputs, outputs=outputs, constraints=constraints)
+
+initial_samples = generate_ring_samples(n_samples=20, r_inner=1.0, r_outer=3.0)
+radii = np.sqrt(initial_samples["x_1"] ** 2 + initial_samples["x_2"] ** 2)
+print(f"Initial radii: min={radii.min():.3f}, max={radii.max():.3f} (expected [1, 3])")
+```
+
+```{python}
+def mock_experiment(X):
+    y1 = X["x_1"] ** 2 + X["x_2"] ** 2
+    y2 = -((X["x_1"] - 2) ** 2 + (X["x_2"] - 2) ** 2)
+    return pd.DataFrame({"y1": y1, "y2": y2})
+
+experiments = pd.concat([initial_samples, mock_experiment(initial_samples)], axis=1)
+strategy_data = MoboStrategy(domain=domain)
+strategy = strategies.map(strategy_data)
+strategy.tell(experiments)
+candidates = strategy.ask(10)
+candidate_radii = np.sqrt(candidates["x_1"] ** 2 + candidates["x_2"] ** 2)
+print(f"Candidate radii: min={candidate_radii.min():.3f}, max={candidate_radii.max():.3f}")
+for i, constraint in enumerate(domain.constraints, 1):
+    fulfilled = constraint.is_fulfilled(candidates, tol=1e-3)
+    print(f"Constraint {i} satisfied: {fulfilled.sum()} / {len(candidates)}")
+```
+
+## Example 2: Physics-based constraints
+
+Chemical process with mass balance (equality) and energy balance (inequality).
+
+```{python}
+inputs = [
+    ContinuousInput(key="flow_A", bounds=(0, 10)),
+    ContinuousInput(key="flow_B", bounds=(0, 10)),
+    ContinuousInput(key="temp", bounds=(300, 400)),
+]
+outputs = [
+    ContinuousOutput(key="yield", objective=MaximizeObjective()),
+    ContinuousOutput(key="cost", objective=MinimizeObjective()),
+]
+constraints = [
+    NonlinearEqualityConstraint(
+        expression="flow_A + flow_B - 10",
+        features=["flow_A", "flow_B"],
+    ),
+    NonlinearInequalityConstraint(
+        expression="flow_A * temp + flow_B * (temp - 50) - 3500",
+        features=["flow_A", "flow_B", "temp"],
+    ),
+]
+domain = Domain(inputs=inputs, outputs=outputs, constraints=constraints)
+
+samples = []
+for _ in range(20):
+    flow_A = np.random.uniform(0, 10)
+    flow_B = 10 - flow_A
+    temp = np.random.uniform(300, 350)
+    energy = flow_A * temp + flow_B * (temp - 50)
+    if energy <= 3500:
+        samples.append({"flow_A": flow_A, "flow_B": flow_B, "temp": temp})
+initial_samples = pd.DataFrame(samples[:15])
+```
+
+```{python}
+def chemical_experiment(X):
+    yield_val = 0.5 * X["flow_A"] + 0.3 * X["flow_B"] + 0.01 * X["temp"]
+    cost = 2 * X["flow_A"] + 3 * X["flow_B"] + 0.05 * X["temp"]
+    return pd.DataFrame({"yield": yield_val, "cost": cost})
+
+experiments = pd.concat([initial_samples, chemical_experiment(initial_samples)], axis=1)
+strategy_data = MoboStrategy(domain=domain)
+strategy = strategies.map(strategy_data)
+strategy.tell(experiments)
+candidates = strategy.ask(5)
+mass_sum = candidates["flow_A"] + candidates["flow_B"]
+energy = candidates["flow_A"] * candidates["temp"] + candidates["flow_B"] * (candidates["temp"] - 50)
+print("Mass balance (should be ~10):", mass_sum.min(), "-", mass_sum.max())
+print("Energy balance (≤ 3500):", energy.min(), "-", energy.max())
+```
+
+## Example 3: Constraint violation analysis
+
+Sphere and plane: $x_1^2 + x_2^2 + x_3^2 \le 16$ and $x_1 + x_2 + x_3 = 3$. We run SOBO and then inspect per-constraint violations.
+
+```{python}
+inputs = [
+    ContinuousInput(key="x_1", bounds=(-5, 5)),
+    ContinuousInput(key="x_2", bounds=(-5, 5)),
+    ContinuousInput(key="x_3", bounds=(-5, 5)),
+]
+outputs = [ContinuousOutput(key="y", objective=MinimizeObjective())]
+constraints = [
+    NonlinearInequalityConstraint(
+        expression="x_1**2 + x_2**2 + x_3**2 - 16",
+        features=["x_1", "x_2", "x_3"],
+    ),
+    NonlinearEqualityConstraint(
+        expression="x_1 + x_2 + x_3 - 3",
+        features=["x_1", "x_2", "x_3"],
+    ),
+]
+domain = Domain(inputs=inputs, outputs=outputs, constraints=constraints)
+
+samples = []
+for _ in range(25):
+    x1 = np.random.uniform(-2, 4)
+    x2 = np.random.uniform(-2, 4)
+    x3 = 3 - x1 - x2
+    if x1**2 + x2**2 + x3**2 <= 15.5 and -5 <= x3 <= 5:
+        samples.append({"x_1": x1, "x_2": x2, "x_3": x3})
+initial_samples = pd.DataFrame(samples[:20])
+
+def mock_function(X):
+    return pd.DataFrame({"y": X["x_1"] ** 2 + X["x_2"] ** 2 + X["x_3"] ** 2})
+
+experiments = pd.concat([initial_samples, mock_function(initial_samples)], axis=1)
+strategy_data = SoboStrategy(domain=domain)
+strategy = strategies.map(strategy_data)
+strategy.tell(experiments)
+candidates = strategy.ask(10)
+```
+
+```{python}
+for i, constraint in enumerate(domain.constraints, 1):
+    fulfilled = constraint.is_fulfilled(candidates, tol=1e-3)
+    violations = constraint(candidates)
+    print(f"Constraint {i}: {constraint.expression}")
+    print(f"  Satisfied: {fulfilled.sum()} / {len(candidates)}")
+    print(f"  Violations - Min: {violations.min():.6f}, Max: {violations.max():.6f}")
+```
+
+## Example 4: High-dimensional L2 ball
+
+Five-dimensional input with $\sum_{i=0}^{4} x_i^2 \le 4$.
+
+```{python}
+n_dims = 5
+inputs = [ContinuousInput(key=f"x_{i}", bounds=(-2, 2)) for i in range(n_dims)]
+outputs = [ContinuousOutput(key="y", objective=MinimizeObjective())]
+expr = " + ".join([f"x_{i}**2" for i in range(n_dims)]) + " - 4"
+constraints = [
+    NonlinearInequalityConstraint(
+        expression=expr,
+        features=[f"x_{i}" for i in range(n_dims)],
+    )
+]
+domain = Domain(inputs=inputs, outputs=outputs, constraints=constraints)
+
+samples = []
+for _ in range(30):
+    direction = np.random.randn(n_dims)
+    direction = direction / np.linalg.norm(direction)
+    r = np.random.uniform(0, 1.9)
+    point = r * direction
+    samples.append({f"x_{i}": point[i] for i in range(n_dims)})
+initial_samples = pd.DataFrame(samples[:25])
+
+def mock_function(X):
+    return pd.DataFrame({"y": sum(X[f"x_{i}"] ** 2 for i in range(n_dims))})
+
+experiments = pd.concat([initial_samples, mock_function(initial_samples)], axis=1)
+strategy_data = SoboStrategy(domain=domain)
+strategy = strategies.map(strategy_data)
+strategy.tell(experiments)
+candidates = strategy.ask(5)
+candidate_norms = np.sqrt(sum(candidates[f"x_{i}"] ** 2 for i in range(n_dims)))
+print("Candidate L2 norms: min =", candidate_norms.min(), ", max =", candidate_norms.max(), "(expected ≤ 2.0)")
+for constraint in domain.constraints:
+    fulfilled = constraint.is_fulfilled(candidates, tol=1e-3)
+    print("Constraint satisfied:", fulfilled.sum(), "/", len(candidates))
+```

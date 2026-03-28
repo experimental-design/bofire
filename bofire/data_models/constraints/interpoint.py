@@ -55,8 +55,8 @@ class InterpointEqualityConstraint(InterpointConstraint):
                 i * multiplicity : min((i + 1) * multiplicity, len(experiments))
             ]
             if not np.allclose(batch, batch[0]):
-                return pd.Series([False])
-        return pd.Series([True])
+                return pd.Series([False] * len(experiments), index=experiments.index)
+        return pd.Series([True] * len(experiments), index=experiments.index)
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         """Numerically evaluates the constraint. Returns the distance to the constraint fulfillment

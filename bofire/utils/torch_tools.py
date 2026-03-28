@@ -17,6 +17,8 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -257,28 +259,94 @@ def get_product_constraints(
 def get_nonlinear_constraints(
     domain: Domain,
     includes: Optional[List[Type[Constraint]]] = None,
+    equality_tolerance: float = 1e-3,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
     Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
+        includes (Optional[List[Type[Constraint]]]): List of constraint types to include.
+            Defaults to [NChooseKConstraint, ProductInequalityConstraint,
+                        NonlinearInequalityConstraint, NonlinearEqualityConstraint].
+        equality_tolerance (float): Tolerance for converting equality constraints to
+            inequality pairs. An equality constraint f(x) = 0 is converted to:
+            f(x) <= tolerance AND -f(x) <= tolerance. Defaults to 1e-6.
 
     Returns:
-        List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
-        as input and return a float value representing the constraint evaluation.
-
+        List[Tuple[Callable[[Tensor], float], bool]]: A list of tuples where each tuple
+        contains a callable function and a boolean indicating if it's an inequality (True)
+        or equality (False). The callable takes a tensor as input and returns a float
+        representing the constraint evaluation.
     """
-    includes = includes or [NChooseKConstraint, ProductInequalityConstraint]
+
+    # Default includes all supported constraint types
+    includes = includes or [
+        NChooseKConstraint,
+        ProductInequalityConstraint,
+        NonlinearInequalityConstraint,
+        NonlinearEqualityConstraint,
+    ]
+
+    # Validate includes
+    supported_types = (
+        NChooseKConstraint,
+        ProductInequalityConstraint,
+        NonlinearInequalityConstraint,
+        NonlinearEqualityConstraint,
+    )
     assert all(
-        (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
-    ), "Only NChooseK and ProductInequality constraints are supported."
+        c in supported_types for c in includes
+    ), f"Only {supported_types} constraints are supported."
 
     callables = []
+
+    # Handle existing constraint types
     if NChooseKConstraint in includes:
         callables += get_nchoosek_constraints(domain)
     if ProductInequalityConstraint in includes:
         callables += get_product_constraints(domain)
+
+    # Handle NonlinearInequalityConstraint
+    if NonlinearInequalityConstraint in includes:
+        for constraint in domain.constraints.get(NonlinearInequalityConstraint):
+            # Create a wrapper that converts to the expected format
+            # The constraint should evaluate to <= 0
+            def make_constraint_callable(c):
+                def constraint_fn(x: Tensor) -> Tensor:
+                    # c.__call__ expects x with shape (batch_size, n_features)
+                    # Returns a tensor of shape (batch_size,) with values <= 0 for feasible points
+                    return -c(x)
+
+                return constraint_fn
+
+            callables.append((make_constraint_callable(constraint), True))
+
+    # Handle NonlinearEqualityConstraint by converting to inequality pairs
+    if NonlinearEqualityConstraint in includes:
+        for constraint in domain.constraints.get(NonlinearEqualityConstraint):
+            # Convert equality f(x) = 0 to two inequalities:
+            # 1. f(x) <= tolerance  =>  f(x) - tolerance <= 0
+            # 2. -f(x) <= tolerance  =>  -f(x) - tolerance <= 0
+
+            def make_equality_constraint_pair(c, tol):
+                # First inequality: f(x) - tolerance <= 0
+                def constraint_fn_upper(x: Tensor) -> Tensor:
+                    return tol - c(x)  # c(x)-tol
+
+                # Second inequality: -f(x) - tolerance <= 0
+                def constraint_fn_lower(x: Tensor) -> Tensor:
+                    return (
+                        c(x) + tol
+                    )  # tol -c(x).  Bofrire feasibility >=0 Botorch 0<=feasibility
+
+                return constraint_fn_upper, constraint_fn_lower
+
+            upper_fn, lower_fn = make_equality_constraint_pair(
+                constraint, equality_tolerance
+            )
+            callables.append((upper_fn, True))
+            callables.append((lower_fn, True))
 
     return callables
 
