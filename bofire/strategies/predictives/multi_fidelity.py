@@ -118,9 +118,9 @@ class MultiFidelityStrategy(SoboStrategy):
         assert self.experiments is not None
         observed_fidelities = set(self.experiments[self.task_feature_key].unique())
         allowed_fidelities = set(
-            self.domain.inputs.get_by_key(
-                self.task_feature_key
-            ).get_allowed_categories()
+            self.domain.inputs.get(TaskInput)
+            .get_by_key(self.task_feature_key)
+            .get_allowed_categories()
         )
         missing_fidelities = allowed_fidelities - observed_fidelities
         if missing_fidelities:

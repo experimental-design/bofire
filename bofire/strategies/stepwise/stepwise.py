@@ -51,7 +51,7 @@ class StepwiseStrategy(Strategy):
                 ]  # ty: ignore[invalid-return-type]
         raise ValueError("No condition could be satisfied.")
 
-    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
         strategy, transform = self.get_step()
 
         candidate_count = candidate_count or 1

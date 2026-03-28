@@ -221,29 +221,19 @@ class TrainableSurrogate(ABC):
             y_train_pred = self.predict(X_train)
 
             # Convert to categorical if applicable
-            if isinstance(
-                self.outputs.get_by_key(key).objective,
-                ConstrainedCategoricalObjective,
-            ):
+            objective = self.outputs.get_by_key(key)
+            if isinstance(objective, ConstrainedCategoricalObjective):
                 y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(
-                        key
-                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
+                    objective.to_dict_label(),
                 )
                 y_train_pred[f"{key}_pred"] = y_train_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(
-                        key
-                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
+                    objective.to_dict_label(),
                 )
                 y_test[key] = y_test[key].map(
-                    self.outputs.get_by_key(
-                        key
-                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
+                    objective.to_dict_label(),
                 )
                 y_train[key] = y_train[key].map(
-                    self.outputs.get_by_key(
-                        key
-                    ).objective.to_dict_label(),  # ty: ignore[possibly-missing-attribute]
+                    objective.to_dict_label(),
                 )
 
             # now store the results
