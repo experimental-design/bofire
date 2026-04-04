@@ -1,11 +1,14 @@
 import importlib
 
+import gpytorch.priors
 import pandas as pd
 import pytest
 import torch
 from botorch.models import MultiTaskGP
+from botorch.models.kernels.positive_index import PositiveIndexKernel
 from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
+from gpytorch.kernels import IndexKernel
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -142,12 +145,7 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     model = surrogates.map(model)
     with pytest.raises(ValueError):
         model.dumps()
-    # if task_prior is not None, a warning should be raised
-    if task_prior is not None:
-        with pytest.warns(UserWarning):
-            model.fit(experiments)
-    else:
-        model.fit(experiments)
+    model.fit(experiments)
     # check that the active_dims are set correctly
     assert torch.allclose(
         model.model.covar_module.kernels[0].active_dims,
@@ -169,6 +167,22 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, MultiTaskGP)
+    task_covar_module = next(
+        kernel
+        for kernel in model.model.covar_module.kernels
+        if isinstance(kernel, (IndexKernel, PositiveIndexKernel))
+    )
+    prior_names = [name for name, *_ in task_covar_module.named_priors()]
+    if task_prior is not None:
+        assert "IndexKernelPrior" in prior_names
+        index_kernel_prior = next(
+            prior
+            for name, _, prior, *_ in task_covar_module.named_priors()
+            if name == "IndexKernelPrior"
+        )
+        assert isinstance(index_kernel_prior, gpytorch.priors.LKJCovariancePrior)
+    else:
+        assert "IndexKernelPrior" not in prior_names
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.LOG:
