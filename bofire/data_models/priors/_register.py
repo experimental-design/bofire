@@ -26,7 +26,10 @@ def _rebuild_dependent_models() -> None:
         RBFKernel,
         SphericalLinearKernel,
     )
-    from bofire.data_models.kernels.shape import WassersteinKernel
+    from bofire.data_models.kernels.shape import (
+        ExactWassersteinKernel,
+        WassersteinKernel,
+    )
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
@@ -61,6 +64,7 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "angle_prior"),
         (WedgeKernel, "radius_prior"),
         (WassersteinKernel, "lengthscale_prior"),
+        (ExactWassersteinKernel, "lengthscale_prior"),
         (SingleTaskGPSurrogate, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
         (MixedSingleTaskGPSurrogate, "noise_prior"),
@@ -104,6 +108,7 @@ def _rebuild_dependent_models() -> None:
         IndexKernel,
         PositiveIndexKernel,
         WassersteinKernel,
+        ExactWassersteinKernel,
     ]:
         cls.model_rebuild(force=True)
 

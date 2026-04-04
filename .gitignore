@@ -162,3 +162,6 @@ notebook_test_stats.csv
 **/*.quarto_ipynb
 
 **/.jupyter_cache
+
+# ignore scripts
+scripts/*

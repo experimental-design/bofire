@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior
@@ -27,3 +27,20 @@ class WassersteinKernel(Kernel):
     type: Literal["WassersteinKernel"] = "WassersteinKernel"
     squared: bool = False
     lengthscale_prior: Optional[AnyPrior] = None
+
+
+class ExactWassersteinKernel(Kernel):
+    """Kernel based on the exact 1D Wasserstein distance for piecewise-linear curves."""
+
+    type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"
+    squared: bool = False
+    lengthscale_prior: Optional[AnyPrior] = None
+    idx_x: List[int]
+    idx_y: List[int]
+    prepend_x: List[float] = []
+    prepend_y: List[float] = []
+    append_x: List[float] = []
+    append_y: List[float] = []
+    normalize_y: float = 1.0
+    normalize_x: bool = True
+    order: Literal[1, 2] = 1

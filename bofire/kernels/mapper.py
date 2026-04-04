@@ -17,7 +17,7 @@ from bofire.kernels.conditional import (
     compute_base_kernel_active_dims,
 )
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
-from bofire.kernels.shape import WassersteinKernel
+from bofire.kernels.shape import ExactWassersteinKernel, WassersteinKernel
 from bofire.kernels.spherical_kernels import SphericalLinearKernel
 
 
@@ -369,6 +369,40 @@ def map_WassersteinKernel(
     )
 
 
+def map_ExactWassersteinKernel(
+    data_model: data_models.ExactWassersteinKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
+) -> ExactWassersteinKernel:
+    idx_x = torch.as_tensor(data_model.idx_x, dtype=torch.long)
+    idx_y = torch.as_tensor(data_model.idx_y, dtype=torch.long)
+    prepend_x = torch.tensor(data_model.prepend_x, dtype=torch.double)
+    prepend_y = torch.tensor(data_model.prepend_y, dtype=torch.double)
+    append_x = torch.tensor(data_model.append_x, dtype=torch.double)
+    append_y = torch.tensor(data_model.append_y, dtype=torch.double)
+    normalize_y = torch.tensor(data_model.normalize_y, dtype=torch.double)
+    return ExactWassersteinKernel(
+        squared=data_model.squared,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        idx_x=idx_x,
+        idx_y=idx_y,
+        prepend_x=prepend_x,
+        prepend_y=prepend_y,
+        append_x=append_x,
+        append_y=append_y,
+        normalize_y=normalize_y,
+        normalize_x=data_model.normalize_x,
+        order=data_model.order,
+        active_dims=active_dims,
+    )
+
+
 def map_PolynomialFeatureInteractionKernel(
     data_model: data_models.PolynomialFeatureInteractionKernel,
     batch_shape: torch.Size,
@@ -488,6 +522,7 @@ KERNEL_MAP = {
     data_models.IndexKernel: map_IndexKernel,
     data_models.PositiveIndexKernel: map_PositiveIndexKernel,
     data_models.WassersteinKernel: map_WassersteinKernel,
+    data_models.ExactWassersteinKernel: map_ExactWassersteinKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,
     data_models.SphericalLinearKernel: map_SphericalLinearKernel,
