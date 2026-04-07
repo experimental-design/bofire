@@ -29,6 +29,7 @@ specs.add_valid(
             ],
         ).model_dump(),
         "constraints": Constraints().model_dump(),
+        "context": None,
     },
 )
 

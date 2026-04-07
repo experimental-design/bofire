@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
+from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -18,6 +19,12 @@ class Feature(BaseModel):
     type: Any
     key: str
     order_id: ClassVar[int] = -1
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text context providing additional information about this "
+        "feature. Useful for agentic optimization where an LLM agent can "
+        "leverage this description to better understand the optimization problem.",
+    )
 
     def __lt__(self, other) -> bool:
         """Method to compare two models to get them in the desired order.

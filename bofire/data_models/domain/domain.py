@@ -41,19 +41,30 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 
 
 class Domain(BaseModel):
-    type: Literal["Domain"] = "Domain"
-
-    inputs: Inputs = Field(default_factory=lambda: Inputs())
-    outputs: Outputs = Field(default_factory=lambda: Outputs())
-    constraints: Constraints = Field(default_factory=lambda: Constraints())
-
     """Representation of the optimization problem/domain
 
     Attributes:
         inputs (List[Input], optional): List of input features. Defaults to [].
         outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
+        context (str, optional): Free-text context providing additional information
+            about the optimization problem. Useful for agentic optimization where an
+            LLM agent can leverage this description to better understand the overall
+            problem, its goals, and any domain-specific knowledge.
     """
+
+    type: Literal["Domain"] = "Domain"
+
+    inputs: Inputs = Field(default_factory=lambda: Inputs())
+    outputs: Outputs = Field(default_factory=lambda: Outputs())
+    constraints: Constraints = Field(default_factory=lambda: Constraints())
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text context providing additional information about the "
+        "optimization problem. Useful for agentic optimization where an LLM agent "
+        "can leverage this description to better understand the overall problem, "
+        "its goals, and any domain-specific knowledge.",
+    )
 
     @classmethod
     def from_lists(
