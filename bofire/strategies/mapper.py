@@ -50,7 +50,13 @@ def map(data_model: data_models.Strategy) -> Strategy:
     data_cls = data_model.__class__
     if data_cls in META_MAP:
         cls = META_MAP[data_cls]
+    elif data_cls in ACTUAL_MAP:
+        cls = ACTUAL_MAP[data_cls]
     else:
+        # Lazy registration for optional strategies (e.g., LLMStrategy)
+        from bofire.strategies.mapper_actual import _register_llm_strategy
+
+        _register_llm_strategy()
         cls = ACTUAL_MAP[data_cls]
 
     return cls.from_spec(data_model=data_model)

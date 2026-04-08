@@ -40,6 +40,16 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
 }
 
 
+def _register_llm_strategy():
+    """Lazily register LLMStrategy to avoid import-time circular dependencies."""
+    try:
+        from bofire.strategies.llm import LLMStrategy as LLMStrategyImpl
+
+        STRATEGY_MAP[data_models.LLMStrategy] = LLMStrategyImpl
+    except ImportError:
+        pass
+
+
 def map(data_model: data_models.Strategy) -> Strategy:
     cls = STRATEGY_MAP[data_model.__class__]
     return cls.from_spec(data_model=data_model)
