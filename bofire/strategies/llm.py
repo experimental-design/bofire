@@ -133,11 +133,10 @@ class LLMStrategy(Strategy):
         self._n_top_experiments = data_model.n_top_experiments
         self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
 
-        # Build the pydantic-ai model and output schema once at init
+        # Build the pydantic-ai model at init (LLM connection doesn't change)
         import bofire.llm.mapper as llm_mapper
 
         self._pydantic_ai_model = llm_mapper.map(self._llm_provider)
-        self._proposal_model = _build_proposal_model(self.domain)
 
     def has_sufficient_experiments(self) -> bool:
         """LLM can propose candidates with zero experiments (cold start)."""
@@ -156,11 +155,14 @@ class LLMStrategy(Strategy):
         """Async implementation of candidate generation."""
         from pydantic_ai import Agent
 
+        # Build output schema fresh each call (domain may have changed)
+        proposal_model = _build_proposal_model(self.domain)
+
         # Create agent
         agent = Agent(
             self._pydantic_ai_model,
             system_prompt=self._system_prompt,
-            output_type=self._proposal_model,
+            output_type=proposal_model,
         )
 
         # Add domain description as dynamic system prompt
