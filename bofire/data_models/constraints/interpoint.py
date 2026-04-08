@@ -34,19 +34,7 @@ class InterpointEqualityConstraint(InterpointConstraint):
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
 
     def to_description(self) -> str:
-        """Render as ``"x1 must be equal across 3 candidates in a batch"``.
-
-        Example::
-
-            >>> c = InterpointEqualityConstraint(features=["x1"], multiplicity=3)
-            >>> c.to_description()
-            'x1 must be equal across 3 candidates in a batch'
-        """
-        mult = f"{self.multiplicity} " if self.multiplicity else ""
-        desc = f"{self.features[0]} must be equal across {mult}candidates in a batch"
-        if self.context:
-            desc += f" — {self.context}"
-        return desc
+        raise NotImplementedError
 
     @property
     def feature(self) -> str:

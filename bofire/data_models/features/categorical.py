@@ -60,7 +60,7 @@ class CategoricalInput(Input):
             >>> field_type, _ = feat.to_pydantic_field()
             >>> # field_type = Literal['water', 'ethanol', 'toluene']
         """
-        allowed = [c for c, a in zip(self.categories, self.allowed) if a]
+        allowed = self.get_allowed_categories()
         desc_parts = [f"Categorical, allowed: {allowed}"]
         if self.context:
             desc_parts.append(self.context)
@@ -394,18 +394,7 @@ class CategoricalOutput(Output):
     objective: AnyCategoricalObjective
 
     def to_description(self) -> str:
-        """Return a human-readable description combining objective and context.
-
-        Example::
-
-            >>> feat = CategoricalOutput(key="class", categories=["a", "b"], ...)
-            >>> feat.to_description()
-            'class: Categorical objective, desired: [a]'
-        """
-        parts = [self.key, self.objective.to_description()]
-        if self.context:
-            parts.append(self.context)
-        return ": ".join(parts[:2]) + (" — " + parts[2] if len(parts) > 2 else "")
+        raise NotImplementedError
 
     @model_validator(mode="after")
     def validate_objective_categories(self):

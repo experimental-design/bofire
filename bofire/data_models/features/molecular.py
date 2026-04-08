@@ -81,7 +81,7 @@ class CategoricalMolecularInput(CategoricalInput):
             >>> field_type, info = feat.to_pydantic_field()
             >>> # description = "Categorical molecular (SMILES), allowed: ['CCO', 'CC']"
         """
-        allowed = [c for c, a in zip(self.categories, self.allowed) if a]
+        allowed = self.get_allowed_categories()
         desc_parts = [f"Categorical molecular (SMILES), allowed: {allowed}"]
         if self.context:
             desc_parts.append(self.context)

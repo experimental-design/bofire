@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, create_model, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
@@ -920,13 +920,11 @@ class Inputs(_BaseFeatures[AnyInput]):
         Returns:
             A Pydantic BaseModel subclass with typed fields matching the inputs.
         """
-        from pydantic import create_model as _create_model
-
         fields = {}
         for feature in self:
             field_type, field_info = feature.to_pydantic_field()
             fields[feature.key] = (field_type, field_info)
-        return _create_model(name, **fields)
+        return create_model(name, **fields)
 
 
 class Outputs(_BaseFeatures[AnyOutput]):

@@ -113,7 +113,7 @@ class CategoricalDescriptorInput(CategoricalInput):
             >>> _, info = feat.to_pydantic_field()
             >>> # description includes category-descriptor mapping
         """
-        allowed = [c for c, a in zip(self.categories, self.allowed) if a]
+        allowed = self.get_allowed_categories()
         desc_mapping = {
             cat: dict(zip(self.descriptors, vals))
             for cat, vals in zip(self.categories, self.values)
