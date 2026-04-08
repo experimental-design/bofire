@@ -66,6 +66,30 @@ class Domain(BaseModel):
         "its goals, and any domain-specific knowledge.",
     )
 
+    def to_description(self) -> str:
+        """Render a human-readable description of the optimization problem.
+
+        Covers problem context, objectives, and constraints. Feature details
+        are handled separately by ``Inputs.to_pydantic_model()`` which embeds
+        bounds, types, and context into the dynamic output schema.
+        """
+        lines = []
+
+        if self.context:
+            lines.append(f"## Problem Context\n{self.context}")
+
+        lines.append("\n## Objectives")
+        for feat in self.outputs:
+            if hasattr(feat, "to_description"):
+                lines.append(f"- {feat.to_description()}")
+
+        if len(self.constraints) > 0:
+            lines.append("\n## Constraints (candidates MUST satisfy all of these)")
+            for c in self.constraints:
+                lines.append(f"- {c.to_description()}")
+
+        return "\n".join(lines)
+
     @classmethod
     def from_lists(
         cls,

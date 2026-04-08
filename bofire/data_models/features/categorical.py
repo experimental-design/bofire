@@ -3,6 +3,7 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -49,6 +50,16 @@ class CategoricalInput(Input):
         if sum(self.allowed) == 0:
             raise ValueError("no category is allowed")
         return self
+
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        allowed = [c for c, a in zip(self.categories, self.allowed) if a]
+        desc_parts = [f"Categorical, allowed: {allowed}"]
+        if self.context:
+            desc_parts.append(self.context)
+        return (
+            Literal[tuple(allowed)],
+            Field(description=" — ".join(desc_parts)),
+        )
 
     @staticmethod
     def valid_transform_types() -> List[CategoricalEncodingEnum]:
@@ -373,6 +384,13 @@ class CategoricalOutput(Output):
 
     categories: CategoryVals
     objective: AnyCategoricalObjective
+
+    def to_description(self) -> str:
+        """Return a human-readable description combining objective and context."""
+        parts = [self.key, self.objective.to_description()]
+        if self.context:
+            parts.append(self.context)
+        return ": ".join(parts[:2]) + (" — " + parts[2] if len(parts) > 2 else "")
 
     @model_validator(mode="after")
     def validate_objective_categories(self):

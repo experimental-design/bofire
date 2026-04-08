@@ -29,6 +29,10 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
     desirability: List[bool]
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
+    def to_description(self) -> str:
+        desired = [c for c, d in zip(self.categories, self.desirability) if d]
+        return f"Categorical objective, desired: {desired} (w={self.w})"
+
     @model_validator(mode="after")
     def validate_desireability(self):
         """Validates that categories have unique names

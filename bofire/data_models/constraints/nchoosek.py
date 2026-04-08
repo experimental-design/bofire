@@ -30,6 +30,14 @@ class NChooseKConstraint(IntrapointConstraint):
     max_count: int
     none_also_valid: bool
 
+    def to_description(self) -> str:
+        desc = f"Choose {self.min_count}-{self.max_count} active features from {self.features}"
+        if self.none_also_valid:
+            desc += ", or none"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys([ContinuousInput, DiscreteInput])
         for f in self.features:

@@ -4,6 +4,7 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 import numpy as np
 import pandas as pd
 from pydantic import Field, PositiveFloat, model_validator
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
@@ -43,6 +44,19 @@ class ContinuousInput(NumericalInput):
     @property
     def upper_bound(self) -> float:
         return self.bounds[1]
+
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        desc_parts = [f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"]
+        if self.stepsize is not None:
+            desc_parts.append(f"stepsize {self.stepsize}")
+        if self.context:
+            desc_parts.append(self.context)
+        return (
+            float,
+            Field(
+                ge=self.bounds[0], le=self.bounds[1], description=" — ".join(desc_parts)
+            ),
+        )
 
     @model_validator(mode="after")
     def validate_step_size(self):
@@ -236,6 +250,15 @@ class ContinuousOutput(Output):
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0),
     )
+
+    def to_description(self) -> str:
+        """Return a human-readable description combining objective and context."""
+        parts = [self.key]
+        if self.objective is not None:
+            parts.append(self.objective.to_description())
+        if self.context:
+            parts.append(self.context)
+        return ": ".join(parts[:2]) + (" — " + parts[2] if len(parts) > 2 else "")
 
     def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:

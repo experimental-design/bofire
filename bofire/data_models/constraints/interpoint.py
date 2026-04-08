@@ -33,6 +33,13 @@ class InterpointEqualityConstraint(InterpointConstraint):
     features: Annotated[List[str], Field(min_length=1), Field(max_length=1)]
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
 
+    def to_description(self) -> str:
+        mult = f"{self.multiplicity} " if self.multiplicity else ""
+        desc = f"{self.features[0]} must be equal across {mult}candidates in a batch"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
     @property
     def feature(self) -> str:
         """Feature to be constrained."""

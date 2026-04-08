@@ -911,6 +911,23 @@ class Inputs(_BaseFeatures[AnyInput]):
             .all(axis=1)
         )
 
+    def to_pydantic_model(self, name: str = "CandidatePoint"):
+        """Build a dynamic Pydantic model with one field per input feature.
+
+        Each feature's ``to_pydantic_field()`` determines the field type and
+        constraints (e.g., ge/le for continuous, Literal for categorical).
+
+        Returns:
+            A Pydantic BaseModel subclass with typed fields matching the inputs.
+        """
+        from pydantic import create_model as _create_model
+
+        fields = {}
+        for feature in self:
+            field_type, field_info = feature.to_pydantic_field()
+            fields[feature.key] = (field_type, field_info)
+        return _create_model(name, **fields)
+
 
 class Outputs(_BaseFeatures[AnyOutput]):
     """Container of output features, only output features are allowed.

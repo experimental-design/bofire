@@ -298,6 +298,13 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
+    def to_description(self) -> str:
+        expr = self.expression if isinstance(self.expression, str) else "<callable>"
+        desc = f"{expr} = 0 (features: {self.features})"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
 
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """Nonlinear inequality constraint of the form 'expression <= 0'.
@@ -308,3 +315,10 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
+
+    def to_description(self) -> str:
+        expr = self.expression if isinstance(self.expression, str) else "<callable>"
+        desc = f"{expr} <= 0 (features: {self.features})"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc

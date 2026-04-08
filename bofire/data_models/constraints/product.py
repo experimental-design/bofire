@@ -102,6 +102,14 @@ class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
 
     type: Literal["ProductEqualityConstraint"] = "ProductEqualityConstraint"
 
+    def to_description(self) -> str:
+        sign = "" if self.sign == 1 else "-"
+        terms = " * ".join(f"{f}^{e}" for f, e in zip(self.features, self.exponents))
+        desc = f"{sign}{terms} = {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
 
 class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
@@ -117,3 +125,11 @@ class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     """
 
     type: Literal["ProductInequalityConstraint"] = "ProductInequalityConstraint"
+
+    def to_description(self) -> str:
+        sign = "" if self.sign == 1 else "-"
+        terms = " * ".join(f"{f}^{e}" for f, e in zip(self.features, self.exponents))
+        desc = f"{sign}{terms} <= {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc

@@ -22,6 +22,18 @@ class Constraint(BaseModel):
         "leverage this description to better understand the optimization problem.",
     )
 
+    def to_description(self) -> str:
+        """Return a human-readable description of this constraint.
+
+        Subclasses should override this to provide a meaningful description
+        (e.g., a mathematical expression). The default returns the class name.
+        Appends the context field if set.
+        """
+        desc = f"{type(self).__name__} on features {self.features}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
     @abstractmethod
     def is_fulfilled(
         self,
