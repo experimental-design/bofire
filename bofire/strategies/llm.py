@@ -2,18 +2,20 @@
 
 import asyncio
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, cast
 
 import pandas as pd
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import Field, create_model
 from pydantic.types import PositiveInt
+from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.llm.api import AnyLLMProvider
 from bofire.data_models.objectives.api import MinimizeObjective
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 
 
 # --- Dependencies dataclass for pydantic-ai agent ---
@@ -228,3 +230,34 @@ class LLMStrategy(Strategy):
 
         proposal = result.output
         return pd.DataFrame([c.values.model_dump() for c in proposal.candidates])
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        llm: AnyLLMProvider,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        thinking=None,
+        n_recent_experiments: Optional[int] = None,
+        n_top_experiments: Optional[int] = None,
+        system_prompt: Optional[str] = None,
+        seed: Optional[int] = None,
+    ) -> Self:
+        """Create a new LLMStrategy instance.
+
+        Args:
+            domain: The optimization domain.
+            llm: LLM provider configuration.
+            temperature: Sampling temperature for the LLM.
+            max_tokens: Maximum response tokens.
+            thinking: Reasoning effort level.
+            n_recent_experiments: Number of recent experiments to show.
+            n_top_experiments: Number of top experiments to show.
+            system_prompt: Custom system prompt override.
+            seed: Random seed.
+
+        Returns:
+            A new LLMStrategy instance.
+        """
+        return cast(Self, make_strategy(cls, data_models.LLMStrategy, locals()))
