@@ -40,7 +40,6 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.surrogates.robust_single_task_gp import (
         RobustSingleTaskGPSurrogate,
     )
-    from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
         SingleTaskGPHyperconfig,
         SingleTaskGPSurrogate,
@@ -69,8 +68,6 @@ def _rebuild_dependent_models() -> None:
         (MultiTaskGPSurrogate, "noise_prior"),
         (MixedSingleTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
-        (PiecewiseLinearGPSurrogate, "outputscale_prior"),
-        (PiecewiseLinearGPSurrogate, "noise_prior"),
         (PolynomialSurrogate, "noise_prior"),
         (LinearSurrogate, "noise_prior"),
         (RobustSingleTaskGPSurrogate, "noise_prior"),
@@ -131,7 +128,6 @@ def _rebuild_dependent_models() -> None:
         MultiTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
         TanimotoGPSurrogate,
-        PiecewiseLinearGPSurrogate,
         PolynomialSurrogate,
         LinearSurrogate,
         RobustSingleTaskGPSurrogate,

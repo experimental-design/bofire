@@ -17,7 +17,6 @@
 | [EmpiricalSurrogate](#bofire.surrogates.api.EmpiricalSurrogate) | All necessary functions has to be implemented in the model which can then be loaded |
 | [RandomForestSurrogate](#bofire.surrogates.api.RandomForestSurrogate) | BoFire Random Forest model. |
 | [MLPEnsemble](#bofire.surrogates.api.MLPEnsemble) |  |
-| [PiecewiseLinearGPSurrogate](#bofire.surrogates.api.PiecewiseLinearGPSurrogate) |  |
 
 ### Surrogate { #bofire.surrogates.api.Surrogate }
 
@@ -212,12 +211,4 @@ Loads the actual random forest from a base64 encoded pickle bytes object and wri
 
 ```python
 surrogates.api.MLPEnsemble(data_model, **kwargs)
-```
-
-
-
-### PiecewiseLinearGPSurrogate { #bofire.surrogates.api.PiecewiseLinearGPSurrogate }
-
-```python
-surrogates.api.PiecewiseLinearGPSurrogate(data_model, **kwargs)
 ```
