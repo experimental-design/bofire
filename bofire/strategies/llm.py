@@ -51,45 +51,43 @@ def _select_experiments(
     domain: Domain,
     n_recent: Optional[int],
     n_top: Optional[int],
-    top_metric_key: Optional[str],
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, str]:
     """Select a subset of experiments for LLM presentation.
 
-    Returns the union (deduplicated) of:
-    - Last n_recent experiments (by row order)
-    - Top n_top experiments (by top_metric_key objective value)
-
-    If both are None, returns all experiments.
+    Returns a tuple of (selected_df, description_text) where description_text
+    explains to the LLM what kind of experiments are being shown.
     """
     if n_recent is None and n_top is None:
-        return experiments
+        return experiments, f"All {len(experiments)} experiments"
 
     parts = []
+    desc_parts = []
 
     if n_recent is not None:
-        parts.append(experiments.tail(n_recent))
+        recent = experiments.tail(n_recent)
+        parts.append(recent)
+        desc_parts.append(f"last {len(recent)} most recent")
 
     if n_top is not None:
-        metric_key = top_metric_key
-        if metric_key is None:
-            for feat in domain.outputs:
-                if isinstance(feat, ContinuousOutput) and feat.objective is not None:
-                    metric_key = feat.key
-                    break
-            if metric_key is None:
-                raise ValueError(
-                    "No output feature with an objective found. "
-                    "Please specify top_metric_key explicitly."
-                )
+        # Use the single objective output (validated at data model level)
+        for feat in domain.outputs:
+            if isinstance(feat, ContinuousOutput) and feat.objective is not None:
+                metric_key = feat.key
+                ascending = isinstance(feat.objective, MinimizeObjective)
+                break
 
-        feat = domain.outputs.get_by_key(metric_key)
-        ascending = isinstance(feat, ContinuousOutput) and isinstance(
-            feat.objective, MinimizeObjective
-        )
         sorted_exps = experiments.sort_values(by=metric_key, ascending=ascending)
-        parts.append(sorted_exps.head(n_top))
+        top = sorted_exps.head(n_top)
+        parts.append(top)
+        direction = "lowest" if ascending else "highest"
+        desc_parts.append(f"top {len(top)} by {direction} {metric_key}")
 
-    return pd.concat(parts).drop_duplicates()
+    selected = pd.concat(parts).drop_duplicates()
+    description = (
+        " + ".join(desc_parts)
+        + f" ({len(selected)} unique shown out of {len(experiments)} total)"
+    )
+    return selected, description
 
 
 # --- Proposal model builder ---
@@ -133,8 +131,13 @@ class LLMStrategy(Strategy):
         self._thinking = data_model.thinking
         self._n_recent_experiments = data_model.n_recent_experiments
         self._n_top_experiments = data_model.n_top_experiments
-        self._top_metric_key = data_model.top_metric_key
         self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
+
+        # Build the pydantic-ai model and output schema once at init
+        import bofire.llm.mapper as llm_mapper
+
+        self._pydantic_ai_model = llm_mapper.map(self._llm_provider)
+        self._proposal_model = _build_proposal_model(self.domain)
 
     def has_sufficient_experiments(self) -> bool:
         """LLM can propose candidates with zero experiments (cold start)."""
@@ -153,19 +156,11 @@ class LLMStrategy(Strategy):
         """Async implementation of candidate generation."""
         from pydantic_ai import Agent
 
-        import bofire.llm.mapper as llm_mapper
-
-        # Build pydantic-ai model from provider config
-        model = llm_mapper.map(self._llm_provider)
-
-        # Build dynamic output schema
-        ProposalModel = _build_proposal_model(self.domain)
-
         # Create agent
         agent = Agent(
-            model,
+            self._pydantic_ai_model,
             system_prompt=self._system_prompt,
-            output_type=ProposalModel,
+            output_type=self._proposal_model,
         )
 
         # Add domain description as dynamic system prompt
@@ -177,27 +172,34 @@ class LLMStrategy(Strategy):
                 parts.append(deps.experiments_text)
             return "\n".join(parts)
 
-        # Add output validator: domain.validate_candidates
+        # Add output validator: domain.validate_candidates with verbose errors
         @agent.output_validator
         async def validate_against_domain(ctx, proposal):
             deps: _LLMDeps = ctx.deps
             rows = [c.values.model_dump() for c in proposal.candidates]
             candidates_df = pd.DataFrame(rows)
-            deps.domain.validate_candidates(candidates_df, only_inputs=True)
+            try:
+                deps.domain.validate_candidates(candidates_df, only_inputs=True)
+            except Exception as e:
+                raise ValueError(
+                    f"Candidate validation failed: {e}\n\n"
+                    f"The proposed candidates were:\n{candidates_df.to_string()}\n\n"
+                    f"Please fix the candidates to satisfy all constraints and "
+                    f"feature bounds, then try again."
+                ) from e
             return proposal
 
         # Prepare experiment text
         experiments_text = ""
         if self.experiments is not None and len(self.experiments) > 0:
-            selected = _select_experiments(
+            selected, description = _select_experiments(
                 self.experiments,
                 self.domain,
                 self._n_recent_experiments,
                 self._n_top_experiments,
-                self._top_metric_key,
             )
             experiments_text = (
-                f"\n## Previous Experiments ({len(selected)} shown)\n"
+                f"\n## Previous Experiments ({description})\n"
                 f"{selected.to_string(index=False)}"
             )
 

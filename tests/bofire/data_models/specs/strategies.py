@@ -1032,7 +1032,6 @@ specs.add_valid(
         "thinking": None,
         "n_recent_experiments": None,
         "n_top_experiments": None,
-        "top_metric_key": None,
         "system_prompt": None,
     },
 )
@@ -1051,7 +1050,6 @@ specs.add_valid(
         "thinking": "medium",
         "n_recent_experiments": 10,
         "n_top_experiments": 5,
-        "top_metric_key": "y",
         "system_prompt": "You are a helpful assistant.",
     },
 )
