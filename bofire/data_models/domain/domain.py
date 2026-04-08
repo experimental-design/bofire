@@ -58,13 +58,7 @@ class Domain(BaseModel):
     inputs: Inputs = Field(default_factory=lambda: Inputs())
     outputs: Outputs = Field(default_factory=lambda: Outputs())
     constraints: Constraints = Field(default_factory=lambda: Constraints())
-    context: Optional[str] = Field(
-        default=None,
-        description="Free-text context providing additional information about the "
-        "optimization problem. Useful for agentic optimization where an LLM agent "
-        "can leverage this description to better understand the overall problem, "
-        "its goals, and any domain-specific knowledge.",
-    )
+    context: Optional[str] = None
 
     def to_description(self) -> str:
         """Render a human-readable description of the optimization problem.
@@ -80,8 +74,7 @@ class Domain(BaseModel):
 
         lines.append("\n## Objectives")
         for feat in self.outputs:
-            if hasattr(feat, "to_description"):
-                lines.append(f"- {feat.to_description()}")
+            lines.append(f"- {feat.to_description()}")
 
         if len(self.constraints) > 0:
             lines.append("\n## Constraints (candidates MUST satisfy all of these)")

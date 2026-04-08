@@ -40,6 +40,17 @@ class CategoricalExcludeConstraint(Constraint):
     logical_op: Literal["AND", "OR", "XOR"] = "AND"
 
     def to_description(self) -> str:
+        """Render as ``"Exclude where solvent in ['A', 'B'] AND temp > 50"``.
+
+        Example::
+
+            >>> c = CategoricalExcludeConstraint(
+            ...     features=["solvent", "temp"],
+            ...     conditions=[SelectionCondition(selection=["A"]), ThresholdCondition(threshold=50, operator=">")],
+            ... )
+            >>> c.to_description()
+            "Exclude where solvent in ['A'] AND temp > 50"
+        """
         conds = []
         for feat, cond in zip(self.features, self.conditions):
             if isinstance(cond, SelectionCondition):

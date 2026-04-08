@@ -82,7 +82,7 @@ class MaximizeObjective(IdentityObjective):
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
 
     def to_description(self) -> str:
-        return f"Maximize (w={self.w})"
+        return "Maximize"
 
 
 class MinimizeObjective(IdentityObjective):
@@ -97,7 +97,7 @@ class MinimizeObjective(IdentityObjective):
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
 
     def to_description(self) -> str:
-        return f"Minimize (w={self.w})"
+        return "Minimize"
 
     def __call__(
         self,

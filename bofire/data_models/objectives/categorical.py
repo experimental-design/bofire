@@ -30,8 +30,7 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
     def to_description(self) -> str:
-        desired = [c for c, d in zip(self.categories, self.desirability) if d]
-        return f"Categorical objective, desired: {desired} (w={self.w})"
+        raise NotImplementedError
 
     @model_validator(mode="after")
     def validate_desireability(self):

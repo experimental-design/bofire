@@ -26,6 +26,14 @@ class DiscreteInput(NumericalInput):
     rtol: float = 1e-7
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(Literal[...], Field(description=...))`` with allowed values.
+
+        Example::
+
+            >>> feat = DiscreteInput(key="n_steps", values=[1.0, 2.0, 5.0])
+            >>> field_type, _ = feat.to_pydantic_field()
+            >>> # field_type = Literal[1.0, 2.0, 5.0]
+        """
         desc_parts = [f"Discrete, allowed values: {self.values}"]
         if self.context:
             desc_parts.append(self.context)

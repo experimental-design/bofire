@@ -3,7 +3,6 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.features import Inputs
@@ -15,12 +14,7 @@ class Constraint(BaseModel):
 
     type: Any
     features: FeatureKeys
-    context: Optional[str] = Field(
-        default=None,
-        description="Free-text context providing additional information about this "
-        "constraint. Useful for agentic optimization where an LLM agent can "
-        "leverage this description to better understand the optimization problem.",
-    )
+    context: Optional[str] = None
 
     def to_description(self) -> str:
         """Return a human-readable description of this constraint.

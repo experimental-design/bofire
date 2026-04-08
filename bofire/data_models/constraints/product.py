@@ -103,6 +103,14 @@ class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
     type: Literal["ProductEqualityConstraint"] = "ProductEqualityConstraint"
 
     def to_description(self) -> str:
+        """Render as ``"x1^2 * x2^3 = 1.0"``.
+
+        Example::
+
+            >>> c = ProductEqualityConstraint(features=["x1", "x2"], exponents=[2, 3], rhs=1.0, sign=1)
+            >>> c.to_description()
+            'x1^2 * x2^3 = 1.0'
+        """
         sign = "" if self.sign == 1 else "-"
         terms = " * ".join(f"{f}^{e}" for f, e in zip(self.features, self.exponents))
         desc = f"{sign}{terms} = {self.rhs}"
@@ -127,6 +135,14 @@ class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     type: Literal["ProductInequalityConstraint"] = "ProductInequalityConstraint"
 
     def to_description(self) -> str:
+        """Render as ``"x1^2 * x2^3 <= 1.0"``.
+
+        Example::
+
+            >>> c = ProductInequalityConstraint(features=["x1", "x2"], exponents=[2, 3], rhs=1.0, sign=1)
+            >>> c.to_description()
+            'x1^2 * x2^3 <= 1.0'
+        """
         sign = "" if self.sign == 1 else "-"
         terms = " * ".join(f"{f}^{e}" for f, e in zip(self.features, self.exponents))
         desc = f"{sign}{terms} <= {self.rhs}"

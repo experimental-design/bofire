@@ -13,12 +13,9 @@ class Objective(BaseModel):
 
     type: str
 
+    @abstractmethod
     def to_description(self) -> str:
-        """Return a human-readable description of this objective.
-
-        Subclasses should override this to provide a meaningful description.
-        """
-        return type(self).__name__
+        """Return a human-readable description of this objective."""
 
     @abstractmethod
     def __call__(

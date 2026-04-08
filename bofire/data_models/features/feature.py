@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
-from pydantic import Field
 from pydantic.fields import FieldInfo
 
 from bofire.data_models.base import BaseModel
@@ -20,12 +19,7 @@ class Feature(BaseModel):
     type: Any
     key: str
     order_id: ClassVar[int] = -1
-    context: Optional[str] = Field(
-        default=None,
-        description="Free-text context providing additional information about this "
-        "feature. Useful for agentic optimization where an LLM agent can "
-        "leverage this description to better understand the optimization problem.",
-    )
+    context: Optional[str] = None
 
     def __lt__(self, other) -> bool:
         """Method to compare two models to get them in the desired order.
@@ -48,17 +42,13 @@ class Feature(BaseModel):
 class Input(Feature):
     """Base class for all input features."""
 
+    @abstractmethod
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
-        """Return (type, FieldInfo) for use in a dynamically created Pydantic model.
+        """Return ``(type, FieldInfo)`` for use in a dynamically created Pydantic model.
 
-        Subclasses should override this to provide tighter type constraints
-        (e.g., ge/le bounds for continuous, Literal for categorical).
-        The default returns a wide (float | str) field.
+        Each subclass must implement this to provide appropriate type constraints
+        (e.g., ``ge``/``le`` bounds for continuous, ``Literal`` for categorical).
         """
-        desc = type(self).__name__
-        if self.context:
-            desc += f" — {self.context}"
-        return (Union[float, str], Field(description=desc))
 
     @staticmethod
     @abstractmethod
@@ -171,6 +161,10 @@ class Output(Feature):
         key(str): Key of the Feature.
 
     """
+
+    @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this output feature."""
 
     @abstractmethod
     def __call__(self, values: pd.Series) -> pd.Series:

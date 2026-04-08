@@ -39,9 +39,7 @@ class MaximizeSigmoidObjective(SigmoidObjective):
     type: Literal["MaximizeSigmoidObjective"] = "MaximizeSigmoidObjective"
 
     def to_description(self) -> str:
-        return (
-            f"Maximize sigmoid (tp={self.tp}, steepness={self.steepness}, w={self.w})"
-        )
+        raise NotImplementedError
 
     def __call__(
         self,
@@ -75,7 +73,7 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
     type: Literal["MovingMaximizeSigmoidObjective"] = "MovingMaximizeSigmoidObjective"
 
     def to_description(self) -> str:
-        return f"Moving maximize sigmoid (tp={self.tp}, steepness={self.steepness}, w={self.w})"
+        raise NotImplementedError
 
     def get_adjusted_tp(self, x: Union[pd.Series, np.ndarray]) -> float:
         """Get the adjusted turning point for the sigmoid function.
@@ -122,9 +120,7 @@ class MinimizeSigmoidObjective(SigmoidObjective):
     type: Literal["MinimizeSigmoidObjective"] = "MinimizeSigmoidObjective"
 
     def to_description(self) -> str:
-        return (
-            f"Minimize sigmoid (tp={self.tp}, steepness={self.steepness}, w={self.w})"
-        )
+        raise NotImplementedError
 
     def __call__(
         self,

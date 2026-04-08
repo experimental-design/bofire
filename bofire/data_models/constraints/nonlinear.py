@@ -299,6 +299,14 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
     def to_description(self) -> str:
+        """Render as ``"x1*x2 = 0 (features: ['x1', 'x2'])"``.
+
+        Example::
+
+            >>> c = NonlinearEqualityConstraint(features=["x1", "x2"], expression="x1*x2")
+            >>> c.to_description()
+            "x1*x2 = 0 (features: ['x1', 'x2'])"
+        """
         expr = self.expression if isinstance(self.expression, str) else "<callable>"
         desc = f"{expr} = 0 (features: {self.features})"
         if self.context:
@@ -317,6 +325,14 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
 
     def to_description(self) -> str:
+        """Render as ``"x1*x2 <= 0 (features: ['x1', 'x2'])"``.
+
+        Example::
+
+            >>> c = NonlinearInequalityConstraint(features=["x1", "x2"], expression="x1*x2")
+            >>> c.to_description()
+            "x1*x2 <= 0 (features: ['x1', 'x2'])"
+        """
         expr = self.expression if isinstance(self.expression, str) else "<callable>"
         desc = f"{expr} <= 0 (features: {self.features})"
         if self.context:

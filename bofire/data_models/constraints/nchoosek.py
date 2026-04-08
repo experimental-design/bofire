@@ -31,6 +31,14 @@ class NChooseKConstraint(IntrapointConstraint):
     none_also_valid: bool
 
     def to_description(self) -> str:
+        """Render as ``"Choose 1-3 active features from ['x1', 'x2', 'x3']"``.
+
+        Example::
+
+            >>> c = NChooseKConstraint(features=["x1", "x2", "x3"], min_count=1, max_count=3, none_also_valid=False)
+            >>> c.to_description()
+            "Choose 1-3 active features from ['x1', 'x2', 'x3']"
+        """
         desc = f"Choose {self.min_count}-{self.max_count} active features from {self.features}"
         if self.none_also_valid:
             desc += ", or none"

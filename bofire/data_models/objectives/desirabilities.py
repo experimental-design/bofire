@@ -77,7 +77,7 @@ class IncreasingDesirabilityObjective(DesirabilityObjective):
     log_shape_factor: float = 0.0
 
     def to_description(self) -> str:
-        return f"Increasing desirability [{self.lower_bound}, {self.upper_bound}] (w={self.w})"
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -129,7 +129,7 @@ class DecreasingDesirabilityObjective(DesirabilityObjective):
     log_shape_factor: float = 0.0
 
     def to_description(self) -> str:
-        return f"Decreasing desirability [{self.lower_bound}, {self.upper_bound}] (w={self.w})"
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -181,7 +181,7 @@ class PeakDesirabilityObjective(DesirabilityObjective):
     peak_position: float = 0.5  # often named T
 
     def to_description(self) -> str:
-        return f"Peak desirability at {self.peak_position} within [{self.lower_bound}, {self.upper_bound}] (w={self.w})"
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -226,7 +226,7 @@ class InRangeDesirability(DesirabilityObjective):
     type: Literal["InRangeDesirability"] = "InRangeDesirability"
 
     def to_description(self) -> str:
-        return f"In-range desirability [{self.lower_bound}, {self.upper_bound}] (w={self.w})"
+        raise NotImplementedError
 
     def call_numpy(
         self,

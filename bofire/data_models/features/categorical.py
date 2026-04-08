@@ -52,6 +52,14 @@ class CategoricalInput(Input):
         return self
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(Literal[...], Field(description=...))`` with allowed categories.
+
+        Example::
+
+            >>> feat = CategoricalInput(key="solvent", categories=["water", "ethanol", "toluene"])
+            >>> field_type, _ = feat.to_pydantic_field()
+            >>> # field_type = Literal['water', 'ethanol', 'toluene']
+        """
         allowed = [c for c, a in zip(self.categories, self.allowed) if a]
         desc_parts = [f"Categorical, allowed: {allowed}"]
         if self.context:
@@ -386,7 +394,14 @@ class CategoricalOutput(Output):
     objective: AnyCategoricalObjective
 
     def to_description(self) -> str:
-        """Return a human-readable description combining objective and context."""
+        """Return a human-readable description combining objective and context.
+
+        Example::
+
+            >>> feat = CategoricalOutput(key="class", categories=["a", "b"], ...)
+            >>> feat.to_description()
+            'class: Categorical objective, desired: [a]'
+        """
         parts = [self.key, self.objective.to_description()]
         if self.context:
             parts.append(self.context)

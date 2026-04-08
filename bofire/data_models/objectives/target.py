@@ -29,7 +29,7 @@ class CloseToTargetObjective(Objective):
     exponent: float
 
     def to_description(self) -> str:
-        return f"Close to target {self.target_value} (w={self.w}, exponent={self.exponent})"
+        raise NotImplementedError
 
     def __call__(
         self,
@@ -57,7 +57,7 @@ class TargetObjective(Objective, ConstrainedObjective):
     steepness: TGt0
 
     def to_description(self) -> str:
-        return f"Target {self.target_value} (tolerance={self.tolerance}, steepness={self.steepness}, w={self.w})"
+        raise NotImplementedError
 
     def __call__(
         self,

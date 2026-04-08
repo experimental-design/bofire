@@ -46,16 +46,26 @@ class ContinuousInput(NumericalInput):
         return self.bounds[1]
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(float, Field(ge=..., le=..., description=...))```.
+
+        Example::
+
+            >>> feat = ContinuousInput(key="temp", bounds=(20.0, 200.0), context="Temperature in C")
+            >>> field_type, field_info = feat.to_pydantic_field()
+            >>> # field_type = float
+            >>> # field_info has ge=20.0, le=200.0
+            >>> # description = "Continuous, bounds [20.0, 200.0] — Temperature in C"
+        """
         desc_parts = [f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"]
-        if self.stepsize is not None:
-            desc_parts.append(f"stepsize {self.stepsize}")
+        lower = self.bounds[0]
+        if self.allow_zero:
+            lower = min(0.0, lower)
+            desc_parts.append("can also be 0 (inactive)")
         if self.context:
             desc_parts.append(self.context)
         return (
             float,
-            Field(
-                ge=self.bounds[0], le=self.bounds[1], description=" — ".join(desc_parts)
-            ),
+            Field(ge=lower, le=self.bounds[1], description=" — ".join(desc_parts)),
         )
 
     @model_validator(mode="after")
@@ -252,7 +262,14 @@ class ContinuousOutput(Output):
     )
 
     def to_description(self) -> str:
-        """Return a human-readable description combining objective and context."""
+        """Return a human-readable description combining objective and context.
+
+        Example::
+
+            >>> feat = ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0), context="Target >90%")
+            >>> feat.to_description()
+            'yield: Maximize — Target >90%'
+        """
         parts = [self.key]
         if self.objective is not None:
             parts.append(self.objective.to_description())
