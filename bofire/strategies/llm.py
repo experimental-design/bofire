@@ -133,6 +133,7 @@ class LLMStrategy(Strategy):
         self._temperature = data_model.temperature
         self._max_tokens = data_model.max_tokens
         self._thinking = data_model.thinking
+        self._output_retries = data_model.output_retries
         self._n_recent_experiments = data_model.n_recent_experiments
         self._n_top_experiments = data_model.n_top_experiments
         self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
@@ -162,12 +163,12 @@ class LLMStrategy(Strategy):
         # Build output schema fresh each call (domain may have changed)
         proposal_model = _build_proposal_model(self.domain)
 
-        # Create agent with output retries for constraint validation
+        # Create agent with configurable output retries for constraint validation
         agent = Agent(
             self._pydantic_ai_model,
             system_prompt=self._system_prompt,
             output_type=proposal_model,
-            output_retries=3,
+            output_retries=self._output_retries,
             name="LLMStrategy",
         )
 
@@ -245,6 +246,7 @@ class LLMStrategy(Strategy):
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         thinking: Optional[ThinkingLevel] = None,
+        output_retries: Optional[int] = None,
         n_recent_experiments: Optional[int] = None,
         n_top_experiments: Optional[int] = None,
         system_prompt: Optional[str] = None,
@@ -258,6 +260,7 @@ class LLMStrategy(Strategy):
             temperature: Sampling temperature for the LLM.
             max_tokens: Maximum response tokens.
             thinking: Reasoning effort level.
+            output_retries: Number of retries for output validation.
             n_recent_experiments: Number of recent experiments to show.
             n_top_experiments: Number of top experiments to show.
             system_prompt: Custom system prompt override.

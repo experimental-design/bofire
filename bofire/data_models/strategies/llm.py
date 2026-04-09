@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Optional, Type, Union
 
-from pydantic import Field, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -34,6 +34,7 @@ class LLMStrategy(Strategy):
         temperature: Sampling temperature for the LLM.
         max_tokens: Maximum number of tokens in the LLM response.
         thinking: Reasoning effort level for the LLM.
+        output_retries: Number of retries when output validation fails.
         n_recent_experiments: Number of most recent experiments to show the LLM.
         n_top_experiments: Number of top-performing experiments to show the LLM.
         system_prompt: Optional override for the default system prompt.
@@ -45,6 +46,7 @@ class LLMStrategy(Strategy):
     temperature: Optional[Annotated[float, Field(ge=0.0, le=2.0)]] = None
     max_tokens: Optional[Annotated[int, Field(gt=0)]] = None
     thinking: Optional[ThinkingLevel] = None
+    output_retries: PositiveInt = 3
     n_recent_experiments: Optional[Annotated[int, Field(gt=0)]] = None
     n_top_experiments: Optional[Annotated[int, Field(gt=0)]] = None
     system_prompt: Optional[str] = None
