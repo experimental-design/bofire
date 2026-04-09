@@ -193,6 +193,8 @@ specs.add_valid(
     lambda: {
         "squared": False,
         "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "lengthscale_constraint": None,
+        "features": None,
     },
 )
 specs.add_valid(
@@ -200,6 +202,8 @@ specs.add_valid(
     lambda: {
         "squared": False,
         "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "lengthscale_constraint": None,
+        "features": None,
         "idx_x": [4, 5],
         "idx_y": [0, 1, 2, 3],
         "prepend_x": [0.0],
