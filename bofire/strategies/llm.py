@@ -1,6 +1,7 @@
 """LLM-based strategy for candidate proposal using pydantic-ai."""
 
 import asyncio
+import json
 from dataclasses import dataclass
 from typing import Optional, cast
 
@@ -185,9 +186,10 @@ class LLMStrategy(Strategy):
             try:
                 deps.domain.validate_candidates(candidates_df, only_inputs=True)
             except Exception as e:
+                candidates_json = json.dumps(rows, indent=2)
                 raise ValueError(
                     f"Candidate validation failed: {e}\n\n"
-                    f"The proposed candidates were:\n{candidates_df.to_string()}\n\n"
+                    f"The proposed candidates were:\n{candidates_json}\n\n"
                     f"Please fix the candidates to satisfy all constraints and "
                     f"feature bounds, then try again."
                 ) from e
@@ -202,9 +204,10 @@ class LLMStrategy(Strategy):
                 self._n_recent_experiments,
                 self._n_top_experiments,
             )
+            experiments_json = json.dumps(selected.to_dict(orient="records"), indent=2)
             experiments_text = (
                 f"\n## Previous Experiments ({description})\n"
-                f"{selected.to_string(index=False)}"
+                f"```json\n{experiments_json}\n```"
             )
 
         deps = _LLMDeps(
