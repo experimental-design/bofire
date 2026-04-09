@@ -497,3 +497,24 @@ def test_categorical_output_call():
     )
     output = categorical_output(test_df, test_df)
     assert output.tolist() == test_df["c1"].tolist()
+
+
+def test_categorical_input_to_pydantic_field():
+    from typing import Literal
+
+    feat = CategoricalInput(key="sol", categories=["water", "ethanol", "toluene"])
+    field_type, _ = feat.to_pydantic_field()
+    assert field_type == Literal["water", "ethanol", "toluene"]
+
+
+def test_categorical_input_to_pydantic_field_respects_allowed():
+    from typing import Literal
+
+    feat = CategoricalInput(
+        key="sol",
+        categories=["water", "ethanol", "toluene"],
+        allowed=[True, True, False],
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal["water", "ethanol"]
+    assert "toluene" not in field_info.description

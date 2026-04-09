@@ -313,3 +313,16 @@ def test_categorical_molecular_input_select_mordred_descriptors():
     assert (
         final_descriptor_count > 0
     ), "All descriptors were removed, expected at least some to remain"
+
+
+def test_categorical_molecular_input_to_pydantic_field():
+    feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
+    _, field_info = feat.to_pydantic_field()
+    assert "SMILES" in field_info.description
+    assert "CCO" in field_info.description
+
+
+def test_continuous_molecular_input_to_pydantic_field():
+    feat = ContinuousMolecularInput(key="conc", molecule="CCO", bounds=(0.0, 1.0))
+    _, field_info = feat.to_pydantic_field()
+    assert "SMILES: CCO" in field_info.description

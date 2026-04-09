@@ -375,3 +375,29 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     assert f.categories == categories
     assert f.descriptors == descriptors
     assert f.values == values
+
+
+def test_categorical_descriptor_input_to_pydantic_field():
+    feat = CategoricalDescriptorInput(
+        key="cat",
+        categories=["a", "b"],
+        descriptors=["d1", "d2"],
+        values=[[1.0, 2.0], [3.0, 4.0]],
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert "descriptors per category" in field_info.description
+    assert "d1" in field_info.description
+
+
+def test_continuous_descriptor_input_to_pydantic_field():
+    from bofire.data_models.features.api import ContinuousDescriptorInput
+
+    feat = ContinuousDescriptorInput(
+        key="x",
+        bounds=(0, 1),
+        descriptors=["d1"],
+        values=[0.5],
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is float
+    assert "descriptors" in field_info.description

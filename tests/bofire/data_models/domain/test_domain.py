@@ -23,7 +23,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     Feature,
 )
-from bofire.data_models.objectives.api import TargetObjective
+from bofire.data_models.objectives.api import MaximizeObjective, TargetObjective
 from bofire.utils.subdomain import get_subdomain
 
 
@@ -486,3 +486,59 @@ def test_is_fulfilled():
         domain.is_fulfilled(experiments),
         pd.Series([True, False, False], index=experiments.index),
     )
+
+
+def test_domain_to_description():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    desc = domain.to_description()
+    assert "Objectives" in desc
+    assert "y" in desc
+    assert "Maximize" in desc
+
+
+def test_domain_to_description_with_context():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    domain.context = "Optimizing a reaction"
+    desc = domain.to_description()
+    assert "Optimizing a reaction" in desc
+
+
+def test_domain_to_description_with_constraints():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=[1.0, 1.0],
+                rhs=1.5,
+                context="Budget constraint",
+            )
+        ],
+    )
+    desc = domain.to_description()
+    assert "Constraints" in desc
+    assert "<= 1.5" in desc
+    assert "Budget constraint" in desc
+
+
+def test_domain_context_roundtrip():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1), context="Feature ctx")],
+        outputs=[ContinuousOutput(key="y", context="Output ctx")],
+    )
+    domain.context = "Domain ctx"
+    dumped = domain.model_dump()
+    restored = Domain(**dumped)
+    assert restored.context == "Domain ctx"
+    assert restored.inputs[0].context == "Feature ctx"
+    assert restored.outputs[0].context == "Output ctx"

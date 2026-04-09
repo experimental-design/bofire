@@ -111,3 +111,14 @@ def test_from_continuous():
     )
     samples = d.from_continuous(continuous_values)
     assert np.all(samples == pd.Series([2, 2, 3, 2]))
+
+
+def test_discrete_input_to_pydantic_field():
+    from typing import Literal
+
+    from bofire.data_models.features.api import DiscreteInput
+
+    feat = DiscreteInput(key="n", values=[1.0, 2.0, 5.0])
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal[1.0, 2.0, 5.0]
+    assert "allowed values" in field_info.description
