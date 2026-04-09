@@ -1,7 +1,7 @@
 from typing import List, Literal, Optional
 
 from bofire.data_models.kernels.kernel import Kernel
-from bofire.data_models.priors.api import AnyPrior
+from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class WassersteinKernel(Kernel):
@@ -27,6 +27,7 @@ class WassersteinKernel(Kernel):
     type: Literal["WassersteinKernel"] = "WassersteinKernel"
     squared: bool = False
     lengthscale_prior: Optional[AnyPrior] = None
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
 
 class ExactWassersteinKernel(Kernel):
@@ -35,6 +36,7 @@ class ExactWassersteinKernel(Kernel):
     type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"
     squared: bool = False
     lengthscale_prior: Optional[AnyPrior] = None
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None
     idx_x: List[int]
     idx_y: List[int]
     prepend_x: List[float] = []

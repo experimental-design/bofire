@@ -365,6 +365,11 @@ def map_WassersteinKernel(
             if data_model.lengthscale_prior is not None
             else None
         ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
+            else None
+        ),
         active_dims=active_dims,
     )
 
@@ -388,6 +393,11 @@ def map_ExactWassersteinKernel(
         lengthscale_prior=(
             priors.map(data_model.lengthscale_prior, d=len(active_dims))
             if data_model.lengthscale_prior is not None
+            else None
+        ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
             else None
         ),
         idx_x=idx_x,
