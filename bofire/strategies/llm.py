@@ -162,11 +162,13 @@ class LLMStrategy(Strategy):
         # Build output schema fresh each call (domain may have changed)
         proposal_model = _build_proposal_model(self.domain)
 
-        # Create agent
+        # Create agent with output retries for constraint validation
         agent = Agent(
             self._pydantic_ai_model,
             system_prompt=self._system_prompt,
             output_type=proposal_model,
+            output_retries=3,
+            name="LLMStrategy",
         )
 
         # Add domain description as dynamic system prompt

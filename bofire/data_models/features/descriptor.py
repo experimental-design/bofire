@@ -102,6 +102,12 @@ class CategoricalDescriptorInput(CategoricalInput):
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
     order_id: ClassVar[int] = 6
 
+    descriptors: Descriptors
+    values: Annotated[
+        List[List[float]],
+        Field(min_length=1),
+    ]
+
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(...))`` with descriptor info.
 
@@ -128,12 +134,6 @@ class CategoricalDescriptorInput(CategoricalInput):
             Literal[tuple(allowed)],
             Field(description=" — ".join(desc_parts)),
         )
-
-    descriptors: Descriptors
-    values: Annotated[
-        List[List[float]],
-        Field(min_length=1),
-    ]
 
     @field_validator("values")
     @classmethod
