@@ -358,6 +358,7 @@ def map_WassersteinKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
     **kwargs,
 ) -> WassersteinKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return WassersteinKernel(
         squared=data_model.squared,
         lengthscale_prior=(
@@ -381,6 +382,7 @@ def map_ExactWassersteinKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
     **kwargs,
 ) -> ExactWassersteinKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     idx_x = torch.as_tensor(data_model.idx_x, dtype=torch.long)
     idx_y = torch.as_tensor(data_model.idx_y, dtype=torch.long)
     prepend_x = torch.tensor(data_model.prepend_x, dtype=torch.double)
