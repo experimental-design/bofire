@@ -12,9 +12,10 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     @model_validator(mode="after")
     def validate_scaler_features(self):
         if self.scaler and len(self.scaler.features) > 0:
-            missing_features = list(
-                set(self.scaler.features) - set(self.inputs.get_keys())
-            )
+            known_keys = set(self.inputs.get_keys())
+            if hasattr(self, "engineered_features"):
+                known_keys |= set(self.engineered_features.get_keys())
+            missing_features = list(set(self.scaler.features) - known_keys)
             if missing_features:
                 raise ValueError(
                     f"The following features are missing in inputs: {missing_features}"

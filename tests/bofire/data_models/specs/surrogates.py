@@ -5,6 +5,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CloneFeature,
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
@@ -59,6 +60,42 @@ specs.add_valid(
             features=[MeanFeature(key="mean1", features=["a", "b"])]
         ).model_dump(),
         "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+)
+
+specs.add_valid(
+    models.SingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True,
+                nu=2.5,
+                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures(
+            features=[CloneFeature(key="__clone_continuous__", features=["a"])]
+        ).model_dump(),
+        "scaler": Normalize(features=["__clone_continuous__"]).model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": None,
