@@ -16,6 +16,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.llm.api import AnyLLMProvider
 from bofire.data_models.objectives.api import MinimizeObjective
+from bofire.data_models.strategies.llm import ThinkingLevel
 from bofire.strategies.strategy import Strategy, make_strategy
 
 
@@ -241,7 +242,7 @@ class LLMStrategy(Strategy):
         llm: AnyLLMProvider,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        thinking=None,
+        thinking: Optional[ThinkingLevel] = None,
         n_recent_experiments: Optional[int] = None,
         n_top_experiments: Optional[int] = None,
         system_prompt: Optional[str] = None,

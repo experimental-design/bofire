@@ -1015,7 +1015,9 @@ _llm_domain = Domain(
             CategoricalInput(key="x3", categories=["a", "b", "c"]),
         ],
     ),
-    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+    outputs=Outputs(
+        features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+    ),
 )
 
 specs.add_valid(

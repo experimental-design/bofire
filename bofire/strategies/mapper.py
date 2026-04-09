@@ -57,6 +57,11 @@ def map(data_model: data_models.Strategy) -> Strategy:
         from bofire.strategies.mapper_actual import _register_llm_strategy
 
         _register_llm_strategy()
+        if data_cls not in ACTUAL_MAP:
+            raise ValueError(
+                f"Unknown strategy type: {data_cls.__name__}. "
+                f"If this is LLMStrategy, install the [llm] extra."
+            )
         cls = ACTUAL_MAP[data_cls]
 
     return cls.from_spec(data_model=data_model)

@@ -47,7 +47,14 @@ def _register_llm_strategy():
 
         STRATEGY_MAP[data_models.LLMStrategy] = LLMStrategyImpl
     except ImportError:
-        pass
+        import warnings
+
+        warnings.warn(
+            "LLMStrategy could not be imported. "
+            "Install the [llm] extra (pip install bofire[llm]) to use it.",
+            ImportWarning,
+            stacklevel=2,
+        )
 
 
 def map(data_model: data_models.Strategy) -> Strategy:

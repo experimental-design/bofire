@@ -1,20 +1,17 @@
-"""Maps LLM provider data models to pydantic-ai Model instances."""
+"""Map LLM provider data models to pydantic-ai Model instances.
+
+Each provider data model (e.g., ``AnthropicLLMProvider``) is mapped to the
+corresponding pydantic-ai ``Model`` object. API keys are resolved from
+environment variables at mapping time.
+"""
 
 import os
-from typing import Union
 
 from bofire.data_models.llm.anthropic import AnthropicLLMProvider
 from bofire.data_models.llm.anthropic_foundry import AnthropicFoundryLLMProvider
 from bofire.data_models.llm.openai import OpenAILLMProvider
 from bofire.data_models.llm.openai_compatible import OpenAICompatibleLLMProvider
-
-
-AnyLLMProviderInstance = Union[
-    AnthropicLLMProvider,
-    AnthropicFoundryLLMProvider,
-    OpenAILLMProvider,
-    OpenAICompatibleLLMProvider,
-]
+from bofire.data_models.llm.provider import LLMProvider
 
 
 def _resolve_env_var(env_var_name: str) -> str:
@@ -89,7 +86,7 @@ _MAP = {
 }
 
 
-def map(data_model: AnyLLMProviderInstance):
+def map(data_model: LLMProvider):
     """Map an LLM provider data model to a pydantic-ai Model instance.
 
     Args:
@@ -100,11 +97,13 @@ def map(data_model: AnyLLMProviderInstance):
 
     Raises:
         EnvironmentError: If required environment variables are not set.
-        KeyError: If the provider type is not registered.
+        ValueError: If the provider type is not supported.
     """
     mapper_fn = _MAP.get(type(data_model))
     if mapper_fn is None:
-        raise KeyError(
-            f"No mapper registered for LLM provider type: {type(data_model).__name__}"
+        supported = ", ".join(c.__name__ for c in _MAP)
+        raise ValueError(
+            f"Unsupported LLM provider type: {type(data_model).__name__}. "
+            f"Supported: {supported}"
         )
     return mapper_fn(data_model)
