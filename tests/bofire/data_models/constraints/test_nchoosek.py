@@ -8,9 +8,7 @@ def test_nchoosek_to_description():
         max_count=2,
         none_also_valid=False,
     )
-    desc = c.to_description()
-    assert "Choose 1-2" in desc
-    assert "x1" in desc
+    assert c.to_description() == "Choose 1-2 active features from ['x1', 'x2', 'x3']"
 
 
 def test_nchoosek_to_description_none_valid():
@@ -20,4 +18,4 @@ def test_nchoosek_to_description_none_valid():
         max_count=2,
         none_also_valid=True,
     )
-    assert "or none" in c.to_description()
+    assert c.to_description() == "Choose 1-2 active features from ['x1', 'x2'], or none"

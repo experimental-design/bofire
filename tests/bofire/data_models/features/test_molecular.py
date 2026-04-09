@@ -318,11 +318,16 @@ def test_categorical_molecular_input_select_mordred_descriptors():
 def test_categorical_molecular_input_to_pydantic_field():
     feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
     _, field_info = feat.to_pydantic_field()
-    assert "SMILES" in field_info.description
-    assert "CCO" in field_info.description
+    assert (
+        field_info.description
+        == "Categorical molecular (SMILES), allowed: ['CCO', 'CC']"
+    )
 
 
 def test_continuous_molecular_input_to_pydantic_field():
     feat = ContinuousMolecularInput(key="conc", molecule="CCO", bounds=(0.0, 1.0))
     _, field_info = feat.to_pydantic_field()
-    assert "SMILES: CCO" in field_info.description
+    assert (
+        field_info.description
+        == "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0]"
+    )

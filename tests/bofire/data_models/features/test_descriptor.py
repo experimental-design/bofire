@@ -385,8 +385,10 @@ def test_categorical_descriptor_input_to_pydantic_field():
         values=[[1.0, 2.0], [3.0, 4.0]],
     )
     _, field_info = feat.to_pydantic_field()
-    assert "descriptors per category" in field_info.description
-    assert "d1" in field_info.description
+    assert field_info.description == (
+        "Categorical with descriptors, allowed: ['a', 'b'] — "
+        "descriptors per category: {'a': {'d1': 1.0, 'd2': 2.0}, 'b': {'d1': 3.0, 'd2': 4.0}}"
+    )
 
 
 def test_continuous_descriptor_input_to_pydantic_field():
@@ -400,4 +402,6 @@ def test_continuous_descriptor_input_to_pydantic_field():
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is float
-    assert "descriptors" in field_info.description
+    assert field_info.description == (
+        "Continuous, bounds [0.0, 1.0] — descriptors: {'d1': 0.5}"
+    )

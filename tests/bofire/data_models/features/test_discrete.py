@@ -121,4 +121,4 @@ def test_discrete_input_to_pydantic_field():
     feat = DiscreteInput(key="n", values=[1.0, 2.0, 5.0])
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal[1.0, 2.0, 5.0]
-    assert "allowed values" in field_info.description
+    assert field_info.description == "Discrete, allowed values: [1.0, 2.0, 5.0]"

@@ -103,17 +103,14 @@ def test_linear_equality_to_description():
     c = LinearEqualityConstraint(
         features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0
     )
-    desc = c.to_description()
-    assert "1.0*x1" in desc
-    assert "2.0*x2" in desc
-    assert "= 5.0" in desc
+    assert c.to_description() == "1.0*x1 + 2.0*x2 = 5.0"
 
 
 def test_linear_inequality_to_description():
     c = LinearInequalityConstraint(
         features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0
     )
-    assert "<= 5.0" in c.to_description()
+    assert c.to_description() == "1.0*x1 + 2.0*x2 <= 5.0"
 
 
 def test_linear_constraint_to_description_with_context():
@@ -123,4 +120,4 @@ def test_linear_constraint_to_description_with_context():
         rhs=5.0,
         context="Safety limit",
     )
-    assert "Safety limit" in c.to_description()
+    assert c.to_description() == "1.0*x1 + 2.0*x2 <= 5.0 — Safety limit"

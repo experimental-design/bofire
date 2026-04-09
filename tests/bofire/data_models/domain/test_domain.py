@@ -493,10 +493,7 @@ def test_domain_to_description():
         inputs=[ContinuousInput(key="x", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
     )
-    desc = domain.to_description()
-    assert "Objectives" in desc
-    assert "y" in desc
-    assert "Maximize" in desc
+    assert domain.to_description() == "\n## Objectives\n- y: Maximize"
 
 
 def test_domain_to_description_with_context():
@@ -505,8 +502,9 @@ def test_domain_to_description_with_context():
         outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
     )
     domain.context = "Optimizing a reaction"
-    desc = domain.to_description()
-    assert "Optimizing a reaction" in desc
+    assert domain.to_description() == (
+        "## Problem Context\nOptimizing a reaction\n" "\n## Objectives\n- y: Maximize"
+    )
 
 
 def test_domain_to_description_with_constraints():
@@ -525,10 +523,11 @@ def test_domain_to_description_with_constraints():
             )
         ],
     )
-    desc = domain.to_description()
-    assert "Constraints" in desc
-    assert "<= 1.5" in desc
-    assert "Budget constraint" in desc
+    assert domain.to_description() == (
+        "\n## Objectives\n- y: Maximize\n"
+        "\n## Constraints (candidates MUST satisfy all of these)\n"
+        "- 1.0*x1 + 1.0*x2 <= 1.5 — Budget constraint"
+    )
 
 
 def test_domain_context_roundtrip():

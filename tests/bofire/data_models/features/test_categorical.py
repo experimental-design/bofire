@@ -503,8 +503,12 @@ def test_categorical_input_to_pydantic_field():
     from typing import Literal
 
     feat = CategoricalInput(key="sol", categories=["water", "ethanol", "toluene"])
-    field_type, _ = feat.to_pydantic_field()
+    field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal["water", "ethanol", "toluene"]
+    assert (
+        field_info.description
+        == "Categorical, allowed: ['water', 'ethanol', 'toluene']"
+    )
 
 
 def test_categorical_input_to_pydantic_field_respects_allowed():
@@ -517,4 +521,4 @@ def test_categorical_input_to_pydantic_field_respects_allowed():
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal["water", "ethanol"]
-    assert "toluene" not in field_info.description
+    assert field_info.description == "Categorical, allowed: ['water', 'ethanol']"
