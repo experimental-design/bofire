@@ -30,6 +30,12 @@ class qLogNEI(SingleObjectiveAcquisitionFunction):
     n_mc_samples: IntPowerOfTwo = 512
 
 
+class pTS(SingleObjectiveAcquisitionFunction):
+    """Pathwise Thompson Sampling acquisition function."""
+
+    type: Literal["pTS"] = "pTS"
+
+
 class qEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qEI"] = "qEI"
     n_mc_samples: IntPowerOfTwo = 512

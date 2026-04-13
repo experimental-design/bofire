@@ -30,6 +30,7 @@ from botorch.acquisition.objective import (
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
+    AnyUnconstrainedAcquisitionFunction,
     qLogNEI,
     qLogPF,
     qNEI,
@@ -60,6 +61,9 @@ from bofire.utils.torch_tools import (
     get_output_constraints,
     tkwargs,
 )
+
+
+# TODO: tidy up the sobo strategies into one by modularizing the objective and constraint construction.
 
 
 class SoboStrategy(BotorchStrategy):
@@ -151,9 +155,9 @@ class SoboStrategy(BotorchStrategy):
             constraint_callables, etas = None, 1e-3
 
         # special cases of qUCB and qSR do not work with separate constraints
-        if (isinstance(self.acquisition_function, (qSR, qUCB))) and (
-            constraint_callables is not None
-        ):
+        if isinstance(
+            self.acquisition_function, AnyUnconstrainedAcquisitionFunction
+        ) and (constraint_callables is not None):
             return (
                 ConstrainedMCObjective(
                     objective=objective_callable,
@@ -249,8 +253,10 @@ class AdditiveSoboStrategy(SoboStrategy):
                 experiments=self.experiments,
             )
 
-            # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, (qSR, qUCB)):
+            # special cases of qUCB and qSRdo not work with separate constraints
+            if isinstance(
+                self.acquisition_function, AnyUnconstrainedAcquisitionFunction
+            ):
                 return (
                     ConstrainedMCObjective(
                         objective=objective_callable,
