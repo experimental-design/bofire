@@ -646,7 +646,8 @@ def test_check_nchoosek_constraints_as_bounds():
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
+    # NChooseK with non-zero lower bounds should be allowed: inactive variables
+    # are pinned to [0, 0] by the bounds formulation regardless of the original lb.
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.1, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
@@ -659,10 +660,8 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
+    check_nchoosek_constraints_as_bounds(domain)  # should pass now
 
-    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key=f"x{1}", bounds=(0.1, 1.0)),
@@ -680,8 +679,7 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
+    check_nchoosek_constraints_as_bounds(domain)  # should pass now
 
     # Not allowed: names parameters of two NChooseK overlap
     domain = Domain.from_lists(

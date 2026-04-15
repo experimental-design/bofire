@@ -7,7 +7,6 @@ from formulaic import Formula
 
 from bofire.data_models.constraints.api import (
     ConstraintNotFulfilledError,
-    NChooseKConstraint,
     NonlinearConstraint,
 )
 from bofire.data_models.domain.api import Domain
@@ -93,13 +92,6 @@ def find_local_max_ipopt(
                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.",
                 UserWarning,
             )
-
-    # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
-    assert all(
-        c.min_count == 0
-        for c in domain.constraints
-        if isinstance(c, NChooseKConstraint)
-    ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     #
     # Sampling initial values
