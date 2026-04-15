@@ -1340,13 +1340,13 @@ def test_nchoosek_bounds_none_also_valid():
     n_features = 3
     d = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
                 features=["x0", "x1", "x2"],
-                min_count=2,
+                min_count=0,
                 max_count=2,
                 none_also_valid=True,
             )
@@ -1367,6 +1367,9 @@ def test_nchoosek_bounds_none_also_valid():
         (1, 1, 0),
         (1, 0, 1),
         (0, 1, 1),
+        (0, 1, 0),
+        (0, 0, 1),
+        (1, 0, 0),
         (0, 0, 0),  # none_also_valid adds the all-inactive pattern
     }
     assert observed_patterns == expected_patterns, (
@@ -1376,4 +1379,4 @@ def test_nchoosek_bounds_none_also_valid():
 
 
 if __name__ == "__main__":
-    test_custom_formula_with_categorical_and_discrete()
+    test_nchoosek_bounds_none_also_valid()

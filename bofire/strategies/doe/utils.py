@@ -658,11 +658,10 @@ def nchoosek_constraints_as_bounds(
                         )
 
                 # Optionally include the all-zero pattern (all inactive).
-                # Only needed when min_count > 0 and none_also_valid, because
-                # the loop above starts at max(min_count, 1) and would not
-                # include the k=0 (all-inactive) case.  When min_count=0 the
-                # loop already covers low-activity patterns adequately.
-                if constraint.none_also_valid and constraint.min_count > 0:
+                # The loop above starts at max(min_count, 1) and never
+                # generates the k=0 (all-inactive) case.  When
+                # none_also_valid is set, we explicitly add it.
+                if constraint.none_also_valid:
                     all_inactive_pattern = tuple(ind)
                     if all_inactive_pattern not in all_inactive_patterns:
                         all_inactive_patterns.append(all_inactive_pattern)
@@ -671,7 +670,9 @@ def nchoosek_constraints_as_bounds(
                     # patterns may have different lengths (different activity
                     # levels), so we keep them as a plain list of tuples
                     # instead of converting to a numpy array.
-                    np.random.shuffle(all_inactive_patterns)
+                    np.random.shuffle(
+                        all_inactive_patterns
+                    )  # shuffle patterns to avoid biasing the optimization towards certain patterns
 
                     # set bounds to zero for the chosen inactive variables per experiment
                     D = len(domain.inputs)

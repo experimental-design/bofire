@@ -660,7 +660,7 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    check_nchoosek_constraints_as_bounds(domain)  # should pass now
+    check_nchoosek_constraints_as_bounds(domain)
 
     domain = Domain.from_lists(
         inputs=[
@@ -679,7 +679,7 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    check_nchoosek_constraints_as_bounds(domain)  # should pass now
+    check_nchoosek_constraints_as_bounds(domain)
 
     # Not allowed: names parameters of two NChooseK overlap
     domain = Domain.from_lists(
