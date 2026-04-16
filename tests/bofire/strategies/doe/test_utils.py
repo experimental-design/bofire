@@ -1012,7 +1012,7 @@ def test_multi_nchoosek_bounds_known_patterns():
     n_features = 3
     d = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{i}", bounds=(0.1, 2.0)) for i in range(n_features)
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
