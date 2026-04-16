@@ -1,4 +1,3 @@
-import warnings
 from typing import Dict, Literal, Union
 
 import numpy as np
@@ -21,8 +20,8 @@ class NChooseKConstraint(IntrapointConstraint):
         features (List[str]): List of feature keys to which the constraint applies.
         min_count (int): Minimal number of non-zero/active feature values.
         max_count (int): Maximum number of non-zero/active feature values.
-        none_also_valid (bool): If True and ``min_count > 0``, zero active
-            features are also accepted as a valid state.
+        none_also_valid (bool): In case that min_count > 0,
+            this flag decides if zero active features are also allowed.
 
     """
 
@@ -30,18 +29,6 @@ class NChooseKConstraint(IntrapointConstraint):
     min_count: int
     max_count: int
     none_also_valid: bool
-
-    @model_validator(mode="after")
-    def validate_none_also_valid(self):
-        if not self.none_also_valid and self.min_count == 0:
-            warnings.warn(
-                "min_count is 0 but none_also_valid is False. "
-                "The all-zero pattern (all features inactive) will NOT be "
-                "considered valid. This is equivalent to min_count=1.",
-                UserWarning,
-                stacklevel=2,
-            )
-        return self
 
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys([ContinuousInput, DiscreteInput])

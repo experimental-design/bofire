@@ -1011,32 +1011,24 @@ def test_nchoosek_bounds_known_patterns():
 
 def test_nchoosek_bounds_none_also_valid():
     """Test none_also_valid behavior for the all-zero pattern."""
-    import warnings
 
     n_features = 3
 
-    # --- Case 1: none_also_valid=False with min_count=0 should warn ---
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        d_no_none = Domain.from_lists(
-            inputs=[
-                ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0))
-                for i in range(n_features)
-            ],
-            outputs=[ContinuousOutput(key="y")],
-            constraints=[
-                NChooseKConstraint(
-                    features=["x0", "x1", "x2"],
-                    min_count=0,
-                    max_count=2,
-                    none_also_valid=False,
-                )
-            ],
-        )
-        # Should have emitted a UserWarning about min_count=0 + none_also_valid=False
-        assert any(
-            issubclass(wi.category, UserWarning) for wi in w
-        ), "Expected a UserWarning when min_count=0 and none_also_valid=False"
+    # --- Case 1: none_also_valid=False with min_count=0 ---
+    d_no_none = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=False,
+            )
+        ],
+    )
 
     n_experiments = 12
     bounds = nchoosek_constraints_as_bounds(d_no_none, n_experiments=n_experiments)
@@ -1062,7 +1054,9 @@ def test_nchoosek_bounds_none_also_valid():
         f"got {sorted(observed_patterns)}"
     )
 
-    # --- Case 2: none_also_valid=True with min_count=0 should include all-zero ---
+    # --- Case 2: none_also_valid=True with min_count=0 ---
+    # When min_count=0, the all-zero pattern is NOT added in bounds
+    # (it is handled at validation level by is_fulfilled / domain.py).
     d_with_none = Domain.from_lists(
         inputs=[
             ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
@@ -1085,18 +1079,45 @@ def test_nchoosek_bounds_none_also_valid():
         pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
         observed_patterns.add(pattern)
 
-    # none_also_valid=True: all-zero pattern SHOULD appear
-    expected_patterns_with_zero = {
+    # Same patterns as Case 1: all-zero is NOT added in bounds when min_count=0
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # --- Case 3: none_also_valid=True with min_count > 0 ---
+    # none_also_valid does NOT affect bounds generation (only is_fulfilled
+    # and domain.py enumeration).  With min_count=2, max_count=2, we only
+    # get the C(3,1) = 3 patterns with exactly 2 active features.
+    d_min_gt_zero = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=2,
+                max_count=2,
+                none_also_valid=True,
+            )
+        ],
+    )
+    bounds = nchoosek_constraints_as_bounds(d_min_gt_zero, n_experiments=n_experiments)
+
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    expected_patterns_min_gt_zero = {
         (1, 1, 0),
         (1, 0, 1),
         (0, 1, 1),
-        (0, 1, 0),
-        (0, 0, 1),
-        (1, 0, 0),
-        (0, 0, 0),  # all-zero from none_also_valid
     }
-    assert observed_patterns == expected_patterns_with_zero, (
-        f"Expected patterns {sorted(expected_patterns_with_zero)}, "
+    assert observed_patterns == expected_patterns_min_gt_zero, (
+        f"Expected patterns {sorted(expected_patterns_min_gt_zero)}, "
         f"got {sorted(observed_patterns)}"
     )
 

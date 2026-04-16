@@ -647,8 +647,6 @@ def nchoosek_constraints_as_bounds(
                 # Build all valid deactivation patterns for every allowed
                 # activity level k in [min_count, max_count].  For each k,
                 # exactly (n_features - k) variables are set to zero.
-                # k=0 means ALL variables inactive (the "none" case), which
-                # is handled separately via none_also_valid below.
                 all_inactive_patterns = []
                 for k in range(max(constraint.min_count, 1), constraint.max_count + 1):
                     n_inactive = n_features - k
@@ -656,13 +654,6 @@ def nchoosek_constraints_as_bounds(
                         all_inactive_patterns.extend(
                             list(combinations(ind, r=n_inactive))
                         )
-
-                # Optionally include the all-zero pattern (all inactive).
-                # If none_also_valid is set, we explicitly add it.
-                if constraint.none_also_valid:
-                    all_inactive_pattern = tuple(ind)
-                    if all_inactive_pattern not in all_inactive_patterns:
-                        all_inactive_patterns.append(all_inactive_pattern)
 
                 if len(all_inactive_patterns) > 0:
                     # patterns may have different lengths (different activity

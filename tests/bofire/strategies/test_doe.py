@@ -1272,9 +1272,10 @@ def test_nchoosek_nonzero_lower_bounds():
 def test_nchoosek_none_valid():
     """Test NChooseK with none_also_valid=True and min_count > 0.
 
-    With none_also_valid=True, zero active features is also valid even when
-    min_count > 0.  The optimizer may produce rows with 0 or >= min_count
-    active features.
+    none_also_valid only affects validation (is_fulfilled) and domain
+    enumeration — it does NOT inject the all-zero pattern into the DoE
+    bounds.  So the optimizer should always produce rows with
+    min_count <= active <= max_count.
     """
     n_features = 5
     nchoosek_constraint = NChooseKConstraint(
@@ -1302,8 +1303,8 @@ def test_nchoosek_none_valid():
     nchoosek_keys = [f"x{i}" for i in range(n_features)]
     for _, row in candidates[nchoosek_keys].iterrows():
         active = int((row.abs() > 1e-6).sum())
-        # none_also_valid=True allows 0 active or >= min_count active
-        assert (active == 0) or (active >= 2), f"Invalid active count: {active}"
+        # Every row must have between min_count and max_count active features
+        assert active >= 2, f"Too few active features: {active}"
 
 
 if __name__ == "__main__":
