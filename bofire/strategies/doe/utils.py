@@ -1,6 +1,7 @@
 import importlib.util
 import re
 import sys
+from collections import defaultdict
 from copy import copy
 from itertools import combinations
 from typing import Iterator, List, Optional, Tuple, Union, cast
@@ -598,22 +599,48 @@ def _iter_nchoosek_combined_patterns(
                 yield {idx: True for idx in ind}
 
     def _merge_two(patterns_a, patterns_b):
-        """Yield merged dicts from two pattern iterables, filtering conflicts."""
-        # patterns_a must be materialized (we iterate it once per b).
-        # patterns_b is consumed once.
+        """Yield merged dicts from two pattern iterables, filtering conflicts.
+
+        Uses a hash-join on shared feature indices: patterns from A are
+        bucketed by their assignment to shared keys, so each pattern from B
+        only needs to merge with the bucket that agrees on those keys.
+
+        Analogy: imagine two bags of puzzle pieces where each piece says
+        which animals are awake or asleep.  If both bags mention the same
+        animal, the pieces must agree (both "awake" or both "asleep").
+        Instead of trying every piece from bag B against every piece from
+        bag A, we sort bag A into labeled bins by what the shared animals
+        do.  Then each bag-B piece goes straight to the matching bin —
+        skipping all bins that would always conflict.
+        """
         list_a = list(patterns_a)
-        for pb in patterns_b:
+        list_b = list(patterns_b)
+
+        # Identify shared feature indices between the two sides.
+        keys_a = set().union(*(pa.keys() for pa in list_a)) if list_a else set()
+        keys_b = set().union(*(pb.keys() for pb in list_b)) if list_b else set()
+        shared = keys_a & keys_b
+
+        if shared:
+            # Bucket A patterns by their assignment on shared indices.
+            sorted_shared = sorted(shared)
+            buckets: dict = defaultdict(list)
             for pa in list_a:
-                merged = dict(pa)
-                consistent = True
-                for idx, active in pb.items():
-                    if idx in merged:
-                        if merged[idx] != active:
-                            consistent = False
-                            break
-                    else:
-                        merged[idx] = active
-                if consistent:
+                key = tuple(pa[idx] for idx in sorted_shared)
+                buckets[key].append(pa)
+
+            for pb in list_b:
+                key = tuple(pb[idx] for idx in sorted_shared)
+                for pa in buckets.get(key, ()):
+                    merged = dict(pa)
+                    merged.update(pb)
+                    yield merged
+        else:
+            # No shared features — full cross-product, no conflicts possible.
+            for pb in list_b:
+                for pa in list_a:
+                    merged = dict(pa)
+                    merged.update(pb)
                     yield merged
 
     # Incremental pairwise merge — each step only materialises a generator

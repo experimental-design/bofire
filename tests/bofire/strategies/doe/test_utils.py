@@ -1007,7 +1007,63 @@ def test_nchoosek_bounds_none_also_valid():
     )
 
 
+def test_multi_nchoosek_bounds_known_patterns():
+    """Test nchoosek_constraints_as_bounds against known expected activity patterns."""
+    n_features = 3
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_experiments)
+
+    D = n_features
+    assert len(bounds) == D * n_experiments
+
+    # extract the activity pattern (1=active, 0=pinned-to-zero) per experiment
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+        # every active slot must keep its original bounds
+        for j, b in enumerate(exp_bounds):
+            if b != (0.0, 0.0):
+                assert b == (
+                    0.0,
+                    1.0,
+                ), f"exp {i}, feature {j}: expected (0.0, 1.0), got {b}"
+
+    expected_patterns = {
+        (0, 1, 0),  # x1 active, x0 and x2 inactive
+        (1, 0, 1),  # x0 and x2 active, x1 inactive
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # every pattern must have between min_count and max_count active features
+    for pat in observed_patterns:
+        active = sum(pat)
+        assert 1 <= active <= 2, f"Pattern {pat} has {active} active features"
+
+
 if __name__ == "__main__":
-    test_formula_str_to_fully_continuous()
-    test_formula_str_to_fully_continuous_only_categoricals()
-    only_continuous_inputs_formula_str_to_fully_continuous()
+    test_multi_nchoosek_bounds_known_patterns()
