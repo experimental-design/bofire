@@ -658,9 +658,7 @@ def nchoosek_constraints_as_bounds(
                         )
 
                 # Optionally include the all-zero pattern (all inactive).
-                # The loop above starts at max(min_count, 1) and never
-                # generates the k=0 (all-inactive) case.  When
-                # none_also_valid is set, we explicitly add it.
+                # If none_also_valid is set, we explicitly add it.
                 if constraint.none_also_valid:
                     all_inactive_pattern = tuple(ind)
                     if all_inactive_pattern not in all_inactive_patterns:

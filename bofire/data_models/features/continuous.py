@@ -67,6 +67,11 @@ class ContinuousInput(NumericalInput):
         if not self.allow_zero:
             return self
         lower, upper = self.bounds
+        # When both bounds are exactly zero the feature is pinned to zero
+        # (e.g. by NChooseK deactivation), which is always valid regardless
+        # of allow_zero.
+        if lower == 0.0 and upper == 0.0:
+            return self
         if lower <= 0.0 <= upper:
             raise ValueError(
                 "If `allow_zero==True`, then zero must not lie within the bounds."
