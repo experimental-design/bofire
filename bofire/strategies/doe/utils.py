@@ -567,6 +567,8 @@ def _iter_nchoosek_combined_patterns(
     a single giant Cartesian product, pruning inconsistent combinations
     early.
 
+    Consistency: If a feature is shared by multiple constraints, it must be active in all or inactive in all to yield a valid combined pattern.
+
     Yields:
         Tuples containing the domain-level indices of features to deactivate
         (pin to 0) for one experiment slot.  Duplicates are possible when
