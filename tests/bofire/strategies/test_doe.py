@@ -1307,5 +1307,91 @@ def test_nchoosek_none_valid():
         assert active >= 2, f"Too few active features: {active}"
 
 
+def test_nchoosek_overlapping_formulation():
+    """Test overlapping NChooseK constraints with a formulation constraint.
+
+    Scenario (filler / expander formulation):
+      - Features: h2o, oil, compound  (all in [0, 1], sum == 1)
+      - Filler constraint:   [h2o, oil]     choose 1  (exactly one filler)
+      - Expander constraint:  [h2o, compound]  choose 1  (exactly one expander)
+
+    Because h2o is shared, the Cartesian product filters down to:
+      - h2o=on,  oil=off, compound=off  → water fills and expands
+      - h2o=off, oil=on,  compound=on   → oil as filler, compound as expander
+
+    Both patterns have exactly 2 active features, consistent with the
+    formulation constraint (sum == 1 over 2 active components).
+    """
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="h2o", bounds=(0.0, 1.0)),
+            ContinuousInput(key="oil", bounds=(0.0, 1.0)),
+            ContinuousInput(key="compound", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["h2o", "oil"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["h2o", "compound"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["h2o", "oil", "compound"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    # --- Verify the bounds patterns ---
+    n_exp = 10
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    # Domain sorts inputs alphabetically: compound, h2o, oil
+    sorted_keys = d.inputs.get_keys(ContinuousInput)
+    D = len(sorted_keys)
+
+    observed_named_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        active_keys = frozenset(
+            sorted_keys[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed_named_patterns.add(active_keys)
+
+    # Only 2 valid combinations should survive:
+    #   {h2o}              → water fills and expands
+    #   {oil, compound}    → oil as filler, compound as expander
+    expected_named = {frozenset(["h2o"]), frozenset(["oil", "compound"])}
+    assert (
+        observed_named_patterns == expected_named
+    ), f"Expected patterns {expected_named}, got {observed_named_patterns}"
+
+    # --- Verify the optimizer produces a valid design ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=False)
+    assert candidates.shape == (n_exp, D)
+
+    for _, row in candidates.iterrows():
+        h2o, oil, compound = row["h2o"], row["oil"], row["compound"]
+        # Either water-only (1 active) or oil+compound (2 active)
+        is_water = abs(oil) < 1e-6 and abs(compound) < 1e-6
+        is_oil_compound = abs(h2o) < 1e-6
+        assert is_water or is_oil_compound, (
+            f"Invalid pattern: h2o={h2o:.4f}, oil={oil:.4f}, "
+            f"compound={compound:.4f}"
+        )
+
+
 if __name__ == "__main__":
     test_nchoosek_none_valid()

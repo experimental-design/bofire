@@ -681,7 +681,8 @@ def test_check_nchoosek_constraints_as_bounds():
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    # Not allowed: names parameters of two NChooseK overlap
+    # Overlapping NChooseK constraints are now allowed — patterns are combined
+    # via Cartesian product with consistency filtering.
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
@@ -700,8 +701,24 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)
+    check_nchoosek_constraints_as_bounds(domain)  # should not raise
+
+    # Verify the combined patterns are correct
+    bounds = nchoosek_constraints_as_bounds(domain, n_experiments=20)
+    D = 4
+    observed_patterns = set()
+    for i in range(20):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    # For every pattern, check x2 status is consistent across both constraints
+    for pat in observed_patterns:
+        x1_on, x2_on, x3_on, x4_on = pat
+        # constraint 1: [x1,x2] choose 0..1  → at most 1 of (x1,x2) active
+        assert x1_on + x2_on <= 1, f"Constraint 1 violated: {pat}"
+        # constraint 2: [x2,x3,x4] choose 0..2 → at most 2 of (x2,x3,x4) active
+        assert x2_on + x3_on + x4_on <= 2, f"Constraint 2 violated: {pat}"
 
 
 def test_nchoosek_constraints_as_bounds():
