@@ -556,27 +556,6 @@ class ConstraintWrapper:
         return hessian
 
 
-def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
-    """Checks if NChooseK constraints of domain can be formulated as bounds.
-
-    Overlapping feature sets across constraints are allowed; they are resolved
-    via Cartesian-product consistency filtering in
-    :func:`nchoosek_constraints_as_bounds`.
-
-    Note: features with non-zero lower bounds (e.g. 0.1 or 1.0) are fine
-    because the bounds-based approach overrides the bounds of inactive
-    variables to [0, 0] per experiment while keeping the original [lb, ub]
-    for active variables.
-
-    Args:
-        domain (Domain): Domain whose NChooseK constraints should be checked
-
-    """
-    # Currently a no-op — structural validation (e.g. contradictory overlap)
-    # is handled by _build_nchoosek_combined_patterns at pattern-build time.
-    pass
-
-
 def _iter_nchoosek_combined_patterns(
     domain: Domain,
 ) -> "Iterator[Tuple[int, ...]]":
@@ -646,15 +625,11 @@ def _iter_nchoosek_combined_patterns(
 
 def _build_nchoosek_combined_patterns(
     domain: Domain,
-    n_max: Optional[int] = None,
 ) -> List[Tuple[int, ...]]:
-    """Collect combined deactivation patterns, optionally capping the count.
+    """Collect combined deactivation patterns.
 
     Args:
         domain: Domain whose NChooseK constraints should be combined.
-        n_max: If given, stop collecting after this many *unique* patterns.
-            Use this to avoid materialising a huge combinatorial space when
-            only a limited number of experiments is planned.
 
     Returns:
         A deduplicated list of inactive-index tuples.
@@ -670,8 +645,6 @@ def _build_nchoosek_combined_patterns(
         if pattern not in seen:
             seen.add(pattern)
             result.append(pattern)
-            if n_max is not None and len(result) >= n_max:
-                break
 
     if not result and any(
         isinstance(c, NChooseKConstraint) for c in domain.constraints
@@ -703,7 +676,6 @@ def nchoosek_constraints_as_bounds(
         imposed onto the decision variables.
 
     """
-    check_nchoosek_constraints_as_bounds(domain)
 
     # bounds without NChooseK constraints
     bounds = np.array(
