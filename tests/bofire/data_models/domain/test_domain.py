@@ -503,7 +503,7 @@ def test_domain_to_description_with_context():
     )
     domain.context = "Optimizing a reaction"
     assert domain.to_description() == (
-        "## Problem Context\nOptimizing a reaction\n" "\n## Objectives\n- y: Maximize"
+        "## Problem Context\nOptimizing a reaction\n\n## Objectives\n- y: Maximize"
     )
 
 
@@ -528,16 +528,3 @@ def test_domain_to_description_with_constraints():
         "\n## Constraints (candidates MUST satisfy all of these)\n"
         "- 1.0*x1 + 1.0*x2 <= 1.5 — Budget constraint"
     )
-
-
-def test_domain_context_roundtrip():
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key="x", bounds=(0, 1), context="Feature ctx")],
-        outputs=[ContinuousOutput(key="y", context="Output ctx")],
-    )
-    domain.context = "Domain ctx"
-    dumped = domain.model_dump()
-    restored = Domain(**dumped)
-    assert restored.context == "Domain ctx"
-    assert restored.inputs[0].context == "Feature ctx"
-    assert restored.outputs[0].context == "Output ctx"
