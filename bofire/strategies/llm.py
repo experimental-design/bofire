@@ -130,18 +130,24 @@ class LLMStrategy(Strategy):
     def __init__(self, data_model: data_models.LLMStrategy, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self._llm_provider = data_model.llm
-        self._temperature = data_model.temperature
-        self._max_tokens = data_model.max_tokens
-        self._thinking = data_model.thinking
         self._output_retries = data_model.output_retries
         self._n_recent_experiments = data_model.n_recent_experiments
         self._n_top_experiments = data_model.n_top_experiments
         self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
+        self._pydantic_ai_model = None
 
-        # Build the pydantic-ai model at init (LLM connection doesn't change)
-        import bofire.llm.mapper as llm_mapper
+    @property
+    def pydantic_ai_model(self):
+        """Lazily constructed pydantic-ai model. Built once on first access.
 
-        self._pydantic_ai_model = llm_mapper.map(self._llm_provider)
+        Kept out of ``__init__`` so that instantiating an ``LLMStrategy`` does
+        not resolve provider environment variables (e.g. API keys).
+        """
+        if self._pydantic_ai_model is None:
+            import bofire.llm.mapper as llm_mapper
+
+            self._pydantic_ai_model = llm_mapper.map(self._llm_provider)
+        return self._pydantic_ai_model
 
     def has_sufficient_experiments(self) -> bool:
         """LLM can propose candidates with zero experiments (cold start)."""
@@ -165,7 +171,7 @@ class LLMStrategy(Strategy):
 
         # Create agent with configurable output retries for constraint validation
         agent = Agent(
-            self._pydantic_ai_model,
+            self.pydantic_ai_model,
             system_prompt=self._system_prompt,
             output_type=proposal_model,
             output_retries=self._output_retries,
@@ -220,19 +226,18 @@ class LLMStrategy(Strategy):
             experiments_text=experiments_text,
         )
 
-        # Build ModelSettings
-        model_settings = {}
-        if self._temperature is not None:
-            model_settings["temperature"] = self._temperature
-        if self._max_tokens is not None:
-            model_settings["max_tokens"] = self._max_tokens
-        if self._thinking is not None:
-            model_settings["thinking"] = self._thinking
+        model_settings = (
+            self._data_model.model_dump(
+                include={"temperature", "max_tokens", "thinking"},
+                exclude_none=True,
+            )
+            or None
+        )
 
         result = await agent.run(
             f"Propose {candidate_count} diverse candidate points for this optimization problem.",
             deps=deps,
-            model_settings=model_settings if model_settings else None,
+            model_settings=model_settings,
         )
 
         proposal = result.output

@@ -4,6 +4,7 @@ import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.factorial import FactorialStrategy
 from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
+from bofire.strategies.llm import LLMStrategy
 from bofire.strategies.predictives.active_learning import ActiveLearningStrategy
 from bofire.strategies.predictives.enting import EntingStrategy
 from bofire.strategies.predictives.mobo import MoboStrategy
@@ -37,24 +38,8 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.MoboStrategy: MoboStrategy,
     data_models.ShortestPathStrategy: ShortestPathStrategy,
     data_models.FractionalFactorialStrategy: FractionalFactorialStrategy,
+    data_models.LLMStrategy: LLMStrategy,
 }
-
-
-def _register_llm_strategy():
-    """Lazily register LLMStrategy to avoid import-time circular dependencies."""
-    try:
-        from bofire.strategies.llm import LLMStrategy as LLMStrategyImpl
-
-        STRATEGY_MAP[data_models.LLMStrategy] = LLMStrategyImpl
-    except ImportError:
-        import warnings
-
-        warnings.warn(
-            "LLMStrategy could not be imported. "
-            "Install the [llm] extra (pip install bofire[llm]) to use it.",
-            ImportWarning,
-            stacklevel=2,
-        )
 
 
 def map(data_model: data_models.Strategy) -> Strategy:
