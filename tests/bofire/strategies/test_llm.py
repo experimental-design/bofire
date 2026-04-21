@@ -16,6 +16,7 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
 from bofire.llm.mapper import _resolve_env_var
 from bofire.llm.mapper import map as llm_map
+from bofire.strategies.api import LLMStrategy
 from bofire.strategies.llm import _build_proposal_model, _select_experiments
 
 
@@ -195,3 +196,35 @@ def test_llm_strategy_rejects_multi_objective():
             domain=domain,
             llm=AnthropicLLMProvider(api_key_env_var="KEY"),
         )
+
+
+# --- End-to-end smoke test with pydantic-ai TestModel ---
+
+
+def test_llm_strategy_ask_with_test_model():
+    """Smoke test the full ask() pipeline using pydantic-ai's TestModel.
+
+    TestModel auto-generates structured output matching the agent's schema.
+    We pick continuous bounds starting at 0 so the generated defaults satisfy
+    the domain validator, and avoid constraints for the same reason.
+    """
+    from pydantic_ai.models.test import TestModel
+
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 10)),
+            ContinuousInput(key="x2", bounds=(0, 10)),
+        ],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    data_model = LLMStrategyDataModel(
+        domain=domain,
+        llm=AnthropicLLMProvider(api_key_env_var="UNUSED_KEY"),
+    )
+    strategy = LLMStrategy(data_model=data_model)
+    # Inject TestModel directly to bypass provider/env-var resolution.
+    strategy._pydantic_ai_model = TestModel()
+
+    candidates = strategy.ask(2)
+    assert len(candidates) == 2
+    assert "reasoning" in candidates.columns
