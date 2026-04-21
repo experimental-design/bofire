@@ -1,7 +1,5 @@
 """Tests for LLMStrategy utility functions and data model integration."""
 
-import os
-
 import pandas as pd
 import pytest
 
@@ -14,7 +12,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.llm.anthropic import AnthropicLLMProvider
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
-from bofire.llm.mapper import _resolve_env_var
 from bofire.strategies.api import LLMStrategy
 from bofire.strategies.llm import _build_proposal_model, _select_experiments
 
@@ -132,22 +129,6 @@ def test_build_proposal_model_validates(simple_domain):
     assert len(proposal.candidates) == 1
 
 
-# --- _resolve_env_var ---
-
-
-def test_resolve_env_var_success():
-    os.environ["_BOFIRE_TEST_VAR"] = "test_value"
-    try:
-        assert _resolve_env_var("_BOFIRE_TEST_VAR") == "test_value"
-    finally:
-        del os.environ["_BOFIRE_TEST_VAR"]
-
-
-def test_resolve_env_var_missing():
-    with pytest.raises(EnvironmentError, match="NONEXISTENT_VAR_12345"):
-        _resolve_env_var("NONEXISTENT_VAR_12345")
-
-
 def test_llm_strategy_rejects_multi_objective():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x", bounds=(0, 1))],
@@ -190,6 +171,7 @@ def test_llm_strategy_ask_with_test_model():
     # Inject TestModel directly to bypass provider/env-var resolution.
     strategy._pydantic_ai_model = TestModel()
 
-    candidates = strategy.ask(2)
-    assert len(candidates) == 2
+    # TestModel generates a single array item by default, so ask(1).
+    candidates = strategy.ask(1)
+    assert len(candidates) == 1
     assert "reasoning" in candidates.columns
