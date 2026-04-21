@@ -8,7 +8,10 @@ from pydantic import Field, field_validator, validate_call
 from pydantic.fields import FieldInfo
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.categorical import CategoricalInput
+from bofire.data_models.features.categorical import (
+    LLM_ENUM_SCHEMA_THRESHOLD,
+    CategoricalInput,
+)
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.molfeatures.api import (
@@ -75,6 +78,10 @@ class CategoricalMolecularInput(CategoricalInput):
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(...))`` with SMILES categories.
 
+        When the number of allowed SMILES exceeds ``LLM_ENUM_SCHEMA_THRESHOLD``
+        the type falls back to ``str`` to stay within provider enum-schema
+        compilation limits (see the constant's module-level comment).
+
         Example::
 
             >>> feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
@@ -85,8 +92,13 @@ class CategoricalMolecularInput(CategoricalInput):
         desc_parts = [f"Categorical molecular (SMILES), allowed: {allowed}"]
         if self.context:
             desc_parts.append(self.context)
+        field_type: type = (
+            str
+            if len(allowed) > LLM_ENUM_SCHEMA_THRESHOLD
+            else Literal[tuple(allowed)]  # ty: ignore[invalid-assignment]
+        )
         return (
-            Literal[tuple(allowed)],
+            field_type,
             Field(description=" — ".join(desc_parts)),
         )
 

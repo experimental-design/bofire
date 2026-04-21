@@ -174,7 +174,7 @@ class LLMStrategy(Strategy):
 
     async def _ask_async(self, candidate_count: int) -> pd.DataFrame:
         """Async implementation of candidate generation."""
-        from pydantic_ai import Agent
+        from pydantic_ai import Agent, ModelRetry
 
         # Build output schema fresh each call (domain may have changed)
         proposal_model = _build_proposal_model(self.domain)
@@ -207,7 +207,10 @@ class LLMStrategy(Strategy):
                 deps.domain.validate_candidates(candidates_df, only_inputs=True)
             except Exception as e:
                 candidates_json = json.dumps(rows, indent=2)
-                raise ValueError(
+                # ModelRetry (not ValueError) is the only exception pydantic-ai
+                # catches in output validators to trigger a retry within
+                # ``output_retries``. See pydantic_ai/_result.py.
+                raise ModelRetry(
                     f"Candidate validation failed: {e}\n\n"
                     f"The proposed candidates were:\n{candidates_json}\n\n"
                     f"Please fix the candidates to satisfy all constraints and "

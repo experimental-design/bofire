@@ -316,12 +316,28 @@ def test_categorical_molecular_input_select_mordred_descriptors():
 
 
 def test_categorical_molecular_input_to_pydantic_field():
+    from typing import Literal
+
     feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
-    _, field_info = feat.to_pydantic_field()
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal["CCO", "CC"]
     assert (
         field_info.description
         == "Categorical molecular (SMILES), allowed: ['CCO', 'CC']"
     )
+
+
+def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshold():
+    from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
+
+    # Generate enough distinct SMILES by varying alkane chain length
+    smiles = ["C" * (i + 1) for i in range(LLM_ENUM_SCHEMA_THRESHOLD + 1)]
+    feat = CategoricalMolecularInput(key="mol", categories=smiles)
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is str
+    # description still lists the SMILES so the LLM has guidance
+    assert smiles[0] in field_info.description
+    assert smiles[-1] in field_info.description
 
 
 def test_continuous_molecular_input_to_pydantic_field():

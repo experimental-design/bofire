@@ -16,6 +16,24 @@ from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
 
 
+# Max number of allowed categories still encoded as ``Literal[...]`` by
+# ``to_pydantic_field``. Above this we emit ``str`` with the allowed values
+# kept in the field description; the ``Domain.validate_candidates`` pass then
+# catches invalid values at ask-time.
+#
+# Why: providers that offer constrained-decoding for structured output (OpenAI,
+# Anthropic) compile each JSON Schema enum into a token-level mask. The
+# compile cost scales with the total byte-length of all enum values, not just
+# their count. For hundreds of long strings (e.g. SMILES categories) this
+# blows the provider's compiled-schema budget and the request is rejected.
+# Observed failure: Anthropic returns 400 "Schema is too complex for
+# compilation." with ~390 SMILES. OpenAI documents a hard cap at 500 enum
+# values and an additional 7500-char combined-length cap above 250 values.
+# 32 is well below any documented limit and leaves headroom for very long
+# category strings.
+LLM_ENUM_SCHEMA_THRESHOLD = 32
+
+
 class CategoricalInput(Input):
     """Base class for all categorical input features.
 
@@ -54,6 +72,11 @@ class CategoricalInput(Input):
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed categories.
 
+        When the number of allowed categories exceeds
+        ``LLM_ENUM_SCHEMA_THRESHOLD`` the type falls back to ``str`` (the
+        allowed values stay in the description). See the module-level comment
+        on the constant for the reason.
+
         Example::
 
             >>> feat = CategoricalInput(key="solvent", categories=["water", "ethanol", "toluene"])
@@ -64,8 +87,13 @@ class CategoricalInput(Input):
         desc_parts = [f"Categorical, allowed: {allowed}"]
         if self.context:
             desc_parts.append(self.context)
+        field_type: type = (
+            str
+            if len(allowed) > LLM_ENUM_SCHEMA_THRESHOLD
+            else Literal[tuple(allowed)]  # ty: ignore[invalid-assignment]
+        )
         return (
-            Literal[tuple(allowed)],
+            field_type,
             Field(description=" — ".join(desc_parts)),
         )
 
