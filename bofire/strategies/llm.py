@@ -94,7 +94,17 @@ def _select_experiments(
     return selected, description
 
 
-# --- Proposal model builder ---
+def _reasoning_column_name(domain: Domain) -> str:
+    """Pick a column name for the LLM reasoning that does not collide with any
+    feature key in the domain. Appends trailing underscores until unique.
+    """
+    taken = set(domain.inputs.get_keys()) | set(domain.outputs.get_keys())
+    name = "reasoning"
+    while name in taken:
+        name += "_"
+    return name
+
+
 def _build_proposal_model(domain: Domain) -> type[PydanticBaseModel]:
     """Build the pydantic-ai output model from the Domain."""
     CandidatePoint = domain.inputs.to_pydantic_model()
@@ -241,7 +251,12 @@ class LLMStrategy(Strategy):
         )
 
         proposal = result.output
-        return pd.DataFrame([c.values.model_dump() for c in proposal.candidates])
+        reasoning_col = _reasoning_column_name(self.domain)
+        rows = [
+            {**c.values.model_dump(), reasoning_col: c.reasoning}
+            for c in proposal.candidates
+        ]
+        return pd.DataFrame(rows)
 
     @classmethod
     def make(
