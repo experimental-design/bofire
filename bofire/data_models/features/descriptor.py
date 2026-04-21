@@ -3,7 +3,6 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
-from pydantic.fields import FieldInfo
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
@@ -30,29 +29,8 @@ class ContinuousDescriptorInput(ContinuousInput):
     descriptors: Descriptors
     values: DiscreteVals
 
-    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
-        """Return ``(float, Field(...))`` with descriptor info in description.
-
-        Example::
-
-            >>> feat = ContinuousDescriptorInput(key="x", bounds=(0, 1), descriptors=["d1"], values=[0.5])
-            >>> _, info = feat.to_pydantic_field()
-            >>> # description includes descriptor names and values
-        """
-        desc_dict = dict(zip(self.descriptors, self.values))
-        desc_parts = [
-            f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]",
-            f"descriptors: {desc_dict}",
-        ]
-        if self.allow_zero:
-            desc_parts.append("can also be 0 (inactive)")
-        if self.context:
-            desc_parts.append(self.context)
-        lower = min(0.0, self.bounds[0]) if self.allow_zero else self.bounds[0]
-        return (
-            float,
-            Field(ge=lower, le=self.bounds[1], description=" — ".join(desc_parts)),
-        )
+    def _extra_description_parts(self) -> List[str]:
+        return [f"descriptors: {dict(zip(self.descriptors, self.values))}"]
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
@@ -108,32 +86,15 @@ class CategoricalDescriptorInput(CategoricalInput):
         Field(min_length=1),
     ]
 
-    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
-        """Return ``(Literal[...], Field(...))`` with descriptor info.
+    def _description_prefix(self) -> str:
+        return f"Categorical with descriptors, allowed: {self.get_allowed_categories()}"
 
-        Example::
-
-            >>> feat = CategoricalDescriptorInput(
-            ...     key="cat", categories=["a", "b"], descriptors=["d1"], values=[[1.0], [2.0]]
-            ... )
-            >>> _, info = feat.to_pydantic_field()
-            >>> # description includes category-descriptor mapping
-        """
-        allowed = self.get_allowed_categories()
-        desc_mapping = {
+    def _extra_description_parts(self) -> List[str]:
+        mapping = {
             cat: dict(zip(self.descriptors, vals))
             for cat, vals in zip(self.categories, self.values)
         }
-        desc_parts = [
-            f"Categorical with descriptors, allowed: {allowed}",
-            f"descriptors per category: {desc_mapping}",
-        ]
-        if self.context:
-            desc_parts.append(self.context)
-        return (
-            Literal[tuple(allowed)],
-            Field(description=" — ".join(desc_parts)),
-        )
+        return [f"descriptors per category: {mapping}"]
 
     @field_validator("values")
     @classmethod

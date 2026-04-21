@@ -69,6 +69,14 @@ class CategoricalInput(Input):
             raise ValueError("no category is allowed")
         return self
 
+    def _description_prefix(self) -> str:
+        """Leading description string identifying this feature kind."""
+        return f"Categorical, allowed: {self.get_allowed_categories()}"
+
+    def _extra_description_parts(self) -> List[str]:
+        """Optional extras appended after the prefix, before context."""
+        return []
+
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed categories.
 
@@ -77,6 +85,9 @@ class CategoricalInput(Input):
         allowed values stay in the description). See the module-level comment
         on the constant for the reason.
 
+        Subclasses customize the output by overriding ``_description_prefix``
+        and/or ``_extra_description_parts``.
+
         Example::
 
             >>> feat = CategoricalInput(key="solvent", categories=["water", "ethanol", "toluene"])
@@ -84,7 +95,7 @@ class CategoricalInput(Input):
             >>> # field_type = Literal['water', 'ethanol', 'toluene']
         """
         allowed = self.get_allowed_categories()
-        desc_parts = [f"Categorical, allowed: {allowed}"]
+        desc_parts = [self._description_prefix(), *self._extra_description_parts()]
         if self.context:
             desc_parts.append(self.context)
         field_type: type = (

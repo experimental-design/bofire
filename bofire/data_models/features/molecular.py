@@ -5,13 +5,9 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, validate_call
-from pydantic.fields import FieldInfo
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.categorical import (
-    LLM_ENUM_SCHEMA_THRESHOLD,
-    CategoricalInput,
-)
+from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.molfeatures.api import (
@@ -29,26 +25,10 @@ class ContinuousMolecularInput(ContinuousInput):
     order_id: ClassVar[int] = 4
     molecule: str
 
-    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
-        """Return ``(float, Field(...))`` with molecule info in description.
-
-        Example::
-
-            >>> feat = ContinuousMolecularInput(key="conc", molecule="CCO", bounds=(0, 1))
-            >>> _, info = feat.to_pydantic_field()
-            >>> # description = "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0]"
-        """
-        desc_parts = [
-            f"Continuous molecular (SMILES: {self.molecule}), bounds [{self.bounds[0]}, {self.bounds[1]}]"
-        ]
-        if self.allow_zero:
-            desc_parts.append("can also be 0 (inactive)")
-        if self.context:
-            desc_parts.append(self.context)
-        lower = min(0.0, self.bounds[0]) if self.allow_zero else self.bounds[0]
+    def _description_prefix(self) -> str:
         return (
-            float,
-            Field(ge=lower, le=self.bounds[1], description=" — ".join(desc_parts)),
+            f"Continuous molecular (SMILES: {self.molecule}), "
+            f"bounds [{self.bounds[0]}, {self.bounds[1]}]"
         )
 
     @field_validator("molecule")
@@ -75,31 +55,9 @@ class CategoricalMolecularInput(CategoricalInput):
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
 
-    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
-        """Return ``(Literal[...], Field(...))`` with SMILES categories.
-
-        When the number of allowed SMILES exceeds ``LLM_ENUM_SCHEMA_THRESHOLD``
-        the type falls back to ``str`` to stay within provider enum-schema
-        compilation limits (see the constant's module-level comment).
-
-        Example::
-
-            >>> feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
-            >>> field_type, info = feat.to_pydantic_field()
-            >>> # description = "Categorical molecular (SMILES), allowed: ['CCO', 'CC']"
-        """
-        allowed = self.get_allowed_categories()
-        desc_parts = [f"Categorical molecular (SMILES), allowed: {allowed}"]
-        if self.context:
-            desc_parts.append(self.context)
-        field_type: type = (
-            str
-            if len(allowed) > LLM_ENUM_SCHEMA_THRESHOLD
-            else Literal[tuple(allowed)]  # ty: ignore[invalid-assignment]
-        )
+    def _description_prefix(self) -> str:
         return (
-            field_type,
-            Field(description=" — ".join(desc_parts)),
+            f"Categorical molecular (SMILES), allowed: {self.get_allowed_categories()}"
         )
 
     @field_validator("categories")

@@ -45,8 +45,19 @@ class ContinuousInput(NumericalInput):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
+    def _description_prefix(self) -> str:
+        """Leading description string identifying this feature kind."""
+        return f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"
+
+    def _extra_description_parts(self) -> List[str]:
+        """Optional extras appended after the prefix, before context."""
+        return []
+
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(float, Field(ge=..., le=..., description=...))```.
+
+        Subclasses customize the output by overriding ``_description_prefix``
+        and/or ``_extra_description_parts``.
 
         Example::
 
@@ -56,7 +67,7 @@ class ContinuousInput(NumericalInput):
             >>> # field_info has ge=20.0, le=200.0
             >>> # description = "Continuous, bounds [20.0, 200.0] — Temperature in C"
         """
-        desc_parts = [f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"]
+        desc_parts = [self._description_prefix(), *self._extra_description_parts()]
         lower = self.bounds[0]
         if self.allow_zero:
             lower = min(0.0, lower)
