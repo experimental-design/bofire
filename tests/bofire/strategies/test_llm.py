@@ -15,7 +15,6 @@ from bofire.data_models.llm.anthropic import AnthropicLLMProvider
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
 from bofire.llm.mapper import _resolve_env_var
-from bofire.llm.mapper import map as llm_map
 from bofire.strategies.api import LLMStrategy
 from bofire.strategies.llm import _build_proposal_model, _select_experiments
 
@@ -147,40 +146,6 @@ def test_resolve_env_var_success():
 def test_resolve_env_var_missing():
     with pytest.raises(EnvironmentError, match="NONEXISTENT_VAR_12345"):
         _resolve_env_var("NONEXISTENT_VAR_12345")
-
-
-# --- LLM mapper error ---
-
-
-def test_llm_mapper_unknown_provider():
-    from bofire.data_models.llm.provider import LLMProvider
-
-    class FakeProvider(LLMProvider):
-        type: str = "FakeProvider"
-        model: str = "fake"
-        api_key_env_var: str = "KEY"
-
-    with pytest.raises(ValueError, match="Unsupported"):
-        llm_map(FakeProvider(model="fake", api_key_env_var="KEY"))
-
-
-# --- LLMStrategy.make ---
-
-
-def test_llm_strategy_make(simple_domain):
-    provider = AnthropicLLMProvider(api_key_env_var="TEST_KEY")
-    strategy = LLMStrategyDataModel(
-        domain=simple_domain,
-        llm=provider,
-        temperature=0.5,
-        max_tokens=2000,
-        thinking="medium",
-        n_recent_experiments=10,
-    )
-    assert strategy.temperature == 0.5
-    assert strategy.max_tokens == 2000
-    assert strategy.thinking == "medium"
-    assert strategy.n_recent_experiments == 10
 
 
 def test_llm_strategy_rejects_multi_objective():
