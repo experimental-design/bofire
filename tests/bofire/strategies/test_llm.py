@@ -1,5 +1,7 @@
 """Tests for LLMStrategy utility functions and data model integration."""
 
+import importlib.util
+
 import pandas as pd
 import pytest
 
@@ -14,6 +16,14 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
 from bofire.strategies.api import LLMStrategy
 from bofire.strategies.llm import _build_proposal_model, _select_experiments
+
+
+PYDANTIC_AI_AVAILABLE = importlib.util.find_spec("pydantic_ai") is not None
+
+pytestmark = pytest.mark.skipif(
+    not PYDANTIC_AI_AVAILABLE,
+    reason="requires pydantic-ai (install with [llm] extra)",
+)
 
 
 # --- Fixtures ---
