@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, List, Literal, Optional, Type, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -21,7 +21,7 @@ PREDEFINED_MODEL_TYPES = Literal[
 
 
 class OptimalityCriterion(BaseModel):
-    type: str
+    type: Any
     delta: float = 1e-6
     transform_range: Optional[Bounds] = None
 
@@ -32,7 +32,7 @@ class SpaceFillingCriterion(OptimalityCriterion):
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
-    type: str
+    type: Any
     formula: Union[PREDEFINED_MODEL_TYPES, str]
     """
     model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords

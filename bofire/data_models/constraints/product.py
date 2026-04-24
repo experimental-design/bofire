@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal
+from typing import Annotated, Any, List, Literal
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ class ProductConstraint(IntrapointConstraint):
 
     """
 
-    type: str
+    type: Any
     exponents: Annotated[List[float], Field(min_length=2)]
     rhs: float
     sign: Literal[1, -1] = 1
