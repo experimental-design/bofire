@@ -2,17 +2,7 @@ import collections.abc
 import itertools
 import warnings
 from collections.abc import Sequence
-from typing import (
-    Annotated,
-    Any,
-    Dict,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-    get_args,
-    get_origin,
-)
+from typing import Any, Dict, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -21,6 +11,7 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
+    Constraint,
     ConstraintNotFulfilledError,
     InterpointConstraint,
     NChooseKConstraint,
@@ -36,16 +27,6 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import Objective
-
-
-def isinstance_or_union(obj, of):
-    # Unwrap Annotated[Union[...], Field(discriminator=...)] to the inner Union
-    # so isinstance() sees a tuple of concrete classes.
-    if get_origin(of) is Annotated:
-        of = get_args(of)[0]
-    if get_origin(of) is Union:
-        of = get_args(of)
-    return isinstance(obj, of)
 
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
@@ -91,7 +72,7 @@ class Domain(BaseModel):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
             return v
-        if isinstance_or_union(v, AnyInput):
+        if isinstance(v, Input):
             return Inputs(features=[v])
         return v
 
@@ -100,7 +81,7 @@ class Domain(BaseModel):
     def validate_outputs_list(cls, v):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
-        if isinstance_or_union(v, AnyOutput):
+        if isinstance(v, Output):
             return Outputs(features=[v])
         return v
 
@@ -109,7 +90,7 @@ class Domain(BaseModel):
     def validate_constraints_list(cls, v):
         if isinstance(v, list):
             return Constraints(constraints=v)
-        if isinstance_or_union(v, AnyConstraint):
+        if isinstance(v, Constraint):
             return Constraints(constraints=[v])
         return v
 

@@ -76,6 +76,27 @@ def constraint_list(input_list):
     ]
 
 
+def test_domain_accepts_single_feature_and_constraint():
+    """Single Input/Output/Constraint instances should be wrapped into containers."""
+    input_a = ContinuousInput(key="x1", bounds=(0, 1))
+    input_b = ContinuousInput(key="x2", bounds=(0, 1))
+    single_output = ContinuousOutput(key="y", objective=obj)
+    single_constraint = LinearEqualityConstraint(
+        features=["x1", "x2"], coefficients=[1.0, 1.0], rhs=0.5
+    )
+    domain_single_output = Domain(
+        inputs=[input_a, input_b],
+        outputs=single_output,
+        constraints=single_constraint,
+    )
+    assert domain_single_output.outputs == Outputs(features=[single_output])
+    assert domain_single_output.constraints == Constraints(
+        constraints=[single_constraint]
+    )
+    domain_single_input = Domain(inputs=input_a)
+    assert domain_single_input.inputs == Inputs(features=[input_a])
+
+
 def test_from_lists(input_list, output_list, constraint_list):
     assert Domain.from_lists(
         inputs=input_list,
