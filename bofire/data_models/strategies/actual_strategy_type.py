@@ -23,9 +23,11 @@ from bofire.data_models.strategies.predictives.sobo import (
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.uniform_gradient import UniformGradientStrategy
 
 
 ActualStrategy = Union[
+    UniformGradientStrategy,
     SoboStrategy,
     AdditiveSoboStrategy,
     ActiveLearningStrategy,

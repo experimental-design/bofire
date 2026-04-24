@@ -19,10 +19,12 @@ from bofire.strategies.predictives.sobo import (
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.strategy import Strategy
+from bofire.strategies.uniform_gradient import UniformGradientStrategy
 
 
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.ActiveLearningStrategy: ActiveLearningStrategy,
+    data_models.UniformGradientStrategy: UniformGradientStrategy,
     data_models.RandomStrategy: RandomStrategy,
     data_models.SoboStrategy: SoboStrategy,
     data_models.AdditiveSoboStrategy: AdditiveSoboStrategy,

@@ -63,6 +63,7 @@ from bofire.data_models.strategies.stepwise.conditions import (
 )
 from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.strategies.uniform_gradient import UniformGradientStrategy
 from bofire.data_models.transforms.api import (
     AnyTransform,
     DropDataTransform,
