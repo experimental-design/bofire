@@ -101,7 +101,14 @@ class CombiCondition(Condition, EvaluateableCondition):
     type: Literal["CombiCondition"] = "CombiCondition"
     conditions: Annotated[
         List[
-            Union[NumberOfExperimentsCondition, "CombiCondition", AlwaysTrueCondition]
+            Annotated[
+                Union[
+                    NumberOfExperimentsCondition,
+                    "CombiCondition",
+                    AlwaysTrueCondition,
+                ],
+                Field(discriminator="type"),
+            ]
         ],
         Field(min_length=2),
     ]
@@ -126,9 +133,12 @@ class CombiCondition(Condition, EvaluateableCondition):
         return False
 
 
-AnyCondition = Union[
-    NumberOfExperimentsCondition,
-    CombiCondition,
-    AlwaysTrueCondition,
-    FeasibleExperimentCondition,
+AnyCondition = Annotated[
+    Union[
+        NumberOfExperimentsCondition,
+        CombiCondition,
+        AlwaysTrueCondition,
+        FeasibleExperimentCondition,
+    ],
+    Field(discriminator="type"),
 ]

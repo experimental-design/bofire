@@ -77,18 +77,29 @@ class IOptimalityCriterion(DoEOptimalityCriterion):
     ipopt_options: Optional[Dict] = None
 
 
-AnyDoEOptimalityCriterion = Union[
-    KOptimalityCriterion,
-    GOptimalityCriterion,
-    AOptimalityCriterion,
-    EOptimalityCriterion,
-    DOptimalityCriterion,
-    IOptimalityCriterion,
+AnyDoEOptimalityCriterion = Annotated[
+    Union[
+        KOptimalityCriterion,
+        GOptimalityCriterion,
+        AOptimalityCriterion,
+        EOptimalityCriterion,
+        DOptimalityCriterion,
+        IOptimalityCriterion,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnyOptimalityCriterion = Union[
-    AnyDoEOptimalityCriterion,
-    SpaceFillingCriterion,
+AnyOptimalityCriterion = Annotated[
+    Union[
+        KOptimalityCriterion,
+        GOptimalityCriterion,
+        AOptimalityCriterion,
+        EOptimalityCriterion,
+        DOptimalityCriterion,
+        IOptimalityCriterion,
+        SpaceFillingCriterion,
+    ],
+    Field(discriminator="type"),
 ]
 
 

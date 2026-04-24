@@ -2,7 +2,17 @@ import collections.abc
 import itertools
 import warnings
 from collections.abc import Sequence
-from typing import Any, Dict, Literal, Optional, Tuple, Union, get_args, get_origin
+from typing import (
+    Annotated,
+    Any,
+    Dict,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import numpy as np
 import pandas as pd
@@ -29,6 +39,10 @@ from bofire.data_models.objectives.api import Objective
 
 
 def isinstance_or_union(obj, of):
+    # Unwrap Annotated[Union[...], Field(discriminator=...)] to the inner Union
+    # so isinstance() sees a tuple of concrete classes.
+    if get_origin(of) is Annotated:
+        of = get_args(of)[0]
     if get_origin(of) is Union:
         of = get_args(of)
     return isinstance(obj, of)

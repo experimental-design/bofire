@@ -1,5 +1,7 @@
 from functools import partial
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.priors._register import (
     register_prior,
@@ -37,7 +39,10 @@ _PRIOR_TYPES: list[type[Prior]] = [
     DimensionalityScaledLogNormalPrior,
 ]
 
-AnyPrior = Union[tuple(_PRIOR_TYPES)]
+AnyPrior = Annotated[
+    Union[tuple(_PRIOR_TYPES)],
+    Field(discriminator="type"),
+]
 
 _PRIOR_CONSTRAINT_TYPES: list[type] = [
     NonTransformedInterval,
@@ -47,12 +52,18 @@ _PRIOR_CONSTRAINT_TYPES: list[type] = [
     LessThan,
 ]
 
-AnyPriorConstraint = Union[tuple(_PRIOR_CONSTRAINT_TYPES)]
+AnyPriorConstraint = Annotated[
+    Union[tuple(_PRIOR_CONSTRAINT_TYPES)],
+    Field(discriminator="type"),
+]
 
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters
-AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
+AnyGeneralPrior = Annotated[
+    Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior],
+    Field(discriminator="type"),
+]
 
 # default priors of interest
 # botorch defaults

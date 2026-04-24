@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.acquisition_functions.acquisition_function import (
     AcquisitionFunction,
@@ -26,26 +28,33 @@ AbstractAcquisitionFunction = [
     MultiObjectiveAcquisitionFunction,
 ]
 
-AnyAcquisitionFunction = Union[
-    qNEI,
-    qEI,
-    qSR,
-    qUCB,
-    qPI,
-    qLogEI,
-    qLogNEI,
-    qEHVI,
-    qLogEHVI,
-    qNEHVI,
-    qLogNEHVI,
-    qNegIntPosVar,
-    qLogPF,
+AnyAcquisitionFunction = Annotated[
+    Union[
+        qNEI,
+        qEI,
+        qSR,
+        qUCB,
+        qPI,
+        qLogEI,
+        qLogNEI,
+        qEHVI,
+        qLogEHVI,
+        qNEHVI,
+        qLogNEHVI,
+        qNegIntPosVar,
+        qLogPF,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnySingleObjectiveAcquisitionFunction = Union[
-    qNEI, qEI, qSR, qUCB, qPI, qLogEI, qLogNEI, qLogPF
+AnySingleObjectiveAcquisitionFunction = Annotated[
+    Union[qNEI, qEI, qSR, qUCB, qPI, qLogEI, qLogNEI, qLogPF],
+    Field(discriminator="type"),
 ]
 
-AnyMultiObjectiveAcquisitionFunction = Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI]
+AnyMultiObjectiveAcquisitionFunction = Annotated[
+    Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI],
+    Field(discriminator="type"),
+]
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar

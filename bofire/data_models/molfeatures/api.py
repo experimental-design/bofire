@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.molfeatures.molfeatures import (
     CompositeMolFeatures,
@@ -12,9 +14,12 @@ from bofire.data_models.molfeatures.molfeatures import (
 
 AbstractMolFeatures = MolFeatures
 
-AnyMolFeatures = Union[
-    CompositeMolFeatures,
-    Fingerprints,
-    Fragments,
-    MordredDescriptors,
+AnyMolFeatures = Annotated[
+    Union[
+        CompositeMolFeatures,
+        Fingerprints,
+        Fragments,
+        MordredDescriptors,
+    ],
+    Field(discriminator="type"),
 ]

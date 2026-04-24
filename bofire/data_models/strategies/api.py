@@ -1,7 +1,12 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.strategies._register import register_strategy
-from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
+from bofire.data_models.strategies.actual_strategy_type import (
+    _ACTUAL_STRATEGY_TYPES,
+    ActualStrategy,
+)
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     AnyOptimalityCriterion,
@@ -78,18 +83,25 @@ AbstractStrategy = Union[
     MultiobjectiveStrategy,
 ]
 
-AnyStrategy = Union[ActualStrategy, MetaStrategy]
+_ANY_STRATEGY_TYPES = (*_ACTUAL_STRATEGY_TYPES, MetaStrategy)
+AnyStrategy = Annotated[
+    Union[_ANY_STRATEGY_TYPES],
+    Field(discriminator="type"),
+]
 
-AnyPredictive = Union[
-    SoboStrategy,
-    ActiveLearningStrategy,
-    AdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    CustomSoboStrategy,
-    QparegoStrategy,
-    EntingStrategy,
-    MoboStrategy,
+AnyPredictive = Annotated[
+    Union[
+        SoboStrategy,
+        ActiveLearningStrategy,
+        AdditiveSoboStrategy,
+        MultiplicativeSoboStrategy,
+        MultiplicativeAdditiveSoboStrategy,
+        CustomSoboStrategy,
+        QparegoStrategy,
+        EntingStrategy,
+        MoboStrategy,
+    ],
+    Field(discriminator="type"),
 ]
 
 AnyLocalSearchConfig = LSRBO

@@ -45,6 +45,7 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 from bofire.strategies.strategy import Strategy
 
 
@@ -1121,7 +1122,7 @@ def get_categorical_encoder(
     feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
 ) -> Encoder:
     """Get the categorical transformer for a given feature."""
-    if isinstance(transform, AnyMolFeatures):
+    if isinstance(transform, tuple(to_list(AnyMolFeatures))):
         assert isinstance(feature, CategoricalMolecularInput)
         # filter out the highly-correlated descriptors
         transform.remove_correlated_descriptors(feature.categories)

@@ -54,6 +54,7 @@ from bofire.data_models.objectives.api import (
     Objective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 
 
 F = TypeVar("F", bound=AnyFeature)
@@ -99,9 +100,12 @@ class _BaseFeatures(BaseModel, Generic[F]):
         new_feature_seq = list(itertools.chain(self.features, other_feature_seq))
 
         def is_feats_of_type(feats, ftype_collection, ftype_element):
+            # ``ftype_element`` may be a discriminated Annotated[Union[...], Field].
+            # Reduce to a tuple of concrete classes for ``isinstance``.
+            element_classes = tuple(to_list(ftype_element))
             return isinstance(feats, ftype_collection) or (
                 not isinstance(feats, Features)
-                and (len(feats) > 0 and isinstance(feats[0], ftype_element))
+                and (len(feats) > 0 and isinstance(feats[0], element_classes))
             )
 
         def is_infeats(feats):

@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.objectives.categorical import ConstrainedCategoricalObjective
 from bofire.data_models.objectives.desirabilities import (
@@ -37,34 +39,43 @@ AbstractObjective = Union[
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective
 
-AnyConstraintObjective = Union[
-    MaximizeSigmoidObjective,
-    MovingMaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    TargetObjective,
+AnyConstraintObjective = Annotated[
+    Union[
+        MaximizeSigmoidObjective,
+        MovingMaximizeSigmoidObjective,
+        MinimizeSigmoidObjective,
+        TargetObjective,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnyRealObjective = Union[
-    MaximizeObjective,
-    MinimizeObjective,
-    CloseToTargetObjective,
-    IncreasingDesirabilityObjective,
-    DecreasingDesirabilityObjective,
-    PeakDesirabilityObjective,
-    InRangeDesirability,
+AnyRealObjective = Annotated[
+    Union[
+        MaximizeObjective,
+        MinimizeObjective,
+        CloseToTargetObjective,
+        IncreasingDesirabilityObjective,
+        DecreasingDesirabilityObjective,
+        PeakDesirabilityObjective,
+        InRangeDesirability,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnyObjective = Union[
-    MaximizeObjective,
-    MinimizeObjective,
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    TargetObjective,
-    CloseToTargetObjective,
-    ConstrainedCategoricalObjective,
-    MovingMaximizeSigmoidObjective,
-    IncreasingDesirabilityObjective,
-    DecreasingDesirabilityObjective,
-    PeakDesirabilityObjective,
-    InRangeDesirability,
+AnyObjective = Annotated[
+    Union[
+        MaximizeObjective,
+        MinimizeObjective,
+        MaximizeSigmoidObjective,
+        MinimizeSigmoidObjective,
+        TargetObjective,
+        CloseToTargetObjective,
+        ConstrainedCategoricalObjective,
+        MovingMaximizeSigmoidObjective,
+        IncreasingDesirabilityObjective,
+        DecreasingDesirabilityObjective,
+        PeakDesirabilityObjective,
+        InRangeDesirability,
+    ],
+    Field(discriminator="type"),
 ]

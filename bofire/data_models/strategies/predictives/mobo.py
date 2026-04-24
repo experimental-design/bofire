@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Literal, Optional, Type, Union
+from typing import Annotated, Any, Dict, Literal, Optional, Type, Union
 
 from pydantic import Field, model_validator
 
@@ -160,11 +160,14 @@ class ExplicitReferencePoint(ReferencePoint):
     type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"
     values: Dict[
         str,
-        Union[
-            FixedReferenceValue,
-            AbsoluteMovingReferenceValue,
-            RelativeMovingReferenceValue,
-            RelativeToMaxMovingReferenceValue,
+        Annotated[
+            Union[
+                FixedReferenceValue,
+                AbsoluteMovingReferenceValue,
+                RelativeMovingReferenceValue,
+                RelativeToMaxMovingReferenceValue,
+            ],
+            Field(discriminator="type"),
         ],
     ]
 

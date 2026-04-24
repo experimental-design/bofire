@@ -1,6 +1,8 @@
 """Registration utilities for custom kernel types."""
 
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 
 def _rebuild_dependent_models(new_kernel_cls: type) -> None:
@@ -107,18 +109,23 @@ def register_kernel(data_model_cls: type) -> None:
     if data_model_cls in kernels_api._KERNEL_TYPES:
         return
     kernels_api._KERNEL_TYPES.append(data_model_cls)
-    kernels_api.AnyKernel = Union[tuple(kernels_api._KERNEL_TYPES)]
+    kernels_api.AnyKernel = Annotated[
+        Union[tuple(kernels_api._KERNEL_TYPES)],
+        Field(discriminator="type"),
+    ]
 
     # Auto-detect sub-category from base class
     if issubclass(data_model_cls, ContinuousKernel):
         kernels_api._CONTINUOUS_KERNEL_TYPES.append(data_model_cls)
-        kernels_api.AnyContinuousKernel = Union[
-            tuple(kernels_api._CONTINUOUS_KERNEL_TYPES)
+        kernels_api.AnyContinuousKernel = Annotated[
+            Union[tuple(kernels_api._CONTINUOUS_KERNEL_TYPES)],
+            Field(discriminator="type"),
         ]
     elif issubclass(data_model_cls, CategoricalKernel):
         kernels_api._CATEGORICAL_KERNEL_TYPES.append(data_model_cls)
-        kernels_api.AnyCategoricalKernel = Union[
-            tuple(kernels_api._CATEGORICAL_KERNEL_TYPES)
+        kernels_api.AnyCategoricalKernel = Annotated[
+            Union[tuple(kernels_api._CATEGORICAL_KERNEL_TYPES)],
+            Field(discriminator="type"),
         ]
 
     _rebuild_dependent_models(data_model_cls)

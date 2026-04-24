@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.dataframes.dataframes import (
     CandidateOutputValue,
@@ -11,5 +13,5 @@ from bofire.data_models.dataframes.dataframes import (
 )
 
 
-AnyDataFrame = Union[Experiments, Candidates]
-AnyRow = Union[ExperimentRow, CandidateRow]
+AnyDataFrame = Annotated[Union[Experiments, Candidates], Field(discriminator="type")]
+AnyRow = Annotated[Union[ExperimentRow, CandidateRow], Field(discriminator="type")]

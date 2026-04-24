@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
@@ -36,41 +38,49 @@ AbstractFeature = Union[
     NumericalInput,
 ]
 
-# TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
-AnyFeature = Union[
-    CategoricalOutput,
-    DiscreteInput,
-    CategoricalInput,
-    ContinuousOutput,
-    ContinuousInput,
-    ContinuousDescriptorInput,
-    CategoricalDescriptorInput,
-    CategoricalMolecularInput,
-    TaskInput,
-    SumFeature,
-    MeanFeature,
-    WeightedMeanFeature,
-    WeightedSumFeature,
-    MolecularWeightedMeanFeature,
-    MolecularWeightedSumFeature,
-    ContinuousMolecularInput,
-    ProductFeature,
-    InterpolateFeature,
-    CloneFeature,
+AnyFeature = Annotated[
+    Union[
+        DiscreteInput,
+        CategoricalInput,
+        ContinuousInput,
+        ContinuousOutput,
+        CategoricalOutput,
+        ContinuousDescriptorInput,
+        CategoricalDescriptorInput,
+        CategoricalMolecularInput,
+        TaskInput,
+        SumFeature,
+        MeanFeature,
+        WeightedMeanFeature,
+        WeightedSumFeature,
+        MolecularWeightedMeanFeature,
+        MolecularWeightedSumFeature,
+        ContinuousMolecularInput,
+        ProductFeature,
+        InterpolateFeature,
+        CloneFeature,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnyInput = Union[
-    DiscreteInput,
-    CategoricalInput,
-    ContinuousInput,
-    ContinuousDescriptorInput,
-    CategoricalDescriptorInput,
-    CategoricalMolecularInput,
-    TaskInput,
-    ContinuousMolecularInput,
+AnyInput = Annotated[
+    Union[
+        DiscreteInput,
+        CategoricalInput,
+        ContinuousInput,
+        ContinuousDescriptorInput,
+        CategoricalDescriptorInput,
+        CategoricalMolecularInput,
+        TaskInput,
+        ContinuousMolecularInput,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnyOutput = Union[ContinuousOutput, CategoricalOutput]
+AnyOutput = Annotated[
+    Union[ContinuousOutput, CategoricalOutput],
+    Field(discriminator="type"),
+]
 
 _ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
     SumFeature,
@@ -84,4 +94,7 @@ _ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
     CloneFeature,
 ]
 
-AnyEngineeredFeature = Union[tuple(_ENGINEERED_FEATURE_TYPES)]
+AnyEngineeredFeature = Annotated[
+    Union[tuple(_ENGINEERED_FEATURE_TYPES)],
+    Field(discriminator="type"),
+]

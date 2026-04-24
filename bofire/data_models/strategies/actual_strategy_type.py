@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
@@ -44,4 +46,7 @@ _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     FractionalFactorialStrategy,
 ]
 
-ActualStrategy = Union[tuple(_ACTUAL_STRATEGY_TYPES)]
+ActualStrategy = Annotated[
+    Union[tuple(_ACTUAL_STRATEGY_TYPES)],
+    Field(discriminator="type"),
+]

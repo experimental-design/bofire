@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.constraints.categorical import CategoricalExcludeConstraint
 from bofire.data_models.constraints.condition import (
@@ -47,35 +49,44 @@ AbstractConstraint = Union[
     EqualityConstraint,
 ]
 
-AnyConstraint = Union[
-    LinearEqualityConstraint,
-    LinearInequalityConstraint,
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
-    NChooseKConstraint,
-    InterpointEqualityConstraint,
-    ProductEqualityConstraint,
-    ProductInequalityConstraint,
-    CategoricalExcludeConstraint,
+AnyConstraint = Annotated[
+    Union[
+        LinearEqualityConstraint,
+        LinearInequalityConstraint,
+        NonlinearEqualityConstraint,
+        NonlinearInequalityConstraint,
+        NChooseKConstraint,
+        InterpointEqualityConstraint,
+        ProductEqualityConstraint,
+        ProductInequalityConstraint,
+        CategoricalExcludeConstraint,
+    ],
+    Field(discriminator="type"),
 ]
 
-AnyContinuousConstraint = Union[
-    LinearEqualityConstraint,
-    LinearInequalityConstraint,
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
-    NChooseKConstraint,
-    InterpointEqualityConstraint,
-    ProductEqualityConstraint,
-    ProductInequalityConstraint,
+AnyContinuousConstraint = Annotated[
+    Union[
+        LinearEqualityConstraint,
+        LinearInequalityConstraint,
+        NonlinearEqualityConstraint,
+        NonlinearInequalityConstraint,
+        NChooseKConstraint,
+        InterpointEqualityConstraint,
+        ProductEqualityConstraint,
+        ProductInequalityConstraint,
+    ],
+    Field(discriminator="type"),
 ]
 
 AnyCategoricalConstraint = CategoricalExcludeConstraint
 
-AnyCondition = Union[
-    SelectionCondition,
-    ThresholdCondition,
-    NonZeroCondition,
+AnyCondition = Annotated[
+    Union[
+        SelectionCondition,
+        ThresholdCondition,
+        NonZeroCondition,
+    ],
+    Field(discriminator="type"),
 ]
 
 AnyConstraintError = Union[ConstraintError, ConstraintNotFulfilledError]

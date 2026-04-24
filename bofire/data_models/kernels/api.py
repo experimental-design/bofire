@@ -1,4 +1,6 @@
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 from bofire.data_models.kernels._register import register_kernel  # noqa: F401
 from bofire.data_models.kernels.aggregation import (
@@ -50,7 +52,10 @@ _CONTINUOUS_KERNEL_TYPES: list[type[ContinuousKernel]] = [
     InfiniteWidthBNNKernel,
 ]
 
-AnyContinuousKernel = Union[tuple(_CONTINUOUS_KERNEL_TYPES)]
+AnyContinuousKernel = Annotated[
+    Union[tuple(_CONTINUOUS_KERNEL_TYPES)],
+    Field(discriminator="type"),
+]
 
 _CATEGORICAL_KERNEL_TYPES: list[type[CategoricalKernel]] = [
     HammingDistanceKernel,
@@ -58,7 +63,10 @@ _CATEGORICAL_KERNEL_TYPES: list[type[CategoricalKernel]] = [
     PositiveIndexKernel,
 ]
 
-AnyCategoricalKernel = Union[tuple(_CATEGORICAL_KERNEL_TYPES)]
+AnyCategoricalKernel = Annotated[
+    Union[tuple(_CATEGORICAL_KERNEL_TYPES)],
+    Field(discriminator="type"),
+]
 
 AnyMolecularKernel = TanimotoKernel
 
@@ -81,4 +89,7 @@ _KERNEL_TYPES: list[type[Kernel]] = [
     WedgeKernel,
 ]
 
-AnyKernel = Union[tuple(_KERNEL_TYPES)]
+AnyKernel = Annotated[
+    Union[tuple(_KERNEL_TYPES)],
+    Field(discriminator="type"),
+]

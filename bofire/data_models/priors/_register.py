@@ -1,6 +1,8 @@
 """Registration utilities for custom prior and prior constraint types."""
 
-from typing import Union
+from typing import Annotated, Union
+
+from pydantic import Field
 
 
 def _rebuild_dependent_models() -> None:
@@ -152,7 +154,10 @@ def register_prior(data_model_cls: type) -> None:
     if data_model_cls in priors_api._PRIOR_TYPES:
         return
     priors_api._PRIOR_TYPES.append(data_model_cls)
-    priors_api.AnyPrior = Union[tuple(priors_api._PRIOR_TYPES)]
+    priors_api.AnyPrior = Annotated[
+        Union[tuple(priors_api._PRIOR_TYPES)],
+        Field(discriminator="type"),
+    ]
     _rebuild_dependent_models()
 
 
@@ -171,5 +176,8 @@ def register_prior_constraint(data_model_cls: type) -> None:
     if data_model_cls in priors_api._PRIOR_CONSTRAINT_TYPES:
         return
     priors_api._PRIOR_CONSTRAINT_TYPES.append(data_model_cls)
-    priors_api.AnyPriorConstraint = Union[tuple(priors_api._PRIOR_CONSTRAINT_TYPES)]
+    priors_api.AnyPriorConstraint = Annotated[
+        Union[tuple(priors_api._PRIOR_CONSTRAINT_TYPES)],
+        Field(discriminator="type"),
+    ]
     _rebuild_dependent_models()

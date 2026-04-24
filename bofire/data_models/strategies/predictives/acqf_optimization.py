@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Literal, Optional, Type, Union
+from typing import Annotated, Literal, Optional, Type, Union
 
 from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
@@ -241,4 +241,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         pass
 
 
-AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithmOptimizer]
+AnyAcqfOptimizer = Annotated[
+    Union[BotorchOptimizer, GeneticAlgorithmOptimizer],
+    Field(discriminator="type"),
+]

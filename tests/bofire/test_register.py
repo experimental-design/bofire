@@ -30,7 +30,7 @@ from bofire.surrogates.surrogate import Surrogate
 
 
 class _CustomStrategyDataModel(StrategyDataModel):
-    type: str = "CustomStrategy"
+    type: Literal["CustomStrategy"] = "CustomStrategy"
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
@@ -57,7 +57,7 @@ _OUTPUTS = Outputs(features=[ContinuousOutput(key="y")])
 
 
 class _CustomSurrogateDataModel(SurrogateDataModel):
-    type: str = "CustomSurrogate"
+    type: Literal["CustomSurrogate"] = "CustomSurrogate"
     inputs: Inputs = _INPUTS
     outputs: Outputs = _OUTPUTS
 
@@ -343,7 +343,6 @@ class TestRegisterBotorchSurrogate:
     def test_register_adds_to_botorch_surrogates(self):
         """Registering a BotorchSurrogate subclass should also update
         AnyBotorchSurrogate so that BotorchSurrogates accepts it."""
-        import typing
 
         import bofire.surrogates.api as surrogates_api
         from bofire.data_models.surrogates.botorch_surrogates import (
@@ -373,8 +372,9 @@ class TestRegisterBotorchSurrogate:
 
         # the module-level AnyBotorchSurrogate union includes our type
         from bofire.data_models.surrogates import botorch_surrogates
+        from bofire.data_models.unions import to_list
 
-        args = typing.get_args(botorch_surrogates.AnyBotorchSurrogate)
+        args = to_list(botorch_surrogates.AnyBotorchSurrogate)
         assert _CustomBotorchSurrogateDataModel in args
 
         self._cleanup()
@@ -450,11 +450,11 @@ class TestRegisterBotorchSurrogate:
 
 
 class _CustomKernelDataModel(KernelDataModel):
-    type: str = "CustomKernel"
+    type: Literal["CustomKernel"] = "CustomKernel"
 
 
 class _CustomPriorDataModel(PriorDataModel):
-    type: str = "CustomPrior"
+    type: Literal["CustomPrior"] = "CustomPrior"
 
 
 # ---------------------------------------------------------------------------
