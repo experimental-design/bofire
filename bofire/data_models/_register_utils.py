@@ -6,13 +6,7 @@ from typing import Annotated, Optional, Union
 
 from pydantic import Field
 
-
-def _unwrap_annotated(tp):
-    """Return (inner, metadata). If *tp* is not Annotated, metadata is ()."""
-    if typing.get_origin(tp) is Annotated:
-        args = typing.get_args(tp)
-        return args[0], args[1:]
-    return tp, ()
+from bofire.data_models.unions import unwrap_annotated
 
 
 def _discriminator_name(metadata):
@@ -76,7 +70,7 @@ def append_to_union_field(model_cls: type, field_name: str, new_type: type) -> N
     if origin in (list, Sequence):
         # Sequence[Union[...]] or Sequence[Annotated[Union[...], Field(...)]]
         inner = typing.get_args(old)[0]
-        inner_unwrapped, inner_meta = _unwrap_annotated(inner)
+        inner_unwrapped, inner_meta = unwrap_annotated(inner)
         discriminator = _discriminator_name(inner_meta)
         inner_args = typing.get_args(inner_unwrapped)
         if new_type not in inner_args:
@@ -89,7 +83,7 @@ def append_to_union_field(model_cls: type, field_name: str, new_type: type) -> N
             ].annotation = new_ann
     else:
         # Union[...] / Optional[Union[...]] / Annotated[Union[...], Field(...)]
-        old_unwrapped, meta = _unwrap_annotated(old)
+        old_unwrapped, meta = unwrap_annotated(old)
         discriminator = _discriminator_name(meta)
         args = typing.get_args(old_unwrapped)
         has_none = type(None) in args

@@ -1,23 +1,8 @@
 import collections.abc as collections
 from collections.abc import Sequence
-from typing import (
-    Annotated,
-    Any,
-    Callable,
-    List,
-    Optional,
-    Type,
-    Union,
-    get_args,
-    get_origin,
-)
+from typing import Any, Callable, List, Optional, Type, Union, get_args, get_origin
 
-
-def _unwrap_annotated(tp):
-    """Strip ``Annotated[X, ...]`` → ``X``; pass other types through unchanged."""
-    if get_origin(tp) is Annotated:
-        return get_args(tp)[0]
-    return tp
+from bofire.data_models.unions import unwrap_annotated
 
 
 def filter_by_attribute(
@@ -98,7 +83,7 @@ def filter_by_class(
 
     includes_ = []
     for incl in includes:
-        incl = _unwrap_annotated(incl)
+        incl, _ = unwrap_annotated(incl)
         if get_origin(incl) is Union:
             includes_ += get_args(incl)
         else:
@@ -106,7 +91,7 @@ def filter_by_class(
     includes = includes_
     excludes_ = []
     for excl in excludes:
-        excl = _unwrap_annotated(excl)
+        excl, _ = unwrap_annotated(excl)
         if get_origin(excl) is Union:
             excludes_ += get_args(excl)
         else:
