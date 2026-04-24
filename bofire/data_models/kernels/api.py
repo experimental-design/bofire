@@ -21,8 +21,12 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
-from bofire.data_models.kernels.kernel import Kernel
-from bofire.data_models.kernels.molecular import TanimotoKernel
+from bofire.data_models.kernels.kernel import (
+    AggregationKernel,
+    FeatureSpecificKernel,
+    Kernel,
+)
+from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
 from bofire.data_models.kernels.shape import WassersteinKernel
 from bofire.data_models.unions import tagged_union
 

@@ -136,6 +136,10 @@ max-complexity = 19
 "bofire/data_models/features/api.py" = ["F401"]
 "bofire/data_models/strategies/api.py" = ["F401"]
 "bofire/data_models/dataframes/api.py" = ["F401"]
+"bofire/data_models/constraints/api.py" = ["F401"]
+"bofire/data_models/kernels/api.py" = ["F401"]
+"bofire/data_models/acquisition_functions/api.py" = ["F401"]
+"bofire/data_models/objectives/api.py" = ["F401"]
 "bofire/plot/api.py" = ["F401"]
 "bofire/data_models/domain/api.py" = ["F401"]
 

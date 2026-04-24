@@ -1,4 +1,7 @@
 from bofire.data_models.acquisition_functions.acquisition_function import (
+    AcquisitionFunction,
+    MultiObjectiveAcquisitionFunction,
+    SingleObjectiveAcquisitionFunction,
     qEHVI,
     qEI,
     qLogEHVI,
