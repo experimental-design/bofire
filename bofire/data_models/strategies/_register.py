@@ -1,8 +1,6 @@
 """Registration utilities for custom strategy types."""
 
-from typing import Annotated, Union
-
-from pydantic import Field
+from bofire.data_models.unions import tagged_union
 
 
 def register_strategy(data_model_cls: type) -> None:
@@ -25,15 +23,10 @@ def register_strategy(data_model_cls: type) -> None:
     if data_model_cls in ast_mod._ACTUAL_STRATEGY_TYPES:
         return
     ast_mod._ACTUAL_STRATEGY_TYPES.append(data_model_cls)
-    ast_mod.ActualStrategy = Annotated[
-        Union[tuple(ast_mod._ACTUAL_STRATEGY_TYPES)],
-        Field(discriminator="type"),
-    ]
-    any_strategy_types = (*ast_mod._ACTUAL_STRATEGY_TYPES, MetaStrategy)
-    strategies_api.AnyStrategy = Annotated[
-        Union[any_strategy_types],
-        Field(discriminator="type"),
-    ]
+    ast_mod.ActualStrategy = tagged_union(*ast_mod._ACTUAL_STRATEGY_TYPES)
+    strategies_api.AnyStrategy = tagged_union(
+        *ast_mod._ACTUAL_STRATEGY_TYPES, MetaStrategy
+    )
 
     patch_field(Step, "strategy_data", ast_mod.ActualStrategy)
     Step.model_rebuild(force=True)

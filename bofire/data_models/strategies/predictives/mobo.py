@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Any, Dict, Literal, Optional, Type, Union
+from typing import Any, Dict, Literal, Optional, Type, Union
 
 from pydantic import Field, model_validator
 
@@ -21,6 +21,7 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
+from bofire.data_models.unions import tagged_union
 
 
 class ReferenceValue(BaseModel):
@@ -160,15 +161,12 @@ class ExplicitReferencePoint(ReferencePoint):
     type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"
     values: Dict[
         str,
-        Annotated[
-            Union[
-                FixedReferenceValue,
-                AbsoluteMovingReferenceValue,
-                RelativeMovingReferenceValue,
-                RelativeToMaxMovingReferenceValue,
-            ],
-            Field(discriminator="type"),
-        ],
+        tagged_union(
+            FixedReferenceValue,
+            AbsoluteMovingReferenceValue,
+            RelativeMovingReferenceValue,
+            RelativeToMaxMovingReferenceValue,
+        ),
     ]
 
 

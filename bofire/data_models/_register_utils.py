@@ -2,26 +2,17 @@
 
 import typing
 from collections.abc import Sequence
-from typing import Annotated, Optional, Union
+from typing import Optional
 
-from pydantic import Field
-
-from bofire.data_models.unions import unwrap_annotated
-
-
-def _discriminator_name(metadata):
-    """Return the discriminator field name if *metadata* contains a Field with one."""
-    for meta in metadata:
-        if isinstance(meta, type(Field())) and getattr(meta, "discriminator", None):
-            return meta.discriminator
-    return None
+from bofire.data_models.unions import discriminator_name, tagged_union, unwrap_annotated
 
 
 def _rewrap_union(union_tp, discriminator: Optional[str]):
     """Wrap *union_tp* in Annotated[..., Field(discriminator=...)] if requested."""
     if discriminator is None:
         return union_tp
-    return Annotated[union_tp, Field(discriminator=discriminator)]
+    args = typing.get_args(union_tp)
+    return tagged_union(*args, discriminator=discriminator)
 
 
 def patch_field(model_cls: type, field_name: str, new_union: type) -> None:
@@ -41,7 +32,7 @@ def patch_field(model_cls: type, field_name: str, new_union: type) -> None:
         new = new_union
     elif type(None) in args:
         # Optional[X] is Union[X, None]
-        new = Optional[new_union]
+        new = typing.Optional[new_union]
     elif typing.get_origin(old) in (list, Sequence):
         # Sequence[Union[...]] or list[Union[...]]
         new = Sequence[new_union]
@@ -71,10 +62,10 @@ def append_to_union_field(model_cls: type, field_name: str, new_type: type) -> N
         # Sequence[Union[...]] or Sequence[Annotated[Union[...], Field(...)]]
         inner = typing.get_args(old)[0]
         inner_unwrapped, inner_meta = unwrap_annotated(inner)
-        discriminator = _discriminator_name(inner_meta)
+        discriminator = discriminator_name(inner_meta)
         inner_args = typing.get_args(inner_unwrapped)
         if new_type not in inner_args:
-            new_inner_union = Union[tuple(list(inner_args) + [new_type])]
+            new_inner_union = typing.Union[tuple(list(inner_args) + [new_type])]
             new_inner = _rewrap_union(new_inner_union, discriminator)
             new_ann = Sequence[new_inner]
             model_cls.__annotations__[field_name] = new_ann
@@ -84,15 +75,15 @@ def append_to_union_field(model_cls: type, field_name: str, new_type: type) -> N
     else:
         # Union[...] / Optional[Union[...]] / Annotated[Union[...], Field(...)]
         old_unwrapped, meta = unwrap_annotated(old)
-        discriminator = _discriminator_name(meta)
+        discriminator = discriminator_name(meta)
         args = typing.get_args(old_unwrapped)
         has_none = type(None) in args
         non_none = [a for a in args if a is not type(None)]
         if new_type not in non_none:
             non_none.append(new_type)
-            new_union = Union[tuple(non_none)]
+            new_union = typing.Union[tuple(non_none)]
             new_union = _rewrap_union(new_union, discriminator)
-            new_ann = Optional[new_union] if has_none else new_union
+            new_ann = typing.Optional[new_union] if has_none else new_union
             model_cls.__annotations__[field_name] = new_ann
             model_cls.model_fields[  # ty: ignore[unresolved-attribute]
                 field_name

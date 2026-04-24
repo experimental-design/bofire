@@ -1,6 +1,4 @@
-from typing import Annotated, Union
-
-from pydantic import Field
+from typing import Union
 
 from bofire.data_models.objectives.categorical import ConstrainedCategoricalObjective
 from bofire.data_models.objectives.desirabilities import (
@@ -27,6 +25,7 @@ from bofire.data_models.objectives.target import (
     ConstrainedObjective,
     TargetObjective,
 )
+from bofire.data_models.unions import tagged_union
 
 
 AbstractObjective = Union[
@@ -39,43 +38,34 @@ AbstractObjective = Union[
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective
 
-AnyConstraintObjective = Annotated[
-    Union[
-        MaximizeSigmoidObjective,
-        MovingMaximizeSigmoidObjective,
-        MinimizeSigmoidObjective,
-        TargetObjective,
-    ],
-    Field(discriminator="type"),
-]
+AnyConstraintObjective = tagged_union(
+    MaximizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
+    MinimizeSigmoidObjective,
+    TargetObjective,
+)
 
-AnyRealObjective = Annotated[
-    Union[
-        MaximizeObjective,
-        MinimizeObjective,
-        CloseToTargetObjective,
-        IncreasingDesirabilityObjective,
-        DecreasingDesirabilityObjective,
-        PeakDesirabilityObjective,
-        InRangeDesirability,
-    ],
-    Field(discriminator="type"),
-]
+AnyRealObjective = tagged_union(
+    MaximizeObjective,
+    MinimizeObjective,
+    CloseToTargetObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+    InRangeDesirability,
+)
 
-AnyObjective = Annotated[
-    Union[
-        MaximizeObjective,
-        MinimizeObjective,
-        MaximizeSigmoidObjective,
-        MinimizeSigmoidObjective,
-        TargetObjective,
-        CloseToTargetObjective,
-        ConstrainedCategoricalObjective,
-        MovingMaximizeSigmoidObjective,
-        IncreasingDesirabilityObjective,
-        DecreasingDesirabilityObjective,
-        PeakDesirabilityObjective,
-        InRangeDesirability,
-    ],
-    Field(discriminator="type"),
-]
+AnyObjective = tagged_union(
+    MaximizeObjective,
+    MinimizeObjective,
+    MaximizeSigmoidObjective,
+    MinimizeSigmoidObjective,
+    TargetObjective,
+    CloseToTargetObjective,
+    ConstrainedCategoricalObjective,
+    MovingMaximizeSigmoidObjective,
+    IncreasingDesirabilityObjective,
+    DecreasingDesirabilityObjective,
+    PeakDesirabilityObjective,
+    InRangeDesirability,
+)

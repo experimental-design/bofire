@@ -1,7 +1,3 @@
-from typing import Annotated, Union
-
-from pydantic import Field
-
 from bofire.data_models.dataframes.dataframes import (
     CandidateOutputValue,
     CandidateRow,
@@ -11,7 +7,8 @@ from bofire.data_models.dataframes.dataframes import (
     Experiments,
     Value,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AnyDataFrame = Annotated[Union[Experiments, Candidates], Field(discriminator="type")]
-AnyRow = Annotated[Union[ExperimentRow, CandidateRow], Field(discriminator="type")]
+AnyDataFrame = tagged_union(Experiments, Candidates)
+AnyRow = tagged_union(ExperimentRow, CandidateRow)

@@ -1,7 +1,3 @@
-from typing import Annotated, Union
-
-from pydantic import Field
-
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.fractional_factorial import (
@@ -26,6 +22,7 @@ from bofire.data_models.strategies.predictives.sobo import (
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.unions import tagged_union
 
 
 _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
@@ -46,7 +43,4 @@ _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     FractionalFactorialStrategy,
 ]
 
-ActualStrategy = Annotated[
-    Union[tuple(_ACTUAL_STRATEGY_TYPES)],
-    Field(discriminator="type"),
-]
+ActualStrategy = tagged_union(*_ACTUAL_STRATEGY_TYPES)

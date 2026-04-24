@@ -1,10 +1,9 @@
 from enum import Enum
-from typing import Annotated, Any, Literal, Optional, Union
-
-from pydantic import Field
+from typing import Any, Literal, Optional
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import NonRestrictedFeatureKeys
+from bofire.data_models.unions import tagged_union
 
 
 class ScalerEnum(str, Enum):
@@ -31,6 +30,4 @@ class Standardize(Scaler):
     type: Literal["Standardize"] = "Standardize"
 
 
-AnyScaler = Optional[
-    Annotated[Union[Normalize, Standardize], Field(discriminator="type")]
-]
+AnyScaler = Optional[tagged_union(Normalize, Standardize)]

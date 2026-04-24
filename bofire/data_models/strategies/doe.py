@@ -10,6 +10,7 @@ from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds
+from bofire.data_models.unions import tagged_union
 
 
 PREDEFINED_MODEL_TYPES = Literal[
@@ -77,30 +78,24 @@ class IOptimalityCriterion(DoEOptimalityCriterion):
     ipopt_options: Optional[Dict] = None
 
 
-AnyDoEOptimalityCriterion = Annotated[
-    Union[
-        KOptimalityCriterion,
-        GOptimalityCriterion,
-        AOptimalityCriterion,
-        EOptimalityCriterion,
-        DOptimalityCriterion,
-        IOptimalityCriterion,
-    ],
-    Field(discriminator="type"),
-]
+AnyDoEOptimalityCriterion = tagged_union(
+    KOptimalityCriterion,
+    GOptimalityCriterion,
+    AOptimalityCriterion,
+    EOptimalityCriterion,
+    DOptimalityCriterion,
+    IOptimalityCriterion,
+)
 
-AnyOptimalityCriterion = Annotated[
-    Union[
-        KOptimalityCriterion,
-        GOptimalityCriterion,
-        AOptimalityCriterion,
-        EOptimalityCriterion,
-        DOptimalityCriterion,
-        IOptimalityCriterion,
-        SpaceFillingCriterion,
-    ],
-    Field(discriminator="type"),
-]
+AnyOptimalityCriterion = tagged_union(
+    KOptimalityCriterion,
+    GOptimalityCriterion,
+    AOptimalityCriterion,
+    EOptimalityCriterion,
+    DOptimalityCriterion,
+    IOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 
 
 class DoEStrategy(Strategy):

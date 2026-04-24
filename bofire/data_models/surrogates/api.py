@@ -1,6 +1,4 @@
-from typing import Annotated, Union
-
-from pydantic import Field
+from typing import Union
 
 from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -54,6 +52,7 @@ from bofire.data_models.surrogates.single_task_gp import (
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.unions import tagged_union
 
 
 AbstractSurrogate = Union[
@@ -65,70 +64,61 @@ AbstractSurrogate = Union[
 ]
 
 
-AnySurrogate = Annotated[
-    Union[
-        EmpiricalSurrogate,
-        RandomForestSurrogate,
-        SingleTaskGPSurrogate,
-        RobustSingleTaskGPSurrogate,
-        MixedSingleTaskGPSurrogate,
-        ClassificationMLPEnsemble,
-        RegressionMLPEnsemble,
-        FullyBayesianSingleTaskGPSurrogate,
-        LinearSurrogate,
-        PolynomialSurrogate,
-        TanimotoGPSurrogate,
-        LinearDeterministicSurrogate,
-        CategoricalDeterministicSurrogate,
-        MultiTaskGPSurrogate,
-        SingleTaskIBNNSurrogate,
-        PiecewiseLinearGPSurrogate,
-        AdditiveMapSaasSingleTaskGPSurrogate,
-        EnsembleMapSaasSingleTaskGPSurrogate,
-    ],
-    Field(discriminator="type"),
-]
+AnySurrogate = tagged_union(
+    EmpiricalSurrogate,
+    RandomForestSurrogate,
+    SingleTaskGPSurrogate,
+    RobustSingleTaskGPSurrogate,
+    MixedSingleTaskGPSurrogate,
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
+    FullyBayesianSingleTaskGPSurrogate,
+    LinearSurrogate,
+    PolynomialSurrogate,
+    TanimotoGPSurrogate,
+    LinearDeterministicSurrogate,
+    CategoricalDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+    SingleTaskIBNNSurrogate,
+    PiecewiseLinearGPSurrogate,
+    AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
+)
 
-AnyTrainableSurrogate = Annotated[
-    Union[
-        RandomForestSurrogate,
-        SingleTaskGPSurrogate,
-        RobustSingleTaskGPSurrogate,
-        MixedSingleTaskGPSurrogate,
-        ClassificationMLPEnsemble,
-        RegressionMLPEnsemble,
-        FullyBayesianSingleTaskGPSurrogate,
-        LinearSurrogate,
-        PolynomialSurrogate,
-        SingleTaskIBNNSurrogate,
-        TanimotoGPSurrogate,
-        PiecewiseLinearGPSurrogate,
-        AdditiveMapSaasSingleTaskGPSurrogate,
-        EnsembleMapSaasSingleTaskGPSurrogate,
-    ],
-    Field(discriminator="type"),
-]
+AnyTrainableSurrogate = tagged_union(
+    RandomForestSurrogate,
+    SingleTaskGPSurrogate,
+    RobustSingleTaskGPSurrogate,
+    MixedSingleTaskGPSurrogate,
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
+    FullyBayesianSingleTaskGPSurrogate,
+    LinearSurrogate,
+    PolynomialSurrogate,
+    SingleTaskIBNNSurrogate,
+    TanimotoGPSurrogate,
+    PiecewiseLinearGPSurrogate,
+    AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
+)
 
-AnyRegressionSurrogate = Annotated[
-    Union[
-        EmpiricalSurrogate,
-        RandomForestSurrogate,
-        SingleTaskGPSurrogate,
-        RobustSingleTaskGPSurrogate,
-        MixedSingleTaskGPSurrogate,
-        RegressionMLPEnsemble,
-        FullyBayesianSingleTaskGPSurrogate,
-        LinearSurrogate,
-        PolynomialSurrogate,
-        TanimotoGPSurrogate,
-        LinearDeterministicSurrogate,
-        MultiTaskGPSurrogate,
-        SingleTaskIBNNSurrogate,
-        PiecewiseLinearGPSurrogate,
-        AdditiveMapSaasSingleTaskGPSurrogate,
-        EnsembleMapSaasSingleTaskGPSurrogate,
-    ],
-    Field(discriminator="type"),
-]
+AnyRegressionSurrogate = tagged_union(
+    EmpiricalSurrogate,
+    RandomForestSurrogate,
+    SingleTaskGPSurrogate,
+    RobustSingleTaskGPSurrogate,
+    MixedSingleTaskGPSurrogate,
+    RegressionMLPEnsemble,
+    FullyBayesianSingleTaskGPSurrogate,
+    LinearSurrogate,
+    PolynomialSurrogate,
+    TanimotoGPSurrogate,
+    LinearDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+    SingleTaskIBNNSurrogate,
+    PiecewiseLinearGPSurrogate,
+    AdditiveMapSaasSingleTaskGPSurrogate,
+    EnsembleMapSaasSingleTaskGPSurrogate,
+)
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

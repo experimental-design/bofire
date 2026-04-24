@@ -1,6 +1,4 @@
-from typing import Annotated, Union
-
-from pydantic import Field
+from typing import Union
 
 from bofire.data_models.constraints.categorical import CategoricalExcludeConstraint
 from bofire.data_models.constraints.condition import (
@@ -36,6 +34,7 @@ from bofire.data_models.constraints.product import (
     ProductEqualityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.unions import tagged_union
 
 
 AbstractConstraint = Union[
@@ -49,44 +48,35 @@ AbstractConstraint = Union[
     EqualityConstraint,
 ]
 
-AnyConstraint = Annotated[
-    Union[
-        LinearEqualityConstraint,
-        LinearInequalityConstraint,
-        NonlinearEqualityConstraint,
-        NonlinearInequalityConstraint,
-        NChooseKConstraint,
-        InterpointEqualityConstraint,
-        ProductEqualityConstraint,
-        ProductInequalityConstraint,
-        CategoricalExcludeConstraint,
-    ],
-    Field(discriminator="type"),
-]
+AnyConstraint = tagged_union(
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+    NChooseKConstraint,
+    InterpointEqualityConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
+    CategoricalExcludeConstraint,
+)
 
-AnyContinuousConstraint = Annotated[
-    Union[
-        LinearEqualityConstraint,
-        LinearInequalityConstraint,
-        NonlinearEqualityConstraint,
-        NonlinearInequalityConstraint,
-        NChooseKConstraint,
-        InterpointEqualityConstraint,
-        ProductEqualityConstraint,
-        ProductInequalityConstraint,
-    ],
-    Field(discriminator="type"),
-]
+AnyContinuousConstraint = tagged_union(
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+    NChooseKConstraint,
+    InterpointEqualityConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
+)
 
 AnyCategoricalConstraint = CategoricalExcludeConstraint
 
-AnyCondition = Annotated[
-    Union[
-        SelectionCondition,
-        ThresholdCondition,
-        NonZeroCondition,
-    ],
-    Field(discriminator="type"),
-]
+AnyCondition = tagged_union(
+    SelectionCondition,
+    ThresholdCondition,
+    NonZeroCondition,
+)
 
 AnyConstraintError = Union[ConstraintError, ConstraintNotFulfilledError]

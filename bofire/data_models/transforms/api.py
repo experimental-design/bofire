@@ -1,12 +1,6 @@
-from typing import Annotated, Union
-
-from pydantic import Field
-
 from bofire.data_models.transforms.drop_data import DropDataTransform
 from bofire.data_models.transforms.manipulate_data import ManipulateDataTransform
+from bofire.data_models.unions import tagged_union
 
 
-AnyTransform = Annotated[
-    Union[DropDataTransform, ManipulateDataTransform],
-    Field(discriminator="type"),
-]
+AnyTransform = tagged_union(DropDataTransform, ManipulateDataTransform)

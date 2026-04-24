@@ -1,8 +1,6 @@
 """Registration utilities for custom engineered feature types."""
 
-from typing import Annotated, Union
-
-from pydantic import Field
+from bofire.data_models.unions import tagged_union
 
 
 def register_engineered_feature(data_model_cls: type) -> None:
@@ -20,10 +18,9 @@ def register_engineered_feature(data_model_cls: type) -> None:
     if data_model_cls in features_api._ENGINEERED_FEATURE_TYPES:
         return
     features_api._ENGINEERED_FEATURE_TYPES.append(data_model_cls)
-    features_api.AnyEngineeredFeature = Annotated[
-        Union[tuple(features_api._ENGINEERED_FEATURE_TYPES)],
-        Field(discriminator="type"),
-    ]
+    features_api.AnyEngineeredFeature = tagged_union(
+        *features_api._ENGINEERED_FEATURE_TYPES
+    )
 
     from bofire.data_models._register_utils import append_to_union_field
     from bofire.data_models.domain.features import EngineeredFeatures
