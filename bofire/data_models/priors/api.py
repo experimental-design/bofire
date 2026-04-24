@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Union
 
 from bofire.data_models.priors._register import (
     register_prior,
@@ -26,9 +25,6 @@ from bofire.data_models.priors.normal import (
 from bofire.data_models.priors.prior import Prior
 from bofire.data_models.unions import tagged_union
 
-
-AbstractPrior = Prior
-AbstractPriorConstraint = Union[PriorConstraint, Interval]
 
 _PRIOR_TYPES: list[type[Prior]] = [
     GammaPrior,

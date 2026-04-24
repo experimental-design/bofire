@@ -9,8 +9,6 @@ from bofire.data_models.molfeatures.molfeatures import (
 from bofire.data_models.unions import tagged_union
 
 
-AbstractMolFeatures = MolFeatures
-
 AnyMolFeatures = tagged_union(
     CompositeMolFeatures,
     Fingerprints,

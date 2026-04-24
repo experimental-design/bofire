@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (
@@ -53,15 +51,6 @@ from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.unions import tagged_union
-
-
-AbstractSurrogate = Union[
-    Surrogate,
-    TrainableBotorchSurrogate,
-    BotorchSurrogate,
-    EmpiricalSurrogate,
-    MLPEnsemble,
-]
 
 
 AnySurrogate = tagged_union(

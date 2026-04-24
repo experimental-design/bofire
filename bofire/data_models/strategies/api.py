@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.strategies._register import register_strategy
 from bofire.data_models.strategies.actual_strategy_type import (
     _ACTUAL_STRATEGY_TYPES,
@@ -74,13 +72,6 @@ from bofire.data_models.transforms.api import (
 )
 from bofire.data_models.unions import tagged_union
 
-
-AbstractStrategy = Union[
-    Strategy,
-    BotorchStrategy,
-    PredictiveStrategy,
-    MultiobjectiveStrategy,
-]
 
 _ANY_STRATEGY_TYPES = (*_ACTUAL_STRATEGY_TYPES, MetaStrategy)
 AnyStrategy = tagged_union(*_ANY_STRATEGY_TYPES)

@@ -7,46 +7,29 @@ from bofire.data_models.constraints.condition import (
     ThresholdCondition,
 )
 from bofire.data_models.constraints.constraint import (
-    Constraint,
+    Constraint,  # noqa: F401 re-export
     ConstraintError,
     ConstraintNotFulfilledError,
-    EqualityConstraint,
-    InequalityConstraint,
-    IntrapointConstraint,
 )
 from bofire.data_models.constraints.interpoint import (
-    InterpointConstraint,
+    InterpointConstraint,  # noqa: F401 re-export
     InterpointEqualityConstraint,
 )
 from bofire.data_models.constraints.linear import (
-    LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
 from bofire.data_models.constraints.nchoosek import NChooseKConstraint
 from bofire.data_models.constraints.nonlinear import (
-    NonlinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.constraints.product import (
-    ProductConstraint,
     ProductEqualityConstraint,
     ProductInequalityConstraint,
 )
 from bofire.data_models.unions import tagged_union
 
-
-AbstractConstraint = Union[
-    Constraint,
-    LinearConstraint,
-    NonlinearConstraint,
-    IntrapointConstraint,
-    InterpointConstraint,
-    ProductConstraint,
-    InequalityConstraint,
-    EqualityConstraint,
-]
 
 AnyConstraint = tagged_union(
     LinearEqualityConstraint,

@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.kernels._register import register_kernel  # noqa: F401
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
@@ -23,24 +21,11 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
-from bofire.data_models.kernels.kernel import (
-    AggregationKernel,
-    FeatureSpecificKernel,
-    Kernel,
-)
-from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
+from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import WassersteinKernel
 from bofire.data_models.unions import tagged_union
 
-
-AbstractKernel = Union[
-    Kernel,
-    CategoricalKernel,
-    ContinuousKernel,
-    MolecularKernel,
-    FeatureSpecificKernel,
-    AggregationKernel,
-]
 
 _CONTINUOUS_KERNEL_TYPES: list[type[ContinuousKernel]] = [
     MaternKernel,

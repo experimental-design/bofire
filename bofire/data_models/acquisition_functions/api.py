@@ -1,7 +1,4 @@
 from bofire.data_models.acquisition_functions.acquisition_function import (
-    AcquisitionFunction,
-    MultiObjectiveAcquisitionFunction,
-    SingleObjectiveAcquisitionFunction,
     qEHVI,
     qEI,
     qLogEHVI,
@@ -18,12 +15,6 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
 )
 from bofire.data_models.unions import tagged_union
 
-
-AbstractAcquisitionFunction = [
-    AcquisitionFunction,
-    SingleObjectiveAcquisitionFunction,
-    MultiObjectiveAcquisitionFunction,
-]
 
 AnyAcquisitionFunction = tagged_union(
     qNEI,

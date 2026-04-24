@@ -2,7 +2,7 @@ import collections.abc as collections
 from collections.abc import Sequence
 from typing import Any, Callable, List, Optional, Type, Union
 
-from bofire.data_models.unions import extract_union_args
+from bofire.data_models.unions import to_list
 
 
 def filter_by_attribute(
@@ -81,8 +81,8 @@ def filter_by_class(
     if len([x for x in includes if x in excludes]) > 0:
         raise ValueError("includes and excludes overlap")
 
-    includes = [t for incl in includes for t in extract_union_args(incl)[0]]
-    excludes = [t for excl in excludes for t in extract_union_args(excl)[0]]
+    includes = [t for incl in includes for t in to_list(incl)]
+    excludes = [t for excl in excludes for t in to_list(excl)]
 
     if exact:
         return [

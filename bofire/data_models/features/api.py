@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput
@@ -29,13 +27,6 @@ from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.features.task import TaskInput
 from bofire.data_models.unions import tagged_union
 
-
-AbstractFeature = Union[
-    Feature,
-    Input,
-    Output,
-    NumericalInput,
-]
 
 AnyFeature = tagged_union(
     DiscreteInput,
