@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional, Type, Union
+from typing import Annotated, Any, Dict, Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, model_validator
 
@@ -12,9 +12,6 @@ from bofire.data_models.features.api import Feature
 from bofire.data_models.llm.api import AnyLLMProvider
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.data_models.strategies.strategy import Strategy
-
-
-ThinkingLevel = Union[bool, Literal["minimal", "low", "medium", "high", "xhigh"]]
 
 
 class LLMStrategy(Strategy):
@@ -31,9 +28,10 @@ class LLMStrategy(Strategy):
 
     Attributes:
         llm: LLM provider configuration.
-        temperature: Sampling temperature for the LLM.
-        max_tokens: Maximum number of tokens in the LLM response.
-        thinking: Reasoning effort level for the LLM.
+        model_settings: Optional dict forwarded directly to pydantic-ai's
+            ``model_settings`` (e.g. ``{"temperature": 0.2, "max_tokens": 4096,
+            "thinking": "high"}``). Keys are not validated by BoFire — pydantic-ai
+            and the underlying provider SDK are the source of truth.
         output_retries: Number of retries when output validation fails.
         n_recent_experiments: Number of most recent experiments to show the LLM.
         n_top_experiments: Number of top-performing experiments to show the LLM.
@@ -43,9 +41,7 @@ class LLMStrategy(Strategy):
     type: Literal["LLMStrategy"] = "LLMStrategy"
 
     llm: AnyLLMProvider
-    temperature: Optional[Annotated[float, Field(ge=0.0, le=2.0)]] = None
-    max_tokens: Optional[Annotated[int, Field(gt=0)]] = None
-    thinking: Optional[ThinkingLevel] = None
+    model_settings: Optional[Dict[str, Any]] = None
     output_retries: PositiveInt = 3
     n_recent_experiments: Optional[Annotated[int, Field(gt=0)]] = None
     n_top_experiments: Optional[Annotated[int, Field(gt=0)]] = None

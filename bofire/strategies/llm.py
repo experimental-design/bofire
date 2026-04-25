@@ -16,7 +16,6 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.llm.api import AnyLLMProvider
 from bofire.data_models.objectives.api import MinimizeObjective
-from bofire.data_models.strategies.llm import ThinkingLevel
 from bofire.strategies.strategy import Strategy, make_strategy
 
 
@@ -239,18 +238,10 @@ class LLMStrategy(Strategy):
             experiments_text=experiments_text,
         )
 
-        model_settings = (
-            self._data_model.model_dump(
-                include={"temperature", "max_tokens", "thinking"},
-                exclude_none=True,
-            )
-            or None
-        )
-
         result = await agent.run(
             f"Propose {candidate_count} diverse candidate points for this optimization problem.",
             deps=deps,
-            model_settings=model_settings,
+            model_settings=self._data_model.model_settings,
         )
 
         proposal = result.output
@@ -266,9 +257,7 @@ class LLMStrategy(Strategy):
         cls,
         domain: Domain,
         llm: AnyLLMProvider,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        thinking: Optional[ThinkingLevel] = None,
+        model_settings: Optional[dict] = None,
         output_retries: Optional[int] = None,
         n_recent_experiments: Optional[int] = None,
         n_top_experiments: Optional[int] = None,
@@ -280,9 +269,9 @@ class LLMStrategy(Strategy):
         Args:
             domain: The optimization domain.
             llm: LLM provider configuration.
-            temperature: Sampling temperature for the LLM.
-            max_tokens: Maximum response tokens.
-            thinking: Reasoning effort level.
+            model_settings: Optional dict forwarded to pydantic-ai's
+                ``model_settings`` (e.g. ``{"temperature": 0.2,
+                "max_tokens": 4096, "thinking": "high"}``).
             output_retries: Number of retries for output validation.
             n_recent_experiments: Number of recent experiments to show.
             n_top_experiments: Number of top experiments to show.
