@@ -15,26 +15,73 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class LLMStrategy(Strategy):
-    """Strategy that uses an LLM to propose optimization candidates.
+    """Strategy that uses a large language model to propose optimization candidates.
 
-    Uses pydantic-ai structured output with a dynamically generated schema
-    that matches the Domain's input features. The LLM receives feature bounds,
-    allowed values, objectives, constraints, and context as prompt context.
-    Domain validation catches constraint violations, and pydantic-ai retries
-    automatically.
+    Instead of fitting a surrogate and optimizing an acquisition function,
+    this strategy lets an LLM read the optimization problem — feature bounds,
+    constraints, objectives, contextual descriptions, and prior experiments —
+    and directly propose candidate points. It is useful for cold-start
+    designs, mixed / categorical / molecular spaces where domain knowledge
+    helps, and exploration informed by written context (``Feature.context``
+    and ``Domain.context``).
 
-    Currently supports single-objective optimization with Maximize or Minimize
-    objectives, and linear/NChooseK constraints.
+    It is not a replacement for a Bayesian optimizer on well-understood
+    numerical problems: there is no calibrated uncertainty model and no
+    acquisition function. Treat candidates as informed heuristics, not
+    optima.
+
+    On each ``ask()``, a pydantic output schema is generated from the
+    domain's input features and the LLM is prompted with a textual problem
+    description plus, optionally, a selection of prior experiments. Returned
+    candidates are validated against the domain; bound or constraint
+    violations are sent back to the LLM as retry messages via pydantic-ai's
+    ``output_retries``.
+
+    Currently supports single-objective optimization with ``MaximizeObjective``
+    or ``MinimizeObjective``, and ``LinearEquality``, ``LinearInequality``,
+    and ``NChooseK`` constraints. All feature types are supported.
+
+    Example:
+        Basic usage::
+
+            strategy = LLMStrategy.make(
+                domain=domain,
+                llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),
+            )
+
+        Enable extended reasoning for harder problems (many constraints,
+        rich context). ``thinking`` is pydantic-ai's cross-provider
+        capability key — it maps to Anthropic's extended thinking, OpenAI's
+        ``reasoning_effort``, and similar mechanisms on other providers.
+        Reasoning increases cost and latency considerably, so it is not
+        enabled by default::
+
+            strategy = LLMStrategy.make(
+                domain=domain,
+                llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),
+                model_settings={"thinking": "high"},
+            )
 
     Attributes:
         llm: LLM provider configuration.
         model_settings: Optional dict forwarded directly to pydantic-ai's
-            ``model_settings`` (e.g. ``{"temperature": 0.2, "max_tokens": 4096,
-            "thinking": "high"}``). Keys are not validated by BoFire — pydantic-ai
-            and the underlying provider SDK are the source of truth.
-        output_retries: Number of retries when output validation fails.
-        n_recent_experiments: Number of most recent experiments to show the LLM.
-        n_top_experiments: Number of top-performing experiments to show the LLM.
+            ``model_settings``. Useful keys include ``temperature``,
+            ``max_tokens``, ``top_p``, ``seed``, ``timeout``, and the
+            cross-provider capability ``thinking`` (``"low"`` / ``"medium"``
+            / ``"high"``). Provider-prefixed keys such as
+            ``anthropic_thinking`` or ``openai_reasoning_effort`` are also
+            accepted as escape hatches for finer control. Keys are not
+            validated by BoFire — pydantic-ai and the underlying provider
+            SDK are the source of truth.
+        output_retries: Number of retries when output validation fails
+            (constraint or bound violations). Each retry sends the LLM the
+            invalid candidates and the error so it can correct.
+        n_recent_experiments: If set, only the most recent N experiments
+            are shown to the LLM. Keeps prompt size bounded on long
+            campaigns.
+        n_top_experiments: If set, the top N experiments by objective
+            value are shown to the LLM. Combine with
+            ``n_recent_experiments`` to mix recency and quality.
         system_prompt: Optional override for the default system prompt.
     """
 
