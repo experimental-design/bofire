@@ -3,7 +3,7 @@
 import asyncio
 import json
 from dataclasses import dataclass
-from typing import Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import pandas as pd
 from pydantic import BaseModel as PydanticBaseModel
@@ -257,7 +257,7 @@ class LLMStrategy(Strategy):
         cls,
         domain: Domain,
         llm: AnyLLMProvider,
-        model_settings: Optional[dict] = None,
+        model_settings: Optional[Dict[str, Any]] = None,
         output_retries: Optional[int] = None,
         n_recent_experiments: Optional[int] = None,
         n_top_experiments: Optional[int] = None,
