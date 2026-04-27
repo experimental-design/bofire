@@ -23,7 +23,6 @@ from bofire.strategies.strategy import Strategy, make_strategy
 @dataclass
 class _LLMDeps:
     domain: Domain
-    n_candidates: int
     experiments_text: str
 
 
@@ -144,6 +143,7 @@ class LLMStrategy(Strategy):
         self._n_top_experiments = data_model.n_top_experiments
         self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
         self._pydantic_ai_model = None
+        self._agent = None
 
     @property
     def pydantic_ai_model(self):
@@ -158,6 +158,61 @@ class LLMStrategy(Strategy):
             self._pydantic_ai_model = llm_mapper.map(self._llm_provider)
         return self._pydantic_ai_model
 
+    @property
+    def agent(self):
+        """Lazily constructed pydantic-ai Agent. Built once on first access.
+
+        Per BoFire's "build once, execute many" philosophy: the Agent
+        captures the domain, output schema, system prompt, and provider
+        model at first access. Per-call inputs (current experiments,
+        candidate count) are passed in via ``_LLMDeps`` on each
+        ``agent.run()``.
+        """
+        if self._agent is None:
+            from pydantic_ai import Agent, ModelRetry
+
+            proposal_model = _build_proposal_model(self.domain)
+
+            agent = Agent(
+                self.pydantic_ai_model,
+                system_prompt=self._system_prompt,
+                output_type=proposal_model,
+                output_retries=self._output_retries,
+                name="LLMStrategy",
+            )
+
+            @agent.system_prompt
+            async def add_domain_description(ctx) -> str:
+                deps: _LLMDeps = ctx.deps
+                parts = [deps.domain.to_description()]
+                if deps.experiments_text:
+                    parts.append(deps.experiments_text)
+                return "\n".join(parts)
+
+            @agent.output_validator
+            async def validate_against_domain(ctx, proposal):
+                deps: _LLMDeps = ctx.deps
+                rows = [c.values.model_dump() for c in proposal.candidates]
+                candidates_df = pd.DataFrame(rows)
+                try:
+                    deps.domain.validate_candidates(candidates_df, only_inputs=True)
+                except Exception as e:
+                    candidates_json = json.dumps(rows, indent=2)
+                    # ModelRetry (not ValueError) is the only exception
+                    # pydantic-ai catches in output validators to trigger a
+                    # retry within ``output_retries``. See
+                    # pydantic_ai/_result.py.
+                    raise ModelRetry(
+                        f"Candidate validation failed: {e}\n\n"
+                        f"The proposed candidates were:\n{candidates_json}\n\n"
+                        f"Please fix the candidates to satisfy all constraints "
+                        f"and feature bounds, then try again."
+                    ) from e
+                return proposal
+
+            self._agent = agent
+        return self._agent
+
     def has_sufficient_experiments(self) -> bool:
         """LLM can propose candidates with zero experiments (cold start)."""
         return True
@@ -171,74 +226,35 @@ class LLMStrategy(Strategy):
             candidate_count = 1
         return asyncio.run(self._ask_async(candidate_count))
 
+    def _build_experiments_text(self) -> str:
+        """Render the currently held experiments as a JSON block for the LLM."""
+        if self.experiments is None or len(self.experiments) == 0:
+            return ""
+        selected, description = _select_experiments(
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                self.experiments
+            ),
+            self.domain,
+            self._n_recent_experiments,
+            self._n_top_experiments,
+        )
+        display_cols = self.domain.inputs.get_keys() + self.domain.outputs.get_keys()
+        experiments_json = json.dumps(
+            selected[display_cols].to_dict(orient="records"), indent=2
+        )
+        return (
+            f"\n## Previous Experiments ({description})\n"
+            f"```json\n{experiments_json}\n```"
+        )
+
     async def _ask_async(self, candidate_count: int) -> pd.DataFrame:
         """Async implementation of candidate generation."""
-        from pydantic_ai import Agent, ModelRetry
-
-        # Build output schema fresh each call (domain may have changed)
-        proposal_model = _build_proposal_model(self.domain)
-
-        # Create agent with configurable output retries for constraint validation
-        agent = Agent(
-            self.pydantic_ai_model,
-            system_prompt=self._system_prompt,
-            output_type=proposal_model,
-            output_retries=self._output_retries,
-            name="LLMStrategy",
-        )
-
-        # Add domain description as dynamic system prompt
-        @agent.system_prompt
-        async def add_domain_description(ctx) -> str:
-            deps: _LLMDeps = ctx.deps
-            parts = [deps.domain.to_description()]
-            if deps.experiments_text:
-                parts.append(deps.experiments_text)
-            return "\n".join(parts)
-
-        # Add output validator: domain.validate_candidates with verbose errors
-        @agent.output_validator
-        async def validate_against_domain(ctx, proposal):
-            deps: _LLMDeps = ctx.deps
-            rows = [c.values.model_dump() for c in proposal.candidates]
-            candidates_df = pd.DataFrame(rows)
-            try:
-                deps.domain.validate_candidates(candidates_df, only_inputs=True)
-            except Exception as e:
-                candidates_json = json.dumps(rows, indent=2)
-                # ModelRetry (not ValueError) is the only exception pydantic-ai
-                # catches in output validators to trigger a retry within
-                # ``output_retries``. See pydantic_ai/_result.py.
-                raise ModelRetry(
-                    f"Candidate validation failed: {e}\n\n"
-                    f"The proposed candidates were:\n{candidates_json}\n\n"
-                    f"Please fix the candidates to satisfy all constraints and "
-                    f"feature bounds, then try again."
-                ) from e
-            return proposal
-
-        # Prepare experiment text
-        experiments_text = ""
-        if self.experiments is not None and len(self.experiments) > 0:
-            selected, description = _select_experiments(
-                self.experiments,
-                self.domain,
-                self._n_recent_experiments,
-                self._n_top_experiments,
-            )
-            experiments_json = json.dumps(selected.to_dict(orient="records"), indent=2)
-            experiments_text = (
-                f"\n## Previous Experiments ({description})\n"
-                f"```json\n{experiments_json}\n```"
-            )
-
         deps = _LLMDeps(
             domain=self.domain,
-            n_candidates=candidate_count,
-            experiments_text=experiments_text,
+            experiments_text=self._build_experiments_text(),
         )
 
-        result = await agent.run(
+        result = await self.agent.run(
             f"Propose {candidate_count} diverse candidate points for this optimization problem.",
             deps=deps,
             model_settings=self._data_model.model_settings,
