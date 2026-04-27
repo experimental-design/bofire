@@ -243,22 +243,49 @@ class FormulationWrapper(Benchmark):
 
 
 class SpuriousFeaturesWrapper(Benchmark):
-    """Wrapper that adds spurious features to a benchmark, that are ignored on evaluation."""
+    """Wrapper that adds spurious features to a benchmark, that are ignored on evaluation.
 
-    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+    Args:
+        benchmark: The benchmark to wrap.
+        n_spurious_features: Number of spurious features to add.
+        max_count: If provided, adds an NChooseKConstraint on all input features
+            (original + spurious) limiting the number of non-zero features.
+    """
+
+    def __init__(
+        self,
+        benchmark: Benchmark,
+        n_spurious_features: int = 1,
+        max_count: Optional[int] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
         self._benchmark = benchmark
+
+        inputs = Inputs(
+            features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
+            + [
+                ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
+                for i in range(n_spurious_features)
+            ]
+        )
+
+        constraints = list(self._benchmark.domain.constraints.constraints)
+        if max_count is not None:
+            constraints.append(
+                NChooseKConstraint(
+                    features=inputs.get_keys(),
+                    max_count=max_count,
+                    min_count=0,
+                    none_also_valid=True,
+                )
+            )
+
         self._domain = Domain(
-            inputs=Inputs(
-                features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
-                + [
-                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
-                    for i in range(n_spurious_features)
-                ]
-            ),
+            inputs=inputs,
             outputs=self._benchmark.domain.outputs,
-            constraints=self._benchmark.domain.constraints,
+            constraints=Constraints(constraints=constraints),
         )
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
