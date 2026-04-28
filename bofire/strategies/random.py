@@ -1,5 +1,4 @@
 import math
-import random
 import warnings
 from copy import deepcopy
 from typing import Dict, Optional, cast
@@ -138,28 +137,35 @@ class RandomStrategy(Strategy):
         zeroable_keys = nchoosek_feature_keys | allow_zero_feature_keys
 
         if zeroable_keys:
-            rng = random.Random(self._get_seed())
+            # Draw a uniform sample of valid active-feature subsets (one per
+            # NChooseK constraint plus one per allow_zero singleton). We draw
+            # at most `max_combinations` distinct subsets; their multiplicities
+            # in `drawn` determine how many polytope samples each subset gets.
             n_combos = min(self.max_combinations, candidate_count)
-            drawn = self.domain.sample_valid_nchoosek_features(rng, n=n_combos)
+            drawn = self.domain.sample_valid_nchoosek_features(
+                seed=self._get_seed(),
+                n=n_combos,
+            )
             combinations: Dict[tuple, int] = {}
             for combo in drawn:
                 combinations[combo] = combinations.get(combo, 0) + 1
 
+            # Each sampled subset gets `count * sampling_multiplier` polytope
+            # samples, so the total before final resampling is at least
+            # `candidate_count`.
             sampling_multiplier = math.ceil(candidate_count / n_combos)
 
             samples = []
             for combo, count in combinations.items():
-                # create new domain without the nchoosekconstraints
+                # Clone the domain and turn the NChooseK problem into a plain
+                # polytope problem: drop the NChooseK constraints, then pin
+                # every zeroable feature that wasn't selected to bounds [0, 0].
                 domain = deepcopy(self.domain)
                 domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-                # fix the unselected zeroable features
                 for key in zeroable_keys - set(combo):
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
-                    if feat.allow_zero:
-                        feat.allow_zero = False
                     feat.bounds = [0.0, 0.0]
-                # setup then sampler for this situation
                 samples.append(
                     self._sample_from_polytope(
                         domain=domain,

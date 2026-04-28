@@ -240,7 +240,7 @@ class Domain(BaseModel):
 
     def sample_valid_nchoosek_features(
         self,
-        rng: random.Random,
+        seed: Optional[int] = None,
         n: int = 1,
         max_iters: int = 1000,
     ) -> list[Tuple[str, ...]]:
@@ -259,7 +259,8 @@ class Domain(BaseModel):
         sampling is used (up to ``max_iters`` attempts per drawn combination).
 
         Args:
-            rng: Random number generator used for sampling.
+            seed: Random seed used to initialise the internal sampler.
+                Defaults to ``None`` (non-deterministic).
             n: Number of combinations to draw. Defaults to 1.
             max_iters: Maximum number of rejection-sampling attempts per
                 drawn combination. Defaults to 1000.
@@ -271,6 +272,7 @@ class Domain(BaseModel):
             ValueError: If a valid combination is not found within
                 ``max_iters`` attempts.
         """
+        rng = random.Random(seed)
         groups: list[Tuple[list[str], list[int], list[int]]] = []
         nchoosek_keys: set[str] = set()
         nchoosek_cons = list(self.constraints.get(NChooseKConstraint))

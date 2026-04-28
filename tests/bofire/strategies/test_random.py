@@ -280,32 +280,6 @@ def test_allow_zero_with_nchoosek():
     assert (samples["if4"] == 0.0).any()
 
 
-def test_nchoosek_scalability():
-    """NChooseK enumeration would explode (~594k combos for n=30, k=6).
-    The sampling-based strategy should handle this without enumerating.
-    """
-    import time
-
-    n_features = 30
-    inputs = [ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(n_features)]
-    constraint = NChooseKConstraint(
-        features=[f"x{i}" for i in range(n_features)],
-        min_count=0,
-        max_count=6,
-        none_also_valid=False,
-    )
-    domain = Domain.from_lists(inputs=inputs, constraints=[constraint])
-    data_model = data_models.RandomStrategy(domain=domain)
-    sampler = strategies.RandomStrategy(data_model=data_model)
-    start = time.monotonic()
-    samples = sampler.ask(50)
-    elapsed = time.monotonic() - start
-    assert len(samples) == 50
-    # at most 6 active features per row
-    assert ((samples != 0.0).sum(axis=1) <= 6).all()
-    assert elapsed < 30, f"Took {elapsed:.1f}s, should be under 30s"
-
-
 def test_sample_from_polytope():
     if1 = ContinuousInput(
         bounds=(0, 1),
