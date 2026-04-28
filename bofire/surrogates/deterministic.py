@@ -62,7 +62,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         self.model = AffineDeterministicModel(
             b=0.0,
             a=torch.tensor(
-                [data_model.mapping[key] for key in self.inputs[0].categories],
+                [data_model.mapping[key] for key in data_model.inputs[0].categories],
             )
             .to(**tkwargs)
             .unsqueeze(-1),

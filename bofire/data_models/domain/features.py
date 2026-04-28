@@ -15,16 +15,16 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    TypeVar,
     Union,
     cast,
+    overload,
 )
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
-from typing_extensions import Self
+from typing_extensions import Self, TypeGuard, TypeVar
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
@@ -57,11 +57,20 @@ from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import to_list
 
 
-F = TypeVar("F", bound=AnyFeature)
-FeatureSequence = Sequence[F]
+FeatureT = TypeVar("FeatureT", bound=AnyFeature | Feature, default=AnyFeature | Feature)
+FeatureGetT = TypeVar(
+    "FeatureGetT", bound=AnyFeature | Feature, default=AnyFeature | Feature
+)
+InputT = TypeVar("InputT", bound=AnyInput | Input, default=AnyInput | Input)
+InputGetT = TypeVar("InputGetT", bound=AnyInput | Input, default=AnyInput | Input)
+EngineeredFeatureT = TypeVar(
+    "EngineeredFeatureT", bound=AnyEngineeredFeature, default=AnyEngineeredFeature
+)
+OutputT = TypeVar("OutputT", bound=AnyOutput | Output, default=AnyOutput | Output)
+OutputGetT = TypeVar("OutputGetT", bound=AnyOutput | Output, default=AnyOutput | Output)
 
 
-class _BaseFeatures(BaseModel, Generic[F]):
+class _BaseFeatures(BaseModel, Generic[FeatureT]):
     """Container of features, both input and output features are allowed.
 
     Attributes:
@@ -70,29 +79,29 @@ class _BaseFeatures(BaseModel, Generic[F]):
     """
 
     type: Literal["Features"] = "Features"
-    features: FeatureSequence = Field(default_factory=list)
+    features: Sequence[FeatureT] = Field(default_factory=list)
 
     @field_validator("features")
     @classmethod
     def validate_unique_feature_keys(
         cls: type[_BaseFeatures],
-        features: FeatureSequence,
-    ) -> FeatureSequence:
+        features: Sequence[FeatureT],
+    ) -> Sequence[FeatureT]:
         keys = [feat.key for feat in features]
         if len(keys) != len(set(keys)):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:
+    def __iter__(self) -> Iterator[FeatureT]:
         return iter(self.features)
 
     def __len__(self):
         return len(self.features)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> FeatureT:
         return self.features[i]
 
-    def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures]):
+    def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures[FeatureGetT]]):
         if isinstance(other, Features):
             other_feature_seq = other.features
         else:
@@ -130,7 +139,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             )
         return Features(features=new_feature_seq)
 
-    def get_by_key(self, key: str, use_regex: bool = False) -> F:
+    def get_by_key(self, key: str, use_regex: bool = False) -> FeatureT:
         """Get a feature by its key.
 
         First, the method tries to find the feature by its key. If no feature is
@@ -178,10 +187,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
-        excludes: Union[Type, List[Type], None] = None,
+        includes: Type[FeatureGetT] | Sequence[Type[FeatureGetT]] = Feature,
+        excludes: Type[AnyFeature] | Sequence[Type[AnyFeature]] | None = None,
         exact: bool = False,
     ) -> Self:
         """Get features of this container and filter via includes and excludes.
@@ -212,17 +219,15 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
-        excludes: Union[Type, List[Type], None] = None,
+        includes: Type[FeatureGetT] | Sequence[Type[FeatureGetT]] = Feature,
+        excludes: Type[AnyFeature] | Sequence[Type[AnyFeature]] | None = None,
         exact: bool = False,
-    ) -> List[str]:
+    ) -> list[str]:
         """Get feature-keys of this container and filter via includes and excludes.
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -255,11 +260,11 @@ class _BaseFeatures(BaseModel, Generic[F]):
         return df
 
 
-class Features(_BaseFeatures[AnyFeature]):
+class Features(_BaseFeatures[FeatureT]):
     pass
 
 
-class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
+class EngineeredFeatures(_BaseFeatures[EngineeredFeatureT]):
     """Container of engineered (input) features, only engineered features
     are allowed.
 
@@ -335,7 +340,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         return sum(feat.n_transformed_inputs for feat in self.get())
 
 
-class Inputs(_BaseFeatures[AnyInput]):
+class Inputs(_BaseFeatures[InputT]):
     """Container of input features, only input features are allowed.
 
     Attributes:
@@ -347,7 +352,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     @field_validator("features")
     @classmethod
-    def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
+    def validate_only_one_task_input(cls, features: Sequence[InputT]):
         filtered = filter_by_class(
             features,
             includes=TaskInput,
@@ -416,7 +421,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 pd.concat(
                     [
                         feat.sample(n, seed=int(rng.integers(1, 1000000)))
-                        for feat in self.get(Input)
+                        for feat in self.get()
                     ],
                     axis=1,
                 ),
@@ -505,10 +510,8 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     def get_number_of_categorical_combinations(
         self,
-        include: Union[Type, List[Type]] = Input,
-        exclude: Union[
-            Type, List[Type]
-        ] = None,  # ty: ignore[invalid-parameter-default]
+        include: Type[InputGetT] | list[Type[InputGetT]] = Input,
+        exclude: Type[AnyInput] | list[Type[AnyInput]] | None = None,
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -553,10 +556,8 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     def get_categorical_combinations(
         self,
-        include: Union[Type, List[Type]] = Input,
-        exclude: Union[
-            Type, List[Type]
-        ] = None,  # ty: ignore[invalid-parameter-default]
+        include: Type[InputGetT] | list[Type[InputGetT]] = Input,
+        exclude: Type[AnyInput] | List[Type[AnyInput]] | None = None,
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -633,7 +634,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         features2idx = {}
         features2names = {}
         counter = 0
-        for _, feat in enumerate(self.get()):
+        for feat in self.get():
             if feat.key not in specs.keys():
                 features2idx[feat.key] = (counter,)
                 features2names[feat.key] = (feat.key,)
@@ -915,8 +916,37 @@ class Inputs(_BaseFeatures[AnyInput]):
             .all(axis=1)
         )
 
+    @staticmethod
+    def is_continuous(inputs: Inputs) -> TypeGuard[Inputs[ContinuousInput]]:
+        return len(inputs.get(ContinuousInput)) == len(inputs)
 
-class Outputs(_BaseFeatures[AnyOutput]):
+    @overload
+    def get(
+        self,
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]] = Input,
+        excludes: None = None,
+        exact: bool = False,
+    ) -> Inputs[InputGetT]: ...
+
+    @overload
+    def get(
+        self,
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]],
+        excludes: Type[AnyInput] | Sequence[Type[AnyInput]] | None,
+        exact: bool = False,
+    ) -> Self: ...
+
+    def get(
+        self,
+        includes: Type[InputGetT] | Sequence[Type[InputGetT]] = Input,
+        excludes: Type[AnyInput] | Sequence[Type[AnyInput]] | None = None,
+        exact: bool = False,
+    ) -> Self:
+        # repeat the function here as implementation must be below overloads
+        return super().get(includes, excludes, exact)
+
+
+class Outputs(_BaseFeatures[OutputT]):
     """Container of output features, only output features are allowed.
 
     Attributes:
@@ -1114,7 +1144,6 @@ class Outputs(_BaseFeatures[AnyOutput]):
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
                         excludes=Objective,
-                        includes=None,
                     )
                 ],
             ),
@@ -1219,3 +1248,28 @@ class Outputs(_BaseFeatures[AnyOutput]):
             ),
         )
         return clean_exp
+
+    @overload
+    def get(
+        self,
+        includes: Type[OutputGetT] | Sequence[Type[OutputGetT]],
+        excludes: None = None,
+        exact: bool = False,
+    ) -> Outputs[OutputGetT]: ...
+
+    @overload
+    def get(
+        self,
+        includes: Type[OutputGetT] | Sequence[Type[OutputGetT]],
+        excludes: Type[AnyOutput] | Sequence[Type[AnyOutput]] | None,
+        exact: bool = False,
+    ) -> Self: ...
+
+    def get(
+        self,
+        includes: Type[OutputGetT] | Sequence[Type[OutputGetT]] = Output,
+        excludes: Type[AnyOutput] | Sequence[Type[AnyOutput]] | None = None,
+        exact: bool = False,
+    ) -> Self:
+        # repeat the function here as implementation must be below overloads
+        return super().get(includes, excludes, exact)

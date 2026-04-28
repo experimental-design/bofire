@@ -95,9 +95,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     )
 
     # only consider continuous inputs
-    continuous_inputs = [
-        cast(ContinuousInput, f) for f in domain.inputs.get(ContinuousInput)
-    ]
+    continuous_inputs = list(domain.inputs.get(ContinuousInput))
     other_inputs = domain.inputs.get(Input, excludes=[ContinuousInput])
 
     # assemble Matrix A from equality constraints

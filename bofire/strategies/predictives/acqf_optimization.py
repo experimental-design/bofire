@@ -29,7 +29,6 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
-    Input,
 )
 from bofire.data_models.strategies.api import (
     AcquisitionOptimizer as AcquisitionOptimizerDataModel,
@@ -207,8 +206,7 @@ class AcquisitionOptimizer(ABC):
             domain
         )
 
-        for _, feat in enumerate(domain.inputs.get(Input)):
-            assert isinstance(feat, Input)
+        for _, feat in enumerate(domain.inputs.get()):
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
                     transform_type=input_preprocessing_specs.get(feat.key),

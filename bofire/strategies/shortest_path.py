@@ -47,7 +47,7 @@ class ShortestPathStrategy(Strategy):
 
     def get_linear_constraints(
         self,
-        constraints: Constraints,
+        constraints: Constraints[LinearConstraint],
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Returns the linear constraints in the form of matrices A and b, where Ax = b for
             equality constraints and Ax <= b for inequality constraints.
