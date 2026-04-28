@@ -213,8 +213,8 @@ def test_nchoosek():
     If7 = ContinuousInput(bounds=(1, 1), key="If7")
 
     c2 = LinearInequalityConstraint.from_greater_equal(
-        features=["if1", "if2"],
-        coefficients=[1.0, 1.0],
+        features=["if1", "if2", "if3"],
+        coefficients=[1.0, 1.0, 1.0],
         rhs=0.2,
     )
 
@@ -225,8 +225,8 @@ def test_nchoosek():
         none_also_valid=False,
     )
     c7 = LinearEqualityConstraint(
-        features=["if1", "if2"],
-        coefficients=[1.0, 1.0],
+        features=["if1", "if2", "if3"],
+        coefficients=[1.0, 1.0, 1.0],
         rhs=1.0,
     )
     domain = Domain.from_lists(
@@ -237,6 +237,73 @@ def test_nchoosek():
     sampler = strategies.RandomStrategy(data_model=data_model)
     samples = sampler.ask(50)
     assert len(samples) == 50
+
+
+def test_allow_zero_without_nchoosek():
+    """Test random sampling with allow_zero features but no NChooseK constraint."""
+    if1 = ContinuousInput(bounds=(0.1, 1), key="if1", allow_zero=True)
+    if2 = ContinuousInput(bounds=(0.1, 1), key="if2", allow_zero=True)
+    if3 = ContinuousInput(bounds=(0.1, 1), key="if3")
+    domain = Domain.from_lists(inputs=[if1, if2, if3])
+    data_model = data_models.RandomStrategy(domain=domain)
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    samples = sampler.ask(50)
+    assert len(samples) == 50
+    # if3 should never be zero (not allow_zero)
+    assert (samples["if3"] != 0.0).all()
+    # if1 and if2 should have some zeros (allow_zero)
+    assert (samples["if1"] == 0.0).any() or (samples["if2"] == 0.0).any()
+
+
+def test_allow_zero_with_nchoosek():
+    """Test that allow_zero features already in NChooseK don't get duplicate groups."""
+    if1 = ContinuousInput(bounds=(0, 1), key="if1")
+    if2 = ContinuousInput(bounds=(0, 1), key="if2")
+    if3 = ContinuousInput(bounds=(0, 1), key="if3")
+    if4 = ContinuousInput(bounds=(0.1, 1), key="if4", allow_zero=True)
+    c = NChooseKConstraint(
+        features=["if1", "if2", "if3"],
+        min_count=1,
+        max_count=2,
+        none_also_valid=False,
+    )
+    domain = Domain.from_lists(inputs=[if1, if2, if3, if4], constraints=[c])
+    data_model = data_models.RandomStrategy(domain=domain)
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    samples = sampler.ask(50)
+    assert len(samples) == 50
+    # At most 2 features should be non-zero per sample (from NChooseK)
+    nonzero_counts = (samples[["if1", "if2", "if3"]] != 0.0).sum(axis=1)
+    assert (nonzero_counts >= 1).all()
+    assert (nonzero_counts <= 2).all()
+    # if4 (allow_zero, not in NChooseK) should have some zeros
+    assert (samples["if4"] == 0.0).any()
+
+
+def test_nchoosek_scalability():
+    """NChooseK enumeration would explode (~594k combos for n=30, k=6).
+    The sampling-based strategy should handle this without enumerating.
+    """
+    import time
+
+    n_features = 30
+    inputs = [ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(n_features)]
+    constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=0,
+        max_count=6,
+        none_also_valid=False,
+    )
+    domain = Domain.from_lists(inputs=inputs, constraints=[constraint])
+    data_model = data_models.RandomStrategy(domain=domain)
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    start = time.monotonic()
+    samples = sampler.ask(50)
+    elapsed = time.monotonic() - start
+    assert len(samples) == 50
+    # at most 6 active features per row
+    assert ((samples != 0.0).sum(axis=1) <= 6).all()
+    assert elapsed < 30, f"Took {elapsed:.1f}s, should be under 30s"
 
 
 def test_sample_from_polytope():

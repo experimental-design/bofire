@@ -1,5 +1,7 @@
 import collections.abc
 import itertools
+import math
+import random
 import warnings
 from collections.abc import Sequence
 from typing import Any, Dict, Literal, Optional, Tuple, Union
@@ -235,6 +237,76 @@ class Domain(BaseModel):
         #         used_features_list_final2.append(used), unused_features_list2.append(unused)
 
         return used_features_list_final, unused_features_list
+
+    def sample_valid_nchoosek_features(
+        self,
+        rng: random.Random,
+        n: int = 1,
+        max_iters: int = 1000,
+    ) -> list[Tuple[str, ...]]:
+        """Sample sets of active feature keys uniformly from all valid subsets.
+
+        Includes (a) one group per ``NChooseKConstraint`` (respecting
+        ``min_count``, ``max_count``, and ``none_also_valid``) and (b) one
+        singleton group per ``ContinuousInput`` with ``allow_zero=True`` that
+        is not already part of any ``NChooseKConstraint``.
+
+        Within each group the subset size ``k`` is drawn with probability
+        proportional to ``C(n, k)`` and ``k`` features are then chosen
+        uniformly, so the per-group distribution is uniform over all valid
+        subsets. When ``NChooseKConstraint``s share features, the per-group
+        union may violate one of the constraints; in that case rejection
+        sampling is used (up to ``max_iters`` attempts per drawn combination).
+
+        Args:
+            rng: Random number generator used for sampling.
+            n: Number of combinations to draw. Defaults to 1.
+            max_iters: Maximum number of rejection-sampling attempts per
+                drawn combination. Defaults to 1000.
+
+        Returns:
+            A list of ``n`` sorted tuples of active feature keys.
+
+        Raises:
+            ValueError: If a valid combination is not found within
+                ``max_iters`` attempts.
+        """
+        groups: list[Tuple[list[str], list[int], list[int]]] = []
+        nchoosek_keys: set[str] = set()
+        nchoosek_cons = list(self.constraints.get(NChooseKConstraint))
+        for con in nchoosek_cons:
+            assert isinstance(con, NChooseKConstraint)
+            ks = list(range(con.min_count, con.max_count + 1))
+            if con.none_also_valid and 0 not in ks:
+                ks.insert(0, 0)
+            weights = [math.comb(len(con.features), k) for k in ks]
+            groups.append((list(con.features), ks, weights))
+            nchoosek_keys.update(con.features)
+        for feat in self.inputs.get(ContinuousInput):
+            assert isinstance(feat, ContinuousInput)
+            if feat.allow_zero and feat.key not in nchoosek_keys:
+                groups.append(([feat.key], [0, 1], [1, 1]))
+
+        results: list[Tuple[str, ...]] = []
+        for _ in range(n):
+            for _ in range(max_iters):
+                active: set[str] = set()
+                for features, ks, weights in groups:
+                    k = rng.choices(ks, weights=weights, k=1)[0]
+                    active.update(rng.sample(features, k))
+                if all(
+                    (con.none_also_valid and len(active & set(con.features)) == 0)
+                    or con.min_count <= len(active & set(con.features)) <= con.max_count
+                    for con in nchoosek_cons
+                ):
+                    results.append(tuple(sorted(active)))
+                    break
+            else:
+                raise ValueError(
+                    f"Failed to sample a valid NChooseK combination after "
+                    f"{max_iters} attempts.",
+                )
+        return results
 
     def coerce_invalids(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Coerces all invalid output measurements to np.nan

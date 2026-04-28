@@ -1,4 +1,5 @@
 import math
+import random
 import warnings
 from copy import deepcopy
 from typing import Dict, Optional, cast
@@ -59,6 +60,7 @@ class RandomStrategy(Strategy):
         self.fallback_sampling_method = data_model.fallback_sampling_method
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
+        self.max_combinations = data_model.max_combinations
         self.sampler_kwargs = data_model.sampler_kwargs
 
     def has_sufficient_experiments(self) -> bool:
@@ -124,32 +126,38 @@ class RandomStrategy(Strategy):
             pd.DataFrame: A DataFrame containing the sampled data.
 
         """
-        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
-            _, unused = self.domain.get_nchoosek_combinations()
+        nchoosek_feature_keys: set[str] = set()
+        for constraint in self.domain.constraints.get(NChooseKConstraint):
+            assert isinstance(constraint, NChooseKConstraint)
+            nchoosek_feature_keys.update(constraint.features)
+        allow_zero_feature_keys = {
+            feat.key
+            for feat in self.domain.inputs.get(ContinuousInput)
+            if isinstance(feat, ContinuousInput) and feat.allow_zero
+        }
+        zeroable_keys = nchoosek_feature_keys | allow_zero_feature_keys
 
-            if candidate_count <= len(unused):
-                sampled_combinations = [
-                    unused[i]
-                    for i in np.random.default_rng(self._get_seed()).choice(
-                        len(unused),
-                        size=candidate_count,
-                        replace=False,
-                    )
-                ]
-                num_samples_per_it = 1
-            else:
-                sampled_combinations = unused
-                num_samples_per_it = math.ceil(candidate_count / len(unused))
+        if zeroable_keys:
+            rng = random.Random(self._get_seed())
+            n_combos = min(self.max_combinations, candidate_count)
+            drawn = self.domain.sample_valid_nchoosek_features(rng, n=n_combos)
+            combinations: Dict[tuple, int] = {}
+            for combo in drawn:
+                combinations[combo] = combinations.get(combo, 0) + 1
+
+            sampling_multiplier = math.ceil(candidate_count / n_combos)
 
             samples = []
-            for u in sampled_combinations:
+            for combo, count in combinations.items():
                 # create new domain without the nchoosekconstraints
                 domain = deepcopy(self.domain)
                 domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-                # fix the unused features
-                for key in u:
+                # fix the unselected zeroable features
+                for key in zeroable_keys - set(combo):
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
+                    if feat.allow_zero:
+                        feat.allow_zero = False
                     feat.bounds = [0.0, 0.0]
                 # setup then sampler for this situation
                 samples.append(
@@ -159,7 +167,7 @@ class RandomStrategy(Strategy):
                         n_burnin=self.n_burnin,
                         n_thinning=self.n_thinning,
                         seed=self._get_seed(),
-                        n=num_samples_per_it,
+                        n=count * sampling_multiplier,
                         sampler_kwargs=self.sampler_kwargs,
                     ),
                 )
@@ -277,7 +285,7 @@ class RandomStrategy(Strategy):
             samples = pd.DataFrame(
                 data=np.nan,
                 index=range(n),
-                columns=domain.inputs.get_keys(),
+                columns=domain.inputs.get_keys(ContinuousInput),
             )
         else:
             bounds = torch.tensor([lower, upper]).to(**tkwargs)
@@ -334,10 +342,13 @@ class RandomStrategy(Strategy):
             )
 
         # setup the categoricals and discrete ones as uniform sampled vals
+        # we have to make sure here that no fixed ones occur here
         samples = pd.concat(
             [
                 samples,
-                domain.inputs.get([CategoricalInput, DiscreteInput]).sample(
+                domain.inputs.get([CategoricalInput, DiscreteInput])
+                .get_free()
+                .sample(
                     n,
                     method=fallback_sampling_method,
                     seed=seed,
@@ -350,6 +361,9 @@ class RandomStrategy(Strategy):
         # setup the fixed continuous ones
         for key, value in fixed_features.items():
             samples[key] = value
+        # setup the fixed discrete/categorical ones
+        for feat in domain.inputs.get([CategoricalInput, DiscreteInput]).get_fixed():
+            samples[feat.key] = feat.fixed_value()[0]
 
         return samples[domain.inputs.get_keys()]
 
