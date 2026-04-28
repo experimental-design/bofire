@@ -382,6 +382,7 @@ class RandomStrategy(Strategy):
         n_thinning: int | None = None,
         num_base_samples: int | None = None,
         max_iters: int | None = None,
+        max_combinations: int | None = None,
         seed: int | None = None,
         sampler_kwargs: Optional[dict] = None,
     ) -> Self:
@@ -393,6 +394,7 @@ class RandomStrategy(Strategy):
             n_thinning: The thinning factor for the polytope sampler.
             num_base_samples: The number of base samples for rejection sampling.
             max_iters: The maximum number of iterations for rejection sampling.
+            max_combinations: The maximum number of distinct NChooseK feature combinations to draw per ask.
             seed: The seed value for random number generation.
             sampler_kwargs: Additional arguments for the sampler. Defaults to None.
         Returns:
