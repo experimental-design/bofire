@@ -1,7 +1,8 @@
 import math
+import random
 import warnings
 from copy import deepcopy
-from typing import Dict, Optional, cast
+from typing import Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -60,6 +61,7 @@ class RandomStrategy(Strategy):
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
         self.max_combinations = data_model.max_combinations
+        self.nchoosek_max_iters = data_model.nchoosek_max_iters
         self.sampler_kwargs = data_model.sampler_kwargs
 
     def has_sufficient_experiments(self) -> bool:
@@ -142,9 +144,11 @@ class RandomStrategy(Strategy):
             # at most `max_combinations` distinct subsets; their multiplicities
             # in `drawn` determine how many polytope samples each subset gets.
             n_combos = min(self.max_combinations, candidate_count)
-            drawn = self.domain.sample_valid_nchoosek_features(
+            drawn = self.sample_valid_nchoosek_features(
+                domain=self.domain,
                 seed=self._get_seed(),
                 n=n_combos,
+                max_iters=self.nchoosek_max_iters,
             )
             combinations: Dict[tuple, int] = {}
             for combo in drawn:
@@ -194,6 +198,80 @@ class RandomStrategy(Strategy):
             n=candidate_count,
             sampler_kwargs=self.sampler_kwargs,
         )
+
+    @staticmethod
+    def sample_valid_nchoosek_features(
+        domain: Domain,
+        seed: Optional[int] = None,
+        n: int = 1,
+        max_iters: int = 1000,
+    ) -> List[Tuple[str, ...]]:
+        """Sample sets of active feature keys uniformly from all valid subsets.
+
+        Includes (a) one group per ``NChooseKConstraint`` (respecting
+        ``min_count``, ``max_count``, and ``none_also_valid``) and (b) one
+        singleton group per ``ContinuousInput`` with ``allow_zero=True`` that
+        is not already part of any ``NChooseKConstraint``.
+
+        Within each group the subset size ``k`` is drawn with probability
+        proportional to ``C(n, k)`` and ``k`` features are then chosen
+        uniformly, so the per-group distribution is uniform over all valid
+        subsets. When ``NChooseKConstraint``s share features, the per-group
+        union may violate one of the constraints; in that case rejection
+        sampling is used (up to ``max_iters`` attempts per drawn combination).
+
+        Args:
+            domain: Domain to sample from.
+            seed: Random seed used to initialise the internal sampler.
+                Defaults to ``None`` (non-deterministic).
+            n: Number of combinations to draw. Defaults to 1.
+            max_iters: Maximum number of rejection-sampling attempts per
+                drawn combination. Defaults to 1000.
+
+        Returns:
+            A list of ``n`` sorted tuples of active feature keys.
+
+        Raises:
+            ValueError: If a valid combination is not found within
+                ``max_iters`` attempts.
+        """
+        rng = random.Random(seed)
+        groups: List[Tuple[List[str], List[int], List[int]]] = []
+        nchoosek_keys: set[str] = set()
+        nchoosek_cons = list(domain.constraints.get(NChooseKConstraint))
+        for con in nchoosek_cons:
+            assert isinstance(con, NChooseKConstraint)
+            ks = list(range(con.min_count, con.max_count + 1))
+            if con.none_also_valid and 0 not in ks:
+                ks.insert(0, 0)
+            weights = [math.comb(len(con.features), k) for k in ks]
+            groups.append((con.features, ks, weights))
+            nchoosek_keys.update(con.features)
+        for feat in domain.inputs.get(ContinuousInput):
+            assert isinstance(feat, ContinuousInput)
+            if feat.allow_zero and feat.key not in nchoosek_keys:
+                groups.append(([feat.key], [0, 1], [1, 1]))
+
+        results: List[Tuple[str, ...]] = []
+        for _ in range(n):
+            for _ in range(max_iters):
+                active: set[str] = set()
+                for features, ks, weights in groups:
+                    k = rng.choices(ks, weights=weights, k=1)[0]
+                    active.update(rng.sample(features, k))
+                if all(
+                    (con.none_also_valid and len(active & set(con.features)) == 0)
+                    or con.min_count <= len(active & set(con.features)) <= con.max_count
+                    for con in nchoosek_cons
+                ):
+                    results.append(tuple(sorted(active)))
+                    break
+            else:
+                raise ValueError(
+                    f"Failed to sample a valid NChooseK combination after "
+                    f"{max_iters} attempts.",
+                )
+        return results
 
     @staticmethod
     def _sample_from_polytope(
@@ -383,6 +461,7 @@ class RandomStrategy(Strategy):
         num_base_samples: int | None = None,
         max_iters: int | None = None,
         max_combinations: int | None = None,
+        nchoosek_max_iters: int | None = None,
         seed: int | None = None,
         sampler_kwargs: Optional[dict] = None,
     ) -> Self:
@@ -395,6 +474,7 @@ class RandomStrategy(Strategy):
             num_base_samples: The number of base samples for rejection sampling.
             max_iters: The maximum number of iterations for rejection sampling.
             max_combinations: The maximum number of distinct NChooseK feature combinations to draw per ask.
+            nchoosek_max_iters: The maximum number of rejection-sampling attempts per drawn NChooseK combination.
             seed: The seed value for random number generation.
             sampler_kwargs: Additional arguments for the sampler. Defaults to None.
         Returns:

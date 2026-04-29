@@ -26,6 +26,7 @@ class RandomStrategy(Strategy):
     num_base_samples: Optional[Annotated[int, Field(gt=0)]] = None
     max_iters: Annotated[int, Field(gt=0)] = 1000
     max_combinations: Annotated[int, Field(gt=0)] = 64
+    nchoosek_max_iters: Annotated[int, Field(gt=0)] = 1000
     sampler_kwargs: Optional[dict] = None
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
