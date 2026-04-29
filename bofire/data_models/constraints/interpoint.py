@@ -1,5 +1,5 @@
 import math
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ class InterpointConstraint(Constraint):
     candidates when asking a strategy for returning more than one candidate.
     """
 
-    type: str
+    type: Any
 
 
 class InterpointEqualityConstraint(InterpointConstraint):

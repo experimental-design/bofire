@@ -1,6 +1,6 @@
 """Registration utilities for custom prior and prior constraint types."""
 
-from typing import Union
+from bofire.data_models.unions import tagged_union
 
 
 def _rebuild_dependent_models() -> None:
@@ -152,7 +152,7 @@ def register_prior(data_model_cls: type) -> None:
     if data_model_cls in priors_api._PRIOR_TYPES:
         return
     priors_api._PRIOR_TYPES.append(data_model_cls)
-    priors_api.AnyPrior = Union[tuple(priors_api._PRIOR_TYPES)]
+    priors_api.AnyPrior = tagged_union(*priors_api._PRIOR_TYPES)
     _rebuild_dependent_models()
 
 
@@ -171,5 +171,5 @@ def register_prior_constraint(data_model_cls: type) -> None:
     if data_model_cls in priors_api._PRIOR_CONSTRAINT_TYPES:
         return
     priors_api._PRIOR_CONSTRAINT_TYPES.append(data_model_cls)
-    priors_api.AnyPriorConstraint = Union[tuple(priors_api._PRIOR_CONSTRAINT_TYPES)]
+    priors_api.AnyPriorConstraint = tagged_union(*priors_api._PRIOR_CONSTRAINT_TYPES)
     _rebuild_dependent_models()

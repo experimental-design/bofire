@@ -25,6 +25,7 @@ from bofire.data_models.objectives.target import (
     ConstrainedObjective,
     TargetObjective,
 )
+from bofire.data_models.unions import tagged_union
 
 
 AbstractObjective = Union[
@@ -37,14 +38,14 @@ AbstractObjective = Union[
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective
 
-AnyConstraintObjective = Union[
+AnyConstraintObjective = tagged_union(
     MaximizeSigmoidObjective,
     MovingMaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
     TargetObjective,
-]
+)
 
-AnyRealObjective = Union[
+AnyRealObjective = tagged_union(
     MaximizeObjective,
     MinimizeObjective,
     CloseToTargetObjective,
@@ -52,9 +53,9 @@ AnyRealObjective = Union[
     DecreasingDesirabilityObjective,
     PeakDesirabilityObjective,
     InRangeDesirability,
-]
+)
 
-AnyObjective = Union[
+AnyObjective = tagged_union(
     MaximizeObjective,
     MinimizeObjective,
     MaximizeSigmoidObjective,
@@ -67,4 +68,4 @@ AnyObjective = Union[
     DecreasingDesirabilityObjective,
     PeakDesirabilityObjective,
     InRangeDesirability,
-]
+)

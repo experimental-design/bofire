@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.dataframes.dataframes import (
     CandidateOutputValue,
     CandidateRow,
@@ -9,7 +7,8 @@ from bofire.data_models.dataframes.dataframes import (
     Experiments,
     Value,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AnyDataFrame = Union[Experiments, Candidates]
-AnyRow = Union[ExperimentRow, CandidateRow]
+AnyDataFrame = tagged_union(Experiments, Candidates)
+AnyRow = tagged_union(ExperimentRow, CandidateRow)

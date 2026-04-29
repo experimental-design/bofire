@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput
@@ -27,22 +25,15 @@ from bofire.data_models.features.molecular import (
 )
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.features.task import TaskInput
+from bofire.data_models.unions import tagged_union
 
 
-AbstractFeature = Union[
-    Feature,
-    Input,
-    Output,
-    NumericalInput,
-]
-
-# TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
-AnyFeature = Union[
-    CategoricalOutput,
+AnyFeature = tagged_union(
     DiscreteInput,
     CategoricalInput,
-    ContinuousOutput,
     ContinuousInput,
+    ContinuousOutput,
+    CategoricalOutput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
@@ -57,9 +48,9 @@ AnyFeature = Union[
     ProductFeature,
     InterpolateFeature,
     CloneFeature,
-]
+)
 
-AnyInput = Union[
+AnyInput = tagged_union(
     DiscreteInput,
     CategoricalInput,
     ContinuousInput,
@@ -68,9 +59,9 @@ AnyInput = Union[
     CategoricalMolecularInput,
     TaskInput,
     ContinuousMolecularInput,
-]
+)
 
-AnyOutput = Union[ContinuousOutput, CategoricalOutput]
+AnyOutput = tagged_union(ContinuousOutput, CategoricalOutput)
 
 _ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
     SumFeature,
@@ -84,4 +75,4 @@ _ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
     CloneFeature,
 ]
 
-AnyEngineeredFeature = Union[tuple(_ENGINEERED_FEATURE_TYPES)]
+AnyEngineeredFeature = tagged_union(*_ENGINEERED_FEATURE_TYPES)

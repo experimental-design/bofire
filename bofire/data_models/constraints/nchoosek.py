@@ -57,10 +57,6 @@ class NChooseKConstraint(IntrapointConstraint):
             assert isinstance(
                 feature_, ContinuousInput
             ), f"Feature {f} is not a ContinuousInput."
-            if feature_.bounds[0] < 0:
-                raise ValueError(
-                    f"Feature {f} must have a lower bound of >=0, but has {feature_.bounds[0]}",
-                )
 
     @model_validator(mode="after")
     def validate_counts(self):
@@ -131,7 +127,6 @@ class NChooseKConstraint(IntrapointConstraint):
         upper = sums <= self.max_count
 
         if not self.none_also_valid:
-            # return lower.all() and upper.all()
             return pd.Series(np.logical_and(lower, upper), index=experiments.index)
         none = sums == 0
         return pd.Series(

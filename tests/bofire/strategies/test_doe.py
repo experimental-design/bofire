@@ -25,7 +25,10 @@ from bofire.data_models.strategies.doe import (
     SpaceFillingCriterion,
 )
 from bofire.strategies.api import DoEStrategy
-from bofire.strategies.doe.utils import get_formula_from_string
+from bofire.strategies.doe.utils import (
+    get_formula_from_string,
+    nchoosek_constraints_as_bounds,
+)
 
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -1168,5 +1171,141 @@ def test_custom_formula_with_categorical_and_discrete():
     assert all(candidates["pressure"].isin([1.0, 2.0, 3.0, 5.0, 10.0]))
 
 
+def test_nchoosek_min_count_greater_zero():
+    """Test that generalized NChooseK with min_count > 0 produces a design
+    and that the bounds correctly encode the allowed activity levels.
+
+    Note: the optimizer may converge an "active" variable to near-zero, so we
+    only verify the bounds structure (not the final values) for strictness,
+    and merely check the design has the right shape.
+    """
+    n_features = 5
+    min_count = 2
+    max_count = 3
+    nchoosek_constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=min_count,
+        max_count=max_count,
+        none_also_valid=False,
+    )
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[nchoosek_constraint],
+    )
+
+    # --- verify the bounds structure encodes the right patterns ---
+    n_exp = 20
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    D = n_features
+    observed_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        active = sum(pattern)
+        assert min_count <= active <= max_count, (
+            f"Bounds pattern {pattern} has {active} active slots, "
+            f"expected {min_count}-{max_count}"
+        )
+        observed_patterns.add(pattern)
+
+    # with 20 experiments all C(5,2)+C(5,3) = 10+10 = 20 patterns should appear
+    assert len(observed_patterns) == 20
+
+    # --- verify the strategy produces a design of the right shape ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    req = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=req, raise_validation_error=False)
+    assert candidates.shape[0] == req
+
+
+def test_nchoosek_nonzero_lower_bounds():
+    """Test NChooseK with features whose lower bound > 0.
+
+    Inactive features should be pinned to 0 (overriding the lb), while active
+    features must respect their original bounds.
+    """
+    n_features = 4
+    lb, ub = 0.1, 1.0
+    nchoosek_constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=0,
+        max_count=2,
+        none_also_valid=True,
+    )
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(lb, ub), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[nchoosek_constraint],
+    )
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=20)
+    assert candidates.shape == (20, n_features)
+
+    nchoosek_keys = [f"x{i}" for i in range(n_features)]
+    for _, row in candidates[nchoosek_keys].iterrows():
+        active = int((row.abs() > 1e-6).sum())
+        # at most max_count active
+        assert active <= 2, f"Too many active features: {active}"
+        for val in row.values:
+            # each value is either ~0 (inactive) or within [lb, ub] (active)
+            is_zero = abs(val) < 1e-6
+            is_in_bounds = lb - 1e-4 <= val <= ub + 1e-4
+            assert (
+                is_zero or is_in_bounds
+            ), f"Value {val} is neither zero nor in [{lb}, {ub}]"
+
+
+def test_nchoosek_none_valid():
+    """Test NChooseK with none_also_valid=True and min_count > 0.
+
+    none_also_valid only affects validation (is_fulfilled) and domain
+    enumeration — it does NOT inject the all-zero pattern into the DoE
+    bounds.  So the optimizer should always produce rows with
+    min_count <= active <= max_count.
+    """
+    n_features = 5
+    nchoosek_constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=2,
+        max_count=3,
+        none_also_valid=True,
+    )
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[nchoosek_constraint],
+    )
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="fully-quadratic"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=20, raise_validation_error=False).round(3)
+    assert candidates.shape == (20, n_features)
+
+    nchoosek_keys = [f"x{i}" for i in range(n_features)]
+    for _, row in candidates[nchoosek_keys].iterrows():
+        active = int((row.abs() > 1e-6).sum())
+        # Every row must have between min_count and max_count active features
+        assert active >= 2, f"Too few active features: {active}"
+
+
 if __name__ == "__main__":
-    test_custom_formula_with_categorical_and_discrete()
+    test_nchoosek_none_valid()

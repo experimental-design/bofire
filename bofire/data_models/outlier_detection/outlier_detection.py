@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Literal, Union
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import Field, field_validator
 
@@ -12,7 +12,7 @@ from bofire.data_models.surrogates.api import (
 
 
 class OutlierDetection(BaseModel):
-    type: str
+    type: Any
 
     @property
     @abstractmethod

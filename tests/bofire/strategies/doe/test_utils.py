@@ -646,7 +646,8 @@ def test_check_nchoosek_constraints_as_bounds():
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
+    # NChooseK with non-zero lower bounds should be allowed: inactive variables
+    # are pinned to [0, 0] by the bounds formulation regardless of the original lb.
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.1, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
@@ -659,10 +660,8 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
+    check_nchoosek_constraints_as_bounds(domain)
 
-    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key=f"x{1}", bounds=(0.1, 1.0)),
@@ -680,8 +679,7 @@ def test_check_nchoosek_constraints_as_bounds():
             ),
         ],
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
+    check_nchoosek_constraints_as_bounds(domain)
 
     # Not allowed: names parameters of two NChooseK overlap
     domain = Domain.from_lists(
@@ -943,6 +941,185 @@ def only_continuous_inputs_formula_str_to_fully_continuous():
     assert (
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
+def test_nchoosek_bounds_known_patterns():
+    """Test nchoosek_constraints_as_bounds against known expected activity patterns.
+
+    For 3 features with min_count=1, max_count=2, the complete set of deactivation
+    patterns is deterministic (only the order within experiments is random):
+      k=1 (2 inactive): (0,0,1), (0,1,0), (1,0,0)
+      k=2 (1 inactive): (0,1,1), (1,0,1), (1,1,0)
+    With n_experiments >= 6, every pattern must appear at least once.
+    """
+    n_features = 3
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            )
+        ],
+    )
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_experiments)
+
+    D = n_features
+    assert len(bounds) == D * n_experiments
+
+    # extract the activity pattern (1=active, 0=pinned-to-zero) per experiment
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+        # every active slot must keep its original bounds
+        for j, b in enumerate(exp_bounds):
+            if b != (0.0, 0.0):
+                assert b == (
+                    0.0,
+                    1.0,
+                ), f"exp {i}, feature {j}: expected (0.0, 1.0), got {b}"
+
+    # the expected set of all patterns for min_count=1, max_count=2, 3 features
+    expected_patterns = {
+        # k=1: exactly 1 active feature
+        (1, 0, 0),
+        (0, 1, 0),
+        (0, 0, 1),
+        # k=2: exactly 2 active features
+        (1, 1, 0),
+        (1, 0, 1),
+        (0, 1, 1),
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # every pattern must have between min_count and max_count active features
+    for pat in observed_patterns:
+        active = sum(pat)
+        assert 1 <= active <= 2, f"Pattern {pat} has {active} active features"
+
+
+def test_nchoosek_bounds_none_also_valid():
+    """Test none_also_valid behavior for the all-zero pattern."""
+
+    n_features = 3
+
+    # --- Case 1: none_also_valid=False with min_count=0 ---
+    d_no_none = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=False,
+            )
+        ],
+    )
+
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d_no_none, n_experiments=n_experiments)
+
+    D = n_features
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    # none_also_valid=False: all-zero pattern should NOT appear
+    expected_patterns = {
+        (1, 1, 0),
+        (1, 0, 1),
+        (0, 1, 1),
+        (0, 1, 0),
+        (0, 0, 1),
+        (1, 0, 0),
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # --- Case 2: none_also_valid=True with min_count=0 ---
+    # When min_count=0, the all-zero pattern is NOT added in bounds
+    # (it is handled at validation level by is_fulfilled / domain.py).
+    d_with_none = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=True,
+            )
+        ],
+    )
+    bounds = nchoosek_constraints_as_bounds(d_with_none, n_experiments=n_experiments)
+
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    # Same patterns as Case 1: all-zero is NOT added in bounds when min_count=0
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # --- Case 3: none_also_valid=True with min_count > 0 ---
+    # none_also_valid does NOT affect bounds generation (only is_fulfilled
+    # and domain.py enumeration).  With min_count=2, max_count=2, we only
+    # get the C(3,1) = 3 patterns with exactly 2 active features.
+    d_min_gt_zero = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=2,
+                max_count=2,
+                none_also_valid=True,
+            )
+        ],
+    )
+    bounds = nchoosek_constraints_as_bounds(d_min_gt_zero, n_experiments=n_experiments)
+
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    expected_patterns_min_gt_zero = {
+        (1, 1, 0),
+        (1, 0, 1),
+        (0, 1, 1),
+    }
+    assert observed_patterns == expected_patterns_min_gt_zero, (
+        f"Expected patterns {sorted(expected_patterns_min_gt_zero)}, "
+        f"got {sorted(observed_patterns)}"
+    )
 
 
 if __name__ == "__main__":

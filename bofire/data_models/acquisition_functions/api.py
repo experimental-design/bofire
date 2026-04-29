@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.acquisition_functions.acquisition_function import (
     AcquisitionFunction,
     MultiObjectiveAcquisitionFunction,
@@ -18,15 +16,10 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qSR,
     qUCB,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AbstractAcquisitionFunction = [
-    AcquisitionFunction,
-    SingleObjectiveAcquisitionFunction,
-    MultiObjectiveAcquisitionFunction,
-]
-
-AnyAcquisitionFunction = Union[
+AnyAcquisitionFunction = tagged_union(
     qNEI,
     qEI,
     qSR,
@@ -40,12 +33,12 @@ AnyAcquisitionFunction = Union[
     qLogNEHVI,
     qNegIntPosVar,
     qLogPF,
-]
+)
 
-AnySingleObjectiveAcquisitionFunction = Union[
+AnySingleObjectiveAcquisitionFunction = tagged_union(
     qNEI, qEI, qSR, qUCB, qPI, qLogEI, qLogNEI, qLogPF
-]
+)
 
-AnyMultiObjectiveAcquisitionFunction = Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI]
+AnyMultiObjectiveAcquisitionFunction = tagged_union(qEHVI, qLogEHVI, qNEHVI, qLogNEHVI)
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar

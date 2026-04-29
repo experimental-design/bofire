@@ -1,7 +1,8 @@
-from typing import Union
-
 from bofire.data_models.strategies._register import register_strategy
-from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
+from bofire.data_models.strategies.actual_strategy_type import (
+    _ACTUAL_STRATEGY_TYPES,
+    ActualStrategy,
+)
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     AnyOptimalityCriterion,
@@ -70,18 +71,13 @@ from bofire.data_models.transforms.api import (
     DropDataTransform,
     ManipulateDataTransform,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AbstractStrategy = Union[
-    Strategy,
-    BotorchStrategy,
-    PredictiveStrategy,
-    MultiobjectiveStrategy,
-]
+_ANY_STRATEGY_TYPES = (*_ACTUAL_STRATEGY_TYPES, MetaStrategy)
+AnyStrategy = tagged_union(*_ANY_STRATEGY_TYPES)
 
-AnyStrategy = Union[ActualStrategy, MetaStrategy]
-
-AnyPredictive = Union[
+AnyPredictive = tagged_union(
     SoboStrategy,
     ActiveLearningStrategy,
     AdditiveSoboStrategy,
@@ -91,6 +87,6 @@ AnyPredictive = Union[
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,
-]
+)
 
 AnyLocalSearchConfig = LSRBO

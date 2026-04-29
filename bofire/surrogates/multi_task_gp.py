@@ -74,6 +74,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
+            # Pass None explicitly to avoid the default BetaPrior introduced in
+            # botorch PR #3271, which registers lambdas in PositiveIndexKernel
+            # (PR #3267) and breaks torch.save-based serialization.
+            task_covar_prior=None,
         )
 
         if isinstance(self.task_prior, LKJPrior):
