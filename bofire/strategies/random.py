@@ -1,6 +1,7 @@
 import math
 import random
 import warnings
+from collections import Counter
 from copy import deepcopy
 from typing import Dict, List, Optional, Tuple, cast
 
@@ -114,6 +115,30 @@ class RandomStrategy(Strategy):
             n_iters += 1
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
+    @staticmethod
+    def _get_zeroable_keys(domain: Domain) -> Tuple[set[str], set[str]]:
+        """Collect feature keys that can take the value zero.
+
+        Returns:
+            A tuple ``(nchoosek_keys, allow_zero_singleton_keys)`` where
+            ``nchoosek_keys`` are all feature keys appearing in any
+            ``NChooseKConstraint`` and ``allow_zero_singleton_keys`` are the
+            keys of ``ContinuousInput``s with ``allow_zero=True`` that are
+            not already part of an ``NChooseKConstraint``.
+        """
+        nchoosek_keys: set[str] = set()
+        for constraint in domain.constraints.get(NChooseKConstraint):
+            assert isinstance(constraint, NChooseKConstraint)
+            nchoosek_keys.update(constraint.features)
+        allow_zero_singleton_keys = {
+            feat.key
+            for feat in domain.inputs.get(ContinuousInput)
+            if isinstance(feat, ContinuousInput)
+            and feat.allow_zero
+            and feat.key not in nchoosek_keys
+        }
+        return nchoosek_keys, allow_zero_singleton_keys
+
     def _sample_with_nchooseks(
         self,
         candidate_count: int,
@@ -127,16 +152,8 @@ class RandomStrategy(Strategy):
             pd.DataFrame: A DataFrame containing the sampled data.
 
         """
-        nchoosek_feature_keys: set[str] = set()
-        for constraint in self.domain.constraints.get(NChooseKConstraint):
-            assert isinstance(constraint, NChooseKConstraint)
-            nchoosek_feature_keys.update(constraint.features)
-        allow_zero_feature_keys = {
-            feat.key
-            for feat in self.domain.inputs.get(ContinuousInput)
-            if isinstance(feat, ContinuousInput) and feat.allow_zero
-        }
-        zeroable_keys = nchoosek_feature_keys | allow_zero_feature_keys
+        nchoosek_keys, allow_zero_keys = self._get_zeroable_keys(self.domain)
+        zeroable_keys = nchoosek_keys | allow_zero_keys
 
         if zeroable_keys:
             # Draw a uniform sample of valid active-feature subsets (one per
@@ -150,9 +167,7 @@ class RandomStrategy(Strategy):
                 n=n_combos,
                 max_iters=self.nchoosek_max_iters,
             )
-            combinations: Dict[tuple, int] = {}
-            for combo in drawn:
-                combinations[combo] = combinations.get(combo, 0) + 1
+            combinations = Counter(drawn)
 
             # Each sampled subset gets `count * sampling_multiplier` polytope
             # samples, so the total before final resampling is at least
@@ -237,8 +252,8 @@ class RandomStrategy(Strategy):
         """
         rng = random.Random(seed)
         groups: List[Tuple[List[str], List[int], List[int]]] = []
-        nchoosek_keys: set[str] = set()
         nchoosek_cons = list(domain.constraints.get(NChooseKConstraint))
+        con_feature_sets: List[set[str]] = []
         for con in nchoosek_cons:
             assert isinstance(con, NChooseKConstraint)
             ks = list(range(con.min_count, con.max_count + 1))
@@ -246,11 +261,10 @@ class RandomStrategy(Strategy):
                 ks.insert(0, 0)
             weights = [math.comb(len(con.features), k) for k in ks]
             groups.append((con.features, ks, weights))
-            nchoosek_keys.update(con.features)
-        for feat in domain.inputs.get(ContinuousInput):
-            assert isinstance(feat, ContinuousInput)
-            if feat.allow_zero and feat.key not in nchoosek_keys:
-                groups.append(([feat.key], [0, 1], [1, 1]))
+            con_feature_sets.append(set(con.features))
+        _, allow_zero_keys = RandomStrategy._get_zeroable_keys(domain)
+        for key in allow_zero_keys:
+            groups.append(([key], [0, 1], [1, 1]))
 
         results: List[Tuple[str, ...]] = []
         for _ in range(n):
@@ -260,9 +274,9 @@ class RandomStrategy(Strategy):
                     k = rng.choices(ks, weights=weights, k=1)[0]
                     active.update(rng.sample(features, k))
                 if all(
-                    (con.none_also_valid and len(active & set(con.features)) == 0)
-                    or con.min_count <= len(active & set(con.features)) <= con.max_count
-                    for con in nchoosek_cons
+                    (con.none_also_valid and len(active & fset) == 0)
+                    or con.min_count <= len(active & fset) <= con.max_count
+                    for con, fset in zip(nchoosek_cons, con_feature_sets)
                 ):
                     results.append(tuple(sorted(active)))
                     break
