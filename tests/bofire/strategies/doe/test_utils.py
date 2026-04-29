@@ -1063,7 +1063,8 @@ def test_nchoosek_bounds_none_also_valid():
     # (it is handled at validation level by is_fulfilled / domain.py).
     d_with_none = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -1095,7 +1096,8 @@ def test_nchoosek_bounds_none_also_valid():
     # get the C(3,1) = 3 patterns with exactly 2 active features.
     d_min_gt_zero = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0)) for i in range(n_features)
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
