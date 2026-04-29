@@ -171,7 +171,7 @@ def test_find_local_max_ipopt_mixed_results():
             ),
             NChooseKConstraint(
                 features=[f"x{i + 1}" for i in range(3)],
-                min_count=0,
+                min_count=1,
                 max_count=1,
                 none_also_valid=False,
             ),
@@ -354,7 +354,7 @@ def test_find_local_max_ipopt_fixed_experiments():
             ),
             NChooseKConstraint(
                 features=[f"x{i + 1}" for i in range(3)],
-                min_count=0,
+                min_count=1,
                 max_count=1,
                 none_also_valid=False,
             ),
