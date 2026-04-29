@@ -634,16 +634,20 @@ def _iter_nchoosek_combined_patterns(
                 for activation_per_feature in patterns_of_constraint_a
             }
             for activation_per_feature in patterns_of_constraint_a:
-                key = tuple(activation_per_feature[idx] for idx in sorted_shared)
-                map_pattern_of_shared_to_global_pattern[key].append(
+                pattern_of_shared = tuple(
+                    activation_per_feature[idx] for idx in sorted_shared
+                )
+                map_pattern_of_shared_to_global_pattern[pattern_of_shared].append(
                     activation_per_feature
                 )
 
             for activation_per_feature_b in patterns_of_constraint_b:
-                key = tuple(activation_per_feature_b[idx] for idx in sorted_shared)
+                pattern_of_shared = tuple(
+                    activation_per_feature_b[idx] for idx in sorted_shared
+                )
                 for (
                     activation_per_feature_a
-                ) in map_pattern_of_shared_to_global_pattern.get(key, ()):
+                ) in map_pattern_of_shared_to_global_pattern.get(pattern_of_shared, ()):
                     merged = dict(activation_per_feature_a)
                     merged.update(activation_per_feature_b)
                     patterns_of_merged_constraints.append(merged)
