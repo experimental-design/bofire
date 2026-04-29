@@ -558,7 +558,7 @@ class ConstraintWrapper:
 
 def _iter_nchoosek_combined_patterns(
     domain: Domain,
-) -> List[Tuple[int, ...]]:
+) -> list[tuple[int, ...]]:
     """Yield combined deactivation patterns across all NChooseK constraints.
 
     For each constraint, per-feature active/inactive patterns are generated
@@ -586,7 +586,7 @@ def _iter_nchoosek_combined_patterns(
 
     def _constraint_patterns(
         constraint: NChooseKConstraint,
-    ) -> List[dict[int, bool]]:
+    ) -> list[dict[int, bool]]:
         """Generate dicts for one constraint."""
         patterns_of_constraint = []
         n_features = len(constraint.features)
@@ -604,9 +604,9 @@ def _iter_nchoosek_combined_patterns(
         return patterns_of_constraint
 
     def _merge_two(
-        patterns_of_constraint_a: List[dict[int, bool]],
-        patterns_of_constraint_b: List[dict[int, bool]],
-    ) -> List[dict[int, bool]]:
+        patterns_of_constraint_a: list[dict[int, bool]],
+        patterns_of_constraint_b: list[dict[int, bool]],
+    ) -> list[dict[int, bool]]:
         """Merge two pattern lists, filtering conflicts.
 
         Uses a hash-join on shared feature indices: patterns from A are
@@ -672,7 +672,7 @@ def _iter_nchoosek_combined_patterns(
 
 def _build_nchoosek_combined_patterns(
     domain: Domain,
-) -> List[Tuple[int, ...]]:
+) -> list[tuple[int, ...]]:
     """Collect combined deactivation patterns.
 
     Args:
@@ -701,7 +701,7 @@ def _build_nchoosek_combined_patterns(
 def nchoosek_constraints_as_bounds(
     domain: Domain,
     n_experiments: int,
-) -> List:
+) -> list:
     """Determines the box bounds for the decision variables.
 
     When multiple NChooseK constraints share features, their patterns are
