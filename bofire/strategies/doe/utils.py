@@ -1,10 +1,9 @@
 import importlib.util
 import re
 import sys
-from collections import defaultdict
 from copy import copy
 from itertools import combinations
-from typing import Iterator, List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -559,7 +558,7 @@ class ConstraintWrapper:
 
 def _iter_nchoosek_combined_patterns(
     domain: Domain,
-) -> "Iterator[Tuple[int, ...]]":
+) -> List[Tuple[int, ...]]:
     """Yield combined deactivation patterns across all NChooseK constraints.
 
     For each constraint, per-feature active/inactive patterns are generated
@@ -581,12 +580,15 @@ def _iter_nchoosek_combined_patterns(
     ]
 
     if not nchoosek_constraints:
-        return
+        return []
 
     all_keys = domain.inputs.get_keys()
 
-    def _constraint_patterns(constraint):
-        """Yield {feature_index: is_active} dicts for one constraint."""
+    def _constraint_patterns(
+        constraint: NChooseKConstraint,
+    ) -> List[dict[int, bool]]:
+        """Generate dicts for one constraint."""
+        patterns_of_constraint = []
         n_features = len(constraint.features)
         ind = [i for i, key in enumerate(all_keys) if key in constraint.features]
         for k in range(max(constraint.min_count, 1), constraint.max_count + 1):
@@ -594,63 +596,78 @@ def _iter_nchoosek_combined_patterns(
             if n_inactive > 0:
                 for combo in combinations(ind, r=n_inactive):
                     inactive_set = set(combo)
-                    yield {idx: (idx not in inactive_set) for idx in ind}
+                    patterns_of_constraint.append(
+                        {idx: (idx not in inactive_set) for idx in ind}
+                    )
             else:
-                yield {idx: True for idx in ind}
+                patterns_of_constraint.append({idx: True for idx in ind})
+        return patterns_of_constraint
 
-    def _merge_two(patterns_a, patterns_b):
-        """Yield merged dicts from two pattern iterables, filtering conflicts.
+    def _merge_two(
+        patterns_of_constraint_a: List[dict[int, bool]],
+        patterns_of_constraint_b: List[dict[int, bool]],
+    ) -> List[dict[int, bool]]:
+        """Merge two pattern lists, filtering conflicts.
 
         Uses a hash-join on shared feature indices: patterns from A are
         bucketed by their assignment to shared keys, so each pattern from B
         only needs to merge with the bucket that agrees on those keys.
 
-        Analogy: imagine two bags of puzzle pieces where each piece says
-        which animals are awake or asleep.  If both bags mention the same
-        animal, the pieces must agree (both "awake" or both "asleep").
-        Instead of trying every piece from bag B against every piece from
-        bag A, we sort bag A into labeled bins by what the shared animals
-        do.  Then each bag-B piece goes straight to the matching bin —
-        skipping all bins that would always conflict.
+        pattern_of_constraint_a: {feature_index: is_active} dict from constraint A
+        pattern_of_constraint_b: {feature_index: is_active} dict from constraint B
+
+        returns: merged {feature_index: is_active} dict if no conflicts, else None
+
         """
-        list_a = list(patterns_a)
-        list_b = list(patterns_b)
-
         # Identify shared feature indices between the two sides.
-        keys_a = set().union(*(pa.keys() for pa in list_a)) if list_a else set()
-        keys_b = set().union(*(pb.keys() for pb in list_b)) if list_b else set()
-        shared = keys_a & keys_b
+        shared = set(patterns_of_constraint_a[0].keys()).intersection(
+            set(patterns_of_constraint_b[0].keys())
+        )
 
+        patterns_of_merged_constraints = []
         if shared:
-            # Bucket A patterns by their assignment on shared indices.
+            # Bucket patterns by their assignment on shared indices.
+            # if activation_per_feature= {0: True, 1:True , 2: False} is a pattern and shared=[0,2], the key is (True, False)
             sorted_shared = sorted(shared)
-            buckets: dict = defaultdict(list)
-            for pa in list_a:
-                key = tuple(pa[idx] for idx in sorted_shared)
-                buckets[key].append(pa)
+            map_pattern_of_shared_to_global_pattern = {
+                tuple(activation_per_feature[idx] for idx in sorted_shared): []
+                for activation_per_feature in patterns_of_constraint_a
+            }
+            for activation_per_feature in patterns_of_constraint_a:
+                key = tuple(activation_per_feature[idx] for idx in sorted_shared)
+                map_pattern_of_shared_to_global_pattern[key].append(
+                    activation_per_feature
+                )
 
-            for pb in list_b:
-                key = tuple(pb[idx] for idx in sorted_shared)
-                for pa in buckets.get(key, ()):
-                    merged = dict(pa)
-                    merged.update(pb)
-                    yield merged
+            for activation_per_feature_b in patterns_of_constraint_b:
+                key = tuple(activation_per_feature_b[idx] for idx in sorted_shared)
+                for (
+                    activation_per_feature_a
+                ) in map_pattern_of_shared_to_global_pattern.get(key, ()):
+                    merged = dict(activation_per_feature_a)
+                    merged.update(activation_per_feature_b)
+                    patterns_of_merged_constraints.append(merged)
         else:
-            # No shared features — full cross-product, no conflicts possible.
-            for pb in list_b:
-                for pa in list_a:
-                    merged = dict(pa)
-                    merged.update(pb)
-                    yield merged
+            # No shared features — full cross-product.
+            for activation_per_feature_b in patterns_of_constraint_b:
+                for activation_per_feature_a in patterns_of_constraint_a:
+                    merged = dict(activation_per_feature_a)
+                    merged.update(activation_per_feature_b)
+                    patterns_of_merged_constraints.append(merged)
+
+        return patterns_of_merged_constraints
 
     # Incremental pairwise merge — each step only materialises a generator
-    # over consistent merges so far, keeping early pruning.
     merged_iter = _constraint_patterns(nchoosek_constraints[0])
     for constraint in nchoosek_constraints[1:]:
         merged_iter = _merge_two(merged_iter, _constraint_patterns(constraint))
 
+    allowed_constraint_patterns = []
     for merged in merged_iter:
-        yield tuple(sorted(idx for idx, active in merged.items() if not active))
+        allowed_constraint_patterns.append(
+            tuple(sorted(idx for idx, active in merged.items() if not active))
+        )
+    return allowed_constraint_patterns
 
 
 def _build_nchoosek_combined_patterns(
@@ -668,13 +685,7 @@ def _build_nchoosek_combined_patterns(
         ValueError: When no valid combined patterns exist (contradictory
             constraints).
     """
-    seen: set = set()
-    result: List[Tuple[int, ...]] = []
-
-    for pattern in _iter_nchoosek_combined_patterns(domain):
-        if pattern not in seen:
-            seen.add(pattern)
-            result.append(pattern)
+    result = list(set(_iter_nchoosek_combined_patterns(domain)))
 
     if not result and any(
         isinstance(c, NChooseKConstraint) for c in domain.constraints
@@ -792,3 +803,36 @@ def _minimize(
             hess=objective_function.evaluate_hessian if use_hessian else None,
         )
         return result.x
+
+
+if __name__ == "__main__":
+    # testing overlapping NChooseK constraints
+    from bofire.data_models.constraints.api import NChooseKConstraint
+    from bofire.data_models.domain.api import Domain
+    from bofire.data_models.features.api import ContinuousInput
+
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+            ContinuousInput(key="x4", bounds=(0, 1)),
+        ]
+    )
+    constraints = [
+        NChooseKConstraint(
+            features=["x1", "x2", "x3"],
+            min_count=1,
+            max_count=2,
+            none_also_valid=True,
+        ),
+        NChooseKConstraint(
+            features=["x2", "x3", "x4"],
+            min_count=1,
+            max_count=2,
+            none_also_valid=True,
+        ),
+    ]
+    domain = Domain(inputs=inputs, constraints=constraints)
+    patterns = _build_nchoosek_combined_patterns(domain)
+    print(patterns)
