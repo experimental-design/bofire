@@ -559,7 +559,7 @@ class ConstraintWrapper:
 def _iter_nchoosek_combined_patterns(
     domain: Domain,
 ) -> list[tuple[int, ...]]:
-    """Yield combined deactivation patterns across all NChooseK constraints.
+    """Generate combined deactivation patterns across all NChooseK constraints.
 
     For each constraint, per-feature active/inactive patterns are generated
     for every allowed activity level.  When multiple constraints share
@@ -570,7 +570,7 @@ def _iter_nchoosek_combined_patterns(
     Consistency: If a feature is shared by multiple constraints, it must be active in all or
     inactive in all to yield a valid combined pattern.
 
-    Yields:
+    Returns:
         Tuples containing the domain-level indices of features to deactivate
         (pin to 0) for one experiment slot.  Duplicates are possible when
         constraints are disjoint; the caller should deduplicate if needed.
