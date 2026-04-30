@@ -3,114 +3,11 @@ from typing import Annotated, Any, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, PositiveFloat, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveFloat, PositiveInt, PrivateAttr, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
-
-
-# ──────────────────────────────────────────────────────────────────────
-# Threshold functions for BO stopping
-# ──────────────────────────────────────────────────────────────────────
-
-
-def compute_threshold_noise(
-    noise_variance: Optional[float],
-    threshold_factor: float = 1.0,
-) -> Optional[float]:
-    """Compute a threshold from a noise variance.
-
-    Works for both a user-specified (manual) noise variance and a GP-estimated
-    one.  Returns ``None`` when the noise variance is unavailable or
-    non-positive.
-
-    Args:
-        noise_variance: Observation noise variance.  May be ``None`` when
-            the GP estimate is not yet available.
-        threshold_factor: Multiplier for the threshold.
-
-    Returns:
-        threshold_factor * noise_variance, or ``None``.
-    """
-    if noise_variance is None or noise_variance <= 0:
-        return None
-    return threshold_factor * noise_variance
-
-
-def compute_threshold_range(
-    experiments: pd.DataFrame,
-    output_key: str,
-    threshold_factor: float = 1.0,
-) -> Optional[float]:
-    """Compute a threshold as a fraction of the observed output range.
-
-    Returns ``None`` when the range cannot be computed (fewer than 2
-    observations or zero range).
-
-    Args:
-        experiments: Experiments conducted so far.
-        output_key: Name of the output column.
-        threshold_factor: Multiplier for the range.
-
-    Returns:
-        threshold_factor * (max(y) - min(y)), or ``None``.
-    """
-    y_values = experiments[output_key].dropna()
-    if len(y_values) < 2:
-        return None
-    observed_range = float(y_values.max() - y_values.min())
-    if observed_range <= 0:
-        return None
-    return threshold_factor * observed_range
-
-
-def compute_threshold_cv(
-    experiments: pd.DataFrame,
-    output_key: str,
-    cv_fold_columns: List[str],
-    threshold_factor: float = 1.0,
-) -> Optional[float]:
-    """Compute a threshold from cross-validation fold variability.
-
-    Uses the corrected standard deviation of the incumbent's per-fold
-    scores (C. Nadeau and Y. Bengio, NeurIPS 2003):
-
-        threshold = threshold_factor * sqrt(1/K + 1/(K-1)) * std(fold_scores)
-
-    where K is the number of folds and ``ddof=0`` is used to match the
-    paper's 1/K divisor. The incumbent is the row with the minimum value
-    of *output_key* (assumes minimisation).
-
-    Returns ``None`` when fold scores contain NaN or have zero variability.
-
-    Args:
-        experiments: Experiments conducted so far.
-        output_key: Name of the output column (used to find the incumbent).
-        cv_fold_columns: Column names containing per-fold CV scores.
-        threshold_factor: Multiplier (``decay`` in Makarova et al. 2022).
-
-    Returns:
-        The corrected CV threshold, or ``None``.
-    """
-    y_values = experiments[output_key].dropna()
-    if len(y_values) < 1:
-        return None
-    incumbent_idx = y_values.idxmin()
-    fold_scores = (
-        experiments.loc[incumbent_idx, cv_fold_columns]
-        .values.astype(float)
-    )
-    if np.any(np.isnan(fold_scores)):
-        return None
-    k = len(cv_fold_columns)
-    correction = np.sqrt(1.0 / k + 1.0 / (k - 1))
-    fold_std = float(np.std(fold_scores, ddof=0))
-    if fold_std <= 0:
-        return None
-    return float(threshold_factor * correction * fold_std)
-
-
 
 
 
@@ -219,6 +116,7 @@ class CombiCondition(Condition, EvaluateableCondition):
                 "CombiCondition",
                 AlwaysTrueCondition,
                 "UCBLCBRegretBoundCondition",
+                "ExpMinRegretGapCondition",
             ]
         ],
         Field(min_length=2),
@@ -247,91 +145,44 @@ class CombiCondition(Condition, EvaluateableCondition):
 
 
 class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
-    """Condition that checks the UCB-LCB regret bound from Makarova et al. (2022).
+    """Condition based on the UCB-LCB regret bound from Makarova et al. (2022).
 
-    Returns True (keep using this step) while the regret bound is above the
-    threshold, and False (move to next step / stop) when the regret bound is
-    small enough.
+    Returns ``True`` (keep going) while the regret bound
+    ``min_x_evaluated UCB(x) - min_x_domain LCB(x)`` exceeds the threshold
+    ``epsilon_BO``, using GP-UCB style bounds
+    ``mu(x) ± sqrt(beta) * sigma(x)``.
 
-    The regret bound is computed as:
-        regret_bound = min_{x in evaluated} UCB(x) - min_{x in domain} LCB(x)
+    The threshold ``epsilon_BO`` depends on ``noise_variance``:
 
-    Where (GP-UCB style):
-    - UCB(x) = mu(x) + sqrt(beta) * sigma(x)
-    - LCB(x) = mu(x) - sqrt(beta) * sigma(x)
+    - ``None`` (default): GP-estimated noise ``likelihood.noise``.
+    - ``"cv"``: corrected CV-fold std of the incumbent
+      (Nadeau and Bengio, 2003). Requires ``cv_fold_columns``.
+    - positive float: used directly as the noise variance.
 
-    The threshold (epsilon_BO) is determined by the ``noise_variance`` setting:
+    In all cases the threshold is ``threshold_factor * <noise_variance>``.
 
-    - **GP noise (default)**: ``noise_variance=None``. The noise variance is
-      estimated from the fitted GP model's ``likelihood.noise``. The threshold
-      is ``threshold_factor * estimated_noise_variance``. This follows the
-      original Makarova et al. paper and terminates when the regret bound is
-      comparable to the observation noise.
-
-    - **Range-based**: ``noise_variance="range"``. The threshold is set as
-      ``threshold_factor * (max(y) - min(y))`` — a fraction of the observed
-      output range. This requires no noise estimate and is useful for
-      noiseless problems or when the GP noise estimate is unreliable.
-      Typical ``threshold_factor`` values are 0.01–0.05 (1–5% of range).
-
-    - **CV noise**: ``noise_variance="cv"``. The threshold is derived from
-      cross-validation fold score variability of the incumbent (current best).
-      Uses the corrected standard deviation from Nadeau and Bengio (2003):
-      ``threshold_factor * sqrt(1/K + 1/(K-1)) * std(fold_scores)``
-      where K is the number of folds and ``fold_scores`` are the per-fold
-      metrics of the incumbent experiment. Requires ``cv_fold_columns`` to
-      specify which columns in the experiments DataFrame contain fold scores.
-
-    - **Manual**: Set ``noise_variance`` to a positive float. The threshold
-      becomes ``threshold_factor * noise_variance``, using the user-specified
-      noise level. This is appropriate when the observation noise is known.
-
-    The condition terminates (returns False) when:
-        regret_bound < epsilon_BO
-
-    Top-q filtering can be enabled via ``topq`` to fit the regret-bound GP
-    on only the best fraction of observations. This focuses the GP's
-    modelling capacity on the promising region of the search space, yielding
-    tighter confidence bounds around the optimum. Only the internal GP used
-    for termination checking is affected — the main BO strategy's GP is
-    unchanged.
-
-    This condition requires a fitted GP-based strategy (e.g., SoboStrategy).
-    The strategy is passed via the ``strategy`` keyword argument from the
-    StepwiseStrategy.
+    Requires a fitted GP-based strategy (e.g. ``SoboStrategy``) passed via
+    the ``strategy`` kwarg from the ``StepwiseStrategy``.
 
     Reference:
         Makarova et al. (2022): "Automatic Termination for Hyperparameter
-        Optimization" (AutoML 2022)
+        Optimization" (AutoML 2022).
 
     Attributes:
-        noise_variance: Controls how the termination threshold is computed.
-            - ``None`` (default): use GP estimated noise from ``likelihood.noise``.
-            - ``"range"``: use ``threshold_factor * observed_output_range``.
-            - ``"cv"``: use corrected CV fold std of the incumbent. Requires
-              ``cv_fold_columns``.
-            - A positive float: use that value directly as the noise variance.
-        threshold_factor: Multiplier for the threshold. Default 1.0.
-            For CV mode, this corresponds to the ``decay`` parameter in
-            Makarova et al. (2022): threshold_factor=1.0 gives the base
-            corrected std.
-        cv_fold_columns: Column names in the experiments DataFrame containing
-            per-fold CV scores. Required when ``noise_variance="cv"``.
-            E.g., ["y_fold_0", "y_fold_1", ..., "y_fold_9"] for 10-fold CV.
-        topq: Fraction of best observations to use for the regret-bound GP.
-            Between 0 (exclusive) and 1 (inclusive). Default 1.0 (no filtering).
-            E.g., ``topq=0.5`` fits the GP on the best 50% of observations.
-            Only affects the internal termination GP — the main strategy's GP
-            is unchanged. A floor of ``min_topq`` observations is always kept.
-        min_topq: Minimum number of observations for top-q filtering.
-            Default 20. Ensures the GP always has enough data for reliable
-            hyperparameter estimation.
-        min_experiments: Minimum number of experiments before checking
-            termination.
+        noise_variance: Noise variance source (see description).
+        threshold_factor: Multiplier for the threshold (``decay`` in
+            Makarova et al. 2022 for the CV mode).
+        cv_fold_columns: Column names with per-fold CV scores; required
+            when ``noise_variance="cv"``.
+        topq: Fraction of best observations used for the internal
+            regret-bound GP. ``1.0`` disables filtering. The main
+            strategy's GP is unaffected.
+        min_topq: Minimum observations kept under top-q filtering.
+        min_experiments: Minimum experiments before termination is checked.
     """
 
     type: Literal["UCBLCBRegretBoundCondition"] = "UCBLCBRegretBoundCondition"
-    noise_variance: Optional[Union[PositiveFloat, Literal["range", "cv"]]] = None
+    noise_variance: Optional[Union[PositiveFloat, Literal["cv"]]] = None
     threshold_factor: PositiveFloat = 1.0
     cv_fold_columns: Optional[List[str]] = None
     topq: Annotated[float, Field(gt=0, le=1)] = 1.0
@@ -351,19 +202,19 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
     def evaluate(
         self, domain: Domain, experiments: Optional[pd.DataFrame], **kwargs
     ) -> bool:
-        """Check if optimization should continue (True) or stop (False).
+        """Check if optimization should continue (``True``) or stop (``False``).
 
         Args:
             domain: The optimization domain.
             experiments: Experiments conducted so far.
-            **kwargs: Must include ``strategy`` — the fitted BotorchStrategy.
+            **kwargs: Must include ``strategy`` — the fitted ``BotorchStrategy``.
 
         Returns:
-            True if optimization should continue, False if converged.
+            ``True`` if optimization should continue, ``False`` if the
+            regret bound has dropped below ``epsilon_BO``.
         """
         strategy = kwargs.get("strategy")
 
-        # Keep going if no strategy or model not ready
         if strategy is None:
             return True
         if not getattr(strategy, "is_fitted", False) or getattr(
@@ -371,18 +222,14 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
         ) is None:
             return True
 
-        # Keep going if not enough data
         if experiments is None or len(experiments) < self.min_experiments:
             return True
 
-        # Compute regret bound via evaluator (lazy import to avoid heavy deps)
         from bofire.termination.evaluator import UCBLCBRegretEvaluator
 
         evaluator = UCBLCBRegretEvaluator()
 
-        # Top-q filtering: fit a separate GP on the best fraction of
-        # observations.  Only affects the regret-bound computation — the
-        # main strategy's GP is unchanged.
+        # Top-q filtering: refit the regret-bound GP on the best fraction.
         eval_strategy = strategy
         eval_experiments = experiments
         if self.topq < 1.0:
@@ -395,36 +242,33 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
                 eval_experiments = experiments.iloc[top_indices].reset_index(
                     drop=True,
                 )
-                # Fit a clone of the main strategy on the filtered subset.
-                # Uses the exact same data model (surrogate, kernel, acqf,
-                # etc.) — only the training data differs.
                 from bofire.strategies.mapper import map as map_strategy
 
                 try:
                     eval_strategy = map_strategy(strategy._data_model)
                     eval_strategy.tell(eval_experiments)
                 except Exception:
-                    return True  # GP fitting failed, keep going
+                    return True
 
         metrics = evaluator.evaluate(
             eval_strategy, eval_experiments, len(experiments),
         )
 
         if not metrics:
-            return True  # Evaluation failed, keep going
+            return True
 
         regret_bound = metrics["regret_bound"]
 
-        # Determine threshold (epsilon_BO) via reusable helpers
+        from bofire.termination.thresholds import (
+            compute_threshold_cv,
+            compute_threshold_noise,
+        )
+
         output_key = domain.outputs.get_keys()[0]
 
         if isinstance(self.noise_variance, (int, float)):
             epsilon_bo = compute_threshold_noise(
                 self.noise_variance, self.threshold_factor,
-            )
-        elif self.noise_variance == "range":
-            epsilon_bo = compute_threshold_range(
-                experiments, output_key, self.threshold_factor,
             )
         elif self.noise_variance == "cv":
             epsilon_bo = compute_threshold_cv(
@@ -438,10 +282,112 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             )
 
         if epsilon_bo is None:
-            return True  # Threshold could not be computed, keep going
+            return True
 
-        # Return True (keep going) if regret bound is still large
         return regret_bound >= epsilon_bo
+
+
+class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
+    """Expected minimum regret gap stopping criterion (Ishibashi et al. 2023).
+
+    Returns ``True`` (keep optimising) while the stopping value
+    ``delta_f + ei_diff + kappa * sqrt(KL / 2)`` exceeds the threshold,
+    and ``False`` (stop) otherwise.
+
+    Two threshold modes:
+
+    - ``"adaptive"`` (default): theoretically motivated threshold from the
+      GP noise and posterior variances; Ishibashi et al. (2023), eq. (16).
+    - ``"median"``: heuristic ``rate * median(early values)`` over the
+      first ``start_timing`` stopping values.
+
+    Stateful: keeps the previous-iteration GP model to compare consecutive
+    posteriors. Always returns ``True`` before ``min_experiments`` is
+    reached.
+
+    Reference:
+        Ishibashi & Ye (2023): "A stopping criterion for Bayesian optimization
+        by the gap of expected minimum simple regrets" (AISTATS 2023).
+
+    Attributes:
+        threshold_mode: ``"adaptive"`` or ``"median"``.
+        delta: Confidence parameter for beta and the adaptive threshold.
+        rate: Fraction of the median stopping value used as threshold in
+            ``"median"`` mode.
+        start_timing: Stopping values collected before the median threshold
+            can be computed / the condition can trigger.
+        min_experiments: Minimum experiments before checking.
+        beta_scale: Scaling factor for the GP-UCB beta parameter.
+        n_samples_lcb: Random samples for the min-LCB estimate in kappa.
+    """
+
+    type: Literal["ExpMinRegretGapCondition"] = "ExpMinRegretGapCondition"
+    threshold_mode: Literal["adaptive", "median"] = "adaptive"
+    delta: PositiveFloat = 0.1
+    rate: PositiveFloat = 0.1
+    start_timing: PositiveInt = 10
+    min_experiments: PositiveInt = 5
+    beta_scale: PositiveFloat = 1.0
+    n_samples_lcb: PositiveInt = 1000
+
+    _evaluator: Any = PrivateAttr(default=None)
+
+    def _get_evaluator(self):
+        if self._evaluator is None:
+            from bofire.termination.evaluator import ExpMinRegretGapEvaluator
+
+            self._evaluator = ExpMinRegretGapEvaluator(
+                delta=self.delta,
+                rate=self.rate,
+                start_timing=self.start_timing,
+                beta_scale=self.beta_scale,
+                n_samples_lcb=self.n_samples_lcb,
+            )
+        return self._evaluator
+
+    def evaluate(
+        self, domain: Domain, experiments: Optional[pd.DataFrame], **kwargs
+    ) -> bool:
+        """Check if optimization should continue (``True``) or stop (``False``).
+
+        Args:
+            domain: The optimization domain.
+            experiments: Experiments conducted so far.
+            **kwargs: Must include ``strategy`` — the fitted ``BotorchStrategy``.
+
+        Returns:
+            ``True`` if optimization should continue, ``False`` when the
+            stopping value drops below the selected threshold.
+        """
+        strategy = kwargs.get("strategy")
+
+        if strategy is None:
+            return True
+        if not getattr(strategy, "is_fitted", False) or getattr(
+            strategy, "model", None
+        ) is None:
+            return True
+
+        if experiments is None or len(experiments) < self.min_experiments:
+            return True
+
+        evaluator = self._get_evaluator()
+        metrics = evaluator.evaluate(strategy, experiments, len(experiments))
+
+        if not metrics:
+            return True
+
+        stopping_value = metrics["stopping_value"]
+
+        if self.threshold_mode == "adaptive":
+            threshold = metrics.get("threshold_adaptive")
+        else:
+            threshold = metrics.get("threshold_median")
+
+        if threshold is None:
+            return True
+
+        return bool(stopping_value >= threshold)
 
 
 AnyCondition = Union[
@@ -450,4 +396,5 @@ AnyCondition = Union[
     AlwaysTrueCondition,
     FeasibleExperimentCondition,
     UCBLCBRegretBoundCondition,
+    ExpMinRegretGapCondition,
 ]
