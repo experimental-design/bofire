@@ -385,6 +385,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#non-predictive-strategies" id="toc-non-predictive-strategies" class="nav-link active" data-scroll-target="#non-predictive-strategies">Non-predictive Strategies</a></li>
   <li><a href="#predictive-strategies" id="toc-predictive-strategies" class="nav-link" data-scroll-target="#predictive-strategies">Predictive Strategies</a></li>
+  <li><a href="#llm-based-strategies" id="toc-llm-based-strategies" class="nav-link" data-scroll-target="#llm-based-strategies">LLM-based Strategies</a></li>
   <li><a href="#combining-strategies" id="toc-combining-strategies" class="nav-link" data-scroll-target="#combining-strategies">Combining Strategies</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/build/lib/docs/userguides/strategies.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
@@ -434,6 +435,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>EntingStrategy</code>: Strategy based on the <code>Entmoot</code> <a href="https://github.com/cog-imperial/entmoot">package</a> that uses tree-based surrogate models to perform both single-objective and multiobjective optimization.</li>
 </ul>
 </section>
+<section id="llm-based-strategies" class="level2">
+<h2 class="anchored" data-anchor-id="llm-based-strategies">LLM-based Strategies</h2>
+<ul>
+<li><code>LLMStrategy</code>: Uses a large language model to propose candidates from the problem description, feature bounds, constraints, and prior experiments. Supports multiple providers via <a href="https://ai.pydantic.dev/">pydantic-ai</a>. Useful for cold-start designs and domains where written context (e.g.&nbsp;molecular optimization) informs proposals. Requires the optional <code>[llm]</code> extra and provider credentials. There is no calibrated uncertainty model — treat candidates as informed heuristics, not optima. See the <a href="../../../../build/lib/docs/tutorials/advanced_examples/llm_molecular.html">LLM molecular optimization tutorial</a> for an end-to-end example.</li>
+</ul>
+</section>
 <section id="combining-strategies" class="level2">
 <h2 class="anchored" data-anchor-id="combining-strategies">Combining Strategies</h2>
 <p>In BoFire, the <code>StepwiseStrategy</code> operates on a sequence of strategies and determines when to switch between them based on customizable logical operators.</p>
@@ -475,7 +482,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>When dealing with output constraints, it is often beneficial to ensure that a certain number of experiments satisfy these constraints before proceeding with the main optimization. If no feasible experiments have been found, the strategy should prioritize generating candidates likely to fulfill the output constraints. This can be accomplished by using the <code>qLogPF</code> (Probability of Feasibility) acquisition function together with the <code>FeasibleExperimentCondition</code>. This approach allows the optimization process to focus first on feasibility, and only switch to the main objective once enough feasible experiments are available.</p>
 <p>In the following example, a <code>RandomStrategy</code> is applied for the initial 10 experiments to broadly explore the search space. Afterward, the <code>SoboStrategy</code> with the <code>qLogPF</code> acquisition function is used to prioritize finding at least one feasible experiment that satisfies the output constraints. Once this feasibility criterion is met, the strategy transitions to the standard <code>SoboStrategy</code> to focus on optimizing the main objective.</p>
-<div id="af1fdbca" class="cell" data-execution_count="1">
+<div id="68ddd55b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> DTLZ2</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogPF</span>
@@ -1019,98 +1026,102 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`MultifidelityStrategy:`</span> Single objective multi-fidelity BO as described <span class="co">[</span><span class="ot">here</span><span class="co">](https://www.sciencedirect.com/science/article/pii/S0098135423000637)</span></span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`EntingStrategy`</span>: Strategy based on the <span class="in">`Entmoot`</span> <span class="co">[</span><span class="ot">package</span><span class="co">](https://github.com/cog-imperial/entmoot)</span> that uses tree-based surrogate models to perform both single-objective and multiobjective optimization.</span>
 <span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## Combining Strategies</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="fu">## LLM-based Strategies</span></span>
 <span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>In BoFire, the <span class="in">`StepwiseStrategy`</span> operates on a sequence of strategies and determines when to switch between them based on customizable logical operators.</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`LLMStrategy`</span>: Uses a large language model to propose candidates from the problem description, feature bounds, constraints, and prior experiments. Supports multiple providers via <span class="co">[</span><span class="ot">pydantic-ai</span><span class="co">](https://ai.pydantic.dev/)</span>. Useful for cold-start designs and domains where written context (e.g. molecular optimization) informs proposals. Requires the optional <span class="in">`[llm]`</span> extra and provider credentials. There is no calibrated uncertainty model — treat candidates as informed heuristics, not optima. See the <span class="co">[</span><span class="ot">LLM molecular optimization tutorial</span><span class="co">](../tutorials/advanced_examples/llm_molecular.qmd)</span> for an end-to-end example.</span>
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>The <span class="in">`StepwiseStrategy`</span> is comprised of a sequence of <span class="in">`Step`</span>s, where each <span class="in">`Step`</span> consists of the following three attributes:</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="fu">## Combining Strategies</span></span>
 <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`strategy_data`</span>: data model of the strategy which should be executed in this step.</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`condition`</span>: A logical expression that determines when this <span class="in">`step`</span>'s strategy should be executed. The <span class="in">`StepwiseStrategy`</span> evaluates each step in order and selects the first strategy whose condition evaluates to <span class="in">`True`</span>.</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`transform`</span>: An object that can be used to transform experiments and/or candidates before they enter/leave the strategy assigned in the step.</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>In BoFire, the <span class="in">`StepwiseStrategy`</span> operates on a sequence of strategies and determines when to switch between them based on customizable logical operators.</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>The <span class="in">`StepwiseStrategy`</span> is comprised of a sequence of <span class="in">`Step`</span>s, where each <span class="in">`Step`</span> consists of the following three attributes:</span>
 <span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>The following example demonstrates how to combine a <span class="in">`RandomStrategy`</span> with a <span class="in">`SoboStrategy`</span> using the <span class="in">`StepwiseStrategy`</span>. In this setup, the <span class="in">`RandomStrategy`</span> is applied initially to propose candidates until 10 experiments have been completed. Once this threshold is reached, the strategy automatically switches to the <span class="in">`SoboStrategy`</span> for subsequent candidate generation.</span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`strategy_data`</span>: data model of the strategy which should be executed in this step.</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`condition`</span>: A logical expression that determines when this <span class="in">`step`</span>'s strategy should be executed. The <span class="in">`StepwiseStrategy`</span> evaluates each step in order and selects the first strategy whose condition evaluates to <span class="in">`True`</span>.</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`transform`</span>: An object that can be used to transform experiments and/or candidates before they enter/leave the strategy assigned in the step.</span>
 <span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Himmelblau</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> (</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>    AlwaysTrueCondition,</span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    NumberOfExperimentsCondition,</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    RandomStrategy,</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    SoboStrategy,</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    Step,</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    StepwiseStrategy,</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Himmelblau().domain</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> StepwiseStrategy(</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>        Step(</span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>RandomStrategy(domain<span class="op">=</span>domain),</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>NumberOfExperimentsCondition(n_experiments<span class="op">=</span><span class="dv">10</span>),</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>The following example demonstrates how to combine a <span class="in">`RandomStrategy`</span> with a <span class="in">`SoboStrategy`</span> using the <span class="in">`StepwiseStrategy`</span>. In this setup, the <span class="in">`RandomStrategy`</span> is applied initially to propose candidates until 10 experiments have been completed. Once this threshold is reached, the strategy automatically switches to the <span class="in">`SoboStrategy`</span> for subsequent candidate generation.</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Himmelblau</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> (</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    AlwaysTrueCondition,</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    NumberOfExperimentsCondition,</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    RandomStrategy,</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    SoboStrategy,</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    Step,</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    StepwiseStrategy,</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Himmelblau().domain</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> StepwiseStrategy(</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
 <span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>        Step(</span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(domain<span class="op">=</span>domain), condition<span class="op">=</span>AlwaysTrueCondition()</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>When dealing with output constraints, it is often beneficial to ensure that a certain number of experiments satisfy these constraints before proceeding with the main optimization. If no feasible experiments have been found, the strategy should prioritize generating candidates likely to fulfill the output constraints. This can be accomplished by using the <span class="in">`qLogPF`</span> (Probability of Feasibility) acquisition function together with the <span class="in">`FeasibleExperimentCondition`</span>. This approach allows the optimization process to focus first on feasibility, and only switch to the main objective once enough feasible experiments are available.</span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>In the following example, a <span class="in">`RandomStrategy`</span> is applied for the initial 10 experiments to broadly explore the search space. Afterward, the <span class="in">`SoboStrategy`</span> with the <span class="in">`qLogPF`</span> acquisition function is used to prioritize finding at least one feasible experiment that satisfies the output constraints. Once this feasibility criterion is met, the strategy transitions to the standard <span class="in">`SoboStrategy`</span> to focus on optimizing the main objective.</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>RandomStrategy(domain<span class="op">=</span>domain),</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>NumberOfExperimentsCondition(n_experiments<span class="op">=</span><span class="dv">10</span>),</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>        Step(</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(domain<span class="op">=</span>domain), condition<span class="op">=</span>AlwaysTrueCondition()</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> DTLZ2</span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogPF</span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.objectives.api <span class="im">import</span> MaximizeSigmoidObjective</span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> (</span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    AlwaysTrueCondition,</span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    FeasibleExperimentCondition,</span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>    NumberOfExperimentsCondition,</span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    RandomStrategy,</span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    SoboStrategy,</span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    Step,</span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    StepwiseStrategy,</span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a><span class="co"># create a domain with one output constraint by assigning a MaximizeSigmoidObjective</span></span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a><span class="co"># to the output with key "f_1"</span></span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>).domain</span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>domain.outputs.get_by_key(<span class="st">"f_1"</span>).objective <span class="op">=</span> MaximizeSigmoidObjective(</span>
-<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a>    tp<span class="op">=</span><span class="fl">0.5</span>, steepness<span class="op">=</span><span class="dv">100</span></span>
-<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> StepwiseStrategy(</span>
-<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
-<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a>        Step(</span>
-<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>RandomStrategy(domain<span class="op">=</span>domain),</span>
-<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>NumberOfExperimentsCondition(n_experiments<span class="op">=</span><span class="dv">10</span>),</span>
-<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>When dealing with output constraints, it is often beneficial to ensure that a certain number of experiments satisfy these constraints before proceeding with the main optimization. If no feasible experiments have been found, the strategy should prioritize generating candidates likely to fulfill the output constraints. This can be accomplished by using the <span class="in">`qLogPF`</span> (Probability of Feasibility) acquisition function together with the <span class="in">`FeasibleExperimentCondition`</span>. This approach allows the optimization process to focus first on feasibility, and only switch to the main objective once enough feasible experiments are available.</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>In the following example, a <span class="in">`RandomStrategy`</span> is applied for the initial 10 experiments to broadly explore the search space. Afterward, the <span class="in">`SoboStrategy`</span> with the <span class="in">`qLogPF`</span> acquisition function is used to prioritize finding at least one feasible experiment that satisfies the output constraints. Once this feasibility criterion is met, the strategy transitions to the standard <span class="in">`SoboStrategy`</span> to focus on optimizing the main objective.</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> DTLZ2</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogPF</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.objectives.api <span class="im">import</span> MaximizeSigmoidObjective</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> (</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    AlwaysTrueCondition,</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>    FeasibleExperimentCondition,</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>    NumberOfExperimentsCondition,</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>    RandomStrategy,</span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>    SoboStrategy,</span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>    Step,</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>    StepwiseStrategy,</span>
+<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-97"><a href="#cb3-97" aria-hidden="true" tabindex="-1"></a><span class="co"># create a domain with one output constraint by assigning a MaximizeSigmoidObjective</span></span>
+<span id="cb3-98"><a href="#cb3-98" aria-hidden="true" tabindex="-1"></a><span class="co"># to the output with key "f_1"</span></span>
+<span id="cb3-99"><a href="#cb3-99" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> DTLZ2(dim<span class="op">=</span><span class="dv">6</span>).domain</span>
+<span id="cb3-100"><a href="#cb3-100" aria-hidden="true" tabindex="-1"></a>domain.outputs.get_by_key(<span class="st">"f_1"</span>).objective <span class="op">=</span> MaximizeSigmoidObjective(</span>
+<span id="cb3-101"><a href="#cb3-101" aria-hidden="true" tabindex="-1"></a>    tp<span class="op">=</span><span class="fl">0.5</span>, steepness<span class="op">=</span><span class="dv">100</span></span>
+<span id="cb3-102"><a href="#cb3-102" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-103"><a href="#cb3-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-104"><a href="#cb3-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-105"><a href="#cb3-105" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> StepwiseStrategy(</span>
+<span id="cb3-106"><a href="#cb3-106" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb3-107"><a href="#cb3-107" aria-hidden="true" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
 <span id="cb3-108"><a href="#cb3-108" aria-hidden="true" tabindex="-1"></a>        Step(</span>
-<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(domain<span class="op">=</span>domain, acquisition_function<span class="op">=</span>qLogPF()),</span>
-<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>FeasibleExperimentCondition(n_required_feasible_experiments<span class="op">=</span><span class="dv">1</span>),</span>
+<span id="cb3-109"><a href="#cb3-109" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>RandomStrategy(domain<span class="op">=</span>domain),</span>
+<span id="cb3-110"><a href="#cb3-110" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>NumberOfExperimentsCondition(n_experiments<span class="op">=</span><span class="dv">10</span>),</span>
 <span id="cb3-111"><a href="#cb3-111" aria-hidden="true" tabindex="-1"></a>        ),</span>
 <span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>        Step(</span>
-<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(domain<span class="op">=</span>domain), condition<span class="op">=</span>AlwaysTrueCondition()</span>
-<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span>
-<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(domain<span class="op">=</span>domain, acquisition_function<span class="op">=</span>qLogPF()),</span>
+<span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>FeasibleExperimentCondition(n_required_feasible_experiments<span class="op">=</span><span class="dv">1</span>),</span>
+<span id="cb3-115"><a href="#cb3-115" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-116"><a href="#cb3-116" aria-hidden="true" tabindex="-1"></a>        Step(</span>
+<span id="cb3-117"><a href="#cb3-117" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(domain<span class="op">=</span>domain), condition<span class="op">=</span>AlwaysTrueCondition()</span>
+<span id="cb3-118"><a href="#cb3-118" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb3-119"><a href="#cb3-119" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb3-120"><a href="#cb3-120" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-121"><a href="#cb3-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-122"><a href="#cb3-122" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span>
+<span id="cb3-123"><a href="#cb3-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-124"><a href="#cb3-124" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
