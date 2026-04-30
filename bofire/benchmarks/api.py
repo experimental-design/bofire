@@ -20,13 +20,19 @@ from bofire.benchmarks.multi import (
 )
 from bofire.benchmarks.single import (
     Ackley,
+    Booth,
     Branin,
     Branin30,
+    CrossInTray,
+    Easom,
     Hartmann,
     Hartmann6plus,
     Himmelblau,
+    HolderTable,
     Multinormalpdfs,
     MultiTaskHimmelblau,
+    Rosenbrock,
+    SixHumpCamel,
 )
 
 
@@ -42,11 +48,17 @@ AnyMultiBenchmark = Union[
 ]
 AnySingleBenchmark = Union[
     Ackley,
+    Booth,
     Branin,
     Branin30,
+    CrossInTray,
+    Easom,
     Hartmann,
     Hartmann6plus,
     Himmelblau,
+    HolderTable,
     MultiTaskHimmelblau,
     Multinormalpdfs,
+    Rosenbrock,
+    SixHumpCamel,
 ]
