@@ -1,6 +1,7 @@
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     CombiCondition,
+    ExpMinRegretGapCondition,
     FeasibleExperimentCondition,
     NumberOfExperimentsCondition,
     UCBLCBRegretBoundCondition,
@@ -38,7 +39,14 @@ specs.add_valid(
 
 specs.add_valid(
     UCBLCBRegretBoundCondition,
-    lambda: {"noise_variance": 0.1, "threshold_factor": 2.0, "min_experiments": 10},
+    lambda: {
+        "noise_variance": 0.1,
+        "threshold_factor": 2.0,
+        "cv_fold_columns": None,
+        "topq": 1.0,
+        "min_topq": 20,
+        "min_experiments": 10,
+    },
 )
 
 specs.add_valid(
@@ -47,6 +55,34 @@ specs.add_valid(
         "noise_variance": "cv",
         "threshold_factor": 0.5,
         "cv_fold_columns": ["f0", "f1", "f2", "f3", "f4"],
+        "topq": 1.0,
+        "min_topq": 20,
         "min_experiments": 5,
+    },
+)
+
+specs.add_valid(
+    ExpMinRegretGapCondition,
+    lambda: {
+        "threshold_mode": "adaptive",
+        "delta": 0.1,
+        "rate": 0.1,
+        "start_timing": 10,
+        "min_experiments": 5,
+        "beta_scale": 1.0,
+        "n_samples_lcb": 1000,
+    },
+)
+
+specs.add_valid(
+    ExpMinRegretGapCondition,
+    lambda: {
+        "threshold_mode": "median",
+        "delta": 0.1,
+        "rate": 0.05,
+        "start_timing": 15,
+        "min_experiments": 5,
+        "beta_scale": 1.0,
+        "n_samples_lcb": 1000,
     },
 )
