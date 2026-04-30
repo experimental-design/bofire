@@ -11,7 +11,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.llm.anthropic import AnthropicLLMProvider
+from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
 from bofire.strategies.api import LLMStrategy

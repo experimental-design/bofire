@@ -71,7 +71,7 @@ benchmark = LookupTableBenchmark(
 
 ```{python}
 import bofire.strategies.api as strategies
-from bofire.data_models.llm.anthropic import AnthropicLLMProvider
+from bofire.data_models.llm.api import AnthropicLLMProvider
 from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
 
 strategy_dm = LLMStrategyDataModel(

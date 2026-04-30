@@ -1,7 +1,9 @@
-from bofire.data_models.llm.anthropic import AnthropicLLMProvider
-from bofire.data_models.llm.anthropic_foundry import AnthropicFoundryLLMProvider
-from bofire.data_models.llm.openai import OpenAILLMProvider
-from bofire.data_models.llm.openai_compatible import OpenAICompatibleLLMProvider
+from bofire.data_models.llm.provider import (
+    AnthropicFoundryLLMProvider,
+    AnthropicLLMProvider,
+    OpenAICompatibleLLMProvider,
+    OpenAILLMProvider,
+)
 from tests.bofire.data_models.specs.specs import Specs
 
 

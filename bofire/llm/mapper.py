@@ -1,17 +1,64 @@
 """Map LLM provider data models to pydantic-ai Model instances.
 
 Each provider data model (e.g., ``AnthropicLLMProvider``) is mapped to the
-corresponding pydantic-ai ``Model`` object. API keys are resolved from
-environment variables at mapping time.
+corresponding pydantic-ai ``Model`` object via a registered factory function.
+API keys are resolved from environment variables at mapping time.
 """
 
 import os
+from typing import Callable, Optional, Type
 
-from bofire.data_models.llm.anthropic import AnthropicLLMProvider
-from bofire.data_models.llm.anthropic_foundry import AnthropicFoundryLLMProvider
-from bofire.data_models.llm.openai import OpenAILLMProvider
-from bofire.data_models.llm.openai_compatible import OpenAICompatibleLLMProvider
-from bofire.data_models.llm.provider import LLMProvider
+import bofire.data_models.llm.api as data_models
+from bofire.data_models.llm.provider import (
+    AnthropicFoundryLLMProvider,
+    AnthropicLLMProvider,
+    LLMProvider,
+    OpenAICompatibleLLMProvider,
+    OpenAILLMProvider,
+)
+
+
+LLM_MAP: dict[Type[LLMProvider], Callable] = {}
+
+
+def register(
+    data_model_cls: Type[LLMProvider],
+    map_fn: Optional[Callable] = None,
+):
+    """Register a custom LLM provider mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyLLMProvider)
+        def map_my_provider(data_model):
+            return MyPydanticAIModel(...)
+
+        # Direct call form
+        register(MyLLMProvider, map_my_provider)
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes the data model instance and returns a
+            pydantic-ai ``Model``. If not provided, returns a decorator.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        LLM_MAP[data_model_cls] = fn
+
+        # Also register with the data model union so Pydantic accepts the type
+        data_models.register_llm_provider(data_model_cls)
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
 
 
 def _resolve_env_var(env_var_name: str) -> str:
@@ -22,7 +69,8 @@ def _resolve_env_var(env_var_name: str) -> str:
     return value
 
 
-def _map_anthropic(data_model: AnthropicLLMProvider):
+@register(AnthropicLLMProvider)
+def map_anthropic(data_model: AnthropicLLMProvider):
     from anthropic import AsyncAnthropic
     from pydantic_ai.models.anthropic import AnthropicModel
     from pydantic_ai.providers.anthropic import AnthropicProvider
@@ -36,7 +84,8 @@ def _map_anthropic(data_model: AnthropicLLMProvider):
     return AnthropicModel(data_model.model, provider=provider)
 
 
-def _map_anthropic_foundry(data_model: AnthropicFoundryLLMProvider):
+@register(AnthropicFoundryLLMProvider)
+def map_anthropic_foundry(data_model: AnthropicFoundryLLMProvider):
     from anthropic import AsyncAnthropicFoundry
     from pydantic_ai.models.anthropic import AnthropicModel
     from pydantic_ai.providers.anthropic import AnthropicProvider
@@ -49,7 +98,8 @@ def _map_anthropic_foundry(data_model: AnthropicFoundryLLMProvider):
     return AnthropicModel(data_model.model, provider=provider)
 
 
-def _map_openai(data_model: OpenAILLMProvider):
+@register(OpenAILLMProvider)
+def map_openai(data_model: OpenAILLMProvider):
     from openai import AsyncOpenAI
     from pydantic_ai.models.openai import OpenAIModel
     from pydantic_ai.providers.openai import OpenAIProvider
@@ -65,7 +115,8 @@ def _map_openai(data_model: OpenAILLMProvider):
     return OpenAIModel(data_model.model, provider=provider)
 
 
-def _map_openai_compatible(data_model: OpenAICompatibleLLMProvider):
+@register(OpenAICompatibleLLMProvider)
+def map_openai_compatible(data_model: OpenAICompatibleLLMProvider):
     from openai import AsyncOpenAI
     from pydantic_ai.models.openai import OpenAIModel
     from pydantic_ai.providers.openai import OpenAIProvider
@@ -76,14 +127,6 @@ def _map_openai_compatible(data_model: OpenAICompatibleLLMProvider):
     )
     provider = OpenAIProvider(openai_client=client)
     return OpenAIModel(data_model.model, provider=provider)
-
-
-_MAP = {
-    AnthropicLLMProvider: _map_anthropic,
-    AnthropicFoundryLLMProvider: _map_anthropic_foundry,
-    OpenAILLMProvider: _map_openai,
-    OpenAICompatibleLLMProvider: _map_openai_compatible,
-}
 
 
 def map(data_model: LLMProvider):
@@ -99,9 +142,9 @@ def map(data_model: LLMProvider):
         EnvironmentError: If required environment variables are not set.
         ValueError: If the provider type is not supported.
     """
-    mapper_fn = _MAP.get(type(data_model))
+    mapper_fn = LLM_MAP.get(type(data_model))
     if mapper_fn is None:
-        supported = ", ".join(c.__name__ for c in _MAP)
+        supported = ", ".join(c.__name__ for c in LLM_MAP)
         raise ValueError(
             f"Unsupported LLM provider type: {type(data_model).__name__}. "
             f"Supported: {supported}"

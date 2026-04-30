@@ -24,7 +24,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
-from bofire.data_models.llm.anthropic import AnthropicLLMProvider
+from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,

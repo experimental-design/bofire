@@ -1,29 +1,17 @@
-from typing import Annotated, Union
+from bofire.data_models.llm._register import register_llm_provider  # noqa: F401
+from bofire.data_models.llm.provider import (
+    AnthropicFoundryLLMProvider,
+    AnthropicLLMProvider,
+    LLMProvider,  # noqa: F401
+    OpenAICompatibleLLMProvider,
+    OpenAILLMProvider,
+)
+from bofire.data_models.unions import tagged_union
 
-from pydantic import Field
 
-from bofire.data_models.llm.anthropic import AnthropicLLMProvider
-from bofire.data_models.llm.anthropic_foundry import AnthropicFoundryLLMProvider
-from bofire.data_models.llm.openai import OpenAILLMProvider
-from bofire.data_models.llm.openai_compatible import OpenAICompatibleLLMProvider
-from bofire.data_models.llm.provider import LLMProvider
-
-
-AnyLLMProvider = Annotated[
-    Union[
-        AnthropicLLMProvider,
-        AnthropicFoundryLLMProvider,
-        OpenAILLMProvider,
-        OpenAICompatibleLLMProvider,
-    ],
-    Field(discriminator="type"),
-]
-
-__all__ = [
-    "AnyLLMProvider",
-    "LLMProvider",
-    "AnthropicLLMProvider",
-    "AnthropicFoundryLLMProvider",
-    "OpenAILLMProvider",
-    "OpenAICompatibleLLMProvider",
-]
+AnyLLMProvider = tagged_union(
+    AnthropicLLMProvider,
+    AnthropicFoundryLLMProvider,
+    OpenAILLMProvider,
+    OpenAICompatibleLLMProvider,
+)
