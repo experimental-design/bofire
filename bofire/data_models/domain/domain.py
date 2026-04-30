@@ -34,19 +34,47 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 
 
 class Domain(BaseModel):
-    type: Literal["Domain"] = "Domain"
-
-    inputs: Inputs = Field(default_factory=lambda: Inputs())
-    outputs: Outputs = Field(default_factory=lambda: Outputs())
-    constraints: Constraints = Field(default_factory=lambda: Constraints())
-
     """Representation of the optimization problem/domain
 
     Attributes:
         inputs (List[Input], optional): List of input features. Defaults to [].
         outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
+        context (str, optional): Free-text context providing additional information
+            about the optimization problem. Useful for agentic optimization where an
+            LLM agent can leverage this description to better understand the overall
+            problem, its goals, and any domain-specific knowledge.
     """
+
+    type: Literal["Domain"] = "Domain"
+
+    inputs: Inputs = Field(default_factory=lambda: Inputs())
+    outputs: Outputs = Field(default_factory=lambda: Outputs())
+    constraints: Constraints = Field(default_factory=lambda: Constraints())
+    context: Optional[str] = None
+
+    def to_description(self) -> str:
+        """Render a human-readable description of the optimization problem.
+
+        Covers problem context, objectives, and constraints. Feature details
+        are handled separately by ``Inputs.to_pydantic_model()`` which embeds
+        bounds, types, and context into the dynamic output schema.
+        """
+        lines = []
+
+        if self.context:
+            lines.append(f"## Problem Context\n{self.context}")
+
+        lines.append("\n## Objectives")
+        for feat in self.outputs:
+            lines.append(f"- {feat.to_description()}")
+
+        if len(self.constraints) > 0:
+            lines.append("\n## Constraints (candidates MUST satisfy all of these)")
+            for c in self.constraints:
+                lines.append(f"- {c.to_description()}")
+
+        return "\n".join(lines)
 
     @classmethod
     def from_lists(

@@ -14,6 +14,11 @@ class Constraint(BaseModel):
 
     type: Any
     features: FeatureKeys
+    context: Optional[str] = None
+
+    @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this constraint."""
 
     @abstractmethod
     def is_fulfilled(

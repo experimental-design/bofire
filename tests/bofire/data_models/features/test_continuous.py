@@ -324,3 +324,50 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
+
+def test_continuous_input_to_pydantic_field():
+    feat = ContinuousInput(key="temp", bounds=(20.0, 200.0))
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is float
+    assert field_info.metadata[0].ge == 20.0
+    assert field_info.metadata[1].le == 200.0
+    assert field_info.description == "Continuous, bounds [20.0, 200.0]"
+
+
+def test_continuous_input_to_pydantic_field_with_context():
+    feat = ContinuousInput(key="temp", bounds=(20.0, 200.0), context="Temperature in C")
+    _, field_info = feat.to_pydantic_field()
+    assert (
+        field_info.description == "Continuous, bounds [20.0, 200.0] — Temperature in C"
+    )
+
+
+def test_continuous_input_to_pydantic_field_allow_zero():
+    feat = ContinuousInput(key="x", bounds=(0.01, 0.5), allow_zero=True)
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.metadata[0].ge == 0.0
+    assert (
+        field_info.description
+        == "Continuous, bounds [0.01, 0.5] — can also be 0 (inactive)"
+    )
+
+
+def test_continuous_output_to_description():
+    from bofire.data_models.features.api import ContinuousOutput
+    from bofire.data_models.objectives.api import MaximizeObjective
+
+    feat = ContinuousOutput(
+        key="yield",
+        objective=MaximizeObjective(w=1.0),
+        context="Target >90%",
+    )
+    assert feat.to_description() == "yield: Maximize — Target >90%"
+
+
+def test_continuous_output_to_description_no_context():
+    from bofire.data_models.features.api import ContinuousOutput
+    from bofire.data_models.objectives.api import MinimizeObjective
+
+    feat = ContinuousOutput(key="yield", objective=MinimizeObjective(w=1.0))
+    assert feat.to_description() == "yield: Minimize"

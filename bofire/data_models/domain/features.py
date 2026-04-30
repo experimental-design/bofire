@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, create_model, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
@@ -914,6 +914,21 @@ class Inputs(_BaseFeatures[AnyInput]):
             .fillna(True)
             .all(axis=1)
         )
+
+    def to_pydantic_model(self, name: str = "CandidatePoint"):
+        """Build a dynamic Pydantic model with one field per input feature.
+
+        Each feature's ``to_pydantic_field()`` determines the field type and
+        constraints (e.g., ge/le for continuous, Literal for categorical).
+
+        Returns:
+            A Pydantic BaseModel subclass with typed fields matching the inputs.
+        """
+        fields = {}
+        for feature in self:
+            field_type, field_info = feature.to_pydantic_field()
+            fields[feature.key] = (field_type, field_info)
+        return create_model(name, **fields)
 
 
 class Outputs(_BaseFeatures[AnyOutput]):
