@@ -30,6 +30,7 @@ def find_local_max_ipopt(
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     use_hessian: bool = False,
     use_cyipopt: Optional[bool] = None,
+    seed: Optional[int] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
@@ -47,6 +48,7 @@ def find_local_max_ipopt(
         use_hessian: If True, the hessian of the objective function is used. Default is False.
         use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
             If None, cyipopt is used if available.
+        seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -101,7 +103,9 @@ def find_local_max_ipopt(
         sampling.sort_index(axis=1, inplace=True)
         x0 = sampling.values.flatten()
     try:
-        sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
+        sampler = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=domain, seed=seed)
+        )
         x0 = (
             sampler.ask(n_experiments, raise_validation_error=False)
             .to_numpy()
@@ -115,7 +119,9 @@ def find_local_max_ipopt(
                       possibly improve performance.",
         )
         x0 = (
-            domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+            domain.inputs.sample(
+                n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=seed
+            )
             .to_numpy()
             .flatten()
         )
