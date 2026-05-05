@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from functools import partial
 from typing import List
 
 import numpy as np
@@ -183,7 +183,23 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         ).tolist()
 
     def get_current_value(self, target_fidelities: dict[int, float]):
-        """Compute the hypervolume of the current HV maximizing set."""
+        """Compute the hypervolume of the current HV maximizing set, m_t^*.
+
+        In general, a knowledge gradient (KG) acquisition function is given by
+        a_{t+1}(x) = E[m_{t+1}^* - m_t^*]
+
+        Given a trained surrogate, trained on data up to time t, m_t^* denotes the maximum
+        of the posterior mean of the model: that is, the surrogate's best guess of the value
+        of the current best experiment. The KG acquisition function evaluated at x gives
+        the expected difference between m_t^*, and the maximum of the posterior mean
+        including an observation at x.
+
+        This extends to the multi output case, however m_t^* is now the maximum hypervolume
+        under the surrogate. See [Daulton et al. 2023] for further details.
+
+        NOTE: since m_t^* is constant wrt x, it can be omitted entirely for the sake of
+        optimization - see the documentation of `qHypervolumeKnowledgeGradient`.
+        """
         assert self.model is not None
         curr_val_acqf = _get_hv_value_function(
             model=self.model,
@@ -236,15 +252,6 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
         include_infeasible_exps_in_acqf_calc: bool | None = False,
     ) -> Self:
         return make_strategy(cls, DataModel, locals())
-
-
-def get_project(
-    target_fidelities: dict[int, float], d: int
-) -> Callable[[Tensor], Tensor]:
-    def project(X):
-        return project_to_target_fidelity(X=X, target_fidelities=target_fidelities, d=d)
-
-    return project
 
 
 def get_acquisition_function_qMFHVKG(
@@ -300,6 +307,12 @@ def get_acquisition_function_qMFHVKG(
         ]
         sampler = ListSampler(*samplers)
 
+    project_fn = partial(
+        project_to_target_fidelity,
+        target_fidelities=target_fidelities,
+        d=X_observed.shape[-1],
+    )
+
     return qMultiFidelityHypervolumeKnowledgeGradient(
         model=model,
         ref_point=torch.as_tensor(
@@ -316,5 +329,5 @@ def get_acquisition_function_qMFHVKG(
         X_pending_evaluation_mask=None,
         current_value=current_value,
         cost_aware_utility=cost_aware_utility,
-        project=get_project(target_fidelities, X_observed.shape[-1]),
+        project=project_fn,
     )
