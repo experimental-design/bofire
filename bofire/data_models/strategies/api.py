@@ -41,7 +41,7 @@ from bofire.data_models.strategies.predictives.mobo import (
     RelativeToMaxMovingReferenceValue,
 )
 from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityStrategy,
+    MultiFidelityVarianceBasedStrategy,
 )
 from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy,

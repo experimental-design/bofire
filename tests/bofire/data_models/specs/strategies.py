@@ -956,7 +956,7 @@ specs.add_invalid(
 )
 
 specs.add_valid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(
@@ -976,7 +976,7 @@ specs.add_valid(
 )
 
 specs.add_invalid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
@@ -991,7 +991,7 @@ specs.add_invalid(
 )
 
 specs.add_invalid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(

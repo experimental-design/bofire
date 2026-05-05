@@ -10,7 +10,7 @@ from bofire.data_models.strategies.predictives.active_learning import (
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityStrategy,
+    MultiFidelityVarianceBasedStrategy,
 )
 from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy,
@@ -36,7 +36,7 @@ _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     MultiplicativeSoboStrategy,
     MultiplicativeAdditiveSoboStrategy,
     CustomSoboStrategy,
-    MultiFidelityStrategy,
+    MultiFidelityVarianceBasedStrategy,
     MultiFidelityHVKGStrategy,
     QparegoStrategy,
     EntingStrategy,

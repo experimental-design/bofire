@@ -8,8 +8,10 @@ from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _Forbid
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate
 
 
-class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
-    type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
+class MultiFidelityVarianceBasedStrategy(SoboStrategy, _ForbidPFMixin):
+    type: Literal["MultiFidelityVarianceBasedStrategy"] = (
+        "MultiFidelityVarianceBasedStrategy"
+    )
 
     fidelity_thresholds: Union[List[float], float] = 0.1
 
@@ -56,7 +58,7 @@ class MultiFidelityStrategy(SoboStrategy, _ForbidPFMixin):
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
         """Ensures that a multi-task model is specified for each output feature"""
-        MultiFidelityStrategy._generate_surrogate_specs(
+        MultiFidelityVarianceBasedStrategy._generate_surrogate_specs(
             self.domain,
             self.surrogate_specs,
         )

@@ -62,7 +62,7 @@ quartodoc:
             - BotorchStrategy
             - EntingStrategy
             - MoboStrategy
-            - MultiFidelityStrategy
+            - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
             - AdditiveSoboStrategy
             - CustomSoboStrategy
@@ -116,7 +116,7 @@ quartodoc:
             - MoboStrategy
             - BotorchStrategy
             - EntingStrategy
-            - MultiFidelityStrategy
+            - MultiFidelityVarianceBasedStrategy
             - ActiveLearningStrategy
             - ShortestPathStrategy
             - StepwiseStrategy

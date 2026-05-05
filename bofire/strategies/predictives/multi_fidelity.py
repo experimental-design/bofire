@@ -13,7 +13,7 @@ from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityStrategy as DataModel,
+    MultiFidelityVarianceBasedStrategy as DataModel,
 )
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.sobo import SoboStrategy
@@ -21,8 +21,7 @@ from bofire.strategies.strategy import make_strategy
 from bofire.utils.naming_conventions import get_column_names
 
 
-class MultiFidelityStrategy(SoboStrategy):
-    # TODO: rename this to "MultiFidelityVarianceBasedStrategy"
+class MultiFidelityVarianceBasedStrategy(SoboStrategy):
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self.task_feature_key = self.domain.inputs.get_keys(CategoricalTaskInput)[0]
