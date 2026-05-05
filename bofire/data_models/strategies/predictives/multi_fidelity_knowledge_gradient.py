@@ -6,6 +6,7 @@ from bofire.data_models.acquisition_functions.acquisition_function import qMFHVK
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput, Feature
 from bofire.data_models.features.task import (
+    CategoricalInput,
     CategoricalTaskInput,
     ContinuousTaskInput,
     TaskInput,
@@ -201,9 +202,7 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
             bool: True if the feature type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type not in [CategoricalOutput]:
-            return True
-        return False
+        return my_type not in [CategoricalOutput, CategoricalInput]
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:

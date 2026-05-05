@@ -143,23 +143,19 @@ class BotorchStrategy(PredictiveStrategy):
         """
 
         if len(domain.inputs.get(CategoricalInput, exact=True)):
-            return (
-                MixedSingleTaskGPSurrogate(
-                    inputs=domain.inputs,
-                    outputs=Outputs(
-                        features=[domain.outputs.get_by_key(output_feature)],
-                    ),
+            return MixedSingleTaskGPSurrogate(
+                inputs=domain.inputs,
+                outputs=Outputs(
+                    features=[domain.outputs.get_by_key(output_feature)],
                 ),
             )
 
-        return (
-            SingleTaskGPSurrogate(
-                inputs=domain.inputs,
-                outputs=Outputs(
-                    features=[
-                        domain.outputs.get_by_key(output_feature),
-                    ],
-                ),
+        return SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(
+                features=[
+                    domain.outputs.get_by_key(output_feature),
+                ],
             ),
         )
 
