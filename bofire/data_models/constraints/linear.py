@@ -78,6 +78,21 @@ class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):
 
     type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
 
+    def to_description(self) -> str:
+        """Render as ``"1.0*x1 + 2.0*x2 = 5.0"``.
+
+        Example::
+
+            >>> c = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0)
+            >>> c.to_description()
+            '1.0*x1 + 2.0*x2 = 5.0'
+        """
+        terms = " + ".join(f"{c}*{f}" for c, f in zip(self.coefficients, self.features))
+        desc = f"{terms} = {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
 
 class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     """Linear inequality constraint of the form `coefficients * x <= rhs`.
@@ -93,6 +108,21 @@ class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     """
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
+
+    def to_description(self) -> str:
+        """Render as ``"1.0*x1 + 2.0*x2 <= 5.0"``.
+
+        Example::
+
+            >>> c = LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0)
+            >>> c.to_description()
+            '1.0*x1 + 2.0*x2 <= 5.0'
+        """
+        terms = " + ".join(f"{c}*{f}" for c, f in zip(self.coefficients, self.features))
+        desc = f"{terms} <= {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
 
     def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
         """Return attributes in the smaller equal convention

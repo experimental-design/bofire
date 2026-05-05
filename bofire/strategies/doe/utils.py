@@ -559,6 +559,15 @@ class ConstraintWrapper:
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     """Checks if NChooseK constraints of domain can be formulated as bounds.
 
+    For every feature referenced by an NChooseKConstraint the lower bound must
+    be >= 0 (so that "inactive" variables can be pinned to 0) and the upper
+    bound must be > 0. The feature sets of different NChooseKConstraints must
+    be pairwise disjoint.
+
+    Note: a non-zero lower bound (e.g. 0.1) is fine because the bounds-based
+    approach overrides the bounds of inactive variables to [0, 0] per
+    experiment while keeping the original [lb, ub] for active variables.
+
     Args:
         domain (Domain): Domain whose NChooseK constraints should be checked
 
@@ -579,10 +588,15 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     for c in nchoosek_constraints:
         for name in np.unique(c.features):
             input = domain.inputs.get_by_key(name)
-            if input.bounds[0] > 0 or input.bounds[1] < 0:
+            if input.bounds[0] < 0:
                 raise ValueError(
-                    f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
-                    domain of the affected decision variables.",
+                    f"Constraint {c} cannot be formulated as bounds. "
+                    f"Feature '{name}' has lower bound {input.bounds[0]} < 0.",
+                )
+            if input.bounds[1] < 0:
+                raise ValueError(
+                    f"Constraint {c} cannot be formulated as bounds. "
+                    f"Feature '{name}' has upper bound {input.bounds[1]} < 0.",
                 )
 
     # check if the parameter names of two nchoose overlap
@@ -622,25 +636,43 @@ def nchoosek_constraints_as_bounds(
     if len(domain.constraints) > 0:
         for constraint in domain.constraints:
             if isinstance(constraint, NChooseKConstraint):
-                n_inactive = len(constraint.features) - constraint.max_count
-                if n_inactive > 0:
-                    # find indices of constraint.names in names
-                    ind = [
-                        i
-                        for i, p in enumerate(domain.inputs.get_keys())
-                        if p in constraint.features
-                    ]
+                n_features = len(constraint.features)
+                # find indices of constraint features in the domain input keys
+                ind = [
+                    i
+                    for i, p in enumerate(domain.inputs.get_keys())
+                    if p in constraint.features
+                ]
 
-                    # find and shuffle all combinations of elements of ind of length max_active
-                    ind = np.array(list(combinations(ind, r=n_inactive)))
-                    np.random.shuffle(ind)
+                # Build all valid deactivation patterns for every allowed
+                # activity level k in [min_count, max_count].  For each k,
+                # exactly (n_features - k) variables are set to zero.
+                all_inactive_patterns = []
+                for k in range(max(constraint.min_count, 1), constraint.max_count + 1):
+                    n_inactive = n_features - k
+                    if n_inactive > 0:
+                        all_inactive_patterns.extend(
+                            list(combinations(ind, r=n_inactive))
+                        )
 
-                    # set bounds to zero in each experiments for the variables that should be inactive
+                if len(all_inactive_patterns) > 0:
+                    # patterns may have different lengths (different activity
+                    # levels), so we keep them as a plain list of tuples
+                    # instead of converting to a numpy array.
+                    np.random.shuffle(
+                        all_inactive_patterns
+                    )  # shuffle patterns to avoid biasing the optimization towards certain patterns
+
+                    # set bounds to zero for the chosen inactive variables per experiment
+                    D = len(domain.inputs)
                     for i in range(n_experiments):
-                        ind_vanish = ind[i % len(ind)]
-                        bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
-                        if i % len(ind) == len(ind) - 1:
-                            np.random.shuffle(ind)
+                        pattern = all_inactive_patterns[i % len(all_inactive_patterns)]
+                        for idx in pattern:
+                            bounds[idx + i * D, :] = [0, 0]
+                        if i % len(all_inactive_patterns) == (
+                            len(all_inactive_patterns) - 1
+                        ):
+                            np.random.shuffle(all_inactive_patterns)
     else:
         pass
 

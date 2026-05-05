@@ -24,6 +24,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     ):
         self.kernel = data_model.kernel
         self.noise_prior = data_model.noise_prior
+        self.noise_constraint = data_model.noise_constraint
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.SingleTaskGP] = None
@@ -57,5 +58,9 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
 
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
+        if self.noise_constraint is not None:
+            self.model.likelihood.noise_covar.raw_noise_constraint = priors.map(
+                self.noise_constraint
+            )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)

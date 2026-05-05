@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal
+from typing import Annotated, Any, List, Literal
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ class ProductConstraint(IntrapointConstraint):
 
     """
 
-    type: str
+    type: Any
     exponents: Annotated[List[float], Field(min_length=2)]
     rhs: float
     sign: Literal[1, -1] = 1
@@ -102,6 +102,22 @@ class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
 
     type: Literal["ProductEqualityConstraint"] = "ProductEqualityConstraint"
 
+    def to_description(self) -> str:
+        """Render as ``"x1^2 * x2^3 = 1.0"``.
+
+        Example::
+
+            >>> c = ProductEqualityConstraint(features=["x1", "x2"], exponents=[2, 3], rhs=1.0, sign=1)
+            >>> c.to_description()
+            'x1^2 * x2^3 = 1.0'
+        """
+        sign = "" if self.sign == 1 else "-"
+        terms = " * ".join(f"{f}^{e}" for f, e in zip(self.features, self.exponents))
+        desc = f"{sign}{terms} = {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
 
 class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
@@ -117,3 +133,19 @@ class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     """
 
     type: Literal["ProductInequalityConstraint"] = "ProductInequalityConstraint"
+
+    def to_description(self) -> str:
+        """Render as ``"x1^2 * x2^3 <= 1.0"``.
+
+        Example::
+
+            >>> c = ProductInequalityConstraint(features=["x1", "x2"], exponents=[2, 3], rhs=1.0, sign=1)
+            >>> c.to_description()
+            'x1^2 * x2^3 <= 1.0'
+        """
+        sign = "" if self.sign == 1 else "-"
+        terms = " * ".join(f"{f}^{e}" for f, e in zip(self.features, self.exponents))
+        desc = f"{sign}{terms} <= {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc

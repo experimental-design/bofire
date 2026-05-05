@@ -1,6 +1,9 @@
 from functools import partial
-from typing import Union
 
+from bofire.data_models.priors._register import (
+    register_prior,
+    register_prior_constraint,
+)
 from bofire.data_models.priors.constraint import (
     GreaterThan,
     LessThan,
@@ -20,12 +23,10 @@ from bofire.data_models.priors.normal import (
     NormalPrior,
 )
 from bofire.data_models.priors.prior import Prior
+from bofire.data_models.unions import tagged_union
 
 
-AbstractPrior = Prior
-AbstractPriorConstraint = Union[PriorConstraint, Interval]
-
-AnyPrior = Union[
+_PRIOR_TYPES: list[type[Prior]] = [
     GammaPrior,
     NormalPrior,
     LKJPrior,
@@ -33,13 +34,22 @@ AnyPrior = Union[
     DimensionalityScaledLogNormalPrior,
 ]
 
-AnyPriorConstraint = Union[
-    NonTransformedInterval, LogTransformedInterval, Positive, GreaterThan, LessThan
+AnyPrior = tagged_union(*_PRIOR_TYPES)
+
+_PRIOR_CONSTRAINT_TYPES: list[type] = [
+    NonTransformedInterval,
+    LogTransformedInterval,
+    Positive,
+    GreaterThan,
+    LessThan,
 ]
+
+AnyPriorConstraint = tagged_union(*_PRIOR_CONSTRAINT_TYPES)
+
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters
-AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
+AnyGeneralPrior = tagged_union(GammaPrior, NormalPrior, LKJPrior, LogNormalPrior)
 
 # default priors of interest
 # botorch defaults

@@ -1,10 +1,11 @@
 import itertools
-from typing import List, Union
+from typing import List, Type
 
 from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.deterministic import (
     CategoricalDeterministicSurrogate,
     LinearDeterministicSurrogate,
@@ -32,9 +33,10 @@ from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import tagged_union
 
 
-AnyBotorchSurrogate = Union[
+_BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
@@ -52,6 +54,31 @@ AnyBotorchSurrogate = Union[
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
 ]
+
+AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
+
+
+def register_botorch_surrogate(
+    data_model_cls: Type[BotorchSurrogate],
+) -> None:
+    """Register a custom BotorchSurrogate type so it is accepted by BotorchSurrogates.
+
+    This appends the type to the internal registry, rebuilds the
+    ``AnyBotorchSurrogate`` discriminated union, and calls ``model_rebuild``
+    on ``BotorchSurrogates`` so that Pydantic picks up the new type.
+
+    Args:
+        data_model_cls: A concrete subclass of ``BotorchSurrogate``.
+    """
+    global AnyBotorchSurrogate
+    if data_model_cls in _BOTORCH_SURROGATE_TYPES:
+        return
+    _BOTORCH_SURROGATE_TYPES.append(data_model_cls)
+    AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
+    new_annotation = List[AnyBotorchSurrogate]
+    BotorchSurrogates.__annotations__["surrogates"] = new_annotation
+    BotorchSurrogates.model_fields["surrogates"].annotation = new_annotation
+    BotorchSurrogates.model_rebuild(force=True)
 
 
 class BotorchSurrogates(BaseModel):

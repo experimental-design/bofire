@@ -1,0 +1,122 @@
+---
+title: "LLM-driven Molecular Optimization"
+format:
+  html:
+    code-fold: false
+    toc: true
+jupyter: python3
+execute:
+  eval: false
+  warning: false
+---
+
+# LLM-driven Molecular Optimization
+
+This tutorial shows how to use `LLMStrategy` to propose photoswitch candidates that maximize the E-isomer pi-pi* wavelength. The strategy reads the optimization problem — feature bounds, objectives, contextual descriptions, and prior experiments — and prompts a large language model directly for new candidates.
+
+::: {.callout-note}
+This example needs the optional `llm` extra:
+
+```bash
+pip install "bofire[llm]"
+```
+
+and an Anthropic API key in the environment (`ANTHROPIC_API_KEY`). The code is shown for illustration; it is not executed during the documentation build because real LLM calls require credentials and incur cost.
+:::
+
+## Define the domain
+
+Use the photoswitch dataset shipped with BoFire as the candidate pool, and wrap it in a `LookupTableBenchmark` so we can score proposals.
+
+```{python}
+import pandas as pd
+from io import StringIO
+
+from bofire.benchmarks.data.photoswitches import EXPERIMENTS
+from bofire.benchmarks.LookupTableBenchmark import LookupTableBenchmark
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import CategoricalMolecularInput, ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective
+
+INPUT_KEY = "Molecule"
+OUTPUT_KEY = "E isomer pi-pi* wavelength in nm"
+
+all_experiments = pd.read_json(StringIO(EXPERIMENTS)).rename(
+    columns={"SMILES": INPUT_KEY},
+)
+all_experiments = all_experiments.loc[all_experiments[OUTPUT_KEY].notnull()]
+
+domain = Domain.from_lists(
+    inputs=[
+        CategoricalMolecularInput(
+            key=INPUT_KEY,
+            categories=all_experiments[INPUT_KEY].to_list(),
+        ),
+    ],
+    outputs=[ContinuousOutput(key=OUTPUT_KEY, objective=MaximizeObjective(w=1.0))],
+)
+domain.context = "Find molecules with high E isomer pi-pi* wavelength."
+
+benchmark = LookupTableBenchmark(
+    domain=domain,
+    lookup_table=all_experiments[[INPUT_KEY, OUTPUT_KEY]]
+    .copy()
+    .reset_index(drop=True),
+)
+```
+
+## Build the strategy
+
+`LLMStrategy` needs an LLM provider and optional `model_settings`. Setting `thinking="medium"` enables pydantic-ai's cross-provider extended-reasoning capability — useful for harder design problems, at higher cost and latency.
+
+```{python}
+import bofire.strategies.api as strategies
+from bofire.data_models.llm.api import AnthropicLLMProvider
+from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataModel
+
+strategy_dm = LLMStrategyDataModel(
+    domain=domain,
+    llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),
+    model_settings={"thinking": "medium"},
+    n_recent_experiments=10,
+    n_top_experiments=10,
+)
+
+strategy = strategies.map(strategy_dm)
+```
+
+## Cold start: propose candidates without prior experiments
+
+`LLMStrategy.has_sufficient_experiments()` returns `True` even before any experiments are recorded — the LLM can propose from the domain alone.
+
+```{python}
+candidates = strategy.ask(10)
+candidates[[INPUT_KEY, "reasoning"]]
+```
+
+The returned dataframe contains the candidate molecules plus a `reasoning` column with short explanations. Score them with the benchmark:
+
+```{python}
+benchmark.f(candidates)
+```
+
+## Iterate with prior experiments
+
+Use `tell()` to feed observed measurements back to the strategy. The next `ask()` call includes them in the prompt so the LLM can build on what worked.
+
+```{python}
+initial = benchmark.domain.inputs.sample(10, seed=42)
+initial_observed = benchmark.f(initial, return_complete=True)
+strategy.tell(initial_observed)
+
+next_candidates = strategy.ask(10)
+benchmark.f(next_candidates)
+```
+
+The prompt is capped at `n_recent_experiments` most-recent + `n_top_experiments` best-performing experiments (deduplicated), keeping prompt size bounded as the campaign grows.
+
+## Caveats
+
+- **No calibrated uncertainty.** Treat candidates as informed heuristics, not optima. Where a Bayesian optimizer is applicable, it is usually preferable.
+- **Cost and latency.** Reasoning models with `thinking="high"` can be 5–10x slower and more expensive than non-reasoning calls.
+- **Constraint handling.** Returned candidates are validated against the domain. Failures are sent back to the LLM via pydantic-ai's `output_retries` for self-correction.

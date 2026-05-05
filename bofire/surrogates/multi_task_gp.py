@@ -33,6 +33,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
+        self.noise_constraint = data_model.noise_constraint
         self.task_prior = data_model.task_prior
         if isinstance(self.task_prior, LKJPrior):
             # set the number of tasks in the prior
@@ -73,6 +74,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
+            # Pass None explicitly to avoid the default BetaPrior introduced in
+            # botorch PR #3271, which registers lambdas in PositiveIndexKernel
+            # (PR #3267) and breaks torch.save-based serialization.
+            task_covar_prior=None,
         )
 
         if isinstance(self.task_prior, LKJPrior):
@@ -85,6 +90,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
+        if self.noise_constraint is not None:
+            self.model.likelihood.noise_covar.raw_noise_constraint = priors.map(
+                self.noise_constraint
+            )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)

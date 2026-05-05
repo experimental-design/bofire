@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Optional, Type
+from typing import Annotated, Any, Optional, Type
 
 from pydantic import Field, field_validator, model_validator
 
@@ -10,7 +10,7 @@ from bofire.data_models.features.api import Feature
 
 
 class Strategy(BaseModel):
-    type: str
+    type: Any
     domain: Domain
     seed: Optional[Annotated[int, Field(ge=0)]] = None
 

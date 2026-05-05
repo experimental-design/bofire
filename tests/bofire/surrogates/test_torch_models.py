@@ -631,7 +631,11 @@ def test_botorch_models_invalid_compatibilize():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
-    experiments1.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments1.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments1["valid_y"] = 1
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=inputs,
@@ -669,7 +673,11 @@ def test_botorch_models_fit_and_compatibilize():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
-    experiments1.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments1.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments1["valid_y"] = 1
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=inputs,
@@ -693,7 +701,11 @@ def test_botorch_models_fit_and_compatibilize():
         [experiments1, inputs.get_by_key("x_cat").sample(10)],
         axis=1,
     )
-    experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments2.eval(
+        "y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1
@@ -783,7 +795,11 @@ def test_botorch_models_rf_fit_and_compatibilize():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
-    experiments1.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments1.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments1["valid_y"] = 1
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=inputs,
@@ -807,7 +823,11 @@ def test_botorch_models_rf_fit_and_compatibilize():
         [experiments1, inputs.get_by_key("x_cat").sample(10)],
         axis=1,
     )
-    experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments2.eval(
+        "y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1
@@ -908,7 +928,11 @@ def test_empirical_model():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments1 = inputs.sample(n=10)
-    experiments1.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments1.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments1["valid_y"] = 1
     data_model1 = data_models.EmpiricalSurrogate(inputs=inputs, outputs=outputs)
     surrogate1 = surrogates.map(data_model1)
@@ -932,7 +956,11 @@ def test_empirical_model():
         [experiments1, inputs.get_by_key("x_cat").sample(10)],
         axis=1,
     )
-    experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments2.eval(
+        "y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1

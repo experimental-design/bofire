@@ -1,1 +1,1 @@
-from bofire.priors.mapper import map
+from bofire.priors.mapper import map, register

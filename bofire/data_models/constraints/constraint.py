@@ -14,6 +14,11 @@ class Constraint(BaseModel):
 
     type: Any
     features: FeatureKeys
+    context: Optional[str] = None
+
+    @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this constraint."""
 
     @abstractmethod
     def is_fulfilled(
@@ -71,11 +76,11 @@ class IntrapointConstraint(Constraint):
     when asking a strategy to return one or more candidates.
     """
 
-    type: str
+    type: Any
 
 
 class EqualityConstraint(IntrapointConstraint):
-    type: str
+    type: Any
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         return pd.Series(
@@ -85,7 +90,7 @@ class EqualityConstraint(IntrapointConstraint):
 
 
 class InequalityConstraint(IntrapointConstraint):
-    type: str
+    type: Any
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         return self(experiments) <= 0 + tol

@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Literal, Optional, Type, Union
+from typing import Literal, Optional, Type
 
 from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import BotorchSurrogates
 from bofire.data_models.types import IntPowerOfTwo
+from bofire.data_models.unions import tagged_union
 
 
 class AcquisitionOptimizer(BaseModel):
@@ -241,4 +242,4 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         pass
 
 
-AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithmOptimizer]
+AnyAcqfOptimizer = tagged_union(BotorchOptimizer, GeneticAlgorithmOptimizer)
