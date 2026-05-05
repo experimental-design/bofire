@@ -3,6 +3,7 @@ from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.fractional_factorial import (
     FractionalFactorialStrategy,
 )
+from bofire.data_models.strategies.llm import LLMStrategy
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,
 )
@@ -45,6 +46,7 @@ _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     MoboStrategy,
     ShortestPathStrategy,
     FractionalFactorialStrategy,
+    LLMStrategy,
 ]
 
 ActualStrategy = tagged_union(*_ACTUAL_STRATEGY_TYPES)

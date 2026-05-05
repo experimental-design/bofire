@@ -14,6 +14,10 @@ class Objective(BaseModel):
     type: Any
 
     @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this objective."""
+
+    @abstractmethod
     def __call__(
         self,
         x: Union[pd.Series, np.ndarray],

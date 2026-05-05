@@ -26,6 +26,7 @@ from bofire.data_models.features.api import (
     ContinuousTaskInput,
     DiscreteInput,
 )
+from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -1009,6 +1010,58 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Only one task can be the target fidelity",
+)
+
+# LLMStrategy specs — uses a single-objective domain
+_llm_domain = Domain(
+    inputs=Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            CategoricalInput(key="x3", categories=["a", "b", "c"]),
+        ],
+    ),
+    outputs=Outputs(
+        features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+    ),
+)
+
+specs.add_valid(
+    strategies.LLMStrategy,
+    lambda: {
+        "domain": _llm_domain.model_dump(),
+        "llm": AnthropicLLMProvider(
+            model="claude-sonnet-4-20250514",
+            api_key_env_var="ANTHROPIC_API_KEY",
+        ).model_dump(),
+        "seed": 42,
+        "model_settings": None,
+        "output_retries": 3,
+        "n_recent_experiments": None,
+        "n_top_experiments": None,
+        "system_prompt": None,
+    },
+)
+
+specs.add_valid(
+    strategies.LLMStrategy,
+    lambda: {
+        "domain": _llm_domain.model_dump(),
+        "llm": AnthropicLLMProvider(
+            model="claude-sonnet-4-20250514",
+            api_key_env_var="ANTHROPIC_API_KEY",
+        ).model_dump(),
+        "seed": 42,
+        "model_settings": {
+            "temperature": 0.7,
+            "max_tokens": 4096,
+            "thinking": "medium",
+        },
+        "output_retries": 5,
+        "n_recent_experiments": 10,
+        "n_top_experiments": 5,
+        "system_prompt": "You are a helpful assistant.",
+    },
 )
 
 specs.add_valid(

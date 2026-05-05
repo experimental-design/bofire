@@ -203,3 +203,8 @@ def molfeatures_spec(request) -> specs.Spec:
 @fixture(params=specs.local_search_configs.valids)
 def local_search_config_spec(request) -> specs.Spec:
     return request.param
+
+
+@fixture(params=specs.llm.valids)
+def llm_spec(request) -> specs.Spec:
+    return request.param

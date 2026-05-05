@@ -14,6 +14,7 @@ from tests.bofire.data_models.specs.engineered_features import (
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.inputs import specs as inputs
 from tests.bofire.data_models.specs.kernels import specs as kernels
+from tests.bofire.data_models.specs.llm import specs as llm
 from tests.bofire.data_models.specs.local_search_config import (
     specs as local_search_configs,
 )

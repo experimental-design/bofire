@@ -1,5 +1,6 @@
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
+from bofire.strategies.llm import LLMStrategy
 from bofire.strategies.mapper import map, register
 from bofire.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
