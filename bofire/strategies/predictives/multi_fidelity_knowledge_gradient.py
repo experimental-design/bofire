@@ -113,10 +113,6 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
 
         X_train, X_pending = self.get_acqf_input_tensors()
 
-        # We must subset the model here, to remove the deterministic cost model from the
-        # ModelList. Otherwise, an error will be raised in the acqf when we try to
-        # generate fantasies, since determinstic models do not have a `.fantasize`
-        # method.
         assert self.model is not None
         objective = self._get_objective()
 
