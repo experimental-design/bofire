@@ -38,11 +38,7 @@ from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
 from bofire.data_models.strategies.predictives.sobo import _ForbidPFMixin
-from bofire.data_models.surrogates.api import (
-    AnyBotorchSurrogate,
-    BotorchSurrogates,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import AnyBotorchSurrogate, SingleTaskGPSurrogate
 from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 
 
@@ -153,26 +149,20 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
 
         return self
 
-    @staticmethod
-    def _generate_surrogate_specs(
-        domain: Domain,
-        surrogate_specs: BotorchSurrogates,
-    ) -> BotorchSurrogates:
-        """Method to generate multi-task model specifications when no model specs are passed
-        As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
+    @classmethod
+    def _generate_single_surrogate_spec_for_output(
+        cls, domain: Domain, output_feature: str
+    ) -> SingleTaskGPSurrogate:
+        """Generate a SingleTaskGPSurrogate surrogate if one is not specified for a given output feature.
+        The kernel uses a DownsamplingKernel for the fidelity features.
+
         Args:
             domain (Domain): The domain defining the problem to be optimized with the strategy
-            surrogate_specs (BotorchSurrogates, optional): List of model specification classes specifying the models to be used in the strategy. Defaults to None.
-        Raises:
-            KeyError: if there is a model spec for an unknown output feature
-            KeyError: if a model spec has an unknown input feature
-        Returns:
-            BotorchSurrogates: List of model specification classes
-        """
-        existing_keys = surrogate_specs.outputs.get_keys()
-        non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
-        _surrogate_specs = surrogate_specs.surrogates
+            output_feature (str): The key of the target output feature.
 
+        Returns:
+            SingleTaskGPSurrogate: Spec for the surrogate for the given output feature.
+        """
         task_keys = domain.inputs.get_keys(includes=TaskInput)
         non_task_keys = domain.inputs.get_keys(excludes=TaskInput)
 
@@ -194,19 +184,11 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
             ]
         )
 
-        for output_feature in non_exisiting_keys:
-            _surrogate_specs.append(
-                SingleTaskGPSurrogate(
-                    inputs=domain.inputs,
-                    outputs=Outputs(
-                        features=[domain.outputs.get_by_key(output_feature)]
-                    ),
-                    kernel=surrogate_kernel,
-                )
-            )
-        surrogate_specs.surrogates = _surrogate_specs
-        surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
-        return surrogate_specs
+        return SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),
+            kernel=surrogate_kernel,
+        )
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
