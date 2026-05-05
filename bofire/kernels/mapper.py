@@ -486,7 +486,7 @@ def map_DownsamplingKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
         offset_prior=(
-            priors.map(data_model.offset_prior, d=len(active_dims))
+            priors.map(data_model.offset_prior, d=1)
             if data_model.offset_prior is not None
             else None
         ),
@@ -496,7 +496,7 @@ def map_DownsamplingKernel(
             else None
         ),
         power_prior=(
-            priors.map(data_model.power_prior, d=len(active_dims))
+            priors.map(data_model.power_prior, d=1)
             if data_model.power_prior is not None
             else None
         ),
