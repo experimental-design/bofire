@@ -34,7 +34,11 @@ from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
 )
-from bofire.data_models.strategies.predictives.mobo import ExplicitReferencePoint
+from bofire.data_models.strategies.predictives.mobo import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+)
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
@@ -73,6 +77,43 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
             raise ValueError("MFHVKG only supports continuous fidelities.")
 
         return domain
+
+    @model_validator(mode="after")
+    def validate_ref_point(self):
+        """Validate that the provided refpoint matches the provided domain.
+
+        Mirrors :meth:`MoboStrategy.validate_ref_point`: normalizes ``None`` and
+        plain ``dict`` reference points to an :class:`ExplicitReferencePoint`
+        and checks that the keys match the multi-objective output features.
+        """
+        if self.ref_point is None:
+            self.ref_point = ExplicitReferencePoint(
+                values={
+                    k: AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0)
+                    for k in self.domain.outputs.get_keys_by_objective(
+                        [
+                            MaximizeObjective,
+                            MinimizeObjective,
+                            CloseToTargetObjective,
+                        ],
+                    )
+                }
+            )
+        if isinstance(self.ref_point, dict):
+            self.ref_point = ExplicitReferencePoint(
+                values={
+                    k: FixedReferenceValue(value=v) for k, v in self.ref_point.items()
+                }
+            )
+        keys = self.domain.outputs.get_keys_by_objective(
+            [MaximizeObjective, MinimizeObjective, CloseToTargetObjective],
+        )
+        ref_point_keys = self.ref_point.values.keys()
+        if sorted(keys) != sorted(ref_point_keys):
+            raise ValueError(
+                f"Provided refpoint do not match the domain, expected keys: {keys}",
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_fidelity_cost_model_spec(self):

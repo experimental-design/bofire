@@ -1,4 +1,4 @@
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 import numpy as np
 from pydantic import model_validator
@@ -9,7 +9,15 @@ from bofire.data_models.features.feature import Input
 
 
 class TaskInput(Input):
-    type: Literal["TaskInput"] = "TaskInput"
+    """Abstract base class for task-encoding inputs.
+
+    This class is not directly instantiable and is not part of any
+    ``AnyFeature``/``AnyInput`` union. Use :class:`CategoricalTaskInput` or
+    :class:`ContinuousTaskInput` instead. It exists solely so that strategies
+    can use ``isinstance(feat, TaskInput)`` to detect either flavour.
+    """
+
+    type: Any
 
 
 class CategoricalTaskInput(TaskInput, CategoricalInput):

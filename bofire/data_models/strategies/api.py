@@ -90,6 +90,8 @@ AnyPredictive = tagged_union(
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,
+    MultiFidelityVarianceBasedStrategy,
+    MultiFidelityHVKGStrategy,
 )
 
 AnyLocalSearchConfig = LSRBO
