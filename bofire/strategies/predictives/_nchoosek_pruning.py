@@ -341,10 +341,102 @@ def _features_eligible_for_zero(
 #
 # This requires `_build_*_variant` to receive the loop's current
 # `active_set` (today they only get `pinned_zero_indices`). Plumbing
-# is small. Worth bundling with the activate-zero work for stage 3
+# is small. Worth bundling with the activate-zero work below
 # (no semi-continuous benchmarks in stage 1/2 exercise this code path,
 # so the bug is currently latent — `final_local_reopt=True` papers
 # over it for the only domain shape in which it would surface today).
+# ---------------------------------------------------------------------------
+#
+# TODO: introduce an "activate-zero" action for non-semi-continuous
+# features when `min_count > 0` is violated.
+#
+# Today the action set only contains:
+#   - zero(j) for any j currently active and in some violated NChooseK,
+#   - active(j) for any j ∈ fractional (snap a fractional semi-continuous
+#     feature into [lb_j, ub_j]).
+#
+# Both move features *out* of the active set or resolve fractional
+# states. Neither moves a currently-zero feature *into* the active set.
+# So if the AF maximiser produces a candidate with `a_c < min_count_c`
+# for some constraint `c` (with `none_also_valid=False` or `count > 0`)
+# and there are no fractional features, the eligibility set
+# `_features_eligible_for_zero(...)` collapses to ∅ — fractional is
+# empty, no constraint is violated by max_count, no zero action helps.
+# The loop bails with `PruningInfeasibleError`.
+#
+# This regime is reachable any time:
+#   - `min_count_c > 0` and `none_also_valid_c = False`, AND
+#   - the AF (e.g. qLogEI on a Map-SAAS posterior) concentrates mass on
+#     fewer than `min_count_c` features.
+#
+# It is the dominant failure mode on real formulation domains (mixture
+# `Σ x = 1` + NChooseK with `min_count = 6` over 12 features). With
+# only `min_count = 0` allowed, BoFire users can't model "you must use
+# at least N components in this formulation" — which is the most common
+# real cardinality constraint.
+#
+# Principled fix: add a third action category, mirror of the active
+# variant but for non-semi-continuous features.
+#
+#     def _build_activate_variant(
+#         x_i, j_idx, ub_j, bounds, ineq, eq, acqf, per_step_local_reopt,
+#         active_set, pinned_zero_indices, fixed_features, tol,
+#     ) -> Tuple[Tensor, bool]:
+#         """Snap currently-zero feature j into a positive value.
+#         Same machinery as `_build_active_variant` but with the per-
+#         feature lower bound set to `tol` (any positive value) instead
+#         of the semi-continuous `lb_j`. The QP enforces sum=1 etc.
+#         The optimiser picks where in `[tol, ub_j]` to place x_j.
+#         """
+#         tightened = bounds.clone()
+#         tightened[0, j_idx] = tol
+#         tightened[1, j_idx] = ub_j
+#         ...  # rest mirrors _build_active_variant
+#
+# Eligibility:
+#   - activate(j) is admissible only when some `a_c < min_count_c`
+#     (with the usual `none_also_valid` carve-out) AND `j` is currently
+#     in `zero_set` AND `j ∈ features(c)` for some min-count-violated
+#     constraint `c`.
+#   - Each iteration's action set then becomes
+#     {zero(j) : eligible_for_zero} ∪
+#     {active(j) : j ∈ fractional ∩ semicontinuous_specs} ∪
+#     {activate(j) : eligible_for_activate}.
+#   - Termination unchanged: stop when no fractional, all `a_c` in
+#     `[min_count_c, max_count_c]`.
+#
+# Selection rule: same — argmin AF reduction across all action kinds.
+# An activate variant typically *increases* AF (we're adding a new
+# active feature to a sparse candidate that the surrogate likes), so
+# its reduction is small or negative; the greedy will prefer it
+# whenever min_count is the binding violation, which is the right
+# behaviour.
+#
+# State updates:
+#   - activate(j): zero_set.discard(j); active_set.add(j); a_c
+#     increments for every c ∋ j.
+#
+# Edge cases:
+#   - Mutual infeasibility (e.g. one constraint demands ≥ 2 actives,
+#     another forbids both). The eligibility set still empties out;
+#     `PruningInfeasibleError` still fires. The error class stays;
+#     only the *common* min-count-violation case ceases to raise.
+#   - Interaction with `per_step_local_reopt`: the activate variant
+#     calls `optimize_acqf` with `bounds[0, j_idx] = tol` (or the
+#     partial-drift fix's tightened bounds for other actives). Same
+#     plumbing as the active variant.
+#   - Cost: the action set size grows by up to |zero_set| in
+#     min-count-violated iterations. Manageable.
+#
+# Plumbing requirement: `_features_eligible_for_activate(...)` helper,
+# and the loop's per-iteration state needs to track per-constraint
+# min-count violations explicitly (currently `_violated_constraints`
+# only tracks max-count violations).
+#
+# Order of operations: do the partial-drift fix above first (cleaner
+# foundation, smaller scope), then this. Both fixes touch the variant
+# builders' signatures, so doing them together would conflate two
+# design discussions in the same diff; sequential is cleaner.
 # ---------------------------------------------------------------------------
 
 
