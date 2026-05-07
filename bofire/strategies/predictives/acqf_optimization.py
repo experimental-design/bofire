@@ -47,6 +47,12 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies import utils
+from bofire.strategies.predictives._nchoosek_pruning import (
+    is_nchoosek_pruning_applicable,
+    is_pruning_applicable,
+    prune_nchoosek,
+    semicontinuous_specs_from_domain,
+)
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -54,6 +60,7 @@ from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
     get_nonlinear_constraints,
+    get_torch_bounds_from_domain,
     tkwargs,
 )
 
@@ -367,6 +374,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         self.local_search_config = data_model.local_search_config
 
+        self.per_step_local_reopt = data_model.per_step_local_reopt
+        self.final_local_reopt = data_model.final_local_reopt
+
         super().__init__(data_model)
 
     def _setup(self):
@@ -379,8 +389,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
+        pruning_applicable = is_pruning_applicable(domain)
+        if pruning_applicable and self.local_search_config is not None:
+            raise NotImplementedError(
+                "Local search region BO combined with NChooseK / "
+                "semi-continuous pruning is not yet supported. Disable "
+                "either `local_search_config` or the constraints that "
+                "trigger pruning."
+            )
+
         input_preprocessing_specs = self._input_preprocessing_specs(domain)
-        bounds = utils.get_torch_bounds_from_domain(domain, input_preprocessing_specs)
+        bounds = get_torch_bounds_from_domain(
+            domain,
+            input_preprocessing_specs,
+            relax_allow_zero=pruning_applicable,
+        )
 
         # setup local bounds
         assert experiments is not None
@@ -397,6 +420,17 @@ class BotorchOptimizer(AcquisitionOptimizer):
             acqfs=acqfs,
             bounds=bounds,
         )
+        # print(candidates)
+
+        if pruning_applicable:
+            candidates = self._prune_if_applicable(
+                candidates=candidates,
+                acqfs=acqfs,
+                domain=domain,
+                bounds=bounds,
+            )
+
+        # print(candidates)
 
         candidates = self._candidates_tensor_to_dataframe(candidates, domain)
 
@@ -434,6 +468,49 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return candidates
 
+    def _prune_if_applicable(
+        self,
+        candidates: Tensor,
+        acqfs: List[AcquisitionFunction],
+        domain: Domain,
+        bounds: Tensor,
+    ) -> Tensor:
+        """Apply BONSAI greedy pruning to the AF-winning candidate tensor.
+
+        Caller must have already verified ``is_pruning_applicable(domain)``.
+        Reuses the bounds (relaxed for semi-continuous features) the AF
+        maximiser used, and the same linear-constraint and
+        fixed-feature accessors.
+
+        Forwards ``acqfs[0]`` to the greedy AF evaluation. Multi-AF
+        per-candidate pruning is not yet implemented.
+        # TODO: per-AF pruning for multi-objective.
+        """
+        features2idx = self._features2idx(domain)
+        inequality_constraints = get_linear_constraints(
+            domain, constraint=LinearInequalityConstraint
+        )
+        equality_constraints = get_linear_constraints(
+            domain, constraint=LinearEqualityConstraint
+        )
+        fixed_features = self.get_fixed_features(domain)
+        semicontinuous_specs = semicontinuous_specs_from_domain(domain, features2idx)
+        nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
+
+        return prune_nchoosek(
+            X=candidates,
+            acqf=acqfs[0],
+            nchoosek_constraints=nchoosek_constraints,
+            features2idx=features2idx,
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            semicontinuous_specs=semicontinuous_specs,
+            fixed_features=fixed_features,
+            per_step_local_reopt=self.per_step_local_reopt,
+            final_local_reopt=self.final_local_reopt,
+        )
+
     def _optimize_acqf_continuous(
         self,
         domain: Domain,
@@ -469,7 +546,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         """
         assert self.batch_limit is not None
-        pruning_applicable = domain.is_nchoosek_pruning_applicable()
+        pruning_applicable = is_nchoosek_pruning_applicable(domain)
         constraint_types = [ProductConstraint]
         if not pruning_applicable:
             constraint_types.append(NChooseKConstraint)
@@ -488,9 +565,26 @@ class BotorchOptimizer(AcquisitionOptimizer):
         n_categorical_combinations = (
             domain.inputs.get_number_of_categorical_combinations()
         )
+        # When pruning is applicable, semi-continuous features
+        # (`allow_zero=True` with `lb > 0`) are handled by the post-AF
+        # pruning step rather than by enumerating their on/off states
+        # at AF-optimisation time. Divide them out of the combination
+        # count so a pure-continuous semi-continuous domain routes to
+        # `optimize_acqf` rather than `optimize_acqf_mixed`.
+        if is_pruning_applicable(domain):
+            n_semi = sum(
+                1
+                for f in domain.inputs.get(ContinuousInput)
+                if isinstance(f, ContinuousInput)
+                and f.allow_zero
+                and f.bounds[0] > 0
+                and not f.is_fixed()
+            )
+            if n_semi > 0:
+                n_categorical_combinations //= 2**n_semi
         if n_categorical_combinations == 1:
             return OptimizerEnum.OPTIMIZE_ACQF
-        exclude_nchoosek = domain.is_nchoosek_pruning_applicable()
+        exclude_nchoosek = is_nchoosek_pruning_applicable(domain)
         if (
             n_categorical_combinations <= ALTERNATING_OPTIMIZER_THRESHOLD
             or len(get_nonlinear_constraints(domain, exclude_nchoosek=exclude_nchoosek))
@@ -520,7 +614,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         equality_constraints = get_linear_constraints(
             domain, constraint=LinearEqualityConstraint
         )
-        exclude_nchoosek = domain.is_nchoosek_pruning_applicable()
+        exclude_nchoosek = is_nchoosek_pruning_applicable(domain)
         if (
             len(
                 nonlinear_constraints := get_nonlinear_constraints(

@@ -32,8 +32,11 @@ from bofire.strategies.predictives._nchoosek_pruning import (
     _zero_action_blocked_by_min_count,
     prune_nchoosek,
 )
-from bofire.strategies.utils import get_torch_bounds_from_domain
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_linear_constraints,
+    get_torch_bounds_from_domain,
+    tkwargs,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -62,8 +65,8 @@ class WeightedSumAcqf:
 
 
 class ConstantAcqf:
-    """AF returning a constant for every input — exercises the
-    ``dense_incremental == 0`` branch of ``_af_reduction``.
+    """AF returning a constant for every input — exercises the case
+    where every variant has the same absolute AF and the tie-break runs.
     """
 
     def __init__(self, value: float = 1.0):
@@ -918,9 +921,10 @@ class TestPruneNchoosekEndToEnd:
         out = prune_nchoosek(X=X, acqf=acqf, **inp, final_local_reopt=False)
         assert out.shape == (0, 2)
 
-    def test_dense_incremental_zero_branch(self):
-        # ConstantAcqf returns the same value for every input → no
-        # exception, deterministic action selection.
+    def test_constant_af_deterministic_selection(self):
+        # ConstantAcqf returns the same value for every input → every
+        # variant has identical absolute AF, every reduction is zero,
+        # action selection falls back to the deterministic tie-break.
         domain = _make_simple_domain(
             n_features=4,
             constraints=[

@@ -221,14 +221,27 @@ class ContinuousInput(NumericalInput):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
         reference_value: Optional[float] = None,
+        relax_allow_zero: bool = False,
     ) -> Tuple[List[float], List[float]]:
         assert transform_type is None
         if reference_value is not None and values is not None:
             raise ValueError("Only one can be used, `local_value` or `values`.")
 
+        # Effective lower bound: 0 for semi-continuous features when the
+        # caller asks for the convex-relaxation view. The `is_fixed` case
+        # short-circuits below (a fixed feature reports its single value).
+        effective_lower = self.lower_bound
+        if (
+            relax_allow_zero
+            and self.allow_zero
+            and self.lower_bound > 0
+            and not self.is_fixed()
+        ):
+            effective_lower = 0.0
+
         if values is None:
             if reference_value is None or self.is_fixed():
-                return [self.lower_bound], [self.upper_bound]
+                return [effective_lower], [self.upper_bound]
 
             local_relative_bounds = self.local_relative_bounds or (
                 math.inf,
@@ -238,7 +251,7 @@ class ContinuousInput(NumericalInput):
             return [
                 max(
                     reference_value - local_relative_bounds[0],
-                    self.lower_bound,
+                    effective_lower,
                 ),
             ], [
                 min(
@@ -247,7 +260,7 @@ class ContinuousInput(NumericalInput):
                 ),
             ]
 
-        lower = min(self.lower_bound, values.min())
+        lower = min(effective_lower, values.min())
         upper = max(self.upper_bound, values.max())
         return [lower], [upper]
 

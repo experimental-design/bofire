@@ -113,6 +113,26 @@ class BotorchOptimizer(AcquisitionOptimizer):
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
 
+    # NChooseK / semi-continuous pruning hyperparameters. See
+    # `bofire.strategies.predictives._nchoosek_pruning.prune_nchoosek` for
+    # full semantics.
+    per_step_local_reopt: bool = Field(
+        default=False,
+        description=(
+            "When pruning is applicable, refine each per-feature variant "
+            "via optimize_acqf in addition to the QP projection. More "
+            "accurate but multiplies cost by the local solver."
+        ),
+    )
+    final_local_reopt: bool = Field(
+        default=True,
+        description=(
+            "When pruning is applicable, run a single optimize_acqf "
+            "clean-up after the greedy loop with zeroed and active "
+            "semi-continuous features pinned."
+        ),
+    )
+
     @field_validator("batch_limit")
     @classmethod
     def validate_batch_limit(cls, batch_limit: int, info):

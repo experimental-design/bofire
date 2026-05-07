@@ -823,6 +823,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
         reference_experiment: Optional[pd.Series] = None,
+        relax_allow_zero: bool = False,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
@@ -837,6 +838,9 @@ class Inputs(_BaseFeatures[AnyInput]):
             then the local bounds based on a local search region are provided as reference to the
                 reference experiment. Currently only supported for continuous inputs.
                 For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
+            relax_allow_zero (bool, optional): If True, semi-continuous continuous inputs
+                (`allow_zero=True` with positive lower bound) report a relaxed lower bound of 0.
+                Other input types ignore this flag. Defaults to False.
 
         Raises:
             ValueError: If a feature type is not known.
@@ -866,6 +870,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     if reference_experiment is not None
                     else None
                 ),
+                relax_allow_zero=relax_allow_zero,
             )
             lower += lo
             upper += up

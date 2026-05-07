@@ -131,6 +131,7 @@ class FormulationWrapper(Benchmark):
         n_filler_features: int = 1,
         n_features_per_original_feature: int = 1,
         max_count: Optional[int] = None,
+        min_count: int = 0,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -191,13 +192,9 @@ class FormulationWrapper(Benchmark):
         if max_count is not None:
             constraints.append(
                 NChooseKConstraint(
-                    features=[
-                        key
-                        for key in inputs.get_keys()
-                        if not key.startswith("x_filler_")
-                    ],
+                    features=inputs.get_keys(),
                     max_count=max_count,
-                    min_count=0,
+                    min_count=min_count,
                     none_also_valid=True,
                 )
             )
@@ -245,20 +242,40 @@ class FormulationWrapper(Benchmark):
 class SpuriousFeaturesWrapper(Benchmark):
     """Wrapper that adds spurious features to a benchmark, that are ignored on evaluation."""
 
-    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+    def __init__(
+        self,
+        benchmark: Benchmark,
+        n_spurious_features: int = 1,
+        max_count: Optional[int] = None,
+        min_count: int = 0,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
+        assert len(benchmark.domain.constraints) == 0, "Constraints not supported yet."
         self._benchmark = benchmark
+        inputs = Inputs(
+            features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
+            + [
+                ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
+                for i in range(n_spurious_features)
+            ]
+        )
+        constraints = Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=inputs.get_keys(),
+                    max_count=max_count,
+                    min_count=min_count,
+                    none_also_valid=False,
+                )
+            ]
+        )
+
         self._domain = Domain(
-            inputs=Inputs(
-                features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
-                + [
-                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
-                    for i in range(n_spurious_features)
-                ]
-            ),
+            inputs=inputs,
             outputs=self._benchmark.domain.outputs,
-            constraints=self._benchmark.domain.constraints,
+            constraints=constraints,
         )
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:

@@ -55,6 +55,31 @@ tkwargs = {
 }
 
 
+def get_torch_bounds_from_domain(
+    domain: Domain,
+    input_preprocessing_specs: InputTransformSpecs,
+    relax_allow_zero: bool = False,
+) -> Tensor:
+    """Get the bounds for the optimization problem in the format required by BoTorch.
+
+    Args:
+        domain: Optimization problem definition.
+        input_preprocessing_specs: Per-feature transform specifications.
+        relax_allow_zero: When True, semi-continuous continuous inputs
+            (`allow_zero=True` with positive lower bound) report a relaxed
+            lower bound of 0, exposing the convex relaxation `[0, ub]` to
+            downstream optimisers. Defaults to False.
+
+    Returns:
+        A `(2, d)` tensor of lower and upper bounds.
+    """
+    lower, upper = domain.inputs.get_bounds(
+        specs=input_preprocessing_specs,
+        relax_allow_zero=relax_allow_zero,
+    )
+    return torch.tensor([lower, upper], **tkwargs)
+
+
 def get_linear_constraints(
     domain: Domain,
     constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],

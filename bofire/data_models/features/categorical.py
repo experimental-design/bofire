@@ -383,7 +383,9 @@ class CategoricalInput(Input):
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
+        relax_allow_zero: bool = False,
     ) -> Tuple[List[float], List[float]]:
+        # relax_allow_zero is only meaningful for ContinuousInput; ignored here.
         assert isinstance(transform_type, CategoricalEncodingEnum)
         if transform_type == CategoricalEncodingEnum.ORDINAL:
             return [0], [len(self.categories) - 1]

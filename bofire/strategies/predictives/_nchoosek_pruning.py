@@ -29,8 +29,16 @@ from botorch.optim.optimize import optimize_acqf
 from botorch.optim.parameter_constraints import project_to_feasible_space_via_slsqp
 from torch import Tensor
 
-from bofire.data_models.constraints.api import NChooseKConstraint
-from bofire.utils.torch_tools import tkwargs
+from bofire.data_models.constraints.api import (
+    InterpointConstraint,
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+    NonlinearConstraint,
+    ProductConstraint,
+)
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput
 
 
 class PruningInfeasibleError(RuntimeError):
@@ -39,6 +47,110 @@ class PruningInfeasibleError(RuntimeError):
     ``min_count`` guard empties the action set before all
     ``max_count`` constraints are met.
     """
+
+
+# ---------------------------------------------------------------------------
+# Domain-level applicability gates
+# ---------------------------------------------------------------------------
+
+
+def has_semicontinuous_features(domain: Domain) -> bool:
+    """True iff any continuous input has ``allow_zero=True`` and a positive
+    lower bound — i.e., its feasible region per coordinate is the
+    disconnected union ``{0} ∪ [lb, ub]``.
+    """
+    for feat in domain.inputs.get(ContinuousInput):
+        assert isinstance(feat, ContinuousInput)
+        if feat.allow_zero and feat.bounds[0] > 0:
+            return True
+    return False
+
+
+def has_nchoosek_linear_overlap(domain: Domain) -> bool:
+    """True iff any NChooseK feature also appears in a linear (equality or
+    inequality) constraint. Used to determine whether QP projection is
+    needed during pruning.
+    """
+    nchoosek_features: Set[str] = set()
+    for c in domain.constraints.get(NChooseKConstraint):
+        assert isinstance(c, NChooseKConstraint)
+        nchoosek_features.update(c.features)
+
+    linear_features: Set[str] = set()
+    for c in domain.constraints.get(
+        includes=[LinearEqualityConstraint, LinearInequalityConstraint]
+    ):
+        linear_features.update(c.features)
+
+    return bool(nchoosek_features.intersection(linear_features))
+
+
+def _features_in_blocking_constraints(domain: Domain) -> Set[str]:
+    blocking: Set[str] = set()
+    for c in domain.constraints.get(
+        includes=[ProductConstraint, NonlinearConstraint, InterpointConstraint]
+    ):
+        blocking.update(c.features)
+    return blocking
+
+
+def is_nchoosek_pruning_applicable(domain: Domain) -> bool:
+    """True iff greedy pruning can be safely applied for the domain's
+    NChooseK constraints (BONSAI algorithm).
+
+    Pruning is applicable when at least one NChooseK constraint exists and
+    no NChooseK feature appears in any nonlinear (Product, Nonlinear) or
+    interpoint constraint. Overlap with linear equality/inequality
+    constraints is allowed and handled via QP projection inside the
+    pruning loop.
+    """
+    nchoosek_constraints = domain.constraints.get(NChooseKConstraint)
+    if len(nchoosek_constraints) == 0:
+        return False
+
+    blocking = _features_in_blocking_constraints(domain)
+    for c in nchoosek_constraints:
+        assert isinstance(c, NChooseKConstraint)
+        if blocking.intersection(c.features):
+            return False
+    return True
+
+
+def semicontinuous_specs_from_domain(
+    domain: Domain,
+    features2idx: Dict[str, Tuple[int, ...]],
+) -> Dict[int, Tuple[float, float]]:
+    """Build the ``semicontinuous_specs`` mapping for ``prune_nchoosek``.
+
+    Returns a dict ``{tensor_column_index: (lb, ub)}`` for every continuous
+    input with ``allow_zero=True`` and a positive lower bound.
+    """
+    specs: Dict[int, Tuple[float, float]] = {}
+    for feat in domain.inputs.get(ContinuousInput):
+        assert isinstance(feat, ContinuousInput)
+        if feat.allow_zero and feat.bounds[0] > 0:
+            for col in features2idx[feat.key]:
+                specs[col] = (float(feat.bounds[0]), float(feat.bounds[1]))
+    return specs
+
+
+def is_pruning_applicable(domain: Domain) -> bool:
+    """Unified gate: pruning runs if either NChooseK pruning is
+    applicable, or the domain has standalone semi-continuous features —
+    and no semi-continuous feature appears in a blocking nonlinear /
+    interpoint constraint.
+    """
+    if is_nchoosek_pruning_applicable(domain):
+        return True
+    if not has_semicontinuous_features(domain):
+        return False
+
+    blocking = _features_in_blocking_constraints(domain)
+    for feat in domain.inputs.get(ContinuousInput):
+        assert isinstance(feat, ContinuousInput)
+        if feat.allow_zero and feat.bounds[0] > 0 and feat.key in blocking:
+            return False
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -183,6 +295,56 @@ def _features_eligible_for_zero(
 
 # ---------------------------------------------------------------------------
 # Variant builders
+# ---------------------------------------------------------------------------
+#
+# TODO: tighten bounds for *all* committed active semi-continuous features
+# inside _build_zero_variant and _build_active_variant, not just the
+# target column. Currently each variant builder only tightens the bounds
+# of the feature it acts on:
+#
+#     # _build_active_variant — tightens only j_idx
+#     tightened[0, j_idx] = lb_j
+#     tightened[1, j_idx] = ub_j
+#
+#     # _build_zero_variant — tightens nothing, just sets fixed_features[j_idx]=0
+#
+# All other previously-committed active semi-continuous features keep
+# the relaxed bounds (lb=0) that the AF maximiser used. So when iter k+1
+# runs optimize_acqf for action active(j_{k+1}) (or zero(j_{k+1})), the
+# optimiser is free to push x_{j_k} (committed active in iter k) back
+# into the gap (0, lb_{j_k}) to satisfy the mixture or other shared
+# constraints. State tracker says x_{j_k} is active; tensor disagrees.
+# The drift is only corrected by `_final_local_reopt`, which tightens
+# bounds on every active semi-continuous feature simultaneously.
+#
+# The principled fix is symmetric in both builders:
+#
+#     for i in (active_set & semicontinuous_specs.keys()) - {j_idx}:
+#         tightened[0, i] = lb_i
+#         tightened[1, i] = ub_i
+#
+# The `- {j_idx}` exclusion is essential: it preserves the ability to
+# *deactivate* (zero) a previously-committed active feature. Without
+# the exclusion, zero(j) would set bounds[0, j] = lb_j AND
+# fixed_features[j] = 0 simultaneously — infeasible. With the
+# exclusion, the feature being acted on is exempt from the tightening
+# (because the action itself defines its target value/bounds), while
+# every other already-committed active stays locked into [lb, ub].
+#
+# After this fix:
+#   - per-step reopt is internally consistent, no drift across
+#     iterations,
+#   - `_final_local_reopt` reduces to its named role (end-of-loop
+#     polish), not a feasibility rescue,
+#   - `final_local_reopt` could safely default to False on every
+#     scenario, semi-continuous included.
+#
+# This requires `_build_*_variant` to receive the loop's current
+# `active_set` (today they only get `pinned_zero_indices`). Plumbing
+# is small. Worth bundling with the activate-zero work for stage 3
+# (no semi-continuous benchmarks in stage 1/2 exercise this code path,
+# so the bug is currently latent — `final_local_reopt=True` papers
+# over it for the only domain shape in which it would surface today).
 # ---------------------------------------------------------------------------
 
 
@@ -470,21 +632,26 @@ def _evaluate_variants_with_prefix(
 
 
 def _af_reduction(
-    base_af: Tensor,
     dense_af: Tensor,
     variant_af: Tensor,
 ) -> Tensor:
-    """BONSAI relative AF reduction.
+    """Absolute BONSAI AF reduction: ``g_j = α(x_dense) − α(x_pruned_j)``.
 
-    ``af_reduction[k] = (dense_inc - clamp_min(variant_af[k] - base_af, 0))
-    / dense_inc`` when ``dense_inc > 0``, else ``zeros_like(variant_af)``.
-    The argmin of this is the action committed in the greedy step.
+    Smaller is better. ``argmin`` picks the variant whose pruning costs the
+    least acquisition value — the BONSAI greedy rule from
+    https://arxiv.org/abs/2602.07144.
+
+    Equivalent to ``argmax variant_af`` since ``dense_af`` is the same for
+    every variant in a single iteration; we keep the explicit subtraction
+    to mirror the paper's notation. We deliberately do not normalise by
+    the dense incremental because (a) the paper only normalises in the
+    termination criterion (the ρ threshold), not in selection, and (b) we
+    terminate by NChooseK satisfaction rather than ρ, so the
+    normalisation has no semantic role here. The relative form is also
+    ill-defined when ``dense_af ≤ base_af`` (qLogEI on a data-starved
+    candidate, etc.); the absolute form has no such pathology.
     """
-    dense_incremental = (dense_af - base_af).clamp_min(0)
-    if dense_incremental.item() > 0:
-        variant_incremental = (variant_af - base_af).clamp_min(0)
-        return (dense_incremental - variant_incremental) / dense_incremental
-    return torch.zeros_like(variant_af)
+    return dense_af - variant_af
 
 
 # ---------------------------------------------------------------------------
@@ -563,6 +730,22 @@ def prune_nchoosek(
             empties the action set before the ``max_count`` constraints
             are met).
     """
+    # Defensive guard: NChooseK features must each map to a single tensor
+    # column. The NChooseKConstraint validator already restricts to
+    # ContinuousInput, but the optimizer's input_preprocessing_specs could
+    # in principle multi-encode an ill-typed feature; fail loudly if so.
+    for c in nchoosek_constraints:
+        for feat_key in c.features:
+            cols = features2idx.get(feat_key, ())
+            if len(cols) != 1:
+                raise NotImplementedError(
+                    f"Pruning requires every NChooseK feature to map to a "
+                    f"single tensor column. Feature {feat_key!r} maps to "
+                    f"{cols} via features2idx — this typically means it "
+                    f"was one-hot or otherwise multi-column encoded, which "
+                    f"is out of scope for the BONSAI pruning module."
+                )
+
     X = X.clone()
     q = X.shape[0]
     if q == 0:
@@ -673,13 +856,8 @@ def prune_nchoosek(
                 torch.full_like(af_values, float("-inf")),
             )
 
-            base_af = (
-                acqf(X[:i].unsqueeze(0)).detach()
-                if i > 0
-                else torch.tensor(0.0, **tkwargs)
-            )
             dense_af = acqf(X[: i + 1].unsqueeze(0)).detach()
-            af_red = _af_reduction(base_af, dense_af, af_values)
+            af_red = _af_reduction(dense_af, af_values)
 
             # Stable tie-break: smallest af_reduction first; on ties,
             # prefer "zero" over "active", then smaller j_idx.

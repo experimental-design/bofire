@@ -48,6 +48,10 @@ from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDa
 from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
+from bofire.strategies.predictives._nchoosek_pruning import (
+    has_nchoosek_linear_overlap,
+    is_nchoosek_pruning_applicable,
+)
 
 
 def test_SOBO_not_fitted():
@@ -567,37 +571,10 @@ def test_sobo_interpoint():
     strategy.ask(2)
 
 
-def test_nchoosek_fulfilled_tensor():
-    from bofire.strategies.predictives.botorch import BotorchStrategy
-
-    constraint = NChooseKConstraint(
-        features=["x1", "x2", "x3"],
-        min_count=1,
-        max_count=2,
-        none_also_valid=False,
-    )
-    features2idx = {"x1": (0,), "x2": (1,), "x3": (2,)}
-
-    # 2 active -> fulfilled
-    x = torch.tensor([0.5, 0.3, 0.0])
-    assert BotorchStrategy._nchoosek_fulfilled_tensor(x, [constraint], features2idx)
-
-    # 3 active -> not fulfilled (max_count=2)
-    x = torch.tensor([0.5, 0.3, 0.1])
-    assert not BotorchStrategy._nchoosek_fulfilled_tensor(x, [constraint], features2idx)
-
-    # 0 active, none_also_valid=False -> not fulfilled
-    x = torch.tensor([0.0, 0.0, 0.0])
-    assert not BotorchStrategy._nchoosek_fulfilled_tensor(x, [constraint], features2idx)
-
-    # 0 active, none_also_valid=True -> fulfilled
-    constraint_nav = NChooseKConstraint(
-        features=["x1", "x2", "x3"],
-        min_count=1,
-        max_count=2,
-        none_also_valid=True,
-    )
-    assert BotorchStrategy._nchoosek_fulfilled_tensor(x, [constraint_nav], features2idx)
+# test_nchoosek_fulfilled_tensor moved to
+# tests/bofire/strategies/test_nchoosek_pruning.py:TestPureHelpers
+# (the helper now lives in _nchoosek_pruning.py rather than as a static
+# method on BotorchStrategy).
 
 
 def test_nchoosek_pruning_sobo():
@@ -619,7 +596,7 @@ def test_nchoosek_pruning_sobo():
             ),
         ],
     )
-    assert domain.is_nchoosek_pruning_applicable() is True
+    assert is_nchoosek_pruning_applicable(domain) is True
 
     # Generate some training data
     random_strategy = RandomStrategy(
@@ -670,8 +647,8 @@ def test_nchoosek_pruning_with_mixture_constraint():
             ),
         ],
     )
-    assert domain.is_nchoosek_pruning_applicable() is True
-    assert domain.has_nchoosek_linear_overlap() is True
+    assert is_nchoosek_pruning_applicable(domain) is True
+    assert has_nchoosek_linear_overlap(domain) is True
 
     # Generate feasible training data (sum to 1, at most 2 active)
     rng = np.random.default_rng(42)
@@ -701,3 +678,40 @@ def test_nchoosek_pruning_with_mixture_constraint():
     # Check mixture constraint is approximately fulfilled (sum ≈ 1)
     input_keys = domain.inputs.get_keys()
     assert np.isclose(candidates[input_keys].sum(axis=1).values[0], 1.0, atol=1e-3)
+
+
+def test_sobo_semicontinuous_through_pruning():
+    """SOBO end-to-end on a domain with semi-continuous features
+    (allow_zero=True with positive lower bound). Every returned
+    coordinate must lie in `{0} ∪ [lb, ub]`.
+    """
+    from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+    from bofire.data_models.objectives.api import MaximizeObjective
+
+    lb = 0.2
+    ub = 1.0
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i + 1}", bounds=(lb, ub), allow_zero=True)
+            for i in range(3)
+        ],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=domain),
+    )
+    experiments = random_strategy.ask(8)
+    experiments["y"] = np.random.default_rng(0).standard_normal(8)
+    experiments["valid_y"] = 1
+
+    strategy_data = data_models.SoboStrategy(domain=domain)
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments)
+    candidates = strategy.ask(1, raise_validation_error=False)
+
+    for key in domain.inputs.get_keys():
+        v = float(candidates[key].iloc[0])
+        assert v == pytest.approx(0.0, abs=1e-3) or (
+            lb - 1e-3 <= v <= ub + 1e-3
+        ), f"{key}={v} fell into the semi-continuity gap (0, {lb})"
