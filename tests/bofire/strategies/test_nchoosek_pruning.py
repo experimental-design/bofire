@@ -1128,3 +1128,187 @@ class TestPruneNchoosekEndToEnd:
         assert out[0, 0].item() == pytest.approx(0.5)
         nz = (out[0].abs() > 1e-6).sum().item()
         assert nz <= 2
+
+
+# ---------------------------------------------------------------------------
+# Partial-drift fix tests
+# ---------------------------------------------------------------------------
+
+
+class TestPartialDriftFix:
+    """Verify that variant builders tighten bounds for previously-committed
+    active semi-continuous features so they cannot drift into the
+    semi-continuity gap during a later iteration's optimize_acqf or QP
+    projection. Covers both `_build_zero_variant` and
+    `_build_active_variant`, plus the deactivation case (the `−{j_idx}`
+    exclusion) and an end-to-end `prune_nchoosek` run with
+    `final_local_reopt=False`.
+    """
+
+    def _setup_mixture_4(self):
+        """4 semi-continuous features (lb=0.2, ub=1) in a mixture
+        Σ x = 1. Returns (bounds, ineq, eq, semi_specs) ready for use
+        with the variant builders.
+        """
+        d = 4
+        bounds = torch.tensor(
+            [[0.0] * d, [1.0] * d],
+            **tkwargs,
+        )
+        # Σ x = 1, expressed in get_linear_constraints' format
+        # (indices, -coefficients, -rhs):
+        eq = [
+            (
+                torch.tensor([0, 1, 2, 3]),
+                torch.tensor([-1.0, -1.0, -1.0, -1.0], **tkwargs),
+                -1.0,
+            )
+        ]
+        ineq: list = []
+        semi = {i: (0.2, 1.0) for i in range(d)}
+        return bounds, ineq, eq, semi
+
+    def test_zero_variant_keeps_active_semi_in_band(self):
+        """Building a zero variant for a feature while two semi-continuous
+        features are committed-active: those committed actives must stay
+        in `[0.2, 1]` after the projection, not drift into `(0, 0.2)`.
+        """
+        bounds, ineq, eq, semi = self._setup_mixture_4()
+        # x_1 and x_2 are already in their active bands [0.2, 1]; x_0
+        # is the deactivation target; x_3 is zero. The candidate is
+        # mixture-feasible (sums to 1).
+        x_i = torch.tensor([0.2, 0.4, 0.4, 0.0], **tkwargs)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        variant, valid = _build_zero_variant(
+            x_i,
+            j_idx=0,
+            bounds=bounds,
+            inequality_constraints=ineq,
+            equality_constraints=eq,
+            acqf=acqf,
+            per_step_local_reopt=False,
+            active_set={1, 2},
+            semicontinuous_specs=semi,
+        )
+        assert valid is True
+        # x_0 was the target → 0
+        assert variant[0].item() == pytest.approx(0.0, abs=1e-6)
+        # x_1 and x_2 were committed-active → must stay in [0.2, 1]
+        assert variant[1].item() >= 0.2 - 1e-6
+        assert variant[1].item() <= 1.0 + 1e-6
+        assert variant[2].item() >= 0.2 - 1e-6
+        assert variant[2].item() <= 1.0 + 1e-6
+        # mixture preserved
+        assert variant.sum().item() == pytest.approx(1.0, abs=1e-3)
+
+    def test_active_variant_keeps_other_active_semi_in_band(self):
+        """Building an active variant for a fractional feature while
+        another semi-continuous feature is already committed-active:
+        the committed-active one must keep its band.
+        """
+        bounds, ineq, eq, semi = self._setup_mixture_4()
+        # x_1 already active at 0.4; x_2 is fractional (0.1) and we'll
+        # commit it active. x_0 free, x_3 zero.
+        x_i = torch.tensor([0.5, 0.4, 0.1, 0.0], **tkwargs)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        variant, valid = _build_active_variant(
+            x_i,
+            j_idx=2,
+            lb_j=0.2,
+            ub_j=1.0,
+            bounds=bounds,
+            inequality_constraints=ineq,
+            equality_constraints=eq,
+            acqf=acqf,
+            per_step_local_reopt=False,
+            active_set={1},
+            semicontinuous_specs=semi,
+        )
+        assert valid is True
+        # x_2 (target) snapped into [0.2, 1]
+        assert variant[2].item() >= 0.2 - 1e-6
+        # x_1 (committed-active) stays in [0.2, 1]
+        assert variant[1].item() >= 0.2 - 1e-6
+        assert variant[1].item() <= 1.0 + 1e-6
+        # mixture preserved
+        assert variant.sum().item() == pytest.approx(1.0, abs=1e-3)
+
+    def test_zero_variant_can_deactivate_active_semi(self):
+        """Building a zero variant for a feature that is itself
+        currently in `active_set` and is semi-continuous: the `− {j_idx}`
+        exclusion must let it leave its band and pin to 0, while *other*
+        active semi features stay locked.
+        """
+        bounds, ineq, eq, semi = self._setup_mixture_4()
+        # Three actives all at 0.33; x_3 zero. We deactivate x_2.
+        x_i = torch.tensor(
+            [0.33, 0.34, 0.33, 0.0],
+            **tkwargs,
+        )
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        variant, valid = _build_zero_variant(
+            x_i,
+            j_idx=2,
+            bounds=bounds,
+            inequality_constraints=ineq,
+            equality_constraints=eq,
+            acqf=acqf,
+            per_step_local_reopt=False,
+            active_set={0, 1, 2},
+            semicontinuous_specs=semi,
+        )
+        assert valid is True
+        # x_2 (the deactivation target) pinned to 0 — exclusion did its
+        # job; we did NOT keep x_2 ≥ 0.2.
+        assert variant[2].item() == pytest.approx(0.0, abs=1e-6)
+        # x_0 and x_1 (still active) stay in [0.2, 1]
+        assert variant[0].item() >= 0.2 - 1e-6
+        assert variant[1].item() >= 0.2 - 1e-6
+        # mixture preserved
+        assert variant.sum().item() == pytest.approx(1.0, abs=1e-3)
+
+    def test_pruning_no_drift_with_flr_false(self):
+        """End-to-end: a 4-feature semi-continuous mixture domain.
+        With `final_local_reopt=False`, every coordinate of the final
+        candidate must lie in `{0} ∪ [lb, ub]`. Without the partial-
+        drift fix the per-step reopts could leave coordinates in
+        `(0, lb)` and `flr=False` wouldn't catch them.
+        """
+        domain = _make_simple_domain(
+            n_features=4,
+            allow_zero=True,
+            lb=0.2,
+            ub=1.0,
+            constraints=[
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=0,
+                    max_count=4,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        # Initial candidate: all four equal at 0.25 (every coordinate
+        # is fractional, in (0, 0.2)? Actually 0.25 > 0.2 so they're
+        # cleanly active. Use a fractional starting point instead so
+        # the active variant is exercised.)
+        X = _stack_to_tensor([[0.1, 0.4, 0.4, 0.1]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            **inp,
+            final_local_reopt=False,
+        )
+        for j in range(4):
+            v = float(out[0, j].abs().item())
+            assert v <= 1e-6 or v >= 0.2 - 1e-6, (
+                f"x_{j + 1}={v} fell into the (0, 0.2) gap; "
+                "partial-drift fix didn't keep it in band."
+            )

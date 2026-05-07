@@ -297,54 +297,37 @@ def _features_eligible_for_zero(
 # Variant builders
 # ---------------------------------------------------------------------------
 #
-# TODO: tighten bounds for *all* committed active semi-continuous features
-# inside _build_zero_variant and _build_active_variant, not just the
-# target column. Currently each variant builder only tightens the bounds
-# of the feature it acts on:
-#
-#     # _build_active_variant — tightens only j_idx
-#     tightened[0, j_idx] = lb_j
-#     tightened[1, j_idx] = ub_j
-#
-#     # _build_zero_variant — tightens nothing, just sets fixed_features[j_idx]=0
-#
-# All other previously-committed active semi-continuous features keep
-# the relaxed bounds (lb=0) that the AF maximiser used. So when iter k+1
-# runs optimize_acqf for action active(j_{k+1}) (or zero(j_{k+1})), the
-# optimiser is free to push x_{j_k} (committed active in iter k) back
-# into the gap (0, lb_{j_k}) to satisfy the mixture or other shared
-# constraints. State tracker says x_{j_k} is active; tensor disagrees.
-# The drift is only corrected by `_final_local_reopt`, which tightens
-# bounds on every active semi-continuous feature simultaneously.
-#
-# The principled fix is symmetric in both builders:
+# Both variant builders accept the loop's current `active_set` and the
+# `semicontinuous_specs` mapping. Before the QP projection or
+# `optimize_acqf` call, they tighten bounds on every column in
+# `(active_set ∩ semicontinuous_specs.keys()) − {j_idx}` to its
+# `[lb_i, ub_i]` band:
 #
 #     for i in (active_set & semicontinuous_specs.keys()) - {j_idx}:
 #         tightened[0, i] = lb_i
 #         tightened[1, i] = ub_i
 #
-# The `- {j_idx}` exclusion is essential: it preserves the ability to
-# *deactivate* (zero) a previously-committed active feature. Without
-# the exclusion, zero(j) would set bounds[0, j] = lb_j AND
-# fixed_features[j] = 0 simultaneously — infeasible. With the
-# exclusion, the feature being acted on is exempt from the tightening
-# (because the action itself defines its target value/bounds), while
-# every other already-committed active stays locked into [lb, ub].
+# This prevents previously-committed active semi-continuous features
+# from drifting back into their gap `(0, lb_i)` when the optimiser
+# redistributes mass to satisfy shared linear constraints (mixture
+# `Σ x = 1`, etc.). Without this, the per-step reopt for action
+# `active(j_{k+1})` could push `x_{j_k}` (committed active in iter k)
+# below its own `lb`, leaving the state tracker and tensor
+# inconsistent until `_final_local_reopt` cleaned it up.
 #
-# After this fix:
-#   - per-step reopt is internally consistent, no drift across
-#     iterations,
-#   - `_final_local_reopt` reduces to its named role (end-of-loop
-#     polish), not a feasibility rescue,
-#   - `final_local_reopt` could safely default to False on every
-#     scenario, semi-continuous included.
+# The `− {j_idx}` exclusion preserves the ability to deactivate a
+# previously-active feature. If `j_idx ∈ active_set` and is itself
+# semi-continuous, we want it pinned to 0 via `fixed_features`, not
+# held in `[lb_j, ub_j]` — those two would conflict. The exclusion
+# means "the feature being acted on is exempt from the tightening,
+# because the action itself defines its target value/bounds."
 #
-# This requires `_build_*_variant` to receive the loop's current
-# `active_set` (today they only get `pinned_zero_indices`). Plumbing
-# is small. Worth bundling with the activate-zero work below
-# (no semi-continuous benchmarks in stage 1/2 exercise this code path,
-# so the bug is currently latent — `final_local_reopt=True` papers
-# over it for the only domain shape in which it would surface today).
+# Consequences:
+#   - per-step reopt is internally consistent across iterations,
+#   - `_final_local_reopt` is now genuinely a polish (not a
+#     feasibility rescue), so `final_local_reopt`'s role is
+#     well-defined regardless of whether semi-continuous features
+#     are in play.
 # ---------------------------------------------------------------------------
 #
 # TODO: introduce an "activate-zero" action for non-semi-continuous
@@ -487,6 +470,8 @@ def _build_zero_variant(
     per_step_local_reopt: bool,
     pinned_zero_indices: Optional[Set[int]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
+    active_set: Optional[Set[int]] = None,
+    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
 ) -> Tuple[Tensor, bool]:
     """Construct the candidate variant where ``x_j`` is forced to zero.
 
@@ -502,6 +487,17 @@ def _build_zero_variant(
     inputs whose bounds collapse to a single value). They are merged
     into the projection's and local re-optimiser's ``fixed_features``
     so SLSQP and ``optimize_acqf`` never move them.
+
+    ``active_set`` and ``semicontinuous_specs`` together let the
+    builder tighten bounds for previously-committed active
+    semi-continuous features (every ``i ∈ active_set ∩
+    semicontinuous_specs.keys()`` other than ``j_idx``), so the QP
+    projection / ``optimize_acqf`` cannot push them back into the
+    semi-continuity gap ``(0, lb_i)`` while satisfying the linear
+    constraints. The ``− {j_idx}`` exclusion preserves the ability
+    to deactivate a previously-active feature: if ``j_idx ∈
+    active_set`` and is itself semi-continuous, we want it pinned to
+    0 (via ``fixed_features``), not held in ``[lb_j, ub_j]``.
 
     Returns ``(variant, valid)``:
 
@@ -519,6 +515,13 @@ def _build_zero_variant(
         fixed[j] = 0.0
     fixed[j_idx] = 0.0
 
+    tightened = bounds.clone()
+    if active_set and semicontinuous_specs:
+        for i in (set(active_set) & semicontinuous_specs.keys()) - {j_idx}:
+            lb_i, ub_i = semicontinuous_specs[i]
+            tightened[0, i] = lb_i
+            tightened[1, i] = ub_i
+
     if not has_linear:
         variant = x_i.clone()
         for j, v in fixed.items():
@@ -526,7 +529,7 @@ def _build_zero_variant(
         if per_step_local_reopt:
             refined = _local_optacqf(
                 variant,
-                bounds,
+                tightened,
                 fixed,
                 inequality_constraints,
                 equality_constraints,
@@ -539,7 +542,7 @@ def _build_zero_variant(
     try:
         projected = project_to_feasible_space_via_slsqp(
             X=x_i.unsqueeze(0),
-            bounds=bounds,
+            bounds=tightened,
             inequality_constraints=inequality_constraints or None,
             equality_constraints=equality_constraints or None,
             fixed_features=fixed,
@@ -560,7 +563,7 @@ def _build_zero_variant(
     if per_step_local_reopt:
         refined = _local_optacqf(
             projected,
-            bounds,
+            tightened,
             fixed,
             inequality_constraints,
             equality_constraints,
@@ -584,6 +587,8 @@ def _build_active_variant(
     per_step_local_reopt: bool,
     pinned_zero_indices: Optional[Set[int]] = None,
     fixed_features: Optional[Dict[int, float]] = None,
+    active_set: Optional[Set[int]] = None,
+    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
 ) -> Tuple[Tensor, bool]:
     """Construct the variant where ``x_j`` is snapped into ``[lb_j, ub_j]``.
 
@@ -595,10 +600,25 @@ def _build_active_variant(
     via ``fixed_features`` so the projection cannot resurrect them.
     ``fixed_features`` is the caller-supplied mapping of features
     that must remain at their fixed values throughout pruning.
+
+    ``active_set`` and ``semicontinuous_specs`` together let the
+    builder also tighten bounds for previously-committed active
+    semi-continuous features (every ``i ∈ active_set ∩
+    semicontinuous_specs.keys()`` other than ``j_idx``), preventing
+    them from drifting back into ``(0, lb_i)`` during the QP
+    projection / ``optimize_acqf`` call. The ``− {j_idx}`` exclusion
+    is harmless here (``j_idx`` is fractional pre-commit, so not in
+    ``active_set``) but kept for symmetry with the zero-variant
+    builder.
     """
     tightened = bounds.clone()
     tightened[0, j_idx] = lb_j
     tightened[1, j_idx] = ub_j
+    if active_set and semicontinuous_specs:
+        for i in (set(active_set) & semicontinuous_specs.keys()) - {j_idx}:
+            lb_i, ub_i = semicontinuous_specs[i]
+            tightened[0, i] = lb_i
+            tightened[1, i] = ub_i
 
     starting = x_i.clone()
     if float(starting[j_idx].item()) < lb_j:
@@ -907,6 +927,8 @@ def prune_nchoosek(
                     per_step_local_reopt,
                     pinned_zero_indices=zero_set,
                     fixed_features=fixed_features,
+                    active_set=active_set,
+                    semicontinuous_specs=semicontinuous_specs,
                 )
                 actions.append((j, "zero", variant, valid))
 
@@ -926,6 +948,8 @@ def prune_nchoosek(
                     per_step_local_reopt,
                     pinned_zero_indices=zero_set,
                     fixed_features=fixed_features,
+                    active_set=active_set,
+                    semicontinuous_specs=semicontinuous_specs,
                 )
                 actions.append((j, "active", variant, valid))
 
