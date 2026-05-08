@@ -21,6 +21,8 @@ mixing NChooseK with one-hot-encoded categorical features is out of
 scope.
 """
 
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 import torch
@@ -47,6 +49,91 @@ class PruningInfeasibleError(RuntimeError):
     ``min_count`` guard empties the action set before all
     ``max_count`` constraints are met.
     """
+
+
+class ActionKind(Enum):
+    """The three primitive action kinds of the greedy pruning loop.
+
+    Values are integers ordered by the existing tie-break preference
+    (``ZERO < ACTIVE < ACTIVATE``) so ``(af_red, kind.value, j)`` is a
+    drop-in replacement for the legacy ``(af_red, 0/1, j)`` ordering.
+    """
+
+    ZERO = 0
+    ACTIVE = 1
+    ACTIVATE = 2
+
+
+@dataclass
+class Action:
+    """A single greedy-pruning move proposed for selection.
+
+    ``valid`` is ``False`` when the per-action variant builder failed
+    (typically a QP-projection failure on mutually infeasible bounds +
+    linear constraints); the caller scores such variants at ``-inf``
+    so they are never selected.
+    """
+
+    j: int
+    kind: ActionKind
+    variant: Tensor
+    valid: bool
+
+
+@dataclass(frozen=True)
+class PruningContext:
+    """All static-per-call inputs to the pruning loop.
+
+    Bundling these reduces the parameter-count of the inner helpers
+    (variant builders, action collectors) from ~10 to ~3 and gives
+    a single source of truth for the per-call configuration.
+    """
+
+    bounds: Tensor
+    inequality_constraints: List[Tuple[Tensor, Tensor, float]]
+    equality_constraints: List[Tuple[Tensor, Tensor, float]]
+    acqf: AcquisitionFunction
+    semicontinuous_specs: Dict[int, Tuple[float, float]]
+    fixed_features: Optional[Dict[int, float]]
+    nchoosek_constraints: Sequence[NChooseKConstraint]
+    features2idx: Dict[str, Tuple[int, ...]]
+    tol: float
+    per_step_local_reopt: bool
+
+
+@dataclass
+class PruningState:
+    """Per-candidate mutable state inside the greedy loop.
+
+    ``zero_set``, ``frac_set``, and ``active_set`` partition the tensor
+    column indices by their current (zero / fractional / active)
+    classification. ``commit`` applies an action's effect on the
+    partition; the candidate tensor ``x`` itself is updated by the
+    caller from ``Action.variant``.
+    """
+
+    x: Tensor
+    zero_set: Set[int] = field(default_factory=set)
+    frac_set: Set[int] = field(default_factory=set)
+    active_set: Set[int] = field(default_factory=set)
+
+    def commit(self, action: Action) -> None:
+        """Apply ``action``'s effect on the (zero, frac, active) partition.
+
+        Mirrors the legacy in-place update at ``prune_nchoosek``'s
+        ``kind_pick`` if/elif/else block.
+        """
+        j = action.j
+        if action.kind is ActionKind.ZERO:
+            self.frac_set.discard(j)
+            self.active_set.discard(j)
+            self.zero_set.add(j)
+        elif action.kind is ActionKind.ACTIVE:
+            self.frac_set.discard(j)
+            self.active_set.add(j)
+        else:  # ActionKind.ACTIVATE
+            self.zero_set.discard(j)
+            self.active_set.add(j)
 
 
 # ---------------------------------------------------------------------------
@@ -649,9 +736,11 @@ def _local_optacqf(
     return local_candidate.squeeze(0).squeeze(0)
 
 
-def _build_zero_variant(
+def _build_variant(
     x_i: Tensor,
     j_idx: int,
+    kind: ActionKind,
+    *,
     bounds: Tensor,
     inequality_constraints: List[Tuple[Tensor, Tensor, float]],
     equality_constraints: List[Tuple[Tensor, Tensor, float]],
@@ -661,32 +750,44 @@ def _build_zero_variant(
     fixed_features: Optional[Dict[int, float]] = None,
     active_set: Optional[Set[int]] = None,
     semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
+    tol: float = 1e-6,
 ) -> Tuple[Tensor, bool]:
-    """Construct the candidate variant where ``x_j`` is forced to zero.
+    """Construct the candidate variant for one greedy-pruning action.
 
-    ``pinned_zero_indices`` lists tensor columns that have been
-    committed to zero in earlier greedy iterations. They are passed
-    as additional ``fixed_features`` to the QP projection and (when
-    enabled) the local re-optimisation, preventing the linear-
-    constraint redistribution from resurrecting previously-zeroed
-    features.
+    Single dispatch over the three :class:`ActionKind`s. The shared
+    skeleton (committed-active bound tightening, fixed-pin merging,
+    no-linear / SLSQP branch, optional local re-optimisation) is
+    consolidated; the per-kind difference is only:
+
+    - ``ZERO``: pin ``x_{j_idx} = 0`` via ``fixed_features``; no bound
+      change on ``j_idx``.
+    - ``ACTIVE``: tighten ``bounds[:, j_idx] = [lb_j, ub_j]`` from
+      ``semicontinuous_specs[j_idx]``; clip starting ``x_{j_idx}`` up
+      to ``lb_j``. Caller guarantees ``j_idx`` is fractional and
+      semi-continuous.
+    - ``ACTIVATE``: tighten ``bounds[:, j_idx]`` to ``[lb_j, ub_j]``
+      (semi-continuous case) or ``[max(2*tol, bounds[0, j_idx]),
+      bounds[1, j_idx]]`` (non-semi-continuous), so the projected
+      variant is classified as active by the ``|x_j| > tol`` rule.
+
+    ``pinned_zero_indices`` are tensor columns committed to zero by
+    earlier greedy iterations; they are passed as additional
+    ``fixed_features`` so the QP cannot resurrect them. For
+    ``ACTIVATE`` actions the caller passes ``zero_set − {j_idx}`` so
+    every *other* committed-zero feature stays pinned without
+    conflicting with the activation target.
+
+    ``active_set`` ∩ ``semicontinuous_specs`` (excluding ``j_idx``)
+    has its bounds tightened to the per-feature semi-continuous band
+    so previously-committed active semi-continuous features cannot
+    drift into the gap ``(0, lb_i)`` while satisfying the linear
+    constraints. The ``− {j_idx}`` exclusion preserves the ability
+    to deactivate a previously-active semi-continuous feature.
 
     ``fixed_features`` is the caller-supplied mapping of features
-    that must remain at fixed values throughout pruning (e.g.,
-    inputs whose bounds collapse to a single value). They are merged
-    into the projection's and local re-optimiser's ``fixed_features``
-    so SLSQP and ``optimize_acqf`` never move them.
-
-    ``active_set`` and ``semicontinuous_specs`` together let the
-    builder tighten bounds for previously-committed active
-    semi-continuous features (every ``i ∈ active_set ∩
-    semicontinuous_specs.keys()`` other than ``j_idx``), so the QP
-    projection / ``optimize_acqf`` cannot push them back into the
-    semi-continuity gap ``(0, lb_i)`` while satisfying the linear
-    constraints. The ``− {j_idx}`` exclusion preserves the ability
-    to deactivate a previously-active feature: if ``j_idx ∈
-    active_set`` and is itself semi-continuous, we want it pinned to
-    0 (via ``fixed_features``), not held in ``[lb_j, ub_j]``.
+    that must remain at their fixed values throughout pruning. They
+    are merged into the projection's and local re-optimiser's
+    ``fixed_features``.
 
     Returns ``(variant, valid)``:
 
@@ -694,131 +795,69 @@ def _build_zero_variant(
       constraint compatible);
     - ``valid=False`` if the QP projection failed (mutually
       infeasible bounds + linear constraints). The variant is still
-      returned with ``x[j_idx] = 0`` so the caller has a well-formed
-      tensor; the caller must replace its AF value with ``-inf`` so
-      it is never selected.
+      returned (with the per-action effect applied as best as
+      possible) so the caller has a well-formed tensor; the caller
+      must replace its AF value with ``-inf`` so it is never
+      selected.
     """
-    has_linear = bool(inequality_constraints) or bool(equality_constraints)
+    # Per-kind diff: target bounds on j_idx and whether j_idx is
+    # pinned to zero via fixed_features.
+    target_lb_j: Optional[float]
+    target_ub_j: Optional[float]
+    if kind is ActionKind.ZERO:
+        target_lb_j = None
+        target_ub_j = None
+        pin_j_to_zero = True
+    elif kind is ActionKind.ACTIVE:
+        # Caller guarantees j_idx ∈ frac_set ∩ semicontinuous_specs.
+        assert (
+            semicontinuous_specs is not None and j_idx in semicontinuous_specs
+        ), "ACTIVE action requires j_idx ∈ semicontinuous_specs"
+        target_lb_j, target_ub_j = semicontinuous_specs[j_idx]
+        pin_j_to_zero = False
+    else:  # ActionKind.ACTIVATE
+        if semicontinuous_specs and j_idx in semicontinuous_specs:
+            target_lb_j, target_ub_j = semicontinuous_specs[j_idx]
+        else:
+            target_ub_j = float(bounds[1, j_idx].item())
+            # Strictly greater than tol so the projected variant is classified
+            # as "active" by ``_classify_features_for_row`` (which treats
+            # ``|x_j| <= tol`` as zero). Using ``tol`` exactly would round-trip
+            # the variant back into the zero set and prevent loop convergence.
+            target_lb_j = max(2 * tol, float(bounds[0, j_idx].item()))
+        pin_j_to_zero = False
+
+    # Build the fixed-pin dict: caller fixed_features + previously
+    # committed zeros + (for ZERO) j_idx itself.
     fixed: Dict[int, float] = dict(fixed_features or {})
     for j in pinned_zero_indices or set():
         fixed[j] = 0.0
-    fixed[j_idx] = 0.0
+    if pin_j_to_zero:
+        fixed[j_idx] = 0.0
+    fixed_arg: Optional[Dict[int, float]] = fixed if fixed else None
 
+    # Tighten bounds: per-action target on j_idx (active/activate) plus
+    # bands for committed-active semi-continuous features.
     tightened = bounds.clone()
+    if target_lb_j is not None:
+        # target_lb_j and target_ub_j are set together by the per-kind
+        # dispatch above — narrow the type for the assignment below.
+        assert target_ub_j is not None
+        tightened[0, j_idx] = target_lb_j
+        tightened[1, j_idx] = target_ub_j
     if active_set and semicontinuous_specs:
         for i in (set(active_set) & semicontinuous_specs.keys()) - {j_idx}:
             lb_i, ub_i = semicontinuous_specs[i]
             tightened[0, i] = lb_i
             tightened[1, i] = ub_i
 
-    if not has_linear:
-        variant = x_i.clone()
-        for j, v in fixed.items():
-            variant[j] = v
-        if per_step_local_reopt:
-            refined = _local_optacqf(
-                variant,
-                tightened,
-                fixed,
-                inequality_constraints,
-                equality_constraints,
-                acqf,
-            )
-            if refined is not None:
-                variant = refined
-        return variant, True
-
-    try:
-        projected = project_to_feasible_space_via_slsqp(
-            X=x_i.unsqueeze(0),
-            bounds=tightened,
-            inequality_constraints=inequality_constraints or None,
-            equality_constraints=equality_constraints or None,
-            fixed_features=fixed,
-        ).squeeze(0)
-    except Exception:
-        fallback = x_i.clone()
-        for j, v in fixed.items():
-            fallback[j] = v
-        return fallback, False
-
-    # Safety net: SLSQP short-circuits when both lists are None,
-    # and we trust the fixed_features convention rather than the
-    # solver's idle path.
-    projected = projected.clone()
-    for j, v in fixed.items():
-        projected[j] = v
-
-    if per_step_local_reopt:
-        refined = _local_optacqf(
-            projected,
-            tightened,
-            fixed,
-            inequality_constraints,
-            equality_constraints,
-            acqf,
-        )
-        if refined is not None:
-            return refined, True
-
-    return projected, True
-
-
-def _build_active_variant(
-    x_i: Tensor,
-    j_idx: int,
-    lb_j: float,
-    ub_j: float,
-    bounds: Tensor,
-    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
-    equality_constraints: List[Tuple[Tensor, Tensor, float]],
-    acqf: AcquisitionFunction,
-    per_step_local_reopt: bool,
-    pinned_zero_indices: Optional[Set[int]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    active_set: Optional[Set[int]] = None,
-    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
-) -> Tuple[Tensor, bool]:
-    """Construct the variant where ``x_j`` is snapped into ``[lb_j, ub_j]``.
-
-    The local bounds are tightened on column ``j_idx`` so the
-    optimiser is constrained to the active branch of the
-    semi-continuous feature. Other columns retain the global bounds.
-
-    ``pinned_zero_indices`` keeps previously-zeroed coordinates pinned
-    via ``fixed_features`` so the projection cannot resurrect them.
-    ``fixed_features`` is the caller-supplied mapping of features
-    that must remain at their fixed values throughout pruning.
-
-    ``active_set`` and ``semicontinuous_specs`` together let the
-    builder also tighten bounds for previously-committed active
-    semi-continuous features (every ``i ∈ active_set ∩
-    semicontinuous_specs.keys()`` other than ``j_idx``), preventing
-    them from drifting back into ``(0, lb_i)`` during the QP
-    projection / ``optimize_acqf`` call. The ``− {j_idx}`` exclusion
-    is harmless here (``j_idx`` is fractional pre-commit, so not in
-    ``active_set``) but kept for symmetry with the zero-variant
-    builder.
-    """
-    tightened = bounds.clone()
-    tightened[0, j_idx] = lb_j
-    tightened[1, j_idx] = ub_j
-    if active_set and semicontinuous_specs:
-        for i in (set(active_set) & semicontinuous_specs.keys()) - {j_idx}:
-            lb_i, ub_i = semicontinuous_specs[i]
-            tightened[0, i] = lb_i
-            tightened[1, i] = ub_i
-
+    # Build starting point: clip x_{j_idx} up to target_lb (active /
+    # activate); apply fixed values.
     starting = x_i.clone()
-    if float(starting[j_idx].item()) < lb_j:
-        starting[j_idx] = lb_j
-
-    fixed: Dict[int, float] = dict(fixed_features or {})
-    for j in pinned_zero_indices or set():
-        fixed[j] = 0.0
+    if target_lb_j is not None and float(starting[j_idx].item()) < target_lb_j:
+        starting[j_idx] = target_lb_j
     for j, v in fixed.items():
         starting[j] = v
-    fixed_arg: Optional[Dict[int, float]] = fixed if fixed else None
 
     has_linear = bool(inequality_constraints) or bool(equality_constraints)
 
@@ -848,6 +887,9 @@ def _build_active_variant(
     except Exception:
         return starting, False
 
+    # Safety net: SLSQP short-circuits when both lists are None,
+    # and we trust the fixed_features convention rather than the
+    # solver's idle path.
     projected = projected.clone()
     for j, v in fixed.items():
         projected[j] = v
@@ -867,6 +909,80 @@ def _build_active_variant(
     return projected, True
 
 
+def _build_zero_variant(
+    x_i: Tensor,
+    j_idx: int,
+    bounds: Tensor,
+    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+    equality_constraints: List[Tuple[Tensor, Tensor, float]],
+    acqf: AcquisitionFunction,
+    per_step_local_reopt: bool,
+    pinned_zero_indices: Optional[Set[int]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    active_set: Optional[Set[int]] = None,
+    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
+) -> Tuple[Tensor, bool]:
+    """Thin wrapper around :func:`_build_variant` for the ZERO kind.
+
+    Kept for backward compatibility with callers / tests that
+    pre-date the unified builder.
+    """
+    return _build_variant(
+        x_i=x_i,
+        j_idx=j_idx,
+        kind=ActionKind.ZERO,
+        bounds=bounds,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        acqf=acqf,
+        per_step_local_reopt=per_step_local_reopt,
+        pinned_zero_indices=pinned_zero_indices,
+        fixed_features=fixed_features,
+        active_set=active_set,
+        semicontinuous_specs=semicontinuous_specs,
+    )
+
+
+def _build_active_variant(
+    x_i: Tensor,
+    j_idx: int,
+    lb_j: float,
+    ub_j: float,
+    bounds: Tensor,
+    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+    equality_constraints: List[Tuple[Tensor, Tensor, float]],
+    acqf: AcquisitionFunction,
+    per_step_local_reopt: bool,
+    pinned_zero_indices: Optional[Set[int]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    active_set: Optional[Set[int]] = None,
+    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
+) -> Tuple[Tensor, bool]:
+    """Thin wrapper around :func:`_build_variant` for the ACTIVE kind.
+
+    The legacy signature accepts ``lb_j`` / ``ub_j`` as positional
+    args; we feed them into ``semicontinuous_specs`` (overriding any
+    existing entry for ``j_idx``) so the unified dispatcher reads
+    the same band.
+    """
+    specs: Dict[int, Tuple[float, float]] = dict(semicontinuous_specs or {})
+    specs[j_idx] = (lb_j, ub_j)
+    return _build_variant(
+        x_i=x_i,
+        j_idx=j_idx,
+        kind=ActionKind.ACTIVE,
+        bounds=bounds,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        acqf=acqf,
+        per_step_local_reopt=per_step_local_reopt,
+        pinned_zero_indices=pinned_zero_indices,
+        fixed_features=fixed_features,
+        active_set=active_set,
+        semicontinuous_specs=specs,
+    )
+
+
 def _build_activate_variant(
     x_i: Tensor,
     j_idx: int,
@@ -881,40 +997,14 @@ def _build_activate_variant(
     semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
     tol: float = 1e-6,
 ) -> Tuple[Tensor, bool]:
-    """Construct the variant where currently-zero feature ``j_idx`` is
-    activated to a positive value.
+    """Thin wrapper around :func:`_build_variant` for the ACTIVATE kind.
 
-    Picks the activation target band:
-
-    - If ``j_idx`` is semi-continuous (in ``semicontinuous_specs``), the
-      target band is the feature's natural ``[lb_j, ub_j]``.
-    - Otherwise, the target band is ``[max(tol, bounds[0, j_idx]), bounds[1, j_idx]]``
-      — any positive value within the feature's original bounds. ``tol``
-      ensures the variant is classified as "active" by the
-      ``|x_j| > tol`` rule used in the fulfilment check.
-
-    Mechanics are then identical to ``_build_active_variant`` (QP
-    projection of the current candidate onto the tightened polytope,
-    plus optional local re-optimisation). The caller must pass
-    ``pinned_zero_indices = zero_set − {j_idx}`` so that
-    ``_build_active_variant``'s ``fixed_features`` plumbing pins every
-    *other* committed-zero feature without conflicting with the
-    activation target.
+    See :func:`_build_variant` for the activation-target-band rules.
     """
-    if semicontinuous_specs and j_idx in semicontinuous_specs:
-        lb_target, ub_target = semicontinuous_specs[j_idx]
-    else:
-        ub_target = float(bounds[1, j_idx].item())
-        # Strictly greater than tol so the projected variant is classified
-        # as "active" by ``_classify_features_for_row`` (which treats
-        # ``|x_j| <= tol`` as zero). Using ``tol`` exactly would round-trip
-        # the variant back into the zero set and prevent loop convergence.
-        lb_target = max(2 * tol, float(bounds[0, j_idx].item()))
-    return _build_active_variant(
+    return _build_variant(
         x_i=x_i,
         j_idx=j_idx,
-        lb_j=lb_target,
-        ub_j=ub_target,
+        kind=ActionKind.ACTIVATE,
         bounds=bounds,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
@@ -924,7 +1014,133 @@ def _build_activate_variant(
         fixed_features=fixed_features,
         active_set=active_set,
         semicontinuous_specs=semicontinuous_specs,
+        tol=tol,
     )
+
+
+def _collect_actions(
+    state: PruningState,
+    ctx: PruningContext,
+    fixed_keys: Set[int],
+) -> List[Action]:
+    """Build the admissible action set for ``state`` under ``ctx``.
+
+    Replicates the legacy three-for-loop block of ``prune_nchoosek``:
+
+    1. Compute per-constraint counts and the violation sets (max-count
+       and min-count).
+    2. Compute the per-kind eligibility sets, intersect with
+       ``~fixed_keys``.
+    3. For each eligible feature, apply the matching guard (min-count
+       guard for ZERO, max-count guard for ACTIVATE) and, if the
+       feature passes, build the variant via :func:`_build_variant`
+       and append an :class:`Action` to the returned list.
+
+    The action set may be empty even when constraints remain violated
+    — for example, if the min-count guard filters every otherwise-
+    eligible zero. The caller is responsible for raising
+    :class:`PruningInfeasibleError` in that case; this helper only
+    constructs the admissible set.
+    """
+    counts = _active_counts(
+        state.x, ctx.nchoosek_constraints, ctx.features2idx, ctx.tol
+    )
+    violated = _violated_constraints(counts, ctx.nchoosek_constraints)
+    min_count_violated = _min_count_violated_constraints(
+        counts, ctx.nchoosek_constraints
+    )
+
+    eligible_zero = (
+        _features_eligible_for_zero(
+            state.frac_set,
+            state.active_set,
+            violated,
+            ctx.nchoosek_constraints,
+            ctx.features2idx,
+        )
+        - fixed_keys
+    )
+    eligible_activate = (
+        _features_eligible_for_activate(
+            state.zero_set,
+            min_count_violated,
+            ctx.nchoosek_constraints,
+            ctx.features2idx,
+        )
+        - fixed_keys
+    )
+
+    actions: List[Action] = []
+
+    for j in sorted(eligible_zero):
+        if _zero_action_blocked_by_min_count(
+            j, counts, ctx.nchoosek_constraints, ctx.features2idx
+        ):
+            continue
+        variant, valid = _build_variant(
+            x_i=state.x,
+            j_idx=j,
+            kind=ActionKind.ZERO,
+            bounds=ctx.bounds,
+            inequality_constraints=ctx.inequality_constraints,
+            equality_constraints=ctx.equality_constraints,
+            acqf=ctx.acqf,
+            per_step_local_reopt=ctx.per_step_local_reopt,
+            pinned_zero_indices=state.zero_set,
+            fixed_features=ctx.fixed_features,
+            active_set=state.active_set,
+            semicontinuous_specs=ctx.semicontinuous_specs,
+            tol=ctx.tol,
+        )
+        actions.append(Action(j=j, kind=ActionKind.ZERO, variant=variant, valid=valid))
+
+    for j in sorted(state.frac_set):
+        if j not in ctx.semicontinuous_specs:
+            continue
+        variant, valid = _build_variant(
+            x_i=state.x,
+            j_idx=j,
+            kind=ActionKind.ACTIVE,
+            bounds=ctx.bounds,
+            inequality_constraints=ctx.inequality_constraints,
+            equality_constraints=ctx.equality_constraints,
+            acqf=ctx.acqf,
+            per_step_local_reopt=ctx.per_step_local_reopt,
+            pinned_zero_indices=state.zero_set,
+            fixed_features=ctx.fixed_features,
+            active_set=state.active_set,
+            semicontinuous_specs=ctx.semicontinuous_specs,
+            tol=ctx.tol,
+        )
+        actions.append(
+            Action(j=j, kind=ActionKind.ACTIVE, variant=variant, valid=valid)
+        )
+
+    for j in sorted(eligible_activate):
+        if _activate_action_blocked_by_max_count(
+            j, counts, ctx.nchoosek_constraints, ctx.features2idx
+        ):
+            continue
+        variant, valid = _build_variant(
+            x_i=state.x,
+            j_idx=j,
+            kind=ActionKind.ACTIVATE,
+            bounds=ctx.bounds,
+            inequality_constraints=ctx.inequality_constraints,
+            equality_constraints=ctx.equality_constraints,
+            acqf=ctx.acqf,
+            per_step_local_reopt=ctx.per_step_local_reopt,
+            pinned_zero_indices=state.zero_set - {j},
+            fixed_features=ctx.fixed_features,
+            active_set=state.active_set,
+            semicontinuous_specs=ctx.semicontinuous_specs,
+            tol=ctx.tol,
+        )
+        actions.append(
+            Action(j=j, kind=ActionKind.ACTIVATE, variant=variant, valid=valid)
+        )
+
+    return actions
 
 
 def _final_local_reopt(
@@ -1020,7 +1236,134 @@ def _af_reduction(
 # ---------------------------------------------------------------------------
 
 
-def prune_nchoosek(  # noqa: C901
+def _prune_single_candidate(
+    x_i: Tensor,
+    X_prefix: Tensor,
+    ctx: PruningContext,
+    fixed_keys: Set[int],
+) -> Tuple[Tensor, PruningState]:
+    """Prune one candidate row to NChooseK + semi-continuity feasibility.
+
+    The greedy inner loop: at every iteration, build the admissible
+    action set (zero / active / activate variants), evaluate the
+    acquisition function at each variant, and commit the action with
+    the smallest AF reduction. Loop terminates when no fractional
+    feature remains and every NChooseK constraint is satisfied.
+
+    ``X_prefix`` is the joint context for q-batch AF conditioning: it
+    is a snapshot of already-pruned earlier candidates, taken at outer-
+    iteration entry, and is never modified by this function. Both the
+    variant AF evaluation (via :func:`_evaluate_variants_with_prefix`)
+    and the dense-AF baseline are computed conditional on
+    ``X_prefix``, so candidate ``i+1``'s decisions account for the AF
+    reductions caused by candidate ``i``'s pruned form (not its dense
+    form).
+
+    Returns ``(x_pruned, final_state)``: the pruned candidate tensor
+    and the final :class:`PruningState`. The caller can use the
+    state's ``zero_set`` / ``active_set`` to drive the optional final
+    local re-optimisation. ``x_i`` itself is not mutated.
+
+    Raises:
+        PruningInfeasibleError: if the greedy loop cannot satisfy all
+            constraints (typically because the per-step min/max-count
+            guards empty the action set, or because the iteration cap
+            ``2 × n_features`` is exceeded).
+    """
+    zero_set, frac_set, active_set = _classify_features_for_row(
+        x_i, ctx.semicontinuous_specs, ctx.tol
+    )
+    # Caller-fixed features are never proposed as actions.
+    frac_set -= fixed_keys
+    active_set -= fixed_keys
+    # Caller-fixed features whose value is exactly zero get tracked
+    # as part of zero_set for the action eligibility filter, but are
+    # not emitted by the loop.
+    for j, v in (ctx.fixed_features or {}).items():
+        if abs(v) <= ctx.tol:
+            zero_set.add(j)
+
+    state = PruningState(
+        x=x_i.clone(),
+        zero_set=zero_set,
+        frac_set=frac_set,
+        active_set=active_set,
+    )
+
+    # Activate is non-monotone (a feature can flip
+    # zero → active → zero across iterations if AF preferences shift),
+    # so cap iterations defensively. 2*d is well above the
+    # AF-driven greedy's typical convergence (≤ d).
+    max_inner_iters = 2 * x_i.shape[0]
+    inner_iter = 0
+
+    while True:
+        if not state.frac_set and _is_nchoosek_fulfilled(
+            state.x,
+            ctx.nchoosek_constraints,
+            ctx.features2idx,
+            ctx.tol,
+        ):
+            break
+        if inner_iter >= max_inner_iters:
+            raise PruningInfeasibleError(
+                f"Greedy pruning exceeded the per-candidate iteration "
+                f"cap of {max_inner_iters} (2 × n_features) without "
+                f"reaching feasibility. This usually indicates an "
+                f"oscillation between zero and activate actions on "
+                f"the same feature. Inspect the acquisition function "
+                f"for non-determinism or extreme non-convexity."
+            )
+        inner_iter += 1
+
+        actions = _collect_actions(state, ctx, fixed_keys)
+
+        if not actions:
+            raise PruningInfeasibleError(
+                "Greedy pruning could not satisfy NChooseK + "
+                "semi-continuity constraints: action set empty "
+                "while constraints still violated."
+            )
+
+        variants = torch.stack([a.variant for a in actions])
+        af_values = _evaluate_variants_with_prefix(X_prefix, variants, ctx.acqf)
+        valid_flags = torch.tensor(
+            [a.valid for a in actions],
+            device=af_values.device,
+        )
+        af_values = torch.where(
+            valid_flags,
+            af_values,
+            torch.full_like(af_values, float("-inf")),
+        )
+
+        # Dense AF reference is `acqf(X_prefix + current state.x)` —
+        # the joint AF at the q-batch including the candidate's
+        # current (mid-pruning) value. This is what `af_red`
+        # subtracts from to measure each variant's AF reduction.
+        dense_eval = torch.cat([X_prefix, state.x.unsqueeze(0)], dim=0).unsqueeze(0)
+        dense_af = ctx.acqf(dense_eval).detach()
+        af_red = _af_reduction(dense_af, af_values)
+
+        # Stable tie-break: smallest af_reduction first; on ties,
+        # prefer ZERO < ACTIVE < ACTIVATE, then smaller j_idx.
+        best_k = min(
+            range(len(actions)),
+            key=lambda k: (
+                float(af_red[k].item()),
+                actions[k].kind.value,
+                actions[k].j,
+            ),
+        )
+
+        chosen = actions[best_k]
+        state.x = chosen.variant
+        state.commit(chosen)
+
+    return state.x, state
+
+
+def prune_nchoosek(
     X: Tensor,
     acqf: AcquisitionFunction,
     nchoosek_constraints: Sequence[NChooseKConstraint],
@@ -1128,206 +1471,34 @@ def prune_nchoosek(  # noqa: C901
         return X
 
     fixed_keys: Set[int] = set((fixed_features or {}).keys())
+    ctx = PruningContext(
+        bounds=bounds,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        acqf=acqf,
+        semicontinuous_specs=semicontinuous_specs,
+        fixed_features=fixed_features,
+        nchoosek_constraints=nchoosek_constraints,
+        features2idx=features2idx,
+        tol=tol,
+        per_step_local_reopt=per_step_local_reopt,
+    )
 
     for i in range(q):
-        zero_set, frac_set, active_set = _classify_features_for_row(
-            X[i],
-            semicontinuous_specs,
-            tol,
+        # Snapshot the prefix so `_prune_single_candidate` cannot
+        # accidentally observe (or mutate) later rows of X. This is
+        # also the invariant the future beam/B&B refactor needs:
+        # multiple in-flight states must share a single immutable
+        # prefix per outer iteration.
+        x_pruned, final_state = _prune_single_candidate(
+            X[i], X[:i].clone(), ctx, fixed_keys
         )
-        # Caller-fixed features are never proposed as actions.
-        frac_set -= fixed_keys
-        active_set -= fixed_keys
-        # Caller-fixed features whose value is exactly zero get
-        # tracked as part of zero_set for the action eligibility
-        # filter, but are not emitted by the loop.
-        for j, v in (fixed_features or {}).items():
-            if abs(v) <= tol:
-                zero_set.add(j)
-
-        # Activate is non-monotone (a feature can flip
-        # zero → active → zero across iterations if AF preferences shift),
-        # so cap iterations defensively. 2*d is well above the
-        # AF-driven greedy's typical convergence (≤ d).
-        max_inner_iters = 2 * X.shape[1]
-        inner_iter = 0
-
-        while True:
-            if not frac_set and _is_nchoosek_fulfilled(
-                X[i],
-                nchoosek_constraints,
-                features2idx,
-                tol,
-            ):
-                break
-            if inner_iter >= max_inner_iters:
-                raise PruningInfeasibleError(
-                    f"Greedy pruning exceeded the per-candidate iteration "
-                    f"cap of {max_inner_iters} (2 × n_features) without "
-                    f"reaching feasibility. This usually indicates an "
-                    f"oscillation between zero and activate actions on "
-                    f"the same feature. Inspect the acquisition function "
-                    f"for non-determinism or extreme non-convexity."
-                )
-            inner_iter += 1
-
-            counts = _active_counts(
-                X[i],
-                nchoosek_constraints,
-                features2idx,
-                tol,
-            )
-            violated = _violated_constraints(counts, nchoosek_constraints)
-            eligible = _features_eligible_for_zero(
-                frac_set,
-                active_set,
-                violated,
-                nchoosek_constraints,
-                features2idx,
-            )
-            min_count_violated = _min_count_violated_constraints(
-                counts, nchoosek_constraints
-            )
-            eligible_activate = _features_eligible_for_activate(
-                zero_set,
-                min_count_violated,
-                nchoosek_constraints,
-                features2idx,
-            )
-
-            # Caller-fixed features are never moved by the loop.
-            eligible = eligible - fixed_keys
-            eligible_activate = eligible_activate - fixed_keys
-
-            actions: List[Tuple[int, str, Tensor, bool]] = []
-            for j in sorted(eligible):
-                if _zero_action_blocked_by_min_count(
-                    j,
-                    counts,
-                    nchoosek_constraints,
-                    features2idx,
-                ):
-                    continue
-                variant, valid = _build_zero_variant(
-                    X[i],
-                    j,
-                    bounds,
-                    inequality_constraints,
-                    equality_constraints,
-                    acqf,
-                    per_step_local_reopt,
-                    pinned_zero_indices=zero_set,
-                    fixed_features=fixed_features,
-                    active_set=active_set,
-                    semicontinuous_specs=semicontinuous_specs,
-                )
-                actions.append((j, "zero", variant, valid))
-
-            for j in sorted(frac_set):
-                if j not in semicontinuous_specs:
-                    continue
-                lb_j, ub_j = semicontinuous_specs[j]
-                variant, valid = _build_active_variant(
-                    X[i],
-                    j,
-                    lb_j,
-                    ub_j,
-                    bounds,
-                    inequality_constraints,
-                    equality_constraints,
-                    acqf,
-                    per_step_local_reopt,
-                    pinned_zero_indices=zero_set,
-                    fixed_features=fixed_features,
-                    active_set=active_set,
-                    semicontinuous_specs=semicontinuous_specs,
-                )
-                actions.append((j, "active", variant, valid))
-
-            for j in sorted(eligible_activate):
-                if _activate_action_blocked_by_max_count(
-                    j,
-                    counts,
-                    nchoosek_constraints,
-                    features2idx,
-                ):
-                    continue
-                variant, valid = _build_activate_variant(
-                    X[i],
-                    j,
-                    bounds,
-                    inequality_constraints,
-                    equality_constraints,
-                    acqf,
-                    per_step_local_reopt,
-                    pinned_zero_indices=zero_set - {j},
-                    fixed_features=fixed_features,
-                    active_set=active_set,
-                    semicontinuous_specs=semicontinuous_specs,
-                    tol=tol,
-                )
-                actions.append((j, "activate", variant, valid))
-
-            if not actions:
-                raise PruningInfeasibleError(
-                    "Greedy pruning could not satisfy NChooseK + "
-                    "semi-continuity constraints: action set empty "
-                    "while constraints still violated."
-                )
-
-            variants = torch.stack([a[2] for a in actions])
-            af_values = _evaluate_variants_with_prefix(X[:i], variants, acqf)
-            valid_flags = torch.tensor(
-                [a[3] for a in actions],
-                device=af_values.device,
-            )
-            af_values = torch.where(
-                valid_flags,
-                af_values,
-                torch.full_like(af_values, float("-inf")),
-            )
-
-            dense_af = acqf(X[: i + 1].unsqueeze(0)).detach()
-            af_red = _af_reduction(dense_af, af_values)
-
-            # Stable tie-break: smallest af_reduction first; on ties,
-            # prefer "zero" over "active", then smaller j_idx.
-            best_k = 0
-            best_key = (
-                float(af_red[0].item()),
-                0 if actions[0][1] == "zero" else 1,
-                actions[0][0],
-            )
-            for k in range(1, len(actions)):
-                key = (
-                    float(af_red[k].item()),
-                    0 if actions[k][1] == "zero" else 1,
-                    actions[k][0],
-                )
-                if key < best_key:
-                    best_key = key
-                    best_k = k
-
-            j_pick, kind_pick, variant_pick, _ = actions[best_k]
-            X[i] = variant_pick
-
-            # Update per-candidate state.
-            if kind_pick == "zero":
-                frac_set.discard(j_pick)
-                active_set.discard(j_pick)
-                zero_set.add(j_pick)
-            elif kind_pick == "active":
-                frac_set.discard(j_pick)
-                active_set.add(j_pick)
-            else:  # activate (zero → active for non-fractional features)
-                zero_set.discard(j_pick)
-                active_set.add(j_pick)
-
+        X[i] = x_pruned
         if final_local_reopt:
             X[i] = _final_local_reopt(
                 X[i],
-                zero_set - fixed_keys,
-                active_set,
+                final_state.zero_set - fixed_keys,
+                final_state.active_set,
                 semicontinuous_specs,
                 bounds,
                 inequality_constraints,

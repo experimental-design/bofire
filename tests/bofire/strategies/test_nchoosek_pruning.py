@@ -21,7 +21,10 @@ from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.strategies.predictives import _nchoosek_pruning as ncp
 from bofire.strategies.predictives._nchoosek_pruning import (
+    Action,
+    ActionKind,
     PruningInfeasibleError,
+    PruningState,
     _activate_action_blocked_by_max_count,
     _active_counts,
     _build_activate_variant,
@@ -594,6 +597,76 @@ class TestPruneNchoosekEndToEnd:
         for i in (0, 1):
             nz = (out[i].abs() > 1e-6).sum().item()
             assert nz <= 2
+
+    def test_q2_second_candidate_conditions_on_pruned_first(self):
+        """During pruning of candidate i=1, every acquisition-function
+        call must include the *pruned* X[0] in its prefix (not the
+        dense X[0]). Locks in the q-batch joint-conditioning invariant
+        the refactor preserves but the existing q2 test does not check.
+        """
+        domain = _make_simple_domain(
+            n_features=4,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+
+        class RecordingAF:
+            """Wraps a base AF, captures every input tensor."""
+
+            def __init__(self, base):
+                self.base = base
+                self.calls: List[Tensor] = []
+
+            def __call__(self, X):
+                self.calls.append(X.detach().clone())
+                return self.base(X)
+
+            def __getattr__(self, name):
+                return getattr(self.base, name)
+
+        rec = RecordingAF(MockAcquisitionFunction())
+        X_dense = _stack_to_tensor(
+            [
+                [0.5, 0.5, 0.5, 0.5],
+                [0.4, 0.4, 0.4, 0.4],
+            ]
+        )
+        out = prune_nchoosek(
+            X=X_dense,
+            acqf=cast(AcquisitionFunction, rec),
+            **inp,
+            final_local_reopt=False,
+        )
+
+        # Pruning must have changed X[0] for the test to be meaningful.
+        assert not torch.allclose(out[0], X_dense[0])
+
+        # Find AF calls that look like q-batch evaluations during the
+        # pruning of i=1: shape (..., 2, d). Their first-position row
+        # is the "prefix" — must equal the *pruned* X[0], never the
+        # dense X[0].
+        d = X_dense.shape[1]
+        joint_calls = [c for c in rec.calls if c.dim() == 3 and c.shape[1] == 2]
+        assert joint_calls, (
+            "expected at least one (..., 2, d) AF call during the " "inner loop for i=1"
+        )
+        for c in joint_calls:
+            assert c.shape[-1] == d
+            prefix_row = c[..., 0, :]  # broadcast across the b-dim
+            # Every batch-row's prefix row equals the pruned X[0].
+            assert torch.allclose(prefix_row, out[0].expand_as(prefix_row)), (
+                "prefix row must equal the pruned candidate-0, not " "any other value"
+            )
+            # And it must NOT equal the dense X[0] (otherwise the
+            # joint-conditioning is bypassed).
+            assert not torch.allclose(prefix_row, X_dense[0].expand_as(prefix_row))
 
     # ----- Single NChooseK with linear overlap (today's QP path) -----
 
@@ -1637,3 +1710,61 @@ class TestActivateZero:
                 **inp,
                 final_local_reopt=False,
             )
+
+
+class TestDataclasses:
+    def test_action_kind_ordering_matches_legacy_priority(self):
+        # Tie-break: ZERO beats ACTIVE beats ACTIVATE.
+        assert ActionKind.ZERO.value < ActionKind.ACTIVE.value
+        assert ActionKind.ACTIVE.value < ActionKind.ACTIVATE.value
+
+    def test_action_holds_supplied_fields(self):
+        v = torch.tensor([1.0, 0.0])
+        a = Action(j=2, kind=ActionKind.ZERO, variant=v, valid=True)
+        assert a.j == 2
+        assert a.kind is ActionKind.ZERO
+        assert torch.equal(a.variant, v)
+        assert a.valid is True
+
+    def test_pruning_state_commit_zero_moves_feature_to_zero_set(self):
+        s = PruningState(
+            x=torch.zeros(4),
+            zero_set=set(),
+            frac_set={1},
+            active_set={0, 2},
+        )
+        s.commit(Action(j=2, kind=ActionKind.ZERO, variant=torch.zeros(4), valid=True))
+        assert s.zero_set == {2}
+        assert s.frac_set == {1}
+        assert s.active_set == {0}
+
+    def test_pruning_state_commit_active_moves_frac_to_active(self):
+        s = PruningState(
+            x=torch.zeros(4),
+            zero_set=set(),
+            frac_set={1},
+            active_set={0},
+        )
+        s.commit(
+            Action(j=1, kind=ActionKind.ACTIVE, variant=torch.zeros(4), valid=True)
+        )
+        assert s.frac_set == set()
+        assert s.active_set == {0, 1}
+
+    def test_pruning_state_commit_activate_moves_zero_to_active(self):
+        s = PruningState(
+            x=torch.zeros(4),
+            zero_set={2, 3},
+            frac_set=set(),
+            active_set={0, 1},
+        )
+        s.commit(
+            Action(
+                j=2,
+                kind=ActionKind.ACTIVATE,
+                variant=torch.zeros(4),
+                valid=True,
+            )
+        )
+        assert s.zero_set == {3}
+        assert s.active_set == {0, 1, 2}
