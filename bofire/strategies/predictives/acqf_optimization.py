@@ -1,7 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 
 import pandas as pd
 import torch
@@ -493,9 +493,23 @@ class BotorchOptimizer(AcquisitionOptimizer):
         equality_constraints = get_linear_constraints(
             domain, constraint=LinearEqualityConstraint
         )
-        fixed_features = self.get_fixed_features(domain)
         semicontinuous_specs = semicontinuous_specs_from_domain(domain, features2idx)
         nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
+
+        # Pin every column that pruning's QP / refinement must not move:
+        # everything that is not an un-fixed `ContinuousInput`. This
+        # covers categorical / discrete / molecular encodings (which
+        # would otherwise drift during SLSQP / optimize_acqf because
+        # those solvers only know about per-column bounds, not feature
+        # types) and continuous features whose `fixed_value()` is set
+        # (the candidate already carries the fixed value, so pinning
+        # at the row value pins at the fixed value).
+        pinned_columns: Set[int] = set()
+        for feat in domain.inputs:
+            cols = features2idx[feat.key]
+            if isinstance(feat, ContinuousInput) and feat.fixed_value() is None:
+                continue
+            pinned_columns.update(cols)
 
         return prune_nchoosek(
             X=candidates,
@@ -506,7 +520,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             inequality_constraints=inequality_constraints,
             equality_constraints=equality_constraints,
             semicontinuous_specs=semicontinuous_specs,
-            fixed_features=fixed_features,
+            pinned_columns=pinned_columns,
             per_step_local_reopt=self.per_step_local_reopt,
             final_local_reopt=self.final_local_reopt,
         )

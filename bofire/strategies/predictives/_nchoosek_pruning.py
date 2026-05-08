@@ -88,6 +88,14 @@ class PruningContext:
     Bundling these reduces the parameter-count of the inner helpers
     (variant builders, action collectors) from ~10 to ~3 and gives
     a single source of truth for the per-call configuration.
+
+    ``pinned_columns`` lists tensor columns that must be frozen at
+    the candidate's per-row value throughout pruning — for example,
+    columns belonging to non-``ContinuousInput`` features (categorical,
+    discrete, molecular) and fixed-value continuous features. The
+    per-row resolution to ``{col: x_i[col]}`` happens at row entry in
+    :func:`_prune_single_candidate`; the result lives on
+    :class:`PruningState`.
     """
 
     bounds: Tensor
@@ -95,7 +103,7 @@ class PruningContext:
     equality_constraints: List[Tuple[Tensor, Tensor, float]]
     acqf: AcquisitionFunction
     semicontinuous_specs: Dict[int, Tuple[float, float]]
-    fixed_features: Optional[Dict[int, float]]
+    pinned_columns: Set[int]
     nchoosek_constraints: Sequence[NChooseKConstraint]
     features2idx: Dict[str, Tuple[int, ...]]
     tol: float
@@ -111,12 +119,19 @@ class PruningState:
     classification. ``commit`` applies an action's effect on the
     partition; the candidate tensor ``x`` itself is updated by the
     caller from ``Action.variant``.
+
+    ``fixed_features`` is the per-row resolved pinning dict —
+    ``{col: x_i[col]}`` for every ``col`` in
+    :attr:`PruningContext.pinned_columns`. Computed once at row entry
+    and forwarded to :func:`_build_variant`, :func:`_local_optacqf`,
+    and :func:`_final_local_reopt`.
     """
 
     x: Tensor
     zero_set: Set[int] = field(default_factory=set)
     frac_set: Set[int] = field(default_factory=set)
     active_set: Set[int] = field(default_factory=set)
+    fixed_features: Dict[int, float] = field(default_factory=dict)
 
     def commit(self, action: Action) -> None:
         """Apply ``action``'s effect on the (zero, frac, active) partition.
@@ -1141,7 +1156,7 @@ def _collect_actions(
             acqf=ctx.acqf,
             per_step_local_reopt=ctx.per_step_local_reopt,
             pinned_zero_indices=state.zero_set,
-            fixed_features=ctx.fixed_features,
+            fixed_features=state.fixed_features,
             active_set=state.active_set,
             semicontinuous_specs=ctx.semicontinuous_specs,
             tol=ctx.tol,
@@ -1162,7 +1177,7 @@ def _collect_actions(
             acqf=ctx.acqf,
             per_step_local_reopt=ctx.per_step_local_reopt,
             pinned_zero_indices=state.zero_set,
-            fixed_features=ctx.fixed_features,
+            fixed_features=state.fixed_features,
             active_set=state.active_set,
             semicontinuous_specs=ctx.semicontinuous_specs,
             tol=ctx.tol,
@@ -1187,7 +1202,7 @@ def _collect_actions(
             acqf=ctx.acqf,
             per_step_local_reopt=ctx.per_step_local_reopt,
             pinned_zero_indices=state.zero_set - {j},
-            fixed_features=ctx.fixed_features,
+            fixed_features=state.fixed_features,
             active_set=state.active_set,
             semicontinuous_specs=ctx.semicontinuous_specs,
             tol=ctx.tol,
@@ -1313,13 +1328,20 @@ def _prune_single_candidate(
     zero_set, frac_set, active_set = _classify_features_for_row(
         x_i, ctx.semicontinuous_specs, ctx.tol
     )
-    # Caller-fixed features are never proposed as actions.
+    # Resolve the per-row fixed dict from the static pinned-columns
+    # set: each pinned column carries the candidate's row value
+    # throughout pruning. This is the "freeze categorical / discrete /
+    # molecular / fixed-continuous columns" mechanism.
+    row_fixed: Dict[int, float] = {
+        col: float(x_i[col].item()) for col in ctx.pinned_columns
+    }
+    # Pinned columns are never proposed as actions.
     frac_set -= fixed_keys
     active_set -= fixed_keys
-    # Caller-fixed features whose value is exactly zero get tracked
-    # as part of zero_set for the action eligibility filter, but are
-    # not emitted by the loop.
-    for j, v in (ctx.fixed_features or {}).items():
+    # Pinned columns whose value is exactly zero get tracked as part
+    # of zero_set for the action eligibility filter, but are not
+    # emitted by the loop.
+    for j, v in row_fixed.items():
         if abs(v) <= ctx.tol:
             zero_set.add(j)
 
@@ -1328,6 +1350,7 @@ def _prune_single_candidate(
         zero_set=zero_set,
         frac_set=frac_set,
         active_set=active_set,
+        fixed_features=row_fixed,
     )
 
     # Activate is non-monotone (a feature can flip
@@ -1413,7 +1436,7 @@ def prune_nchoosek(
     equality_constraints: List[Tuple[Tensor, Tensor, float]],
     semicontinuous_specs: Dict[int, Tuple[float, float]],
     *,
-    fixed_features: Optional[Dict[int, float]] = None,
+    pinned_columns: Optional[Set[int]] = None,
     per_step_local_reopt: bool = False,
     final_local_reopt: bool = True,
     tol: float = 1e-6,
@@ -1460,13 +1483,18 @@ def prune_nchoosek(
             tensor column whose feature is ``allow_zero=True`` with
             ``lb_j > 0``. May be empty when no semi-continuous
             features are in the domain.
-        fixed_features: ``{j_idx: value}`` for caller-supplied features
-            that must remain at the given value throughout pruning
-            (e.g., inputs whose bounds collapse to a single value).
-            These features are never proposed as zero or active
-            actions, and they are forwarded to both the QP projection
-            and ``optimize_acqf`` so they cannot drift. May be empty
-            or ``None``.
+        pinned_columns: Tensor columns that must remain at the
+            candidate's per-row value throughout pruning. Used by the
+            caller to freeze every column that is not an un-fixed
+            ``ContinuousInput`` — e.g., one-hot/ordinal categorical
+            columns, discrete-input columns, molecular descriptor
+            columns, and fixed-value continuous features. Per-row
+            resolution: each pinned column inherits whatever value
+            the candidate ``X[i]`` carried at row entry, and that
+            value is held constant through every QP projection and
+            ``optimize_acqf`` call for the duration of pruning.
+            Pinned columns are never proposed as zero/active/activate
+            actions. May be empty or ``None``.
         per_step_local_reopt: When ``True``, every variant
             (zero or active) is locally re-optimised via
             ``optimize_acqf`` after the QP projection. This is more
@@ -1510,14 +1538,15 @@ def prune_nchoosek(
     if q == 0:
         return X
 
-    fixed_keys: Set[int] = set((fixed_features or {}).keys())
+    pinned_columns_set: Set[int] = pinned_columns or set()
+    fixed_keys: Set[int] = pinned_columns_set
     ctx = PruningContext(
         bounds=bounds,
         inequality_constraints=inequality_constraints,
         equality_constraints=equality_constraints,
         acqf=acqf,
         semicontinuous_specs=semicontinuous_specs,
-        fixed_features=fixed_features,
+        pinned_columns=pinned_columns_set,
         nchoosek_constraints=nchoosek_constraints,
         features2idx=features2idx,
         tol=tol,
@@ -1543,7 +1572,7 @@ def prune_nchoosek(
                 inequality_constraints,
                 equality_constraints,
                 acqf,
-                fixed_features=fixed_features,
+                fixed_features=final_state.fixed_features,
                 X_pending_extra=X_prefix,
             )
 
