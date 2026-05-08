@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import field_validator
 
@@ -7,9 +7,17 @@ from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class FidelityKernel(FeatureSpecificKernel):
-    """A kernel that encodes a continuous task feature, representing different fidelities."""
+    """Abstract base class for kernels that encode a continuous task feature
+    representing different fidelities.
 
-    pass
+    This class is intentionally not part of the ``AnyKernel`` union and cannot
+    be instantiated directly. Use a concrete subclass such as
+    :class:`DownsamplingKernel`. The base class exists only so that strategies
+    can use ``isinstance(kernel, FidelityKernel)`` to identify fidelity kernels
+    when validating surrogate specifications.
+    """
+
+    type: Any
 
 
 class DownsamplingKernel(FidelityKernel):
