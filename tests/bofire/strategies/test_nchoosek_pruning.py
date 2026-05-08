@@ -1768,3 +1768,241 @@ class TestDataclasses:
         )
         assert s.zero_set == {3}
         assert s.active_set == {0, 1, 2}
+
+
+class TestXPendingThreading:
+    """Regression tests for the X_pending threading into the local-reopt
+    path. The threading must:
+
+    1. Preserve any pre-existing ``acqf.X_pending`` (set at AF
+       construction time, e.g. via ``strategy.set_candidates(...)``).
+    2. Concatenate the pruning prefix onto it during
+       ``_local_optacqf`` calls.
+    3. Restore the original ``X_pending`` afterwards via try/finally.
+    4. Silently no-op for analytic AFs that raise ``UnsupportedError``
+       on ``set_X_pending`` (their joint AF == marginal on a q-batch).
+    """
+
+    @staticmethod
+    def _make_recording_af(
+        base: Any, raise_on_set: bool = False
+    ) -> Tuple[Any, List[Any]]:
+        """Wrap ``base`` so every ``set_X_pending`` call is captured
+        in a list. If ``raise_on_set`` is True the wrapper mimics an
+        analytic AF and raises ``UnsupportedError`` on every call.
+        """
+        from botorch.exceptions.errors import UnsupportedError
+
+        calls: List[Any] = []
+
+        class RecordingAF:
+            def __init__(self) -> None:
+                self.base = base
+                self.X_pending: Any = None  # exposed for the decorator path
+
+            def set_X_pending(self, value: Any) -> None:
+                if raise_on_set:
+                    calls.append(("raise", value))
+                    raise UnsupportedError("analytic AFs do not support pending points")
+                # Mimic botorch behaviour: detach + clone.
+                clone = None if value is None else value.detach().clone()
+                calls.append(("set", clone))
+                self.X_pending = clone
+
+            def __call__(self, X: Tensor) -> Tensor:
+                return self.base(X)
+
+            def __getattr__(self, name: str) -> Any:
+                return getattr(self.base, name)
+
+        return RecordingAF(), calls
+
+    @staticmethod
+    def _two_candidate_setup() -> Tuple[Any, Any, Tensor]:
+        domain = _make_simple_domain(
+            n_features=4,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        X = _stack_to_tensor(
+            [
+                [0.5, 0.5, 0.5, 0.5],
+                [0.4, 0.4, 0.4, 0.4],
+            ]
+        )
+        return domain, inp, X
+
+    def test_x_pending_restored_after_prune(self):
+        """``acqf.X_pending`` must equal its pre-call value after
+        ``prune_nchoosek`` returns, regardless of how many local-reopt
+        calls happen inside.
+        """
+        _, inp, X = self._two_candidate_setup()
+        rec, _ = self._make_recording_af(MockAcquisitionFunction())
+        # Pre-set a known X_pending on the AF (mimics
+        # strategy.set_candidates → AF construction).
+        user_pending = torch.tensor([[0.1, 0.2, 0.3, 0.4]], **tkwargs)
+        rec.X_pending = user_pending.clone()
+
+        prune_nchoosek(
+            X=X,
+            acqf=cast(AcquisitionFunction, rec),
+            **inp,
+            per_step_local_reopt=True,
+            final_local_reopt=True,
+        )
+
+        # After the call, X_pending must be the pre-set tensor again.
+        assert rec.X_pending is not None
+        assert torch.allclose(rec.X_pending, user_pending)
+
+    def test_x_pending_concat_during_local_optacqf(self):
+        """During the per-step reopt of i=1, ``set_X_pending`` must be
+        called with ``cat([user_pending, X_prefix_i1])``, not just
+        ``X_prefix_i1`` (which would silently overwrite the user's
+        pending candidates).
+        """
+        _, inp, X = self._two_candidate_setup()
+        rec, calls = self._make_recording_af(MockAcquisitionFunction())
+        user_pending = torch.tensor([[0.1, 0.2, 0.3, 0.4]], **tkwargs)
+        rec.X_pending = user_pending.clone()
+
+        out = prune_nchoosek(
+            X=X,
+            acqf=cast(AcquisitionFunction, rec),
+            **inp,
+            per_step_local_reopt=True,
+            final_local_reopt=True,
+        )
+
+        # X[0] must have been pruned (otherwise the test is vacuous).
+        assert not torch.allclose(out[0], X[0])
+
+        # Must have at least one set_X_pending call where the value
+        # has shape (1 + |X_prefix_i1|, d) = (2, d) — i.e., user_pending
+        # concatenated with the pruned X[0].
+        d = X.shape[1]
+        concat_calls = [
+            v
+            for tag, v in calls
+            if tag == "set" and v is not None and v.shape == (2, d)
+        ]
+        assert concat_calls, (
+            "expected at least one set_X_pending call with shape "
+            "(2, d) — concat of user_pending and pruned X[0]"
+        )
+        # Every such call must carry user_pending in the first row
+        # and the pruned X[0] in the second row.
+        for v in concat_calls:
+            assert torch.allclose(v[0], user_pending[0])
+            assert torch.allclose(v[1], out[0])
+
+    def test_x_pending_no_user_pending(self):
+        """When ``acqf.X_pending`` starts as None, the local-reopt
+        path must call ``set_X_pending`` with just the prefix (not
+        ``cat([None, prefix])``, which would crash).
+        """
+        _, inp, X = self._two_candidate_setup()
+        rec, calls = self._make_recording_af(MockAcquisitionFunction())
+        rec.X_pending = None  # no user-set pending
+
+        out = prune_nchoosek(
+            X=X,
+            acqf=cast(AcquisitionFunction, rec),
+            **inp,
+            per_step_local_reopt=True,
+            final_local_reopt=True,
+        )
+
+        d = X.shape[1]
+        # Calls during i=1 must be shape (1, d) — the pruned X[0]
+        # alone, no user_pending to concat.
+        prefix_only_calls = [
+            v
+            for tag, v in calls
+            if tag == "set" and v is not None and v.shape == (1, d)
+        ]
+        assert prefix_only_calls, (
+            "expected at least one set_X_pending call with shape "
+            "(1, d) — the pruned X[0] as the entire pending set"
+        )
+        for v in prefix_only_calls:
+            assert torch.allclose(v[0], out[0])
+
+        # And after the run X_pending is restored to None.
+        assert rec.X_pending is None
+
+    def test_analytic_af_does_not_crash(self):
+        """An AF whose ``set_X_pending`` raises ``UnsupportedError``
+        (analytic AFs) must be silently skipped — the prefix
+        conditioning is a mathematical no-op for them, and the
+        pruning loop must complete without raising.
+        """
+        _, inp, X = self._two_candidate_setup()
+        rec, calls = self._make_recording_af(
+            MockAcquisitionFunction(), raise_on_set=True
+        )
+
+        # Should not crash even though set_X_pending raises.
+        out = prune_nchoosek(
+            X=X,
+            acqf=cast(AcquisitionFunction, rec),
+            **inp,
+            per_step_local_reopt=True,
+            final_local_reopt=True,
+        )
+
+        # We attempted at least one set call (which raised).
+        raised_calls = [v for tag, v in calls if tag == "raise"]
+        assert raised_calls, (
+            "expected at least one set_X_pending attempt (which "
+            "raised UnsupportedError and was caught)"
+        )
+        # And produced a feasible candidate.
+        for i in (0, 1):
+            nz = (out[i].abs() > 1e-6).sum().item()
+            assert nz <= 2
+
+    def test_final_local_reopt_threads_pending(self):
+        """The final polish step must also receive the prefix via
+        ``X_pending_extra`` — verified by recording set_X_pending
+        calls when only ``final_local_reopt=True`` (per-step disabled).
+        """
+        _, inp, X = self._two_candidate_setup()
+        rec, calls = self._make_recording_af(MockAcquisitionFunction())
+        user_pending = torch.tensor([[0.1, 0.2, 0.3, 0.4]], **tkwargs)
+        rec.X_pending = user_pending.clone()
+
+        out = prune_nchoosek(
+            X=X,
+            acqf=cast(AcquisitionFunction, rec),
+            **inp,
+            per_step_local_reopt=False,
+            final_local_reopt=True,
+        )
+
+        d = X.shape[1]
+        # With per_step_local_reopt=False, the only local-reopt path
+        # exercised is _final_local_reopt for i=1 (i=0 has empty
+        # prefix so no set_X_pending call is made there). It must
+        # have called set_X_pending with concat([user_pending,
+        # pruned_X[0]]) — shape (2, d).
+        concat_calls = [
+            v
+            for tag, v in calls
+            if tag == "set" and v is not None and v.shape == (2, d)
+        ]
+        assert concat_calls, (
+            "expected at least one set_X_pending call with shape "
+            "(2, d) during the final polish for i=1"
+        )
+        for v in concat_calls:
+            assert torch.allclose(v[0], user_pending[0])
+            assert torch.allclose(v[1], out[0])

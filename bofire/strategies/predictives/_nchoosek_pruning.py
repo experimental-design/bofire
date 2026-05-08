@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.exceptions.errors import UnsupportedError
 from botorch.optim.optimize import optimize_acqf
 from botorch.optim.parameter_constraints import project_to_feasible_space_via_slsqp
 from torch import Tensor
@@ -713,27 +714,76 @@ def _local_optacqf(
     inequality_constraints: List[Tuple[Tensor, Tensor, float]],
     equality_constraints: List[Tuple[Tensor, Tensor, float]],
     acqf: AcquisitionFunction,
+    X_pending_extra: Optional[Tensor] = None,
 ) -> Optional[Tensor]:
     """Single-restart ``optimize_acqf`` warm-started from ``initial``.
+
+    ``X_pending_extra`` carries the q-batch prefix (already-pruned
+    earlier candidates from the current ``prune_nchoosek`` call). When
+    non-empty and the AF supports ``set_X_pending`` (i.e. it is an MC
+    acquisition function), the prefix is concatenated onto the AF's
+    existing ``X_pending`` for the duration of the optimization, then
+    restored in ``finally``. This makes the local reopt consistent
+    with the variant-ranking step's joint q-batch evaluation, which
+    already constructs ``[user_X_pending, X_prefix, candidate]`` by
+    hand.
+
+    The user's ``acqf.X_pending`` (set at AF construction time, e.g.
+    via ``strategy.set_candidates(...)``) is preserved by concatenating
+    onto it rather than overwriting. Analytic AFs raise
+    ``UnsupportedError`` on ``set_X_pending``; they are silently
+    skipped because for analytic AFs the marginal AF on a q-batch
+    coincides with the joint AF (no joint covariance modelled), so
+    the prefix conditioning is a mathematical no-op.
 
     Returns the refined ``(d,)`` tensor on success or ``None`` on
     optimizer failure (caller falls back to ``initial``).
     """
-    try:
-        local_candidate, _ = optimize_acqf(
-            acq_function=acqf,
-            bounds=bounds,
-            batch_initial_conditions=initial.unsqueeze(0).unsqueeze(0),
-            fixed_features=fixed_features,
-            inequality_constraints=inequality_constraints
-            if inequality_constraints
-            else None,
-            equality_constraints=equality_constraints if equality_constraints else None,
-            **_OPTIMIZE_ACQF_DEFAULTS,
+    saved_pending = getattr(acqf, "X_pending", None)
+    pending_was_set = False
+
+    if X_pending_extra is not None and X_pending_extra.numel() > 0:
+        combined = (
+            X_pending_extra
+            if saved_pending is None
+            else torch.cat([saved_pending, X_pending_extra], dim=0)
         )
-    except Exception:
-        return None
-    return local_candidate.squeeze(0).squeeze(0)
+        try:
+            acqf.set_X_pending(combined)
+            pending_was_set = True
+        except UnsupportedError:
+            # Analytic AF: marginal AF on a q-batch == joint AF, so
+            # skipping the prefix conditioning is correct.
+            pass
+
+    try:
+        try:
+            local_candidate, _ = optimize_acqf(
+                acq_function=acqf,
+                bounds=bounds,
+                batch_initial_conditions=initial.unsqueeze(0).unsqueeze(0),
+                fixed_features=fixed_features,
+                inequality_constraints=inequality_constraints
+                if inequality_constraints
+                else None,
+                equality_constraints=equality_constraints
+                if equality_constraints
+                else None,
+                **_OPTIMIZE_ACQF_DEFAULTS,
+            )
+        except Exception:
+            return None
+        return local_candidate.squeeze(0).squeeze(0)
+    finally:
+        if pending_was_set:
+            # The set above succeeded, so the AF supports
+            # set_X_pending and this won't raise. Defensive
+            # try/except just in case a third-party class behaves
+            # asymmetrically.
+            try:
+                acqf.set_X_pending(saved_pending)
+            except UnsupportedError:
+                pass
 
 
 def _build_variant(
@@ -751,6 +801,7 @@ def _build_variant(
     active_set: Optional[Set[int]] = None,
     semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
     tol: float = 1e-6,
+    X_pending_extra: Optional[Tensor] = None,
 ) -> Tuple[Tensor, bool]:
     """Construct the candidate variant for one greedy-pruning action.
 
@@ -871,6 +922,7 @@ def _build_variant(
                 inequality_constraints,
                 equality_constraints,
                 acqf,
+                X_pending_extra=X_pending_extra,
             )
             if refined is not None:
                 variant = refined
@@ -902,6 +954,7 @@ def _build_variant(
             inequality_constraints,
             equality_constraints,
             acqf,
+            X_pending_extra=X_pending_extra,
         )
         if refined is not None:
             return refined, True
@@ -1022,6 +1075,7 @@ def _collect_actions(
     state: PruningState,
     ctx: PruningContext,
     fixed_keys: Set[int],
+    X_pending_extra: Optional[Tensor] = None,
 ) -> List[Action]:
     """Build the admissible action set for ``state`` under ``ctx``.
 
@@ -1091,6 +1145,7 @@ def _collect_actions(
             active_set=state.active_set,
             semicontinuous_specs=ctx.semicontinuous_specs,
             tol=ctx.tol,
+            X_pending_extra=X_pending_extra,
         )
         actions.append(Action(j=j, kind=ActionKind.ZERO, variant=variant, valid=valid))
 
@@ -1111,6 +1166,7 @@ def _collect_actions(
             active_set=state.active_set,
             semicontinuous_specs=ctx.semicontinuous_specs,
             tol=ctx.tol,
+            X_pending_extra=X_pending_extra,
         )
         actions.append(
             Action(j=j, kind=ActionKind.ACTIVE, variant=variant, valid=valid)
@@ -1135,6 +1191,7 @@ def _collect_actions(
             active_set=state.active_set,
             semicontinuous_specs=ctx.semicontinuous_specs,
             tol=ctx.tol,
+            X_pending_extra=X_pending_extra,
         )
         actions.append(
             Action(j=j, kind=ActionKind.ACTIVATE, variant=variant, valid=valid)
@@ -1153,6 +1210,7 @@ def _final_local_reopt(
     equality_constraints: List[Tuple[Tensor, Tensor, float]],
     acqf: AcquisitionFunction,
     fixed_features: Optional[Dict[int, float]] = None,
+    X_pending_extra: Optional[Tensor] = None,
 ) -> Tensor:
     """Run a single local ``optimize_acqf`` with the loop's decisions
     frozen.
@@ -1162,6 +1220,10 @@ def _final_local_reopt(
     ``[lb_j, ub_j]``. Caller-supplied ``fixed_features`` are merged in
     so they remain pinned during the clean-up. All other coordinates
     keep their global bounds. Falls back to ``x`` on optimiser failure.
+
+    ``X_pending_extra`` is forwarded to :func:`_local_optacqf` so the
+    polish step conditions on the q-batch prefix; see the docstring
+    of :func:`_local_optacqf` for the save/restore semantics.
     """
     tightened = bounds.clone()
     for j in active_set:
@@ -1181,6 +1243,7 @@ def _final_local_reopt(
         inequality_constraints,
         equality_constraints,
         acqf,
+        X_pending_extra=X_pending_extra,
     )
     return refined if refined is not None else x
 
@@ -1293,7 +1356,7 @@ def _prune_single_candidate(
             )
         inner_iter += 1
 
-        actions = _collect_actions(state, ctx, fixed_keys)
+        actions = _collect_actions(state, ctx, fixed_keys, X_pending_extra=X_prefix)
 
         if not actions:
             raise PruningInfeasibleError(
@@ -1467,9 +1530,8 @@ def prune_nchoosek(
         # also the invariant the future beam/B&B refactor needs:
         # multiple in-flight states must share a single immutable
         # prefix per outer iteration.
-        x_pruned, final_state = _prune_single_candidate(
-            X[i], X[:i].clone(), ctx, fixed_keys
-        )
+        X_prefix = X[:i].clone()
+        x_pruned, final_state = _prune_single_candidate(X[i], X_prefix, ctx, fixed_keys)
         X[i] = x_pruned
         if final_local_reopt:
             X[i] = _final_local_reopt(
@@ -1482,6 +1544,7 @@ def prune_nchoosek(
                 equality_constraints,
                 acqf,
                 fixed_features=fixed_features,
+                X_pending_extra=X_prefix,
             )
 
     return X
