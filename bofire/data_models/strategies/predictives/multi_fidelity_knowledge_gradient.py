@@ -21,24 +21,11 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
-from bofire.data_models.objectives.api import (
-    CloseToTargetObjective,
-    MaximizeObjective,
-    MaximizeSigmoidObjective,
-    MinimizeObjective,
-    MinimizeSigmoidObjective,
-    Objective,
-    TargetObjective,
-)
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
 )
-from bofire.data_models.strategies.predictives.mobo import ExplicitReferencePoint
-from bofire.data_models.strategies.predictives.multiobjective import (
-    MultiobjectiveStrategy,
-)
-from bofire.data_models.strategies.predictives.sobo import _ForbidPFMixin
+from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.surrogates.api import AnyBotorchSurrogate, SingleTaskGPSurrogate
 from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 
@@ -55,9 +42,8 @@ def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
             yield from _traverse_kernels(base_kernel)
 
 
-class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
-    type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"  # type: ignore
-    ref_point: ExplicitReferencePoint | dict[str, float] | None = None
+class MultiFidelityHVKGStrategy(MoboStrategy):
+    type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"
     acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
     fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None
 
@@ -203,23 +189,3 @@ class MultiFidelityHVKGStrategy(MultiobjectiveStrategy, _ForbidPFMixin):
 
         """
         return my_type not in [CategoricalOutput, CategoricalInput]
-
-    @classmethod
-    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        """Method to check if a objective type is implemented for the strategy
-
-        Args:
-            my_type (Type[Objective]): Objective class
-
-        Returns:
-            bool: True if the objective type is valid for the strategy chosen, False otherwise
-
-        """
-        return my_type in [
-            MaximizeObjective,
-            MinimizeObjective,
-            MinimizeSigmoidObjective,
-            MaximizeSigmoidObjective,
-            TargetObjective,
-            CloseToTargetObjective,
-        ]

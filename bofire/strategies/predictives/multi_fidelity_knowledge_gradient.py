@@ -11,10 +11,7 @@ from botorch.acquisition.multi_objective import (
 from botorch.acquisition.multi_objective.hypervolume_knowledge_gradient import (
     _get_hv_value_function,
 )
-from botorch.acquisition.multi_objective.objective import (
-    GenericMCMultiOutputObjective,
-    MCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import MCMultiOutputObjective
 from botorch.acquisition.utils import project_to_target_fidelity
 from botorch.models.cost import AffineFidelityCostModel
 from botorch.models.gpytorch import GPyTorchModel
@@ -29,7 +26,6 @@ from typing_extensions import Self
 from bofire.data_models.acquisition_functions.api import qMFHVKG
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousTaskInput
-from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
@@ -38,10 +34,9 @@ from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient
 )
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
-from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.strategies.predictives.mobo import MoboStrategy
 from bofire.strategies.strategy import make_strategy
-from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
-from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 
 def _map_cost_model_to_botorch(
@@ -88,7 +83,7 @@ def _get_domain_with_fixed_task_inputs(
     return domain.model_copy(update={"inputs": fixed_inputs})
 
 
-class MultiFidelityHVKGStrategy(BotorchStrategy):
+class MultiFidelityHVKGStrategy(MoboStrategy):
     """Use the MFHVKG AF for a multi-objective, multi-fidelity problem.
 
     This does not inherit from MoboStrategy since the acqf requires some additional
@@ -99,12 +94,6 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self.task_feature_keys = self.domain.inputs.get_keys(ContinuousTaskInput)
-        self.acquisition_function = data_model.acquisition_function
-
-        # assert isinstance(data_model.ref_point, ExplicitReferencePoint)
-        assert not isinstance(data_model.ref_point, dict)
-        self.ref_point: ExplicitReferencePoint | None = data_model.ref_point
-        self.ref_point_mask = get_ref_point_mask(self.domain)
         self.fidelity_cost_model_spec = data_model.fidelity_cost_model_spec
 
     def _get_acqfs(self, n: PositiveInt) -> List[AcquisitionFunction]:
@@ -145,42 +134,6 @@ class MultiFidelityHVKGStrategy(BotorchStrategy):
             seed=self.seed,
         )
         return [acqf]
-
-    def _get_objective(self) -> GenericMCMultiOutputObjective:
-        assert self.experiments is not None
-
-        objective = get_multiobjective_objective(
-            outputs=self.domain.outputs,
-            experiments=self.experiments,
-        )
-        return GenericMCMultiOutputObjective(objective=objective)
-
-    def get_adjusted_refpoint(self) -> List[float]:
-        assert self.experiments is not None, "No experiments available."
-        assert (
-            isinstance(self.ref_point, ExplicitReferencePoint) or self.ref_point is None
-        )
-        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments,
-        )
-        ref_point = infer_ref_point(
-            self.domain,
-            experiments=df,
-            return_masked=False,
-            reference_point=self.ref_point,
-        )
-
-        return (
-            self.ref_point_mask
-            * np.array(
-                [
-                    ref_point[feat]
-                    for feat in self.domain.outputs.get_keys_by_objective(
-                        excludes=ConstrainedObjective,
-                    )
-                ],
-            )
-        ).tolist()
 
     def get_current_value(self, target_fidelities: dict[int, float]):
         """Compute the hypervolume of the current HV maximizing set, m_t^*.
