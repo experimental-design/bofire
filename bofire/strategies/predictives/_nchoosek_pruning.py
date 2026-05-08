@@ -264,6 +264,48 @@ def _zero_action_blocked_by_min_count(
     return False
 
 
+def _activate_action_blocked_by_max_count(
+    j_idx: int,
+    active_counts: Dict[int, int],
+    nchoosek_constraints: Sequence[NChooseKConstraint],
+    features2idx: Dict[str, Tuple[int, ...]],
+) -> bool:
+    """True iff activating ``j_idx`` would push some ``a_c`` above
+    ``max_count_c`` for any constraint ``c`` containing it.
+
+    Symmetric of ``_zero_action_blocked_by_min_count`` — prevents
+    activating into a max-count violation. No ``none_also_valid``
+    carve-out (max_count is a hard ceiling).
+    """
+    for c_idx, c in enumerate(nchoosek_constraints):
+        constraint_indices: Set[int] = set()
+        for feat_key in c.features:
+            constraint_indices.update(features2idx[feat_key])
+        if j_idx not in constraint_indices:
+            continue
+        if active_counts[c_idx] + 1 > c.max_count:
+            return True
+    return False
+
+
+def _min_count_violated_constraints(
+    active_counts: Dict[int, int],
+    nchoosek_constraints: Sequence[NChooseKConstraint],
+) -> Set[int]:
+    """Constraints with ``a_c < min_count_c`` (positions only).
+
+    Honours ``none_also_valid``: if a constraint allows
+    ``count == 0`` and the current count is 0, it is *not* reported
+    as violated.
+    """
+    violated: Set[int] = set()
+    for c_idx, c in enumerate(nchoosek_constraints):
+        a_c = active_counts[c_idx]
+        if a_c < c.min_count and not (c.none_also_valid and a_c == 0):
+            violated.add(c_idx)
+    return violated
+
+
 def _features_eligible_for_zero(
     fractional: Set[int],
     active: Set[int],
@@ -291,6 +333,30 @@ def _features_eligible_for_zero(
             violated_indices.update(features2idx[feat_key])
     eligible.update(active.intersection(violated_indices))
     return eligible
+
+
+def _features_eligible_for_activate(
+    zero_set: Set[int],
+    min_count_violated: Set[int],
+    nchoosek_constraints: Sequence[NChooseKConstraint],
+    features2idx: Dict[str, Tuple[int, ...]],
+) -> Set[int]:
+    """Indices admissible as targets of an ``activate`` action.
+
+    Only currently-zero features (``j ∈ zero_set``) that participate
+    in at least one min-count-violated NChooseK constraint are
+    candidates. Mirror of ``_features_eligible_for_zero`` on the
+    zero set, intersected with the min-count-violation feature set.
+    """
+    if not min_count_violated:
+        return set()
+
+    violated_indices: Set[int] = set()
+    for c_idx in min_count_violated:
+        c = nchoosek_constraints[c_idx]
+        for feat_key in c.features:
+            violated_indices.update(features2idx[feat_key])
+    return zero_set.intersection(violated_indices)
 
 
 # ---------------------------------------------------------------------------
@@ -330,96 +396,219 @@ def _features_eligible_for_zero(
 #     are in play.
 # ---------------------------------------------------------------------------
 #
-# TODO: introduce an "activate-zero" action for non-semi-continuous
-# features when `min_count > 0` is violated.
+# Activate-zero: a third action category for currently-zero features,
+# fired when some NChooseK constraint has `a_c < min_count_c` and
+# would otherwise leave the loop stuck.
 #
-# Today the action set only contains:
-#   - zero(j) for any j currently active and in some violated NChooseK,
-#   - active(j) for any j ∈ fractional (snap a fractional semi-continuous
-#     feature into [lb_j, ub_j]).
+# The action set per iteration is:
+#   - zero(j)     for j ∈ eligible_for_zero (existing logic),
+#   - active(j)   for j ∈ fractional ∩ semicontinuous_specs (existing),
+#   - activate(j) for j ∈ zero_set ∩ features(c) for some
+#                  min-count-violated c (new).
 #
-# Both move features *out* of the active set or resolve fractional
-# states. Neither moves a currently-zero feature *into* the active set.
-# So if the AF maximiser produces a candidate with `a_c < min_count_c`
-# for some constraint `c` (with `none_also_valid=False` or `count > 0`)
-# and there are no fractional features, the eligibility set
-# `_features_eligible_for_zero(...)` collapses to ∅ — fractional is
-# empty, no constraint is violated by max_count, no zero action helps.
-# The loop bails with `PruningInfeasibleError`.
+# `_build_activate_variant` is a thin wrapper around
+# `_build_active_variant`. It picks the activation target band:
+# semi-continuous features get their natural [lb_j, ub_j]; everything
+# else gets [max(tol, bounds[0, j_idx]), bounds[1, j_idx]] — any
+# positive value within the feature's original bounds, with `tol`
+# ensuring the variant is classified as "active" by the |x_j| > tol
+# fulfilment rule. The caller passes
+# `pinned_zero_indices = zero_set − {j_idx}` so the rest of the zero
+# set stays pinned.
 #
-# This regime is reachable any time:
-#   - `min_count_c > 0` and `none_also_valid_c = False`, AND
-#   - the AF (e.g. qLogEI on a Map-SAAS posterior) concentrates mass on
-#     fewer than `min_count_c` features.
+# `none_also_valid=True`: the loop always activates when
+# `0 < count < min_count`. It does not attempt to walk down to
+# count=0 by zeroing remaining actives — the per-step
+# min-count guard (`_zero_action_blocked_by_min_count`) blocks any
+# zero action whose post-state would be in the (0, min_count) gap,
+# and the greedy doesn't have multi-step lookahead to plan a
+# zero-down trajectory. count=0 is reached only if the AF maximiser
+# places the candidate there to begin with; in that case
+# none_also_valid=True and the loop accepts it as feasible
+# immediately. If a user wants the loop to actively prefer count=0,
+# that's an AF-level concern (sparsity prior), not a pruning concern.
 #
-# It is the dominant failure mode on real formulation domains (mixture
-# `Σ x = 1` + NChooseK with `min_count = 6` over 12 features). With
-# only `min_count = 0` allowed, BoFire users can't model "you must use
-# at least N components in this formulation" — which is the most common
-# real cardinality constraint.
+# Iteration cap: activate makes the action set non-monotone (zero →
+# active → zero is possible across iterations if AF preferences
+# shift). The loop caps per-candidate iterations at 2 × n_features
+# and raises `PruningInfeasibleError` with a clear message if
+# exceeded. In practice the AF-driven greedy converges in ≤ d
+# iterations because the AF reduction shrinks each step; the cap is
+# a safety net against pathological non-determinism.
+# ---------------------------------------------------------------------------
 #
-# Principled fix: add a third action category, mirror of the active
-# variant but for non-semi-continuous features.
+# Future improvement — swap actions:
 #
-#     def _build_activate_variant(
-#         x_i, j_idx, ub_j, bounds, ineq, eq, acqf, per_step_local_reopt,
-#         active_set, pinned_zero_indices, fixed_features, tol,
-#     ) -> Tuple[Tensor, bool]:
-#         """Snap currently-zero feature j into a positive value.
-#         Same machinery as `_build_active_variant` but with the per-
-#         feature lower bound set to `tol` (any positive value) instead
-#         of the semi-continuous `lb_j`. The QP enforces sum=1 etc.
-#         The optimiser picks where in `[tol, ub_j]` to place x_j.
-#         """
-#         tightened = bounds.clone()
-#         tightened[0, j_idx] = tol
-#         tightened[1, j_idx] = ub_j
-#         ...  # rest mirrors _build_active_variant
+# Add a fourth action kind `swap(j, k) = zero(j) + activate(k)`
+# committed atomically in one iteration. `j ∈ active_set`,
+# `k ∈ zero_set`, both in (at least one) shared NChooseK group. Net
+# count change is zero per shared constraint, so this is the natural
+# "rebalance the support set without changing cardinality" move.
 #
-# Eligibility:
-#   - activate(j) is admissible only when some `a_c < min_count_c`
-#     (with the usual `none_also_valid` carve-out) AND `j` is currently
-#     in `zero_set` AND `j ∈ features(c)` for some min-count-violated
-#     constraint `c`.
-#   - Each iteration's action set then becomes
-#     {zero(j) : eligible_for_zero} ∪
-#     {active(j) : j ∈ fractional ∩ semicontinuous_specs} ∪
-#     {activate(j) : eligible_for_activate}.
-#   - Termination unchanged: stop when no fractional, all `a_c` in
-#     `[min_count_c, max_count_c]`.
+# Motivation: the current greedy can only change cardinality. Once a
+# feature is committed active it is sticky — there is no path back to
+# zero unless a max_count violation reopens it. On
+# mixture + NChooseK with tight `min_count = max_count`, the support
+# set is locked by the dense AF maximiser even when the GP posterior
+# would prefer a different support of the same size. Concrete case:
+# dense AF `x = (0.40, 0.35, 0.10, 0.10, 0.05)`, NChooseK over all
+# five features with `min=max=3`. Greedy zeros `x5` then `x4` and
+# returns support `{1, 2, 3}`. The AF may actually peak at
+# `{1, 2, 4}` after redistribution, but reaching it would require
+# `zero(3) + activate(4)` together, which the per-step min_count
+# guard blocks.
 #
-# Selection rule: same — argmin AF reduction across all action kinds.
-# An activate variant typically *increases* AF (we're adding a new
-# active feature to a sparse candidate that the surrogate likes), so
-# its reduction is small or negative; the greedy will prefer it
-# whenever min_count is the binding violation, which is the right
-# behaviour.
+# Sketch:
+#   - Eligibility per (j, k):
+#       * for every NChooseK c with {j,k} ⊆ c.features: count
+#         unchanged, always admissible.
+#       * j ∈ c, k ∉ c: count_c -= 1; gate with the existing
+#         min_count guard.
+#       * k ∈ c, j ∉ c: count_c += 1; gate with the max_count guard.
+#       * neither in c: no effect.
+#   - Variant: tighten bounds with `x_j = 0` pinned and
+#     `x_k ∈ [lb_k, ub_k]` (or `[2 * tol, ub_k]` for
+#     non-semi-continuous), project onto the linear set, optionally
+#     local-reopt — same machinery as the existing variant builders.
+#   - Selection rule unchanged: swap competes with zero / active /
+#     activate on smallest AF reduction.
 #
-# State updates:
-#   - activate(j): zero_set.discard(j); active_set.add(j); a_c
-#     increments for every c ∋ j.
+# Cost: action set grows from O(d) to O(d²) per iteration. For
+# d ≤ 30 still cheap (one QP each), worth pre-filtering by AF
+# gradient if profiling shows it dominates. Termination is still
+# bounded by the 2·d cap.
 #
-# Edge cases:
-#   - Mutual infeasibility (e.g. one constraint demands ≥ 2 actives,
-#     another forbids both). The eligibility set still empties out;
-#     `PruningInfeasibleError` still fires. The error class stays;
-#     only the *common* min-count-violation case ceases to raise.
-#   - Interaction with `per_step_local_reopt`: the activate variant
-#     calls `optimize_acqf` with `bounds[0, j_idx] = tol` (or the
-#     partial-drift fix's tightened bounds for other actives). Same
-#     plumbing as the active variant.
-#   - Cost: the action set size grows by up to |zero_set| in
-#     min-count-violated iterations. Manageable.
+# Where it would pay off: mixture + NChooseK with non-trivial
+# `min_count` (formulation problems), and semi-continuous mixtures
+# where activation order currently locks in suboptimal supports.
+# Spurious-features case probably sees only marginal gains.
+# ---------------------------------------------------------------------------
 #
-# Plumbing requirement: `_features_eligible_for_activate(...)` helper,
-# and the loop's per-iteration state needs to track per-constraint
-# min-count violations explicitly (currently `_violated_constraints`
-# only tracks max-count violations).
+# Future improvement — beam search:
 #
-# Order of operations: do the partial-drift fix above first (cleaner
-# foundation, smaller scope), then this. Both fixes touch the variant
-# builders' signatures, so doing them together would conflate two
-# design discussions in the same diff; sequential is cleaner.
+# The current loop is structurally beam search with width k=1: at each
+# iteration it expands the current state into all admissible action
+# variants, ranks by AF reduction, and commits the argmin. Widening
+# this to k>1 is a natural expansion of BONSAI — the action set, the
+# guards, the variant builders, the fulfilment check, and the 2·d
+# iteration cap all transfer unchanged. Only the selection rule
+# changes from `argmin` to `top-k`.
+#
+# Refactor sketch:
+#   1. Factor the per-iteration body of `prune_nchoosek` into
+#      `expand(state) → list[(state', af_reduction)]` that returns
+#      every admissible successor (not just the argmin). No
+#      behaviour change at k=1.
+#   2. Replace the inner `while True / argmin` with a beam loop:
+#      hold `beam: list[state]`, expand each, concatenate the
+#      successors, retain the top-k by *cumulative* AF reduction.
+#   3. Track cumulative AF reduction per beam slot rather than
+#      committing in place to `X[i]`.
+#   4. On termination, return the best feasible state across the
+#      beam.
+#   5. Expose `k` as an optional hyperparameter alongside
+#      `per_step_local_reopt` / `final_local_reopt`, defaulting to
+#      `1` so existing behaviour and tests are unchanged.
+#
+# Cost: per iteration scales as `k · |actions|`; total work
+# `O(k · d²)` (or `O(k · d³)` with swap). Polynomial in d for fixed
+# k. Beam-k vs. greedy is a constant-factor `k` slowdown.
+#
+# What it catches that greedy misses: trajectories where the local
+# AF-best move is suboptimal but a continuation from the second-best
+# is better. Concretely the "redistribute mass to a different active
+# feature" case where the greedy locks in a sticky support set.
+#
+# What it does *not* catch: trajectories that pass through
+# individually-infeasible intermediate states (e.g., `zero(j)` that
+# violates min_count even though a downstream `activate(k)` would
+# restore feasibility). The per-step guards prune those branches
+# before the beam ever sees them — that's exactly the gap that the
+# atomic swap action closes. Beam search and swap are therefore
+# complementary, not equivalent: swap extends the action *set*,
+# beam extends the search *strategy* over that set.
+#
+# A further structural step beyond plain beam is "lookahead beam":
+# admit individually-infeasible states into the beam in the hope
+# that a k_lookahead-step continuation restores feasibility. This
+# generalises the swap action to arbitrary k, but gives up the
+# per-step feasibility invariant and probably needs B&B-style
+# bounding to be tractable. Not recommended without that.
+# ---------------------------------------------------------------------------
+#
+# Future improvement — branch-and-bound (B&B):
+#
+# B&B is the next step beyond beam search. The connection to what we
+# already have is direct:
+#
+#   - Greedy   = beam search with width 1: argmin AF reduction at
+#                each step, no backtracking.
+#   - Beam-k   = top-k continuations retained per step, ranked by
+#                cumulative AF reduction. No proof of optimality, but
+#                catches sticky-support trajectories the greedy
+#                misses.
+#   - B&B      = a priority-queue-driven tree search that retains
+#                *all* unpruned partial trajectories. A bounding
+#                function `L(state)` provides a lower bound on the
+#                AF reduction of any feasible descendant; subtrees
+#                whose `accumulated + L(state) >= incumbent` are
+#                discarded. With a tight bound the search is exact;
+#                with a loose bound it gracefully degrades to a more
+#                exhaustive beam-like search.
+#
+# Why it is a natural next step rather than a rewrite:
+#
+#   - Branching is the same `expand(state)` function that beam
+#     search needs. The action set, guards, and variant builders
+#     transfer unchanged.
+#   - The current greedy plays four load-bearing roles inside B&B:
+#       (a) **Initial incumbent.** Seed `incumbent =
+#           greedy(state).af_reduction` so the search has something
+#           to prune against from iteration 1. Without this, B&B is
+#           effectively unbounded best-first search until the first
+#           feasible leaf is reached.
+#       (b) **Primal heuristic at every interior node.** Run the
+#           greedy from the node to a feasible leaf, update the
+#           incumbent if the result is better. Same role the
+#           rollout policy plays in MCTS.
+#       (c) **Action machinery.** The eligibility, guards, and
+#           variant builders are the primitives B&B branches over.
+#       (d) **Runtime fallback.** When a node-budget is exceeded,
+#           return the incumbent (typically the greedy result) plus
+#           the gap `incumbent - best_open_bound` as a quality
+#           stamp.
+#   - Beam search reuses (c). B&B reuses (a)-(d). Neither obsoletes
+#     the greedy.
+#
+# Reasonable expansion path from the current state of the codebase:
+#
+#   step 1: factor the per-iteration body of `prune_nchoosek` into
+#           an `expand(state) → list[(state', af_reduction)]`
+#           function returning every admissible successor (not just
+#           the argmin). No behaviour change at width 1; this is
+#           the structural prerequisite for everything that follows.
+#   step 2: replace the inner `argmin` selection with `top-k`,
+#           threaded through a beam list. Add a hyperparameter `k`
+#           defaulting to 1 so existing tests are unchanged.
+#   step 3: replace the beam list with a priority queue keyed on
+#           `accumulated + L(state)`, where `L(state)` is a
+#           bounding function. Seed `incumbent` from the greedy at
+#           the root. Run the greedy as a primal heuristic at every
+#           expanded node and update `incumbent` from its result.
+#           Prune subtrees whose bound exceeds `incumbent`. Add a
+#           `node_budget` hyperparameter; on exhaustion, return the
+#           incumbent with the current gap.
+#
+# Each step is self-contained: `step 1` is a pure refactor; after
+# `step 2` users can opt into beam search; after `step 3` users can
+# opt into anytime B&B. The greedy remains the default code path
+# throughout.
+#
+# The bounding function `L(state)` deserves its own design pass and
+# is intentionally not specified here. The cheap-and-always-valid
+# fallback is `L = 0` (B&B prunes only on accumulated AF reduction);
+# tighter bounds use the constraint structure of the violated
+# NChooseK group.
 # ---------------------------------------------------------------------------
 
 
@@ -678,6 +867,66 @@ def _build_active_variant(
     return projected, True
 
 
+def _build_activate_variant(
+    x_i: Tensor,
+    j_idx: int,
+    bounds: Tensor,
+    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
+    equality_constraints: List[Tuple[Tensor, Tensor, float]],
+    acqf: AcquisitionFunction,
+    per_step_local_reopt: bool,
+    pinned_zero_indices: Optional[Set[int]] = None,
+    fixed_features: Optional[Dict[int, float]] = None,
+    active_set: Optional[Set[int]] = None,
+    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
+    tol: float = 1e-6,
+) -> Tuple[Tensor, bool]:
+    """Construct the variant where currently-zero feature ``j_idx`` is
+    activated to a positive value.
+
+    Picks the activation target band:
+
+    - If ``j_idx`` is semi-continuous (in ``semicontinuous_specs``), the
+      target band is the feature's natural ``[lb_j, ub_j]``.
+    - Otherwise, the target band is ``[max(tol, bounds[0, j_idx]), bounds[1, j_idx]]``
+      — any positive value within the feature's original bounds. ``tol``
+      ensures the variant is classified as "active" by the
+      ``|x_j| > tol`` rule used in the fulfilment check.
+
+    Mechanics are then identical to ``_build_active_variant`` (QP
+    projection of the current candidate onto the tightened polytope,
+    plus optional local re-optimisation). The caller must pass
+    ``pinned_zero_indices = zero_set − {j_idx}`` so that
+    ``_build_active_variant``'s ``fixed_features`` plumbing pins every
+    *other* committed-zero feature without conflicting with the
+    activation target.
+    """
+    if semicontinuous_specs and j_idx in semicontinuous_specs:
+        lb_target, ub_target = semicontinuous_specs[j_idx]
+    else:
+        ub_target = float(bounds[1, j_idx].item())
+        # Strictly greater than tol so the projected variant is classified
+        # as "active" by ``_classify_features_for_row`` (which treats
+        # ``|x_j| <= tol`` as zero). Using ``tol`` exactly would round-trip
+        # the variant back into the zero set and prevent loop convergence.
+        lb_target = max(2 * tol, float(bounds[0, j_idx].item()))
+    return _build_active_variant(
+        x_i=x_i,
+        j_idx=j_idx,
+        lb_j=lb_target,
+        ub_j=ub_target,
+        bounds=bounds,
+        inequality_constraints=inequality_constraints,
+        equality_constraints=equality_constraints,
+        acqf=acqf,
+        per_step_local_reopt=per_step_local_reopt,
+        pinned_zero_indices=pinned_zero_indices,
+        fixed_features=fixed_features,
+        active_set=active_set,
+        semicontinuous_specs=semicontinuous_specs,
+    )
+
+
 def _final_local_reopt(
     x: Tensor,
     zero_set: Set[int],
@@ -771,7 +1020,7 @@ def _af_reduction(
 # ---------------------------------------------------------------------------
 
 
-def prune_nchoosek(
+def prune_nchoosek(  # noqa: C901
     X: Tensor,
     acqf: AcquisitionFunction,
     nchoosek_constraints: Sequence[NChooseKConstraint],
@@ -790,11 +1039,26 @@ def prune_nchoosek(
     candidates.
 
     For every candidate row ``X[i]``, iteratively commit the action
-    (zero a feature, or snap a fractional feature into its active
-    band) whose acquisition reduction is smallest, until every
-    NChooseK constraint is satisfied and no feature remains in the
-    semi-continuous gap. Later candidates condition on already-pruned
-    earlier ones via the prefixed AF evaluation.
+    whose acquisition reduction is smallest, until every NChooseK
+    constraint is satisfied and no feature remains in the
+    semi-continuous gap. Three action kinds:
+
+    - ``zero(j)``: zero a currently active or fractional feature.
+    - ``active(j)``: snap a fractional semi-continuous feature into
+      its ``[lb_j, ub_j]`` band.
+    - ``activate(j)``: bring a currently-zero feature into a positive
+      value, used when some NChooseK constraint has
+      ``a_c < min_count_c``. Targets ``[lb_j, ub_j]`` for
+      semi-continuous features; ``[tol, ub_j]`` otherwise.
+
+    On constraints with ``none_also_valid=True``, the loop activates
+    when ``0 < count < min_count``; it does *not* attempt to zero
+    down to ``count=0`` (the per-step zero guard blocks intermediate
+    sub-min states). ``count=0`` is reached only if the AF maximiser
+    places the candidate there to begin with.
+
+    Later candidates condition on already-pruned earlier ones via the
+    prefixed AF evaluation.
 
     Args:
         X: ``(q, d)`` candidate tensor.
@@ -881,6 +1145,13 @@ def prune_nchoosek(
             if abs(v) <= tol:
                 zero_set.add(j)
 
+        # Activate is non-monotone (a feature can flip
+        # zero → active → zero across iterations if AF preferences shift),
+        # so cap iterations defensively. 2*d is well above the
+        # AF-driven greedy's typical convergence (≤ d).
+        max_inner_iters = 2 * X.shape[1]
+        inner_iter = 0
+
         while True:
             if not frac_set and _is_nchoosek_fulfilled(
                 X[i],
@@ -889,6 +1160,16 @@ def prune_nchoosek(
                 tol,
             ):
                 break
+            if inner_iter >= max_inner_iters:
+                raise PruningInfeasibleError(
+                    f"Greedy pruning exceeded the per-candidate iteration "
+                    f"cap of {max_inner_iters} (2 × n_features) without "
+                    f"reaching feasibility. This usually indicates an "
+                    f"oscillation between zero and activate actions on "
+                    f"the same feature. Inspect the acquisition function "
+                    f"for non-determinism or extreme non-convexity."
+                )
+            inner_iter += 1
 
             counts = _active_counts(
                 X[i],
@@ -904,9 +1185,19 @@ def prune_nchoosek(
                 nchoosek_constraints,
                 features2idx,
             )
+            min_count_violated = _min_count_violated_constraints(
+                counts, nchoosek_constraints
+            )
+            eligible_activate = _features_eligible_for_activate(
+                zero_set,
+                min_count_violated,
+                nchoosek_constraints,
+                features2idx,
+            )
 
             # Caller-fixed features are never moved by the loop.
             eligible = eligible - fixed_keys
+            eligible_activate = eligible_activate - fixed_keys
 
             actions: List[Tuple[int, str, Tensor, bool]] = []
             for j in sorted(eligible):
@@ -952,6 +1243,30 @@ def prune_nchoosek(
                     semicontinuous_specs=semicontinuous_specs,
                 )
                 actions.append((j, "active", variant, valid))
+
+            for j in sorted(eligible_activate):
+                if _activate_action_blocked_by_max_count(
+                    j,
+                    counts,
+                    nchoosek_constraints,
+                    features2idx,
+                ):
+                    continue
+                variant, valid = _build_activate_variant(
+                    X[i],
+                    j,
+                    bounds,
+                    inequality_constraints,
+                    equality_constraints,
+                    acqf,
+                    per_step_local_reopt,
+                    pinned_zero_indices=zero_set - {j},
+                    fixed_features=fixed_features,
+                    active_set=active_set,
+                    semicontinuous_specs=semicontinuous_specs,
+                    tol=tol,
+                )
+                actions.append((j, "activate", variant, valid))
 
             if not actions:
                 raise PruningInfeasibleError(
@@ -1001,8 +1316,11 @@ def prune_nchoosek(
                 frac_set.discard(j_pick)
                 active_set.discard(j_pick)
                 zero_set.add(j_pick)
-            else:
+            elif kind_pick == "active":
                 frac_set.discard(j_pick)
+                active_set.add(j_pick)
+            else:  # activate (zero → active for non-fractional features)
+                zero_set.discard(j_pick)
                 active_set.add(j_pick)
 
         if final_local_reopt:

@@ -73,7 +73,7 @@ Let `a` denote the active count `|{j : x*_j > 0}|`.
 
 The loop maintains a current candidate that starts at `x*` and, at each
 iteration, commits one *action* that moves a single feature into a terminal
-state (`0` or `[lb_j, ub_j]`). Two kinds of actions are considered.
+state (`0` or `[lb_j, ub_j]`). Three kinds of actions are considered.
 
 **Zero action `zero(j)`** — pin `x_j = 0` and re-establish feasibility of the
 remaining features against the linear constraints. If a feature `j` is currently
@@ -84,6 +84,14 @@ active (fractional or cleanly active), this is always available. Committing
 features. Set the bounds of `j` to `[lb_j, ub_j]` and re-establish feasibility.
 Committing `active(j)` resolves the semi-continuity violation for `j` without
 changing the active count.
+
+**Activate action `activate(j)`** — only available for currently zero
+features, and only when some NChooseK constraint has `a_c < min_count_c` (an
+"under-budget" violation). Snap `x_j` into a positive band — `[lb_j, ub_j]`
+for semi-continuous features, `[ε, ub_j]` otherwise — and re-establish
+linear feasibility. Committing `activate(j)` increments the active count by
+one. See [The activate action](#the-activate-action--handling-min_count--0)
+below for eligibility and the `none_also_valid` interaction.
 
 For each candidate action, a per-action *variant* candidate is constructed (see
 hyperparameters below). The acquisition function is evaluated at each variant.
@@ -161,6 +169,73 @@ usual `none_also_valid` exception that allows `a_c = 0`). Active actions are
 never filtered. As before, an empty filtered action set before all
 `max_count_c` are satisfied indicates a mutually infeasible configuration:
 the algorithm raises rather than returning an infeasible candidate.
+
+### The activate action — handling `min_count > 0`
+
+The zero/active action pair is sufficient when the dense candidate already has
+`a ≥ min_count` for every constraint: the loop only ever needs to *reduce*
+the active count to land inside `[min_count, max_count]`. When the AF
+maximizer places mass on fewer features than required by some constraint
+(`a_c < min_count_c`), neither action can resolve the violation:
+
+- `zero(j)` decreases `a_c`, away from feasibility, and is blocked by the
+  min_count guard.
+- `active(j)` only resolves *fractional* features; it never moves a
+  currently-zero feature into the active set.
+
+A third action category, `activate(j)`, fills this gap. It targets a
+currently-zero feature `j` and proposes to move it into the active region:
+
+- if `j` is semi-continuous, into its natural band `[lb_j, ub_j]`;
+- otherwise, into `[ε, ub_j]` for a small ε just above the classification
+  tolerance (so the variant is unambiguously classified as active).
+
+Eligibility is the dual of the zero-action eligibility rule: `j` is a valid
+target iff it is currently zero *and* participates in at least one
+**min-count-violated** constraint (`a_c < min_count_c` for some `c ∋ j`,
+honouring `none_also_valid`). A symmetric **max_count guard** filters out
+activations that would push some `a_c` above `max_count_c`. With these in
+place the loop's exit condition extends naturally to
+
+```
+fractional == ∅   AND   ∀ c :  min_count_c ≤ a_c ≤ max_count_c
+```
+
+The greedy selection rule is unchanged: every iteration collects zero,
+active, and activate variants into a single action set, evaluates the AF at
+each variant, and commits the action with the smallest AF reduction.
+
+#### `none_also_valid = True`
+
+When a constraint allows `a_c = 0` (the empty formulation is valid) and the
+dense candidate enters the loop with `0 < a_c < min_count_c`, two
+trajectories could in principle satisfy the constraint: walk *up* to
+`a_c = min_count_c` via activate actions, or walk *down* to `a_c = 0` via
+zero actions. The greedy commits one action per iteration with no
+multi-step lookahead, so any intermediate state with `0 < a_c < min_count_c`
+is itself infeasible and the per-step zero-guard blocks every zero action
+along the walk-down trajectory. The loop therefore only ever takes the
+walk-up route.
+
+This is a deliberate design choice: walking down through infeasible
+intermediate states is unsafe in the presence of *other* NChooseK
+constraints with `none_also_valid = False`, which would force activation
+before the count reached zero — leaving the algorithm to commit zeros that
+it later has to undo. The reachable `a_c = 0` outcome is the case where the
+AF maximizer placed the candidate at `a_c = 0` to begin with; the loop
+accepts that as feasible immediately. Users who want the algorithm to
+*prefer* an empty formulation should encode that preference in the AF
+itself (e.g. via a sparsity prior), not in the pruning rule.
+
+#### Iteration cap
+
+Activate makes the action set non-monotone in principle: a feature can flip
+zero → active → zero across iterations if AF preferences shift between
+commits. To bound runtime against pathological non-determinism, the loop
+caps per-candidate iterations at `2 × n_features` and raises
+`PruningInfeasibleError` if exceeded. In practice the AF-driven greedy
+converges in `≤ d` iterations because the AF reduction shrinks each step;
+the cap is a safety net, not a regular path.
 
 ### A useful efficiency restriction
 

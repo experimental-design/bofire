@@ -22,12 +22,16 @@ from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.strategies.predictives import _nchoosek_pruning as ncp
 from bofire.strategies.predictives._nchoosek_pruning import (
     PruningInfeasibleError,
+    _activate_action_blocked_by_max_count,
     _active_counts,
+    _build_activate_variant,
     _build_active_variant,
     _build_zero_variant,
     _classify_features_for_row,
+    _features_eligible_for_activate,
     _features_eligible_for_zero,
     _is_nchoosek_fulfilled,
+    _min_count_violated_constraints,
     _violated_constraints,
     _zero_action_blocked_by_min_count,
     prune_nchoosek,
@@ -1311,4 +1315,325 @@ class TestPartialDriftFix:
             assert v <= 1e-6 or v >= 0.2 - 1e-6, (
                 f"x_{j + 1}={v} fell into the (0, 0.2) gap; "
                 "partial-drift fix didn't keep it in band."
+            )
+
+
+# ---------------------------------------------------------------------------
+# Activate-zero tests (min_count > 0)
+# ---------------------------------------------------------------------------
+
+
+class TestActivateZero:
+    """Verify the activate-zero action: when an NChooseK constraint has
+    ``a_c < min_count_c``, the loop activates currently-zero features
+    rather than raising. Covers the new helpers, the variant builder,
+    the loop's eligibility logic, and end-to-end formulation cases.
+    """
+
+    def _basic_constraint(self, **kw) -> NChooseKConstraint:
+        defaults = {
+            "features": ["x1", "x2", "x3", "x4"],
+            "min_count": 2,
+            "max_count": 3,
+            "none_also_valid": False,
+        }
+        defaults.update(kw)
+        return NChooseKConstraint(**defaults)  # type: ignore
+
+    def _f2i_continuous(self, n: int) -> Dict[str, Tuple[int, ...]]:
+        return {f"x{i + 1}": (i,) for i in range(n)}
+
+    # ----- _min_count_violated_constraints -----
+
+    def test_min_count_violated_marks_count_below_min(self):
+        c = self._basic_constraint(min_count=3, max_count=4)
+        # count=2 < min=3, none_also_valid=False
+        violated = _min_count_violated_constraints({0: 2}, [c])
+        assert violated == {0}
+
+    def test_min_count_violated_satisfied_at_min(self):
+        c = self._basic_constraint(min_count=3, max_count=4)
+        violated = _min_count_violated_constraints({0: 3}, [c])
+        assert violated == set()
+
+    def test_min_count_none_also_valid_at_zero(self):
+        c = self._basic_constraint(min_count=3, max_count=4, none_also_valid=True)
+        violated = _min_count_violated_constraints({0: 0}, [c])
+        assert violated == set()
+
+    def test_min_count_none_also_valid_above_zero_below_min(self):
+        c = self._basic_constraint(min_count=3, max_count=4, none_also_valid=True)
+        # count=1 between 0 and min: still violated, the carve-out only
+        # exempts exactly count=0.
+        violated = _min_count_violated_constraints({0: 1}, [c])
+        assert violated == {0}
+
+    # ----- _features_eligible_for_activate -----
+
+    def test_features_eligible_for_activate_only_zero_features_in_violated(
+        self,
+    ):
+        c1 = self._basic_constraint(features=["x1", "x2"], min_count=2, max_count=2)
+        c2 = self._basic_constraint(features=["x3", "x4"], min_count=0, max_count=2)
+        f2i = self._f2i_continuous(4)
+        # zero_set = {0, 1, 2}, only c1 (idx=0) is violated;
+        # c1 features are x1, x2 → indices {0, 1}; intersect with
+        # zero_set = {0, 1}.
+        eligible = _features_eligible_for_activate(
+            zero_set={0, 1, 2},
+            min_count_violated={0},
+            nchoosek_constraints=[c1, c2],
+            features2idx=f2i,
+        )
+        assert eligible == {0, 1}
+
+    def test_features_eligible_for_activate_empty_when_no_violation(self):
+        c = self._basic_constraint()
+        f2i = self._f2i_continuous(4)
+        assert (
+            _features_eligible_for_activate(
+                zero_set={0, 1, 2},
+                min_count_violated=set(),
+                nchoosek_constraints=[c],
+                features2idx=f2i,
+            )
+            == set()
+        )
+
+    # ----- _activate_action_blocked_by_max_count -----
+
+    def test_activate_blocked_when_at_max_count(self):
+        # max_count=2 already, activating one more pushes to 3 → blocked.
+        c = self._basic_constraint(min_count=0, max_count=2)
+        f2i = self._f2i_continuous(4)
+        assert (
+            _activate_action_blocked_by_max_count(
+                j_idx=0,
+                active_counts={0: 2},
+                nchoosek_constraints=[c],
+                features2idx=f2i,
+            )
+            is True
+        )
+
+    def test_activate_not_blocked_below_max(self):
+        c = self._basic_constraint(min_count=0, max_count=3)
+        f2i = self._f2i_continuous(4)
+        assert (
+            _activate_action_blocked_by_max_count(
+                j_idx=0,
+                active_counts={0: 1},
+                nchoosek_constraints=[c],
+                features2idx=f2i,
+            )
+            is False
+        )
+
+    def test_activate_not_blocked_when_feature_outside_constraint(self):
+        # j_idx=3 (x4) is not in c1 → guard skips it.
+        c1 = NChooseKConstraint(  # type: ignore
+            features=["x1", "x2"],
+            min_count=0,
+            max_count=2,
+            none_also_valid=False,
+        )
+        f2i = self._f2i_continuous(4)
+        assert (
+            _activate_action_blocked_by_max_count(
+                j_idx=3,
+                active_counts={0: 2},  # c1 at max
+                nchoosek_constraints=[c1],
+                features2idx=f2i,
+            )
+            is False
+        )
+
+    # ----- _build_activate_variant -----
+
+    def test_build_activate_variant_non_semicontinuous(self):
+        # 4-feature mixture, all non-semicontinuous.
+        bounds = torch.tensor([[0.0] * 4, [1.0] * 4], **tkwargs)
+        eq = [
+            (
+                torch.tensor([0, 1, 2, 3]),
+                torch.tensor([-1.0] * 4, **tkwargs),
+                -1.0,
+            )
+        ]
+        # Two features active (x_1, x_2 at 0.5 each); x_3, x_4 zero.
+        # Activate x_3.
+        x_i = torch.tensor([0.0, 0.5, 0.5, 0.0], **tkwargs)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        variant, valid = _build_activate_variant(
+            x_i,
+            j_idx=2,
+            bounds=bounds,
+            inequality_constraints=[],
+            equality_constraints=eq,
+            acqf=acqf,
+            per_step_local_reopt=False,
+            pinned_zero_indices={0, 3},  # zero_set − {j_idx}
+            active_set={1},
+            semicontinuous_specs={},
+            tol=1e-6,
+        )
+        assert valid is True
+        # x_2 (target) ≥ tol (positive)
+        assert variant[2].item() >= 1e-6
+        # mixture preserved
+        assert variant.sum().item() == pytest.approx(1.0, abs=1e-3)
+        # other zeros stayed zero
+        assert variant[0].item() == pytest.approx(0.0, abs=1e-6)
+        assert variant[3].item() == pytest.approx(0.0, abs=1e-6)
+
+    def test_build_activate_variant_semicontinuous(self):
+        # 4 semi-continuous features (lb=0.2, ub=1) + mixture.
+        bounds = torch.tensor([[0.0] * 4, [1.0] * 4], **tkwargs)
+        eq = [
+            (
+                torch.tensor([0, 1, 2, 3]),
+                torch.tensor([-1.0] * 4, **tkwargs),
+                -1.0,
+            )
+        ]
+        semi = {i: (0.2, 1.0) for i in range(4)}
+        # x_1, x_2 active (in band); x_3, x_4 zero.
+        x_i = torch.tensor([0.0, 0.4, 0.6, 0.0], **tkwargs)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        variant, valid = _build_activate_variant(
+            x_i,
+            j_idx=2,
+            bounds=bounds,
+            inequality_constraints=[],
+            equality_constraints=eq,
+            acqf=acqf,
+            per_step_local_reopt=False,
+            pinned_zero_indices={0, 3},
+            active_set={1},
+            semicontinuous_specs=semi,
+            tol=1e-6,
+        )
+        assert valid is True
+        # x_2 must enter its semi-continuous band [0.2, 1].
+        assert variant[2].item() >= 0.2 - 1e-6
+        # x_1 (committed-active) stays in band.
+        assert variant[1].item() >= 0.2 - 1e-6
+        # mixture preserved
+        assert variant.sum().item() == pytest.approx(1.0, abs=1e-3)
+
+    # ----- End-to-end -----
+
+    def test_pruning_min_count_formulation(self):
+        """End-to-end: 4-feature mixture domain with min_count=3,
+        max_count=4. AF places mass on 2 features. Pruning should
+        activate to satisfy min_count.
+        """
+        domain = _make_simple_domain(
+            n_features=4,
+            constraints=[
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=3,
+                    max_count=4,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        # AF maximiser placed mass on only 2 features.
+        X = _stack_to_tensor([[0.4, 0.6, 0.0, 0.0]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            **inp,
+            final_local_reopt=False,
+        )
+        # NChooseK satisfied: 3 or 4 active.
+        nz = (out[0].abs() > 1e-6).sum().item()
+        assert 3 <= nz <= 4
+        # mixture preserved
+        assert out[0].sum().item() == pytest.approx(1.0, abs=1e-3)
+
+    def test_pruning_min_count_with_none_also_valid_does_not_zero_down(self):
+        """When the constraint has none_also_valid=True and the
+        candidate is at 0 < count < min, we activate up rather than
+        attempting to zero down. (The per-step zero-guard blocks the
+        zero-down trajectory.)
+        """
+        domain = _make_simple_domain(
+            n_features=4,
+            constraints=[
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=3,
+                    max_count=4,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        X = _stack_to_tensor([[0.4, 0.6, 0.0, 0.0]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            **inp,
+            final_local_reopt=False,
+        )
+        # The algorithm activated up to ≥3 active rather than zeroing
+        # down to 0. Either count=3 or count=4 is acceptable; count=0
+        # would also satisfy the constraint but is unreachable from
+        # count>0 by the per-step rules.
+        nz = (out[0].abs() > 1e-6).sum().item()
+        assert nz >= 3, f"expected count ≥ 3 (activation), got {nz}"
+        assert nz <= 4
+        assert out[0].sum().item() == pytest.approx(1.0, abs=1e-3)
+
+    def test_pruning_conflicting_min_max_raises(self):
+        """Two NChooseK constraints over the same features with mutually
+        infeasible min/max: min_count=3 forces activation, max_count=1
+        forbids it. PruningInfeasibleError should fire.
+        """
+        domain = _make_simple_domain(
+            n_features=4,
+            constraints=[
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=3,
+                    max_count=4,
+                    none_also_valid=False,
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        X = _stack_to_tensor([[1.0, 0.0, 0.0, 0.0]])
+        with pytest.raises(PruningInfeasibleError):
+            prune_nchoosek(
+                X=X,
+                acqf=acqf,
+                **inp,
+                final_local_reopt=False,
             )
