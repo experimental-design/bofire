@@ -1208,29 +1208,6 @@ def _evaluate_variants_with_prefix(
         return acqf(eval_X)
 
 
-def _af_reduction(
-    dense_af: Tensor,
-    variant_af: Tensor,
-) -> Tensor:
-    """Absolute BONSAI AF reduction: ``g_j = α(x_dense) − α(x_pruned_j)``.
-
-    Smaller is better. ``argmin`` picks the variant whose pruning costs the
-    least acquisition value — the BONSAI greedy rule from
-    https://arxiv.org/abs/2602.07144.
-
-    Equivalent to ``argmax variant_af`` since ``dense_af`` is the same for
-    every variant in a single iteration; we keep the explicit subtraction
-    to mirror the paper's notation. We deliberately do not normalise by
-    the dense incremental because (a) the paper only normalises in the
-    termination criterion (the ρ threshold), not in selection, and (b) we
-    terminate by NChooseK satisfaction rather than ρ, so the
-    normalisation has no semantic role here. The relative form is also
-    ill-defined when ``dense_af ≤ base_af`` (qLogEI on a data-starved
-    candidate, etc.); the absolute form has no such pathology.
-    """
-    return dense_af - variant_af
-
-
 # ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
@@ -1337,20 +1314,20 @@ def _prune_single_candidate(
             torch.full_like(af_values, float("-inf")),
         )
 
-        # Dense AF reference is `acqf(X_prefix + current state.x)` —
-        # the joint AF at the q-batch including the candidate's
-        # current (mid-pruning) value. This is what `af_red`
-        # subtracts from to measure each variant's AF reduction.
-        dense_eval = torch.cat([X_prefix, state.x.unsqueeze(0)], dim=0).unsqueeze(0)
-        dense_af = ctx.acqf(dense_eval).detach()
-        af_red = _af_reduction(dense_af, af_values)
-
-        # Stable tie-break: smallest af_reduction first; on ties,
-        # prefer ZERO < ACTIVE < ACTIVATE, then smaller j_idx.
+        # BONSAI greedy rule in its minimal form: argmax of joint AF
+        # over variants (with -inf masking invalid ones), tie-break
+        # by ZERO < ACTIVE < ACTIVATE, then by smaller j_idx. The
+        # paper writes this as `argmin (α(x_dense) − α(x_variant))`;
+        # the two forms are equivalent because `α(x_dense)` is the
+        # same scalar across all variants within an iteration, so
+        # the subtraction is a constant offset that cancels in the
+        # argmin. Cumulative AF reduction across iterations also
+        # telescopes (`α(x_root) − α(x_terminal)`), so no stable
+        # reference is needed for downstream comparisons either.
         best_k = min(
             range(len(actions)),
             key=lambda k: (
-                float(af_red[k].item()),
+                -float(af_values[k].item()),
                 actions[k].kind.value,
                 actions[k].j,
             ),
