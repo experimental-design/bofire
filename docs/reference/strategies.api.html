@@ -399,7 +399,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#bofire.strategies.api.MoboStrategy" id="toc-bofire.strategies.api.MoboStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.MoboStrategy">MoboStrategy</a></li>
   <li><a href="#bofire.strategies.api.BotorchStrategy" id="toc-bofire.strategies.api.BotorchStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.BotorchStrategy">BotorchStrategy</a></li>
   <li><a href="#bofire.strategies.api.EntingStrategy" id="toc-bofire.strategies.api.EntingStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.EntingStrategy">EntingStrategy</a></li>
-  <li><a href="#bofire.strategies.api.MultiFidelityStrategy" id="toc-bofire.strategies.api.MultiFidelityStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.MultiFidelityStrategy">MultiFidelityStrategy</a></li>
+  <li><a href="#bofire.strategies.api.MultiFidelityVarianceBasedStrategy" id="toc-bofire.strategies.api.MultiFidelityVarianceBasedStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.MultiFidelityVarianceBasedStrategy">MultiFidelityVarianceBasedStrategy</a></li>
   <li><a href="#bofire.strategies.api.ActiveLearningStrategy" id="toc-bofire.strategies.api.ActiveLearningStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.ActiveLearningStrategy">ActiveLearningStrategy</a></li>
   <li><a href="#bofire.strategies.api.ShortestPathStrategy" id="toc-bofire.strategies.api.ShortestPathStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.ShortestPathStrategy">ShortestPathStrategy</a></li>
   <li><a href="#bofire.strategies.api.StepwiseStrategy" id="toc-bofire.strategies.api.StepwiseStrategy" class="nav-link" data-scroll-target="#bofire.strategies.api.StepwiseStrategy">StepwiseStrategy</a></li>
@@ -478,7 +478,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Strategy for selecting new candidates using ENTMOOT</td>
 </tr>
 <tr class="odd">
-<td><a href="#bofire.strategies.api.MultiFidelityStrategy">MultiFidelityStrategy</a></td>
+<td><a href="#bofire.strategies.api.MultiFidelityVarianceBasedStrategy">MultiFidelityVarianceBasedStrategy</a></td>
 <td></td>
 </tr>
 <tr class="even">
@@ -2163,9 +2163,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 </section>
 </section>
-<section id="bofire.strategies.api.MultiFidelityStrategy" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.strategies.api.MultiFidelityStrategy">MultiFidelityStrategy</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityStrategy(data_model, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="bofire.strategies.api.MultiFidelityVarianceBasedStrategy" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.strategies.api.MultiFidelityVarianceBasedStrategy">MultiFidelityVarianceBasedStrategy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityVarianceBasedStrategy(data_model, <span class="op">**</span>kwargs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="methods-12" class="level4">
 <h4 class="anchored" data-anchor-id="methods-12">Methods</h4>
 <table class="caption-top table">
@@ -2177,14 +2177,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#bofire.strategies.api.MultiFidelityStrategy.make">make</a></td>
+<td><a href="#bofire.strategies.api.MultiFidelityVarianceBasedStrategy.make">make</a></td>
 <td>Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy</td>
 </tr>
 </tbody>
 </table>
-<section id="bofire.strategies.api.MultiFidelityStrategy.make" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.strategies.api.MultiFidelityStrategy.make">make</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityStrategy.make(</span>
+<section id="bofire.strategies.api.MultiFidelityVarianceBasedStrategy.make" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.strategies.api.MultiFidelityVarianceBasedStrategy.make">make</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityVarianceBasedStrategy.make(</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    domain,</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    fidelity_thresholds<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span><span class="va">None</span>,</span>
@@ -3247,7 +3247,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb60-20"><a href="#cb60-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MoboStrategy</span><span class="co">](#bofire.strategies.api.MoboStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb60-21"><a href="#cb60-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">BotorchStrategy</span><span class="co">](#bofire.strategies.api.BotorchStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb60-22"><a href="#cb60-22" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">EntingStrategy</span><span class="co">](#bofire.strategies.api.EntingStrategy)</span> <span class="pp">|</span> Strategy for selecting new candidates using ENTMOOT <span class="pp">|</span></span>
-<span id="cb60-23"><a href="#cb60-23" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiFidelityStrategy</span><span class="co">](#bofire.strategies.api.MultiFidelityStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb60-23"><a href="#cb60-23" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiFidelityVarianceBasedStrategy</span><span class="co">](#bofire.strategies.api.MultiFidelityVarianceBasedStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb60-24"><a href="#cb60-24" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ActiveLearningStrategy</span><span class="co">](#bofire.strategies.api.ActiveLearningStrategy)</span> <span class="pp">|</span> ActiveLearningStrategy that uses an acquisition function which focuses on <span class="pp">|</span></span>
 <span id="cb60-25"><a href="#cb60-25" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ShortestPathStrategy</span><span class="co">](#bofire.strategies.api.ShortestPathStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb60-26"><a href="#cb60-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">StepwiseStrategy</span><span class="co">](#bofire.strategies.api.StepwiseStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
@@ -4180,10 +4180,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb60-953"><a href="#cb60-953" aria-hidden="true" tabindex="-1"></a>Returns:</span>
 <span id="cb60-954"><a href="#cb60-954" aria-hidden="true" tabindex="-1"></a>    A strategy instance configured with the provided parameters.</span>
 <span id="cb60-955"><a href="#cb60-955" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb60-956"><a href="#cb60-956" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiFidelityStrategy { #bofire.strategies.api.MultiFidelityStrategy }</span></span>
+<span id="cb60-956"><a href="#cb60-956" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiFidelityVarianceBasedStrategy { #bofire.strategies.api.MultiFidelityVarianceBasedStrategy }</span></span>
 <span id="cb60-957"><a href="#cb60-957" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb60-958"><a href="#cb60-958" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb60-959"><a href="#cb60-959" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityStrategy(data_model, <span class="op">**</span>kwargs)</span>
+<span id="cb60-959"><a href="#cb60-959" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityVarianceBasedStrategy(data_model, <span class="op">**</span>kwargs)</span>
 <span id="cb60-960"><a href="#cb60-960" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb60-961"><a href="#cb60-961" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb60-962"><a href="#cb60-962" aria-hidden="true" tabindex="-1"></a></span>
@@ -4192,12 +4192,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb60-965"><a href="#cb60-965" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb60-966"><a href="#cb60-966" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb60-967"><a href="#cb60-967" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb60-968"><a href="#cb60-968" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">make</span><span class="co">](#bofire.strategies.api.MultiFidelityStrategy.make)</span> <span class="pp">|</span> Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy <span class="pp">|</span></span>
+<span id="cb60-968"><a href="#cb60-968" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">make</span><span class="co">](#bofire.strategies.api.MultiFidelityVarianceBasedStrategy.make)</span> <span class="pp">|</span> Create a new instance of the multi-fidelity optimization strategy with the given parameters. This strategy <span class="pp">|</span></span>
 <span id="cb60-969"><a href="#cb60-969" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb60-970"><a href="#cb60-970" aria-hidden="true" tabindex="-1"></a><span class="fu">##### make { #bofire.strategies.api.MultiFidelityStrategy.make }</span></span>
+<span id="cb60-970"><a href="#cb60-970" aria-hidden="true" tabindex="-1"></a><span class="fu">##### make { #bofire.strategies.api.MultiFidelityVarianceBasedStrategy.make }</span></span>
 <span id="cb60-971"><a href="#cb60-971" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb60-972"><a href="#cb60-972" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb60-973"><a href="#cb60-973" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityStrategy.make(</span>
+<span id="cb60-973"><a href="#cb60-973" aria-hidden="true" tabindex="-1"></a>strategies.api.MultiFidelityVarianceBasedStrategy.make(</span>
 <span id="cb60-974"><a href="#cb60-974" aria-hidden="true" tabindex="-1"></a>    domain,</span>
 <span id="cb60-975"><a href="#cb60-975" aria-hidden="true" tabindex="-1"></a>    fidelity_thresholds<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb60-976"><a href="#cb60-976" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span><span class="va">None</span>,</span>

@@ -460,7 +460,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.features.api.TaskInput">TaskInput</a></td>
-<td></td>
+<td>Abstract base class for task-encoding inputs.</td>
 </tr>
 </tbody>
 </table>
@@ -3173,6 +3173,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="bofire.data_models.features.api.TaskInput" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.features.api.TaskInput">TaskInput</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>data_models.features.api.TaskInput()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Abstract base class for task-encoding inputs.</p>
+<p>This class is not directly instantiable and is not part of any <code>AnyFeature</code>/<code>AnyInput</code> union. Use :class:<code>CategoricalTaskInput</code> or :class:<code>ContinuousTaskInput</code> instead. It exists solely so that strategies can use <code>isinstance(feat, TaskInput)</code> to detect either flavour.</p>
 
 
 <!-- -->
@@ -3669,7 +3671,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CategoricalDescriptorInput</span><span class="co">](#bofire.data_models.features.api.CategoricalDescriptorInput)</span> <span class="pp">|</span> Class for categorical input features with descriptors <span class="pp">|</span></span>
 <span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ContinuousMolecularInput</span><span class="co">](#bofire.data_models.features.api.ContinuousMolecularInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CategoricalMolecularInput</span><span class="co">](#bofire.data_models.features.api.CategoricalMolecularInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TaskInput</span><span class="co">](#bofire.data_models.features.api.TaskInput)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TaskInput</span><span class="co">](#bofire.data_models.features.api.TaskInput)</span> <span class="pp">|</span> Abstract base class for task-encoding inputs. <span class="pp">|</span></span>
 <span id="cb59-21"><a href="#cb59-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb59-22"><a href="#cb59-22" aria-hidden="true" tabindex="-1"></a><span class="fu">### CategoricalInput { #bofire.data_models.features.api.CategoricalInput }</span></span>
 <span id="cb59-23"><a href="#cb59-23" aria-hidden="true" tabindex="-1"></a></span>
@@ -4818,7 +4820,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb59-1166"><a href="#cb59-1166" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb59-1167"><a href="#cb59-1167" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
 <span id="cb59-1168"><a href="#cb59-1168" aria-hidden="true" tabindex="-1"></a>data_models.features.api.TaskInput()</span>
-<span id="cb59-1169"><a href="#cb59-1169" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb59-1169"><a href="#cb59-1169" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb59-1170"><a href="#cb59-1170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-1171"><a href="#cb59-1171" aria-hidden="true" tabindex="-1"></a>Abstract base class for task-encoding inputs.</span>
+<span id="cb59-1172"><a href="#cb59-1172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-1173"><a href="#cb59-1173" aria-hidden="true" tabindex="-1"></a>This class is not directly instantiable and is not part of any</span>
+<span id="cb59-1174"><a href="#cb59-1174" aria-hidden="true" tabindex="-1"></a>``AnyFeature<span class="in">``/``</span>AnyInput`<span class="in">` union. Use :class:`</span>CategoricalTaskInput` or</span>
+<span id="cb59-1175"><a href="#cb59-1175" aria-hidden="true" tabindex="-1"></a><span class="sc">:class:</span><span class="in">`ContinuousTaskInput`</span> instead. It exists solely so that strategies</span>
+<span id="cb59-1176"><a href="#cb59-1176" aria-hidden="true" tabindex="-1"></a>can use ``isinstance(feat, TaskInput)`` to detect either flavour.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

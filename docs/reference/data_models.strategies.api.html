@@ -394,7 +394,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#bofire.data_models.strategies.api.BotorchStrategy" id="toc-bofire.data_models.strategies.api.BotorchStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.BotorchStrategy">BotorchStrategy</a></li>
   <li><a href="#bofire.data_models.strategies.api.EntingStrategy" id="toc-bofire.data_models.strategies.api.EntingStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.EntingStrategy">EntingStrategy</a></li>
   <li><a href="#bofire.data_models.strategies.api.MoboStrategy" id="toc-bofire.data_models.strategies.api.MoboStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.MoboStrategy">MoboStrategy</a></li>
-  <li><a href="#bofire.data_models.strategies.api.MultiFidelityStrategy" id="toc-bofire.data_models.strategies.api.MultiFidelityStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.MultiFidelityStrategy">MultiFidelityStrategy</a></li>
+  <li><a href="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy" id="toc-bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy">MultiFidelityVarianceBasedStrategy</a></li>
   <li><a href="#bofire.data_models.strategies.api.MultiobjectiveStrategy" id="toc-bofire.data_models.strategies.api.MultiobjectiveStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.MultiobjectiveStrategy">MultiobjectiveStrategy</a></li>
   <li><a href="#bofire.data_models.strategies.api.AdditiveSoboStrategy" id="toc-bofire.data_models.strategies.api.AdditiveSoboStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.AdditiveSoboStrategy">AdditiveSoboStrategy</a></li>
   <li><a href="#bofire.data_models.strategies.api.CustomSoboStrategy" id="toc-bofire.data_models.strategies.api.CustomSoboStrategy" class="nav-link" data-scroll-target="#bofire.data_models.strategies.api.CustomSoboStrategy">CustomSoboStrategy</a></li>
@@ -453,7 +453,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td></td>
 </tr>
 <tr class="even">
-<td><a href="#bofire.data_models.strategies.api.MultiFidelityStrategy">MultiFidelityStrategy</a></td>
+<td><a href="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy">MultiFidelityVarianceBasedStrategy</a></td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -874,9 +874,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 </section>
 </section>
-<section id="bofire.data_models.strategies.api.MultiFidelityStrategy" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityStrategy">MultiFidelityStrategy</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy">MultiFidelityVarianceBasedStrategy</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="methods-3" class="level4">
 <h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
 <table class="caption-top table">
@@ -888,42 +888,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed">validate_multitask_allowed</a></td>
+<td><a href="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed">validate_multitask_allowed</a></td>
 <td>Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed.</td>
 </tr>
 <tr class="even">
-<td><a href="#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity">validate_only_one_target_fidelity</a></td>
+<td><a href="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity">validate_only_one_target_fidelity</a></td>
 <td>Ensures that there is only one target fidelity (task where fidelity==0).</td>
 </tr>
 <tr class="odd">
-<td><a href="#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs">validate_surrogate_specs</a></td>
+<td><a href="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs">validate_surrogate_specs</a></td>
 <td>Ensures that a multi-task model is specified for each output feature</td>
 </tr>
 <tr class="even">
-<td><a href="#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds">validate_tasks_and_fidelity_thresholds</a></td>
+<td><a href="#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds">validate_tasks_and_fidelity_thresholds</a></td>
 <td>Ensures that there is one threshold per fidelity</td>
 </tr>
 </tbody>
 </table>
-<section id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed">validate_multitask_allowed</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed">validate_multitask_allowed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed.</p>
 </section>
-<section id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity">validate_only_one_target_fidelity</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity(</span>
+<section id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity">validate_only_one_target_fidelity</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity(</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ensures that there is only one target fidelity (task where fidelity==0).</p>
 </section>
-<section id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs">validate_surrogate_specs</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs">validate_surrogate_specs</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ensures that a multi-task model is specified for each output feature</p>
 </section>
-<section id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds">validate_tasks_and_fidelity_thresholds</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds(</span>
+<section id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds">validate_tasks_and_fidelity_thresholds</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds(</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Ensures that there is one threshold per fidelity</p>
 </section>
@@ -1552,7 +1554,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">BotorchStrategy</span><span class="co">](#bofire.data_models.strategies.api.BotorchStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">EntingStrategy</span><span class="co">](#bofire.data_models.strategies.api.EntingStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MoboStrategy</span><span class="co">](#bofire.data_models.strategies.api.MoboStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiFidelityStrategy</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiFidelityVarianceBasedStrategy</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiobjectiveStrategy</span><span class="co">](#bofire.data_models.strategies.api.MultiobjectiveStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">AdditiveSoboStrategy</span><span class="co">](#bofire.data_models.strategies.api.AdditiveSoboStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CustomSoboStrategy</span><span class="co">](#bofire.data_models.strategies.api.CustomSoboStrategy)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
@@ -1789,10 +1791,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb30-252"><a href="#cb30-252" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-253"><a href="#cb30-253" aria-hidden="true" tabindex="-1"></a>Validate that the provided refpoint matches the provided domain.</span>
 <span id="cb30-254"><a href="#cb30-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-255"><a href="#cb30-255" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiFidelityStrategy { #bofire.data_models.strategies.api.MultiFidelityStrategy }</span></span>
+<span id="cb30-255"><a href="#cb30-255" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiFidelityVarianceBasedStrategy { #bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy }</span></span>
 <span id="cb30-256"><a href="#cb30-256" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-257"><a href="#cb30-257" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-258"><a href="#cb30-258" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy()</span>
+<span id="cb30-258"><a href="#cb30-258" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy()</span>
 <span id="cb30-259"><a href="#cb30-259" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-260"><a href="#cb30-260" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-261"><a href="#cb30-261" aria-hidden="true" tabindex="-1"></a></span>
@@ -1801,163 +1803,165 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb30-264"><a href="#cb30-264" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-265"><a href="#cb30-265" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb30-266"><a href="#cb30-266" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb30-267"><a href="#cb30-267" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_multitask_allowed</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed)</span> <span class="pp">|</span> Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed. <span class="pp">|</span></span>
-<span id="cb30-268"><a href="#cb30-268" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_only_one_target_fidelity</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity)</span> <span class="pp">|</span> Ensures that there is only one target fidelity (task where fidelity==0). <span class="pp">|</span></span>
-<span id="cb30-269"><a href="#cb30-269" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_surrogate_specs</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs)</span> <span class="pp">|</span> Ensures that a multi-task model is specified for each output feature <span class="pp">|</span></span>
-<span id="cb30-270"><a href="#cb30-270" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_tasks_and_fidelity_thresholds</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds)</span> <span class="pp">|</span> Ensures that there is one threshold per fidelity <span class="pp">|</span></span>
+<span id="cb30-267"><a href="#cb30-267" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_multitask_allowed</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed)</span> <span class="pp">|</span> Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed. <span class="pp">|</span></span>
+<span id="cb30-268"><a href="#cb30-268" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_only_one_target_fidelity</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity)</span> <span class="pp">|</span> Ensures that there is only one target fidelity (task where fidelity==0). <span class="pp">|</span></span>
+<span id="cb30-269"><a href="#cb30-269" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_surrogate_specs</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs)</span> <span class="pp">|</span> Ensures that a multi-task model is specified for each output feature <span class="pp">|</span></span>
+<span id="cb30-270"><a href="#cb30-270" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_tasks_and_fidelity_thresholds</span><span class="co">](#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds)</span> <span class="pp">|</span> Ensures that there is one threshold per fidelity <span class="pp">|</span></span>
 <span id="cb30-271"><a href="#cb30-271" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-272"><a href="#cb30-272" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_multitask_allowed { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed }</span></span>
+<span id="cb30-272"><a href="#cb30-272" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_multitask_allowed { #bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed }</span></span>
 <span id="cb30-273"><a href="#cb30-273" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-274"><a href="#cb30-274" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-275"><a href="#cb30-275" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_multitask_allowed()</span>
-<span id="cb30-276"><a href="#cb30-276" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-277"><a href="#cb30-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-278"><a href="#cb30-278" aria-hidden="true" tabindex="-1"></a>Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed.</span>
-<span id="cb30-279"><a href="#cb30-279" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-280"><a href="#cb30-280" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_only_one_target_fidelity { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity }</span></span>
-<span id="cb30-281"><a href="#cb30-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-282"><a href="#cb30-282" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-283"><a href="#cb30-283" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_only_one_target_fidelity(</span>
-<span id="cb30-284"><a href="#cb30-284" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb30-285"><a href="#cb30-285" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-286"><a href="#cb30-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-287"><a href="#cb30-287" aria-hidden="true" tabindex="-1"></a>Ensures that there is only one target fidelity (task where fidelity==0).</span>
-<span id="cb30-288"><a href="#cb30-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-289"><a href="#cb30-289" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_surrogate_specs { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs }</span></span>
-<span id="cb30-290"><a href="#cb30-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-291"><a href="#cb30-291" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-292"><a href="#cb30-292" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_surrogate_specs()</span>
-<span id="cb30-293"><a href="#cb30-293" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-294"><a href="#cb30-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-295"><a href="#cb30-295" aria-hidden="true" tabindex="-1"></a>Ensures that a multi-task model is specified for each output feature</span>
+<span id="cb30-275"><a href="#cb30-275" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_multitask_allowed(</span>
+<span id="cb30-276"><a href="#cb30-276" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-277"><a href="#cb30-277" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb30-278"><a href="#cb30-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-279"><a href="#cb30-279" aria-hidden="true" tabindex="-1"></a>Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed.</span>
+<span id="cb30-280"><a href="#cb30-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-281"><a href="#cb30-281" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_only_one_target_fidelity { #bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity }</span></span>
+<span id="cb30-282"><a href="#cb30-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-283"><a href="#cb30-283" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-284"><a href="#cb30-284" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_only_one_target_fidelity(</span>
+<span id="cb30-285"><a href="#cb30-285" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-286"><a href="#cb30-286" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb30-287"><a href="#cb30-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-288"><a href="#cb30-288" aria-hidden="true" tabindex="-1"></a>Ensures that there is only one target fidelity (task where fidelity==0).</span>
+<span id="cb30-289"><a href="#cb30-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-290"><a href="#cb30-290" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_surrogate_specs { #bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs }</span></span>
+<span id="cb30-291"><a href="#cb30-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-292"><a href="#cb30-292" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-293"><a href="#cb30-293" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_surrogate_specs(</span>
+<span id="cb30-294"><a href="#cb30-294" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-295"><a href="#cb30-295" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-296"><a href="#cb30-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-297"><a href="#cb30-297" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_tasks_and_fidelity_thresholds { #bofire.data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds }</span></span>
+<span id="cb30-297"><a href="#cb30-297" aria-hidden="true" tabindex="-1"></a>Ensures that a multi-task model is specified for each output feature</span>
 <span id="cb30-298"><a href="#cb30-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-299"><a href="#cb30-299" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-300"><a href="#cb30-300" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityStrategy.validate_tasks_and_fidelity_thresholds(</span>
-<span id="cb30-301"><a href="#cb30-301" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb30-302"><a href="#cb30-302" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-303"><a href="#cb30-303" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-304"><a href="#cb30-304" aria-hidden="true" tabindex="-1"></a>Ensures that there is one threshold per fidelity</span>
+<span id="cb30-299"><a href="#cb30-299" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_tasks_and_fidelity_thresholds { #bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds }</span></span>
+<span id="cb30-300"><a href="#cb30-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-301"><a href="#cb30-301" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-302"><a href="#cb30-302" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiFidelityVarianceBasedStrategy.validate_tasks_and_fidelity_thresholds(</span>
+<span id="cb30-303"><a href="#cb30-303" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-304"><a href="#cb30-304" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-305"><a href="#cb30-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-306"><a href="#cb30-306" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiobjectiveStrategy { #bofire.data_models.strategies.api.MultiobjectiveStrategy }</span></span>
+<span id="cb30-306"><a href="#cb30-306" aria-hidden="true" tabindex="-1"></a>Ensures that there is one threshold per fidelity</span>
 <span id="cb30-307"><a href="#cb30-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-308"><a href="#cb30-308" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-309"><a href="#cb30-309" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiobjectiveStrategy()</span>
-<span id="cb30-310"><a href="#cb30-310" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-311"><a href="#cb30-311" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-312"><a href="#cb30-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-308"><a href="#cb30-308" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiobjectiveStrategy { #bofire.data_models.strategies.api.MultiobjectiveStrategy }</span></span>
+<span id="cb30-309"><a href="#cb30-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-310"><a href="#cb30-310" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-311"><a href="#cb30-311" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiobjectiveStrategy()</span>
+<span id="cb30-312"><a href="#cb30-312" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-313"><a href="#cb30-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-314"><a href="#cb30-314" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb30-314"><a href="#cb30-314" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-315"><a href="#cb30-315" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-316"><a href="#cb30-316" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb30-317"><a href="#cb30-317" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb30-318"><a href="#cb30-318" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_domain_is_multiobjective</span><span class="co">](#bofire.data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective)</span> <span class="pp">|</span> Validate that the domain is multiobjective. <span class="pp">|</span></span>
-<span id="cb30-319"><a href="#cb30-319" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-320"><a href="#cb30-320" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_domain_is_multiobjective { #bofire.data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective }</span></span>
+<span id="cb30-316"><a href="#cb30-316" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb30-317"><a href="#cb30-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-318"><a href="#cb30-318" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb30-319"><a href="#cb30-319" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb30-320"><a href="#cb30-320" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_domain_is_multiobjective</span><span class="co">](#bofire.data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective)</span> <span class="pp">|</span> Validate that the domain is multiobjective. <span class="pp">|</span></span>
 <span id="cb30-321"><a href="#cb30-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-322"><a href="#cb30-322" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-323"><a href="#cb30-323" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective(</span>
-<span id="cb30-324"><a href="#cb30-324" aria-hidden="true" tabindex="-1"></a>    v,</span>
-<span id="cb30-325"><a href="#cb30-325" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb30-326"><a href="#cb30-326" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-327"><a href="#cb30-327" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-328"><a href="#cb30-328" aria-hidden="true" tabindex="-1"></a>Validate that the domain is multiobjective.</span>
+<span id="cb30-322"><a href="#cb30-322" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_domain_is_multiobjective { #bofire.data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective }</span></span>
+<span id="cb30-323"><a href="#cb30-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-324"><a href="#cb30-324" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-325"><a href="#cb30-325" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.MultiobjectiveStrategy.validate_domain_is_multiobjective(</span>
+<span id="cb30-326"><a href="#cb30-326" aria-hidden="true" tabindex="-1"></a>    v,</span>
+<span id="cb30-327"><a href="#cb30-327" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-328"><a href="#cb30-328" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-329"><a href="#cb30-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-330"><a href="#cb30-330" aria-hidden="true" tabindex="-1"></a><span class="fu">### AdditiveSoboStrategy { #bofire.data_models.strategies.api.AdditiveSoboStrategy }</span></span>
+<span id="cb30-330"><a href="#cb30-330" aria-hidden="true" tabindex="-1"></a>Validate that the domain is multiobjective.</span>
 <span id="cb30-331"><a href="#cb30-331" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-332"><a href="#cb30-332" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-333"><a href="#cb30-333" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.AdditiveSoboStrategy()</span>
-<span id="cb30-334"><a href="#cb30-334" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-335"><a href="#cb30-335" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-336"><a href="#cb30-336" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-332"><a href="#cb30-332" aria-hidden="true" tabindex="-1"></a><span class="fu">### AdditiveSoboStrategy { #bofire.data_models.strategies.api.AdditiveSoboStrategy }</span></span>
+<span id="cb30-333"><a href="#cb30-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-334"><a href="#cb30-334" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-335"><a href="#cb30-335" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.AdditiveSoboStrategy()</span>
+<span id="cb30-336"><a href="#cb30-336" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-337"><a href="#cb30-337" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-338"><a href="#cb30-338" aria-hidden="true" tabindex="-1"></a><span class="fu">### CustomSoboStrategy { #bofire.data_models.strategies.api.CustomSoboStrategy }</span></span>
+<span id="cb30-338"><a href="#cb30-338" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-339"><a href="#cb30-339" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-340"><a href="#cb30-340" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-341"><a href="#cb30-341" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.CustomSoboStrategy()</span>
-<span id="cb30-342"><a href="#cb30-342" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-343"><a href="#cb30-343" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-344"><a href="#cb30-344" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-340"><a href="#cb30-340" aria-hidden="true" tabindex="-1"></a><span class="fu">### CustomSoboStrategy { #bofire.data_models.strategies.api.CustomSoboStrategy }</span></span>
+<span id="cb30-341"><a href="#cb30-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-342"><a href="#cb30-342" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-343"><a href="#cb30-343" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.CustomSoboStrategy()</span>
+<span id="cb30-344"><a href="#cb30-344" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-345"><a href="#cb30-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-346"><a href="#cb30-346" aria-hidden="true" tabindex="-1"></a><span class="fu">### LLMStrategy { #bofire.data_models.strategies.api.LLMStrategy }</span></span>
+<span id="cb30-346"><a href="#cb30-346" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-347"><a href="#cb30-347" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-348"><a href="#cb30-348" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-349"><a href="#cb30-349" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.LLMStrategy()</span>
-<span id="cb30-350"><a href="#cb30-350" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-351"><a href="#cb30-351" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-352"><a href="#cb30-352" aria-hidden="true" tabindex="-1"></a>Strategy that uses a large language model to propose optimization candidates.</span>
+<span id="cb30-348"><a href="#cb30-348" aria-hidden="true" tabindex="-1"></a><span class="fu">### LLMStrategy { #bofire.data_models.strategies.api.LLMStrategy }</span></span>
+<span id="cb30-349"><a href="#cb30-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-350"><a href="#cb30-350" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-351"><a href="#cb30-351" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.LLMStrategy()</span>
+<span id="cb30-352"><a href="#cb30-352" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb30-353"><a href="#cb30-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-354"><a href="#cb30-354" aria-hidden="true" tabindex="-1"></a>Instead of fitting a surrogate and optimizing an acquisition function,</span>
-<span id="cb30-355"><a href="#cb30-355" aria-hidden="true" tabindex="-1"></a>this strategy lets an LLM read the optimization problem — feature bounds,</span>
-<span id="cb30-356"><a href="#cb30-356" aria-hidden="true" tabindex="-1"></a>constraints, objectives, contextual descriptions, and prior experiments —</span>
-<span id="cb30-357"><a href="#cb30-357" aria-hidden="true" tabindex="-1"></a>and directly propose candidate points. It is useful for cold-start</span>
-<span id="cb30-358"><a href="#cb30-358" aria-hidden="true" tabindex="-1"></a>designs, mixed / categorical / molecular spaces where domain knowledge</span>
-<span id="cb30-359"><a href="#cb30-359" aria-hidden="true" tabindex="-1"></a>helps, and exploration informed by written context (``Feature.context``</span>
-<span id="cb30-360"><a href="#cb30-360" aria-hidden="true" tabindex="-1"></a>and ``Domain.context``).</span>
-<span id="cb30-361"><a href="#cb30-361" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-362"><a href="#cb30-362" aria-hidden="true" tabindex="-1"></a>It is not a replacement for a Bayesian optimizer on well-understood</span>
-<span id="cb30-363"><a href="#cb30-363" aria-hidden="true" tabindex="-1"></a>numerical problems: there is no calibrated uncertainty model and no</span>
-<span id="cb30-364"><a href="#cb30-364" aria-hidden="true" tabindex="-1"></a>acquisition function. Treat candidates as informed heuristics, not</span>
-<span id="cb30-365"><a href="#cb30-365" aria-hidden="true" tabindex="-1"></a>optima.</span>
-<span id="cb30-366"><a href="#cb30-366" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-367"><a href="#cb30-367" aria-hidden="true" tabindex="-1"></a>On each ``ask()``, a pydantic output schema is generated from the</span>
-<span id="cb30-368"><a href="#cb30-368" aria-hidden="true" tabindex="-1"></a>domain's input features and the LLM is prompted with a textual problem</span>
-<span id="cb30-369"><a href="#cb30-369" aria-hidden="true" tabindex="-1"></a>description plus, optionally, a selection of prior experiments. Returned</span>
-<span id="cb30-370"><a href="#cb30-370" aria-hidden="true" tabindex="-1"></a>candidates are validated against the domain; bound or constraint</span>
-<span id="cb30-371"><a href="#cb30-371" aria-hidden="true" tabindex="-1"></a>violations are sent back to the LLM as retry messages via pydantic-ai's</span>
-<span id="cb30-372"><a href="#cb30-372" aria-hidden="true" tabindex="-1"></a>``output_retries``.</span>
-<span id="cb30-373"><a href="#cb30-373" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-374"><a href="#cb30-374" aria-hidden="true" tabindex="-1"></a>Currently supports single-objective optimization with ``MaximizeObjective``</span>
-<span id="cb30-375"><a href="#cb30-375" aria-hidden="true" tabindex="-1"></a>or ``MinimizeObjective``, and ``LinearEquality<span class="in">``, ``</span>LinearInequality``,</span>
-<span id="cb30-376"><a href="#cb30-376" aria-hidden="true" tabindex="-1"></a>and ``NChooseK`` constraints. All feature types are supported.</span>
-<span id="cb30-377"><a href="#cb30-377" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-378"><a href="#cb30-378" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Example {.doc-section .doc-section-example}</span></span>
+<span id="cb30-354"><a href="#cb30-354" aria-hidden="true" tabindex="-1"></a>Strategy that uses a large language model to propose optimization candidates.</span>
+<span id="cb30-355"><a href="#cb30-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-356"><a href="#cb30-356" aria-hidden="true" tabindex="-1"></a>Instead of fitting a surrogate and optimizing an acquisition function,</span>
+<span id="cb30-357"><a href="#cb30-357" aria-hidden="true" tabindex="-1"></a>this strategy lets an LLM read the optimization problem — feature bounds,</span>
+<span id="cb30-358"><a href="#cb30-358" aria-hidden="true" tabindex="-1"></a>constraints, objectives, contextual descriptions, and prior experiments —</span>
+<span id="cb30-359"><a href="#cb30-359" aria-hidden="true" tabindex="-1"></a>and directly propose candidate points. It is useful for cold-start</span>
+<span id="cb30-360"><a href="#cb30-360" aria-hidden="true" tabindex="-1"></a>designs, mixed / categorical / molecular spaces where domain knowledge</span>
+<span id="cb30-361"><a href="#cb30-361" aria-hidden="true" tabindex="-1"></a>helps, and exploration informed by written context (``Feature.context``</span>
+<span id="cb30-362"><a href="#cb30-362" aria-hidden="true" tabindex="-1"></a>and ``Domain.context``).</span>
+<span id="cb30-363"><a href="#cb30-363" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-364"><a href="#cb30-364" aria-hidden="true" tabindex="-1"></a>It is not a replacement for a Bayesian optimizer on well-understood</span>
+<span id="cb30-365"><a href="#cb30-365" aria-hidden="true" tabindex="-1"></a>numerical problems: there is no calibrated uncertainty model and no</span>
+<span id="cb30-366"><a href="#cb30-366" aria-hidden="true" tabindex="-1"></a>acquisition function. Treat candidates as informed heuristics, not</span>
+<span id="cb30-367"><a href="#cb30-367" aria-hidden="true" tabindex="-1"></a>optima.</span>
+<span id="cb30-368"><a href="#cb30-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-369"><a href="#cb30-369" aria-hidden="true" tabindex="-1"></a>On each ``ask()``, a pydantic output schema is generated from the</span>
+<span id="cb30-370"><a href="#cb30-370" aria-hidden="true" tabindex="-1"></a>domain's input features and the LLM is prompted with a textual problem</span>
+<span id="cb30-371"><a href="#cb30-371" aria-hidden="true" tabindex="-1"></a>description plus, optionally, a selection of prior experiments. Returned</span>
+<span id="cb30-372"><a href="#cb30-372" aria-hidden="true" tabindex="-1"></a>candidates are validated against the domain; bound or constraint</span>
+<span id="cb30-373"><a href="#cb30-373" aria-hidden="true" tabindex="-1"></a>violations are sent back to the LLM as retry messages via pydantic-ai's</span>
+<span id="cb30-374"><a href="#cb30-374" aria-hidden="true" tabindex="-1"></a>``output_retries``.</span>
+<span id="cb30-375"><a href="#cb30-375" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-376"><a href="#cb30-376" aria-hidden="true" tabindex="-1"></a>Currently supports single-objective optimization with ``MaximizeObjective``</span>
+<span id="cb30-377"><a href="#cb30-377" aria-hidden="true" tabindex="-1"></a>or ``MinimizeObjective``, and ``LinearEquality<span class="in">``, ``</span>LinearInequality``,</span>
+<span id="cb30-378"><a href="#cb30-378" aria-hidden="true" tabindex="-1"></a>and ``NChooseK`` constraints. All feature types are supported.</span>
 <span id="cb30-379"><a href="#cb30-379" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-380"><a href="#cb30-380" aria-hidden="true" tabindex="-1"></a>Basic usage::</span>
+<span id="cb30-380"><a href="#cb30-380" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Example {.doc-section .doc-section-example}</span></span>
 <span id="cb30-381"><a href="#cb30-381" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-382"><a href="#cb30-382" aria-hidden="true" tabindex="-1"></a><span class="in">    strategy = LLMStrategy.make(</span></span>
-<span id="cb30-383"><a href="#cb30-383" aria-hidden="true" tabindex="-1"></a><span class="in">        domain=domain,</span></span>
-<span id="cb30-384"><a href="#cb30-384" aria-hidden="true" tabindex="-1"></a><span class="in">        llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),</span></span>
-<span id="cb30-385"><a href="#cb30-385" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
-<span id="cb30-386"><a href="#cb30-386" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-387"><a href="#cb30-387" aria-hidden="true" tabindex="-1"></a>Enable extended reasoning for harder problems (many constraints,</span>
-<span id="cb30-388"><a href="#cb30-388" aria-hidden="true" tabindex="-1"></a>rich context). ``thinking`` is pydantic-ai's cross-provider</span>
-<span id="cb30-389"><a href="#cb30-389" aria-hidden="true" tabindex="-1"></a>capability key — it maps to Anthropic's extended thinking, OpenAI's</span>
-<span id="cb30-390"><a href="#cb30-390" aria-hidden="true" tabindex="-1"></a>``reasoning_effort``, and similar mechanisms on other providers.</span>
-<span id="cb30-391"><a href="#cb30-391" aria-hidden="true" tabindex="-1"></a>Reasoning increases cost and latency considerably, so it is not</span>
-<span id="cb30-392"><a href="#cb30-392" aria-hidden="true" tabindex="-1"></a>enabled by default::</span>
-<span id="cb30-393"><a href="#cb30-393" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-394"><a href="#cb30-394" aria-hidden="true" tabindex="-1"></a><span class="in">    strategy = LLMStrategy.make(</span></span>
-<span id="cb30-395"><a href="#cb30-395" aria-hidden="true" tabindex="-1"></a><span class="in">        domain=domain,</span></span>
-<span id="cb30-396"><a href="#cb30-396" aria-hidden="true" tabindex="-1"></a><span class="in">        llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),</span></span>
-<span id="cb30-397"><a href="#cb30-397" aria-hidden="true" tabindex="-1"></a><span class="in">        model_settings={"thinking": "high"},</span></span>
-<span id="cb30-398"><a href="#cb30-398" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
-<span id="cb30-399"><a href="#cb30-399" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-400"><a href="#cb30-400" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb30-382"><a href="#cb30-382" aria-hidden="true" tabindex="-1"></a>Basic usage::</span>
+<span id="cb30-383"><a href="#cb30-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-384"><a href="#cb30-384" aria-hidden="true" tabindex="-1"></a><span class="in">    strategy = LLMStrategy.make(</span></span>
+<span id="cb30-385"><a href="#cb30-385" aria-hidden="true" tabindex="-1"></a><span class="in">        domain=domain,</span></span>
+<span id="cb30-386"><a href="#cb30-386" aria-hidden="true" tabindex="-1"></a><span class="in">        llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),</span></span>
+<span id="cb30-387"><a href="#cb30-387" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb30-388"><a href="#cb30-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-389"><a href="#cb30-389" aria-hidden="true" tabindex="-1"></a>Enable extended reasoning for harder problems (many constraints,</span>
+<span id="cb30-390"><a href="#cb30-390" aria-hidden="true" tabindex="-1"></a>rich context). ``thinking`` is pydantic-ai's cross-provider</span>
+<span id="cb30-391"><a href="#cb30-391" aria-hidden="true" tabindex="-1"></a>capability key — it maps to Anthropic's extended thinking, OpenAI's</span>
+<span id="cb30-392"><a href="#cb30-392" aria-hidden="true" tabindex="-1"></a>``reasoning_effort``, and similar mechanisms on other providers.</span>
+<span id="cb30-393"><a href="#cb30-393" aria-hidden="true" tabindex="-1"></a>Reasoning increases cost and latency considerably, so it is not</span>
+<span id="cb30-394"><a href="#cb30-394" aria-hidden="true" tabindex="-1"></a>enabled by default::</span>
+<span id="cb30-395"><a href="#cb30-395" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-396"><a href="#cb30-396" aria-hidden="true" tabindex="-1"></a><span class="in">    strategy = LLMStrategy.make(</span></span>
+<span id="cb30-397"><a href="#cb30-397" aria-hidden="true" tabindex="-1"></a><span class="in">        domain=domain,</span></span>
+<span id="cb30-398"><a href="#cb30-398" aria-hidden="true" tabindex="-1"></a><span class="in">        llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),</span></span>
+<span id="cb30-399"><a href="#cb30-399" aria-hidden="true" tabindex="-1"></a><span class="in">        model_settings={"thinking": "high"},</span></span>
+<span id="cb30-400"><a href="#cb30-400" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
 <span id="cb30-401"><a href="#cb30-401" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-402"><a href="#cb30-402" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                 <span class="pp">|</span> Type                                      <span class="pp">|</span> Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span></span>
-<span id="cb30-403"><a href="#cb30-403" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------------|-------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb30-404"><a href="#cb30-404" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> llm                  <span class="pp">|</span> AnyLLMProvider                            <span class="pp">|</span> LLM provider configuration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span></span>
-<span id="cb30-405"><a href="#cb30-405" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> model_settings       <span class="pp">|</span> Optional<span class="sc">\[</span>Dict<span class="sc">\[</span>str, Any<span class="sc">\]\]</span>              <span class="pp">|</span> Optional dict forwarded directly to pydantic-ai's ``model_settings``. Useful keys include ``temperature<span class="in">``, ``</span>max_tokens<span class="in">``, ``</span>top_p<span class="in">``, ``</span>seed<span class="in">``, ``</span>timeout``, and the cross-provider capability ``thinking<span class="in">`` (``</span>"low"`` / ``"medium"`` / ``"high"``). Provider-prefixed keys such as ``anthropic_thinking`` or ``openai_reasoning_effort`` are also accepted as escape hatches for finer control. Keys are not validated by BoFire — pydantic-ai and the underlying provider SDK are the source of truth. <span class="pp">|</span></span>
-<span id="cb30-406"><a href="#cb30-406" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> output_retries       <span class="pp">|</span> PositiveInt                               <span class="pp">|</span> Number of retries when output validation fails (constraint or bound violations). Each retry sends the LLM the invalid candidates and the error so it can correct.                                                                                                                                                                                                                                                                                                                                        <span class="pp">|</span></span>
-<span id="cb30-407"><a href="#cb30-407" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n_recent_experiments <span class="pp">|</span> Optional<span class="sc">\[</span>Annotated<span class="sc">\[</span>int, Field(gt=0)<span class="sc">\]\]</span> <span class="pp">|</span> If set, only the most recent N experiments are shown to the LLM. Keeps prompt size bounded on long campaigns.                                                                                                                                                                                                                                                                                                                                                                                            <span class="pp">|</span></span>
-<span id="cb30-408"><a href="#cb30-408" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n_top_experiments    <span class="pp">|</span> Optional<span class="sc">\[</span>Annotated<span class="sc">\[</span>int, Field(gt=0)<span class="sc">\]\]</span> <span class="pp">|</span> If set, the top N experiments by objective value are shown to the LLM. Combine with ``n_recent_experiments`` to mix recency and quality.                                                                                                                                                                                                                                                                                                                                                                 <span class="pp">|</span></span>
-<span id="cb30-409"><a href="#cb30-409" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> system_prompt        <span class="pp">|</span> Optional<span class="sc">\[</span>str<span class="sc">\]</span>                           <span class="pp">|</span> Optional override for the default system prompt.                                                                                                                                                                                                                                                                                                                                                                                                                                                         <span class="pp">|</span></span>
-<span id="cb30-410"><a href="#cb30-410" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-411"><a href="#cb30-411" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb30-402"><a href="#cb30-402" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb30-403"><a href="#cb30-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-404"><a href="#cb30-404" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                 <span class="pp">|</span> Type                                      <span class="pp">|</span> Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span></span>
+<span id="cb30-405"><a href="#cb30-405" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------------|-------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb30-406"><a href="#cb30-406" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> llm                  <span class="pp">|</span> AnyLLMProvider                            <span class="pp">|</span> LLM provider configuration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span></span>
+<span id="cb30-407"><a href="#cb30-407" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> model_settings       <span class="pp">|</span> Optional<span class="sc">\[</span>Dict<span class="sc">\[</span>str, Any<span class="sc">\]\]</span>              <span class="pp">|</span> Optional dict forwarded directly to pydantic-ai's ``model_settings``. Useful keys include ``temperature<span class="in">``, ``</span>max_tokens<span class="in">``, ``</span>top_p<span class="in">``, ``</span>seed<span class="in">``, ``</span>timeout``, and the cross-provider capability ``thinking<span class="in">`` (``</span>"low"`` / ``"medium"`` / ``"high"``). Provider-prefixed keys such as ``anthropic_thinking`` or ``openai_reasoning_effort`` are also accepted as escape hatches for finer control. Keys are not validated by BoFire — pydantic-ai and the underlying provider SDK are the source of truth. <span class="pp">|</span></span>
+<span id="cb30-408"><a href="#cb30-408" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> output_retries       <span class="pp">|</span> PositiveInt                               <span class="pp">|</span> Number of retries when output validation fails (constraint or bound violations). Each retry sends the LLM the invalid candidates and the error so it can correct.                                                                                                                                                                                                                                                                                                                                        <span class="pp">|</span></span>
+<span id="cb30-409"><a href="#cb30-409" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n_recent_experiments <span class="pp">|</span> Optional<span class="sc">\[</span>Annotated<span class="sc">\[</span>int, Field(gt=0)<span class="sc">\]\]</span> <span class="pp">|</span> If set, only the most recent N experiments are shown to the LLM. Keeps prompt size bounded on long campaigns.                                                                                                                                                                                                                                                                                                                                                                                            <span class="pp">|</span></span>
+<span id="cb30-410"><a href="#cb30-410" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n_top_experiments    <span class="pp">|</span> Optional<span class="sc">\[</span>Annotated<span class="sc">\[</span>int, Field(gt=0)<span class="sc">\]\]</span> <span class="pp">|</span> If set, the top N experiments by objective value are shown to the LLM. Combine with ``n_recent_experiments`` to mix recency and quality.                                                                                                                                                                                                                                                                                                                                                                 <span class="pp">|</span></span>
+<span id="cb30-411"><a href="#cb30-411" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> system_prompt        <span class="pp">|</span> Optional<span class="sc">\[</span>str<span class="sc">\]</span>                           <span class="pp">|</span> Optional override for the default system prompt.                                                                                                                                                                                                                                                                                                                                                                                                                                                         <span class="pp">|</span></span>
 <span id="cb30-412"><a href="#cb30-412" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-413"><a href="#cb30-413" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb30-414"><a href="#cb30-414" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb30-415"><a href="#cb30-415" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_single_objective</span><span class="co">](#bofire.data_models.strategies.api.LLMStrategy.validate_single_objective)</span> <span class="pp">|</span> Validate that the domain has exactly one output with a supported objective. <span class="pp">|</span></span>
-<span id="cb30-416"><a href="#cb30-416" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-417"><a href="#cb30-417" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_single_objective { #bofire.data_models.strategies.api.LLMStrategy.validate_single_objective }</span></span>
+<span id="cb30-413"><a href="#cb30-413" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb30-414"><a href="#cb30-414" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-415"><a href="#cb30-415" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb30-416"><a href="#cb30-416" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb30-417"><a href="#cb30-417" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_single_objective</span><span class="co">](#bofire.data_models.strategies.api.LLMStrategy.validate_single_objective)</span> <span class="pp">|</span> Validate that the domain has exactly one output with a supported objective. <span class="pp">|</span></span>
 <span id="cb30-418"><a href="#cb30-418" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-419"><a href="#cb30-419" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb30-420"><a href="#cb30-420" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.LLMStrategy.validate_single_objective()</span>
-<span id="cb30-421"><a href="#cb30-421" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb30-422"><a href="#cb30-422" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-423"><a href="#cb30-423" aria-hidden="true" tabindex="-1"></a>Validate that the domain has exactly one output with a supported objective.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb30-419"><a href="#cb30-419" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_single_objective { #bofire.data_models.strategies.api.LLMStrategy.validate_single_objective }</span></span>
+<span id="cb30-420"><a href="#cb30-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-421"><a href="#cb30-421" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb30-422"><a href="#cb30-422" aria-hidden="true" tabindex="-1"></a>data_models.strategies.api.LLMStrategy.validate_single_objective()</span>
+<span id="cb30-423"><a href="#cb30-423" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb30-424"><a href="#cb30-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-425"><a href="#cb30-425" aria-hidden="true" tabindex="-1"></a>Validate that the domain has exactly one output with a supported objective.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
