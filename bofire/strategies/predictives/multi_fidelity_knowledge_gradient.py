@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -191,7 +191,7 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
     def make(
         cls,
         domain: Domain,
-        ref_point: ExplicitReferencePoint | dict[str, float] | None = None,
+        ref_point: ExplicitReferencePoint | Dict[str, float] | None = None,
         acquisition_function: qMFHVKG | None = None,
         fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
