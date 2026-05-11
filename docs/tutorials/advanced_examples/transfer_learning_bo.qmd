@@ -16,7 +16,7 @@ import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Ackley, Branin
 from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, CategoricalTaskInput
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import SoboStrategy
 from bofire.data_models.surrogates.api import (
@@ -94,13 +94,13 @@ At first we will show to do inference with the model and see make predictions us
 
 We first set-up the model according to BoFire's API, by defining the set of input and output features and the corresponding bounds, and create a surrogate data model:
 
-- To define the task we choose the `TaskInput` feature, everything else follows standard BoFire procedure.
+- To define the task we choose the `CategoricalTaskInput` feature, everything else follows standard BoFire procedure.
 
 ```{python}
 #| papermill: {duration: 0.006739, end_time: '2024-10-10T20:34:19.750236', exception: false, start_time: '2024-10-10T20:34:19.743497', status: completed}
 #| tags: []
 # set-up the task model with allowed variable as ["True"] for the target task and ["False"] for the other task
-task_input = TaskInput(key="task", categories=["task_1", "task_2"])
+task_input = CategoricalTaskInput(key="task", categories=["task_1", "task_2"])
 # define the input features
 input_features = [ContinuousInput(key="x", bounds=(0, 1)), task_input]
 
@@ -179,7 +179,7 @@ Let us now integrate this into BoFire's `SOBO` strategy. This can be done by fol
 #| tags: []
 input_features = [
     ContinuousInput(key="x", bounds=(0, 1)),
-    TaskInput(key="task", categories=["task_1", "task_2"], allowed=[True, False]),
+    CategoricalTaskInput(key="task", categories=["task_1", "task_2"], allowed=[True, False]),
 ]
 
 objective = MaximizeObjective(w=1)
@@ -225,7 +225,7 @@ If we instead wanted to optimize `task_2` instead of `task_1`, we simply change 
 #| tags: []
 input_features = [
     ContinuousInput(key="x", bounds=(0, 1)),
-    TaskInput(key="task", categories=["task_1", "task_2"], allowed=[False, True]),
+    CategoricalTaskInput(key="task", categories=["task_1", "task_2"], allowed=[False, True]),
 ]
 
 objective = MaximizeObjective(w=1)
@@ -389,7 +389,7 @@ for run in range(num_runs):
     experiments_joint = experiments_joint_datasets[run]
 
     input_features = benchmark.domain.inputs.features + [
-        TaskInput(key="task", categories=["task_1", "task_2"], allowed=[True, False]),
+        CategoricalTaskInput(key="task", categories=["task_1", "task_2"], allowed=[True, False]),
     ]
     inputs = Inputs(features=input_features)
     outputs = benchmark.domain.outputs

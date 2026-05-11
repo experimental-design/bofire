@@ -21,6 +21,7 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
+from bofire.data_models.kernels.fidelity import DownsamplingKernel, FidelityKernel
 from bofire.data_models.kernels.kernel import (
     AggregationKernel,
     FeatureSpecificKernel,
@@ -69,6 +70,7 @@ _KERNEL_TYPES: list[type[Kernel]] = [
     InfiniteWidthBNNKernel,
     WassersteinKernel,
     WedgeKernel,
+    DownsamplingKernel,
 ]
 
 AnyKernel = tagged_union(*_KERNEL_TYPES)

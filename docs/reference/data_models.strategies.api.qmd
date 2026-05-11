@@ -15,7 +15,7 @@
 | [BotorchStrategy](#bofire.data_models.strategies.api.BotorchStrategy) |  |
 | [EntingStrategy](#bofire.data_models.strategies.api.EntingStrategy) |  |
 | [MoboStrategy](#bofire.data_models.strategies.api.MoboStrategy) |  |
-| [MultiFidelityStrategy](#bofire.data_models.strategies.api.MultiFidelityStrategy) |  |
+| [MultiFidelityVarianceBasedStrategy](#bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy) |  |
 | [MultiobjectiveStrategy](#bofire.data_models.strategies.api.MultiobjectiveStrategy) |  |
 | [AdditiveSoboStrategy](#bofire.data_models.strategies.api.AdditiveSoboStrategy) |  |
 | [CustomSoboStrategy](#bofire.data_models.strategies.api.CustomSoboStrategy) |  |
@@ -251,10 +251,10 @@ data_models.strategies.api.MoboStrategy.validate_ref_point()
 
 Validate that the provided refpoint matches the provided domain.
 
-### MultiFidelityStrategy { #bofire.data_models.strategies.api.MultiFidelityStrategy }
+### MultiFidelityVarianceBasedStrategy { #bofire.data_models.strategies.api.MultiFidelityVarianceBasedStrategy }
 
 ```python
-data_models.strategies.api.MultiFidelityStrategy()
+data_models.strategies.api.MultiFidelityVarianceBasedStrategy()
 ```
 
 

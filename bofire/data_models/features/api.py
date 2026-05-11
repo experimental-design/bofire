@@ -24,7 +24,11 @@ from bofire.data_models.features.molecular import (
     ContinuousMolecularInput,
 )
 from bofire.data_models.features.numerical import NumericalInput
-from bofire.data_models.features.task import TaskInput
+from bofire.data_models.features.task import (
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    TaskInput,
+)
 from bofire.data_models.unions import tagged_union
 
 
@@ -37,7 +41,8 @@ AnyFeature = tagged_union(
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    CategoricalTaskInput,
+    ContinuousTaskInput,
     SumFeature,
     MeanFeature,
     WeightedMeanFeature,
@@ -57,7 +62,8 @@ AnyInput = tagged_union(
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    ContinuousTaskInput,
+    CategoricalTaskInput,
     ContinuousMolecularInput,
 )
 

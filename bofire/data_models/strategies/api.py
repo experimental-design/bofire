@@ -41,7 +41,10 @@ from bofire.data_models.strategies.predictives.mobo import (
     RelativeToMaxMovingReferenceValue,
 )
 from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityStrategy,
+    MultiFidelityVarianceBasedStrategy,
+)
+from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
+    MultiFidelityHVKGStrategy,
 )
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -87,6 +90,8 @@ AnyPredictive = tagged_union(
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,
+    MultiFidelityVarianceBasedStrategy,
+    MultiFidelityHVKGStrategy,
 )
 
 AnyLocalSearchConfig = LSRBO

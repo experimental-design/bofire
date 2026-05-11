@@ -17,6 +17,7 @@ import bofire.kernels.shape as shapeKernels
 from bofire.data_models.constraints.condition import ThresholdCondition
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
+    DownsamplingKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
     IndexKernel,
@@ -64,7 +65,10 @@ EQUIVALENTS = {
 
 def test_map(kernel_spec: Spec):
     kernel = kernel_spec.cls(**kernel_spec.typed_spec())
-    if isinstance(kernel, HammingDistanceKernel) and kernel.features is not None:
+    if (
+        isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel))
+        and kernel.features is not None
+    ):
         return
     gkernel = kernels.map(
         kernel,
