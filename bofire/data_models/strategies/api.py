@@ -60,6 +60,7 @@ from bofire.data_models.strategies.stepwise.conditions import (
     CombiCondition,
     ExpMinRegretGapCondition,
     FeasibleExperimentCondition,
+    LogEIPCCondition,
     NumberOfExperimentsCondition,
     UCBLCBRegretBoundCondition,
 )

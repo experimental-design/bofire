@@ -9,7 +9,7 @@ import numpy as np
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
 from bofire.strategies.api import RandomStrategy, SoboStrategy
-from bofire.termination.evaluator import ExpMinRegretGapEvaluator, UCBLCBRegretEvaluator
+from bofire.termination.evaluator import ExpMinRegretGapEvaluator, LogEIPCEvaluator, UCBLCBRegretEvaluator
 
 
 @pytest.fixture
@@ -525,6 +525,169 @@ class TestExpMinRegretGapEvaluator:
         assert result != {}
         assert result["stopping_value"] >= 0
         assert len(result["seq_values"]) == 2  # values from iter 2 + iter 3
+
+
+class TestLogEIPCEvaluator:
+    """Unit tests for the LogEIPCEvaluator (Xie et al., 2025)."""
+
+    def test_evaluate_returns_expected_keys(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator()
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert set(result.keys()) == {"max_log_eipc", "best_f", "cost_estimate", "lambda_cost"}
+
+    def test_max_log_eipc_is_float(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator()
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert isinstance(result["max_log_eipc"], float)
+
+    def test_best_f_equals_min_observed(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator()
+        output_key = strategy.domain.outputs.get_keys()[0]
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["best_f"] == pytest.approx(experiments[output_key].min())
+
+    def test_returns_empty_when_not_fitted(self, benchmark):
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        evaluator = LogEIPCEvaluator()
+
+        result = evaluator.evaluate(strategy, pd.DataFrame(), 0)
+
+        assert result == {}
+
+    def test_returns_empty_with_few_experiments(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator()
+
+        result = evaluator.evaluate(strategy, experiments.iloc[:1], 0)
+
+        assert result == {}
+
+    def test_cost_column_used_when_present(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        experiments = experiments.copy()
+        experiments["cost"] = 2.5
+
+        evaluator = LogEIPCEvaluator(cost_column="cost")
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["cost_estimate"] == pytest.approx(2.5)
+
+    def test_cost_value_fallback_when_no_column(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator(cost_value=3.0)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["cost_estimate"] == pytest.approx(3.0)
+
+    def test_higher_lambda_cost_decreases_max_log_eipc(self, trained_strategy):
+        """Higher lambda_cost shifts the threshold up, lowering max_log_eipc."""
+        strategy, experiments = trained_strategy
+
+        result_low = LogEIPCEvaluator(lambda_cost=0.01).evaluate(strategy, experiments, 0)
+        result_high = LogEIPCEvaluator(lambda_cost=100.0).evaluate(strategy, experiments, 0)
+
+        assert result_high["max_log_eipc"] < result_low["max_log_eipc"]
+
+    def test_returns_empty_with_zero_cost(self, trained_strategy):
+        """Zero cost_value should return empty dict (undefined log(0))."""
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator(cost_value=0.0)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result == {}
+
+    def test_cost_callable_used_when_provided(self, trained_strategy):
+        """cost_callable should override cost_value for per-point evaluation."""
+        strategy, experiments = trained_strategy
+        # Callable returns constant 2.5 — should give same result as cost_value=2.5
+        ev_callable = LogEIPCEvaluator(
+            cost_callable=lambda X: X.new_full((X.shape[0],), 2.5)
+        )
+        ev_scalar = LogEIPCEvaluator(cost_value=2.5)
+
+        r_callable = ev_callable.evaluate(strategy, experiments, 0)
+        r_scalar = ev_scalar.evaluate(strategy, experiments, 0)
+
+        assert r_callable["max_log_eipc"] == pytest.approx(
+            r_scalar["max_log_eipc"], abs=0.5
+        )
+
+    def test_search_method_optimize_returns_valid_result(self, trained_strategy):
+        """search_method='optimize' should return a valid max_log_eipc."""
+        strategy, experiments = trained_strategy
+        evaluator = LogEIPCEvaluator(search_method="optimize")
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert isinstance(result["max_log_eipc"], float)
+
+    def test_search_method_sample_and_optimize_agree(self, trained_strategy):
+        """'sample' and 'optimize' should produce results with the same sign."""
+        strategy, experiments = trained_strategy
+
+        r_sample = LogEIPCEvaluator(
+            lambda_cost=1.0, cost_value=1.0, search_method="sample"
+        ).evaluate(strategy, experiments, 0)
+        r_opt = LogEIPCEvaluator(
+            lambda_cost=1.0, cost_value=1.0, search_method="optimize"
+        ).evaluate(strategy, experiments, 0)
+
+        # Both should agree on stop vs continue
+        assert (r_sample["max_log_eipc"] > 0) == (r_opt["max_log_eipc"] > 0)
+
+    def test_cost_model_gp_returns_valid_result(self, trained_strategy):
+        """cost_model='gp' should fit a cost GP and return a valid result."""
+        strategy, experiments = trained_strategy
+        experiments = experiments.copy()
+        experiments["cost"] = np.random.uniform(1.0, 3.0, len(experiments))
+
+        evaluator = LogEIPCEvaluator(
+            cost_column="cost", cost_model="gp"
+        )
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert isinstance(result["max_log_eipc"], float)
+
+    def test_cost_model_gp_doesnt_mutate_cost_callable(self, trained_strategy):
+        """cost_callable should be None after evaluate() even with cost_model='gp'."""
+        strategy, experiments = trained_strategy
+        experiments = experiments.copy()
+        experiments["cost"] = 2.0
+
+        evaluator = LogEIPCEvaluator(cost_column="cost", cost_model="gp")
+        assert evaluator.cost_callable is None
+        evaluator.evaluate(strategy, experiments, 0)
+        assert evaluator.cost_callable is None  # restored after call
+
+    def test_cost_model_gp_vs_mean_differ(self, trained_strategy):
+        """GP cost model should give a different result from scalar mean."""
+        strategy, experiments = trained_strategy
+        experiments = experiments.copy()
+        # Costs increase with x_1 — spatial variation the GP can learn
+        experiments["cost"] = 1.0 + experiments["x_1"].abs()
+
+        r_mean = LogEIPCEvaluator(
+            cost_column="cost", cost_model="mean"
+        ).evaluate(strategy, experiments, 0)
+        r_gp = LogEIPCEvaluator(
+            cost_column="cost", cost_model="gp"
+        ).evaluate(strategy, experiments, 0)
+
+        # GP-based costs are per-point so max_log_eipc will generally differ
+        assert r_mean["max_log_eipc"] != pytest.approx(r_gp["max_log_eipc"])
 
 
 class TestEvaluatorKwargs:

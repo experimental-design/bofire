@@ -2,6 +2,7 @@
 
 from bofire.termination.evaluator import (
     ExpMinRegretGapEvaluator,
+    LogEIPCEvaluator,
     TerminationEvaluator,
     UCBLCBRegretEvaluator,
 )
@@ -9,6 +10,7 @@ from bofire.termination.evaluator import (
 
 __all__ = [
     "ExpMinRegretGapEvaluator",
+    "LogEIPCEvaluator",
     "TerminationEvaluator",
     "UCBLCBRegretEvaluator",
 ]

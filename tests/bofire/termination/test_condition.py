@@ -8,6 +8,7 @@ from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     ExpMinRegretGapCondition,
+    LogEIPCCondition,
     NumberOfExperimentsCondition,
     RandomStrategy as RandomStrategyDataModel,
     SoboStrategy as SoboStrategyDataModel,
@@ -654,6 +655,146 @@ class TestExpMinRegretGapConditionDataModel:
         strategy = StepwiseStrategy(data_model=data_model)
 
         # Should run without errors for several iterations
+        for i in range(15):
+            try:
+                candidates = strategy.ask(1)
+            except OptimizationComplete:
+                break
+            candidates = candidates[domain.inputs.get_keys()]
+            experiments = benchmark.f(candidates, return_complete=True)
+            strategy.tell(experiments)
+
+
+class TestLogEIPCConditionDataModel:
+    """Tests for the LogEIPCCondition data model."""
+
+    def test_defaults(self):
+        cond = LogEIPCCondition()
+        assert cond.lambda_cost == 1.0
+        assert cond.cost_column is None
+        assert cond.cost_value == 1.0
+        assert cond.alpha == 1.0
+        assert cond.min_experiments == 5
+        assert cond.n_samples == 2000
+        assert cond.search_method == "sample"
+        assert cond.cost_model == "mean"
+
+    def test_custom_params(self):
+        cond = LogEIPCCondition(
+            lambda_cost=0.1,
+            cost_column="time_seconds",
+            cost_value=60.0,
+            alpha=0.5,
+            min_experiments=10,
+            n_samples=500,
+        )
+        assert cond.lambda_cost == 0.1
+        assert cond.cost_column == "time_seconds"
+        assert cond.cost_value == 60.0
+        assert cond.alpha == 0.5
+        assert cond.min_experiments == 10
+        assert cond.n_samples == 500
+
+    def test_serialization(self):
+        cond = LogEIPCCondition(lambda_cost=0.5, cost_value=2.0)
+        data = cond.model_dump()
+        restored = LogEIPCCondition(**data)
+        assert restored.lambda_cost == cond.lambda_cost
+        assert restored.cost_value == cond.cost_value
+
+    def test_returns_true_without_strategy(self, benchmark):
+        cond = LogEIPCCondition()
+        assert cond.evaluate(benchmark.domain, None) is True
+
+    def test_returns_true_with_unfitted_strategy(self, benchmark):
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        cond = LogEIPCCondition()
+        assert cond.evaluate(benchmark.domain, None, strategy=strategy) is True
+
+    def test_returns_true_with_few_experiments(self, benchmark):
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(3), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        cond = LogEIPCCondition(min_experiments=10)
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
+
+    def test_evaluate_returns_bool(self, benchmark):
+        """evaluate() must always return a bool."""
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(10), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        cond = LogEIPCCondition(min_experiments=5)
+        result = cond.evaluate(benchmark.domain, experiments, strategy=strategy)
+        assert isinstance(result, bool)
+
+    def test_generous_lambda_does_not_stop(self, benchmark):
+        """Very small lambda_cost → EI almost always exceeds cost → keep going."""
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(10), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        cond = LogEIPCCondition(lambda_cost=1e-10, min_experiments=5)
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
+
+    def test_cost_column_used_when_present(self, benchmark):
+        """When cost_column is set and populated, it should be used."""
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(10), return_complete=True)
+        experiments = experiments.copy()
+        experiments["cost"] = 5.0
+
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        cond = LogEIPCCondition(cost_column="cost", min_experiments=5)
+        result = cond.evaluate(benchmark.domain, experiments, strategy=strategy)
+        assert isinstance(result, bool)
+
+    def test_in_stepwise_strategy(self, benchmark):
+        """LogEIPCCondition should work inside a StepwiseStrategy."""
+        domain = benchmark.domain
+
+        data_model = StepwiseStrategyDataModel(
+            domain=domain,
+            steps=[
+                Step(
+                    strategy_data=RandomStrategyDataModel(domain=domain),
+                    condition=NumberOfExperimentsCondition(n_experiments=10),
+                ),
+                Step(
+                    strategy_data=SoboStrategyDataModel(domain=domain),
+                    condition=LogEIPCCondition(
+                        lambda_cost=1.0,
+                        min_experiments=5,
+                    ),
+                ),
+            ],
+        )
+        strategy = StepwiseStrategy(data_model=data_model)
+
         for i in range(15):
             try:
                 candidates = strategy.ask(1)
