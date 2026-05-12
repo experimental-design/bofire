@@ -17,7 +17,12 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.strategies.predictives import _nchoosek_pruning as ncp
 from bofire.strategies.predictives._nchoosek_pruning import (
@@ -1099,12 +1104,12 @@ class TestPruneNchoosekEndToEnd:
         assert out[0, 2].item() > 0
         assert out[0, 3].item() > 0
 
-    # ----- Caller-supplied fixed_features -----
+    # ----- Caller-supplied pinned_columns -----
 
     def test_fixed_feature_outside_nchoosek_does_not_move(self):
-        # 5-feature domain: x5 is fixed at 0.7 by the caller. NChooseK
+        # 5-feature domain: x5 is pinned at 0.7 by the caller. NChooseK
         # acts only on x1..x4. Mixture x1+...+x4 = 1 (does not include
-        # the fixed feature). The pruning should not touch x5.
+        # the pinned feature). The pruning should not touch x5.
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(4)]
         inputs.append(ContinuousInput(key="x5", bounds=(0.0, 1.0)))
         outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
@@ -1127,11 +1132,12 @@ class TestPruneNchoosekEndToEnd:
         )
         inp = _inputs_from_domain(domain)
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        # Candidate already carries the desired pinned value at x5.
         X = _stack_to_tensor([[0.4, 0.3, 0.2, 0.1, 0.7]])
         out = prune_nchoosek(
             X=X,
             acqf=acqf,
-            fixed_features={4: 0.7},
+            pinned_columns={4},
             **inp,
             final_local_reopt=True,
         )
@@ -1141,7 +1147,7 @@ class TestPruneNchoosekEndToEnd:
         assert out[0, :4].sum().item() == pytest.approx(1.0, abs=1e-3)
 
     def test_fixed_zero_feature_does_not_count_or_move(self):
-        # x5 is fixed to zero by the caller — it should never be a
+        # x5 is pinned to zero by the caller — it should never be a
         # zero-action target (it is already zero by external decree)
         # and the final value must remain exactly 0.
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
@@ -1160,11 +1166,12 @@ class TestPruneNchoosekEndToEnd:
         )
         inp = _inputs_from_domain(domain)
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        # Candidate already carries x5 = 0 (the desired pinned value).
         X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5, 0.0]])
         out = prune_nchoosek(
             X=X,
             acqf=acqf,
-            fixed_features={4: 0.0},
+            pinned_columns={4},
             **inp,
             final_local_reopt=True,
         )
@@ -1173,9 +1180,9 @@ class TestPruneNchoosekEndToEnd:
         assert nz <= 2
 
     def test_fixed_feature_inside_nchoosek_excluded_from_actions(self):
-        # x1 is fixed at 0.5 even though it appears in the NChooseK
+        # x1 is pinned at 0.5 even though it appears in the NChooseK
         # constraint. The pruning must exclude it from the action set
-        # (cannot zero a fixed feature) and instead zero among
+        # (cannot zero a pinned feature) and instead zero among
         # {x2, x3, x4}.
         domain = _make_simple_domain(
             n_features=4,
@@ -1190,15 +1197,16 @@ class TestPruneNchoosekEndToEnd:
         )
         inp = _inputs_from_domain(domain)
         # Use weights that would otherwise make x1 the prime zero
-        # candidate (smallest weight). The fixed-features filter must
+        # candidate (smallest weight). The pinning filter must
         # override.
         weights = torch.tensor([0.1, 5.0, 5.0, 10.0], **tkwargs)
         acqf = WeightedSumAcqf(weights)
+        # Candidate already carries x1 = 0.5 (the desired pinned value).
         X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5]])
         out = prune_nchoosek(
             X=X,
             acqf=cast(AcquisitionFunction, acqf),
-            fixed_features={0: 0.5},
+            pinned_columns={0},
             **inp,
             final_local_reopt=False,
         )
@@ -2006,3 +2014,277 @@ class TestXPendingThreading:
         for v in concat_calls:
             assert torch.allclose(v[0], user_pending[0])
             assert torch.allclose(v[1], out[0])
+
+
+class TestPinnedColumns:
+    """Regression tests for the ``pinned_columns`` API: tensor columns
+    that must remain at the candidate's per-row value through every
+    QP projection and reopt call. The mechanism replaces the old
+    ``fixed_features: Dict[int, float]`` parameter and supports
+    per-row resolution (different candidates in a q-batch can carry
+    different values for the same pinned column).
+    """
+
+    def test_pinned_column_not_proposed_as_action(self):
+        """A pinned column inside an NChooseK feature set must be
+        excluded from the action set. Otherwise the loop would try
+        to zero it (smallest AF impact via the weights) and the
+        pinning would silently fail.
+        """
+        domain = _make_simple_domain(
+            n_features=4,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        # Weights make x1 the AF-cheapest zero target.
+        weights = torch.tensor([0.1, 5.0, 5.0, 10.0], **tkwargs)
+        acqf = WeightedSumAcqf(weights)
+        X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=cast(AcquisitionFunction, acqf),
+            pinned_columns={0},
+            **inp,
+            final_local_reopt=False,
+        )
+        # x1 (column 0) must still be 0.5; pruning must have zeroed
+        # one of {x2, x3, x4} instead.
+        assert out[0, 0].item() == pytest.approx(0.5)
+
+    def test_pinned_column_value_unchanged_q1(self):
+        """q=1, mixture sums over four NChooseK features, plus a
+        fifth column pinned at 0.7 outside the NChooseK. The value
+        on the pinned column survives the QP projection exactly.
+        """
+        inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        domain = Domain.from_lists(
+            inputs=inputs,
+            outputs=outputs,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        X = _stack_to_tensor([[0.4, 0.3, 0.2, 0.1, 0.7]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            pinned_columns={4},
+            **inp,
+            final_local_reopt=False,
+        )
+        assert out[0, 4].item() == pytest.approx(0.7, abs=1e-9)
+
+    def test_pinned_column_value_unchanged_per_row_q2(self):
+        """q=2 with the same column pinned to *different* values
+        across rows. Locks in the per-row resolution: row 0 carries
+        0.3, row 1 carries 0.8, both must survive pruning unchanged.
+        """
+        inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        domain = Domain.from_lists(
+            inputs=inputs,
+            outputs=outputs,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        # Same column 4, different per-row values.
+        X = _stack_to_tensor(
+            [
+                [0.5, 0.5, 0.5, 0.5, 0.3],
+                [0.4, 0.4, 0.4, 0.4, 0.8],
+            ]
+        )
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            pinned_columns={4},
+            **inp,
+            final_local_reopt=False,
+        )
+        assert out[0, 4].item() == pytest.approx(0.3, abs=1e-9)
+        assert out[1, 4].item() == pytest.approx(0.8, abs=1e-9)
+
+    def test_pinned_column_propagates_to_final_local_reopt(self):
+        """``final_local_reopt=True`` runs an additional
+        ``optimize_acqf`` polish; the pinned column must still survive.
+        """
+        inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        domain = Domain.from_lists(
+            inputs=inputs,
+            outputs=outputs,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5, 0.7]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            pinned_columns={4},
+            **inp,
+            final_local_reopt=True,
+        )
+        assert out[0, 4].item() == pytest.approx(0.7, abs=1e-6)
+
+    def test_pinned_column_propagates_to_per_step_local_reopt(self):
+        """``per_step_local_reopt=True`` runs ``optimize_acqf`` per
+        action variant; pin must hold through every reopt call.
+        """
+        inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        domain = Domain.from_lists(
+            inputs=inputs,
+            outputs=outputs,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+            ],
+        )
+        inp = _inputs_from_domain(domain)
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+        X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5, 0.7]])
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            pinned_columns={4},
+            **inp,
+            per_step_local_reopt=True,
+            final_local_reopt=False,
+        )
+        assert out[0, 4].item() == pytest.approx(0.7, abs=1e-6)
+
+    def test_categorical_one_hot_survives_pruning(self):
+        """Integration test: a domain with a one-hot-encoded
+        ``CategoricalInput`` plus an NChooseK over four continuous
+        features. Build ``pinned_columns`` the way
+        ``BotorchOptimizer._prune_if_applicable`` would (every column
+        outside un-fixed ``ContinuousInput``s) and run
+        ``prune_nchoosek`` end-to-end with ``final_local_reopt=True``.
+        Assert the categorical's three one-hot columns survive the
+        full pruning pipeline (QP projection + final polish) without
+        drifting to fractional values.
+        """
+        inputs: List[Any] = [
+            ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(4)
+        ]
+        inputs.append(CategoricalInput(key="cat", categories=["A", "B", "C"]))
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        domain = Domain.from_lists(
+            inputs=inputs,
+            outputs=outputs,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+
+        # Force one-hot encoding so the categorical occupies multiple
+        # columns — the nasty drift case.
+        specs: Dict[str, Any] = {"cat": CategoricalEncodingEnum.ONE_HOT}
+        features2idx, _ = domain.inputs._get_transform_info(specs)
+        bounds = get_torch_bounds_from_domain(domain, specs)
+        inequality_constraints = get_linear_constraints(
+            domain, constraint=LinearInequalityConstraint
+        )
+        equality_constraints = get_linear_constraints(
+            domain, constraint=LinearEqualityConstraint
+        )
+        nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
+
+        # Mirror BotorchOptimizer._prune_if_applicable.
+        pinned_columns: set = set()
+        for feat in domain.inputs:
+            cols = features2idx[feat.key]
+            if isinstance(feat, ContinuousInput) and feat.fixed_value() is None:
+                continue
+            pinned_columns.update(cols)
+
+        cat_cols = list(features2idx["cat"])
+        assert set(cat_cols) <= pinned_columns
+
+        # Candidate: continuous mixture x1+...+x4 = 1, categorical
+        # one-hot = (0, 1, 0) for category B.
+        d = bounds.shape[1]
+        row = torch.zeros(d, **tkwargs)
+        row[0:4] = torch.tensor([0.4, 0.3, 0.2, 0.1], **tkwargs)
+        # cat_cols[1] is category B's column — set its one-hot to 1.
+        row[cat_cols[1]] = 1.0
+
+        X = row.unsqueeze(0).clone()
+        X_in = X.clone()  # snapshot for comparison
+
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            nchoosek_constraints=nchoosek_constraints,
+            features2idx=features2idx,
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            semicontinuous_specs={},
+            pinned_columns=pinned_columns,
+            final_local_reopt=True,
+        )
+
+        # Categorical one-hot columns must be exactly preserved —
+        # no drift to fractional values from QP projection or polish.
+        for col in cat_cols:
+            assert torch.isclose(out[0, col], X_in[0, col], atol=1e-9), (
+                f"categorical column {col} drifted from "
+                f"{X_in[0, col].item()} to {out[0, col].item()}"
+            )
+        # Sanity: continuous mixture still satisfied; NChooseK pruning happened.
+        assert out[0, :4].sum().item() == pytest.approx(1.0, abs=1e-3)
+        nz = (out[0, :4].abs() > 1e-6).sum().item()
+        assert nz <= 2

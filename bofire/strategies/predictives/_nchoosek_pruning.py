@@ -927,6 +927,18 @@ def _build_variant(
 
     has_linear = bool(inequality_constraints) or bool(equality_constraints)
 
+    # TODO (perf, cf. Ax PR facebook/Ax#5180): when ``has_linear`` is
+    # True but ``j_idx`` does not appear in any linear constraint's
+    # index tensor, the SLSQP projection below is unnecessary —
+    # changing only ``x_{j_idx}`` cannot perturb the satisfaction of
+    # constraints that do not reference it, so ``starting`` is
+    # already feasible. Compute ``j_in_constraint`` once at function
+    # entry and route through the no-projection branch when False.
+    # The win is small in BoFire's typical regime (NChooseK features
+    # usually also appear in a mixture equality), so we keep the
+    # simpler "always project" behaviour until profiling shows
+    # ``_build_variant`` is hot.
+
     if not has_linear:
         variant = starting
         if per_step_local_reopt:
@@ -953,6 +965,15 @@ def _build_variant(
         ).squeeze(0)
     except Exception:
         return starting, False
+
+    # TODO (defensive, cf. Ax PR facebook/Ax#5180): SLSQP's default
+    # convergence tolerance can return points that are "close enough"
+    # to feasible but fail a strict ``evaluate_feasibility`` check
+    # (especially with tight equalities and small ``tol``). Ax adds a
+    # post-projection feasibility safety net that masks such
+    # candidates as infeasible (``valid=False`` here). We trust the
+    # projection output today; consider adding the safety net if a
+    # real-world domain produces near-feasible-but-rejected points.
 
     # Safety net: SLSQP short-circuits when both lists are None,
     # and we trust the fixed_features convention rather than the
