@@ -175,6 +175,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     > 0
                 ):
                     raise ValueError("LSR-BO only supported for linear constraints.")
+                # Semi-continuous features (`allow_zero=True` with
+                # `bounds[0] > 0`) create a disconnected feasible region
+                # `{0} ∪ [lb, ub]` that LSR-BO's QP-based shortest-path
+                # cannot interpolate across without producing infeasible
+                # intermediate steps. The local AF solver would also
+                # produce fractional candidates in the gap `(0, lb)`.
+                for feat in domain.inputs.get(ContinuousInput):
+                    assert isinstance(feat, ContinuousInput)
+                    if feat.allow_zero and feat.bounds[0] > 0:
+                        raise ValueError(
+                            "LSR-BO is not supported for domains with "
+                            "semi-continuous features (`allow_zero=True` "
+                            "with `bounds[0] > 0`). Feature "
+                            f"{feat.key!r} violates this."
+                        )
 
         def validate_interpoint_constraints(domain: Domain):
             if domain.constraints.get(InterpointConstraint) and len(

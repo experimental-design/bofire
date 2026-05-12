@@ -391,14 +391,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
+        # NChooseK + LSR-BO and semi-continuous + LSR-BO are both
+        # rejected at data-model validation time
+        # (`BotorchOptimizer.validate_domain`), so any combination
+        # reaching this point is supported. See the data model for
+        # the rationale.
         pruning_applicable = is_pruning_applicable(domain)
-        if pruning_applicable and self.local_search_config is not None:
-            raise NotImplementedError(
-                "Local search region BO combined with NChooseK / "
-                "semi-continuous pruning is not yet supported. Disable "
-                "either `local_search_config` or the constraints that "
-                "trigger pruning."
-            )
 
         input_preprocessing_specs = self._input_preprocessing_specs(domain)
         bounds = get_torch_bounds_from_domain(
