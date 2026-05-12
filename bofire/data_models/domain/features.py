@@ -550,11 +550,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             conditional_conts = [
                 f
                 for f in self.get(includes=include, excludes=exclude)
-                if (
-                    isinstance(f, ContinuousInput)
-                    and f.is_semicontinuous
-                    and not f.is_fixed()
-                )
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
             ]
             # each conditional feature may be 'active' or 'inactive'
             num_conditional_conts = [2 for _ in conditional_conts]
@@ -607,11 +603,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         conditional_conts = [
             f
             for f in self.get(includes=include, excludes=exclude)
-            if (
-                isinstance(f, ContinuousInput)
-                and f.is_semicontinuous
-                and not f.is_fixed()
-            )
+            if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
         ]
 
         conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]

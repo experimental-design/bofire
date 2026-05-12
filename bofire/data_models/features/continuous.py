@@ -121,6 +121,19 @@ class ContinuousInput(NumericalInput):
             raise ValueError(
                 "If `allow_zero==True`, then zero must not lie within the bounds."
             )
+        # A positively-fixed feature with allow_zero=True would have the
+        # disjoint feasible set ``{0} ∪ {v}`` — a 2-point discrete set
+        # masquerading as a semi-continuous fixed feature. The intent is
+        # ambiguous (is the feature really fixed, or really binary?), so
+        # we reject it. Users who want a 2-point set should use
+        # ``DiscreteInput(values=[0, v])``.
+        if lower == upper:
+            raise ValueError(
+                "`allow_zero=True` is not compatible with a positively-fixed "
+                "feature (`bounds[0] == bounds[1] > 0`). The resulting feasible "
+                "set `{0, v}` is a 2-point discrete set, not a continuous "
+                "feature. Use `DiscreteInput(values=[0, v])` instead."
+            )
 
         return self
 
@@ -238,15 +251,11 @@ class ContinuousInput(NumericalInput):
             raise ValueError("Only one can be used, `local_value` or `values`.")
 
         # Effective lower bound: 0 for semi-continuous features when the
-        # caller asks for the convex-relaxation view. The `is_fixed` case
-        # short-circuits below (a fixed feature reports its single value).
+        # caller asks for the convex-relaxation view. (Fixed semi-
+        # continuous features are forbidden by the `allow_zero` validator,
+        # so the `is_semicontinuous` check below implies `not is_fixed()`.)
         effective_lower = self.lower_bound
-        if (
-            relax_allow_zero
-            and self.allow_zero
-            and self.lower_bound > 0
-            and not self.is_fixed()
-        ):
+        if relax_allow_zero and self.is_semicontinuous:
             effective_lower = 0.0
 
         if values is None:

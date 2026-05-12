@@ -140,8 +140,9 @@ def test_continuous_input_feature_get_bounds_relax_allow_zero():
     lower, upper = feat.get_bounds(relax_allow_zero=True)
     assert np.isclose(lower[0], 0.2)
 
-    # Fixed feature ignores the flag.
-    feat = ContinuousInput(key="x", bounds=(0.5, 0.5), allow_zero=True)
+    # Fixed feature ignores the flag (allow_zero is incompatible with a
+    # positively-fixed feature; use allow_zero=False here).
+    feat = ContinuousInput(key="x", bounds=(0.5, 0.5), allow_zero=False)
     lower, upper = feat.get_bounds(relax_allow_zero=True)
     assert np.isclose(lower[0], 0.5)
     assert np.isclose(upper[0], 0.5)
