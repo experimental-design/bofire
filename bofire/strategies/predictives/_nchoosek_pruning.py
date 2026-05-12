@@ -55,9 +55,26 @@ class PruningInfeasibleError(RuntimeError):
 class ActionKind(Enum):
     """The three primitive action kinds of the greedy pruning loop.
 
-    Values are integers ordered by the existing tie-break preference
-    (``ZERO < ACTIVE < ACTIVATE``) so ``(af_red, kind.value, j)`` is a
-    drop-in replacement for the legacy ``(af_red, 0/1, j)`` ordering.
+    Attributes:
+        ZERO: Pin a currently active or fractional feature's value to
+            zero. Used to reduce ``active_count`` toward ``max_count``.
+        ACTIVE: Snap a *fractional* semi-continuous feature (whose
+            current value lies in the gap ``(0, lb_j)``) into its
+            ``[lb_j, ub_j]`` band. Used only for fractional features;
+            does not change ``active_count``.
+        ACTIVATE: Bring a currently *zero* feature into a positive
+            band — ``[lb_j, ub_j]`` for semi-continuous features,
+            ``[2*tol, ub_j]`` otherwise. Used to increase
+            ``active_count`` toward ``min_count`` when an NChooseK
+            constraint is under-budget.
+
+    Despite the similar names, ``ACTIVE`` and ``ACTIVATE`` are
+    distinct: ``ACTIVE`` resolves a fractional value already in
+    ``(0, lb_j)``; ``ACTIVATE`` lifts a value at zero into the
+    positive band.
+
+    The integer values order tie-break preference
+    (``ZERO < ACTIVE < ACTIVATE``).
     """
 
     ZERO = 0
@@ -69,10 +86,15 @@ class ActionKind(Enum):
 class Action:
     """A single greedy-pruning move proposed for selection.
 
-    ``valid`` is ``False`` when the per-action variant builder failed
-    (typically a QP-projection failure on mutually infeasible bounds +
-    linear constraints); the caller scores such variants at ``-inf``
-    so they are never selected.
+    Attributes:
+        j: Tensor column index of the feature this action targets.
+        kind: One of :class:`ActionKind`.
+        variant: The ``(d,)`` candidate tensor that results from
+            applying this action to the current state.
+        valid: ``False`` when the per-action variant builder failed
+            (typically a QP-projection failure on mutually infeasible
+            bounds + linear constraints). The caller scores invalid
+            variants at ``-inf`` so they are never selected.
     """
 
     j: int
@@ -85,17 +107,31 @@ class Action:
 class PruningContext:
     """All static-per-call inputs to the pruning loop.
 
-    Bundling these reduces the parameter-count of the inner helpers
-    (variant builders, action collectors) from ~10 to ~3 and gives
-    a single source of truth for the per-call configuration.
-
-    ``pinned_columns`` lists tensor columns that must be frozen at
-    the candidate's per-row value throughout pruning — for example,
-    columns belonging to non-``ContinuousInput`` features (categorical,
-    discrete, molecular) and fixed-value continuous features. The
-    per-row resolution to ``{col: x_i[col]}`` happens at row entry in
-    :func:`_prune_single_candidate`; the result lives on
-    :class:`PruningState`.
+    Attributes:
+        bounds: ``(2, d)`` tensor of per-column lower and upper bounds.
+        inequality_constraints: BoTorch-style ``(indices, coefficients,
+            rhs)`` triples for ``A x >= b``. May be empty.
+        equality_constraints: same format, for ``A x = b``. May be
+            empty.
+        acqf: Acquisition function to evaluate variants against.
+        semicontinuous_specs: ``{col: (lb_j, ub_j)}`` for every tensor
+            column whose feature is ``allow_zero=True`` with a positive
+            lower bound. May be empty.
+        pinned_columns: Tensor columns that must be frozen at the
+            candidate's per-row value throughout pruning (categorical,
+            discrete, molecular columns; fixed-value continuous
+            features; features participating in constraint types the
+            QP cannot enforce). The per-row resolution to
+            ``{col: x_i[col]}`` happens at row entry in
+            :func:`_prune_single_candidate`; the result lives on
+            :class:`PruningState`.
+        nchoosek_constraints: NChooseK constraints (filtered list).
+        features2idx: Mapping from feature key to a tuple of tensor
+            column indices.
+        tol: Tolerance for the ``|x_j| > tol`` "is this column zero?"
+            classification rule.
+        per_step_local_reopt: When True, every variant is locally
+            re-optimized via ``optimize_acqf`` after the QP projection.
     """
 
     bounds: Tensor
@@ -114,17 +150,20 @@ class PruningContext:
 class PruningState:
     """Per-candidate mutable state inside the greedy loop.
 
-    ``zero_set``, ``frac_set``, and ``active_set`` partition the tensor
-    column indices by their current (zero / fractional / active)
-    classification. ``commit`` applies an action's effect on the
-    partition; the candidate tensor ``x`` itself is updated by the
-    caller from ``Action.variant``.
-
-    ``fixed_features`` is the per-row resolved pinning dict —
-    ``{col: x_i[col]}`` for every ``col`` in
-    :attr:`PruningContext.pinned_columns`. Computed once at row entry
-    and forwarded to :func:`_build_variant`, :func:`_local_optacqf`,
-    and :func:`_final_local_reopt`.
+    Attributes:
+        x: The current candidate value (``(d,)`` tensor). Updated each
+            iteration to ``Action.variant`` of the chosen action.
+        zero_set: Tensor columns currently classified as zero
+            (``|x_j| <= tol``).
+        frac_set: Tensor columns currently classified as fractional —
+            semi-continuous features whose value lies in ``(0, lb_j)``.
+        active_set: Tensor columns currently classified as active
+            (non-zero, and not fractional).
+        fixed_features: Per-row resolved pinning dict —
+            ``{col: x_i[col]}`` for every ``col`` in
+            :attr:`PruningContext.pinned_columns`. Computed once at row
+            entry and forwarded to :func:`_build_variant`,
+            :func:`_local_optacqf`, and :func:`_final_local_reopt`.
     """
 
     x: Tensor
@@ -164,7 +203,7 @@ def has_semicontinuous_features(domain: Domain) -> bool:
     """
     for feat in domain.inputs.get(ContinuousInput):
         assert isinstance(feat, ContinuousInput)
-        if feat.allow_zero and feat.bounds[0] > 0:
+        if feat.is_semicontinuous:
             return True
     return False
 
@@ -231,7 +270,7 @@ def semicontinuous_specs_from_domain(
     specs: Dict[int, Tuple[float, float]] = {}
     for feat in domain.inputs.get(ContinuousInput):
         assert isinstance(feat, ContinuousInput)
-        if feat.allow_zero and feat.bounds[0] > 0:
+        if feat.is_semicontinuous:
             for col in features2idx[feat.key]:
                 specs[col] = (float(feat.bounds[0]), float(feat.bounds[1]))
     return specs
@@ -251,7 +290,7 @@ def is_pruning_applicable(domain: Domain) -> bool:
     blocking = _features_in_blocking_constraints(domain)
     for feat in domain.inputs.get(ContinuousInput):
         assert isinstance(feat, ContinuousInput)
-        if feat.allow_zero and feat.bounds[0] > 0 and feat.key in blocking:
+        if feat.is_semicontinuous and feat.key in blocking:
             return False
     return True
 
@@ -331,7 +370,7 @@ def _active_counts(
     return counts
 
 
-def _violated_constraints(
+def _max_count_violated_constraints(
     active_counts: Dict[int, int],
     nchoosek_constraints: Sequence[NChooseKConstraint],
 ) -> Set[int]:
@@ -753,6 +792,19 @@ def _local_optacqf(
 
     Returns the refined ``(d,)`` tensor on success or ``None`` on
     optimizer failure (caller falls back to ``initial``).
+
+    TODO (perf): batch all per-variant local reopts into a single
+    ``optimize_acqf`` call with ``batch_initial_conditions`` of shape
+    ``(num_variants, 1, d)``. Today each variant calls this function
+    independently — one ``optimize_acqf`` invocation per action per
+    inner-loop iteration. Batching would let BoTorch parallelize the
+    L-BFGS steps across variants. Requires per-variant bounds /
+    fixed-features (the bounds tightening differs by variant), so the
+    batched call would need either uniform bounds or BoTorch's
+    inhomogeneous-batch support. Real perf win on a fast path (q≥2
+    with joint AFs + per_step_local_reopt=True) but the per-variant
+    code is also where the X_pending save/restore happens, which
+    complicates the batching.
     """
     saved_pending = getattr(acqf, "X_pending", None)
     pending_was_set = False
@@ -998,115 +1050,6 @@ def _build_variant(
     return projected, True
 
 
-def _build_zero_variant(
-    x_i: Tensor,
-    j_idx: int,
-    bounds: Tensor,
-    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
-    equality_constraints: List[Tuple[Tensor, Tensor, float]],
-    acqf: AcquisitionFunction,
-    per_step_local_reopt: bool,
-    pinned_zero_indices: Optional[Set[int]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    active_set: Optional[Set[int]] = None,
-    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
-) -> Tuple[Tensor, bool]:
-    """Thin wrapper around :func:`_build_variant` for the ZERO kind.
-
-    Kept for backward compatibility with callers / tests that
-    pre-date the unified builder.
-    """
-    return _build_variant(
-        x_i=x_i,
-        j_idx=j_idx,
-        kind=ActionKind.ZERO,
-        bounds=bounds,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-        acqf=acqf,
-        per_step_local_reopt=per_step_local_reopt,
-        pinned_zero_indices=pinned_zero_indices,
-        fixed_features=fixed_features,
-        active_set=active_set,
-        semicontinuous_specs=semicontinuous_specs,
-    )
-
-
-def _build_active_variant(
-    x_i: Tensor,
-    j_idx: int,
-    lb_j: float,
-    ub_j: float,
-    bounds: Tensor,
-    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
-    equality_constraints: List[Tuple[Tensor, Tensor, float]],
-    acqf: AcquisitionFunction,
-    per_step_local_reopt: bool,
-    pinned_zero_indices: Optional[Set[int]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    active_set: Optional[Set[int]] = None,
-    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
-) -> Tuple[Tensor, bool]:
-    """Thin wrapper around :func:`_build_variant` for the ACTIVE kind.
-
-    The legacy signature accepts ``lb_j`` / ``ub_j`` as positional
-    args; we feed them into ``semicontinuous_specs`` (overriding any
-    existing entry for ``j_idx``) so the unified dispatcher reads
-    the same band.
-    """
-    specs: Dict[int, Tuple[float, float]] = dict(semicontinuous_specs or {})
-    specs[j_idx] = (lb_j, ub_j)
-    return _build_variant(
-        x_i=x_i,
-        j_idx=j_idx,
-        kind=ActionKind.ACTIVE,
-        bounds=bounds,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-        acqf=acqf,
-        per_step_local_reopt=per_step_local_reopt,
-        pinned_zero_indices=pinned_zero_indices,
-        fixed_features=fixed_features,
-        active_set=active_set,
-        semicontinuous_specs=specs,
-    )
-
-
-def _build_activate_variant(
-    x_i: Tensor,
-    j_idx: int,
-    bounds: Tensor,
-    inequality_constraints: List[Tuple[Tensor, Tensor, float]],
-    equality_constraints: List[Tuple[Tensor, Tensor, float]],
-    acqf: AcquisitionFunction,
-    per_step_local_reopt: bool,
-    pinned_zero_indices: Optional[Set[int]] = None,
-    fixed_features: Optional[Dict[int, float]] = None,
-    active_set: Optional[Set[int]] = None,
-    semicontinuous_specs: Optional[Dict[int, Tuple[float, float]]] = None,
-    tol: float = 1e-6,
-) -> Tuple[Tensor, bool]:
-    """Thin wrapper around :func:`_build_variant` for the ACTIVATE kind.
-
-    See :func:`_build_variant` for the activation-target-band rules.
-    """
-    return _build_variant(
-        x_i=x_i,
-        j_idx=j_idx,
-        kind=ActionKind.ACTIVATE,
-        bounds=bounds,
-        inequality_constraints=inequality_constraints,
-        equality_constraints=equality_constraints,
-        acqf=acqf,
-        per_step_local_reopt=per_step_local_reopt,
-        pinned_zero_indices=pinned_zero_indices,
-        fixed_features=fixed_features,
-        active_set=active_set,
-        semicontinuous_specs=semicontinuous_specs,
-        tol=tol,
-    )
-
-
 def _collect_actions(
     state: PruningState,
     ctx: PruningContext,
@@ -1135,7 +1078,7 @@ def _collect_actions(
     counts = _active_counts(
         state.x, ctx.nchoosek_constraints, ctx.features2idx, ctx.tol
     )
-    violated = _violated_constraints(counts, ctx.nchoosek_constraints)
+    violated = _max_count_violated_constraints(counts, ctx.nchoosek_constraints)
     min_count_violated = _min_count_violated_constraints(
         counts, ctx.nchoosek_constraints
     )
@@ -1538,26 +1481,8 @@ def prune_nchoosek(
             empties the action set before the ``max_count`` constraints
             are met).
     """
-    # Defensive guard: NChooseK features must each map to a single tensor
-    # column. The NChooseKConstraint validator already restricts to
-    # ContinuousInput, but the optimizer's input_preprocessing_specs could
-    # in principle multi-encode an ill-typed feature; fail loudly if so.
-    for c in nchoosek_constraints:
-        for feat_key in c.features:
-            cols = features2idx.get(feat_key, ())
-            if len(cols) != 1:
-                raise NotImplementedError(
-                    f"Pruning requires every NChooseK feature to map to a "
-                    f"single tensor column. Feature {feat_key!r} maps to "
-                    f"{cols} via features2idx — this typically means it "
-                    f"was one-hot or otherwise multi-column encoded, which "
-                    f"is out of scope for the BONSAI pruning module."
-                )
-
     X = X.clone()
     q = X.shape[0]
-    if q == 0:
-        return X
 
     pinned_columns_set: Set[int] = pinned_columns or set()
     fixed_keys: Set[int] = pinned_columns_set

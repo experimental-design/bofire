@@ -164,9 +164,8 @@ class CategoricalDescriptorInput(CategoricalInput):
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
-        relax_allow_zero: bool = False,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
-        # relax_allow_zero is only meaningful for ContinuousInput; ignored here.
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
         # in case that values is None, we return the optimization bounds

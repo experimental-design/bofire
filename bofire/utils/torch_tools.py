@@ -59,6 +59,7 @@ def get_torch_bounds_from_domain(
     domain: Domain,
     input_preprocessing_specs: InputTransformSpecs,
     relax_allow_zero: bool = False,
+    reference_experiment: Optional[pd.Series] = None,
 ) -> Tensor:
     """Get the bounds for the optimization problem in the format required by BoTorch.
 
@@ -69,6 +70,10 @@ def get_torch_bounds_from_domain(
             (`allow_zero=True` with positive lower bound) report a relaxed
             lower bound of 0, exposing the convex relaxation `[0, ub]` to
             downstream optimisers. Defaults to False.
+        reference_experiment: When provided, returns local bounds centred
+            on this reference (for LSR-BO). Used with the
+            ``local_relative_bounds`` attribute on continuous inputs.
+            Defaults to None (global bounds).
 
     Returns:
         A `(2, d)` tensor of lower and upper bounds.
@@ -76,6 +81,7 @@ def get_torch_bounds_from_domain(
     lower, upper = domain.inputs.get_bounds(
         specs=input_preprocessing_specs,
         relax_allow_zero=relax_allow_zero,
+        reference_experiment=reference_experiment,
     )
     return torch.tensor([lower, upper], **tkwargs)
 
@@ -283,15 +289,16 @@ def get_product_constraints(
 def get_nonlinear_constraints(
     domain: Domain,
     includes: Optional[List[Type[Constraint]]] = None,
-    exclude_nchoosek: bool = False,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
     Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
-        includes: List of constraint types to include. Defaults to NChooseK and ProductInequality.
-        exclude_nchoosek: If True, NChooseK constraints are excluded even if in includes.
+        includes: List of constraint types to include. Defaults to NChooseK and
+            ProductInequality. To exclude a constraint type, simply omit it
+            from this list (e.g. pass ``[ProductInequalityConstraint]`` to
+            exclude NChooseK).
 
     Returns:
         List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
@@ -304,7 +311,7 @@ def get_nonlinear_constraints(
     ), "Only NChooseK and ProductInequality constraints are supported."
 
     callables = []
-    if NChooseKConstraint in includes and not exclude_nchoosek:
+    if NChooseKConstraint in includes:
         callables += get_nchoosek_constraints(domain)
     if ProductInequalityConstraint in includes:
         callables += get_product_constraints(domain)

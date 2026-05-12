@@ -183,7 +183,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 # produce fractional candidates in the gap `(0, lb)`.
                 for feat in domain.inputs.get(ContinuousInput):
                     assert isinstance(feat, ContinuousInput)
-                    if feat.allow_zero and feat.bounds[0] > 0:
+                    if feat.is_semicontinuous:
                         raise ValueError(
                             "LSR-BO is not supported for domains with "
                             "semi-continuous features (`allow_zero=True` "

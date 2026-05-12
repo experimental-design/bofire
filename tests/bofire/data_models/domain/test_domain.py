@@ -549,9 +549,3 @@ def test_domain_to_description_with_constraints():
         "\n## Constraints (candidates MUST satisfy all of these)\n"
         "- 1.0*x1 + 1.0*x2 <= 1.5 — Budget constraint"
     )
-
-
-# Note: pruning-applicability and gate tests live in
-# tests/bofire/strategies/test_pruning_gate.py since the gate functions
-# moved from Domain methods to free functions in
-# bofire.strategies.predictives._nchoosek_pruning.

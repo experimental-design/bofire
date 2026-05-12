@@ -18,12 +18,14 @@ from pydantic import BaseModel, model_validator
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
+    Constraint,
     InterpointConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearConstraint,
     ProductConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -391,11 +393,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        # NChooseK + LSR-BO and semi-continuous + LSR-BO are both
-        # rejected at data-model validation time
-        # (`BotorchOptimizer.validate_domain`), so any combination
-        # reaching this point is supported. See the data model for
-        # the rationale.
         pruning_applicable = is_pruning_applicable(domain)
 
         input_preprocessing_specs = self._input_preprocessing_specs(domain)
@@ -407,11 +404,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         # setup local bounds
         assert experiments is not None
-        local_lower, local_upper = domain.inputs.get_bounds(
-            specs=input_preprocessing_specs,
+        local_bounds = get_torch_bounds_from_domain(
+            domain,
+            input_preprocessing_specs,
             reference_experiment=experiments.iloc[-1],
         )
-        local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
         # do the global opt
         candidates, global_acqf_val = self._optimize_acqf_continuous(
@@ -423,7 +420,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         # print(candidates)
 
         if pruning_applicable:
-            candidates = self._prune_if_applicable(
+            candidates = self._prune(
                 candidates=candidates,
                 acqfs=acqfs,
                 domain=domain,
@@ -468,7 +465,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return candidates
 
-    def _prune_if_applicable(
+    def _prune(
         self,
         candidates: Tensor,
         acqfs: List[AcquisitionFunction],
@@ -496,35 +493,61 @@ class BotorchOptimizer(AcquisitionOptimizer):
         semicontinuous_specs = semicontinuous_specs_from_domain(domain, features2idx)
         nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
 
-        # Pin every column that pruning's QP / refinement must not move:
-        # everything that is not an un-fixed `ContinuousInput`. This
-        # covers categorical / discrete / molecular encodings (which
-        # would otherwise drift during SLSQP / optimize_acqf because
-        # those solvers only know about per-column bounds, not feature
-        # types) and continuous features whose `fixed_value()` is set
-        # (the candidate already carries the fixed value, so pinning
-        # at the row value pins at the fixed value).
-        pinned_columns: Set[int] = set()
-        for feat in domain.inputs:
-            cols = features2idx[feat.key]
-            if isinstance(feat, ContinuousInput) and feat.fixed_value() is None:
-                continue
-            pinned_columns.update(cols)
-
-        # Also pin features participating in constraint types the QP
-        # projection cannot enforce (Interpoint / Nonlinear / Product).
-        # The candidate carries values satisfying these constraints at
-        # row entry (upstream optimizer respected them), so freezing
-        # those features at the per-row value preserves the constraints
-        # by inertia. Without this, pruning's SLSQP projection could
-        # drift those features within their bounds and silently break
-        # the constraint -- the QP only sees Linear{Equality,Inequality}
-        # via `get_linear_constraints`; other types are invisible to it.
+        # Pinning policy: freeze every column at its per-row value
+        # *except* those pruning genuinely needs to move. Pruning only
+        # needs to move continuous, un-fixed features that are either
+        # NChooseK / semi-continuous themselves, or participate in a
+        # linear constraint that touches an NChooseK / semi-continuous
+        # feature (the QP projection may need to redistribute mass
+        # across those features after a zero/active/activate commit).
+        # Everything else stays frozen: categorical / discrete /
+        # molecular encodings (which can't be reasoned about by SLSQP
+        # / optimize_acqf), fixed-value features, features in
+        # Interpoint / Nonlinear / Product constraints (which the QP
+        # cannot enforce), and continuous features that pruning has
+        # no business touching at all.
+        nchoosek_feat_keys: Set[str] = set()
+        for c in nchoosek_constraints:
+            nchoosek_feat_keys.update(c.features)
+        semi_feat_keys: Set[str] = {
+            feat.key
+            for feat in domain.inputs.get(ContinuousInput)
+            if isinstance(feat, ContinuousInput) and feat.is_semicontinuous
+        }
+        pruning_core_feat_keys: Set[str] = nchoosek_feat_keys | semi_feat_keys
+        # Features dragged in via linear constraints that touch a
+        # core feature: the QP may need to move them to redistribute
+        # mass when a core feature is zeroed / activated.
+        linear_drag_feat_keys: Set[str] = set()
+        for c in domain.constraints.get(
+            includes=[LinearEqualityConstraint, LinearInequalityConstraint]
+        ):
+            feat_set = set(c.features)
+            if feat_set & pruning_core_feat_keys:
+                linear_drag_feat_keys.update(feat_set)
+        movable_feat_keys: Set[str] = pruning_core_feat_keys | linear_drag_feat_keys
+        # Features in pruning-unhandled constraint types (Interpoint /
+        # Nonlinear / Product) must be pinned even when they would
+        # otherwise be movable -- those constraints are invisible to
+        # the QP and freezing the feature at the per-row value
+        # preserves them by inertia.
+        unhandled_constraint_feat_keys: Set[str] = set()
         for c in domain.constraints.get(
             includes=[InterpointConstraint, NonlinearConstraint, ProductConstraint]
         ):
-            for feat_key in c.features:
-                pinned_columns.update(features2idx[feat_key])
+            unhandled_constraint_feat_keys.update(c.features)
+
+        pinned_columns: Set[int] = set()
+        for feat in domain.inputs:
+            cols = features2idx[feat.key]
+            is_movable_candidate = (
+                isinstance(feat, ContinuousInput)
+                and feat.fixed_value() is None
+                and feat.key in movable_feat_keys
+            )
+            if is_movable_candidate and feat.key not in unhandled_constraint_feat_keys:
+                continue
+            pinned_columns.update(cols)
 
         return prune_nchoosek(
             X=candidates,
@@ -591,33 +614,27 @@ class BotorchOptimizer(AcquisitionOptimizer):
     def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
         if n_acqfs > 1:
             return OptimizerEnum.OPTIMIZE_ACQF_LIST
-        n_categorical_combinations = (
-            domain.inputs.get_number_of_categorical_combinations()
-        )
         # When pruning is applicable, semi-continuous features
         # (`allow_zero=True` with `lb > 0`) are handled by the post-AF
         # pruning step rather than by enumerating their on/off states
-        # at AF-optimisation time. Divide them out of the combination
-        # count so a pure-continuous semi-continuous domain routes to
+        # at AF-optimisation time. Excluding them from the combination
+        # count routes a pure-continuous semi-continuous domain to
         # `optimize_acqf` rather than `optimize_acqf_mixed`.
-        if is_pruning_applicable(domain):
-            n_semi = sum(
-                1
-                for f in domain.inputs.get(ContinuousInput)
-                if isinstance(f, ContinuousInput)
-                and f.allow_zero
-                and f.bounds[0] > 0
-                and not f.is_fixed()
+        n_categorical_combinations = (
+            domain.inputs.get_number_of_categorical_combinations(
+                include_semicontinuous=not is_pruning_applicable(domain),
             )
-            if n_semi > 0:
-                n_categorical_combinations //= 2**n_semi
+        )
         if n_categorical_combinations == 1:
             return OptimizerEnum.OPTIMIZE_ACQF
-        exclude_nchoosek = is_nchoosek_pruning_applicable(domain)
+        # NChooseK is handled by post-AF pruning when applicable, so
+        # exclude it from the AF-time nonlinear constraint set.
+        nonlinear_types: List[Type[Constraint]] = [ProductInequalityConstraint]
+        if not is_nchoosek_pruning_applicable(domain):
+            nonlinear_types.append(NChooseKConstraint)
         if (
             n_categorical_combinations <= ALTERNATING_OPTIMIZER_THRESHOLD
-            or len(get_nonlinear_constraints(domain, exclude_nchoosek=exclude_nchoosek))
-            > 0
+            or len(get_nonlinear_constraints(domain, includes=nonlinear_types)) > 0
         ):
             return OptimizerEnum.OPTIMIZE_ACQF_MIXED
         return OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
@@ -643,11 +660,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
         equality_constraints = get_linear_constraints(
             domain, constraint=LinearEqualityConstraint
         )
-        exclude_nchoosek = is_nchoosek_pruning_applicable(domain)
+        # NChooseK is handled by post-AF pruning when applicable.
+        nonlinear_types: List[Type[Constraint]] = [ProductInequalityConstraint]
+        if not is_nchoosek_pruning_applicable(domain):
+            nonlinear_types.append(NChooseKConstraint)
         if (
             len(
                 nonlinear_constraints := get_nonlinear_constraints(
-                    domain, exclude_nchoosek=exclude_nchoosek
+                    domain, includes=nonlinear_types
                 )
             )
             == 0

@@ -45,6 +45,16 @@ class ContinuousInput(NumericalInput):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
+    @property
+    def is_semicontinuous(self) -> bool:
+        """True iff the feasible region is the disconnected union
+        ``{0} ∪ [lb, ub]`` — i.e., ``allow_zero=True`` *and* a strictly
+        positive lower bound. Used by NChooseK pruning and the BoTorch
+        optimizer-routing logic to detect features that need the
+        semi-continuous handling path.
+        """
+        return self.allow_zero and self.bounds[0] > 0
+
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
         return f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"

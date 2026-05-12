@@ -3,11 +3,10 @@ import random
 import warnings
 from collections import Counter
 from copy import deepcopy
-from typing import Dict, Iterable, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
-import scipy.optimize
 import torch
 from botorch.exceptions.errors import InfeasibilityError
 from botorch.optim.initializers import sample_q_batches_from_polytope
@@ -118,106 +117,6 @@ class RandomStrategy(Strategy):
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
     @staticmethod
-    def _subset_lp_feasible(
-        domain: Domain,
-        active_keys: Iterable[str],
-    ) -> bool:
-        """Check whether pinning the non-``active_keys`` continuous features
-        to zero is compatible with the domain's linear equality and
-        inequality constraints.
-
-        Solves a small LP with the trivial objective ``min 0`` (only the
-        constraints matter) via ``scipy.optimize.linprog`` and returns
-        ``True`` iff scipy reports ``status == 0`` (a feasible point
-        exists). NChooseK constraints are *not* part of the LP — the
-        active subset has already been chosen by the caller; the LP only
-        checks that the resulting reduced polytope is non-empty.
-
-        TODO: re-evaluate against ``botorch.utils.sampling.find_interior_point``.
-
-        ``find_interior_point`` is the LP that ``HitAndRunPolytopeSampler``
-        invokes internally and would be the more semantically aligned
-        check — it searches for a *strictly interior* point with positive
-        inequality slack and so rejects degenerate polytopes (single
-        points, lower-dim faces) that hit-and-run can't sample, which
-        ``linprog(c=0, ...)`` would otherwise let through. Two reasons we
-        currently roll our own LP instead:
-
-        1. ``find_interior_point`` has an undocumented precondition: it
-           adds a slack variable ``s`` (extending ``c`` and ``A_ub`` to
-           ``d+1`` columns), but does not extend ``A_eq``. Every internal
-           call site (``PolytopeSampler.find_interior_point`` at
-           ``botorch/utils/sampling.py:559``) pre-pads ``A_eq`` with a
-           zero column for ``s``; the free function does not. Passing an
-           unpadded ``A_eq`` (the natural shape) triggers a scipy size
-           mismatch ``ValueError``. Using the helper from outside botorch
-           therefore requires replicating the padding workaround.
-        2. ``linprog(c=0, A_eq=..., A_ub=..., bounds=...)`` handles
-           per-feature bounds, equalities, and inequalities in one call
-           without any slack-variable plumbing, so the code is shorter.
-
-        The right long-term move is probably to swap to
-        ``find_interior_point`` (or reuse the ``PolytopeSampler.find_interior_point``
-        method directly) once we either upstream the padding fix or
-        accept the local workaround. Worth revisiting if a domain
-        produces a feasible-but-degenerate polytope that this LP accepts
-        but ``HitAndRunPolytopeSampler`` then can't sample from.
-        """
-        active_set = set(active_keys)
-        keys = domain.inputs.get_keys(ContinuousInput)
-        n = len(keys)
-        if n == 0:
-            return True
-        key_to_idx = {k: i for i, k in enumerate(keys)}
-
-        bounds: List[Tuple[float, float]] = []
-        for k in keys:
-            if k in active_set:
-                feat = domain.inputs.get_by_key(k)
-                assert isinstance(feat, ContinuousInput)
-                bounds.append((float(feat.lower_bound), float(feat.upper_bound)))
-            else:
-                bounds.append((0.0, 0.0))
-
-        a_eq_rows: List[np.ndarray] = []
-        b_eq_vals: List[float] = []
-        for c in domain.constraints.get(LinearEqualityConstraint):
-            assert isinstance(c, LinearEqualityConstraint)
-            row = np.zeros(n)
-            for f, coef in zip(c.features, c.coefficients):
-                if f in key_to_idx:
-                    row[key_to_idx[f]] = coef
-            a_eq_rows.append(row)
-            b_eq_vals.append(float(c.rhs))
-
-        a_ub_rows: List[np.ndarray] = []
-        b_ub_vals: List[float] = []
-        for c in domain.constraints.get(LinearInequalityConstraint):
-            assert isinstance(c, LinearInequalityConstraint)
-            row = np.zeros(n)
-            for f, coef in zip(c.features, c.coefficients):
-                if f in key_to_idx:
-                    row[key_to_idx[f]] = coef
-            a_ub_rows.append(row)
-            b_ub_vals.append(float(c.rhs))
-
-        a_eq = np.array(a_eq_rows) if a_eq_rows else None
-        b_eq = np.array(b_eq_vals) if b_eq_vals else None
-        a_ub = np.array(a_ub_rows) if a_ub_rows else None
-        b_ub = np.array(b_ub_vals) if b_ub_vals else None
-
-        result = scipy.optimize.linprog(
-            c=np.zeros(n),
-            A_ub=a_ub,
-            b_ub=b_ub,
-            A_eq=a_eq,
-            b_eq=b_eq,
-            bounds=bounds,
-            method="highs",
-        )
-        return bool(result.status == 0)
-
-    @staticmethod
     def _get_zeroable_keys(domain: Domain) -> Tuple[set[str], set[str]]:
         """Collect feature keys that can take the value zero.
 
@@ -300,12 +199,13 @@ class RandomStrategy(Strategy):
                         ),
                     )
                 except InfeasibilityError:
-                    # Safety net: the principled LP rejection in
-                    # `sample_valid_nchoosek_features` should already have
-                    # filtered this combination, but numerical edge cases
-                    # (linprog vs. botorch's interior-point solver
-                    # disagreeing) could still slip through. Drop the
-                    # combination and continue.
+                    # The chosen subset, after pinning all other zeroable
+                    # features to zero, makes the reduced polytope
+                    # infeasible against the domain's linear constraints
+                    # (e.g. a mixture-sum equality that no subset of the
+                    # active features can satisfy). The polytope sampler's
+                    # interior-point solver is the authoritative
+                    # feasibility check; drop the combination and continue.
                     continue
             if not samples:
                 raise ValueError(
@@ -380,16 +280,9 @@ class RandomStrategy(Strategy):
             weights = [math.comb(len(con.features), k) for k in ks]
             groups.append((con.features, ks, weights))
             con_feature_sets.append(set(con.features))
-        zeroable_keys, allow_zero_keys = RandomStrategy._get_zeroable_keys(domain)
-        zeroable_keys = zeroable_keys | allow_zero_keys
+        _, allow_zero_keys = RandomStrategy._get_zeroable_keys(domain)
         for key in allow_zero_keys:
             groups.append(([key], [0, 1], [1, 1]))
-
-        all_continuous_keys = set(domain.inputs.get_keys(ContinuousInput))
-        has_linear_constraints = (
-            len(domain.constraints.get(LinearEqualityConstraint)) > 0
-            or len(domain.constraints.get(LinearInequalityConstraint)) > 0
-        )
 
         results: List[Tuple[str, ...]] = []
         for _ in range(n):
@@ -404,15 +297,6 @@ class RandomStrategy(Strategy):
                     for con, fset in zip(nchoosek_cons, con_feature_sets)
                 ):
                     continue
-                # Principled rejection: the chosen subset, after pinning all
-                # other zeroable features to zero, must be compatible with
-                # the linear equality and inequality constraints. We solve a
-                # small LP with a zero objective to test feasibility.
-                if has_linear_constraints:
-                    fixed_to_zero = zeroable_keys - active
-                    variable_keys = all_continuous_keys - fixed_to_zero
-                    if not RandomStrategy._subset_lp_feasible(domain, variable_keys):
-                        continue
                 results.append(tuple(sorted(active)))
                 break
             else:

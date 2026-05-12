@@ -171,10 +171,9 @@ class DiscreteInput(NumericalInput):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
         reference_value: Optional[float] = None,
-        relax_allow_zero: bool = False,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         assert transform_type is None
-        # relax_allow_zero is only meaningful for ContinuousInput; ignored here.
         if values is None:
             return [self.lower_bound], [self.upper_bound]
         lower = min(self.lower_bound, values.min())

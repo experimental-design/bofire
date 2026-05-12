@@ -104,9 +104,8 @@ class CategoricalMolecularInput(CategoricalInput):
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
-        relax_allow_zero: bool = False,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
-        # relax_allow_zero is only meaningful for ContinuousInput; ignored here.
         if isinstance(transform_type, CategoricalEncodingEnum):
             # we are just using the standard categorical transformations
             return super().get_bounds(

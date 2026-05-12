@@ -121,8 +121,11 @@ class FormulationWrapper(Benchmark):
     multiple features per original feature are created and a linear inequality constraint
     is added to ensure that their sum does not exceed 1/n_original_features.
 
-    Via the `max_count` parameter an additional NChooseK constraint can be added to
-    the formulation, that limits the number of non-zero non-filler features to `max_count`.
+    Via the `min_count` / `max_count` parameters an additional NChooseK
+    constraint can be added to the formulation. The constraint is applied
+    over *all* non-filler features (the original features and any
+    multi-feature expansions of them), bounding the count of non-zero
+    features into ``[min_count, max_count]``.
     """
 
     def __init__(

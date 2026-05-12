@@ -19,6 +19,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     NonlinearConstraint,
     ProductConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -36,16 +37,18 @@ from bofire.strategies.predictives._nchoosek_pruning import (
     PruningState,
     _activate_action_blocked_by_max_count,
     _active_counts,
-    _build_activate_variant,
-    _build_active_variant,
-    _build_zero_variant,
+    _build_variant,
     _classify_features_for_row,
     _features_eligible_for_activate,
     _features_eligible_for_zero,
     _is_nchoosek_fulfilled,
+    _max_count_violated_constraints,
     _min_count_violated_constraints,
-    _violated_constraints,
     _zero_action_blocked_by_min_count,
+    has_nchoosek_linear_overlap,
+    has_semicontinuous_features,
+    is_nchoosek_pruning_applicable,
+    is_pruning_applicable,
     prune_nchoosek,
 )
 from bofire.utils.torch_tools import (
@@ -264,13 +267,13 @@ class TestPureHelpers:
         counts = _active_counts(x, [c1, c2], f2i, tol=1e-6)
         assert counts == {0: 2, 1: 2}
 
-    # ----- _violated_constraints -----
+    # ----- _max_count_violated_constraints -----
 
     def test_violated_constraints_only_max_violations(self):
         c1 = self._basic_constraint(features=["x1", "x2"], max_count=1, min_count=0)
         c2 = self._basic_constraint(features=["x3", "x4"], max_count=2, min_count=2)
         counts = {0: 2, 1: 1}  # c1 violates max, c2 violates min (but excluded)
-        violated = _violated_constraints(counts, [c1, c2])
+        violated = _max_count_violated_constraints(counts, [c1, c2])
         assert violated == {0}
 
     # ----- _zero_action_blocked_by_min_count -----
@@ -361,9 +364,10 @@ class TestVariantConstruction:
 
     def test_zero_variant_no_constraints_zeroes_in_place(self):
         x = _row_to_tensor([0.5, 0.5, 0.5, 0.5])
-        variant, valid = _build_zero_variant(
+        variant, valid = _build_variant(
             x,
             j_idx=2,
+            kind=ActionKind.ZERO,
             bounds=self._bounds(),
             inequality_constraints=[],
             equality_constraints=[],
@@ -389,9 +393,10 @@ class TestVariantConstruction:
         )
         inp = _inputs_from_domain(domain)
         x = _row_to_tensor([0.4, 0.3, 0.2, 0.1])
-        variant, valid = _build_zero_variant(
+        variant, valid = _build_variant(
             x,
             j_idx=2,
+            kind=ActionKind.ZERO,
             bounds=inp["bounds"],
             inequality_constraints=inp["inequality_constraints"],
             equality_constraints=inp["equality_constraints"],
@@ -418,9 +423,10 @@ class TestVariantConstruction:
         )
         inp = _inputs_from_domain(domain)
         x = _row_to_tensor([0.4, 0.4, 0.5, 0.5])  # already infeasible: x1+x2=0.8 > 0.6
-        variant, valid = _build_zero_variant(
+        variant, valid = _build_variant(
             x,
             j_idx=0,
+            kind=ActionKind.ZERO,
             bounds=inp["bounds"],
             inequality_constraints=inp["inequality_constraints"],
             equality_constraints=inp["equality_constraints"],
@@ -452,9 +458,10 @@ class TestVariantConstruction:
         )
         inp = _inputs_from_domain(domain)
         x = _row_to_tensor([0.6, 0.4])
-        variant, valid = _build_zero_variant(
+        variant, valid = _build_variant(
             x,
             j_idx=0,
+            kind=ActionKind.ZERO,
             bounds=inp["bounds"],
             inequality_constraints=inp["inequality_constraints"],
             equality_constraints=inp["equality_constraints"],
@@ -481,16 +488,16 @@ class TestVariantConstruction:
         inp = _inputs_from_domain(domain)
         # x3 starts fractional at 0.05; snap to >= 0.2
         x = _row_to_tensor([0.5, 0.4, 0.05, 0.05])
-        variant, valid = _build_active_variant(
+        variant, valid = _build_variant(
             x,
             j_idx=2,
-            lb_j=0.2,
-            ub_j=1.0,
+            kind=ActionKind.ACTIVE,
             bounds=inp["bounds"],
             inequality_constraints=inp["inequality_constraints"],
             equality_constraints=inp["equality_constraints"],
             acqf=self._acqf(),
             per_step_local_reopt=False,
+            semicontinuous_specs=inp["semicontinuous_specs"],
         )
         assert valid is True
         assert variant[2].item() >= 0.2 - 1e-6
@@ -500,16 +507,16 @@ class TestVariantConstruction:
         # No linear constraints — projection short-circuits, we just clamp
         # the fractional column to lb.
         x = _row_to_tensor([0.5, 0.05, 0.5, 0.5])
-        variant, valid = _build_active_variant(
+        variant, valid = _build_variant(
             x,
             j_idx=1,
-            lb_j=0.2,
-            ub_j=1.0,
+            kind=ActionKind.ACTIVE,
             bounds=torch.tensor([[0.0] * 4, [1.0] * 4], **tkwargs),
             inequality_constraints=[],
             equality_constraints=[],
             acqf=self._acqf(),
             per_step_local_reopt=False,
+            semicontinuous_specs={1: (0.2, 1.0)},
         )
         assert valid is True
         assert variant[1].item() == pytest.approx(0.2)
@@ -1268,9 +1275,10 @@ class TestPartialDriftFix:
         # mixture-feasible (sums to 1).
         x_i = torch.tensor([0.2, 0.4, 0.4, 0.0], **tkwargs)
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
-        variant, valid = _build_zero_variant(
+        variant, valid = _build_variant(
             x_i,
             j_idx=0,
+            kind=ActionKind.ZERO,
             bounds=bounds,
             inequality_constraints=ineq,
             equality_constraints=eq,
@@ -1300,11 +1308,10 @@ class TestPartialDriftFix:
         # commit it active. x_0 free, x_3 zero.
         x_i = torch.tensor([0.5, 0.4, 0.1, 0.0], **tkwargs)
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
-        variant, valid = _build_active_variant(
+        variant, valid = _build_variant(
             x_i,
             j_idx=2,
-            lb_j=0.2,
-            ub_j=1.0,
+            kind=ActionKind.ACTIVE,
             bounds=bounds,
             inequality_constraints=ineq,
             equality_constraints=eq,
@@ -1335,9 +1342,10 @@ class TestPartialDriftFix:
             **tkwargs,
         )
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
-        variant, valid = _build_zero_variant(
+        variant, valid = _build_variant(
             x_i,
             j_idx=2,
+            kind=ActionKind.ZERO,
             bounds=bounds,
             inequality_constraints=ineq,
             equality_constraints=eq,
@@ -1549,9 +1557,10 @@ class TestActivateZero:
         # Activate x_3.
         x_i = torch.tensor([0.0, 0.5, 0.5, 0.0], **tkwargs)
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
-        variant, valid = _build_activate_variant(
+        variant, valid = _build_variant(
             x_i,
             j_idx=2,
+            kind=ActionKind.ACTIVATE,
             bounds=bounds,
             inequality_constraints=[],
             equality_constraints=eq,
@@ -1585,9 +1594,10 @@ class TestActivateZero:
         # x_1, x_2 active (in band); x_3, x_4 zero.
         x_i = torch.tensor([0.0, 0.4, 0.6, 0.0], **tkwargs)
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
-        variant, valid = _build_activate_variant(
+        variant, valid = _build_variant(
             x_i,
             j_idx=2,
+            kind=ActionKind.ACTIVATE,
             bounds=bounds,
             inequality_constraints=[],
             equality_constraints=eq,
@@ -2201,7 +2211,7 @@ class TestPinnedColumns:
         """Integration test: a domain with a one-hot-encoded
         ``CategoricalInput`` plus an NChooseK over four continuous
         features. Build ``pinned_columns`` the way
-        ``BotorchOptimizer._prune_if_applicable`` would (every column
+        ``BotorchOptimizer._prune`` would (every column
         outside un-fixed ``ContinuousInput``s) and run
         ``prune_nchoosek`` end-to-end with ``final_local_reopt=True``.
         Assert the categorical's three one-hot columns survive the
@@ -2244,7 +2254,7 @@ class TestPinnedColumns:
         )
         nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
 
-        # Mirror BotorchOptimizer._prune_if_applicable.
+        # Mirror BotorchOptimizer._prune.
         pinned_columns: set = set()
         for feat in domain.inputs:
             cols = features2idx[feat.key]
@@ -2302,7 +2312,7 @@ class TestPinnedColumns:
         be free to move it within its bounds and silently break the
         interpoint constraint.
 
-        Mirrors ``BotorchOptimizer._prune_if_applicable``'s pinning
+        Mirrors ``BotorchOptimizer._prune``'s pinning
         construction, including the new loop that covers
         ``Interpoint`` / ``Nonlinear`` / ``Product`` constraint
         features.
@@ -2342,7 +2352,7 @@ class TestPinnedColumns:
         )
         nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
 
-        # Mirror BotorchOptimizer._prune_if_applicable's full pinning
+        # Mirror BotorchOptimizer._prune's full pinning
         # logic, including the new Interpoint/Nonlinear/Product loop.
         pinned_columns: set = set()
         for feat in domain.inputs:
@@ -2384,3 +2394,349 @@ class TestPinnedColumns:
         nz = (out[0, :4].abs() > 1e-6).sum().item()
         assert nz <= 2
         assert out[0, :4].sum().item() == pytest.approx(1.0, abs=1e-3)
+
+
+class TestIsNchoosekPruningApplicable:
+    def test_no_nchoosek(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is False
+
+    def test_nchoosek_only(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+
+    def test_nchoosek_with_overlapping_linear_inequality(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x1", "x2"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+        assert has_nchoosek_linear_overlap(domain) is True
+
+    def test_nchoosek_with_overlapping_linear_equality(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                LinearEqualityConstraint(
+                    features=["x1", "x2"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+        assert has_nchoosek_linear_overlap(domain) is True
+
+    def test_nchoosek_with_partial_linear_overlap(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+        assert has_nchoosek_linear_overlap(domain) is True
+
+    def test_nchoosek_with_truly_disjoint_linear(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+                ContinuousInput(key="x4", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+        assert has_nchoosek_linear_overlap(domain) is False
+
+    def test_nchoosek_blocked_by_product_constraint(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+                ContinuousInput(key="x3", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+                ProductInequalityConstraint(
+                    features=["x1", "x2"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is False
+
+    def test_multiple_nchoosek_one_overlapping_linear(self):
+        domain = Domain.from_lists(
+            inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(1, 5)],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"],
+                    coefficients=[1.0, 1.0],
+                    rhs=1.0,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+
+    def test_multiple_nchoosek_blocked_by_product(self):
+        domain = Domain.from_lists(
+            inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(1, 5)],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                ProductInequalityConstraint(
+                    features=["x3", "x4"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is False
+
+    def test_multiple_nchoosek_no_blockers(self):
+        domain = Domain.from_lists(
+            inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(1, 5)],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+
+
+class TestHasSemicontinuousFeatures:
+    def test_no_continuous_inputs_with_allow_zero(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x2", bounds=(0.0, 1.0), allow_zero=False),
+            ],
+        )
+        assert has_semicontinuous_features(domain) is False
+
+    def test_allow_zero_with_positive_lb(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x2", bounds=(0.2, 1.0), allow_zero=True),
+            ],
+        )
+        assert has_semicontinuous_features(domain) is True
+
+
+class TestIsPruningApplicable:
+    def test_neither_trigger(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+            ],
+        )
+        assert is_pruning_applicable(domain) is False
+
+    def test_nchoosek_trigger(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0, 1)),
+                ContinuousInput(key="x2", bounds=(0, 1)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        assert is_pruning_applicable(domain) is True
+
+    def test_semicontinuous_trigger(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.2, 1.0), allow_zero=True),
+                ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+            ],
+        )
+        assert is_pruning_applicable(domain) is True
+
+    def test_both_triggers(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.2, 1.0), allow_zero=True),
+                ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x3", bounds=(0.0, 1.0)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3"],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                ),
+            ],
+        )
+        assert is_pruning_applicable(domain) is True
+
+    def test_semicontinuous_blocked_by_product(self):
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.2, 1.0), allow_zero=True),
+                ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+            ],
+            constraints=[
+                ProductInequalityConstraint(
+                    features=["x1", "x2"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
+                ),
+            ],
+        )
+        # x1 (semicontinuous) is in a product constraint → not applicable
+        assert is_pruning_applicable(domain) is False
+
+    def test_nchoosek_blocked_overrides_semicontinuous(self):
+        # Even though semi-continuous is present, the overall pruning is
+        # blocked when NChooseK is itself blocked (defensive: caller should
+        # not encounter this in practice).
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.2, 1.0), allow_zero=True),
+                ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x3", bounds=(0.0, 1.0)),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x2", "x3"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                ProductInequalityConstraint(
+                    features=["x2", "x3"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
+                ),
+            ],
+        )
+        # NChooseK pruning blocked. But semi-continuous x1 is not in any
+        # blocking constraint, so the semi-continuous path still allows
+        # pruning.
+        assert is_nchoosek_pruning_applicable(domain) is False
+        assert is_pruning_applicable(domain) is True

@@ -137,7 +137,7 @@ class Input(Feature):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
         reference_value: Optional[Union[float, str]] = None,
-        relax_allow_zero: bool = False,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         """Returns the bounds of an input feature depending on the requested transform type.
 
@@ -148,10 +148,11 @@ class Input(Feature):
             reference_value (Optional[float], optional): If a reference value is provided, then the local bounds based
                 on a local search region are provided. Currently only supported for continuous inputs. For more
                 details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.
-            relax_allow_zero (bool, optional): If True, semi-continuous continuous inputs (`allow_zero=True`
-                with a positive lower bound) report a relaxed lower bound of 0, exposing the convex
-                relaxation `[0, ub]` to downstream optimisers. Other input types ignore this flag.
-                Defaults to False.
+            **kwargs: Subclass-specific options. ``ContinuousInput`` accepts
+                ``relax_allow_zero: bool`` (when True, semi-continuous features
+                report a relaxed lower bound of 0, exposing the convex relaxation
+                ``[0, ub]`` to downstream optimisers); other input types currently
+                accept no extra options and silently ignore unknown kwargs.
 
         Returns:
             Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
