@@ -298,6 +298,9 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
 
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """Nonlinear inequality constraint of the form 'expression <= 0'.
@@ -308,3 +311,6 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
+
+    def to_description(self) -> str:
+        raise NotImplementedError

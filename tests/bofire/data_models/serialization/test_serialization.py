@@ -127,3 +127,9 @@ def test_local_search_config_should_be_serializable(local_search_config_spec: Sp
     spec = local_search_config_spec.typed_spec()
     obj = local_search_config_spec.cls(**spec)
     assert obj.model_dump() == spec
+
+
+def test_llm_should_be_serializable(llm_spec: Spec):
+    spec = llm_spec.typed_spec()
+    obj = llm_spec.cls(**spec)
+    assert obj.model_dump() == spec

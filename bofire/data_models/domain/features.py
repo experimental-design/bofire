@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, create_model, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
@@ -37,13 +37,13 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     Feature,
     Input,
     Output,
-    TaskInput,
 )
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
@@ -54,6 +54,7 @@ from bofire.data_models.objectives.api import (
     Objective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 
 
 F = TypeVar("F", bound=AnyFeature)
@@ -99,9 +100,12 @@ class _BaseFeatures(BaseModel, Generic[F]):
         new_feature_seq = list(itertools.chain(self.features, other_feature_seq))
 
         def is_feats_of_type(feats, ftype_collection, ftype_element):
+            # ``ftype_element`` may be a discriminated Annotated[Union[...], Field].
+            # Reduce to a tuple of concrete classes for ``isinstance``.
+            element_classes = tuple(to_list(ftype_element))
             return isinstance(feats, ftype_collection) or (
                 not isinstance(feats, Features)
-                and (len(feats) > 0 and isinstance(feats[0], ftype_element))
+                and (len(feats) > 0 and isinstance(feats[0], element_classes))
             )
 
         def is_infeats(feats):
@@ -346,12 +350,14 @@ class Inputs(_BaseFeatures[AnyInput]):
     def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
         filtered = filter_by_class(
             features,
-            includes=TaskInput,
+            includes=CategoricalTaskInput,
             excludes=None,
             exact=False,
         )
         if len(filtered) > 1:
-            raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
+            raise ValueError(
+                f"Only one `CategoricalTaskInput` is allowed, got {len(filtered)}."
+            )
         return features
 
     def get_fixed(self) -> Inputs:
@@ -910,6 +916,21 @@ class Inputs(_BaseFeatures[AnyInput]):
             .fillna(True)
             .all(axis=1)
         )
+
+    def to_pydantic_model(self, name: str = "CandidatePoint"):
+        """Build a dynamic Pydantic model with one field per input feature.
+
+        Each feature's ``to_pydantic_field()`` determines the field type and
+        constraints (e.g., ge/le for continuous, Literal for categorical).
+
+        Returns:
+            A Pydantic BaseModel subclass with typed fields matching the inputs.
+        """
+        fields = {}
+        for feature in self:
+            field_type, field_info = feature.to_pydantic_field()
+            fields[feature.key] = (field_type, field_info)
+        return create_model(name, **fields)
 
 
 class Outputs(_BaseFeatures[AnyOutput]):

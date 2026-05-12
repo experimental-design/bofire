@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, get_args
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
@@ -99,7 +100,7 @@ class BotorchStrategy(PredictiveStrategy):
                         training_data=experiments,
                         folds=self.folds,
                     )[0]
-                    if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
+                    if isinstance(surrogate_data, tuple(to_list(AnyTrainableSurrogate)))
                     else surrogate_data
                 )
                 for surrogate_data in self.surrogate_specs.surrogates

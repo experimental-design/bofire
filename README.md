@@ -22,7 +22,8 @@ Why BoFire? BoFire ...
 - supports built-in chemical encodings and kernels to boost surrogate performance for optimization problems including molecules,
 - can provide flexible DoEs that fulfill constraints,
 - provides sampling methods for constrained mixed variable spaces,
-- provides seamless integration into RESTful APIs, by builtin serialization capabilities for problems, optimization strategies and surrogates.
+- provides seamless integration into RESTful APIs, by builtin serialization capabilities for problems, optimization strategies and surrogates,
+- includes an agentic `LLMStrategy` that proposes candidates by prompting a large language model with the problem description and prior experiments — useful for cold starts and domains where written context informs proposals.
 
 ## Getting started
 

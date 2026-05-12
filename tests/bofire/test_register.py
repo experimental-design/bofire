@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
+from bofire.data_models.llm.provider import LLMProvider
 from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -30,7 +31,7 @@ from bofire.surrogates.surrogate import Surrogate
 
 
 class _CustomStrategyDataModel(StrategyDataModel):
-    type: str = "CustomStrategy"
+    type: Literal["CustomStrategy"] = "CustomStrategy"
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
@@ -57,7 +58,7 @@ _OUTPUTS = Outputs(features=[ContinuousOutput(key="y")])
 
 
 class _CustomSurrogateDataModel(SurrogateDataModel):
-    type: str = "CustomSurrogate"
+    type: Literal["CustomSurrogate"] = "CustomSurrogate"
     inputs: Inputs = _INPUTS
     outputs: Outputs = _OUTPUTS
 
@@ -343,7 +344,6 @@ class TestRegisterBotorchSurrogate:
     def test_register_adds_to_botorch_surrogates(self):
         """Registering a BotorchSurrogate subclass should also update
         AnyBotorchSurrogate so that BotorchSurrogates accepts it."""
-        import typing
 
         import bofire.surrogates.api as surrogates_api
         from bofire.data_models.surrogates.botorch_surrogates import (
@@ -373,8 +373,9 @@ class TestRegisterBotorchSurrogate:
 
         # the module-level AnyBotorchSurrogate union includes our type
         from bofire.data_models.surrogates import botorch_surrogates
+        from bofire.data_models.unions import to_list
 
-        args = typing.get_args(botorch_surrogates.AnyBotorchSurrogate)
+        args = to_list(botorch_surrogates.AnyBotorchSurrogate)
         assert _CustomBotorchSurrogateDataModel in args
 
         self._cleanup()
@@ -450,11 +451,11 @@ class TestRegisterBotorchSurrogate:
 
 
 class _CustomKernelDataModel(KernelDataModel):
-    type: str = "CustomKernel"
+    type: Literal["CustomKernel"] = "CustomKernel"
 
 
 class _CustomPriorDataModel(PriorDataModel):
-    type: str = "CustomPrior"
+    type: Literal["CustomPrior"] = "CustomPrior"
 
 
 # ---------------------------------------------------------------------------
@@ -741,6 +742,88 @@ class TestPriorPydanticIntegration:
 
         k = RBFKernel(lengthscale_prior=_MapperPrior())
         assert isinstance(k.lengthscale_prior, _MapperPrior)
+
+
+# ---------------------------------------------------------------------------
+# LLM provider registration tests
+# ---------------------------------------------------------------------------
+
+
+class _IntegrationLLMProvider(LLMProvider):
+    type: Literal["_IntegrationLLMProvider"] = "_IntegrationLLMProvider"
+    model: str = "fake-model"
+    api_key_env_var: str = "FAKE_KEY"
+
+
+class TestLLMProviderPydanticIntegration:
+    """After register_llm_provider, custom LLM provider types should pass
+    Pydantic validation on LLMStrategy.llm and round-trip through
+    AnyLLMProvider."""
+
+    def test_custom_provider_in_llm_strategy(self):
+        from pydantic import TypeAdapter
+
+        import bofire.data_models.llm.api as llm_api
+        from bofire.data_models.llm.api import register_llm_provider
+        from bofire.data_models.objectives.api import MaximizeObjective
+        from bofire.data_models.strategies.api import (
+            LLMStrategy as LLMStrategyDataModel,
+        )
+
+        register_llm_provider(_IntegrationLLMProvider)
+
+        obj = _IntegrationLLMProvider()
+        deserialized = TypeAdapter(llm_api.AnyLLMProvider).validate_python(
+            obj.model_dump()
+        )
+        assert deserialized == obj
+
+        domain = Domain(
+            inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(
+                        key="y",
+                        objective=MaximizeObjective(w=1.0),
+                    )
+                ]
+            ),
+        )
+        data_model = LLMStrategyDataModel(domain=domain, llm=obj)
+        assert isinstance(data_model.llm, _IntegrationLLMProvider)
+
+    def test_mapper_register_also_updates_pydantic(self):
+        """The mapper-level register() should trigger data model registration."""
+        import bofire.llm.mapper as llm_mapper
+
+        class _MapperLLMProvider(LLMProvider):
+            type: Literal["_MapperLLMProvider"] = "_MapperLLMProvider"
+            model: str = "fake"
+            api_key_env_var: str = "FAKE"
+
+        sentinel = MagicMock(name="pydantic_ai_model")
+        llm_mapper.register(_MapperLLMProvider, lambda dm: sentinel)
+
+        assert llm_mapper.LLM_MAP[_MapperLLMProvider] is not None
+
+        from bofire.data_models.objectives.api import MaximizeObjective
+        from bofire.data_models.strategies.api import (
+            LLMStrategy as LLMStrategyDataModel,
+        )
+
+        domain = Domain(
+            inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(
+                        key="y",
+                        objective=MaximizeObjective(w=1.0),
+                    )
+                ]
+            ),
+        )
+        data_model = LLMStrategyDataModel(domain=domain, llm=_MapperLLMProvider())
+        assert isinstance(data_model.llm, _MapperLLMProvider)
 
 
 # ---------------------------------------------------------------------------

@@ -2,7 +2,8 @@ from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator
+from pydantic import Field, field_validator
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
@@ -23,6 +24,23 @@ class DiscreteInput(NumericalInput):
 
     values: DiscreteVals
     rtol: float = 1e-7
+
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(Literal[...], Field(description=...))`` with allowed values.
+
+        Example::
+
+            >>> feat = DiscreteInput(key="n_steps", values=[1.0, 2.0, 5.0])
+            >>> field_type, _ = feat.to_pydantic_field()
+            >>> # field_type = Literal[1.0, 2.0, 5.0]
+        """
+        desc_parts = [f"Discrete, allowed values: {self.values}"]
+        if self.context:
+            desc_parts.append(self.context)
+        return (
+            Literal[tuple(self.values)],
+            Field(description=" — ".join(desc_parts)),
+        )
 
     @field_validator("values")
     @classmethod

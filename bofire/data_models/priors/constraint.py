@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from bofire.data_models.base import BaseModel
 
@@ -16,7 +16,7 @@ class Positive(PriorConstraint):
         type (Literal): A string literal to identify the class type.
     """
 
-    type: Any = "Positive"
+    type: Literal["Positive"] = "Positive"
 
 
 class GreaterThan(PriorConstraint):
@@ -26,7 +26,7 @@ class GreaterThan(PriorConstraint):
         type (Literal): A string literal to identify the class type.
     """
 
-    type: Any = "GreaterThan"
+    type: Literal["GreaterThan"] = "GreaterThan"
     lower_bound: float
 
 
@@ -37,5 +37,5 @@ class LessThan(PriorConstraint):
         type (Literal): A string literal to identify the class type.
     """
 
-    type: Any = "LessThan"
+    type: Literal["LessThan"] = "LessThan"
     upper_bound: float

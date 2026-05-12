@@ -62,10 +62,11 @@ quartodoc:
             - BotorchStrategy
             - EntingStrategy
             - MoboStrategy
-            - MultiFidelityStrategy
+            - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
             - AdditiveSoboStrategy
             - CustomSoboStrategy
+            - LLMStrategy
     - title: Data Models - Kernels
       desc: Kernel configuration data models
       contents:
@@ -115,10 +116,11 @@ quartodoc:
             - MoboStrategy
             - BotorchStrategy
             - EntingStrategy
-            - MultiFidelityStrategy
+            - MultiFidelityVarianceBasedStrategy
             - ActiveLearningStrategy
             - ShortestPathStrategy
             - StepwiseStrategy
+            - LLMStrategy
     - title: Surrogates
       desc: Surrogate model implementations
       contents:
@@ -219,6 +221,7 @@ website:
             - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
             - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
             - docs/tutorials/advanced_examples/octane_number.qmd
+            - docs/tutorials/advanced_examples/llm_molecular.qmd
         - section: "Benchmarks"
           contents:
             - docs/tutorials/benchmarks/index.qmd

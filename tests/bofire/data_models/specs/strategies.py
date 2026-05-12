@@ -4,6 +4,7 @@ from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
     qLogPF,
+    qMFHVKG,
     qNegIntPosVar,
     qPI,
 )
@@ -19,11 +20,13 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
+    ContinuousTaskInput,
     DiscreteInput,
-    TaskInput,
 )
+from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -35,7 +38,11 @@ from bofire.data_models.strategies.api import (
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
 )
-from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
+from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
+    LinearDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+)
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -916,7 +923,7 @@ specs.add_invalid(
         "domain": Domain(
             inputs=Inputs(
                 features=[
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task",
                         categories=["task_1", "task_2"],
                         allowed=[True, True],
@@ -931,7 +938,7 @@ specs.add_invalid(
                 MultiTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
-                            TaskInput(
+                            CategoricalTaskInput(
                                 key="task",
                                 categories=["task_1", "task_2"],
                                 allowed=[True, True],
@@ -949,13 +956,13 @@ specs.add_invalid(
 )
 
 specs.add_valid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
                     ),
                 ]
@@ -969,7 +976,7 @@ specs.add_valid(
 )
 
 specs.add_invalid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
@@ -984,13 +991,13 @@ specs.add_invalid(
 )
 
 specs.add_invalid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 0]
                     ),
                 ]
@@ -1003,4 +1010,190 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Only one task can be the target fidelity",
+)
+
+# LLMStrategy specs — uses a single-objective domain
+_llm_domain = Domain(
+    inputs=Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            CategoricalInput(key="x3", categories=["a", "b", "c"]),
+        ],
+    ),
+    outputs=Outputs(
+        features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+    ),
+)
+
+specs.add_valid(
+    strategies.LLMStrategy,
+    lambda: {
+        "domain": _llm_domain.model_dump(),
+        "llm": AnthropicLLMProvider(
+            model="claude-sonnet-4-20250514",
+            api_key_env_var="ANTHROPIC_API_KEY",
+        ).model_dump(),
+        "seed": 42,
+        "model_settings": None,
+        "output_retries": 3,
+        "n_recent_experiments": None,
+        "n_top_experiments": None,
+        "system_prompt": None,
+    },
+)
+
+specs.add_valid(
+    strategies.LLMStrategy,
+    lambda: {
+        "domain": _llm_domain.model_dump(),
+        "llm": AnthropicLLMProvider(
+            model="claude-sonnet-4-20250514",
+            api_key_env_var="ANTHROPIC_API_KEY",
+        ).model_dump(),
+        "seed": 42,
+        "model_settings": {
+            "temperature": 0.7,
+            "max_tokens": 4096,
+            "thinking": "medium",
+        },
+        "output_retries": 5,
+        "n_recent_experiments": 10,
+        "n_top_experiments": 5,
+        "system_prompt": "You are a helpful assistant.",
+    },
+)
+
+specs.add_valid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    CategoricalTaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=ValueError,
+    message="only supports continuous fidelities",
+)
+
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=ValueError,
+    message="Must provide at least one fidelity",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_model_spec": LinearDeterministicSurrogate(
+            inputs=Inputs(
+                features=[ContinuousInput(key="a", bounds=(0, 1))],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="cost")]),
+            coefficients={"a": 1.0},
+            intercept=1.0,
+        ),
+    },
+    error=ValueError,
+    message="inputs to the cost model are not fidelities",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task_other", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_model_spec": LinearDeterministicSurrogate(
+            inputs=Inputs(
+                features=[ContinuousTaskInput(key="task", bounds=(0, 1))],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="cost")]),
+            coefficients={"task": 1.0},
+            intercept=1.0,
+        ),
+    },
+    error=ValueError,
+    message="All fidelities should be included in the cost model",
 )

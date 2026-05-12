@@ -21,8 +21,12 @@ The following predictive strategies are available:
 - `SoboStrategy`: Bayesian optimization strategy that optimizes a single-objective acquisition function. For multi-objective domains, different scalarizations are possible as implemented in the `AdditiveSoboStrategy`, `MultiplicativeSoboStrategy`, `AdditiveMultiplicativeSoboStrategy` and `CustomSoboStrategy`.
 - `MoboStrategy`: Bayesian optimization strategy that optimizes a hypervolume based acquisition function for pareto-based multi-objective optimization.
 - `QparegoStrategy`: Parallel ParEGO strategy for multiobjective optimization.
-- `MultifidelityStrategy:` Single objective multi-fidelity BO as described [here](https://www.sciencedirect.com/science/article/pii/S0098135423000637)
+- `MultiFidelityVarianceBasedStrategy:` Single objective multi-fidelity BO as described [here](https://www.sciencedirect.com/science/article/pii/S0098135423000637)
 - `EntingStrategy`: Strategy based on the `Entmoot` [package](https://github.com/cog-imperial/entmoot) that uses tree-based surrogate models to perform both single-objective and multiobjective optimization.
+
+## LLM-based Strategies
+
+- `LLMStrategy`: Uses a large language model to propose candidates from the problem description, feature bounds, constraints, and prior experiments. Supports multiple providers via [pydantic-ai](https://ai.pydantic.dev/). Useful for cold-start designs and domains where written context (e.g. molecular optimization) informs proposals. Requires the optional `[llm]` extra and provider credentials. There is no calibrated uncertainty model — treat candidates as informed heuristics, not optima. See the [LLM molecular optimization tutorial](../tutorials/advanced_examples/llm_molecular.qmd) for an end-to-end example.
 
 ## Combining Strategies
 
