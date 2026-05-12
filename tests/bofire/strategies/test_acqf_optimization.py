@@ -3,7 +3,6 @@ from typing import cast
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.utils.testing import MockAcquisitionFunction
 
 from bofire.benchmarks.api import Hartmann
@@ -83,9 +82,14 @@ def test_determine_optimizer():
         ],
         outputs=[ContinuousOutput(key="y1")],
     )
+    # NChooseK on continuous features only -> pruning applicable -> NChooseK
+    # is excluded from AF-time nonlinear constraints (handled by post-AF
+    # pruning instead). With 12 categorical combinations > ALTERNATING
+    # threshold and no remaining nonlinear constraints, routing falls
+    # through to ALTERNATING.
     assert (
         optimizer._determine_optimizer(domain, n_acqfs=1)
-        == OptimizerEnum.OPTIMIZE_ACQF_MIXED
+        == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
     )
 
 
@@ -123,7 +127,10 @@ def test_get_arguments_for_optimizer():
     assert optimizer_args.fixed_features == {}
     assert optimizer_args.options == {"batch_limit": 20, "maxiter": 2000}
 
-    # test with nchooseks
+    # test with nchooseks: NChooseK on continuous features only is
+    # handled by post-AF pruning, so the AF-time arguments must NOT
+    # carry a smooth-NChooseK callable. ic_generator and the
+    # constraint-aware batch_limit override also drop out.
     benchmark = Hartmann(dim=6, allowed_k=3)
     optimizer_data = BotorchOptimizerModel()
     domain = benchmark.domain
@@ -137,10 +144,10 @@ def test_get_arguments_for_optimizer():
         bounds=get_bounds(domain),
     )
 
-    assert len(optimizer_args.nonlinear_inequality_constraints) == 1
-    assert optimizer_args.ic_generator == gen_batch_initial_conditions
-    assert optimizer_args.generator is not None
-    assert optimizer_args.options["batch_limit"] == 1
+    assert optimizer_args.nonlinear_inequality_constraints is None
+    assert optimizer_args.ic_generator is None
+    assert optimizer_args.generator is None
+    assert optimizer_args.options["batch_limit"] == optimizer_data.batch_limit
 
     domain.constraints.constraints.append(
         LinearInequalityConstraint(features=["x_1", "x_2"], coefficients=[1, 1], rhs=2)

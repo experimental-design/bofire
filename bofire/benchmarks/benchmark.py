@@ -264,16 +264,18 @@ class SpuriousFeaturesWrapper(Benchmark):
                 for i in range(n_spurious_features)
             ]
         )
-        constraints = Constraints(
-            constraints=[
-                NChooseKConstraint(
-                    features=inputs.get_keys(),
-                    max_count=max_count,
-                    min_count=min_count,
-                    none_also_valid=False,
-                )
-            ]
-        )
+        constraints = Constraints()
+        if max_count is not None:
+            constraints = Constraints(
+                constraints=[
+                    NChooseKConstraint(
+                        features=inputs.get_keys(),
+                        max_count=max_count,
+                        min_count=min_count,
+                        none_also_valid=False,
+                    )
+                ]
+            )
 
         self._domain = Domain(
             inputs=inputs,
