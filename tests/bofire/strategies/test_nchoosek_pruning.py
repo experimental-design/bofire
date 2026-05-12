@@ -101,6 +101,62 @@ class ConstantAcqf:
         self.X_pending = X_pending
 
 
+class RecordingCallAF:
+    """Wraps a base AF and captures every ``__call__`` input tensor.
+
+    Used by tests that verify what gets passed to the AF during the
+    pruning loop (e.g. q-batch prefix conditioning).
+    """
+
+    def __init__(self, base: Any):
+        self.base = base
+        self.calls: List[Tensor] = []
+
+    def __call__(self, X: Tensor) -> Tensor:
+        self.calls.append(X.detach().clone())
+        return self.base(X)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.base, name)
+
+
+def _make_recording_pending_af(
+    base: Any, raise_on_set: bool = False
+) -> Tuple[Any, List[Any]]:
+    """Wrap ``base`` so every ``set_X_pending`` call is captured.
+
+    If ``raise_on_set`` is True the wrapper mimics an analytic AF and
+    raises :class:`UnsupportedError` on every call (used to test the
+    pruning code's graceful skip path). Returns ``(wrapped, calls)``
+    where ``calls`` is a list of ``("set", clone)`` or ``("raise",
+    value)`` tuples in invocation order.
+    """
+    from botorch.exceptions.errors import UnsupportedError
+
+    calls: List[Any] = []
+
+    class RecordingPendingAF:
+        def __init__(self) -> None:
+            self.base = base
+            self.X_pending: Any = None  # exposed for the decorator path
+
+        def set_X_pending(self, value: Any) -> None:
+            if raise_on_set:
+                calls.append(("raise", value))
+                raise UnsupportedError("analytic AFs do not support pending points")
+            clone = None if value is None else value.detach().clone()
+            calls.append(("set", clone))
+            self.X_pending = clone
+
+        def __call__(self, X: Tensor) -> Tensor:
+            return self.base(X)
+
+        def __getattr__(self, name: str) -> Any:
+            return getattr(self.base, name)
+
+    return RecordingPendingAF(), calls
+
+
 # ---------------------------------------------------------------------------
 # Domain → algorithm-input helper
 # ---------------------------------------------------------------------------
@@ -179,6 +235,33 @@ def _make_simple_domain(
     ]
     outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
     return Domain.from_lists(inputs=inputs, outputs=outputs, constraints=constraints)
+
+
+def _default_nchoosek_setup(
+    *,
+    n_features: int = 4,
+    min_count: int = 1,
+    max_count: int = 2,
+    none_also_valid: bool = False,
+) -> Tuple[Domain, Dict[str, Any]]:
+    """Canonical (domain, inp) setup used by most pruning tests:
+    `n_features` continuous inputs over `[0, 1]` plus a single NChooseK
+    over all of them. Returns the domain plus the kwargs dict
+    `_inputs_from_domain` produces for `prune_nchoosek`.
+    """
+    feature_keys = [f"x{i + 1}" for i in range(n_features)]
+    domain = _make_simple_domain(
+        n_features=n_features,
+        constraints=[
+            NChooseKConstraint(
+                features=feature_keys,
+                min_count=min_count,
+                max_count=max_count,
+                none_also_valid=none_also_valid,
+            ),
+        ],
+    )
+    return domain, _inputs_from_domain(domain)
 
 
 # ---------------------------------------------------------------------------
@@ -531,18 +614,7 @@ class TestPruneNchoosekEndToEnd:
     # ----- Single NChooseK without semi-continuity (matches today's path) -----
 
     def test_q1_max_count_violation_zeros_smallest_weight(self):
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         # Weights: x2 and x3 have lowest, but only one needs to be zeroed
         weights = torch.tensor([10.0, 1.0, 2.0, 8.0], **tkwargs)
         acqf = WeightedSumAcqf(weights)
@@ -561,18 +633,7 @@ class TestPruneNchoosekEndToEnd:
         assert out[0, 2].item() == pytest.approx(0.0)
 
     def test_q1_already_feasible_is_noop(self):
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
         X = _stack_to_tensor([[0.5, 0.5, 0.0, 0.0]])
         out = prune_nchoosek(
@@ -585,18 +646,7 @@ class TestPruneNchoosekEndToEnd:
 
     def test_q2_processes_each_candidate(self):
         # Both candidates violate; both get pruned to <= 2 active.
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
         X = _stack_to_tensor(
             [
@@ -620,34 +670,8 @@ class TestPruneNchoosekEndToEnd:
         dense X[0]). Locks in the q-batch joint-conditioning invariant
         the refactor preserves but the existing q2 test does not check.
         """
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
-
-        class RecordingAF:
-            """Wraps a base AF, captures every input tensor."""
-
-            def __init__(self, base):
-                self.base = base
-                self.calls: List[Tensor] = []
-
-            def __call__(self, X):
-                self.calls.append(X.detach().clone())
-                return self.base(X)
-
-            def __getattr__(self, name):
-                return getattr(self.base, name)
-
-        rec = RecordingAF(MockAcquisitionFunction())
+        domain, inp = _default_nchoosek_setup()
+        rec = RecordingCallAF(MockAcquisitionFunction())
         X_dense = _stack_to_tensor(
             [
                 [0.5, 0.5, 0.5, 0.5],
@@ -1018,18 +1042,7 @@ class TestPruneNchoosekEndToEnd:
         # ConstantAcqf returns the same value for every input → every
         # variant has identical absolute AF, every reduction is zero,
         # action selection falls back to the deterministic tie-break.
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         acqf = ConstantAcqf(value=0.5)
         X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5]])
         out = prune_nchoosek(
@@ -1088,18 +1101,7 @@ class TestPruneNchoosekEndToEnd:
         # smallest j_idx with "zero" preferred over "active". With
         # 4 active features and max_count=2, we expect the first two
         # iterations to zero x1 and x2 (lowest j_idx).
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         acqf = ConstantAcqf(value=1.0)
         X = _stack_to_tensor([[0.5, 0.5, 0.5, 0.5]])
         out = prune_nchoosek(
@@ -1195,18 +1197,7 @@ class TestPruneNchoosekEndToEnd:
         # constraint. The pruning must exclude it from the action set
         # (cannot zero a pinned feature) and instead zero among
         # {x2, x3, x4}.
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         # Use weights that would otherwise make x1 the prime zero
         # candidate (smallest weight). The pinning filter must
         # override.
@@ -1806,53 +1797,8 @@ class TestXPendingThreading:
     """
 
     @staticmethod
-    def _make_recording_af(
-        base: Any, raise_on_set: bool = False
-    ) -> Tuple[Any, List[Any]]:
-        """Wrap ``base`` so every ``set_X_pending`` call is captured
-        in a list. If ``raise_on_set`` is True the wrapper mimics an
-        analytic AF and raises ``UnsupportedError`` on every call.
-        """
-        from botorch.exceptions.errors import UnsupportedError
-
-        calls: List[Any] = []
-
-        class RecordingAF:
-            def __init__(self) -> None:
-                self.base = base
-                self.X_pending: Any = None  # exposed for the decorator path
-
-            def set_X_pending(self, value: Any) -> None:
-                if raise_on_set:
-                    calls.append(("raise", value))
-                    raise UnsupportedError("analytic AFs do not support pending points")
-                # Mimic botorch behaviour: detach + clone.
-                clone = None if value is None else value.detach().clone()
-                calls.append(("set", clone))
-                self.X_pending = clone
-
-            def __call__(self, X: Tensor) -> Tensor:
-                return self.base(X)
-
-            def __getattr__(self, name: str) -> Any:
-                return getattr(self.base, name)
-
-        return RecordingAF(), calls
-
-    @staticmethod
     def _two_candidate_setup() -> Tuple[Any, Any, Tensor]:
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         X = _stack_to_tensor(
             [
                 [0.5, 0.5, 0.5, 0.5],
@@ -1867,7 +1813,7 @@ class TestXPendingThreading:
         calls happen inside.
         """
         _, inp, X = self._two_candidate_setup()
-        rec, _ = self._make_recording_af(MockAcquisitionFunction())
+        rec, _ = _make_recording_pending_af(MockAcquisitionFunction())
         # Pre-set a known X_pending on the AF (mimics
         # strategy.set_candidates → AF construction).
         user_pending = torch.tensor([[0.1, 0.2, 0.3, 0.4]], **tkwargs)
@@ -1892,7 +1838,7 @@ class TestXPendingThreading:
         pending candidates).
         """
         _, inp, X = self._two_candidate_setup()
-        rec, calls = self._make_recording_af(MockAcquisitionFunction())
+        rec, calls = _make_recording_pending_af(MockAcquisitionFunction())
         user_pending = torch.tensor([[0.1, 0.2, 0.3, 0.4]], **tkwargs)
         rec.X_pending = user_pending.clone()
 
@@ -1932,7 +1878,7 @@ class TestXPendingThreading:
         ``cat([None, prefix])``, which would crash).
         """
         _, inp, X = self._two_candidate_setup()
-        rec, calls = self._make_recording_af(MockAcquisitionFunction())
+        rec, calls = _make_recording_pending_af(MockAcquisitionFunction())
         rec.X_pending = None  # no user-set pending
 
         out = prune_nchoosek(
@@ -1968,7 +1914,7 @@ class TestXPendingThreading:
         pruning loop must complete without raising.
         """
         _, inp, X = self._two_candidate_setup()
-        rec, calls = self._make_recording_af(
+        rec, calls = _make_recording_pending_af(
             MockAcquisitionFunction(), raise_on_set=True
         )
 
@@ -1998,7 +1944,7 @@ class TestXPendingThreading:
         calls when only ``final_local_reopt=True`` (per-step disabled).
         """
         _, inp, X = self._two_candidate_setup()
-        rec, calls = self._make_recording_af(MockAcquisitionFunction())
+        rec, calls = _make_recording_pending_af(MockAcquisitionFunction())
         user_pending = torch.tensor([[0.1, 0.2, 0.3, 0.4]], **tkwargs)
         rec.X_pending = user_pending.clone()
 
@@ -2045,18 +1991,7 @@ class TestPinnedColumns:
         to zero it (smallest AF impact via the weights) and the
         pinning would silently fail.
         """
-        domain = _make_simple_domain(
-            n_features=4,
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2", "x3", "x4"],
-                    min_count=1,
-                    max_count=2,
-                    none_also_valid=False,
-                ),
-            ],
-        )
-        inp = _inputs_from_domain(domain)
+        domain, inp = _default_nchoosek_setup()
         # Weights make x1 the AF-cheapest zero target.
         weights = torch.tensor([0.1, 5.0, 5.0, 10.0], **tkwargs)
         acqf = WeightedSumAcqf(weights)

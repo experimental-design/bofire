@@ -442,3 +442,195 @@ respects:
 
 The greedy selection rule itself — at each step, prefer the action with
 smallest acquisition reduction — is unchanged.
+
+## Future improvements
+
+These extensions are designed but not implemented. Each is self-contained
+and reuses the existing greedy machinery (action set, guards, variant
+builders, `_collect_actions`). Listed in roughly increasing implementation
+complexity.
+
+### Swap actions
+
+Add a fourth action kind `swap(j, k) = zero(j) + activate(k)` committed
+atomically in one iteration. `j ∈ active_set`, `k ∈ zero_set`, both in
+(at least one) shared NChooseK group. Net count change is zero per
+shared constraint, so this is the natural "rebalance the support set
+without changing cardinality" move.
+
+**Motivation.** The current greedy can only change cardinality. Once a
+feature is committed active it is sticky — there is no path back to
+zero unless a `max_count` violation reopens it. On
+`mixture + NChooseK` with tight `min_count = max_count`, the support
+set is locked by the dense AF maximiser even when the GP posterior
+would prefer a different support of the same size. Concrete case:
+dense AF `x = (0.40, 0.35, 0.10, 0.10, 0.05)`, NChooseK over all five
+features with `min = max = 3`. Greedy zeros `x5` then `x4` and returns
+support `{1, 2, 3}`. The AF may actually peak at `{1, 2, 4}` after
+redistribution, but reaching it would require `zero(3) + activate(4)`
+together, which the per-step `min_count` guard blocks.
+
+**Sketch.**
+
+- Eligibility per `(j, k)`:
+  - for every NChooseK `c` with `{j, k} ⊆ c.features`: count
+    unchanged, always admissible.
+  - `j ∈ c, k ∉ c`: `count_c -= 1`; gate with the existing `min_count`
+    guard.
+  - `k ∈ c, j ∉ c`: `count_c += 1`; gate with the `max_count` guard.
+  - neither in `c`: no effect.
+- Variant: tighten bounds with `x_j = 0` pinned and
+  `x_k ∈ [lb_k, ub_k]` (or `[2 · tol, ub_k]` for non-semi-continuous),
+  project onto the linear set, optionally local-reopt — same machinery
+  as the existing variant builders.
+- Selection rule unchanged: swap competes with zero / active / activate
+  on smallest AF reduction.
+
+**Cost.** Action set grows from `O(d)` to `O(d²)` per iteration. For
+`d ≤ 30` still cheap (one QP each), worth pre-filtering by AF gradient
+if profiling shows it dominates. Termination is still bounded by the
+`2 · d` cap.
+
+**Where it would pay off.** Mixture + NChooseK with non-trivial
+`min_count` (formulation problems), and semi-continuous mixtures where
+activation order currently locks in suboptimal supports. Spurious-
+features cases probably see only marginal gains.
+
+### Beam search
+
+The current loop is structurally beam search with width `k = 1`: at
+each iteration it expands the current state into all admissible
+action variants, ranks by AF reduction, and commits the argmin.
+Widening this to `k > 1` is a natural expansion of BONSAI — the
+action set, the guards, the variant builders, the fulfilment check,
+and the `2 · d` iteration cap all transfer unchanged. Only the
+selection rule changes from `argmin` to `top-k`.
+
+**Refactor sketch.**
+
+1. Factor the per-iteration body of `_prune_single_candidate` into
+   `expand(state) → list[(state', af_reduction)]` that returns every
+   admissible successor (not just the argmin). No behaviour change at
+   `k = 1`.
+2. Replace the inner `while True / argmin` with a beam loop: hold
+   `beam: list[state]`, expand each, concatenate the successors,
+   retain the top-`k` by *cumulative* AF reduction.
+3. Track cumulative AF reduction per beam slot rather than committing
+   in place to `X[i]`.
+4. On termination, return the best feasible state across the beam.
+5. Expose `k` as an optional hyperparameter alongside
+   `per_step_local_reopt` / `final_local_reopt`, defaulting to `1` so
+   existing behaviour and tests are unchanged.
+
+**Cost.** Per iteration scales as `k · |actions|`; total work
+`O(k · d²)` (or `O(k · d³)` with swap). Polynomial in `d` for fixed
+`k`. Beam-`k` vs. greedy is a constant-factor `k` slowdown.
+
+**What it catches that greedy misses.** Trajectories where the local
+AF-best move is suboptimal but a continuation from the second-best is
+better — concretely, the "redistribute mass to a different active
+feature" case where the greedy locks in a sticky support set.
+
+**What it does *not* catch.** Trajectories that pass through
+individually-infeasible intermediate states (e.g., `zero(j)` that
+violates `min_count` even though a downstream `activate(k)` would
+restore feasibility). The per-step guards prune those branches before
+the beam ever sees them — that's exactly the gap that the atomic
+swap action closes. **Beam search and swap are complementary, not
+equivalent**: swap extends the action *set*, beam extends the search
+*strategy* over that set.
+
+A further structural step beyond plain beam is "lookahead beam":
+admit individually-infeasible states into the beam in the hope that a
+`k_lookahead`-step continuation restores feasibility. This generalises
+the swap action to arbitrary `k`, but gives up the per-step
+feasibility invariant and probably needs B&B-style bounding to be
+tractable. Not recommended without that.
+
+### Branch-and-bound (B&B)
+
+B&B is the next step beyond beam search. The connection to what we
+already have is direct:
+
+- **Greedy** = beam search with width 1: argmin AF reduction at each
+  step, no backtracking.
+- **Beam-`k`** = top-`k` continuations retained per step, ranked by
+  cumulative AF reduction. No proof of optimality, but catches sticky-
+  support trajectories the greedy misses.
+- **B&B** = a priority-queue-driven tree search that retains *all*
+  unpruned partial trajectories. A bounding function `L(state)`
+  provides a lower bound on the AF reduction of any feasible
+  descendant; subtrees whose `accumulated + L(state) >= incumbent`
+  are discarded. With a tight bound the search is exact; with a loose
+  bound it gracefully degrades to a more exhaustive beam-like search.
+
+**Why it is a natural next step rather than a rewrite.**
+
+- Branching is the same `expand(state)` function that beam search
+  needs. The action set, guards, and variant builders transfer
+  unchanged.
+- The current greedy plays four load-bearing roles inside B&B:
+  - (a) **Initial incumbent.** Seed `incumbent = greedy(state).af_reduction`
+    so the search has something to prune against from iteration 1.
+    Without this, B&B is effectively unbounded best-first search
+    until the first feasible leaf is reached.
+  - (b) **Primal heuristic at every interior node.** Run the greedy
+    from the node to a feasible leaf, update the incumbent if the
+    result is better. Same role the rollout policy plays in MCTS.
+  - (c) **Action machinery.** The eligibility, guards, and variant
+    builders are the primitives B&B branches over.
+  - (d) **Runtime fallback.** When a node-budget is exceeded, return
+    the incumbent (typically the greedy result) plus the gap
+    `incumbent - best_open_bound` as a quality stamp.
+- Beam search reuses (c). B&B reuses (a)-(d). Neither obsoletes the
+  greedy.
+
+**Reasonable expansion path from the current state of the codebase.**
+
+1. Factor the per-iteration body of `_prune_single_candidate` into an
+   `expand(state) → list[(state', af_reduction)]` function returning
+   every admissible successor (not just the argmin). No behaviour
+   change at width 1; this is the structural prerequisite for
+   everything that follows.
+2. Replace the inner `argmin` selection with `top-k`, threaded through
+   a beam list. Add a hyperparameter `k` defaulting to 1 so existing
+   tests are unchanged.
+3. Replace the beam list with a priority queue keyed on
+   `accumulated + L(state)`, where `L(state)` is a bounding function.
+   Seed `incumbent` from the greedy at the root. Run the greedy as a
+   primal heuristic at every expanded node and update `incumbent` from
+   its result. Prune subtrees whose bound exceeds `incumbent`. Add a
+   `node_budget` hyperparameter; on exhaustion, return the incumbent
+   with the current gap.
+
+Each step is self-contained: step 1 is a pure refactor; after step 2
+users can opt into beam search; after step 3 users can opt into
+anytime B&B. The greedy remains the default code path throughout.
+
+The bounding function `L(state)` deserves its own design pass and is
+intentionally not specified here. The cheap-and-always-valid fallback
+is `L = 0` (B&B prunes only on accumulated AF reduction); tighter
+bounds use the constraint structure of the violated NChooseK group.
+
+### Smaller perf / defensive items
+
+- **Skip SLSQP projection when `j_idx` is unconstrained** (cf. Ax
+  PR facebook/Ax#5180). When `has_linear` is True but `j_idx` does
+  not appear in any linear constraint's index tensor, changing only
+  `x_{j_idx}` cannot perturb constraint satisfaction; the projection
+  is unnecessary. Small win in BoFire's typical regime (NChooseK
+  features usually also appear in a mixture equality).
+- **Post-projection feasibility safety net** (cf. Ax
+  PR facebook/Ax#5180). SLSQP's default convergence tolerance can
+  return points that are "close enough" to feasible but fail a strict
+  `evaluate_feasibility` check. Ax adds a final check that masks such
+  candidates as infeasible. Consider adding if a real-world domain
+  produces near-feasible-but-rejected points.
+- **Batched per-variant local reopts in `_local_optacqf`.** Today each
+  variant calls `optimize_acqf` independently. Batching the `num_variants`
+  variants into a single call with
+  `batch_initial_conditions=(num_variants, 1, d)` would let BoTorch
+  parallelise the L-BFGS steps. Complicated by per-variant bound
+  tightening (different per variant) and the X_pending save/restore
+  scope. Real perf win on the q≥2, joint AF, `per_step_local_reopt=True`
+  path.

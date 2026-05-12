@@ -479,10 +479,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
         maximiser used, and the same linear-constraint and
         fixed-feature accessors.
 
-        Forwards ``acqfs[0]`` to the greedy AF evaluation. Multi-AF
+        Forwards ``acqfs[0]`` to the greedy AF evaluation; multi-AF
         per-candidate pruning is not yet implemented.
-        # TODO: per-AF pruning for multi-objective.
         """
+        # TODO: per-AF pruning for multi-objective.
         features2idx = self._features2idx(domain)
         inequality_constraints = get_linear_constraints(
             domain, constraint=LinearInequalityConstraint
