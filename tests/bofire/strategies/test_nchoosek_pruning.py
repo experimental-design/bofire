@@ -12,9 +12,13 @@ from botorch.utils.testing import MockAcquisitionFunction
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
+    InterpointConstraint,
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -2288,3 +2292,95 @@ class TestPinnedColumns:
         assert out[0, :4].sum().item() == pytest.approx(1.0, abs=1e-3)
         nz = (out[0, :4].abs() > 1e-6).sum().item()
         assert nz <= 2
+
+    def test_interpoint_feature_pinned_through_pruning(self):
+        """A domain with NChooseK over continuous features plus an
+        ``InterpointEqualityConstraint`` over a disjoint continuous
+        feature. The interpoint feature must not drift during pruning
+        — the QP projection only sees linear constraints, so without
+        the caller pinning the interpoint feature column, SLSQP would
+        be free to move it within its bounds and silently break the
+        interpoint constraint.
+
+        Mirrors ``BotorchOptimizer._prune_if_applicable``'s pinning
+        construction, including the new loop that covers
+        ``Interpoint`` / ``Nonlinear`` / ``Product`` constraint
+        features.
+        """
+        inputs: List[Any] = [
+            ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(4)
+        ]
+        inputs.append(ContinuousInput(key="x5", bounds=(0.0, 1.0)))
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        domain = Domain.from_lists(
+            inputs=inputs,
+            outputs=outputs,
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    min_count=1,
+                    max_count=2,
+                    none_also_valid=False,
+                ),
+                LinearEqualityConstraint(
+                    features=["x1", "x2", "x3", "x4"],
+                    coefficients=[1.0, 1.0, 1.0, 1.0],
+                    rhs=1.0,
+                ),
+                InterpointEqualityConstraint(features=["x5"]),
+            ],
+        )
+
+        specs: Dict[str, Any] = {}
+        features2idx, _ = domain.inputs._get_transform_info(specs)
+        bounds = get_torch_bounds_from_domain(domain, specs)
+        inequality_constraints = get_linear_constraints(
+            domain, constraint=LinearInequalityConstraint
+        )
+        equality_constraints = get_linear_constraints(
+            domain, constraint=LinearEqualityConstraint
+        )
+        nchoosek_constraints = list(domain.constraints.get(NChooseKConstraint))
+
+        # Mirror BotorchOptimizer._prune_if_applicable's full pinning
+        # logic, including the new Interpoint/Nonlinear/Product loop.
+        pinned_columns: set = set()
+        for feat in domain.inputs:
+            cols = features2idx[feat.key]
+            if isinstance(feat, ContinuousInput) and feat.fixed_value() is None:
+                continue
+            pinned_columns.update(cols)
+        for c in domain.constraints.get(
+            includes=[InterpointConstraint, NonlinearConstraint, ProductConstraint]
+        ):
+            for feat_key in c.features:
+                pinned_columns.update(features2idx[feat_key])
+
+        # The interpoint feature column must be in pinned_columns.
+        x5_col = features2idx["x5"][0]
+        assert x5_col in pinned_columns
+
+        # Candidate carries x5 = 0.7 (the value the interpoint
+        # constraint would lock across the q-batch).
+        X = _stack_to_tensor([[0.4, 0.3, 0.2, 0.1, 0.7]])
+        acqf = cast(AcquisitionFunction, MockAcquisitionFunction())
+
+        out = prune_nchoosek(
+            X=X,
+            acqf=acqf,
+            nchoosek_constraints=nchoosek_constraints,
+            features2idx=features2idx,
+            bounds=bounds,
+            inequality_constraints=inequality_constraints,
+            equality_constraints=equality_constraints,
+            semicontinuous_specs={},
+            pinned_columns=pinned_columns,
+            final_local_reopt=True,
+        )
+
+        # x5 unchanged through both QP projection and final polish.
+        assert out[0, x5_col].item() == pytest.approx(0.7, abs=1e-9)
+        # NChooseK pruning still worked on x1..x4.
+        nz = (out[0, :4].abs() > 1e-6).sum().item()
+        assert nz <= 2
+        assert out[0, :4].sum().item() == pytest.approx(1.0, abs=1e-3)

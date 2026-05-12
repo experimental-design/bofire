@@ -18,9 +18,11 @@ from pydantic import BaseModel, model_validator
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
+    InterpointConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearConstraint,
     ProductConstraint,
 )
 from bofire.data_models.domain.api import Domain
@@ -510,6 +512,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
             if isinstance(feat, ContinuousInput) and feat.fixed_value() is None:
                 continue
             pinned_columns.update(cols)
+
+        # Also pin features participating in constraint types the QP
+        # projection cannot enforce (Interpoint / Nonlinear / Product).
+        # The candidate carries values satisfying these constraints at
+        # row entry (upstream optimizer respected them), so freezing
+        # those features at the per-row value preserves the constraints
+        # by inertia. Without this, pruning's SLSQP projection could
+        # drift those features within their bounds and silently break
+        # the constraint -- the QP only sees Linear{Equality,Inequality}
+        # via `get_linear_constraints`; other types are invisible to it.
+        for c in domain.constraints.get(
+            includes=[InterpointConstraint, NonlinearConstraint, ProductConstraint]
+        ):
+            for feat_key in c.features:
+                pinned_columns.update(features2idx[feat_key])
 
         return prune_nchoosek(
             X=candidates,
