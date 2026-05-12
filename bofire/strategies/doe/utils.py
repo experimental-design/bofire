@@ -556,7 +556,87 @@ class ConstraintWrapper:
         return hessian
 
 
-def _iter_nchoosek_combined_patterns(
+def _constraint_patterns(
+    all_keys: list[str],
+    constraint: NChooseKConstraint,
+) -> list[dict[int, bool]]:
+    """Generate dicts for one constraint."""
+    patterns_of_constraint = []
+    n_features = len(constraint.features)
+    ind = [i for i, key in enumerate(all_keys) if key in constraint.features]
+    for k in range(max(constraint.min_count, 1), constraint.max_count + 1):
+        n_inactive = n_features - k
+        if n_inactive > 0:
+            for combo in combinations(ind, r=n_inactive):
+                inactive_set = set(combo)
+                patterns_of_constraint.append(
+                    {idx: (idx not in inactive_set) for idx in ind}
+                )
+        else:
+            patterns_of_constraint.append({idx: True for idx in ind})
+    return patterns_of_constraint
+
+
+def _merge_two(
+    patterns_of_constraint_a: list[dict[int, bool]],
+    patterns_of_constraint_b: list[dict[int, bool]],
+) -> list[dict[int, bool]]:
+    """Merge two pattern lists, filtering conflicts.
+
+    Uses a hash-join on shared feature indices: patterns from A are
+    bucketed by their assignment to shared keys, so each pattern from B
+    only needs to merge with the bucket that agrees on those keys.
+
+    pattern_of_constraint_a: {feature_index: is_active} dict from constraint A
+    pattern_of_constraint_b: {feature_index: is_active} dict from constraint B
+
+    returns: merged {feature_index: is_active} dict if no conflicts, else None
+
+    """
+    # Identify shared feature indices between the two sides.
+    shared = set(patterns_of_constraint_a[0].keys()).intersection(
+        set(patterns_of_constraint_b[0].keys())
+    )
+
+    patterns_of_merged_constraints = []
+    if shared:
+        # Bucket patterns by their assignment on shared indices.
+        # if activation_per_feature= {0: True, 1:True , 2: False} is a pattern and shared=[0,2], the key is (True, False)
+        sorted_shared = sorted(shared)
+        map_pattern_of_shared_to_global_pattern = {
+            tuple(activation_per_feature[idx] for idx in sorted_shared): []
+            for activation_per_feature in patterns_of_constraint_a
+        }
+        for activation_per_feature in patterns_of_constraint_a:
+            pattern_of_shared = tuple(
+                activation_per_feature[idx] for idx in sorted_shared
+            )
+            map_pattern_of_shared_to_global_pattern[pattern_of_shared].append(
+                activation_per_feature
+            )
+
+        for activation_per_feature_b in patterns_of_constraint_b:
+            pattern_of_shared = tuple(
+                activation_per_feature_b[idx] for idx in sorted_shared
+            )
+            for activation_per_feature_a in map_pattern_of_shared_to_global_pattern.get(
+                pattern_of_shared, ()
+            ):
+                merged = dict(activation_per_feature_a)
+                merged.update(activation_per_feature_b)
+                patterns_of_merged_constraints.append(merged)
+    else:
+        # No shared features — full cross-product.
+        for activation_per_feature_b in patterns_of_constraint_b:
+            for activation_per_feature_a in patterns_of_constraint_a:
+                merged = dict(activation_per_feature_a)
+                merged.update(activation_per_feature_b)
+                patterns_of_merged_constraints.append(merged)
+
+    return patterns_of_merged_constraints
+
+
+def _get_nchoosek_combined_patterns(
     domain: Domain,
 ) -> list[tuple[int, ...]]:
     """Generate combined deactivation patterns across all NChooseK constraints.
@@ -584,90 +664,15 @@ def _iter_nchoosek_combined_patterns(
 
     all_keys = domain.inputs.get_keys()
 
-    def _constraint_patterns(
-        constraint: NChooseKConstraint,
-    ) -> list[dict[int, bool]]:
-        """Generate dicts for one constraint."""
-        patterns_of_constraint = []
-        n_features = len(constraint.features)
-        ind = [i for i, key in enumerate(all_keys) if key in constraint.features]
-        for k in range(max(constraint.min_count, 1), constraint.max_count + 1):
-            n_inactive = n_features - k
-            if n_inactive > 0:
-                for combo in combinations(ind, r=n_inactive):
-                    inactive_set = set(combo)
-                    patterns_of_constraint.append(
-                        {idx: (idx not in inactive_set) for idx in ind}
-                    )
-            else:
-                patterns_of_constraint.append({idx: True for idx in ind})
-        return patterns_of_constraint
-
-    def _merge_two(
-        patterns_of_constraint_a: list[dict[int, bool]],
-        patterns_of_constraint_b: list[dict[int, bool]],
-    ) -> list[dict[int, bool]]:
-        """Merge two pattern lists, filtering conflicts.
-
-        Uses a hash-join on shared feature indices: patterns from A are
-        bucketed by their assignment to shared keys, so each pattern from B
-        only needs to merge with the bucket that agrees on those keys.
-
-        pattern_of_constraint_a: {feature_index: is_active} dict from constraint A
-        pattern_of_constraint_b: {feature_index: is_active} dict from constraint B
-
-        returns: merged {feature_index: is_active} dict if no conflicts, else None
-
-        """
-        # Identify shared feature indices between the two sides.
-        shared = set(patterns_of_constraint_a[0].keys()).intersection(
-            set(patterns_of_constraint_b[0].keys())
+    # Incremental pairwise merge — each step only materialises a generator
+    merged_patterns = _constraint_patterns(all_keys, nchoosek_constraints[0])
+    for constraint in nchoosek_constraints[1:]:
+        merged_patterns = _merge_two(
+            merged_patterns, _constraint_patterns(all_keys, constraint)
         )
 
-        patterns_of_merged_constraints = []
-        if shared:
-            # Bucket patterns by their assignment on shared indices.
-            # if activation_per_feature= {0: True, 1:True , 2: False} is a pattern and shared=[0,2], the key is (True, False)
-            sorted_shared = sorted(shared)
-            map_pattern_of_shared_to_global_pattern = {
-                tuple(activation_per_feature[idx] for idx in sorted_shared): []
-                for activation_per_feature in patterns_of_constraint_a
-            }
-            for activation_per_feature in patterns_of_constraint_a:
-                pattern_of_shared = tuple(
-                    activation_per_feature[idx] for idx in sorted_shared
-                )
-                map_pattern_of_shared_to_global_pattern[pattern_of_shared].append(
-                    activation_per_feature
-                )
-
-            for activation_per_feature_b in patterns_of_constraint_b:
-                pattern_of_shared = tuple(
-                    activation_per_feature_b[idx] for idx in sorted_shared
-                )
-                for (
-                    activation_per_feature_a
-                ) in map_pattern_of_shared_to_global_pattern.get(pattern_of_shared, ()):
-                    merged = dict(activation_per_feature_a)
-                    merged.update(activation_per_feature_b)
-                    patterns_of_merged_constraints.append(merged)
-        else:
-            # No shared features — full cross-product.
-            for activation_per_feature_b in patterns_of_constraint_b:
-                for activation_per_feature_a in patterns_of_constraint_a:
-                    merged = dict(activation_per_feature_a)
-                    merged.update(activation_per_feature_b)
-                    patterns_of_merged_constraints.append(merged)
-
-        return patterns_of_merged_constraints
-
-    # Incremental pairwise merge — each step only materialises a generator
-    merged_iter = _constraint_patterns(nchoosek_constraints[0])
-    for constraint in nchoosek_constraints[1:]:
-        merged_iter = _merge_two(merged_iter, _constraint_patterns(constraint))
-
     allowed_constraint_patterns = []
-    for merged in merged_iter:
+    for merged in merged_patterns:
         allowed_constraint_patterns.append(
             tuple(sorted(idx for idx, active in merged.items() if not active))
         )
@@ -689,7 +694,7 @@ def _build_nchoosek_combined_patterns(
         ValueError: When no valid combined patterns exist (contradictory
             constraints).
     """
-    result = list(set(_iter_nchoosek_combined_patterns(domain)))
+    result = list(set(_get_nchoosek_combined_patterns(domain)))
 
     if not result and any(
         isinstance(c, NChooseKConstraint) for c in domain.constraints
@@ -706,11 +711,7 @@ def nchoosek_constraints_as_bounds(
     domain: Domain,
     n_experiments: int,
 ) -> list:
-    """Determines the box bounds for the decision variables.
-
-    When multiple NChooseK constraints share features, their patterns are
-    combined via Cartesian product and filtered for consistency so that
-    each shared feature has a single active/inactive status per experiment.
+    """Determines the bounds for the optimization problem that correspond to the NChooseK constraints of the domain.
 
     Args:
         domain (Domain): Domain to find the bounds for.
@@ -807,36 +808,3 @@ def _minimize(
             hess=objective_function.evaluate_hessian if use_hessian else None,
         )
         return result.x
-
-
-if __name__ == "__main__":
-    # testing overlapping NChooseK constraints
-    from bofire.data_models.constraints.api import NChooseKConstraint
-    from bofire.data_models.domain.api import Domain
-    from bofire.data_models.features.api import ContinuousInput
-
-    inputs = Inputs(
-        features=[
-            ContinuousInput(key="x1", bounds=(0, 1)),
-            ContinuousInput(key="x2", bounds=(0, 1)),
-            ContinuousInput(key="x3", bounds=(0, 1)),
-            ContinuousInput(key="x4", bounds=(0, 1)),
-        ]
-    )
-    constraints = [
-        NChooseKConstraint(
-            features=["x1", "x2", "x3"],
-            min_count=1,
-            max_count=2,
-            none_also_valid=True,
-        ),
-        NChooseKConstraint(
-            features=["x2", "x3", "x4"],
-            min_count=1,
-            max_count=2,
-            none_also_valid=True,
-        ),
-    ]
-    domain = Domain(inputs=inputs, constraints=constraints)
-    patterns = _build_nchoosek_combined_patterns(domain)
-    print(patterns)
