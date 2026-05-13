@@ -24,6 +24,7 @@ scope.
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import partial
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
 import torch
@@ -383,17 +384,27 @@ def _max_count_violated_constraints(
     return violated
 
 
-def _zero_action_blocked_by_min_count(
+def _action_violates_count_bound(
     j_idx: int,
     active_counts: Dict[int, int],
     nchoosek_constraints: Sequence[NChooseKConstraint],
     features2idx: Dict[str, Tuple[int, ...]],
+    *,
+    delta: int,
 ) -> bool:
-    """True iff zeroing ``j_idx`` would push some ``a_c`` below
-    ``min_count_c`` for any constraint ``c`` containing it.
+    """True iff applying ``delta`` to ``a_c`` for every constraint
+    containing ``j_idx`` would push the count out of its NChooseK band.
 
-    ``none_also_valid`` exempts the case where the post-commit count
-    is exactly zero.
+    - ``delta == -1`` (zero action): checks the ``min_count`` floor.
+      ``none_also_valid`` exempts the case where the post-commit count
+      is exactly zero.
+    - ``delta == +1`` (activate action): checks the ``max_count``
+      ceiling. No ``none_also_valid`` carve-out — max_count is a hard
+      ceiling.
+
+    Exposed via the two ``partial`` specialisations below
+    (:data:`_zero_action_blocked_by_min_count` and
+    :data:`_activate_action_blocked_by_max_count`).
     """
     for c_idx, c in enumerate(nchoosek_constraints):
         constraint_indices: Set[int] = set()
@@ -401,34 +412,17 @@ def _zero_action_blocked_by_min_count(
             constraint_indices.update(features2idx[feat_key])
         if j_idx not in constraint_indices:
             continue
-        post = active_counts[c_idx] - 1
-        if post < c.min_count and not (c.none_also_valid and post == 0):
+        post = active_counts[c_idx] + delta
+        if delta < 0:
+            if post < c.min_count and not (c.none_also_valid and post == 0):
+                return True
+        elif post > c.max_count:
             return True
     return False
 
 
-def _activate_action_blocked_by_max_count(
-    j_idx: int,
-    active_counts: Dict[int, int],
-    nchoosek_constraints: Sequence[NChooseKConstraint],
-    features2idx: Dict[str, Tuple[int, ...]],
-) -> bool:
-    """True iff activating ``j_idx`` would push some ``a_c`` above
-    ``max_count_c`` for any constraint ``c`` containing it.
-
-    Symmetric of ``_zero_action_blocked_by_min_count`` — prevents
-    activating into a max-count violation. No ``none_also_valid``
-    carve-out (max_count is a hard ceiling).
-    """
-    for c_idx, c in enumerate(nchoosek_constraints):
-        constraint_indices: Set[int] = set()
-        for feat_key in c.features:
-            constraint_indices.update(features2idx[feat_key])
-        if j_idx not in constraint_indices:
-            continue
-        if active_counts[c_idx] + 1 > c.max_count:
-            return True
-    return False
+_zero_action_blocked_by_min_count = partial(_action_violates_count_bound, delta=-1)
+_activate_action_blocked_by_max_count = partial(_action_violates_count_bound, delta=+1)
 
 
 def _min_count_violated_constraints(
