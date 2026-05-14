@@ -93,7 +93,7 @@ class NumericalInput(Input):
         """
         return self.lower_bound == self.upper_bound
 
-    def fixed_value(
+    def get_fixed_value(
         self,
         transform_type: Optional[TTransform] = None,
     ) -> Union[None, List[float]]:

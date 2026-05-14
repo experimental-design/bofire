@@ -289,6 +289,7 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
         (ContinuousInput(key="k", bounds=(1, 1)), True, [1]),
         (ContinuousInput(key="k", bounds=(1, 2)), False, None),
         (ContinuousInput(key="k", bounds=(2, 3)), False, None),
+        (ContinuousInput(key="k", bounds=(1, 5), fixed_value=3.0), True, [3.0]),
         (
             ContinuousDescriptorInput(
                 key="k",
@@ -323,7 +324,7 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 )
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
-    assert input_feature.fixed_value() == expected_value
+    assert input_feature.get_fixed_value() == expected_value
 
 
 def test_continuous_input_to_pydantic_field():

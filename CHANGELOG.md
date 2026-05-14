@@ -24,6 +24,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Entmoot >=2.1.1
 - Static type checking was migrated from `pyright` to `ty`.
 - Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
+- `ContinuousInput` now accepts an explicit `fixed_value` parameter to pin a continuous input to a specific value during optimization while preserving its bounds for surrogate modelling, as a more intuitive alternative to setting `lower_bound == upper_bound`.
 
 ### Fixed
 

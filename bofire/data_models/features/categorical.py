@@ -127,7 +127,7 @@ class CategoricalInput(Input):
             return False
         return sum(self.allowed) == 1
 
-    def fixed_value(
+    def get_fixed_value(
         self,
         transform_type: Optional[TTransform] = None,
     ) -> Union[List[str], List[float], None]:

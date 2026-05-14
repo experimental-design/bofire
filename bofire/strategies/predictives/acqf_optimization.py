@@ -209,8 +209,8 @@ class AcquisitionOptimizer(ABC):
 
         for _, feat in enumerate(domain.inputs.get(Input)):
             assert isinstance(feat, Input)
-            if feat.fixed_value() is not None:
-                fixed_values = feat.fixed_value(
+            if feat.get_fixed_value() is not None:
+                fixed_values = feat.get_fixed_value(
                     transform_type=input_preprocessing_specs.get(feat.key),
                 )
                 for j, idx in enumerate(features2idx[feat.key]):
@@ -245,7 +245,7 @@ class AcquisitionOptimizer(ABC):
         )
         # adding categorical features that are fixed
         for feat in domain.inputs.get_fixed():
-            fixed_val = feat.fixed_value()
+            fixed_val = feat.get_fixed_value()
             assert fixed_val is not None
             choices[feat.key] = fixed_val[0]
         # compare the choices with the training data and remove all that are also part

@@ -69,7 +69,7 @@ class ShortestPathStrategy(Strategy):
                 feat = inputs.get_by_key(key)
                 assert isinstance(feat, ContinuousInput)
                 if feat.is_fixed():
-                    fixed_val = feat.fixed_value()
+                    fixed_val = feat.get_fixed_value()
                     assert fixed_val is not None
                     b[i] -= fixed_val[0] * coef
                 else:

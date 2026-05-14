@@ -258,8 +258,17 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
+        "fixed_value": None,
         "context": None,
     },
+)
+
+
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": [1, 5], "fixed_value": 10.0},
+    error=ValueError,
+    message="fixed_value 10.0 must be within bounds",
 )
 
 specs.add_invalid(
@@ -287,6 +296,7 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
+        "fixed_value": None,
         "context": None,
     },
 )
@@ -399,6 +409,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
+        "fixed_value": None,
         "context": None,
     },
 )
@@ -428,6 +439,7 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
+        "fixed_value": None,
         "context": None,
     },
 )

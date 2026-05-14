@@ -92,7 +92,7 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
         fidelity_outputs = Outputs(
             features=[ContinuousOutput(key="fidelity cost", objective=None)]
         )
-        coefficients = {key: 1.0 for key in fidelity_inputs.get_keys()}
+        coefficients = dict.fromkeys(fidelity_inputs.get_keys(), 1.0)
 
         return LinearDeterministicSurrogate(
             inputs=fidelity_inputs,

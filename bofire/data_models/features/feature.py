@@ -78,7 +78,7 @@ class Input(Feature):
         pass
 
     @abstractmethod
-    def fixed_value(
+    def get_fixed_value(
         self,
         transform_type: Optional[TTransform] = None,
     ) -> Union[None, List[str], List[float]]:

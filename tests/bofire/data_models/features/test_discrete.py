@@ -18,7 +18,7 @@ from bofire.data_models.features.api import DiscreteInput
 def test_discrete_input_feature_is_fixed(input_feature, expected, expected_value):
     print(input_feature)
     assert input_feature.is_fixed() == expected
-    assert input_feature.fixed_value() == expected_value
+    assert input_feature.get_fixed_value() == expected_value
 
 
 @pytest.mark.parametrize(

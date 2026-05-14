@@ -121,14 +121,13 @@ class PredictiveStrategy(Strategy):
                 experiments=experiments,
             )
         )
-
         fixed_nontasks = (
             feat
             for feat in self.domain.inputs.get_fixed()
-            if not isinstance(feat, TaskInput)
+            if not isinstance(feat, TaskInput) and feat.lower_bound == feat.upper_bound
         )
         for feature in fixed_nontasks:
-            fixed_value = feature.fixed_value()
+            fixed_value = feature.get_fixed_value()
             assert fixed_value is not None
             if (cleaned_experiments[feature.key] == fixed_value[0]).all():
                 raise ValueError(

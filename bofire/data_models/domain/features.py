@@ -456,7 +456,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         samples = pd.concat(res, axis=1)
 
         for feat in self.get_fixed():
-            val = feat.fixed_value()
+            val = feat.get_fixed_value()
             assert val is not None
             samples[feat.key] = val[0]
 

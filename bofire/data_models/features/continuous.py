@@ -36,6 +36,7 @@ class ContinuousInput(NumericalInput):
     ] = None
     stepsize: Optional[PositiveFloat] = None
     allow_zero: bool = False
+    fixed_value: Optional[float] = None
 
     @property
     def lower_bound(self) -> float:
@@ -113,6 +114,31 @@ class ContinuousInput(NumericalInput):
             )
 
         return self
+
+    @model_validator(mode="after")
+    def validate_fixed_value(self):
+        if self.fixed_value is None:
+            return self
+        lower, upper = self.bounds
+        if not (lower <= self.fixed_value <= upper):
+            raise ValueError(
+                f"fixed_value {self.fixed_value} must be within bounds [{lower}, {upper}].",
+            )
+        return self
+
+    def is_fixed(self) -> bool:
+        return self.fixed_value is not None or self.lower_bound == self.upper_bound
+
+    def get_fixed_value(
+        self,
+        transform_type=None,
+    ):
+        assert transform_type is None
+        if self.fixed_value is not None:
+            return [self.fixed_value]
+        if self.lower_bound == self.upper_bound:
+            return [self.lower_bound]
+        return None
 
     def _get_allowed_steps(self) -> List[float]:
         """Method to get the allowed steps of the feature.

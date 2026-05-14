@@ -448,7 +448,7 @@ def test_categorical_input_feature_is_fixed(
     transform_type,
 ):
     assert input_feature.is_fixed() == expected
-    assert input_feature.fixed_value(transform_type) == expected_value
+    assert input_feature.get_fixed_value(transform_type) == expected_value
 
 
 @pytest.mark.parametrize(

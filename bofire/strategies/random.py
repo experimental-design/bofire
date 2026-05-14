@@ -335,7 +335,7 @@ class RandomStrategy(Strategy):
         )
         cleaned_eqs = []
         fixed_features: Dict[str, float] = {  # ty: ignore[invalid-assignment]
-            feat.key: feat.fixed_value()[0]  # ty: ignore[not-subscriptable]
+            feat.key: feat.get_fixed_value()[0]  # ty: ignore[not-subscriptable]
             for feat in domain.inputs.get(ContinuousInput)
             if feat.is_fixed()
         }
@@ -461,7 +461,7 @@ class RandomStrategy(Strategy):
             samples[key] = value
         # setup the fixed discrete/categorical ones
         for feat in domain.inputs.get([CategoricalInput, DiscreteInput]).get_fixed():
-            samples[feat.key] = feat.fixed_value()[0]
+            samples[feat.key] = feat.get_fixed_value()[0]
 
         return samples[domain.inputs.get_keys()]
 

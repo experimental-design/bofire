@@ -144,7 +144,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         data = dict(zip(self.categories, self.values))
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
 
-    def fixed_value(
+    def get_fixed_value(
         self,
         transform_type: Optional[TTransform] = None,
     ) -> Union[List[str], List[float], None]:
@@ -155,7 +155,7 @@ class CategoricalDescriptorInput(CategoricalInput):
 
         """
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
-            return super().fixed_value(transform_type)
+            return super().get_fixed_value(transform_type)
         val = self.get_allowed_categories()[0]
         return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
