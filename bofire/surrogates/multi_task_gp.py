@@ -1,4 +1,3 @@
-import warnings
 from typing import Dict, Optional
 
 import botorch
@@ -6,8 +5,10 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.kernels.positive_index import PositiveIndexKernel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from gpytorch.kernels import IndexKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -83,14 +84,16 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         )
 
         if isinstance(self.task_prior, LKJPrior):
-            warnings.warn(
-                "The LKJ prior has issues when sampling from the prior, prior has been defaulted to None.",
-                UserWarning,
+            task_covar_module = next(
+                kernel
+                for kernel in self.model.covar_module.kernels
+                if isinstance(kernel, (IndexKernel, PositiveIndexKernel))
             )
-            # once the issue is fixed, the following line should be uncommented
-            # self.model.task_covar_module.register_prior(
-            #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
-            # )
+            task_covar_module.register_prior(
+                "IndexKernelPrior",
+                priors.map(self.task_prior),
+                _index_kernel_prior_closure,
+            )
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
         if self.noise_constraint is not None:
             self.model.likelihood.noise_covar.raw_noise_constraint = priors.map(
