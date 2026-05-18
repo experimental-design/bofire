@@ -25,7 +25,6 @@ from bofire.strategies.doe.objective import DOptimalityCriterion, get_objective_
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
     _minimize,
-    check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
     convert_formula_to_string,
     formula_str_to_fully_continuous,
@@ -590,123 +589,6 @@ def test_minimize():
         )
 
 
-def test_check_nchoosek_constraints_as_bounds():
-    # define domain: possible to formulate as bounds, no NChooseK constraints
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
-        ],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    # n-choose-k constraints when variables can be negative
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(key=f"x{1}", bounds=(0, 1)),
-            ContinuousInput(key=f"x{2}", bounds=(0, 2)),
-            ContinuousInput(key=f"x{3}", bounds=(0, 3)),
-            ContinuousInput(key=f"x{4}", bounds=(0, 4)),
-        ],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
-            LinearInequalityConstraint(
-                features=["x3", "x4"],
-                coefficients=[1, 1],
-                rhs=0,
-            ),
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-            NChooseKConstraint(
-                features=["x3", "x4"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    # NChooseK with non-zero lower bounds should be allowed: inactive variables
-    # are pinned to [0, 0] by the bounds formulation regardless of the original lb.
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(key=f"x{i + 1}", bounds=(0.1, 1), allow_zero=True)
-            for i in range(4)
-        ],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(key=f"x{1}", bounds=(0.1, 1.0), allow_zero=True),
-            ContinuousInput(key=f"x{2}", bounds=(0.1, 1.0), allow_zero=True),
-            ContinuousInput(key=f"x{3}", bounds=(0.1, 1.0)),
-            ContinuousInput(key=f"x{4}", bounds=(0.1, 1.0)),
-        ],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    # Not allowed: names parameters of two NChooseK overlap
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-            NChooseKConstraint(
-                features=["x2", "x3", "x4"],
-                max_count=2,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)
-
-
 def test_nchoosek_constraints_as_bounds():
     # define domain: no NChooseK constraints
     domain = Domain.from_lists(
@@ -1128,7 +1010,63 @@ def test_nchoosek_bounds_none_also_valid():
     )
 
 
+def test_multi_nchoosek_bounds_known_patterns():
+    """Test nchoosek_constraints_as_bounds against known expected activity patterns."""
+    n_features = 3
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_experiments)
+
+    D = n_features
+    assert len(bounds) == D * n_experiments
+
+    # extract the activity pattern (1=active, 0=pinned-to-zero) per experiment
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+        # every active slot must keep its original bounds
+        for j, b in enumerate(exp_bounds):
+            if b != (0.0, 0.0):
+                assert b == (
+                    0.0,
+                    1.0,
+                ), f"exp {i}, feature {j}: expected (0.0, 1.0), got {b}"
+
+    expected_patterns = {
+        (0, 1, 0),  # x1 active, x0 and x2 inactive
+        (1, 0, 1),  # x0 and x2 active, x1 inactive
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # every pattern must have between min_count and max_count active features
+    for pat in observed_patterns:
+        active = sum(pat)
+        assert 1 <= active <= 2, f"Pattern {pat} has {active} active features"
+
+
 if __name__ == "__main__":
-    test_formula_str_to_fully_continuous()
-    test_formula_str_to_fully_continuous_only_categoricals()
-    only_continuous_inputs_formula_str_to_fully_continuous()
+    test_multi_nchoosek_bounds_known_patterns()
