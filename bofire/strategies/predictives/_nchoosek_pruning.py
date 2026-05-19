@@ -25,11 +25,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterator, List, Literal, Optional, Sequence, Set, Tuple
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.exceptions.errors import UnsupportedError
 from botorch.optim.optimize import optimize_acqf
 from botorch.optim.parameter_constraints import project_to_feasible_space_via_slsqp
 from torch import Tensor
@@ -283,17 +282,25 @@ def is_pruning_applicable(domain: Domain) -> bool:
     applicable, or the domain has standalone semi-continuous features —
     and no semi-continuous feature appears in a blocking nonlinear /
     interpoint constraint.
+
+    Both checks must clear independently. A domain with an NChooseK
+    that doesn't overlap blocking constraints *and* a semi-continuous
+    feature that *does* overlap a blocking constraint is unsafe to
+    prune, because pruning processes every semi-continuous feature in
+    the domain (not just those in NChooseK groups).
     """
-    if is_nchoosek_pruning_applicable(domain):
-        return True
-    if not has_semicontinuous_features(domain):
+    nchoosek_ok = is_nchoosek_pruning_applicable(domain)
+    has_semicont = has_semicontinuous_features(domain)
+
+    if not nchoosek_ok and not has_semicont:
         return False
 
-    blocking = _features_in_blocking_constraints(domain)
-    for feat in domain.inputs.get(ContinuousInput):
-        assert isinstance(feat, ContinuousInput)
-        if feat.is_semicontinuous and feat.key in blocking:
-            return False
+    if has_semicont:
+        blocking = _features_in_blocking_constraints(domain)
+        for feat in domain.inputs.get(ContinuousInput):
+            assert isinstance(feat, ContinuousInput)
+            if feat.is_semicontinuous and feat.key in blocking:
+                return False
     return True
 
 
@@ -336,22 +343,15 @@ def _is_nchoosek_fulfilled(
     x: Tensor,
     nchoosek_constraints: Sequence[NChooseKConstraint],
     features2idx: Dict[str, Tuple[int, ...]],
-    tol: float = 1e-6,
+    tol: float,
 ) -> bool:
-    """Tensor-native NChooseK fulfilment check for a single candidate.
-
-    Ported from ``BotorchStrategy._nchoosek_fulfilled_tensor``. Counts
-    non-zero columns per constraint (using ``|x[idx]| > tol``) and
-    honours ``none_also_valid`` when the count is zero.
-    """
+    """Tensor-native NChooseK fulfilment check for a single candidate."""
     for c in nchoosek_constraints:
         indices: List[int] = []
         for feat_key in c.features:
             indices.extend(features2idx[feat_key])
         count = int((x[indices].abs() > tol).sum().item())
-        if count > c.max_count:
-            return False
-        if count < c.min_count and not (c.none_also_valid and count == 0):
+        if not c.count_is_valid(count):
             return False
     return True
 
@@ -390,17 +390,23 @@ def _action_violates_count_bound(
     nchoosek_constraints: Sequence[NChooseKConstraint],
     features2idx: Dict[str, Tuple[int, ...]],
     *,
-    delta: int,
+    delta: Literal[-1, 1],
 ) -> bool:
     """True iff applying ``delta`` to ``a_c`` for every constraint
-    containing ``j_idx`` would push the count out of its NChooseK band.
+    containing ``j_idx`` would push the count out of its NChooseK band
+    *in the direction the action can move it*.
 
     - ``delta == -1`` (zero action): checks the ``min_count`` floor.
       ``none_also_valid`` exempts the case where the post-commit count
-      is exactly zero.
+      is exactly zero. The opposite bound is not relevant — zeroing
+      cannot raise a count above ``max_count`` and the algorithm may
+      need to apply zero actions even when starting from a
+      max-violating state.
     - ``delta == +1`` (activate action): checks the ``max_count``
-      ceiling. No ``none_also_valid`` carve-out — max_count is a hard
-      ceiling.
+      ceiling. The opposite bound is not relevant — activating cannot
+      lower a count below ``min_count`` and the algorithm may need to
+      apply activate actions even when starting from a min-violating
+      state.
 
     Exposed via the two ``partial`` specialisations below
     (:data:`_zero_action_blocked_by_min_count` and
@@ -433,12 +439,16 @@ def _min_count_violated_constraints(
 
     Honours ``none_also_valid``: if a constraint allows
     ``count == 0`` and the current count is 0, it is *not* reported
-    as violated.
+    as violated. The check delegates to
+    :meth:`NChooseKConstraint.count_is_valid` to keep the band rule in
+    one place; ``a_c > max_count`` is reported separately by
+    :func:`_max_count_violated_constraints`, so the only failing-band
+    cases reaching here are below-floor.
     """
     violated: Set[int] = set()
     for c_idx, c in enumerate(nchoosek_constraints):
         a_c = active_counts[c_idx]
-        if a_c < c.min_count and not (c.none_also_valid and a_c == 0):
+        if a_c <= c.max_count and not c.count_is_valid(a_c):
             violated.add(c_idx)
     return violated
 
@@ -595,35 +605,29 @@ def _x_pending_overlay(
 ) -> Iterator[None]:
     """Temporarily concat ``extra`` onto ``acqf.X_pending`` for the body.
 
-    Preserves the caller's existing ``acqf.X_pending`` (set at AF
-    construction time, e.g. via ``strategy.set_candidates(...)``) by
-    concatenating onto it rather than overwriting. Restored on exit.
+    Purpose. When ``q > 1``, ``prune_nchoosek`` processes the q-batch
+    candidates one at a time. For the joint AF (qLogEI, qUCB, ...) to
+    score later candidates consistently with how they would be scored
+    at the original ask, the AF must be conditioned on the earlier
+    *already-pruned* candidates from the same batch. ``extra`` carries
+    that "already-pruned prefix"; the overlay concatenates it onto any
+    pre-existing ``X_pending`` (e.g. one set by
+    ``strategy.set_candidates(...)``) for the duration of the body,
+    then restores the original on exit. For ``q == 1``, ``extra`` is
+    empty and the overlay is a no-op.
 
-    For analytic AFs ``set_X_pending`` raises :class:`UnsupportedError`;
-    we silently skip in that case because their marginal AF on a
-    q-batch coincides with the joint AF, so prefix conditioning is a
-    mathematical no-op.
+    BoFire only exposes Monte-Carlo (``q*``) acquisition functions, all
+    of which implement ``set_X_pending``, so no special-casing for
+    analytic AFs is needed here.
     """
     if extra is None or extra.numel() == 0:
         yield
         return
     saved = getattr(acqf, "X_pending", None)
     combined = extra if saved is None else torch.cat([saved, extra], dim=0)
-    try:
-        acqf.set_X_pending(combined)
-    except UnsupportedError:
-        yield
-        return
-    try:
-        yield
-    finally:
-        # ``set_X_pending`` succeeded above so this won't raise; keep
-        # the try/except as a defensive net for third-party AFs that
-        # might behave asymmetrically.
-        try:
-            acqf.set_X_pending(saved)
-        except UnsupportedError:
-            pass
+    acqf.set_X_pending(combined)
+    yield
+    acqf.set_X_pending(saved)
 
 
 def _local_optacqf(

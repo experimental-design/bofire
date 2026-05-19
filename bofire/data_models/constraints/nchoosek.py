@@ -116,6 +116,19 @@ class NChooseKConstraint(IntrapointConstraint):
 
         return pd.Series(max_count_violation + min_count_violation)
 
+    def count_is_valid(self, count: int) -> bool:
+        """True if ``count`` non-zero features satisfies this NChooseK band.
+
+        Encodes ``min_count <= count <= max_count`` with the
+        ``none_also_valid`` carve-out: when set, ``count == 0`` is also
+        accepted regardless of ``min_count``.
+        """
+        if count > self.max_count:
+            return False
+        if count >= self.min_count:
+            return True
+        return self.none_also_valid and count == 0
+
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         """Check if the concurrency constraint is fulfilled for all the rows of the provided dataframe.
 

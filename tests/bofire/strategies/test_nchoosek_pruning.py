@@ -120,19 +120,12 @@ class RecordingCallAF:
         return getattr(self.base, name)
 
 
-def _make_recording_pending_af(
-    base: Any, raise_on_set: bool = False
-) -> Tuple[Any, List[Any]]:
+def _make_recording_pending_af(base: Any) -> Tuple[Any, List[Any]]:
     """Wrap ``base`` so every ``set_X_pending`` call is captured.
 
-    If ``raise_on_set`` is True the wrapper mimics an analytic AF and
-    raises :class:`UnsupportedError` on every call (used to test the
-    pruning code's graceful skip path). Returns ``(wrapped, calls)``
-    where ``calls`` is a list of ``("set", clone)`` or ``("raise",
-    value)`` tuples in invocation order.
+    Returns ``(wrapped, calls)`` where ``calls`` is a list of
+    ``("set", clone)`` tuples in invocation order.
     """
-    from botorch.exceptions.errors import UnsupportedError
-
     calls: List[Any] = []
 
     class RecordingPendingAF:
@@ -141,9 +134,6 @@ def _make_recording_pending_af(
             self.X_pending: Any = None  # exposed for the decorator path
 
         def set_X_pending(self, value: Any) -> None:
-            if raise_on_set:
-                calls.append(("raise", value))
-                raise UnsupportedError("analytic AFs do not support pending points")
             clone = None if value is None else value.detach().clone()
             calls.append(("set", clone))
             self.X_pending = clone
@@ -313,32 +303,38 @@ class TestPureHelpers:
     def test_fulfilled_max_count_violated(self):
         c = self._basic_constraint(max_count=2)
         x = _row_to_tensor([0.5, 0.5, 0.5])
-        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3)) is False
+        assert (
+            _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3), tol=1e-6) is False
+        )
 
     def test_fulfilled_min_count_violated(self):
         c = self._basic_constraint(min_count=2, max_count=3)
         x = _row_to_tensor([0.5, 0.0, 0.0])
-        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3)) is False
+        assert (
+            _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3), tol=1e-6) is False
+        )
 
     def test_fulfilled_none_also_valid_zero_count(self):
         c = self._basic_constraint(min_count=1, max_count=2, none_also_valid=True)
         x = _row_to_tensor([0.0, 0.0, 0.0])
-        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3)) is True
+        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3), tol=1e-6) is True
 
     def test_fulfilled_none_also_valid_does_not_allow_low_nonzero(self):
         c = self._basic_constraint(min_count=2, max_count=3, none_also_valid=True)
         x = _row_to_tensor([0.5, 0.0, 0.0])  # one active, below min_count
-        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3)) is False
+        assert (
+            _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3), tol=1e-6) is False
+        )
 
     def test_fulfilled_tol_classifies_small_values_as_zero(self):
         c = self._basic_constraint(min_count=1, max_count=2)
         x = _row_to_tensor([1e-9, 1e-9, 0.5])
-        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3)) is True
+        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3), tol=1e-6) is True
 
     def test_fulfilled_within_bounds(self):
         c = self._basic_constraint(min_count=1, max_count=2)
         x = _row_to_tensor([0.5, 0.5, 0.0])
-        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3)) is True
+        assert _is_nchoosek_fulfilled(x, [c], self._f2i_continuous(3), tol=1e-6) is True
 
     # ----- _active_counts -----
 
@@ -1907,37 +1903,6 @@ class TestXPendingThreading:
         # And after the run X_pending is restored to None.
         assert rec.X_pending is None
 
-    def test_analytic_af_does_not_crash(self):
-        """An AF whose ``set_X_pending`` raises ``UnsupportedError``
-        (analytic AFs) must be silently skipped — the prefix
-        conditioning is a mathematical no-op for them, and the
-        pruning loop must complete without raising.
-        """
-        _, inp, X = self._two_candidate_setup()
-        rec, calls = _make_recording_pending_af(
-            MockAcquisitionFunction(), raise_on_set=True
-        )
-
-        # Should not crash even though set_X_pending raises.
-        out = prune_nchoosek(
-            X=X,
-            acqf=cast(AcquisitionFunction, rec),
-            **inp,
-            per_step_local_reopt=True,
-            final_local_reopt=True,
-        )
-
-        # We attempted at least one set call (which raised).
-        raised_calls = [v for tag, v in calls if tag == "raise"]
-        assert raised_calls, (
-            "expected at least one set_X_pending attempt (which "
-            "raised UnsupportedError and was caught)"
-        )
-        # And produced a feasible candidate.
-        for i in (0, 1):
-            nz = (out[i].abs() > 1e-6).sum().item()
-            assert nz <= 2
-
     def test_final_local_reopt_threads_pending(self):
         """The final polish step must also receive the prefix via
         ``X_pending_extra`` — verified by recording set_X_pending
@@ -2675,3 +2640,34 @@ class TestIsPruningApplicable:
         # pruning.
         assert is_nchoosek_pruning_applicable(domain) is False
         assert is_pruning_applicable(domain) is True
+
+    def test_unblocked_nchoosek_does_not_mask_semicontinuous_block(self):
+        # Regression for a silent-gap: an unblocked NChooseK must not
+        # cause the gate to skip the semi-continuous + blocking check.
+        # x4 (semi-continuous) is in a ProductInequalityConstraint, so
+        # pruning is unsafe and the gate must return False even though
+        # the NChooseK over {x1, x2} is itself unblocked.
+        domain = Domain.from_lists(
+            inputs=[
+                ContinuousInput(key="x1", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x3", bounds=(0.0, 1.0)),
+                ContinuousInput(key="x4", bounds=(0.2, 1.0), allow_zero=True),
+            ],
+            constraints=[
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    min_count=0,
+                    max_count=1,
+                    none_also_valid=True,
+                ),
+                ProductInequalityConstraint(
+                    features=["x3", "x4"],
+                    exponents=[1.0, 1.0],
+                    rhs=0.5,
+                    sign=1,
+                ),
+            ],
+        )
+        assert is_nchoosek_pruning_applicable(domain) is True
+        assert is_pruning_applicable(domain) is False
