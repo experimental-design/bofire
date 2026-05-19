@@ -25,7 +25,18 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, Iterator, List, Literal, Optional, Sequence, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -339,6 +350,41 @@ def _classify_features_for_row(
     return zero, fractional, active
 
 
+def _constraint_column_indices(
+    c: NChooseKConstraint,
+    features2idx: Dict[str, Tuple[int, ...]],
+) -> Tuple[int, ...]:
+    """Flatten a constraint's feature keys to the tensor column indices
+    they occupy."""
+    return tuple(i for k in c.features for i in features2idx[k])
+
+
+def _count_active_in_constraint(
+    x: Tensor,
+    c: NChooseKConstraint,
+    features2idx: Dict[str, Tuple[int, ...]],
+    tol: float,
+) -> int:
+    """Number of columns of ``x`` participating in ``c`` whose absolute
+    value exceeds ``tol``."""
+    indices = list(_constraint_column_indices(c, features2idx))
+    return int((x[indices].abs() > tol).sum().item())
+
+
+def _indices_across_constraints(
+    c_indices: Iterable[int],
+    nchoosek_constraints: Sequence[NChooseKConstraint],
+    features2idx: Dict[str, Tuple[int, ...]],
+) -> Set[int]:
+    """Union of tensor column indices for every constraint in
+    ``c_indices``."""
+    return {
+        i
+        for c_idx in c_indices
+        for i in _constraint_column_indices(nchoosek_constraints[c_idx], features2idx)
+    }
+
+
 def _is_nchoosek_fulfilled(
     x: Tensor,
     nchoosek_constraints: Sequence[NChooseKConstraint],
@@ -346,14 +392,10 @@ def _is_nchoosek_fulfilled(
     tol: float,
 ) -> bool:
     """Tensor-native NChooseK fulfilment check for a single candidate."""
-    for c in nchoosek_constraints:
-        indices: List[int] = []
-        for feat_key in c.features:
-            indices.extend(features2idx[feat_key])
-        count = int((x[indices].abs() > tol).sum().item())
-        if not c.count_is_valid(count):
-            return False
-    return True
+    return all(
+        c.count_is_valid(_count_active_in_constraint(x, c, features2idx, tol))
+        for c in nchoosek_constraints
+    )
 
 
 def _active_counts(
@@ -363,13 +405,10 @@ def _active_counts(
     tol: float,
 ) -> Dict[int, int]:
     """Per-constraint active counts, keyed by constraint position."""
-    counts: Dict[int, int] = {}
-    for c_idx, c in enumerate(nchoosek_constraints):
-        indices: List[int] = []
-        for feat_key in c.features:
-            indices.extend(features2idx[feat_key])
-        counts[c_idx] = int((x[indices].abs() > tol).sum().item())
-    return counts
+    return {
+        c_idx: _count_active_in_constraint(x, c, features2idx, tol)
+        for c_idx, c in enumerate(nchoosek_constraints)
+    }
 
 
 def _max_count_violated_constraints(
@@ -413,10 +452,7 @@ def _action_violates_count_bound(
     :data:`_activate_action_blocked_by_max_count`).
     """
     for c_idx, c in enumerate(nchoosek_constraints):
-        constraint_indices: Set[int] = set()
-        for feat_key in c.features:
-            constraint_indices.update(features2idx[feat_key])
-        if j_idx not in constraint_indices:
+        if j_idx not in _constraint_column_indices(c, features2idx):
             continue
         post = active_counts[c_idx] + delta
         if delta < 0:
@@ -470,15 +506,11 @@ def _features_eligible_for_zero(
     without contributing to feasibility.
     """
     eligible: Set[int] = set(fractional)
-    if not violated:
-        return eligible
-
-    violated_indices: Set[int] = set()
-    for c_idx in violated:
-        c = nchoosek_constraints[c_idx]
-        for feat_key in c.features:
-            violated_indices.update(features2idx[feat_key])
-    eligible.update(active.intersection(violated_indices))
+    if violated:
+        eligible.update(
+            active
+            & _indices_across_constraints(violated, nchoosek_constraints, features2idx)
+        )
     return eligible
 
 
@@ -497,13 +529,9 @@ def _features_eligible_for_activate(
     """
     if not min_count_violated:
         return set()
-
-    violated_indices: Set[int] = set()
-    for c_idx in min_count_violated:
-        c = nchoosek_constraints[c_idx]
-        for feat_key in c.features:
-            violated_indices.update(features2idx[feat_key])
-    return zero_set.intersection(violated_indices)
+    return zero_set & _indices_across_constraints(
+        min_count_violated, nchoosek_constraints, features2idx
+    )
 
 
 # ---------------------------------------------------------------------------
