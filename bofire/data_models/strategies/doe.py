@@ -53,7 +53,7 @@ def _warn_on_potential_formulaic_term_drops(formula: str) -> None:
     if risky_patterns:
         details = ", ".join(dict.fromkeys(risky_patterns))
         warnings.warn(
-            "Formulaic may silently drop model terms while parsing this formula. "
+            "Formulaic may silently drop model terms that are not correctly delimited by braces. "
             f"Detected potentially risky pattern(s): {details}. "
             "If you intended powers or self-products, wrap terms in curly braces "
             "(for example `{x**2}` or `{x*x}`). See Formulaic grammar for details: "
