@@ -66,7 +66,7 @@ def represent_categories_as_by_their_states(
 
 
 def formula_str_to_fully_continuous(
-    formula: str,
+    formula_str: str,
     inputs: Inputs,
 ) -> str:
     """Converts a formula with categorical variables to a formula with only continuous variables by identifying the categorical variables and replacing them with their one-hot encoded counterparts.
@@ -84,11 +84,11 @@ def formula_str_to_fully_continuous(
         formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
 
     formula = Formula(
-        formula
+        formula_str
     )  # formula casting for expansion of terms like (a+b)*(c+d)
     for _input in inputs.get([DiscreteInput]):
         for k in range(
-            2, 99
+            2, len(_input.values) + 1
         ):  # arbitrary upper bound on number of levels of discrete input
             if (len(_input.values) <= k) and (_input.key + f" ** {k}" in formula.root):
                 warnings.warn(
