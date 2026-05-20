@@ -31,6 +31,7 @@ from bofire.data_models.surrogates.multi_task_gp import (
     MultiTaskGPHyperconfig,
     MultiTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.robust_single_task_gp import (
@@ -72,6 +73,7 @@ AnySurrogate = tagged_union(
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    PairwiseGPSurrogate,
 )
 
 AnyTrainableSurrogate = tagged_union(
