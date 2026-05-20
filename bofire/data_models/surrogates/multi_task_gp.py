@@ -16,6 +16,8 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
@@ -91,13 +93,12 @@ class MultiTaskGPHyperconfig(Hyperconfig):
 class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
-        default_factory=lambda: MaternKernel(
+        default_factory=lambda: RBFKernel(
             ard=True,
-            nu=2.5,
-            lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
         )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
     noise_constraint: AnyPriorConstraint = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
     )
