@@ -54,5 +54,39 @@ specs.add_invalid(
 )
 
 specs.add_valid(priors.Positive, lambda: {})
-specs.add_valid(priors.GreaterThan, lambda: {"lower_bound": 42})
+specs.add_valid(priors.GreaterThan, lambda: {"lower_bound": 42, "initial_value": None})
+specs.add_valid(
+    priors.GreaterThan, lambda: {"lower_bound": 1e-4, "initial_value": 0.5185}
+)
 specs.add_valid(priors.LessThan, lambda: {"upper_bound": 42})
+
+specs.add_valid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 0.005,
+        "upper_bound": 200.0,
+        "initial_value": 1.0,
+    },
+)
+
+specs.add_invalid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 2.0,
+        "upper_bound": 1.0,
+        "initial_value": 1.5,
+    },
+    error=ValueError,
+    message="The lower bound must be less than the upper bound for an interval.",
+)
+
+specs.add_invalid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 1.0,
+        "upper_bound": 10.0,
+        "initial_value": 11.0,
+    },
+    error=ValueError,
+    message="The initial value must be within the bounds of the interval.",
+)

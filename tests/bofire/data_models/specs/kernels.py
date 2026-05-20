@@ -5,6 +5,7 @@ from bofire.data_models.priors.api import (
     GammaPrior,
     LogNormalPrior,
     NonTransformedInterval,
+    SmoothedBoxPrior,
 )
 from tests.bofire.data_models.specs.prior_constraints import specs as prior_constraints
 from tests.bofire.data_models.specs.priors import specs as priors
@@ -281,6 +282,14 @@ specs.add_valid(
         "outputscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
+    },
+)
+specs.add_valid(
+    kernels.ScaleKernel,
+    lambda: {
+        "base_kernel": specs.valid(kernels.RBFKernel).obj().model_dump(),
+        "outputscale_prior": priors.valid(SmoothedBoxPrior).obj().model_dump(),
+        "outputscale_constraint": None,
     },
 )
 specs.add_valid(
