@@ -5,8 +5,10 @@ from pydantic import Field, model_validator
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, RBFKernel, ScaleKernel
 from bofire.data_models.priors.api import (
-    THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_SCALE_PRIOR,
+    PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
+    PAIRWISEGP_LENGTHSCALE_PRIOR,
+    PAIRWISEGP_OUTPUTSCALE_CONSTRAINT,
+    PAIRWISEGP_OUTPUTSCALE_PRIOR,
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import AnyScaler, Normalize
@@ -28,12 +30,13 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         default_factory=lambda: ScaleKernel(
             base_kernel=RBFKernel(
                 ard=True,
-                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+                lengthscale_prior=PAIRWISEGP_LENGTHSCALE_PRIOR,
+                lengthscale_constraint=PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
             ),
-            outputscale_prior=THREESIX_SCALE_PRIOR(),
+            outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR,
+            outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT,
         )
     )
-    likelihood: Literal["probit", "logit"] = "probit"
     scaler: AnyScaler = Field(default_factory=Normalize)
 
     @classmethod

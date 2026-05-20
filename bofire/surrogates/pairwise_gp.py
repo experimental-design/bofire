@@ -5,10 +5,6 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.likelihoods.pairwise import (
-    PairwiseLogitLikelihood,
-    PairwiseProbitLikelihood,
-)
 from botorch.models.pairwise_gp import PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import InputTransform
 
@@ -26,9 +22,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         **kwargs,
     ):
         self.kernel = data_model.kernel
-        self.likelihood_type = data_model.likelihood
         self.scaler = data_model.scaler
-        self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.PairwiseGP] = None
@@ -46,23 +40,15 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         else:
             n_dim = datapoints.shape[-1]
 
-        covar_module = kernels.map(
-            self.kernel,
-            batch_shape=torch.Size(),
-            active_dims=list(range(n_dim)),
-            features_to_idx_mapper=None,
-        )
-
-        if self.likelihood_type == "logit":
-            likelihood = PairwiseLogitLikelihood()
-        else:
-            likelihood = PairwiseProbitLikelihood()
-
         self.model = botorch.models.PairwiseGP(
             datapoints=datapoints,
             comparisons=comparisons,
-            likelihood=likelihood,
-            covar_module=covar_module,
+            covar_module=kernels.map(
+                self.kernel,
+                batch_shape=torch.Size(),
+                active_dims=list(range(n_dim)),
+                features_to_idx_mapper=None,
+            ),
             input_transform=input_transform,
         )
 
