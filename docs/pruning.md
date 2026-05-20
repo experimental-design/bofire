@@ -443,6 +443,48 @@ respects:
 The greedy selection rule itself — at each step, prefer the action with
 smallest acquisition reduction — is unchanged.
 
+## Empirical behaviour
+
+The algorithm has been exercised on a small benchmark suite around the
+Hartmann-6 test function. One scenario is included here to illustrate the typical
+behaviour with overlapping NChooseK constraints.
+
+### Scenario: tight overlapping NChooseK with reachable optimum
+
+- Hartmann-6 + 16 spurious features (22 inputs total).
+- NCK_1 over `{x_1..x_4, x_spurious_0..13}` with `max_count = 4`.
+- NCK_2 over `{x_3..x_6, x_spurious_2..15}` with `max_count = 4`.
+- Overlap zone covers `{x_3, x_4}` plus 12 spurious features.
+- Both NChooseK constraints are saturated at the Hartmann optimum
+  (4 reals per constraint, 0 spurious): every spurious activation
+  forces a real to be zeroed.
+- Three methods compared, 5 seeds each, `n_init = 20`, `n_iters = 100`:
+  - `random`: random sampling from the same domain (NChooseK enforced),
+  - `pruning`: SoboStrategy with the NChooseK pruning step,
+  - `no_nchoosek`: the same SoboStrategy with the NChooseK constraint
+    stripped — an unconstrained ceiling that ignores the cardinality
+    requirement.
+
+![C.4 convergence curves](figures/pruning_c4_convergence.png)
+
+The shaded bands are ±1 std across seeds; the solid line is the mean
+best-so-far.
+
+| method | final-best mean | final-best std |
+|--------|-----------------|----------------|
+| random | -0.52 | 0.09 |
+| no_nchoosek (cheating ceiling) | -3.30 | 0.053 |
+| **pruning** | **-3.32** | **0.0005** |
+
+Pruning closes the gap to the unconstrained baseline by iteration
+~90 despite the tight overlapping constraints and the 16 decoy
+features competing for the budget.
+
+These numbers are illustrative, not commitments: they come from a
+specific benchmark with a fixed surrogate
+(`EnsembleMapSaasSingleTaskGPSurrogate`) and budget; a user's domain
+may show different magnitudes.
+
 ## Future improvements
 
 These extensions are designed but not implemented. Each is self-contained
