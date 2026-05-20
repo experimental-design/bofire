@@ -17,6 +17,9 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - `plot_gp_slice_plotly` now supports fixed input features that can be a mix of `ContinuousInput` and `CategoricalInput` (with string categorical fixed values).
 - Configurable `noise_constraint` support for GP-based surrogates (`SingleTaskGP`, `MixedSingleTaskGP`, `TanimotoGP`, and `MultiTaskGP`) and corresponding linear/polynomial wrappers.
 - Generalized NChooseK constraint support in DoE: `min_count > 0` is now supported, non-zero lower bounds (`lb > 0`) are allowed for NChooseK features, overlapping NChooseK constraints (shared features) are handled via incremental pairwise merge with consistency filtering, and `nchoosek_constraints_as_bounds` generates deactivation patterns for all activity levels `k ∈ [min_count, max_count]`.
+- `PairwiseGPSurrogate`, a Gaussian process surrogate that learns a latent utility function from pairwise preference/comparison data, wrapping BoTorch's `PairwiseGP`.
+- `SmoothedBoxPrior` prior, and a concrete instantiable `Interval` prior constraint.
+- Optional `initial_value` on the `GreaterThan` prior constraint.
 
 ### Changed
 
