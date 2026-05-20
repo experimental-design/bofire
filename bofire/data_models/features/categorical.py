@@ -383,6 +383,7 @@ class CategoricalInput(Input):
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         assert isinstance(transform_type, CategoricalEncodingEnum)
         if transform_type == CategoricalEncodingEnum.ORDINAL:

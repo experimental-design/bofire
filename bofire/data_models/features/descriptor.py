@@ -164,6 +164,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
