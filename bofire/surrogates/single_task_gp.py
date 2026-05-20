@@ -45,9 +45,12 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         else:
             n_dim = tX.shape[-1]
 
+        noise_prior = priors.map(self.noise_prior)
         likelihood = GaussianLikelihood(
-            noise_prior=priors.map(self.noise_prior),
-            noise_constraint=priors.map(self.noise_constraint),
+            noise_prior=noise_prior,
+            noise_constraint=priors.map(
+                self.noise_constraint, initial_value=noise_prior.mode
+            ),
         )
 
         self.model = botorch.models.SingleTaskGP(

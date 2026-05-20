@@ -53,6 +53,21 @@ specs.add_invalid(
     message="The initial value must be within the bounds of the interval.",
 )
 
-specs.add_valid(priors.Positive, lambda: {})
-specs.add_valid(priors.GreaterThan, lambda: {"lower_bound": 42})
-specs.add_valid(priors.LessThan, lambda: {"upper_bound": 42})
+specs.add_valid(priors.Positive, lambda: {"initial_value": None})
+specs.add_valid(priors.GreaterThan, lambda: {"lower_bound": 42, "initial_value": None})
+specs.add_valid(priors.LessThan, lambda: {"upper_bound": 42, "initial_value": None})
+specs.add_valid(priors.GreaterThan, lambda: {"lower_bound": 1.0, "initial_value": 5.0})
+specs.add_valid(priors.LessThan, lambda: {"upper_bound": 10.0, "initial_value": 3.0})
+specs.add_valid(priors.Positive, lambda: {"initial_value": 1.5})
+specs.add_invalid(
+    priors.GreaterThan,
+    lambda: {"lower_bound": 5.0, "initial_value": 1.0},
+    error=ValueError,
+    message="The initial value must be greater than or equal to the lower bound.",
+)
+specs.add_invalid(
+    priors.LessThan,
+    lambda: {"upper_bound": 1.0, "initial_value": 5.0},
+    error=ValueError,
+    message="The initial value must be less than or equal to the upper bound.",
+)
