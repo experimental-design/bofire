@@ -30,4 +30,3 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 - Flaky tests in the test pipeline
 - Serialization tests now explicitly assert the expected `DeprecationWarning` for deprecated `FactorialStrategy` specs instead of treating it as an unhandled warning.
-- Added regression coverage for `Domain.model_validate_json(...)` with `tests/test_data/bad_objective_bounds.json` to ensure invalid objective bounds are rejected in JSON payloads.
