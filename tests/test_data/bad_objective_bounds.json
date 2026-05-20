@@ -1,0 +1,115 @@
+{
+  "type": "Domain",
+  "inputs": {
+    "type": "Inputs",
+    "features": [
+      {
+        "type": "ContinuousInput",
+        "key": "Input_1",
+        "unit": null,
+        "bounds": [
+          0.0,
+          0.2
+        ],
+        "local_relative_bounds": null,
+        "stepsize": null
+      },
+      {
+        "type": "ContinuousInput",
+        "key": "Input_2",
+        "unit": null,
+        "bounds": [
+          0.15,
+          0.35
+        ],
+        "local_relative_bounds": null,
+        "stepsize": null
+      },
+      {
+        "type": "ContinuousInput",
+        "key": "Input_3",
+        "unit": null,
+        "bounds": [
+          0.0,
+          0.19
+        ],
+        "local_relative_bounds": null,
+        "stepsize": null
+      },
+      {
+        "type": "ContinuousInput",
+        "key": "Input_4",
+        "unit": null,
+        "bounds": [
+          0.0,
+          0.34
+        ],
+        "local_relative_bounds": null,
+        "stepsize": null
+      },
+      {
+        "type": "ContinuousInput",
+        "key": "Input_5",
+        "unit": null,
+        "bounds": [
+          0.0,
+          0.4
+        ],
+        "local_relative_bounds": null,
+        "stepsize": null
+      },
+      {
+        "type": "ContinuousInput",
+        "key": "Input_6",
+        "unit": null,
+        "bounds": [
+          0.0,
+          0.38
+        ],
+        "local_relative_bounds": null,
+        "stepsize": null
+      }
+    ]
+  },
+  "outputs": {
+    "type": "Outputs",
+    "features": [
+      {
+        "type": "ContinuousOutput",
+        "key": "Output_1",
+        "unit": null,
+        "objective": {
+          "type": "MinimizeObjective",
+          "w": 1.0,
+          "bounds": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "type": "ContinuousOutput",
+        "key": "Output_2",
+        "unit": null,
+        "objective": {
+          "type": "MaximizeObjective",
+          "w": 1.0,
+          "bounds": [
+            0.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "type": "ContinuousOutput",
+        "key": "Output_3",
+        "unit": null,
+        "objective": null
+      }
+    ]
+  },
+  "constraints": {
+    "type": "Constraints",
+    "constraints": []
+  }
+}

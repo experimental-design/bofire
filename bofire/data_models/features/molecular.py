@@ -104,6 +104,7 @@ class CategoricalMolecularInput(CategoricalInput):
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         if isinstance(transform_type, CategoricalEncodingEnum):
             # we are just using the standard categorical transformations

@@ -91,6 +91,63 @@ def test_continuous_input_feature_get_bounds_local():
         feat.get_bounds(reference_value=0.3, values=pd.Series([0.1, 0.2], name="if2"))
 
 
+def test_continuous_input_is_semicontinuous():
+    # allow_zero=True with strictly positive lb → semi-continuous
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=True)
+    assert feat.is_semicontinuous
+
+    # allow_zero=False → not semi-continuous regardless of bounds.
+    # (allow_zero=True with lb=0 is forbidden by the pydantic validator,
+    # so the only "not semi-continuous" case for a non-degenerate
+    # feature is allow_zero=False.)
+    feat = ContinuousInput(key="x", bounds=(0.0, 1.0), allow_zero=False)
+    assert not feat.is_semicontinuous
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=False)
+    assert not feat.is_semicontinuous
+
+
+def test_continuous_input_feature_get_bounds_relax_allow_zero():
+    """`relax_allow_zero=True` exposes the convex-relaxation lower bound
+    (0) for semi-continuous features, both with and without a local
+    reference. Fixed features ignore the flag (they always report their
+    fixed value).
+    """
+    # Semi-continuous, no reference: lower drops from lb=0.2 to 0.
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=True)
+    lower, upper = feat.get_bounds()
+    assert np.isclose(lower[0], 0.2)
+    lower, upper = feat.get_bounds(relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.0)
+    assert np.isclose(upper[0], 1.0)
+
+    # Semi-continuous + local reference: the effective lower (0 under
+    # relaxation) clamps the local window's lower edge.
+    feat = ContinuousInput(
+        key="x",
+        bounds=(0.2, 1.0),
+        allow_zero=True,
+        local_relative_bounds=(0.3, 0.3),
+    )
+    # Without relaxation, local lower is max(0.3 - 0.3, 0.2) = 0.2.
+    lower, upper = feat.get_bounds(reference_value=0.3)
+    assert np.isclose(lower[0], 0.2)
+    # With relaxation, local lower is max(0.3 - 0.3, 0.0) = 0.0.
+    lower, upper = feat.get_bounds(reference_value=0.3, relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.0)
+
+    # Non-semi-continuous (allow_zero=False): flag is a no-op.
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=False)
+    lower, upper = feat.get_bounds(relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.2)
+
+    # Fixed feature ignores the flag (allow_zero is incompatible with a
+    # positively-fixed feature; use allow_zero=False here).
+    feat = ContinuousInput(key="x", bounds=(0.5, 0.5), allow_zero=False)
+    lower, upper = feat.get_bounds(relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.5)
+    assert np.isclose(upper[0], 0.5)
+
+
 @pytest.mark.parametrize(
     "input_feature, values, strict",
     [

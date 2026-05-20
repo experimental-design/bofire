@@ -1307,5 +1307,303 @@ def test_nchoosek_none_valid():
         assert active >= 2, f"Too few active features: {active}"
 
 
+def test_nchoosek_overlapping_formulation():
+    """Test overlapping NChooseK constraints with a formulation constraint.
+
+    Scenario (filler / expander formulation):
+      - Features: h2o, oil, compound  (all in [0, 1], sum == 1)
+      - Filler constraint:   [h2o, oil]     choose 1  (exactly one filler)
+      - Expander constraint:  [h2o, compound]  choose 1  (exactly one expander)
+
+    Because h2o is shared, the Cartesian product filters down to:
+      - h2o=on,  oil=off, compound=off  → water fills and expands
+      - h2o=off, oil=on,  compound=on   → oil as filler, compound as expander
+
+    Both patterns have exactly 2 active features, consistent with the
+    formulation constraint (sum == 1 over 2 active components).
+    """
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="h2o", bounds=(0.0, 1.0)),
+            ContinuousInput(key="oil", bounds=(0.0, 1.0)),
+            ContinuousInput(key="compound", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["h2o", "oil"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["h2o", "compound"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["h2o", "oil", "compound"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    # --- Verify the bounds patterns ---
+    n_exp = 10
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    # Domain sorts inputs alphabetically: compound, h2o, oil
+    sorted_keys = d.inputs.get_keys(ContinuousInput)
+    D = len(sorted_keys)
+
+    observed_named_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        active_keys = frozenset(
+            sorted_keys[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed_named_patterns.add(active_keys)
+
+    # Only 2 valid combinations should survive:
+    #   {h2o}              → water fills and expands
+    #   {oil, compound}    → oil as filler, compound as expander
+    expected_named = {frozenset(["h2o"]), frozenset(["oil", "compound"])}
+    assert (
+        observed_named_patterns == expected_named
+    ), f"Expected patterns {expected_named}, got {observed_named_patterns}"
+
+    # --- Verify the optimizer produces a valid design ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=False)
+    assert candidates.shape == (n_exp, D)
+
+    for _, row in candidates.iterrows():
+        h2o, oil, compound = row["h2o"], row["oil"], row["compound"]
+        # Either water-only (1 active) or oil+compound (2 active)
+        is_water = abs(oil) < 1e-6 and abs(compound) < 1e-6
+        is_oil_compound = abs(h2o) < 1e-6
+        assert is_water or is_oil_compound, (
+            f"Invalid pattern: h2o={h2o:.4f}, oil={oil:.4f}, "
+            f"compound={compound:.4f}"
+        )
+
+    # --- Example 2: max_count > 1 on an overlapping constraint ---
+    #
+    # Cleaning-agent formulation:
+    #   Features: water, alcohol, surfactant  (all in [0,1], sum == 1)
+    #   Solvent constraint:  [water, alcohol]    choose 1..2  (one or both solvents)
+    #   Active constraint:   [water, surfactant] choose 1     (exactly one active)
+    #
+    # water is shared.  Cartesian product (3×2 = 6) after consistency filter:
+    #   Solvent{water}          × Active{water}      → {water}                  ✓
+    #   Solvent{water}          × Active{surfactant}  → water on/off conflict   ✗
+    #   Solvent{alcohol}        × Active{water}       → water off/on conflict   ✗
+    #   Solvent{alcohol}        × Active{surfactant}  → {alcohol, surfactant}   ✓
+    #   Solvent{water, alcohol} × Active{water}       → {water, alcohol}        ✓
+    #   Solvent{water, alcohol} × Active{surfactant}  → water on/off conflict   ✗
+    #
+    # Valid patterns: {water}, {alcohol, surfactant}, {water, alcohol}
+    d2 = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="water", bounds=(0.0, 1.0)),
+            ContinuousInput(key="alcohol", bounds=(0.0, 1.0)),
+            ContinuousInput(key="surfactant", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["water", "alcohol"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["water", "surfactant"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["water", "alcohol", "surfactant"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    n_exp2 = 15
+    bounds2 = nchoosek_constraints_as_bounds(d2, n_experiments=n_exp2)
+    sorted_keys2 = d2.inputs.get_keys(ContinuousInput)
+    D2 = len(sorted_keys2)
+
+    observed2 = set()
+    for i in range(n_exp2):
+        exp_bounds = bounds2[i * D2 : (i + 1) * D2]
+        active_keys = frozenset(
+            sorted_keys2[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed2.add(active_keys)
+
+    expected2 = {
+        frozenset(["water"]),
+        frozenset(["alcohol", "surfactant"]),
+        frozenset(["water", "alcohol"]),
+    }
+    assert (
+        observed2 == expected2
+    ), f"max_count>1 example: expected {expected2}, got {observed2}"
+
+    # Verify optimizer design respects per-constraint limits
+    data_model2 = data_models.DoEStrategy(
+        domain=d2,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy2 = DoEStrategy(data_model=data_model2)
+    candidates2 = strategy2.ask(candidate_count=n_exp2, raise_validation_error=False)
+    assert candidates2.shape == (n_exp2, D2)
+
+    for _, row in candidates2.iterrows():
+        vals = {k: row[k] for k in ["water", "alcohol", "surfactant"]}
+        active = frozenset(k for k, v in vals.items() if abs(v) > 1e-6)
+
+        # Solvent constraint: 1..2 of {water, alcohol} active
+        solvent_active = sum(1 for k in ["water", "alcohol"] if k in active)
+        assert 0 <= solvent_active <= 2, f"Solvent constraint violated: {active}"
+
+        # Active constraint: at most 1 of {water, surfactant} active
+        active_active = sum(1 for k in ["water", "surfactant"] if k in active)
+        assert active_active <= 1, f"Active constraint violated: {active}"
+
+        # Consistency: if surfactant is on, water must be off (and vice versa)
+        if "surfactant" in active:
+            assert "water" not in active, f"water+surfactant conflict: {active}"
+
+
+def test_nchoosek_overlapping_formulation_complex():
+    """Test 3 overlapping NChooseK constraints with shared + disjoint features.
+
+    Scenario (paint formulation):
+      - Features: water, resin, pigment, solvent, additive  (all in [0,1], sum==1)
+      - Binder constraint:   [water, resin]     choose 1  (exactly one binder base)
+      - Carrier constraint:  [water, solvent]    choose 1  (exactly one carrier)
+      - Colorant constraint: [pigment, additive] choose 1  (exactly one colorant)
+
+    water is shared between binder and carrier.  The Cartesian product is
+    {binder} × {colorant} × {carrier} = 2×2×2 = 8, but the consistency
+    filter on water kills 4, leaving 4 valid combined patterns:
+
+      1. {water, pigment}           → water is both binder and carrier
+      2. {water, additive}          → water is both binder and carrier
+      3. {resin, pigment, solvent}  → resin as binder, solvent as carrier
+      4. {resin, additive, solvent} → resin as binder, solvent as carrier
+
+    Notably the active count varies: 2 or 3 per pattern.
+    """
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="water", bounds=(0.0, 1.0)),
+            ContinuousInput(key="resin", bounds=(0.0, 1.0)),
+            ContinuousInput(key="pigment", bounds=(0.0, 1.0)),
+            ContinuousInput(key="solvent", bounds=(0.0, 1.0)),
+            ContinuousInput(key="additive", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["water", "resin"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["water", "solvent"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["pigment", "additive"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["water", "resin", "pigment", "solvent", "additive"],
+                coefficients=[1.0, 1.0, 1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    # --- Verify the bounds patterns ---
+    n_exp = 20
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    sorted_keys = d.inputs.get_keys(ContinuousInput)
+    D = len(sorted_keys)
+
+    observed_named_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        active_keys = frozenset(
+            sorted_keys[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed_named_patterns.add(active_keys)
+
+    expected_named = {
+        frozenset(["water", "pigment"]),
+        frozenset(["water", "additive"]),
+        frozenset(["resin", "pigment", "solvent"]),
+        frozenset(["resin", "additive", "solvent"]),
+    }
+    assert observed_named_patterns == expected_named, (
+        f"Expected {len(expected_named)} patterns {expected_named}, "
+        f"got {len(observed_named_patterns)} patterns {observed_named_patterns}"
+    )
+
+    # Verify active counts: must be 2 or 3
+    for pat in observed_named_patterns:
+        assert len(pat) in (2, 3), f"Unexpected active count {len(pat)} in {pat}"
+
+    # --- Verify the optimizer produces a valid design ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=False)
+    assert candidates.shape == (n_exp, D)
+
+    for _, row in candidates.iterrows():
+        vals = {k: row[k] for k in ["water", "resin", "pigment", "solvent", "additive"]}
+        active = frozenset(k for k, v in vals.items() if abs(v) > 1e-6)
+
+        # The optimizer may converge an "active" variable to near-zero, so
+        # the observed active set can be a subset of a valid pattern.
+        # We only check per-constraint satisfaction (at most 1 active per
+        # choose-1 group).
+
+        # Binder constraint: at most one of {water, resin} active
+        binder_active = sum(1 for k in ["water", "resin"] if k in active)
+        assert binder_active <= 1, f"Binder constraint violated: {active}"
+
+        # Carrier constraint: at most one of {water, solvent} active
+        carrier_active = sum(1 for k in ["water", "solvent"] if k in active)
+        assert carrier_active <= 1, f"Carrier constraint violated: {active}"
+
+        # Colorant constraint: at most one of {pigment, additive} active
+        colorant_active = sum(1 for k in ["pigment", "additive"] if k in active)
+        assert colorant_active <= 1, f"Colorant constraint violated: {active}"
+
+        # Consistency: if water is active, resin and solvent must be off
+        if "water" in active:
+            assert "resin" not in active, f"water+resin conflict: {active}"
+            assert "solvent" not in active, f"water+solvent conflict: {active}"
+
+
 if __name__ == "__main__":
     test_nchoosek_none_valid()

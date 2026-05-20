@@ -171,6 +171,7 @@ class DiscreteInput(NumericalInput):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
         reference_value: Optional[float] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         assert transform_type is None
         if values is None:

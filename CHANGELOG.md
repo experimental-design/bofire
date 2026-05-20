@@ -16,7 +16,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - `WeightedMeanFeature` and `MolecularWeightedMeanFeature` engineered features for weighted-mean behavior.
 - `plot_gp_slice_plotly` now supports fixed input features that can be a mix of `ContinuousInput` and `CategoricalInput` (with string categorical fixed values).
 - Configurable `noise_constraint` support for GP-based surrogates (`SingleTaskGP`, `MixedSingleTaskGP`, `TanimotoGP`, and `MultiTaskGP`) and corresponding linear/polynomial wrappers.
-- Generalized NChooseK constraint support in DoE: `min_count > 0` is now supported, non-zero lower bounds (`lb > 0`) are allowed for NChooseK features, and `nchoosek_constraints_as_bounds` generates deactivation patterns for all activity levels `k ∈ [min_count, max_count]`. When `min_count=0`, the all-zero (fully inactive) pattern is now included naturally. `none_also_valid=True` with `min_count > 0` explicitly adds the all-zero pattern.
+- Generalized NChooseK constraint support in DoE: `min_count > 0` is now supported, non-zero lower bounds (`lb > 0`) are allowed for NChooseK features, overlapping NChooseK constraints (shared features) are handled via incremental pairwise merge with consistency filtering, and `nchoosek_constraints_as_bounds` generates deactivation patterns for all activity levels `k ∈ [min_count, max_count]`.
 
 ### Changed
 
@@ -24,7 +24,10 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Entmoot >=2.1.1
 - Static type checking was migrated from `pyright` to `ty`.
 - Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
+- Objective bounds validation for `IdentityObjective`-based objectives is now strict (`lower < upper`) to prevent degenerate normalization ranges.
 
 ### Fixed
 
 - Flaky tests in the test pipeline
+- Serialization tests now explicitly assert the expected `DeprecationWarning` for deprecated `FactorialStrategy` specs instead of treating it as an unhandled warning.
+- Added regression coverage for `Domain.model_validate_json(...)` with `tests/test_data/bad_objective_bounds.json` to ensure invalid objective bounds are rejected in JSON payloads.

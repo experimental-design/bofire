@@ -8,6 +8,7 @@ from typing import Dict, List, Optional, Tuple, cast
 import numpy as np
 import pandas as pd
 import torch
+from botorch.exceptions.errors import InfeasibilityError
 from botorch.optim.initializers import sample_q_batches_from_polytope
 from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
 from pydantic.types import PositiveInt
@@ -185,16 +186,33 @@ class RandomStrategy(Strategy):
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
                     feat.bounds = [0.0, 0.0]
-                samples.append(
-                    self._sample_from_polytope(
-                        domain=domain,
-                        fallback_sampling_method=self.fallback_sampling_method,
-                        n_burnin=self.n_burnin,
-                        n_thinning=self.n_thinning,
-                        seed=self._get_seed(),
-                        n=count * sampling_multiplier,
-                        sampler_kwargs=self.sampler_kwargs,
-                    ),
+                try:
+                    samples.append(
+                        self._sample_from_polytope(
+                            domain=domain,
+                            fallback_sampling_method=self.fallback_sampling_method,
+                            n_burnin=self.n_burnin,
+                            n_thinning=self.n_thinning,
+                            seed=self._get_seed(),
+                            n=count * sampling_multiplier,
+                            sampler_kwargs=self.sampler_kwargs,
+                        ),
+                    )
+                except InfeasibilityError:
+                    # The chosen subset, after pinning all other zeroable
+                    # features to zero, makes the reduced polytope
+                    # infeasible against the domain's linear constraints
+                    # (e.g. a mixture-sum equality that no subset of the
+                    # active features can satisfy). The polytope sampler's
+                    # interior-point solver is the authoritative
+                    # feasibility check; drop the combination and continue.
+                    continue
+            if not samples:
+                raise ValueError(
+                    "All sampled NChooseK subsets produced infeasible "
+                    "polytopes. Check the interaction between NChooseK and "
+                    "linear constraints (e.g. a mixture sum=1 forbids the "
+                    "empty subset)."
                 )
             samples = pd.concat(samples, axis=0, ignore_index=True)
             return samples.sample(
@@ -273,13 +291,14 @@ class RandomStrategy(Strategy):
                 for features, ks, weights in groups:
                     k = rng.choices(ks, weights=weights, k=1)[0]
                     active.update(rng.sample(features, k))
-                if all(
+                if not all(
                     (con.none_also_valid and len(active & fset) == 0)
                     or con.min_count <= len(active & fset) <= con.max_count
                     for con, fset in zip(nchoosek_cons, con_feature_sets)
                 ):
-                    results.append(tuple(sorted(active)))
-                    break
+                    continue
+                results.append(tuple(sorted(active)))
+                break
             else:
                 raise ValueError(
                     f"Failed to sample a valid NChooseK combination after "
