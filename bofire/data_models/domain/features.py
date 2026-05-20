@@ -511,6 +511,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         exclude: Union[
             Type, List[Type]
         ] = None,  # ty: ignore[invalid-parameter-default]
+        include_semicontinuous: bool = True,
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -521,6 +522,13 @@ class Inputs(_BaseFeatures[AnyInput]):
             include (Feature, optional): Features to be included. Defaults to Input.
             exclude (Feature, optional): Features to be excluded, e.g. subclasses
                 of the included features. Defaults to None.
+            include_semicontinuous (bool, optional): When True (default), each
+                semi-continuous feature (`ContinuousInput` with `allow_zero=True`
+                and a positive lower bound, un-fixed) contributes a factor of 2
+                for its on/off enumeration. When False, semi-continuous features
+                are excluded from the count -- useful when the caller handles
+                them via a post-optimisation pruning step rather than by
+                AF-time enumeration.
         Returns:
             int: Returns the number of unique combinations of discrete and categorical
                 features.
@@ -540,14 +548,16 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         num_discretes = [len(d.values) for d in discretes]
 
-        conditional_conts = [
-            f
-            for f in self.get(includes=include, excludes=exclude)
-            if (isinstance(f, ContinuousInput) and f.allow_zero and not f.is_fixed())
-        ]
-
-        # each conditional feature may be 'active' or 'inactive'
-        num_conditional_conts = [2 for _ in conditional_conts]
+        if include_semicontinuous:
+            conditional_conts = [
+                f
+                for f in self.get(includes=include, excludes=exclude)
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
+            ]
+            # each conditional feature may be 'active' or 'inactive'
+            num_conditional_conts = [2 for _ in conditional_conts]
+        else:
+            num_conditional_conts = []
 
         num_values = num_cats + num_discretes + num_conditional_conts
 
@@ -595,7 +605,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         conditional_conts = [
             f
             for f in self.get(includes=include, excludes=exclude)
-            if (isinstance(f, ContinuousInput) and f.allow_zero and not f.is_fixed())
+            if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
         ]
 
         conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]
@@ -825,6 +835,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
         reference_experiment: Optional[pd.Series] = None,
+        relax_allow_zero: bool = False,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
@@ -839,6 +850,9 @@ class Inputs(_BaseFeatures[AnyInput]):
             then the local bounds based on a local search region are provided as reference to the
                 reference experiment. Currently only supported for continuous inputs.
                 For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
+            relax_allow_zero (bool, optional): If True, semi-continuous continuous inputs
+                (`allow_zero=True` with positive lower bound) report a relaxed lower bound of 0.
+                Other input types ignore this flag. Defaults to False.
 
         Raises:
             ValueError: If a feature type is not known.
@@ -868,6 +882,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     if reference_experiment is not None
                     else None
                 ),
+                relax_allow_zero=relax_allow_zero,
             )
             lower += lo
             upper += up
