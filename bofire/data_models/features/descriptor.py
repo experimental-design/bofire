@@ -29,6 +29,9 @@ class ContinuousDescriptorInput(ContinuousInput):
     descriptors: Descriptors
     values: DiscreteVals
 
+    def _extra_description_parts(self) -> List[str]:
+        return [f"descriptors: {dict(zip(self.descriptors, self.values))}"]
+
     @model_validator(mode="after")
     def validate_list_lengths(self):
         """Compares the length of the defined descriptors list with the provided values
@@ -82,6 +85,16 @@ class CategoricalDescriptorInput(CategoricalInput):
         List[List[float]],
         Field(min_length=1),
     ]
+
+    def _description_prefix(self) -> str:
+        return f"Categorical with descriptors, allowed: {self.get_allowed_categories()}"
+
+    def _extra_description_parts(self) -> List[str]:
+        mapping = {
+            cat: dict(zip(self.descriptors, vals))
+            for cat, vals in zip(self.categories, self.values)
+        }
+        return [f"descriptors per category: {mapping}"]
 
     @field_validator("values")
     @classmethod

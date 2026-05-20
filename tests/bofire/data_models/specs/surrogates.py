@@ -5,11 +5,11 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
     SumFeature,
-    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
@@ -64,6 +64,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
@@ -188,6 +189,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "hyperconfig": None,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
@@ -391,6 +393,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ORDINAL},
         "categorical_encodings": {"cat1": CategoricalEncodingEnum.ORDINAL},
         "dump": None,
@@ -420,6 +423,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
@@ -463,51 +467,48 @@ specs.add_invalid(
     message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
 )
 
-(
-    specs.add_invalid(
-        models.MixedSingleTaskGPSurrogate,
-        lambda: {
-            "inputs": Inputs(
-                features=[
-                    ContinuousInput(key="x_cont", bounds=[0, 1]),
-                    CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-                ],
-            ).model_dump(),
-            "outputs": Outputs(
-                features=[
-                    features.valid(ContinuousOutput).obj(),
-                ],
-            ).model_dump(),
-            "continuous_kernel": MaternKernel(nu=2.5, features=["x_cat"]).model_dump(),
-        },
-        error=ValueError,
-        message="The features defined in",
-    ),
+specs.add_invalid(
+    models.MixedSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="x_cont", bounds=[0, 1]),
+                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "continuous_kernel": MaternKernel(nu=2.5, features=["x_cat"]).model_dump(),
+    },
+    error=ValueError,
+    message="The features defined in",
 )
 
-(
-    specs.add_invalid(
-        models.MixedSingleTaskGPSurrogate,
-        lambda: {
-            "inputs": Inputs(
-                features=[
-                    ContinuousInput(key="x_cont", bounds=[0, 1]),
-                    CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-                ],
-            ).model_dump(),
-            "outputs": Outputs(
-                features=[
-                    features.valid(ContinuousOutput).obj(),
-                ],
-            ).model_dump(),
-            "categorical_kernel": HammingDistanceKernel(
-                ard=True, features=["x_cont"]
-            ).model_dump(),
-        },
-        error=ValueError,
-        message="The features defined in the categorical",
-    ),
+specs.add_invalid(
+    models.MixedSingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="x_cont", bounds=[0, 1]),
+                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(
+            ard=True, features=["x_cont"]
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="The features defined in the categorical",
 )
+
 
 specs.add_valid(
     models.RandomForestSurrogate,
@@ -701,6 +702,7 @@ specs.add_valid(
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
         "categorical_encodings": {
             "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
@@ -853,7 +855,7 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])],
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
@@ -870,6 +872,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,
@@ -889,7 +892,7 @@ specs.add_invalid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])],
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
@@ -905,6 +908,7 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ONE_HOT,
@@ -938,6 +942,7 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,
@@ -956,7 +961,7 @@ specs.add_invalid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])],
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
@@ -972,6 +977,7 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,

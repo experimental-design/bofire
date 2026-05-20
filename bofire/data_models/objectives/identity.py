@@ -81,6 +81,9 @@ class MaximizeObjective(IdentityObjective):
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
 
+    def to_description(self) -> str:
+        return "Maximize"
+
 
 class MinimizeObjective(IdentityObjective):
     """Class returning the negative identity as reward.
@@ -92,6 +95,9 @@ class MinimizeObjective(IdentityObjective):
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
+
+    def to_description(self) -> str:
+        return "Minimize"
 
     def __call__(
         self,

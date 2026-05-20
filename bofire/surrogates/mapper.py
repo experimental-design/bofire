@@ -67,6 +67,7 @@ def map_MixedSingleTaskGPSurrogate(
         scaler=data_model.scaler,
         output_scaler=data_model.output_scaler,
         noise_prior=data_model.noise_prior,
+        noise_constraint=data_model.noise_constraint,
         hyperconfig=None,
         kernel=kernel,
     )

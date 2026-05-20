@@ -23,7 +23,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     Feature,
 )
-from bofire.data_models.objectives.api import TargetObjective
+from bofire.data_models.objectives.api import MaximizeObjective, TargetObjective
 from bofire.utils.subdomain import get_subdomain
 
 
@@ -74,6 +74,27 @@ def constraint_list(input_list):
             rhs=11,
         ),
     ]
+
+
+def test_domain_accepts_single_feature_and_constraint():
+    """Single Input/Output/Constraint instances should be wrapped into containers."""
+    input_a = ContinuousInput(key="x1", bounds=(0, 1))
+    input_b = ContinuousInput(key="x2", bounds=(0, 1))
+    single_output = ContinuousOutput(key="y", objective=obj)
+    single_constraint = LinearEqualityConstraint(
+        features=["x1", "x2"], coefficients=[1.0, 1.0], rhs=0.5
+    )
+    domain_single_output = Domain(
+        inputs=[input_a, input_b],
+        outputs=single_output,
+        constraints=single_constraint,
+    )
+    assert domain_single_output.outputs == Outputs(features=[single_output])
+    assert domain_single_output.constraints == Constraints(
+        constraints=[single_constraint]
+    )
+    domain_single_input = Domain(inputs=input_a)
+    assert domain_single_input.inputs == Inputs(features=[input_a])
 
 
 def test_from_lists(input_list, output_list, constraint_list):
@@ -485,4 +506,46 @@ def test_is_fulfilled():
     assert_series_equal(
         domain.is_fulfilled(experiments),
         pd.Series([True, False, False], index=experiments.index),
+    )
+
+
+def test_domain_to_description():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    assert domain.to_description() == "\n## Objectives\n- y: Maximize"
+
+
+def test_domain_to_description_with_context():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    domain.context = "Optimizing a reaction"
+    assert domain.to_description() == (
+        "## Problem Context\nOptimizing a reaction\n\n## Objectives\n- y: Maximize"
+    )
+
+
+def test_domain_to_description_with_constraints():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=[1.0, 1.0],
+                rhs=1.5,
+                context="Budget constraint",
+            )
+        ],
+    )
+    assert domain.to_description() == (
+        "\n## Objectives\n- y: Maximize\n"
+        "\n## Constraints (candidates MUST satisfy all of these)\n"
+        "- 1.0*x1 + 1.0*x2 <= 1.5 — Budget constraint"
     )

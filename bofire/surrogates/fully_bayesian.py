@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import numpy as np
 import pandas as pd
 import torch
-from botorch import fit_fully_bayesian_model_nuts
+from botorch.fit import fit_fully_bayesian_model_nuts
 from botorch.models.fully_bayesian import (
     FullyBayesianLinearSingleTaskGP,
     FullyBayesianSingleTaskGP,

@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -28,7 +28,7 @@ metrics2objectives = {
 
 
 class Hyperconfig(BaseModel):
-    type: str
+    type: Any
     hyperstrategy: Literal[
         "RandomStrategy", "FractionalFactorialStrategy", "SoboStrategy"
     ]

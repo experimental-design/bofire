@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Type, Union
+from typing import List, Type
 
 from pydantic import field_validator
 
@@ -33,6 +33,7 @@ from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import tagged_union
 
 
 _BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
@@ -54,7 +55,7 @@ _BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
     EnsembleMapSaasSingleTaskGPSurrogate,
 ]
 
-AnyBotorchSurrogate = Union[tuple(_BOTORCH_SURROGATE_TYPES)]
+AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
 
 
 def register_botorch_surrogate(
@@ -63,8 +64,8 @@ def register_botorch_surrogate(
     """Register a custom BotorchSurrogate type so it is accepted by BotorchSurrogates.
 
     This appends the type to the internal registry, rebuilds the
-    ``AnyBotorchSurrogate`` union, and calls ``model_rebuild`` on
-    ``BotorchSurrogates`` so that Pydantic picks up the new type.
+    ``AnyBotorchSurrogate`` discriminated union, and calls ``model_rebuild``
+    on ``BotorchSurrogates`` so that Pydantic picks up the new type.
 
     Args:
         data_model_cls: A concrete subclass of ``BotorchSurrogate``.
@@ -73,7 +74,7 @@ def register_botorch_surrogate(
     if data_model_cls in _BOTORCH_SURROGATE_TYPES:
         return
     _BOTORCH_SURROGATE_TYPES.append(data_model_cls)
-    AnyBotorchSurrogate = Union[tuple(_BOTORCH_SURROGATE_TYPES)]
+    AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
     new_annotation = List[AnyBotorchSurrogate]
     BotorchSurrogates.__annotations__["surrogates"] = new_annotation
     BotorchSurrogates.model_fields["surrogates"].annotation = new_annotation

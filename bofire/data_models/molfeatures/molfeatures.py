@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Any, List, Literal, Optional, Union
 
 import pandas as pd
 from pydantic import Field, PrivateAttr, field_validator
@@ -17,7 +17,7 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
 class MolFeatures(BaseModel):
     """Base class for all molecular features"""
 
-    type: str
+    type: Any
     filter_descriptors: bool = True
     correlation_cutoff: float = 0.95
     _descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = PrivateAttr(

@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.kernels.api import AnyKernel, Kernel
+from bofire.data_models.llm.api import AnyLLMProvider, LLMProvider
 from bofire.data_models.molfeatures.api import AnyMolFeatures, MolFeatures
 from bofire.data_models.objectives.api import AnyObjective, Objective
 from bofire.data_models.outlier_detection.api import (

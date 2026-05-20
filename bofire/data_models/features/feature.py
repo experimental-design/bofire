@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -18,6 +19,7 @@ class Feature(BaseModel):
     type: Any
     key: str
     order_id: ClassVar[int] = -1
+    context: Optional[str] = None
 
     def __lt__(self, other) -> bool:
         """Method to compare two models to get them in the desired order.
@@ -39,6 +41,14 @@ class Feature(BaseModel):
 
 class Input(Feature):
     """Base class for all input features."""
+
+    @abstractmethod
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(type, FieldInfo)`` for use in a dynamically created Pydantic model.
+
+        Each subclass must implement this to provide appropriate type constraints
+        (e.g., ``ge``/``le`` bounds for continuous, ``Literal`` for categorical).
+        """
 
     @staticmethod
     @abstractmethod
@@ -151,6 +161,10 @@ class Output(Feature):
         key(str): Key of the Feature.
 
     """
+
+    @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this output feature."""
 
     @abstractmethod
     def __call__(self, values: pd.Series) -> pd.Series:

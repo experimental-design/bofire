@@ -4,6 +4,7 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 import numpy as np
 import pandas as pd
 from pydantic import Field, PositiveFloat, model_validator
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
@@ -44,6 +45,40 @@ class ContinuousInput(NumericalInput):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
+    def _description_prefix(self) -> str:
+        """Leading description string identifying this feature kind."""
+        return f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"
+
+    def _extra_description_parts(self) -> List[str]:
+        """Optional extras appended after the prefix, before context."""
+        return []
+
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(float, Field(ge=..., le=..., description=...))```.
+
+        Subclasses customize the output by overriding ``_description_prefix``
+        and/or ``_extra_description_parts``.
+
+        Example::
+
+            >>> feat = ContinuousInput(key="temp", bounds=(20.0, 200.0), context="Temperature in C")
+            >>> field_type, field_info = feat.to_pydantic_field()
+            >>> # field_type = float
+            >>> # field_info has ge=20.0, le=200.0
+            >>> # description = "Continuous, bounds [20.0, 200.0] — Temperature in C"
+        """
+        desc_parts = [self._description_prefix(), *self._extra_description_parts()]
+        lower = self.bounds[0]
+        if self.allow_zero:
+            lower = min(0.0, lower)
+            desc_parts.append("can also be 0 (inactive)")
+        if self.context:
+            desc_parts.append(self.context)
+        return (
+            float,
+            Field(ge=lower, le=self.bounds[1], description=" — ".join(desc_parts)),
+        )
+
     @model_validator(mode="after")
     def validate_step_size(self):
         if self.stepsize is None:
@@ -67,6 +102,11 @@ class ContinuousInput(NumericalInput):
         if not self.allow_zero:
             return self
         lower, upper = self.bounds
+        # When both bounds are exactly zero the feature is pinned to zero
+        # (e.g. by NChooseK deactivation), which is always valid regardless
+        # of allow_zero.
+        if lower == 0.0 and upper == 0.0:
+            return self
         if lower <= 0.0 <= upper:
             raise ValueError(
                 "If `allow_zero==True`, then zero must not lie within the bounds."
@@ -236,6 +276,22 @@ class ContinuousOutput(Output):
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0),
     )
+
+    def to_description(self) -> str:
+        """Return a human-readable description combining objective and context.
+
+        Example::
+
+            >>> feat = ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0), context="Target >90%")
+            >>> feat.to_description()
+            'yield: Maximize — Target >90%'
+        """
+        parts = [self.key]
+        if self.objective is not None:
+            parts.append(self.objective.to_description())
+        if self.context:
+            parts.append(self.context)
+        return ": ".join(parts[:2]) + (" — " + parts[2] if len(parts) > 2 else "")
 
     def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:

@@ -10,8 +10,8 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalMolecularInput,
+    CategoricalTaskInput,
     ContinuousOutput,
-    TaskInput,
 )
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
 from bofire.data_models.molfeatures.api import Fingerprints
@@ -21,6 +21,7 @@ from bofire.data_models.priors.api import (
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     AnyPrior,
+    AnyPriorConstraint,
 )
 from bofire.data_models.priors.lkj import LKJPrior
 from bofire.data_models.surrogates.trainable import Hyperconfig
@@ -96,6 +97,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    noise_constraint: Optional[AnyPriorConstraint] = None
     task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig(),
@@ -109,7 +111,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
             CategoricalMolecularInput: Fingerprints(),
             CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
-            TaskInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
         }
 
     @classmethod
@@ -124,9 +126,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
 
     @model_validator(mode="after")
     def validate_task_inputs(self):
-        if len(self.inputs.get_keys(TaskInput)) != 1:
+        if len(self.inputs.get_keys(CategoricalTaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
-        task_feature = self.inputs.get(TaskInput)[0]
+        task_feature = self.inputs.get(CategoricalTaskInput)[0]
         if (
             not self.categorical_encodings[task_feature.key]
             == CategoricalEncodingEnum.ORDINAL
@@ -143,10 +145,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         if "inputs" not in info.data:
             return v
 
-        if len(info.data["inputs"].get_keys(TaskInput)) == 0:
+        if len(info.data["inputs"].get_keys(CategoricalTaskInput)) == 0:
             return v
 
-        task_feature_id = info.data["inputs"].get_keys(TaskInput)[0]
+        task_feature_id = info.data["inputs"].get_keys(CategoricalTaskInput)[0]
         if v.get(task_feature_id) is None:
             v[task_feature_id] = CategoricalEncodingEnum.ORDINAL
         elif v[task_feature_id] != CategoricalEncodingEnum.ORDINAL:
