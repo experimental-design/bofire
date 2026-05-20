@@ -21,8 +21,6 @@ from botorch.acquisition.objective import GenericMCObjective, IdentityMCObjectiv
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.api import Branin
-from bofire.data_models.priors.api import GammaPrior
-from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
@@ -46,9 +44,11 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
+from bofire.data_models.priors.api import GammaPrior
 from bofire.data_models.strategies.api import BotorchOptimizer
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
+from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
 from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
 
@@ -415,19 +415,19 @@ def test_noise_prior_affects_sobo_predictions():
     m_large = strategy_large_noise.surrogates.surrogates[0].model
 
     def _get_noise_prior(model):
-        return {
-            n: p for n, _, p, _, _ in model.likelihood.named_priors()
-        }.get("noise_covar.noise_prior")
+        return {n: p for n, _, p, _, _ in model.likelihood.named_priors()}.get(
+            "noise_covar.noise_prior"
+        )
 
     # 1. Structural check: the correct prior class must be registered in the fitted
     #    GP model.  Before the fix both strategies would show GammaPrior(1.1, 0.05)
     #    (the BoTorch default) regardless of what was specified.
-    assert isinstance(_get_noise_prior(m_default), gpytorch.priors.LogNormalPrior), (
-        "Default strategy should register the HVARFNER LogNormal prior"
-    )
-    assert isinstance(_get_noise_prior(m_large), gpytorch.priors.GammaPrior), (
-        "Large-noise strategy should register the specified GammaPrior"
-    )
+    assert isinstance(
+        _get_noise_prior(m_default), gpytorch.priors.LogNormalPrior
+    ), "Default strategy should register the HVARFNER LogNormal prior"
+    assert isinstance(
+        _get_noise_prior(m_large), gpytorch.priors.GammaPrior
+    ), "Large-noise strategy should register the specified GammaPrior"
 
     # 2. Directional behavioural check: HVARFNER (mode ≈ 0.007) pulls the fitted noise
     #    below the MLL optimum (~0.5) while GammaPrior (mode = 100) pulls it above,
