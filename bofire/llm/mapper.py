@@ -12,6 +12,7 @@ import bofire.data_models.llm.api as data_models
 from bofire.data_models.llm.provider import (
     AnthropicFoundryLLMProvider,
     AnthropicLLMProvider,
+    AzureOpenAILLMProvider,
     LLMProvider,
     OpenAICompatibleLLMProvider,
     OpenAILLMProvider,
@@ -111,6 +112,21 @@ def map_openai(data_model: OpenAILLMProvider):
         kwargs["organization"] = data_model.organization
 
     client = AsyncOpenAI(**kwargs)
+    provider = OpenAIProvider(openai_client=client)
+    return OpenAIModel(data_model.model, provider=provider)
+
+
+@register(AzureOpenAILLMProvider)
+def map_azure_openai(data_model: AzureOpenAILLMProvider):
+    from openai import AsyncAzureOpenAI
+    from pydantic_ai.models.openai import OpenAIModel
+    from pydantic_ai.providers.openai import OpenAIProvider
+
+    client = AsyncAzureOpenAI(
+        api_key=_resolve_env_var(data_model.api_key_env_var),
+        azure_endpoint=_resolve_env_var(data_model.azure_endpoint_env_var),
+        api_version=data_model.api_version,
+    )
     provider = OpenAIProvider(openai_client=client)
     return OpenAIModel(data_model.model, provider=provider)
 

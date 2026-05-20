@@ -82,6 +82,23 @@ class OpenAILLMProvider(LLMProvider):
     )
 
 
+class AzureOpenAILLMProvider(LLMProvider):
+    """LLM provider for Azure OpenAI Service.
+
+    Attributes:
+        model: The Azure deployment name.
+        api_key_env_var: Environment variable name for the Azure OpenAI API key.
+        azure_endpoint_env_var: Environment variable name for the Azure endpoint URL.
+        api_version: Azure OpenAI API version.
+    """
+
+    type: Literal["AzureOpenAILLMProvider"] = "AzureOpenAILLMProvider"
+    model: str = "gpt-4o"
+    api_key_env_var: str = "AZURE_OPENAI_API_KEY"
+    azure_endpoint_env_var: str = "AZURE_OPENAI_ENDPOINT"
+    api_version: str = "2024-12-01-preview"
+
+
 class OpenAICompatibleLLMProvider(LLMProvider):
     """LLM provider for any OpenAI-compatible API (vLLM, Ollama, etc.).
 
