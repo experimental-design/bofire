@@ -24,7 +24,9 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Entmoot >=2.1.1
 - Static type checking was migrated from `pyright` to `ty`.
 - Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
+- Objective bounds validation for `IdentityObjective`-based objectives is now strict (`lower < upper`) to prevent degenerate normalization ranges.
 
 ### Fixed
 
 - Flaky tests in the test pipeline
+- Serialization tests now explicitly assert the expected `DeprecationWarning` for deprecated `FactorialStrategy` specs instead of treating it as an unhandled warning.
