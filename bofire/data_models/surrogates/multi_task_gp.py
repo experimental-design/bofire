@@ -39,7 +39,7 @@ class MultiTaskGPHyperconfig(Hyperconfig):
                 key="kernel",
                 categories=["rbf", "matern_1.5", "matern_2.5"],
             ),
-            CategoricalInput(key="prior", categories=["mbo", "botorch"]),
+            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
         ],
     )
@@ -64,10 +64,15 @@ class MultiTaskGPHyperconfig(Hyperconfig):
                 MBO_NOISE_PRIOR(),
                 MBO_LENGTHSCALE_PRIOR(),
             )
-        else:
+        elif hyperparameters.prior == "threesix":
             noise_prior, lengthscale_prior = (
                 THREESIX_NOISE_PRIOR(),
                 THREESIX_LENGTHSCALE_PRIOR(),
+            )
+        else:
+            noise_prior, lengthscale_prior = (
+                HVARFNER_NOISE_PRIOR(),
+                HVARFNER_LENGTHSCALE_PRIOR(),
             )
 
         surrogate_data.noise_prior = noise_prior

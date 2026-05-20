@@ -21,6 +21,8 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     LKJ_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
@@ -71,9 +73,12 @@ def test_MultiTaskGPHyperconfig():
     if candidate.prior == "mbo":
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         assert surrogate_data.kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
-    else:
+    elif candidate.prior == "threesix":
         assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         assert surrogate_data.kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
+    else:
+        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert surrogate_data.kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
 
 
 def test_MultiTask_input_preprocessing():
