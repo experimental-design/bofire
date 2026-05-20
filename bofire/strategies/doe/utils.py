@@ -1,6 +1,7 @@
 import importlib.util
 import re
 import sys
+import warnings
 from copy import copy
 from itertools import combinations
 from typing import List, Optional, Tuple, Union, cast
@@ -9,6 +10,8 @@ import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 from formulaic import Formula
+from formulaic.parser import DefaultFormulaParser
+from formulaic.parser.types import ASTNode
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 from scipy.optimize._minimize import standardize_constraints
 
@@ -81,6 +84,45 @@ def formula_str_to_fully_continuous(
     return str(
         Formula(formula)
     )  # formula casting for expansion of terms like (a+b)*(c+d)
+
+
+def _iter_ast_nodes(node: object):
+    if isinstance(node, ASTNode):
+        yield node
+        for arg in node.args:
+            yield from _iter_ast_nodes(arg)
+
+
+def _warn_on_potential_formulaic_term_drops(formula: str) -> None:
+    try:
+        ast = DefaultFormulaParser().get_ast(formula)
+    except Exception:
+        return
+    risky_patterns = []
+    supported_operators = {":", "*", "+", "-", "~"}
+
+    for node in _iter_ast_nodes(ast):
+        operator = node.operator.symbol
+        if operator not in supported_operators:
+            risky_patterns.append(f"operator `{operator}`")
+        if (
+            operator in {":", "*"}
+            and len(node.args) == 2
+            and str(node.args[0]) == str(node.args[1])
+        ):
+            risky_patterns.append(f"self interaction `{node}`")
+
+    if risky_patterns:
+        details = ", ".join(dict.fromkeys(risky_patterns))
+        warnings.warn(
+            "Formulaic may silently drop model terms while parsing this formula. "
+            f"Detected potentially risky pattern(s): {details}. "
+            "If you intended powers or self-products, wrap terms in curly braces "
+            "(for example `{x**2}` or `{x*x}`). See Formulaic grammar for details: "
+            "https://matthewwardrop.github.io/formulaic/latest/guides/grammar/.",
+            UserWarning,
+            stacklevel=2,
+        )
 
 
 def get_formula_from_string(
@@ -166,6 +208,7 @@ def get_formula_from_string(
                     formula=model_type,
                     inputs=inputs,
                 )
+        _warn_on_potential_formulaic_term_drops(model_type)
         formula = model_type + "   "
 
     formula = Formula(formula[:-3])
