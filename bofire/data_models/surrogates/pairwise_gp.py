@@ -30,11 +30,11 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         default_factory=lambda: ScaleKernel(
             base_kernel=RBFKernel(
                 ard=True,
-                lengthscale_prior=PAIRWISEGP_LENGTHSCALE_PRIOR,
-                lengthscale_constraint=PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
+                lengthscale_prior=PAIRWISEGP_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=PAIRWISEGP_LENGTHSCALE_CONSTRAINT(),
             ),
-            outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR,
-            outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT,
+            outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR(),
+            outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         )
     )
     scaler: AnyScaler = Field(default_factory=Normalize)

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import PositiveFloat, model_validator
 
@@ -6,7 +6,7 @@ from bofire.data_models.priors.constraint import PriorConstraint
 
 
 class Interval(PriorConstraint):
-    """Abstract Interval class.
+    """Interval constraint on a GP hyperparameter.
 
     It is used to define interval constraints on GP hyperparameters.
 
@@ -16,7 +16,7 @@ class Interval(PriorConstraint):
         initial_value: The initial value within the interval.
     """
 
-    type: Any
+    type: Literal["Interval"] = "Interval"
     lower_bound: PositiveFloat
     upper_bound: PositiveFloat
     initial_value: PositiveFloat

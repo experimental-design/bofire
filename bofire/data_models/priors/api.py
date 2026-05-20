@@ -52,7 +52,9 @@ AnyPriorConstraint = tagged_union(*_PRIOR_CONSTRAINT_TYPES)
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters
-AnyGeneralPrior = tagged_union(GammaPrior, NormalPrior, LKJPrior, LogNormalPrior)
+AnyGeneralPrior = tagged_union(
+    GammaPrior, NormalPrior, LKJPrior, LogNormalPrior, SmoothedBoxPrior
+)
 
 # default priors of interest
 # botorch defaults
@@ -93,17 +95,15 @@ ROBUSTGP_OUTPUTSCALE_CONSTRAINT = partial(
 
 # Priors for PairwiseGPSurrogate based on botorch defaults
 PAIRWISEGP_LENGTHSCALE_PRIOR = partial(
-    GammaPrior(
-        concentration=2.4,
-        rate=2.7,
-    )
+    GammaPrior,
+    concentration=2.4,
+    rate=2.7,
 )
 
 PAIRWISEGP_LENGTHSCALE_CONSTRAINT = partial(
     GreaterThan,
     lower_bound=1e-4,
-    transform=None,
-    initial_value=0.5185,  # comes from mode of lengtscale GammaPrior
+    initial_value=0.5185,  # mode of the lengthscale GammaPrior(2.4, 2.7)
 )
 
 PAIRWISEGP_OUTPUTSCALE_PRIOR = partial(
@@ -114,11 +114,10 @@ PAIRWISEGP_OUTPUTSCALE_PRIOR = partial(
 )
 
 PAIRWISEGP_OUTPUTSCALE_CONSTRAINT = partial(
-    Interval(
-        lower_bound=5e-3,
-        upper_bound=200,
-        initial_value=1,
-    )
+    Interval,
+    lower_bound=5e-3,
+    upper_bound=200,
+    initial_value=1,
 )
 
 # Hvarfner priors

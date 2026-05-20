@@ -151,7 +151,11 @@ def map_Positive(
 def map_GreaterThan(
     data_model: data_models.GreaterThan,
 ) -> GreaterThan:
-    return GreaterThan(lower_bound=data_model.lower_bound, transform=None)
+    return GreaterThan(
+        lower_bound=data_model.lower_bound,
+        transform=None,
+        initial_value=data_model.initial_value,
+    )
 
 
 def map_LessThan(
