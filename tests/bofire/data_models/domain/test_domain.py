@@ -97,6 +97,24 @@ def test_domain_accepts_single_feature_and_constraint():
     assert domain_single_input.inputs == Inputs(features=[input_a])
 
 
+def test_domain_validates_objective_bounds_when_specified():
+    with pytest.raises(ValidationError, match="Invalid objective bounds"):
+        Domain(
+            inputs=[{"type": "ContinuousInput", "key": "x", "bounds": [0, 1]}],
+            outputs=[
+                {
+                    "type": "ContinuousOutput",
+                    "key": "y",
+                    "objective": {
+                        "type": "MaximizeObjective",
+                        "w": 1.0,
+                        "bounds": [1.0, 1.0],
+                    },
+                }
+            ],
+        )
+
+
 def test_from_lists(input_list, output_list, constraint_list):
     assert Domain.from_lists(
         inputs=input_list,
