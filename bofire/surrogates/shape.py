@@ -8,6 +8,7 @@ from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import ChainedInputTransform, Normalize
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.constraints.constraints import GreaterThan
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -117,16 +118,19 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 ),
             )
 
+        likelihood = GaussianLikelihood(
+            noise_prior=priors.map(self.noise_prior),
+            noise_constraint=GreaterThan(5e-4),
+        )
+
         self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
             covar_module=covar_module,
+            likelihood=likelihood,
             outcome_transform=(Standardize(m=tY.shape[-1])),
             input_transform=self.transform,
         )
-
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
-        self.model.likelihood.noise_covar.raw_noise_constraint = GreaterThan(5e-4)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
