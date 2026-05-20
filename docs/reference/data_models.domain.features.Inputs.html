@@ -501,7 +501,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    specs,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    experiments<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    reference_experiment<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    relax_allow_zero<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Returns the boundaries of the optimization problem based on the transformations defined in the <code>specs</code> dictionary.</p>
 <section id="parameters" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h4>
@@ -509,7 +510,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <colgroup>
 <col style="width: 9%">
 <col style="width: 10%">
-<col style="width: 74%">
+<col style="width: 75%">
 <col style="width: 5%">
 </colgroup>
 <thead>
@@ -538,6 +539,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Optional[pd.Series]</td>
 <td>If a reference experiment provided,</td>
 <td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>relax_allow_zero</td>
+<td>bool</td>
+<td>If True, semi-continuous continuous inputs (<code>allow_zero=True</code> with positive lower bound) report a relaxed lower bound of 0. Other input types ignore this flag. Defaults to False.</td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
@@ -781,17 +788,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_number_of_categorical_combinations(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>Input,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    include_semicontinuous<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Get the total number of unique categorical combinations.</p>
 <p>This is used before generating all of the categorical combinations, which may cause memory issues if there are too many.</p>
 <section id="parameters-3" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 74%">
-<col style="width: 9%">
+<col style="width: 5%">
+<col style="width: 2%">
+<col style="width: 89%">
+<col style="width: 2%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -813,6 +821,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Feature</td>
 <td>Features to be excluded, e.g.&nbsp;subclasses of the included features. Defaults to None.</td>
 <td><code>None</code></td>
+</tr>
+<tr class="odd">
+<td>include_semicontinuous</td>
+<td>bool</td>
+<td>When True (default), each semi-continuous feature (<code>ContinuousInput</code> with <code>allow_zero=True</code> and a positive lower bound, un-fixed) contributes a factor of 2 for its on/off enumeration. When False, semi-continuous features are excluded from the count – useful when the caller handles them via a post-optimisation pruning step rather than by AF-time enumeration.</td>
+<td><code>True</code></td>
 </tr>
 </tbody>
 </table>
@@ -1693,271 +1707,275 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>    specs,</span>
 <span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    experiments<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    reference_experiment<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>Returns the boundaries of the optimization problem based on the transformations</span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>defined in the  <span class="in">`specs`</span> dictionary.</span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                 <span class="pp">|</span> Type                     <span class="pp">|</span> Description                                                                                                                                                                      <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------------|--------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|</span></span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs                <span class="pp">|</span> InputTransformSpecs      <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder.                                                                                                       <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments          <span class="pp">|</span> Optional<span class="sc">\[</span>pd.DataFrame<span class="sc">\]</span> <span class="pp">|</span> Dataframe with input features. If provided the real feature bounds are returned based on both the opt. feature bounds and the extreme points in the dataframe. Defaults to None, <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> reference_experiment <span class="pp">|</span> Optional<span class="sc">\[</span>pd.Series<span class="sc">\]</span>    <span class="pp">|</span> If a reference experiment provided,                                                                                                                                              <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>    relax_allow_zero<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>Returns the boundaries of the optimization problem based on the transformations</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>defined in the  <span class="in">`specs`</span> dictionary.</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                 <span class="pp">|</span> Type                     <span class="pp">|</span> Description                                                                                                                                                                        <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs                <span class="pp">|</span> InputTransformSpecs      <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder.                                                                                                         <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments          <span class="pp">|</span> Optional<span class="sc">\[</span>pd.DataFrame<span class="sc">\]</span> <span class="pp">|</span> Dataframe with input features. If provided the real feature bounds are returned based on both the opt. feature bounds and the extreme points in the dataframe. Defaults to None,   <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> reference_experiment <span class="pp">|</span> Optional<span class="sc">\[</span>pd.Series<span class="sc">\]</span>    <span class="pp">|</span> If a reference experiment provided,                                                                                                                                                <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> relax_allow_zero     <span class="pp">|</span> bool                     <span class="pp">|</span> If True, semi-continuous continuous inputs (<span class="in">`allow_zero=True`</span> with positive lower bound) report a relaxed lower bound of 0. Other input types ignore this flag. Defaults to False. <span class="pp">|</span> <span class="in">`False`</span>    <span class="pp">|</span></span>
 <span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                 <span class="pp">|</span></span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-------------------------------------------------------------|</span></span>
-<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If a feature type is not known.                             <span class="pp">|</span></span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If no transformation is provided for a categorical feature. <span class="pp">|</span></span>
-<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                 <span class="pp">|</span></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-------------------------------------------------------------|</span></span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If a feature type is not known.                             <span class="pp">|</span></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If no transformation is provided for a categorical feature. <span class="pp">|</span></span>
 <span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                  <span class="pp">|</span> Description                                                                      <span class="pp">|</span></span>
-<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------------------------------------|----------------------------------------------------------------------------------|</span></span>
-<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> Tuple<span class="sc">\[</span>List<span class="sc">\[</span>float<span class="sc">\]</span>, List<span class="sc">\[</span>float<span class="sc">\]\]</span> <span class="pp">|</span> Tuple<span class="co">[</span><span class="ot">List[float], List[float]</span><span class="co">]</span>: list with lower bounds, list with upper bounds. <span class="pp">|</span></span>
-<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_categorical_combinations { #bofire.data_models.domain.features.Inputs.get_categorical_combinations }</span></span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                  <span class="pp">|</span> Description                                                                      <span class="pp">|</span></span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|---------------------------------------|----------------------------------------------------------------------------------|</span></span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> Tuple<span class="sc">\[</span>List<span class="sc">\[</span>float<span class="sc">\]</span>, List<span class="sc">\[</span>float<span class="sc">\]\]</span> <span class="pp">|</span> Tuple<span class="co">[</span><span class="ot">List[float], List[float]</span><span class="co">]</span>: list with lower bounds, list with upper bounds. <span class="pp">|</span></span>
 <span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_categorical_combinations(</span>
-<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>Input,</span>
-<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>Get a list of tuples pairing the feature keys with a list of valid categories</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_categorical_combinations { #bofire.data_models.domain.features.Inputs.get_categorical_combinations }</span></span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_categorical_combinations(</span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>Input,</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a>Get a list of tuples pairing the feature keys with a list of valid categories</span>
 <span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name    <span class="pp">|</span> Type    <span class="pp">|</span> Description                                                                          <span class="pp">|</span> Default   <span class="pp">|</span></span>
-<span id="cb14-80"><a href="#cb14-80" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|---------|--------------------------------------------------------------------------------------|-----------|</span></span>
-<span id="cb14-81"><a href="#cb14-81" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include <span class="pp">|</span> Feature <span class="pp">|</span> Features to be included. Defaults to Input.                                          <span class="pp">|</span> <span class="in">`Input`</span>   <span class="pp">|</span></span>
-<span id="cb14-82"><a href="#cb14-82" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> exclude <span class="pp">|</span> Feature <span class="pp">|</span> Features to be excluded, e.g. subclasses of the included features. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>    <span class="pp">|</span></span>
-<span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-80"><a href="#cb14-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-81"><a href="#cb14-81" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name    <span class="pp">|</span> Type    <span class="pp">|</span> Description                                                                          <span class="pp">|</span> Default   <span class="pp">|</span></span>
+<span id="cb14-82"><a href="#cb14-82" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|---------|--------------------------------------------------------------------------------------|-----------|</span></span>
+<span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include <span class="pp">|</span> Feature <span class="pp">|</span> Features to be included. Defaults to Input.                                          <span class="pp">|</span> <span class="in">`Input`</span>   <span class="pp">|</span></span>
+<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> exclude <span class="pp">|</span> Feature <span class="pp">|</span> Features to be excluded, e.g. subclasses of the included features. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>    <span class="pp">|</span></span>
 <span id="cb14-85"><a href="#cb14-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                                           <span class="pp">|</span> Description                                                                                                     <span class="pp">|</span></span>
-<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> list<span class="sc">\[</span>tuple<span class="sc">\[</span>tuple<span class="sc">\[</span>str, float<span class="sc">\]</span> <span class="sc">\|</span> tuple<span class="sc">\[</span>str, str<span class="sc">\]</span>, ...<span class="sc">\]\]</span> <span class="pp">|</span> List<span class="co">[</span><span class="ot">(str, List[str])</span><span class="co">]</span>: Returns a list of tuples pairing the feature keys with a list of valid categories (str) <span class="pp">|</span></span>
-<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_feature_indices { #bofire.data_models.domain.features.Inputs.get_feature_indices }</span></span>
+<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                                                           <span class="pp">|</span> Description                                                                                                     <span class="pp">|</span></span>
+<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> list<span class="sc">\[</span>tuple<span class="sc">\[</span>tuple<span class="sc">\[</span>str, float<span class="sc">\]</span> <span class="sc">\|</span> tuple<span class="sc">\[</span>str, str<span class="sc">\]</span>, ...<span class="sc">\]\]</span> <span class="pp">|</span> List<span class="co">[</span><span class="ot">(str, List[str])</span><span class="co">]</span>: Returns a list of tuples pairing the feature keys with a list of valid categories (str) <span class="pp">|</span></span>
 <span id="cb14-91"><a href="#cb14-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-93"><a href="#cb14-93" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_feature_indices(specs, feature_keys)</span>
-<span id="cb14-94"><a href="#cb14-94" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-95"><a href="#cb14-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-96"><a href="#cb14-96" aria-hidden="true" tabindex="-1"></a>Returns a list of indices of the given feature key list.</span>
+<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_feature_indices { #bofire.data_models.domain.features.Inputs.get_feature_indices }</span></span>
+<span id="cb14-93"><a href="#cb14-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-94"><a href="#cb14-94" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-95"><a href="#cb14-95" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_feature_indices(specs, feature_keys)</span>
+<span id="cb14-96"><a href="#cb14-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-97"><a href="#cb14-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-98"><a href="#cb14-98" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-98"><a href="#cb14-98" aria-hidden="true" tabindex="-1"></a>Returns a list of indices of the given feature key list.</span>
 <span id="cb14-99"><a href="#cb14-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-100"><a href="#cb14-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name         <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-101"><a href="#cb14-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
-<span id="cb14-102"><a href="#cb14-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs        <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-103"><a href="#cb14-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> feature_keys <span class="pp">|</span> List<span class="sc">\[</span>str<span class="sc">\]</span>         <span class="pp">|</span> List of feature keys.                                                      <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-104"><a href="#cb14-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-105"><a href="#cb14-105" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-100"><a href="#cb14-100" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-101"><a href="#cb14-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-102"><a href="#cb14-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name         <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-103"><a href="#cb14-103" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
+<span id="cb14-104"><a href="#cb14-104" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs        <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-105"><a href="#cb14-105" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> feature_keys <span class="pp">|</span> List<span class="sc">\[</span>str<span class="sc">\]</span>         <span class="pp">|</span> List of feature keys.                                                      <span class="pp">|</span> _required_ <span class="pp">|</span></span>
 <span id="cb14-106"><a href="#cb14-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-107"><a href="#cb14-107" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type        <span class="pp">|</span> Description                     <span class="pp">|</span></span>
-<span id="cb14-108"><a href="#cb14-108" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-------------|---------------------------------|</span></span>
-<span id="cb14-109"><a href="#cb14-109" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> List<span class="sc">\[</span>int<span class="sc">\]</span> <span class="pp">|</span> List<span class="co">[</span><span class="ot">int</span><span class="co">]</span>: The list of indices. <span class="pp">|</span></span>
-<span id="cb14-110"><a href="#cb14-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-111"><a href="#cb14-111" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_fixed { #bofire.data_models.domain.features.Inputs.get_fixed }</span></span>
+<span id="cb14-107"><a href="#cb14-107" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-108"><a href="#cb14-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-109"><a href="#cb14-109" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type        <span class="pp">|</span> Description                     <span class="pp">|</span></span>
+<span id="cb14-110"><a href="#cb14-110" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-------------|---------------------------------|</span></span>
+<span id="cb14-111"><a href="#cb14-111" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> List<span class="sc">\[</span>int<span class="sc">\]</span> <span class="pp">|</span> List<span class="co">[</span><span class="ot">int</span><span class="co">]</span>: The list of indices. <span class="pp">|</span></span>
 <span id="cb14-112"><a href="#cb14-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-113"><a href="#cb14-113" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-114"><a href="#cb14-114" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_fixed()</span>
-<span id="cb14-115"><a href="#cb14-115" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-116"><a href="#cb14-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-117"><a href="#cb14-117" aria-hidden="true" tabindex="-1"></a>Gets all features in <span class="in">`self`</span> that are fixed and returns them as new</span>
-<span id="cb14-118"><a href="#cb14-118" aria-hidden="true" tabindex="-1"></a><span class="in">`Inputs`</span> object.</span>
-<span id="cb14-119"><a href="#cb14-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-120"><a href="#cb14-120" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-113"><a href="#cb14-113" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_fixed { #bofire.data_models.domain.features.Inputs.get_fixed }</span></span>
+<span id="cb14-114"><a href="#cb14-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-115"><a href="#cb14-115" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-116"><a href="#cb14-116" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_fixed()</span>
+<span id="cb14-117"><a href="#cb14-117" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-118"><a href="#cb14-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-119"><a href="#cb14-119" aria-hidden="true" tabindex="-1"></a>Gets all features in <span class="in">`self`</span> that are fixed and returns them as new</span>
+<span id="cb14-120"><a href="#cb14-120" aria-hidden="true" tabindex="-1"></a><span class="in">`Inputs`</span> object.</span>
 <span id="cb14-121"><a href="#cb14-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-122"><a href="#cb14-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                           <span class="pp">|</span></span>
-<span id="cb14-123"><a href="#cb14-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-------------------------------------------------------|</span></span>
-<span id="cb14-124"><a href="#cb14-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs <span class="pp">|</span> Inputs <span class="pp">|</span> Input features object containing only fixed features. <span class="pp">|</span></span>
-<span id="cb14-125"><a href="#cb14-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-126"><a href="#cb14-126" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_free { #bofire.data_models.domain.features.Inputs.get_free }</span></span>
+<span id="cb14-122"><a href="#cb14-122" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-123"><a href="#cb14-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-124"><a href="#cb14-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                           <span class="pp">|</span></span>
+<span id="cb14-125"><a href="#cb14-125" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-------------------------------------------------------|</span></span>
+<span id="cb14-126"><a href="#cb14-126" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs <span class="pp">|</span> Inputs <span class="pp">|</span> Input features object containing only fixed features. <span class="pp">|</span></span>
 <span id="cb14-127"><a href="#cb14-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-128"><a href="#cb14-128" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-129"><a href="#cb14-129" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_free()</span>
-<span id="cb14-130"><a href="#cb14-130" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-131"><a href="#cb14-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-132"><a href="#cb14-132" aria-hidden="true" tabindex="-1"></a>Gets all features in <span class="in">`self`</span> that are not fixed and returns them as</span>
-<span id="cb14-133"><a href="#cb14-133" aria-hidden="true" tabindex="-1"></a>new <span class="in">`Inputs`</span> object.</span>
-<span id="cb14-134"><a href="#cb14-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-135"><a href="#cb14-135" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-128"><a href="#cb14-128" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_free { #bofire.data_models.domain.features.Inputs.get_free }</span></span>
+<span id="cb14-129"><a href="#cb14-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-130"><a href="#cb14-130" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-131"><a href="#cb14-131" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_free()</span>
+<span id="cb14-132"><a href="#cb14-132" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-133"><a href="#cb14-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-134"><a href="#cb14-134" aria-hidden="true" tabindex="-1"></a>Gets all features in <span class="in">`self`</span> that are not fixed and returns them as</span>
+<span id="cb14-135"><a href="#cb14-135" aria-hidden="true" tabindex="-1"></a>new <span class="in">`Inputs`</span> object.</span>
 <span id="cb14-136"><a href="#cb14-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-137"><a href="#cb14-137" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                               <span class="pp">|</span></span>
-<span id="cb14-138"><a href="#cb14-138" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-----------------------------------------------------------|</span></span>
-<span id="cb14-139"><a href="#cb14-139" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs <span class="pp">|</span> Inputs <span class="pp">|</span> Input features object containing only non-fixed features. <span class="pp">|</span></span>
-<span id="cb14-140"><a href="#cb14-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-141"><a href="#cb14-141" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_number_of_categorical_combinations { #bofire.data_models.domain.features.Inputs.get_number_of_categorical_combinations }</span></span>
+<span id="cb14-137"><a href="#cb14-137" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-138"><a href="#cb14-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-139"><a href="#cb14-139" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                               <span class="pp">|</span></span>
+<span id="cb14-140"><a href="#cb14-140" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|-----------------------------------------------------------|</span></span>
+<span id="cb14-141"><a href="#cb14-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Inputs <span class="pp">|</span> Inputs <span class="pp">|</span> Input features object containing only non-fixed features. <span class="pp">|</span></span>
 <span id="cb14-142"><a href="#cb14-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-143"><a href="#cb14-143" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-144"><a href="#cb14-144" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_number_of_categorical_combinations(</span>
-<span id="cb14-145"><a href="#cb14-145" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>Input,</span>
-<span id="cb14-146"><a href="#cb14-146" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-147"><a href="#cb14-147" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-148"><a href="#cb14-148" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-149"><a href="#cb14-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-150"><a href="#cb14-150" aria-hidden="true" tabindex="-1"></a>Get the total number of unique categorical combinations.</span>
-<span id="cb14-151"><a href="#cb14-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-152"><a href="#cb14-152" aria-hidden="true" tabindex="-1"></a>This is used before generating all of the categorical combinations, which may</span>
-<span id="cb14-153"><a href="#cb14-153" aria-hidden="true" tabindex="-1"></a>cause memory issues if there are too many.</span>
+<span id="cb14-143"><a href="#cb14-143" aria-hidden="true" tabindex="-1"></a><span class="fu">### get_number_of_categorical_combinations { #bofire.data_models.domain.features.Inputs.get_number_of_categorical_combinations }</span></span>
+<span id="cb14-144"><a href="#cb14-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-145"><a href="#cb14-145" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-146"><a href="#cb14-146" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.get_number_of_categorical_combinations(</span>
+<span id="cb14-147"><a href="#cb14-147" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>Input,</span>
+<span id="cb14-148"><a href="#cb14-148" aria-hidden="true" tabindex="-1"></a>    exclude<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-149"><a href="#cb14-149" aria-hidden="true" tabindex="-1"></a>    include_semicontinuous<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb14-150"><a href="#cb14-150" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-151"><a href="#cb14-151" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-152"><a href="#cb14-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-153"><a href="#cb14-153" aria-hidden="true" tabindex="-1"></a>Get the total number of unique categorical combinations.</span>
 <span id="cb14-154"><a href="#cb14-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-155"><a href="#cb14-155" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-156"><a href="#cb14-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-157"><a href="#cb14-157" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name    <span class="pp">|</span> Type    <span class="pp">|</span> Description                                                                          <span class="pp">|</span> Default   <span class="pp">|</span></span>
-<span id="cb14-158"><a href="#cb14-158" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|---------|--------------------------------------------------------------------------------------|-----------|</span></span>
-<span id="cb14-159"><a href="#cb14-159" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include <span class="pp">|</span> Feature <span class="pp">|</span> Features to be included. Defaults to Input.                                          <span class="pp">|</span> <span class="in">`Input`</span>   <span class="pp">|</span></span>
-<span id="cb14-160"><a href="#cb14-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> exclude <span class="pp">|</span> Feature <span class="pp">|</span> Features to be excluded, e.g. subclasses of the included features. Defaults to None. <span class="pp">|</span> <span class="in">`None`</span>    <span class="pp">|</span></span>
-<span id="cb14-161"><a href="#cb14-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-162"><a href="#cb14-162" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb14-163"><a href="#cb14-163" aria-hidden="true" tabindex="-1"></a>    int: Returns the number of unique combinations of discrete and categorical</span>
-<span id="cb14-164"><a href="#cb14-164" aria-hidden="true" tabindex="-1"></a>        features.</span>
+<span id="cb14-155"><a href="#cb14-155" aria-hidden="true" tabindex="-1"></a>This is used before generating all of the categorical combinations, which may</span>
+<span id="cb14-156"><a href="#cb14-156" aria-hidden="true" tabindex="-1"></a>cause memory issues if there are too many.</span>
+<span id="cb14-157"><a href="#cb14-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-158"><a href="#cb14-158" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-159"><a href="#cb14-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-160"><a href="#cb14-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                   <span class="pp">|</span> Type    <span class="pp">|</span> Description                                                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span> Default   <span class="pp">|</span></span>
+<span id="cb14-161"><a href="#cb14-161" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|</span></span>
+<span id="cb14-162"><a href="#cb14-162" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include                <span class="pp">|</span> Feature <span class="pp">|</span> Features to be included. Defaults to Input.                                                                                                                                                                                                                                                                                                                              <span class="pp">|</span> <span class="in">`Input`</span>   <span class="pp">|</span></span>
+<span id="cb14-163"><a href="#cb14-163" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> exclude                <span class="pp">|</span> Feature <span class="pp">|</span> Features to be excluded, e.g. subclasses of the included features. Defaults to None.                                                                                                                                                                                                                                                                                     <span class="pp">|</span> <span class="in">`None`</span>    <span class="pp">|</span></span>
+<span id="cb14-164"><a href="#cb14-164" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> include_semicontinuous <span class="pp">|</span> bool    <span class="pp">|</span> When True (default), each semi-continuous feature (<span class="in">`ContinuousInput`</span> with <span class="in">`allow_zero=True`</span> and a positive lower bound, un-fixed) contributes a factor of 2 for its on/off enumeration. When False, semi-continuous features are excluded from the count -- useful when the caller handles them via a post-optimisation pruning step rather than by AF-time enumeration. <span class="pp">|</span> <span class="in">`True`</span>    <span class="pp">|</span></span>
 <span id="cb14-165"><a href="#cb14-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-166"><a href="#cb14-166" aria-hidden="true" tabindex="-1"></a><span class="fu">### inverse_transform { #bofire.data_models.domain.features.Inputs.inverse_transform }</span></span>
-<span id="cb14-167"><a href="#cb14-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-168"><a href="#cb14-168" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-169"><a href="#cb14-169" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.inverse_transform(experiments, specs)</span>
-<span id="cb14-170"><a href="#cb14-170" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-166"><a href="#cb14-166" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb14-167"><a href="#cb14-167" aria-hidden="true" tabindex="-1"></a>    int: Returns the number of unique combinations of discrete and categorical</span>
+<span id="cb14-168"><a href="#cb14-168" aria-hidden="true" tabindex="-1"></a>        features.</span>
+<span id="cb14-169"><a href="#cb14-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-170"><a href="#cb14-170" aria-hidden="true" tabindex="-1"></a><span class="fu">### inverse_transform { #bofire.data_models.domain.features.Inputs.inverse_transform }</span></span>
 <span id="cb14-171"><a href="#cb14-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-172"><a href="#cb14-172" aria-hidden="true" tabindex="-1"></a>Transform a dataframe back to the original representations.</span>
-<span id="cb14-173"><a href="#cb14-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-174"><a href="#cb14-174" aria-hidden="true" tabindex="-1"></a>The original applied transformation has to be provided via the specs dictionary.</span>
-<span id="cb14-175"><a href="#cb14-175" aria-hidden="true" tabindex="-1"></a>Currently only input categoricals are supported.</span>
-<span id="cb14-176"><a href="#cb14-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-177"><a href="#cb14-177" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-178"><a href="#cb14-178" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-179"><a href="#cb14-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-180"><a href="#cb14-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
-<span id="cb14-181"><a href="#cb14-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame        <span class="pp">|</span> Transformed data dataframe.                                                <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-182"><a href="#cb14-182" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs       <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-183"><a href="#cb14-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-184"><a href="#cb14-184" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-185"><a href="#cb14-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-186"><a href="#cb14-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                                                 <span class="pp">|</span></span>
-<span id="cb14-187"><a href="#cb14-187" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-----------------------------------------------------------------------------|</span></span>
-<span id="cb14-188"><a href="#cb14-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Back transformed dataframe. Only input features are included. <span class="pp">|</span></span>
+<span id="cb14-172"><a href="#cb14-172" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-173"><a href="#cb14-173" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.inverse_transform(experiments, specs)</span>
+<span id="cb14-174"><a href="#cb14-174" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-175"><a href="#cb14-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-176"><a href="#cb14-176" aria-hidden="true" tabindex="-1"></a>Transform a dataframe back to the original representations.</span>
+<span id="cb14-177"><a href="#cb14-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-178"><a href="#cb14-178" aria-hidden="true" tabindex="-1"></a>The original applied transformation has to be provided via the specs dictionary.</span>
+<span id="cb14-179"><a href="#cb14-179" aria-hidden="true" tabindex="-1"></a>Currently only input categoricals are supported.</span>
+<span id="cb14-180"><a href="#cb14-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-181"><a href="#cb14-181" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-182"><a href="#cb14-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-183"><a href="#cb14-183" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-184"><a href="#cb14-184" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
+<span id="cb14-185"><a href="#cb14-185" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame        <span class="pp">|</span> Transformed data dataframe.                                                <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-186"><a href="#cb14-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs       <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-187"><a href="#cb14-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-188"><a href="#cb14-188" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-189"><a href="#cb14-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-190"><a href="#cb14-190" aria-hidden="true" tabindex="-1"></a><span class="fu">### is_fulfilled { #bofire.data_models.domain.features.Inputs.is_fulfilled }</span></span>
-<span id="cb14-191"><a href="#cb14-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-192"><a href="#cb14-192" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-193"><a href="#cb14-193" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.is_fulfilled(experiments)</span>
-<span id="cb14-194"><a href="#cb14-194" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-190"><a href="#cb14-190" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                                                 <span class="pp">|</span></span>
+<span id="cb14-191"><a href="#cb14-191" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-----------------------------------------------------------------------------|</span></span>
+<span id="cb14-192"><a href="#cb14-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Back transformed dataframe. Only input features are included. <span class="pp">|</span></span>
+<span id="cb14-193"><a href="#cb14-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-194"><a href="#cb14-194" aria-hidden="true" tabindex="-1"></a><span class="fu">### is_fulfilled { #bofire.data_models.domain.features.Inputs.is_fulfilled }</span></span>
 <span id="cb14-195"><a href="#cb14-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-196"><a href="#cb14-196" aria-hidden="true" tabindex="-1"></a>Check if the provided experiments fulfill all constraints defined on the</span>
-<span id="cb14-197"><a href="#cb14-197" aria-hidden="true" tabindex="-1"></a>input features itself like the bounds or the allowed categories.</span>
-<span id="cb14-198"><a href="#cb14-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-199"><a href="#cb14-199" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-200"><a href="#cb14-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-201"><a href="#cb14-201" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type         <span class="pp">|</span> Description                    <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-202"><a href="#cb14-202" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|--------------|--------------------------------|------------|</span></span>
-<span id="cb14-203"><a href="#cb14-203" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> Dataframe with input features. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-196"><a href="#cb14-196" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-197"><a href="#cb14-197" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.is_fulfilled(experiments)</span>
+<span id="cb14-198"><a href="#cb14-198" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-199"><a href="#cb14-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-200"><a href="#cb14-200" aria-hidden="true" tabindex="-1"></a>Check if the provided experiments fulfill all constraints defined on the</span>
+<span id="cb14-201"><a href="#cb14-201" aria-hidden="true" tabindex="-1"></a>input features itself like the bounds or the allowed categories.</span>
+<span id="cb14-202"><a href="#cb14-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-203"><a href="#cb14-203" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb14-204"><a href="#cb14-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-205"><a href="#cb14-205" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-206"><a href="#cb14-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-207"><a href="#cb14-207" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type      <span class="pp">|</span> Description                                                                                             <span class="pp">|</span></span>
-<span id="cb14-208"><a href="#cb14-208" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------|---------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb14-209"><a href="#cb14-209" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.Series <span class="pp">|</span> Series with boolean values indicating if the experiments fulfill the constraints on the input features. <span class="pp">|</span></span>
+<span id="cb14-205"><a href="#cb14-205" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type         <span class="pp">|</span> Description                    <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-206"><a href="#cb14-206" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|--------------|--------------------------------|------------|</span></span>
+<span id="cb14-207"><a href="#cb14-207" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> Dataframe with input features. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-208"><a href="#cb14-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-209"><a href="#cb14-209" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-210"><a href="#cb14-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-211"><a href="#cb14-211" aria-hidden="true" tabindex="-1"></a><span class="fu">### sample { #bofire.data_models.domain.features.Inputs.sample }</span></span>
-<span id="cb14-212"><a href="#cb14-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-213"><a href="#cb14-213" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-214"><a href="#cb14-214" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.sample(</span>
-<span id="cb14-215"><a href="#cb14-215" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span>SamplingMethodEnum.UNIFORM,</span>
-<span id="cb14-217"><a href="#cb14-217" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-218"><a href="#cb14-218" aria-hidden="true" tabindex="-1"></a>    sampler_kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-219"><a href="#cb14-219" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-220"><a href="#cb14-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-221"><a href="#cb14-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-222"><a href="#cb14-222" aria-hidden="true" tabindex="-1"></a>Draw sobol samples</span>
-<span id="cb14-223"><a href="#cb14-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-224"><a href="#cb14-224" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-211"><a href="#cb14-211" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type      <span class="pp">|</span> Description                                                                                             <span class="pp">|</span></span>
+<span id="cb14-212"><a href="#cb14-212" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------|---------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb14-213"><a href="#cb14-213" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.Series <span class="pp">|</span> Series with boolean values indicating if the experiments fulfill the constraints on the input features. <span class="pp">|</span></span>
+<span id="cb14-214"><a href="#cb14-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-215"><a href="#cb14-215" aria-hidden="true" tabindex="-1"></a><span class="fu">### sample { #bofire.data_models.domain.features.Inputs.sample }</span></span>
+<span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-217"><a href="#cb14-217" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-218"><a href="#cb14-218" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.sample(</span>
+<span id="cb14-219"><a href="#cb14-219" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb14-220"><a href="#cb14-220" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span>SamplingMethodEnum.UNIFORM,</span>
+<span id="cb14-221"><a href="#cb14-221" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-222"><a href="#cb14-222" aria-hidden="true" tabindex="-1"></a>    sampler_kwargs<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb14-223"><a href="#cb14-223" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-224"><a href="#cb14-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-225"><a href="#cb14-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-226"><a href="#cb14-226" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name           <span class="pp">|</span> Type               <span class="pp">|</span> Description                                                                                 <span class="pp">|</span> Default                      <span class="pp">|</span></span>
-<span id="cb14-227"><a href="#cb14-227" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------|--------------------|---------------------------------------------------------------------------------------------|------------------------------|</span></span>
-<span id="cb14-228"><a href="#cb14-228" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n              <span class="pp">|</span> int                <span class="pp">|</span> Number of samples, has to be larger than 0. Defaults to 1.                                  <span class="pp">|</span> <span class="in">`1`</span>                          <span class="pp">|</span></span>
-<span id="cb14-229"><a href="#cb14-229" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> method         <span class="pp">|</span> SamplingMethodEnum <span class="pp">|</span> Method to use, implemented methods are <span class="in">`UNIFORM`</span>, <span class="in">`SOBOL`</span> and <span class="in">`LHS`</span>. Defaults to <span class="in">`UNIFORM`</span>. <span class="pp">|</span> <span class="in">`SamplingMethodEnum.UNIFORM`</span> <span class="pp">|</span></span>
-<span id="cb14-230"><a href="#cb14-230" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> seed           <span class="pp">|</span> int                <span class="pp">|</span> random seed. Defaults to None.                                                              <span class="pp">|</span> <span class="in">`None`</span>                       <span class="pp">|</span></span>
-<span id="cb14-231"><a href="#cb14-231" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> sampler_kwargs <span class="pp">|</span> Dict               <span class="pp">|</span> Additional arguments for the sampler. Defaults to None.                                     <span class="pp">|</span> <span class="in">`None`</span>                       <span class="pp">|</span></span>
-<span id="cb14-232"><a href="#cb14-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-233"><a href="#cb14-233" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-234"><a href="#cb14-234" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-235"><a href="#cb14-235" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                     <span class="pp">|</span></span>
-<span id="cb14-236"><a href="#cb14-236" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-------------------------------------------------|</span></span>
-<span id="cb14-237"><a href="#cb14-237" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Dataframe containing the samples. <span class="pp">|</span></span>
+<span id="cb14-226"><a href="#cb14-226" aria-hidden="true" tabindex="-1"></a>Draw sobol samples</span>
+<span id="cb14-227"><a href="#cb14-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-228"><a href="#cb14-228" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-229"><a href="#cb14-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-230"><a href="#cb14-230" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name           <span class="pp">|</span> Type               <span class="pp">|</span> Description                                                                                 <span class="pp">|</span> Default                      <span class="pp">|</span></span>
+<span id="cb14-231"><a href="#cb14-231" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------|--------------------|---------------------------------------------------------------------------------------------|------------------------------|</span></span>
+<span id="cb14-232"><a href="#cb14-232" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n              <span class="pp">|</span> int                <span class="pp">|</span> Number of samples, has to be larger than 0. Defaults to 1.                                  <span class="pp">|</span> <span class="in">`1`</span>                          <span class="pp">|</span></span>
+<span id="cb14-233"><a href="#cb14-233" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> method         <span class="pp">|</span> SamplingMethodEnum <span class="pp">|</span> Method to use, implemented methods are <span class="in">`UNIFORM`</span>, <span class="in">`SOBOL`</span> and <span class="in">`LHS`</span>. Defaults to <span class="in">`UNIFORM`</span>. <span class="pp">|</span> <span class="in">`SamplingMethodEnum.UNIFORM`</span> <span class="pp">|</span></span>
+<span id="cb14-234"><a href="#cb14-234" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> seed           <span class="pp">|</span> int                <span class="pp">|</span> random seed. Defaults to None.                                                              <span class="pp">|</span> <span class="in">`None`</span>                       <span class="pp">|</span></span>
+<span id="cb14-235"><a href="#cb14-235" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> sampler_kwargs <span class="pp">|</span> Dict               <span class="pp">|</span> Additional arguments for the sampler. Defaults to None.                                     <span class="pp">|</span> <span class="in">`None`</span>                       <span class="pp">|</span></span>
+<span id="cb14-236"><a href="#cb14-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-237"><a href="#cb14-237" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-238"><a href="#cb14-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-239"><a href="#cb14-239" aria-hidden="true" tabindex="-1"></a><span class="fu">### to_pydantic_model { #bofire.data_models.domain.features.Inputs.to_pydantic_model }</span></span>
-<span id="cb14-240"><a href="#cb14-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-241"><a href="#cb14-241" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-242"><a href="#cb14-242" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.to_pydantic_model(name<span class="op">=</span><span class="st">'CandidatePoint'</span>)</span>
-<span id="cb14-243"><a href="#cb14-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-239"><a href="#cb14-239" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                     <span class="pp">|</span></span>
+<span id="cb14-240"><a href="#cb14-240" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-------------------------------------------------|</span></span>
+<span id="cb14-241"><a href="#cb14-241" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Dataframe containing the samples. <span class="pp">|</span></span>
+<span id="cb14-242"><a href="#cb14-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-243"><a href="#cb14-243" aria-hidden="true" tabindex="-1"></a><span class="fu">### to_pydantic_model { #bofire.data_models.domain.features.Inputs.to_pydantic_model }</span></span>
 <span id="cb14-244"><a href="#cb14-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-245"><a href="#cb14-245" aria-hidden="true" tabindex="-1"></a>Build a dynamic Pydantic model with one field per input feature.</span>
-<span id="cb14-246"><a href="#cb14-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-247"><a href="#cb14-247" aria-hidden="true" tabindex="-1"></a>Each feature's ``to_pydantic_field()`` determines the field type and</span>
-<span id="cb14-248"><a href="#cb14-248" aria-hidden="true" tabindex="-1"></a>constraints (e.g., ge/le for continuous, Literal for categorical).</span>
-<span id="cb14-249"><a href="#cb14-249" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-250"><a href="#cb14-250" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-251"><a href="#cb14-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-252"><a href="#cb14-252" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                                          <span class="pp">|</span></span>
-<span id="cb14-253"><a href="#cb14-253" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|----------------------------------------------------------------------|</span></span>
-<span id="cb14-254"><a href="#cb14-254" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> A Pydantic BaseModel subclass with typed fields matching the inputs. <span class="pp">|</span></span>
+<span id="cb14-245"><a href="#cb14-245" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-246"><a href="#cb14-246" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.to_pydantic_model(name<span class="op">=</span><span class="st">'CandidatePoint'</span>)</span>
+<span id="cb14-247"><a href="#cb14-247" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-248"><a href="#cb14-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-249"><a href="#cb14-249" aria-hidden="true" tabindex="-1"></a>Build a dynamic Pydantic model with one field per input feature.</span>
+<span id="cb14-250"><a href="#cb14-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-251"><a href="#cb14-251" aria-hidden="true" tabindex="-1"></a>Each feature's ``to_pydantic_field()`` determines the field type and</span>
+<span id="cb14-252"><a href="#cb14-252" aria-hidden="true" tabindex="-1"></a>constraints (e.g., ge/le for continuous, Literal for categorical).</span>
+<span id="cb14-253"><a href="#cb14-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-254"><a href="#cb14-254" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-255"><a href="#cb14-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-256"><a href="#cb14-256" aria-hidden="true" tabindex="-1"></a><span class="fu">### transform { #bofire.data_models.domain.features.Inputs.transform }</span></span>
-<span id="cb14-257"><a href="#cb14-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-258"><a href="#cb14-258" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-259"><a href="#cb14-259" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.transform(experiments, specs)</span>
-<span id="cb14-260"><a href="#cb14-260" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-256"><a href="#cb14-256" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                                          <span class="pp">|</span></span>
+<span id="cb14-257"><a href="#cb14-257" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|----------------------------------------------------------------------|</span></span>
+<span id="cb14-258"><a href="#cb14-258" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> A Pydantic BaseModel subclass with typed fields matching the inputs. <span class="pp">|</span></span>
+<span id="cb14-259"><a href="#cb14-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-260"><a href="#cb14-260" aria-hidden="true" tabindex="-1"></a><span class="fu">### transform { #bofire.data_models.domain.features.Inputs.transform }</span></span>
 <span id="cb14-261"><a href="#cb14-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-262"><a href="#cb14-262" aria-hidden="true" tabindex="-1"></a>Transform a dataframe to the representation specified in <span class="in">`specs`</span>.</span>
-<span id="cb14-263"><a href="#cb14-263" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-264"><a href="#cb14-264" aria-hidden="true" tabindex="-1"></a>Currently only input categoricals are supported.</span>
+<span id="cb14-262"><a href="#cb14-262" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-263"><a href="#cb14-263" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.transform(experiments, specs)</span>
+<span id="cb14-264"><a href="#cb14-264" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-265"><a href="#cb14-265" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-266"><a href="#cb14-266" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-266"><a href="#cb14-266" aria-hidden="true" tabindex="-1"></a>Transform a dataframe to the representation specified in <span class="in">`specs`</span>.</span>
 <span id="cb14-267"><a href="#cb14-267" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-268"><a href="#cb14-268" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-269"><a href="#cb14-269" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
-<span id="cb14-270"><a href="#cb14-270" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame        <span class="pp">|</span> Data dataframe to be transformed.                                          <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-271"><a href="#cb14-271" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs       <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-272"><a href="#cb14-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-273"><a href="#cb14-273" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-274"><a href="#cb14-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-275"><a href="#cb14-275" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
-<span id="cb14-276"><a href="#cb14-276" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|------------------------------------------------------------------------|</span></span>
-<span id="cb14-277"><a href="#cb14-277" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Transformed dataframe. Only input features are included. <span class="pp">|</span></span>
+<span id="cb14-268"><a href="#cb14-268" aria-hidden="true" tabindex="-1"></a>Currently only input categoricals are supported.</span>
+<span id="cb14-269"><a href="#cb14-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-270"><a href="#cb14-270" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-271"><a href="#cb14-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-272"><a href="#cb14-272" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-273"><a href="#cb14-273" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
+<span id="cb14-274"><a href="#cb14-274" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame        <span class="pp">|</span> Data dataframe to be transformed.                                          <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-275"><a href="#cb14-275" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs       <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-276"><a href="#cb14-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-277"><a href="#cb14-277" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-278"><a href="#cb14-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-279"><a href="#cb14-279" aria-hidden="true" tabindex="-1"></a><span class="fu">### validate_candidates { #bofire.data_models.domain.features.Inputs.validate_candidates }</span></span>
-<span id="cb14-280"><a href="#cb14-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-281"><a href="#cb14-281" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-282"><a href="#cb14-282" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.validate_candidates(candidates)</span>
-<span id="cb14-283"><a href="#cb14-283" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-279"><a href="#cb14-279" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
+<span id="cb14-280"><a href="#cb14-280" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|------------------------------------------------------------------------|</span></span>
+<span id="cb14-281"><a href="#cb14-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Transformed dataframe. Only input features are included. <span class="pp">|</span></span>
+<span id="cb14-282"><a href="#cb14-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-283"><a href="#cb14-283" aria-hidden="true" tabindex="-1"></a><span class="fu">### validate_candidates { #bofire.data_models.domain.features.Inputs.validate_candidates }</span></span>
 <span id="cb14-284"><a href="#cb14-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-285"><a href="#cb14-285" aria-hidden="true" tabindex="-1"></a>Validate a pandas dataframe with input feature values.</span>
-<span id="cb14-286"><a href="#cb14-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-287"><a href="#cb14-287" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-285"><a href="#cb14-285" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-286"><a href="#cb14-286" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.validate_candidates(candidates)</span>
+<span id="cb14-287"><a href="#cb14-287" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb14-288"><a href="#cb14-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-289"><a href="#cb14-289" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type         <span class="pp">|</span> Description         <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-290"><a href="#cb14-290" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|--------------|---------------------|------------|</span></span>
-<span id="cb14-291"><a href="#cb14-291" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> candidates <span class="pp">|</span> pd.Dataframe <span class="pp">|</span> Inputs to validate. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-289"><a href="#cb14-289" aria-hidden="true" tabindex="-1"></a>Validate a pandas dataframe with input feature values.</span>
+<span id="cb14-290"><a href="#cb14-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-291"><a href="#cb14-291" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb14-292"><a href="#cb14-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-293"><a href="#cb14-293" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb14-294"><a href="#cb14-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-295"><a href="#cb14-295" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
-<span id="cb14-296"><a href="#cb14-296" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|------------------------------------------------------------------------|</span></span>
-<span id="cb14-297"><a href="#cb14-297" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> Raises a Valueerror if a feature based validation raises an exception. <span class="pp">|</span></span>
+<span id="cb14-293"><a href="#cb14-293" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type         <span class="pp">|</span> Description         <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-294"><a href="#cb14-294" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|--------------|---------------------|------------|</span></span>
+<span id="cb14-295"><a href="#cb14-295" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> candidates <span class="pp">|</span> pd.Dataframe <span class="pp">|</span> Inputs to validate. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-296"><a href="#cb14-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-297"><a href="#cb14-297" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Raises {.doc-section .doc-section-raises}</span></span>
 <span id="cb14-298"><a href="#cb14-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-299"><a href="#cb14-299" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-300"><a href="#cb14-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-301"><a href="#cb14-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                       <span class="pp">|</span></span>
-<span id="cb14-302"><a href="#cb14-302" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-----------------------------------|</span></span>
-<span id="cb14-303"><a href="#cb14-303" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.Dataframe: Validated dataframe <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb14-299"><a href="#cb14-299" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
+<span id="cb14-300"><a href="#cb14-300" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|------------------------------------------------------------------------|</span></span>
+<span id="cb14-301"><a href="#cb14-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> Raises a Valueerror if a feature based validation raises an exception. <span class="pp">|</span></span>
+<span id="cb14-302"><a href="#cb14-302" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-303"><a href="#cb14-303" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb14-304"><a href="#cb14-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-305"><a href="#cb14-305" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                       <span class="pp">|</span></span>
+<span id="cb14-306"><a href="#cb14-306" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-----------------------------------|</span></span>
+<span id="cb14-307"><a href="#cb14-307" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.Dataframe: Validated dataframe <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

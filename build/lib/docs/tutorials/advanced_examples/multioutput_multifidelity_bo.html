@@ -420,7 +420,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to set up a multi-fidelity problem that has multiple objectives. This approach uses the Multi-fidelity Hypervolume Knowledge Gradient acquisition function [1], which supports: - Multiple objectives, optimizing their pareto front - Multiple fidelities, which can correspond to the quality of a function evaluation. For example, when running a computer simulation, one can control the resolution or the duration, each of which trade-off between quality and cost. - A cost-weighting, which determines how expensive an experiment is to carry out given the fidelity.</p>
 <p>For a deeper look at how this acquisition function works, see the corresponding paper or the <a href="https://botorch.org/docs/tutorials/Multi_objective_multi_fidelity_BO">BoTorch tutorial</a>.</p>
 <p>[1] S. Daulton, M. Balandat, and E. Bakshy. <a href="https://proceedings.mlr.press/v202/daulton23a.html">Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information</a>. ICML, 2023.</p>
-<div id="fd28f75c" class="cell" data-execution_count="1">
+<div id="d5438103" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qMFHVKG</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.enum <span class="im">import</span> SamplingMethodEnum</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousTaskInput</span>
@@ -433,7 +433,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="ecbe7400" class="cell" data-execution_count="2">
+<div id="7b9f3956" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">32</span>,</span>
@@ -459,7 +459,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="problem-definition">Problem definition</h2>
 <p>We will consider a very simple objective function - a rigid-body physics simulation of thousands of particles in a packed bed reactor. We can control the shape of each particle, and we want to optimize the performance of the reactor. This includes: - maximizing air flow through the reactor (minimizing pressure drop), and - maximizing the number reaction sites (maximizing surface area per unit volume of the reactor).</p>
 <p>We can also decrease the fidelity in two different ways, each reducing the cost of an experiment: - stop the simulation early, and - reduce the resolution of the simulation.</p>
-<div id="69ef21ca" class="cell" data-execution_count="3">
+<div id="7bc4890e" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulation_black_box(experiments: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Toy function representing a rigid-body simulation of reactor packing.</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -491,7 +491,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"surface_area"</span>: surface_area,</span>
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="48faf96b" class="cell" data-execution_count="4">
+<div id="ccf0e10c" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Benchmark</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> domain_api</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> feature_api</span>
@@ -521,7 +521,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> simulation_black_box(candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s plot the objective function. First, we show the surface at the highest fidelity, varying the height+radius parameters. The objective surface is quite smooth, and unimodal, so this problem shouldn’t be too difficult.</p>
-<div id="39ffe7c8" class="cell" data-execution_count="5">
+<div id="25fc32b5" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -551,7 +551,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We can also plot the pareto front below, keeping in mind that we want to minimize the pressure drop, and maximize the surface area. We color the observations according to the radius, and scale their size according to the height.</p>
-<div id="995c275e" class="cell" data-execution_count="6">
+<div id="50e15515" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_pareto_idcs(data: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">int</span>]:</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    dominating_points: <span class="bu">list</span>[<span class="bu">int</span>] <span class="op">=</span> []</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    cur_max_surface_area <span class="op">=</span> <span class="op">-</span>np.inf</span>
@@ -580,7 +580,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We also show the impact of varying the fidelity parameters, for a fixed height+radius. This shows the scale of bias that is introduced when changing the fidelities.</p>
-<div id="a01dbb7a" class="cell" data-execution_count="7">
+<div id="b988e4cc" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> CenteredNorm</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fixed_shape <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">7.5</span>, <span class="st">"radius"</span>: <span class="fl">5.0</span>}</span>
@@ -616,7 +616,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="creating-the-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="creating-the-strategy">Creating the strategy</h2>
 <p>Now that the problem has been defined, we can sample some experiments from the problem, and define the strategy that we will use to ask for points.</p>
-<div id="73baa50b" class="cell" data-execution_count="8">
+<div id="4ec51f5a" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SimulationBenchmark()</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(<span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -689,7 +689,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="ee3fddd5" class="cell" data-execution_count="9">
+<div id="4217c5bd" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
@@ -731,16 +731,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>2.194124</td>
-<td>4.656202</td>
+<td>7.546359</td>
+<td>3.007158</td>
 <td>0.1</td>
 <td>0.2</td>
-<td>1.650214</td>
-<td>1.8089</td>
-<td>0.38566</td>
-<td>0.370193</td>
-<td>-1.650214</td>
-<td>1.8089</td>
+<td>0.612364</td>
+<td>3.26045</td>
+<td>0.58836</td>
+<td>0.55435</td>
+<td>-0.612364</td>
+<td>3.26045</td>
 </tr>
 </tbody>
 </table>
@@ -753,7 +753,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A key piece of information that we omitted in the above cells is the <em>cost</em> function - how much does an experiment cost to run? This is highly relevant in multi-fidelity settings, since if all experiments cost the same, then there is no reason to not query at the highest fidelity.</p>
 <p>By default, we assume that an experiment at the lowest fidelity costs <code>1.0</code> units, and scales linearly with the task features with coefficients <code>1.0</code>. However, this should be explicitly defined as a part of the strategy. Note that currently, BoFire only supports linear costs.</p>
 <p>In our example, increasing the duration of the simulation will increase the cost by a large coefficient. However (eg. due to parallelization of the simulation), increasing the resolution incurs a smaller cost. We can explicitly include this in the model. We would then expect the strategy to propose experiments at full resolution (since there is no significant cost savings to reducing the resolution), but not necessarily at the full duration.</p>
-<div id="d5ebc7f6" class="cell" data-execution_count="10">
+<div id="1ae7d19d" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cost_model <span class="op">=</span> LinearDeterministicSurrogate(</span>
@@ -799,16 +799,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>7.135431</td>
-<td>2.410965</td>
-<td>0.452424</td>
-<td>0.752936</td>
-<td>0.586039</td>
-<td>3.081417</td>
-<td>0.167455</td>
-<td>0.142729</td>
-<td>-0.586039</td>
-<td>3.081417</td>
+<td>8.120327</td>
+<td>5.512399</td>
+<td>0.1</td>
+<td>0.2</td>
+<td>0.37634</td>
+<td>2.87527</td>
+<td>0.328903</td>
+<td>0.326034</td>
+<td>-0.37634</td>
+<td>2.87527</td>
 </tr>
 </tbody>
 </table>
