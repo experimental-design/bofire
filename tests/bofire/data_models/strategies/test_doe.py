@@ -14,7 +14,10 @@ from bofire.data_models.strategies.doe import DOptimalityCriterion
     ],
 )
 def test_doe_optimality_criterion_warns_on_silent_term_drop(formula):
-    with pytest.warns(UserWarning, match="Formulaic may silently drop model terms"):
+    with pytest.warns(
+        UserWarning,
+        match="Formulaic may silently drop model terms that are not correctly delimited by braces.",
+    ):
         DOptimalityCriterion(formula=formula)
 
 
@@ -24,5 +27,7 @@ def test_doe_optimality_criterion_does_not_warn_for_braced_quadratic():
         DOptimalityCriterion(formula="1 + x1 + {x1**2}")
 
     assert not any(
-        "Formulaic may silently drop model terms" in str(w.message) for w in caught
+        "Formulaic may silently drop model terms that are not correctly delimited by braces."
+        in str(w.message)
+        for w in caught
     )
