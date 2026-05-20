@@ -22,6 +22,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     AnyPrior,
     AnyPriorConstraint,
+    GreaterThan,
 )
 from bofire.data_models.priors.lkj import LKJPrior
 from bofire.data_models.surrogates.trainable import Hyperconfig
@@ -97,7 +98,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = None
+    noise_constraint: AnyPriorConstraint = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
     task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig(),

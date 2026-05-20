@@ -47,9 +47,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
         likelihood = GaussianLikelihood(
             noise_prior=priors.map(self.noise_prior),
-            noise_constraint=priors.map(self.noise_constraint)
-            if self.noise_constraint is not None
-            else None,
+            noise_constraint=priors.map(self.noise_constraint),
         )
 
         self.model = botorch.models.SingleTaskGP(

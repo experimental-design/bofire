@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Type
 
 from pydantic import Field
 
@@ -9,6 +9,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     AnyPrior,
     AnyPriorConstraint,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -18,7 +19,9 @@ class PolynomialSurrogate(TrainableBotorchSurrogate):
 
     kernel: PolynomialKernel = Field(default_factory=lambda: PolynomialKernel(power=2))
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = None
+    noise_constraint: AnyPriorConstraint = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
 
     @staticmethod
     def from_power(power: int, inputs: Inputs, outputs: Outputs):

@@ -8,6 +8,7 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -57,6 +58,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ) -> None:
+        likelihood = GaussianLikelihood(
+            noise_prior=priors.map(self.noise_prior),
+            noise_constraint=priors.map(self.noise_constraint),
+        )
+
         self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -74,6 +80,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 ),
                 features_to_idx_mapper=self.get_feature_indices,
             ),
+            likelihood=likelihood,
             outcome_transform=outcome_transform,
             input_transform=input_transform,
             # Pass None explicitly to avoid the default BetaPrior introduced in
@@ -91,11 +98,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             # self.model.task_covar_module.register_prior(
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
-        if self.noise_constraint is not None:
-            self.model.likelihood.noise_covar.raw_noise_constraint = priors.map(
-                self.noise_constraint
-            )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)

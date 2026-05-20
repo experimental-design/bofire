@@ -10,6 +10,8 @@ from bofire.data_models.priors.api import (
     ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     ROBUSTGP_OUTPUTSCALE_CONSTRAINT,
     AnyPrior,
+    AnyPriorConstraint,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -44,6 +46,9 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_constraint: AnyPriorConstraint = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(
             lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),

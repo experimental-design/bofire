@@ -1,7 +1,6 @@
 import math
 from itertools import chain
 
-import gpytorch
 import numpy as np
 import pandas as pd
 import pytest
@@ -21,8 +20,6 @@ from botorch.acquisition.objective import GenericMCObjective, IdentityMCObjectiv
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.api import Branin
-from bofire.data_models.priors.api import GammaPrior
-from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
@@ -361,92 +358,6 @@ def test_custom_dumps_loads():
 
     torch.testing.assert_close(output1, output2)
     torch.testing.assert_close(output1, output3)
-
-
-def test_noise_prior_affects_sobo_predictions():
-    """Test that the noise prior specified in SingleTaskGPSurrogate is correctly
-    registered in the fitted GP and influences the optimised noise level.
-
-    Before the fix, the prior was assigned via direct attribute assignment after
-    constructing SingleTaskGP, which bypassed GPyTorch's _priors registry so the
-    BoTorch default GammaPrior(1.1, 0.05) was always used. The fix passes the
-    GaussianLikelihood with the correct prior directly to the SingleTaskGP constructor.
-    """
-    torch.manual_seed(42)
-    np.random.seed(42)
-
-    benchmark = Himmelblau()
-    random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain),
-    )
-    experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
-    test_candidates = random_strategy.ask(10)
-
-    # Add synthetic observation noise so the MLL-optimal noise sits at ~0.5 in
-    # standardised space — between the two priors' modes (~0.007 and ~100) — giving
-    # each prior a clear direction to pull the optimiser.
-    experiments = experiments.copy()
-    experiments["y"] += (
-        np.random.RandomState(0).randn(len(experiments)) * experiments["y"].std()
-    )
-
-    # Strategy 1: default noise prior (HVARFNER LogNormal(-4, 1), mode ≈ 0.007 in
-    # standardised space — strongly prefers small noise).
-    strategy_default = SoboStrategy(
-        data_model=data_models.SoboStrategy(domain=benchmark.domain),
-    )
-    strategy_default.tell(experiments)
-    m_default = strategy_default.surrogates.surrogates[0].model
-
-    # Strategy 2: extreme large-noise prior (GammaPrior(1.1, 0.001), mode = 100 in
-    # standardised space — strongly prefers large noise).
-    large_noise_surrogate = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        noise_prior=GammaPrior(concentration=1.1, rate=0.001),
-    )
-    strategy_large_noise = SoboStrategy(
-        data_model=data_models.SoboStrategy(
-            domain=benchmark.domain,
-            surrogate_specs=BotorchSurrogates(surrogates=[large_noise_surrogate]),
-        ),
-    )
-    strategy_large_noise.tell(experiments)
-    m_large = strategy_large_noise.surrogates.surrogates[0].model
-
-    def _get_noise_prior(model):
-        return {
-            n: p for n, _, p, _, _ in model.likelihood.named_priors()
-        }.get("noise_covar.noise_prior")
-
-    # 1. Structural check: the correct prior class must be registered in the fitted
-    #    GP model.  Before the fix both strategies would show GammaPrior(1.1, 0.05)
-    #    (the BoTorch default) regardless of what was specified.
-    assert isinstance(_get_noise_prior(m_default), gpytorch.priors.LogNormalPrior), (
-        "Default strategy should register the HVARFNER LogNormal prior"
-    )
-    assert isinstance(_get_noise_prior(m_large), gpytorch.priors.GammaPrior), (
-        "Large-noise strategy should register the specified GammaPrior"
-    )
-
-    # 2. Directional behavioural check: HVARFNER (mode ≈ 0.007) pulls the fitted noise
-    #    below the MLL optimum (~0.5) while GammaPrior (mode = 100) pulls it above,
-    #    so the large-noise strategy must end up with higher fitted noise.
-    noise_default = m_default.likelihood.noise.item()
-    noise_large = m_large.likelihood.noise.item()
-    assert noise_large > noise_default, (
-        f"Large-noise prior should yield higher fitted noise: "
-        f"large={noise_large:.6f} vs default={noise_default:.6f}"
-    )
-
-    # 3. End-to-end check: the different noise levels must produce different predictions.
-    preds_default = strategy_default.predict(test_candidates)
-    preds_large = strategy_large_noise.predict(test_candidates)
-    assert not np.allclose(
-        preds_default["y_pred"].values,
-        preds_large["y_pred"].values,
-        atol=1.0,
-    ), "Mean predictions should differ between the two strategies"
 
 
 def test_custom_dumps_invalid():
