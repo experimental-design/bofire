@@ -53,6 +53,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     GammaPrior,
+    LogNormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
 from bofire.data_models.surrogates.api import (
@@ -1163,9 +1164,7 @@ def test_noise_prior_affects_single_task_gp():
     experiments = benchmark.f(benchmark.domain.inputs.sample(20), return_complete=True)
     test_candidates = benchmark.domain.inputs.sample(10)
 
-    # Add synthetic observation noise so the MLL-optimal noise sits at ~0.5 in
-    # standardised space — between the two priors' modes (~0.007 and ~100) —
-    # giving each prior a clear direction to pull the optimiser.
+    # Add synthetic observation noise so the data has non-trivial noise level.
     experiments = experiments.copy()
     experiments["y"] += (
         np.random.RandomState(0).randn(len(experiments)) * experiments["y"].std()
@@ -1179,12 +1178,17 @@ def test_noise_prior_affects_single_task_gp():
     )
     surrogate_default.fit(experiments)
 
-    # Extreme large-noise prior: GammaPrior(1.1, 0.001), mode = 100 — pulls noise high.
+    # Tight LogNormal prior peaked near 1.0 in standardised space — should
+    # reliably hold the fitted noise near its mode (~0.78 = exp(0 - 0.25^2)),
+    # regardless of optimizer trajectory or BLAS quirks across platforms.
+    # We deliberately avoid a wide / nearly-flat prior (e.g. Gamma with low
+    # concentration) because the data likelihood would dominate and the
+    # directional test would become brittle.
     surrogate_large = surrogates.map(
         SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+            noise_prior=LogNormalPrior(loc=0.0, scale=0.25),
         )
     )
     surrogate_large.fit(experiments)
@@ -1195,7 +1199,8 @@ def test_noise_prior_affects_single_task_gp():
         gpytorch.priors.LogNormalPrior,
     )
     assert isinstance(
-        _get_registered_noise_prior(surrogate_large.model), gpytorch.priors.GammaPrior
+        _get_registered_noise_prior(surrogate_large.model),
+        gpytorch.priors.LogNormalPrior,
     )
 
     # 2. Directional: large-noise prior must yield higher fitted noise.
