@@ -31,6 +31,24 @@ specs.add_valid(
     },
 )
 
+specs.add_valid(
+    priors.NonTransformedInterval,
+    lambda: {
+        "lower_bound": 0.01,
+        "upper_bound": 10,
+        "initial_value": None,
+    },
+)
+
+specs.add_valid(
+    priors.LogTransformedInterval,
+    lambda: {
+        "lower_bound": 0.05,
+        "upper_bound": 1,
+        "initial_value": None,
+    },
+)
+
 specs.add_invalid(
     priors.NonTransformedInterval,
     lambda: {
