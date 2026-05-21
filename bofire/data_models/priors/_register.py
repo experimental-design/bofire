@@ -89,6 +89,7 @@ def _rebuild_dependent_models() -> None:
         (TanimotoGPSurrogate, "noise_constraint"),
         (PolynomialSurrogate, "noise_constraint"),
         (LinearSurrogate, "noise_constraint"),
+        (RobustSingleTaskGPSurrogate, "noise_constraint"),
         (SingleTaskGPHyperconfig, "lengthscale_constraint"),
         (SingleTaskGPHyperconfig, "outputscale_constraint"),
     ]:

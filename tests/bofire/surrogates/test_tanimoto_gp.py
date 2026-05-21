@@ -1,5 +1,6 @@
 import importlib
 
+import gpytorch
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,6 +13,7 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MolFeatures,
 )
+from bofire.data_models.priors.api import GammaPrior
 from bofire.data_models.strategies import api as strategies_api
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
 from bofire.strategies.api import map as map_strategy
@@ -130,3 +132,36 @@ def test_passing_of_tanimoto_sim_matrices(
     assert (
         id_tensor_1 == id_tensor_2
     )  # passing matrix works would not change the id of the tensor
+
+
+# --- Regression test for issue #762: noise_prior registration on TanimotoGPSurrogate ---
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_noise_prior_registered_for_tanimoto_gp(chem_domain_simple):
+    """The user-supplied ``noise_prior`` must end up in the fitted likelihood's
+    ``_priors`` registry (which MLL reads from). Before the fix it was only set
+    as an attribute and MLL silently used the BoTorch default.
+    """
+    torch.manual_seed(42)
+    domain, X, Y = chem_domain_simple
+    experiments = pd.concat(
+        [X, Y, pd.Series([1] * len(X), name="valid_output")], axis=1
+    )
+
+    surrogate = map(
+        TanimotoGPSurrogate(
+            inputs=domain.inputs,
+            outputs=domain.outputs,
+            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+            categorical_encodings={"molecules": Fingerprints()},
+        )
+    )
+    surrogate.fit(experiments)
+
+    priors = {n: p for n, _, p, _, _ in surrogate.model.likelihood.named_priors()}
+    prior = priors.get("noise_covar.noise_prior")
+    assert isinstance(prior, gpytorch.priors.GammaPrior), (
+        f"User-supplied GammaPrior must be in the likelihood's _priors registry "
+        f"(got {type(prior).__name__})"
+    )

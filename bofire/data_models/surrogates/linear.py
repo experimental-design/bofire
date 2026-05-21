@@ -9,6 +9,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     AnyPrior,
     AnyPriorConstraint,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -18,7 +19,9 @@ class LinearSurrogate(TrainableBotorchSurrogate):
 
     kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = None
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
