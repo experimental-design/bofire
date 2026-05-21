@@ -105,7 +105,6 @@ def map_DimensionalityScaledLogNormalPrior(
 
 def map_NonTransformedInterval(
     data_model: data_models.NonTransformedInterval,
-    **_kwargs,
 ) -> NonTransformedInterval:
     return NonTransformedInterval(
         lower_bound=data_model.lower_bound,
@@ -116,7 +115,6 @@ def map_NonTransformedInterval(
 
 def map_LogTransformedInterval(
     data_model: data_models.LogTransformedInterval,
-    **_kwargs,
 ) -> LogTransformedInterval:
     return LogTransformedInterval(
         lower_bound=data_model.lower_bound,
@@ -127,41 +125,27 @@ def map_LogTransformedInterval(
 
 def map_Positive(
     data_model: data_models.Positive,
-    initial_value=None,
 ) -> Positive:
-    # The ``initial_value`` from the data model takes precedence; the kwarg is a
-    # runtime fallback supplied by callers (e.g. the GP surrogates pass
-    # ``noise_prior.mode`` to mirror BoTorch's default warm-start).
-    return Positive(
-        initial_value=data_model.initial_value
-        if data_model.initial_value is not None
-        else initial_value,
-    )
+    return Positive(initial_value=data_model.initial_value)
 
 
 def map_GreaterThan(
     data_model: data_models.GreaterThan,
-    initial_value=None,
 ) -> GreaterThan:
     return GreaterThan(
         lower_bound=data_model.lower_bound,
         transform=None,
-        initial_value=data_model.initial_value
-        if data_model.initial_value is not None
-        else initial_value,
+        initial_value=data_model.initial_value,
     )
 
 
 def map_LessThan(
     data_model: data_models.LessThan,
-    initial_value=None,
 ) -> LessThan:
     return LessThan(
         upper_bound=data_model.upper_bound,
         transform=None,
-        initial_value=data_model.initial_value
-        if data_model.initial_value is not None
-        else initial_value,
+        initial_value=data_model.initial_value,
     )
 
 
