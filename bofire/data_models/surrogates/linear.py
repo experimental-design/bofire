@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field
 
@@ -19,7 +19,7 @@ class LinearSurrogate(TrainableBotorchSurrogate):
 
     kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    noise_constraint: AnyPriorConstraint = Field(
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
     )
 

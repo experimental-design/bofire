@@ -104,7 +104,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    noise_constraint: AnyPriorConstraint = Field(
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
     )
     task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)

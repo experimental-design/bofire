@@ -71,7 +71,9 @@ class TanimotoGPSurrogate(SingleTaskGPSurrogate):
 
         likelihood = GaussianLikelihood(
             noise_prior=priors.map(self.noise_prior),
-            noise_constraint=priors.map(self.noise_constraint),
+            noise_constraint=priors.map(self.noise_constraint)
+            if self.noise_constraint is not None
+            else None,
         )
 
         self.model = botorch.models.SingleTaskGP(
