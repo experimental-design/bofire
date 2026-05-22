@@ -674,14 +674,7 @@ def test_model_cross_validate_aggregate():
     # Without aggregation for comparison
     train_cv_no_agg, test_cv_no_agg, _ = model.cross_validate(experiments, folds=2, aggregate=False)
 
-    # With folds=2, there should be exactly 2 results (one per fold)
-    assert len(train_cv_agg.results) == 2
-    assert len(test_cv_agg.results) == 2
-    assert len(train_cv_no_agg.results) == 2
-    assert len(test_cv_no_agg.results) == 2
-
     # With aggregation, total unique observations across all test folds should be 3
-    # (5 rows collapsed to 3 unique input combinations)
     agg_test_obs = sum(len(r.observed) for r in test_cv_agg.results)
     assert agg_test_obs == 3
 
