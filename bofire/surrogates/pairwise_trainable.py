@@ -78,9 +78,6 @@ class PairwiseTrainableSurrogate(ABC):
                 "PairwiseGPSurrogate requires unique labcodes."
             )
 
-        if not isinstance(preferences, pd.DataFrame):
-            raise TypeError("`preferences` must be a pandas DataFrame.")
-
         expected_cols = set(self.PREFERENCE_COLUMNS)
         missing = expected_cols - set(preferences.columns)
         if missing:

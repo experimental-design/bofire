@@ -1208,6 +1208,38 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
+        "likelihood": "probit",
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+    },
+)
+
+specs.add_valid(
+    models.PairwiseGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[features.valid(ContinuousOutput).obj()],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=RBFKernel(
+                ard=True,
+                lengthscale_prior=PAIRWISEGP_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=PAIRWISEGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR(),
+            outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "scaler": Normalize().model_dump(),
+        "likelihood": "logit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "hyperconfig": None,
         "input_preprocessing_specs": {},

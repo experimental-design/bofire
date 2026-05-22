@@ -22,6 +22,12 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     `preferences` DataFrame references rows of the standard BoFire `experiments`
     DataFrame by `labcode`; the single output feature represents the latent
     utility inferred from those comparisons.
+
+    Attributes:
+        likelihood: The pairwise likelihood linking latent-utility differences
+            to preference probabilities -- ``"probit"`` (Gaussian comparison
+            noise, BoTorch's default) or ``"logit"`` (logistic noise, i.e. the
+            Bradley-Terry model).
     """
 
     type: Literal["PairwiseGPSurrogate"] = "PairwiseGPSurrogate"
@@ -38,6 +44,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
     )
     scaler: AnyScaler = Field(default_factory=Normalize)
+    likelihood: Literal["probit", "logit"] = "probit"
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -58,16 +65,4 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 "PairwiseGPSurrogate.kernel must be a ScaleKernel "
                 "(BoTorch's PairwiseGP requires the covariance module to be a ScaleKernel)."
             )
-        return self
-
-    @model_validator(mode="after")
-    def validate_scaler_features(self):
-        if self.scaler and len(self.scaler.features) > 0:
-            missing_features = list(
-                set(self.scaler.features) - set(self.inputs.get_keys())
-            )
-            if missing_features:
-                raise ValueError(
-                    f"The following features are missing in inputs: {missing_features}"
-                )
         return self

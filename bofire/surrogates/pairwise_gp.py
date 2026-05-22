@@ -1,10 +1,12 @@
 from typing import Dict, Optional
 
 import botorch
-import numpy as np
-import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from botorch.models.pairwise_gp import PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import InputTransform
 
@@ -12,7 +14,13 @@ import bofire.kernels.api as kernels
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
-from bofire.utils.torch_tools import tkwargs
+
+
+# maps the serializable likelihood name to the BoTorch PairwiseLikelihood class
+PAIRWISE_LIKELIHOODS = {
+    "probit": PairwiseProbitLikelihood,
+    "logit": PairwiseLogitLikelihood,
+}
 
 
 class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
@@ -23,6 +31,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
     ):
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
+        self.likelihood = data_model.likelihood
         self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
 
@@ -44,6 +53,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         self.model = botorch.models.PairwiseGP(
             datapoints=datapoints,
             comparisons=comparisons,
+            likelihood=PAIRWISE_LIKELIHOODS[self.likelihood](),
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
@@ -59,12 +69,6 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         )
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
 
-    def _predict(self, transformed_X: pd.DataFrame):
-        # PairwiseGP silently ignores observation_noise; latent utility has
-        # no identifiable observation noise in probit/logit pairwise models.
-        X = torch.from_numpy(transformed_X.values).to(**tkwargs)
-        with torch.no_grad():
-            post = self.model.posterior(X=X)
-            preds = post.mean.cpu().detach().numpy()
-            stds = np.sqrt(post.variance.cpu().detach().numpy())
-        return preds, stds
+    # `_predict` is inherited from BotorchSurrogate: it calls
+    # `posterior(X, observation_noise=True)`, and PairwiseGP ignores
+    # `observation_noise` (verified in scripts/pairwise_gp_checks.py).

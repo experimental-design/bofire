@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 import pytest
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from botorch.models.pairwise_gp import PairwiseGP
 from pandas.testing import assert_frame_equal
 from scipy.stats import kendalltau
@@ -197,3 +201,32 @@ def test_pairwise_gp_data_model_validation():
             outputs=Outputs(features=[ContinuousOutput(key="utility")]),
             kernel=RBFKernel(ard=True),
         )
+
+
+@pytest.mark.parametrize(
+    "likelihood, expected_cls",
+    [
+        ("probit", PairwiseProbitLikelihood),
+        ("logit", PairwiseLogitLikelihood),
+    ],
+)
+def test_pairwise_gp_likelihood(likelihood, expected_cls):
+    """Both pairwise likelihoods fit and map to the right BoTorch class."""
+    inputs, outputs = _make_domain()
+    experiments, preferences, utility = _make_data()
+
+    surrogate = surrogates.map(
+        PairwiseGPSurrogate(inputs=inputs, outputs=outputs, likelihood=likelihood)
+    )
+    surrogate.fit(experiments, preferences)
+
+    assert isinstance(surrogate.model.likelihood, expected_cls)
+
+    preds = surrogate.predict(experiments[[f"x_{i + 1}" for i in range(DIM)]])
+    corr = kendalltau(preds["utility_pred"].to_numpy(), utility).correlation
+    assert corr > 0.8
+
+
+def test_pairwise_gp_likelihood_default_is_probit():
+    inputs, outputs = _make_domain()
+    assert PairwiseGPSurrogate(inputs=inputs, outputs=outputs).likelihood == "probit"
