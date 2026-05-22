@@ -118,7 +118,9 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         ),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = None
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
         default_factory=lambda: MixedSingleTaskGPHyperconfig(),
     )

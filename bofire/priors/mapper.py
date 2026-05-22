@@ -126,19 +126,27 @@ def map_LogTransformedInterval(
 def map_Positive(
     data_model: data_models.Positive,
 ) -> Positive:
-    return Positive()
+    return Positive(initial_value=data_model.initial_value)
 
 
 def map_GreaterThan(
     data_model: data_models.GreaterThan,
 ) -> GreaterThan:
-    return GreaterThan(lower_bound=data_model.lower_bound, transform=None)
+    return GreaterThan(
+        lower_bound=data_model.lower_bound,
+        transform=None,
+        initial_value=data_model.initial_value,
+    )
 
 
 def map_LessThan(
     data_model: data_models.LessThan,
 ) -> LessThan:
-    return LessThan(upper_bound=data_model.upper_bound, transform=None)
+    return LessThan(
+        upper_bound=data_model.upper_bound,
+        transform=None,
+        initial_value=data_model.initial_value,
+    )
 
 
 PRIOR_MAP = {
