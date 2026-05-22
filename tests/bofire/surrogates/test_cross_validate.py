@@ -585,7 +585,7 @@ def test_model_cross_validate_groupfold(random_state):
             train_set = set(train_index)
             assert test_set.issuperset(indices) or train_set.issuperset(indices)
 
-    # Test if aggregation is fallback to False with group split
+    # Test if aggregate fallback to False when group split is supplied
     with pytest.warns(
         UserWarning,
         match="Aggregation is not compatible with group split, fallback to no aggregation.",
