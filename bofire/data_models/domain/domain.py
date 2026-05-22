@@ -25,7 +25,6 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import Objective
-from bofire.data_models.types import validate_strictly_increasing
 
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
@@ -158,28 +157,6 @@ class Domain(BaseModel):
         """
         for c in self.constraints.get():
             c.validate_inputs(self.inputs)
-        return self
-
-    @model_validator(mode="after")
-    def validate_objective_bounds(self):
-        """Validate objective bounds for outputs when they are specified.
-
-        For objectives exposing a ``bounds`` attribute, enforce strict ordering
-        so downstream normalization does not use a degenerate range.
-        """
-        for feat in self.outputs.get_by_objective(excludes=[]):
-            objective = feat.objective
-            if objective is None or not hasattr(objective, "bounds"):
-                continue
-            bounds = objective.bounds
-            if bounds is None:
-                continue
-            try:
-                validate_strictly_increasing(bounds)
-            except ValueError as exc:
-                raise ValueError(
-                    f"Invalid objective bounds for output `{feat.key}`: {exc}",
-                ) from exc
         return self
 
     def coerce_invalids(self, experiments: pd.DataFrame) -> pd.DataFrame:
