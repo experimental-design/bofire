@@ -183,19 +183,19 @@ class TrainableSurrogate(ABC):
                 raise ValueError(
                     f"Number of unique groups {ngroups} is less than the number of folds {folds}."
                 )
-            
+
             if aggregate:
                 warnings.warn(
                     "Aggregation is not compatible with group split, fallback to no aggregation.",
                 )
                 aggregate = False
-            
+
         if aggregate:
-            # aggregate duplicates 
+            # aggregate duplicates
             domain = Domain(inputs=self.inputs, outputs=self.outputs)
             experiments, _ = domain.aggregate_by_duplicates(
-                experiments = experiments,
-                prec = aggregate_prec,
+                experiments=experiments,
+                prec=aggregate_prec,
             )
 
         # first filter the experiments based on the model setting

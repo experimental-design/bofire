@@ -654,11 +654,13 @@ def test_model_cross_validate_aggregate():
     outputs = Outputs(features=[ContinuousOutput(key="y")])
 
     # Create experiments with duplicates
-    experiments = pd.DataFrame({
-        "x_1": [1.0, 1.0, 2.0, 2.0, 3.0],
-        "x_2": [1.0, 1.0, 2.0, 2.0, 3.0],
-        "y": [1.0, 2.0, 3.0, 4.0, 5.0],
-    })
+    experiments = pd.DataFrame(
+        {
+            "x_1": [1.0, 1.0, 2.0, 2.0, 3.0],
+            "x_2": [1.0, 1.0, 2.0, 2.0, 3.0],
+            "y": [1.0, 2.0, 3.0, 4.0, 5.0],
+        }
+    )
     experiments["valid_y"] = 1
 
     model = SingleTaskGPSurrogate(
@@ -668,7 +670,9 @@ def test_model_cross_validate_aggregate():
     model = surrogates.map(model)
 
     # With aggregate, duplicates should be merged
-    train_cv_agg, test_cv_agg, _ = model.cross_validate(experiments, folds=2, aggregate=True)
+    train_cv_agg, test_cv_agg, _ = model.cross_validate(
+        experiments, folds=2, aggregate=True
+    )
 
     # Without aggregation for comparison, default is False
     train_cv_no_agg, test_cv_no_agg, _ = model.cross_validate(experiments, folds=2)
