@@ -93,7 +93,7 @@ class TrainableSurrogate(ABC):
         folds: int = -1,
         include_X: bool = False,
         include_labcodes: bool = False,
-        aggregate: bool = True,
+        aggregate: bool = False,
         aggregate_prec: int = 3,
         random_state: Optional[int] = None,
         stratified_feature: Optional[str] = None,
@@ -122,7 +122,7 @@ class TrainableSurrogate(ABC):
             folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
             include_X (bool, optional): If true the X values of the fold are written to respective CvResult objects for
                 later analysis. Defaults to False.
-            aggregate (bool, optional): If true, duplicate experiments are aggregated before the CV split. Defaults to True. When group_split_column is provided, aggregation falls back to False.
+            aggregate (bool, optional): If true, duplicate experiments are aggregated before the CV split. Defaults to False. When group_split_column is provided, aggregation is disabled.
             aggregate_prec (int, optional): The precision for rounding up when aggregating. Defaults to 3.
             random_state (int, optional): Controls the randomness of the indices in the train and test sets of each fold.
                 Defaults to None.

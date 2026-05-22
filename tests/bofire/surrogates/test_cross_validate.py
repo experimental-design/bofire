@@ -564,7 +564,6 @@ def test_model_cross_validate_groupfold(random_state):
     train_cv, test_cv, hook_results = model.cross_validate(
         experiments,
         folds=4,
-        aggregate=False,
         random_state=random_state,
         group_split_column="group",
     )
@@ -585,7 +584,7 @@ def test_model_cross_validate_groupfold(random_state):
             train_set = set(train_index)
             assert test_set.issuperset(indices) or train_set.issuperset(indices)
 
-    # Test if aggregate fallback to False when group split is supplied
+    # Test if aggregate is disabled when group split is supplied
     with pytest.warns(
         UserWarning,
         match="Aggregation is not compatible with group split, fallback to no aggregation.",
@@ -668,11 +667,11 @@ def test_model_cross_validate_aggregate():
     )
     model = surrogates.map(model)
 
-    # With default aggregate=True, duplicates should be merged
-    train_cv_agg, test_cv_agg, _ = model.cross_validate(experiments, folds=2)
+    # With aggregate, duplicates should be merged
+    train_cv_agg, test_cv_agg, _ = model.cross_validate(experiments, folds=2, aggregate=True)
 
-    # Without aggregation for comparison
-    train_cv_no_agg, test_cv_no_agg, _ = model.cross_validate(experiments, folds=2, aggregate=False)
+    # Without aggregation for comparison, default is False
+    train_cv_no_agg, test_cv_no_agg, _ = model.cross_validate(experiments, folds=2)
 
     # With aggregation, total unique observations across all test folds should be 3
     agg_test_obs = sum(len(r.observed) for r in test_cv_agg.results)
