@@ -11,8 +11,17 @@ from scipy.stats import kendalltau
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.kernels.api import RBFKernel
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.kernels.api import (
+    AdditiveKernel,
+    HammingDistanceKernel,
+    RBFKernel,
+    ScaleKernel,
+)
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
 
 
@@ -230,3 +239,63 @@ def test_pairwise_gp_likelihood(likelihood, expected_cls):
 def test_pairwise_gp_likelihood_default_is_probit():
     inputs, outputs = _make_domain()
     assert PairwiseGPSurrogate(inputs=inputs, outputs=outputs).likelihood == "probit"
+
+
+def test_pairwise_gp_feature_specific_kernels():
+    """A kernel built from feature-specific sub-kernels over a mixed
+    continuous/categorical space fits and predicts.
+
+    Exercises the `features_to_idx_mapper` wiring: each sub-kernel is restricted
+    to a subset of feature keys, which must resolve to the right columns of the
+    (categorically encoded) datapoints tensor.
+    """
+    rng = np.random.default_rng(0)
+    n = 30
+    cats = ["a", "b", "c"]
+    cat_offset = {"a": 0.0, "b": 0.6, "c": 1.2}
+    cat_vals = rng.choice(cats, size=n)
+    X = rng.random((n, 2))
+    utility = X @ np.array([1.0, 2.0]) + np.array([cat_offset[c] for c in cat_vals])
+    labcodes = [f"cand_{i}" for i in range(n)]
+
+    experiments = pd.DataFrame(X, columns=["x_1", "x_2"])
+    experiments["cat"] = cat_vals
+    experiments["labcode"] = labcodes
+
+    rows = []
+    for _ in range(80):
+        i, j = rng.choice(n, size=2, replace=False)
+        winner, loser = (i, j) if utility[i] > utility[j] else (j, i)
+        rows.append((labcodes[winner], labcodes[loser], 1.0))
+    preferences = pd.DataFrame(rows, columns=["labcode_A", "labcode_B", "preference"])
+
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x_1", bounds=(0.0, 1.0)),
+            ContinuousInput(key="x_2", bounds=(0.0, 1.0)),
+            CategoricalInput(key="cat", categories=cats),
+        ]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="utility")])
+    # an RBF restricted to the continuous features + a Hamming kernel on the
+    # categorical -- a kernel that is *not* the same over all inputs
+    kernel = ScaleKernel(
+        base_kernel=AdditiveKernel(
+            kernels=[
+                RBFKernel(ard=True, features=["x_1", "x_2"]),
+                HammingDistanceKernel(features=["cat"]),
+            ]
+        )
+    )
+
+    surrogate = surrogates.map(
+        PairwiseGPSurrogate(inputs=inputs, outputs=outputs, kernel=kernel)
+    )
+    surrogate.fit(experiments, preferences)
+    assert surrogate.is_fitted
+
+    preds = surrogate.predict(experiments[["x_1", "x_2", "cat"]])
+    assert list(preds.columns) == ["utility_pred", "utility_sd"]
+    assert np.isfinite(preds.to_numpy()).all()
+    corr = kendalltau(preds["utility_pred"].to_numpy(), utility).correlation
+    assert corr > 0.6
