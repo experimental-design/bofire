@@ -736,6 +736,7 @@ specs.add_valid(
         ).model_dump(),
         "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "engineered_features": EngineeredFeatures().model_dump(),
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
     },

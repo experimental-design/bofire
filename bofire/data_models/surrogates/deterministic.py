@@ -2,7 +2,6 @@ from typing import Annotated, Dict, Literal, Type
 
 from pydantic import Field, field_validator, model_validator
 
-from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -67,9 +66,6 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
 
 class LinearDeterministicSurrogate(BotorchSurrogate):
     type: Literal["LinearDeterministicSurrogate"] = "LinearDeterministicSurrogate"
-    engineered_features: EngineeredFeatures = Field(
-        default_factory=lambda: EngineeredFeatures()
-    )
     coefficients: Annotated[Dict[str, float], Field(min_length=1)]
     intercept: float
 

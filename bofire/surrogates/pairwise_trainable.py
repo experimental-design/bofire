@@ -1,6 +1,6 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -150,51 +150,6 @@ class PairwiseTrainableSurrogate(ABC):
             input_transform=input_transform,
             **options,
         )
-
-    def get_feature_indices(self, feature_keys: List[str]) -> List[int]:
-        """Return the tensor column indices of the given feature keys.
-
-        Used as the ``features_to_idx_mapper`` when mapping feature-specific
-        kernels, so a kernel restricted to a subset of feature keys can resolve
-        them to columns of the (categorically encoded) datapoints tensor.
-
-        Structurally identical to
-        :meth:`bofire.surrogates.botorch.TrainableBotorchSurrogate.get_feature_indices`;
-        it lives here too because ``PairwiseGPSurrogate`` does not derive from
-        ``TrainableBotorchSurrogate``.
-
-        Args:
-            feature_keys: The feature keys to get the indices for.
-
-        Returns:
-            The indices of the specified features (original and engineered).
-        """
-        original_keys = [key for key in feature_keys if key in self.inputs.get_keys()]
-        indices = self.inputs.get_feature_indices(
-            specs=self.categorical_encodings, feature_keys=original_keys
-        )
-        engineered_keys = [key for key in feature_keys if key not in original_keys]
-        for key in engineered_keys:
-            if key not in self.engineered_features.get_keys():
-                raise KeyError(f"Feature with key '{key}' not found.")
-        if len(engineered_keys) == 0:
-            return indices
-        for feat in self.engineered_features.get():
-            if feat.keep_features is False:
-                raise NotImplementedError(
-                    "Cannot get feature indices if original features are filtered. "
-                    "Define a feature specific kernel to filter out features and set "
-                    "`keep_features=True`."
-                )
-        # offset introduced by the original inputs
-        features2idx, _ = self.inputs._get_transform_info(self.categorical_encodings)
-        d = 0
-        for idx in features2idx.values():
-            d += len(idx)
-        indices += self.engineered_features.get_feature_indices(
-            offset=d, feature_keys=engineered_keys
-        )
-        return indices
 
     @abstractmethod
     def _fit_pairwise(

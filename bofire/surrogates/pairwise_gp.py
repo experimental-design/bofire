@@ -32,7 +32,6 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
         self.likelihood = data_model.likelihood
-        self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.PairwiseGP] = None
