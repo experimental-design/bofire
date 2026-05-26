@@ -103,6 +103,25 @@ def map_DimensionalityScaledLogNormalPrior(
     )
 
 
+def map_SmoothedBoxPrior(
+    data_model: data_models.SmoothedBoxPrior,
+    **kwargs,
+) -> gpytorch.priors.smoothed_box_prior.SmoothedBoxPrior:
+    return gpytorch.priors.smoothed_box_prior.SmoothedBoxPrior(
+        a=data_model.lower_bound, b=data_model.upper_bound, sigma=data_model.sigma
+    )
+
+
+def map_Interval(
+    data_model: data_models.Interval,
+) -> gpytorch.constraints.Interval:
+    return gpytorch.constraints.Interval(
+        lower_bound=data_model.lower_bound,
+        upper_bound=data_model.upper_bound,
+        initial_value=data_model.initial_value,
+    )
+
+
 def map_NonTransformedInterval(
     data_model: data_models.NonTransformedInterval,
 ) -> NonTransformedInterval:
@@ -155,6 +174,8 @@ PRIOR_MAP = {
     data_models.LKJPrior: map_LKJPrior,
     data_models.LogNormalPrior: map_LogNormalPrior,
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
+    data_models.SmoothedBoxPrior: map_SmoothedBoxPrior,
+    data_models.Interval: map_Interval,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
     data_models.LogTransformedInterval: map_LogTransformedInterval,
     data_models.Positive: map_Positive,

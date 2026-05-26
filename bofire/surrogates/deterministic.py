@@ -22,7 +22,6 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
     ):
         self.intercept = data_model.intercept
         self.coefficients = data_model.coefficients
-        self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
         self.model = AffineDeterministicModel(
             b=data_model.intercept,

@@ -1,7 +1,8 @@
 from typing import Type
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
+from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -36,6 +37,9 @@ class BotorchSurrogate(Surrogate):
 
     categorical_encodings: InputTransformSpecs = Field(
         default_factory=dict, validate_default=True
+    )
+    engineered_features: EngineeredFeatures = Field(
+        default_factory=lambda: EngineeredFeatures()
     )
 
     @field_validator("input_preprocessing_specs")
@@ -99,3 +103,8 @@ class BotorchSurrogate(Surrogate):
         v = cls._generate_default_categorical_encodings(inputs, v)
         inputs._validate_transform_specs(v)
         return v
+
+    @model_validator(mode="after")
+    def validate_engineered_features(self):
+        self.engineered_features.validate_inputs(self.inputs)
+        return self

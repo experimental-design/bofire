@@ -15,12 +15,17 @@ from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
     InfiniteWidthBNNKernel,
     MaternKernel,
+    RBFKernel,
     ScaleKernel,
     TanimotoKernel,
     WassersteinKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
+    PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
+    PAIRWISEGP_LENGTHSCALE_PRIOR,
+    PAIRWISEGP_OUTPUTSCALE_CONSTRAINT,
+    PAIRWISEGP_OUTPUTSCALE_PRIOR,
     ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     ROBUSTGP_OUTPUTSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
@@ -731,6 +736,7 @@ specs.add_valid(
         ).model_dump(),
         "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "engineered_features": EngineeredFeatures().model_dump(),
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
     },
@@ -1179,4 +1185,98 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Feature keys do not match input keys.",
+)
+
+specs.add_valid(
+    models.PairwiseGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[features.valid(ContinuousOutput).obj()],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=RBFKernel(
+                ard=True,
+                lengthscale_prior=PAIRWISEGP_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=PAIRWISEGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR(),
+            outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "scaler": Normalize().model_dump(),
+        "likelihood": "probit",
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+    },
+)
+
+specs.add_valid(
+    models.PairwiseGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[features.valid(ContinuousOutput).obj()],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=RBFKernel(
+                ard=True,
+                lengthscale_prior=PAIRWISEGP_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=PAIRWISEGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR(),
+            outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
+        ).model_dump(),
+        "scaler": Normalize().model_dump(),
+        "likelihood": "logit",
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+    },
+)
+
+specs.add_invalid(
+    models.PairwiseGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key="a", bounds=[0, 1])],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                ContinuousOutput(key="y1"),
+                ContinuousOutput(key="y2"),
+            ],
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="PairwiseGPSurrogate supports exactly one output",
+)
+
+specs.add_invalid(
+    models.PairwiseGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key="a", bounds=[0, 1])],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[features.valid(ContinuousOutput).obj()],
+        ).model_dump(),
+        "kernel": RBFKernel(ard=True).model_dump(),
+    },
+    error=ValueError,
+    message="PairwiseGPSurrogate.kernel must be a ScaleKernel",
 )

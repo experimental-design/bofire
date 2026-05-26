@@ -89,3 +89,43 @@ specs.add_invalid(
     error=ValueError,
     message="The initial value must be less than or equal to the upper bound.",
 )
+
+specs.add_valid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 0.005,
+        "upper_bound": 200.0,
+        "initial_value": 1.0,
+    },
+)
+
+specs.add_valid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 0.005,
+        "upper_bound": 200.0,
+        "initial_value": None,
+    },
+)
+
+specs.add_invalid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 2.0,
+        "upper_bound": 1.0,
+        "initial_value": 1.5,
+    },
+    error=ValueError,
+    message="The lower bound must be less than the upper bound for an interval.",
+)
+
+specs.add_invalid(
+    priors.Interval,
+    lambda: {
+        "lower_bound": 1.0,
+        "upper_bound": 10.0,
+        "initial_value": 11.0,
+    },
+    error=ValueError,
+    message="The initial value must be within the bounds of the interval.",
+)
