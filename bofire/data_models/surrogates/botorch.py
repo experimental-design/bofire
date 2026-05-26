@@ -105,6 +105,6 @@ class BotorchSurrogate(Surrogate):
         return v
 
     @model_validator(mode="after")
-    def validate_aggregations(self):
+    def validate_engineered_features(self):
         self.engineered_features.validate_inputs(self.inputs)
         return self

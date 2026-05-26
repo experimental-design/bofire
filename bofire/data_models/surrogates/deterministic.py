@@ -89,7 +89,7 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
 
     @field_validator("engineered_features")
     @classmethod
-    def validate_engineered_features(cls, engineered_features, info):
+    def validate_linear_engineered_features(cls, engineered_features, info):
         for feat in engineered_features.get():
             if feat.n_transformed_inputs != 1:
                 raise ValueError(
