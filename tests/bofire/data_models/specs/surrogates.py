@@ -1178,3 +1178,86 @@ specs.add_invalid(
     error=ValueError,
     message="Feature keys do not match input keys.",
 )
+
+
+specs.add_valid(
+    models.TabPFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": None,
+        "tabpfn_version": "v3",
+        "posterior_type": "gaussian",
+        "use_kv_cache": False,
+        "device": "cpu",
+        "checkpoint_path": None,
+    },
+)
+specs.add_valid(
+    models.TabPFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": None,
+        "tabpfn_version": "v2.6",
+        "posterior_type": "riemann",
+        "use_kv_cache": False,
+        "device": "cuda",
+        "checkpoint_path": "/tmp/tabpfn.ckpt",
+    },
+)
+specs.add_invalid(
+    models.TabPFNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(CategoricalOutput).obj(),
+            ],
+        ).model_dump(),
+        "tabpfn_version": "v3",
+        "posterior_type": "gaussian",
+        "use_kv_cache": False,
+        "device": "cpu",
+        "checkpoint_path": None,
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
+)

@@ -48,6 +48,7 @@ from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.surrogate import Surrogate
+from bofire.data_models.surrogates.tabpfn import TabPFNSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.unions import tagged_union
@@ -72,6 +73,7 @@ AnySurrogate = tagged_union(
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    TabPFNSurrogate,
 )
 
 AnyTrainableSurrogate = tagged_union(
@@ -89,6 +91,7 @@ AnyTrainableSurrogate = tagged_union(
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    TabPFNSurrogate,
 )
 
 AnyRegressionSurrogate = tagged_union(
@@ -108,6 +111,7 @@ AnyRegressionSurrogate = tagged_union(
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    TabPFNSurrogate,
 )
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

@@ -16,5 +16,6 @@ from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
+from bofire.surrogates.tabpfn import TabPFNSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.surrogates.values import PredictedValue

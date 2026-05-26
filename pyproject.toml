@@ -52,6 +52,7 @@ entmoot = [
     "entmoot>=2.1.1",
 ] # we pin the pyomo version here due to compatibility issues
 llm = ["pydantic-ai>=0.1"]
+tabpfn = ["tabpfn>=2.0"]
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
@@ -85,6 +86,7 @@ all = [
     "pymoo>=0.6.0",
     "shap>=0.48.0",
     "pydantic-ai>=0.1",
+    "tabpfn>=2.0",
 ]
 
 [tool.setuptools.packages]

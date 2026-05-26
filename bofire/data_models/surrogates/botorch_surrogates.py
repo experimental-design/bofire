@@ -31,6 +31,7 @@ from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.tabpfn import TabPFNSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import tagged_union
@@ -53,6 +54,7 @@ _BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
     PiecewiseLinearGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    TabPFNSurrogate,
 ]
 
 AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
