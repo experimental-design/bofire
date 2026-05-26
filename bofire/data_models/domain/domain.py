@@ -19,6 +19,7 @@ from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyInput,
     AnyOutput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     Input,
@@ -180,13 +181,18 @@ class Domain(BaseModel):
         prec: int,
         delimiter: str = "-",
         method: Literal["mean", "median"] = "mean",
+        random_state: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, list]:
         """Aggregate the dataframe by duplicate experiments
 
         Duplicates are identified based on the experiments with the same input
         features. Continuous input features are rounded before identifying the
-        duplicates. Aggregation is performed by taking the average of the
-        involved output features.
+        duplicates. Continuous output features are aggregated by taking the
+        average (or median) of the involved values; categorical output
+        features are aggregated by majority vote, with a warning emitted when
+        the duplicates carry conflicting categorical labels. Ties in the
+        majority vote are broken by a random pick (a separate warning is
+        emitted; pass ``random_state`` to make this reproducible).
 
         Args:
             experiments (pd.DataFrame): Dataframe containing experimental data
@@ -194,7 +200,12 @@ class Domain(BaseModel):
             delimiter (str, optional): Delimiter used when combining the orig.
                 labcodes to a new one. Defaults to "-".
             method (Literal["mean", "median"], optional): Which aggregation
-                method to use. Defaults to "mean".
+                method to use for continuous outputs. Defaults to "mean".
+                Categorical outputs always use majority vote regardless of
+                this argument.
+            random_state (int, optional): Seed used only when breaking ties in
+                the categorical majority vote. Defaults to None
+                (non-deterministic).
 
         Returns:
             Tuple[pd.DataFrame, list]: Dataframe holding the aggregated
@@ -227,6 +238,38 @@ class Domain(BaseModel):
         agg: Dict[str, Any] = dict.fromkeys(
             self.outputs.get_keys(ContinuousOutput), method
         )
+
+        rng = np.random.default_rng(random_state)
+
+        def _make_categorical_aggregator(feat: str):
+            def _aggregate(values: pd.Series):
+                non_na = values.dropna()
+                if len(non_na) == 0:
+                    return np.nan
+                counts = non_na.value_counts()
+                if len(counts) > 1:
+                    warnings.warn(
+                        f"Conflicting categorical output values for '{feat}' "
+                        f"in a duplicate group: "
+                        f"{sorted(non_na.unique().tolist())}. "
+                        f"Resolving by majority vote.",
+                    )
+                top_count = counts.iloc[0]
+                winners = counts[counts == top_count].index.tolist()
+                if len(winners) > 1:
+                    warnings.warn(
+                        f"Tied majority vote for '{feat}' in a duplicate "
+                        f"group between {sorted(winners)}. Breaking the tie "
+                        f"at random; pass `random_state` to make this "
+                        f"reproducible.",
+                    )
+                    return rng.choice(winners)
+                return winners[0]
+
+            return _aggregate
+
+        for feat in self.outputs.get_keys(CategoricalOutput):
+            agg[feat] = _make_categorical_aggregator(feat)
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1
