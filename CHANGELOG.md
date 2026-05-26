@@ -36,6 +36,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Fixed
 
+- `Domain.aggregate_by_duplicates` now preserves and aggregates `CategoricalOutput`s by majority vote, breaking ties randomly; `cross_validate(..., aggregate=True)` passes through `random_state` to make tied categorical aggregation reproducible.
 - `noise_prior` and `noise_constraint` set on `SingleTaskGP`, `MultiTaskGP`, `TanimotoGP`, and `RobustSingleTaskGP` surrogates now actually influence the GP fit. Previously they were assigned via attribute on `model.likelihood.noise_covar` after model construction, which did not populate gpytorch's `_priors` / `_constraints` registries — so the user-supplied prior was silently ignored by the marginal log-likelihood and the user-supplied constraint's bounds were silently not enforced. ([#762](https://github.com/experimental-design/bofire/issues/762), [#763](https://github.com/experimental-design/bofire/pull/763), [#766](https://github.com/experimental-design/bofire/pull/766))
 - Flaky tests in the test pipeline
 - Serialization tests now explicitly assert the expected `DeprecationWarning` for deprecated `FactorialStrategy` specs instead of treating it as an unhandled warning.
