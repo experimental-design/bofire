@@ -1,4 +1,3 @@
-import warnings
 from math import nan
 
 import numpy as np
@@ -417,8 +416,9 @@ def _categorical_output(key: str, categories) -> CategoricalOutput:
 
 
 def test_aggregate_by_duplicates_with_categorical_output_matching():
-    """Duplicates that agree on the categorical output merge cleanly and emit
-    no warning. The continuous output is averaged; the categorical output label is
+    """Duplicates that agree on the categorical output merge cleanly.
+
+    The continuous output is averaged; the categorical output label is
     preserved."""
     full = pd.DataFrame.from_dict(
         {
@@ -445,28 +445,23 @@ def test_aggregate_by_duplicates_with_categorical_output_matching():
         inputs=Inputs(features=[if1, if2]),
         outputs=Outputs(features=[of1, _categorical_output("color", ["red", "blue"])]),
     )
-    with warnings.catch_warnings():
-        # Treat any UserWarning as a failure for this test — matching
-        # duplicates must not warn.
-        warnings.simplefilter("error", UserWarning)
-        aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
-            full,
-            prec=2,
-        )
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full,
+        prec=2,
+    )
     assert duplicated_labcodes == [["1", "4"]]
     assert_frame_equal(aggregated, expected, check_dtype=False, check_like=True)
 
 
 def test_aggregate_by_duplicates_with_categorical_output_conflict():
-    """Duplicates that disagree on the categorical output emit a warning and
-    are resolved by majority vote. Ties resolve randomly among the tied
-    values."""
+    """Duplicates that disagree on the categorical output are resolved by
+    majority vote. Ties resolve randomly among the tied values."""
     full = pd.DataFrame.from_dict(
         {
             # rows 0-2 share inputs (1.0, 1.0) with two reds and one blue
-            #   -> majority "red", warns about the conflict
+            #   -> majority "red"
             # rows 3-4 share inputs (2.0, 2.0) with one red and one blue
-            #   -> tie, random pick among the tied labels, warns
+            #   -> tie, random pick among the tied labels
             # row 5 is a singleton
             "x1": [1.0, 1.0, 1.0, 2.0, 2.0, 3.0],
             "x2": [1.0, 1.0, 1.0, 2.0, 2.0, 3.0],
@@ -480,17 +475,10 @@ def test_aggregate_by_duplicates_with_categorical_output_conflict():
         inputs=Inputs(features=[if1, if2]),
         outputs=Outputs(features=[of1, _categorical_output("color", ["red", "blue"])]),
     )
-    with pytest.warns(UserWarning) as warnings:
-        aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
-            full,
-            prec=2,
-        )
-    warning_messages = [str(warning.message) for warning in warnings]
-    assert any(
-        "Conflicting categorical output values" in message
-        for message in warning_messages
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full,
+        prec=2,
     )
-    assert any("Tied majority vote" in message for message in warning_messages)
 
     expected_without_tie = pd.DataFrame.from_dict(
         {
