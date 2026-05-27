@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import (
@@ -92,6 +93,8 @@ class TrainableSurrogate(ABC):
         folds: int = -1,
         include_X: bool = False,
         include_labcodes: bool = False,
+        aggregate: bool = False,
+        aggregate_prec: int = 3,
         random_state: Optional[int] = None,
         stratified_feature: Optional[str] = None,
         group_split_column: Optional[str] = None,
@@ -119,6 +122,8 @@ class TrainableSurrogate(ABC):
             folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
             include_X (bool, optional): If true the X values of the fold are written to respective CvResult objects for
                 later analysis. Defaults to False.
+            aggregate (bool, optional): If true, duplicate experiments are aggregated before the CV split. Defaults to False. When group_split_column is provided, aggregation is disabled.
+            aggregate_prec (int, optional): The precision for rounding up when aggregating. Defaults to 3.
             random_state (int, optional): Controls the randomness of the indices in the train and test sets of each fold.
                 Defaults to None.
             stratified_feature (str, optional): The feature name to preserve the percentage of samples for each class in
@@ -178,6 +183,20 @@ class TrainableSurrogate(ABC):
                 raise ValueError(
                     f"Number of unique groups {ngroups} is less than the number of folds {folds}."
                 )
+
+            if aggregate:
+                warnings.warn(
+                    "Aggregation is not compatible with group split, fallback to no aggregation.",
+                )
+                aggregate = False
+
+        if aggregate:
+            # aggregate duplicates
+            domain = Domain(inputs=self.inputs, outputs=self.outputs)
+            experiments, _ = domain.aggregate_by_duplicates(
+                experiments=experiments,
+                prec=aggregate_prec,
+            )
 
         # first filter the experiments based on the model setting
         experiments = self._preprocess_experiments(experiments)

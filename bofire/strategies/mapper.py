@@ -52,5 +52,4 @@ def map(data_model: data_models.Strategy) -> Strategy:
         cls = META_MAP[data_cls]
     else:
         cls = ACTUAL_MAP[data_cls]
-
     return cls.from_spec(data_model=data_model)

@@ -3,18 +3,18 @@ import pytest
 from bofire.benchmarks.api import MultiTaskHimmelblau
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.strategies.api import (
-    MultiFidelityStrategy as MultiFidelityStrategyDataModel,
+    MultiFidelityVarianceBasedStrategy as MFVarianceBasedStrategyDataModel,
 )
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.strategies.api import MultiFidelityStrategy, RandomStrategy
+from bofire.strategies.api import MultiFidelityVarianceBasedStrategy, RandomStrategy
 
 
 def test_mf_requires_all_fidelities_observed():
     benchmark = MultiTaskHimmelblau()
-    (task_input,) = benchmark.domain.inputs.get(TaskInput, exact=True)
-    assert task_input.type == "TaskInput"
+    (task_input,) = benchmark.domain.inputs.get(CategoricalTaskInput, exact=True)
+    assert task_input.type == "CategoricalTaskInput"
 
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(
@@ -27,9 +27,9 @@ def test_mf_requires_all_fidelities_observed():
     experiments = benchmark.f(random_strategy.ask(100), return_complete=True)
 
     domain_with_extra_task = Domain(
-        inputs=benchmark.domain.inputs.get(excludes=TaskInput)  # type: ignore
+        inputs=benchmark.domain.inputs.get(excludes=CategoricalTaskInput)  # type: ignore
         + (
-            TaskInput(
+            CategoricalTaskInput(
                 key=task_input.key,
                 categories=["task_1", "task_dummy", "task_2"],
                 fidelities=[0, 1, 2],
@@ -39,8 +39,8 @@ def test_mf_requires_all_fidelities_observed():
         outputs=benchmark.domain.outputs,
     )
 
-    strategy = MultiFidelityStrategy(
-        data_model=MultiFidelityStrategyDataModel(
+    strategy = MultiFidelityVarianceBasedStrategy(
+        data_model=MFVarianceBasedStrategyDataModel(
             domain=domain_with_extra_task,
             fidelity_thresholds=0.1,
         )
@@ -63,8 +63,8 @@ def test_mf_requires_all_fidelities_observed():
 
 def test_mf_fidelity_selection():
     benchmark = MultiTaskHimmelblau()
-    (task_input,) = benchmark.domain.inputs.get(TaskInput, exact=True)
-    assert task_input.type == "TaskInput"
+    (task_input,) = benchmark.domain.inputs.get(CategoricalTaskInput, exact=True)
+    assert task_input.type == "CategoricalTaskInput"
     task_input.fidelities = [0, 1]
 
     random_strategy = RandomStrategy(
@@ -79,8 +79,8 @@ def test_mf_fidelity_selection():
     experiments[task_input.key] = ["task_1", "task_2", "task_2", "task_2"]
     experiments, withheld = experiments.iloc[:-1], experiments.iloc[-1:]
 
-    strategy = MultiFidelityStrategy(
-        data_model=MultiFidelityStrategyDataModel(
+    strategy = MultiFidelityVarianceBasedStrategy(
+        data_model=MFVarianceBasedStrategyDataModel(
             domain=benchmark.domain,
             fidelity_thresholds=0.2,
         )
@@ -91,7 +91,9 @@ def test_mf_fidelity_selection():
     assert len(preds) == len(experiments)
     # test that for a point close to training data, the highest fidelity is selected
     close_to_training = experiments.iloc[2:3].copy()
-    close_to_training[benchmark.domain.inputs.get_keys(excludes=TaskInput)] += 0.01
+    close_to_training[
+        benchmark.domain.inputs.get_keys(excludes=CategoricalTaskInput)
+    ] += 0.01
     pred = strategy._select_fidelity_and_get_predict(close_to_training)
     assert (pred[task_input.key] == task_input.categories[0]).all()
 
@@ -102,8 +104,8 @@ def test_mf_fidelity_selection():
 
 def test_mf_point_selection():
     benchmark = MultiTaskHimmelblau()
-    (task_input,) = benchmark.domain.inputs.get(TaskInput, exact=True)
-    assert task_input.type == "TaskInput"
+    (task_input,) = benchmark.domain.inputs.get(CategoricalTaskInput, exact=True)
+    assert task_input.type == "CategoricalTaskInput"
     task_input.fidelities = [0, 1]
 
     random_strategy = RandomStrategy(
@@ -117,8 +119,8 @@ def test_mf_point_selection():
     experiments = benchmark.f(random_strategy.ask(4), return_complete=True)
     experiments[task_input.key] = ["task_1", "task_2", "task_2", "task_2"]
 
-    strategy = MultiFidelityStrategy(
-        data_model=MultiFidelityStrategyDataModel(
+    strategy = MultiFidelityVarianceBasedStrategy(
+        data_model=MFVarianceBasedStrategyDataModel(
             domain=benchmark.domain,
             fidelity_thresholds=0.1,
         )

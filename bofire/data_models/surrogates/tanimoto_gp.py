@@ -15,6 +15,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     AnyPrior,
     AnyPriorConstraint,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -31,7 +32,9 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = None
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
     tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed"
 
     @classmethod

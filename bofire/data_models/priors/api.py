@@ -1,5 +1,4 @@
 from functools import partial
-from typing import Union
 
 from bofire.data_models.priors._register import (
     register_prior,
@@ -24,10 +23,9 @@ from bofire.data_models.priors.normal import (
     NormalPrior,
 )
 from bofire.data_models.priors.prior import Prior
+from bofire.data_models.priors.smoothedbox import SmoothedBoxPrior
+from bofire.data_models.unions import tagged_union
 
-
-AbstractPrior = Prior
-AbstractPriorConstraint = Union[PriorConstraint, Interval]
 
 _PRIOR_TYPES: list[type[Prior]] = [
     GammaPrior,
@@ -35,11 +33,13 @@ _PRIOR_TYPES: list[type[Prior]] = [
     LKJPrior,
     LogNormalPrior,
     DimensionalityScaledLogNormalPrior,
+    SmoothedBoxPrior,
 ]
 
-AnyPrior = Union[tuple(_PRIOR_TYPES)]
+AnyPrior = tagged_union(*_PRIOR_TYPES)
 
 _PRIOR_CONSTRAINT_TYPES: list[type] = [
+    Interval,
     NonTransformedInterval,
     LogTransformedInterval,
     Positive,
@@ -47,12 +47,14 @@ _PRIOR_CONSTRAINT_TYPES: list[type] = [
     LessThan,
 ]
 
-AnyPriorConstraint = Union[tuple(_PRIOR_CONSTRAINT_TYPES)]
+AnyPriorConstraint = tagged_union(*_PRIOR_CONSTRAINT_TYPES)
 
 
 # these are priors that are generally applicable
 # and do not depend on problem specific extra parameters
-AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
+AnyGeneralPrior = tagged_union(
+    GammaPrior, NormalPrior, LKJPrior, LogNormalPrior, SmoothedBoxPrior
+)
 
 # default priors of interest
 # botorch defaults
@@ -75,7 +77,7 @@ LKJ_PRIOR = partial(
     sd_prior=GammaPrior(concentration=2.0, rate=0.15),
 )
 
-# prior for RobustSingleTaskGPSurrogate
+# priors for RobustSingleTaskGPSurrogate
 ROBUSTGP_LENGTHSCALE_CONSTRAINT = partial(
     NonTransformedInterval,
     lower_bound=0.05,
@@ -88,6 +90,34 @@ ROBUSTGP_OUTPUTSCALE_CONSTRAINT = partial(
     lower_bound=0.01,
     upper_bound=10.0,
     initial_value=0.1,
+)
+
+
+# Priors for PairwiseGPSurrogate based on botorch defaults
+PAIRWISEGP_LENGTHSCALE_PRIOR = partial(
+    GammaPrior,
+    concentration=2.4,
+    rate=2.7,
+)
+
+PAIRWISEGP_LENGTHSCALE_CONSTRAINT = partial(
+    GreaterThan,
+    lower_bound=1e-4,
+    initial_value=0.5185,  # mode of the lengthscale GammaPrior(2.4, 2.7)
+)
+
+PAIRWISEGP_OUTPUTSCALE_PRIOR = partial(
+    SmoothedBoxPrior,
+    lower_bound=0.01,
+    upper_bound=100,
+    sigma=0.01,
+)
+
+PAIRWISEGP_OUTPUTSCALE_CONSTRAINT = partial(
+    Interval,
+    lower_bound=5e-3,
+    upper_bound=200,
+    initial_value=1,
 )
 
 # Hvarfner priors

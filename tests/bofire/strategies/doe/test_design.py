@@ -171,9 +171,9 @@ def test_find_local_max_ipopt_mixed_results():
             ),
             NChooseKConstraint(
                 features=[f"x{i + 1}" for i in range(3)],
-                min_count=0,
+                min_count=1,
                 max_count=1,
-                none_also_valid=True,
+                none_also_valid=False,
             ),
         ],
     )
@@ -311,28 +311,6 @@ def test_find_local_max_ipopt_fixed_experiments():
             ),
         ],
     )
-    # np.random.seed(1)
-    # fixed_experiments = pd.DataFrame([[0.3, 0.5, 0.2]], columns=["x1", "x2", "x3"])
-    # A = find_local_max_ipopt(
-    #     domain,
-    #     "linear",
-    #     n_experiments=12,
-    #     fixed_experiments=fixed_experiments,
-    # )
-    # opt = np.array(
-    #     [
-    #         [0.2, 0.2, 0.6],
-    #         [0.3, 0.6, 0.1],
-    #         [0.7, 0.1, 0.2],
-    #         [0.3, 0.1, 0.6],
-    #         [0.3, 0.5, 0.2],
-    #     ]
-    # )
-    # for row in A.to_numpy():
-    #     assert any([np.allclose(row, o, atol=1e-2) for o in opt])
-    # for o in opt[:-1]:
-    #     assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
-    # assert np.allclose(A.to_numpy()[0, :], np.array([0.3, 0.5, 0.2]))
 
     # define domain: no NChooseK constraints, invalid proposal
     np.random.seed(1)
@@ -376,9 +354,9 @@ def test_find_local_max_ipopt_fixed_experiments():
             ),
             NChooseKConstraint(
                 features=[f"x{i + 1}" for i in range(3)],
-                min_count=0,
+                min_count=1,
                 max_count=1,
-                none_also_valid=True,
+                none_also_valid=False,
             ),
         ],
     )

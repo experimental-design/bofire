@@ -44,6 +44,7 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 from bofire.strategies.strategy import Strategy
 
 
@@ -51,6 +52,37 @@ tkwargs = {
     "dtype": torch.double,
     "device": "cpu",
 }
+
+
+def get_torch_bounds_from_domain(
+    domain: Domain,
+    input_preprocessing_specs: InputTransformSpecs,
+    relax_allow_zero: bool = False,
+    reference_experiment: Optional[pd.Series] = None,
+) -> Tensor:
+    """Get the bounds for the optimization problem in the format required by BoTorch.
+
+    Args:
+        domain: Optimization problem definition.
+        input_preprocessing_specs: Per-feature transform specifications.
+        relax_allow_zero: When True, semi-continuous continuous inputs
+            (`allow_zero=True` with positive lower bound) report a relaxed
+            lower bound of 0, exposing the convex relaxation `[0, ub]` to
+            downstream optimisers. Defaults to False.
+        reference_experiment: When provided, returns local bounds centred
+            on this reference (for LSR-BO). Used with the
+            ``local_relative_bounds`` attribute on continuous inputs.
+            Defaults to None (global bounds).
+
+    Returns:
+        A `(2, d)` tensor of lower and upper bounds.
+    """
+    lower, upper = domain.inputs.get_bounds(
+        specs=input_preprocessing_specs,
+        relax_allow_zero=relax_allow_zero,
+        reference_experiment=reference_experiment,
+    )
+    return torch.tensor([lower, upper], **tkwargs)
 
 
 def get_linear_constraints(
@@ -262,6 +294,10 @@ def get_nonlinear_constraints(
 
     Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
+        includes: List of constraint types to include. Defaults to NChooseK and
+            ProductInequality. To exclude a constraint type, simply omit it
+            from this list (e.g. pass ``[ProductInequalityConstraint]`` to
+            exclude NChooseK).
 
     Returns:
         List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
@@ -1026,7 +1062,7 @@ def get_categorical_encoder(
     feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
 ) -> Encoder:
     """Get the categorical transformer for a given feature."""
-    if isinstance(transform, AnyMolFeatures):
+    if isinstance(transform, tuple(to_list(AnyMolFeatures))):
         assert isinstance(feature, CategoricalMolecularInput)
         # filter out the highly-correlated descriptors
         transform.remove_correlated_descriptors(feature.categories)
