@@ -73,6 +73,25 @@ def validate_monotonically_increasing(sequence: Sequence[float]) -> Sequence[flo
     return sequence
 
 
+def validate_strictly_increasing(sequence: Sequence[float]) -> Sequence[float]:
+    """Validate that the sequence is strictly increasing.
+
+    Args:
+        sequence: Sequence of values.
+
+    Raises:
+        ValueError: If lower bound is greater or equal to the upper bound.
+
+    Returns:
+        Validated sequence
+
+    """
+    if len(sequence) > 1:
+        if not all(x < y for x, y in zip(sequence, sequence[1:])):
+            raise ValueError("Sequence is not strictly increasing.")
+    return sequence
+
+
 FeatureKeys = Annotated[
     List[str],
     Field(min_length=2),
@@ -100,7 +119,7 @@ CategoryVals = Annotated[
 
 Descriptors = Annotated[
     List[str],
-    Field(min_length=2),
+    Field(min_length=1),
     AfterValidator(make_unique_validator("Descriptors")),
 ]
 

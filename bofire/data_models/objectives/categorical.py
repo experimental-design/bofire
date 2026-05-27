@@ -29,6 +29,9 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
     desirability: List[bool]
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
     @model_validator(mode="after")
     def validate_desireability(self):
         """Validates that categories have unique names

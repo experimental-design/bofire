@@ -30,6 +30,22 @@ class NChooseKConstraint(IntrapointConstraint):
     max_count: int
     none_also_valid: bool
 
+    def to_description(self) -> str:
+        """Render as ``"Choose 1-3 active features from ['x1', 'x2', 'x3']"``.
+
+        Example::
+
+            >>> c = NChooseKConstraint(features=["x1", "x2", "x3"], min_count=1, max_count=3, none_also_valid=False)
+            >>> c.to_description()
+            "Choose 1-3 active features from ['x1', 'x2', 'x3']"
+        """
+        desc = f"Choose {self.min_count}-{self.max_count} active features from {self.features}"
+        if self.none_also_valid:
+            desc += ", or none"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys([ContinuousInput, DiscreteInput])
         for f in self.features:
@@ -41,9 +57,13 @@ class NChooseKConstraint(IntrapointConstraint):
             assert isinstance(
                 feature_, ContinuousInput
             ), f"Feature {f} is not a ContinuousInput."
-            if feature_.bounds[0] < 0:
+            if not (
+                feature_.bounds[0] == 0
+                or (feature_.bounds[0] > 0 and feature_.allow_zero)
+            ):
                 raise ValueError(
-                    f"Feature {f} must have a lower bound of >=0, but has {feature_.bounds[0]}",
+                    f"Feature {f} must have a lower bound of 0 or `allow_zero=True`, "
+                    f"but has bounds[0]={feature_.bounds[0]} and allow_zero={feature_.allow_zero}",
                 )
 
     @model_validator(mode="after")
@@ -96,6 +116,19 @@ class NChooseKConstraint(IntrapointConstraint):
 
         return pd.Series(max_count_violation + min_count_violation)
 
+    def count_is_valid(self, count: int) -> bool:
+        """True if ``count`` non-zero features satisfies this NChooseK band.
+
+        Encodes ``min_count <= count <= max_count`` with the
+        ``none_also_valid`` carve-out: when set, ``count == 0`` is also
+        accepted regardless of ``min_count``.
+        """
+        if count > self.max_count:
+            return False
+        if count >= self.min_count:
+            return True
+        return self.none_also_valid and count == 0
+
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         """Check if the concurrency constraint is fulfilled for all the rows of the provided dataframe.
 
@@ -115,7 +148,6 @@ class NChooseKConstraint(IntrapointConstraint):
         upper = sums <= self.max_count
 
         if not self.none_also_valid:
-            # return lower.all() and upper.all()
             return pd.Series(np.logical_and(lower, upper), index=experiments.index)
         none = sums == 0
         return pd.Series(

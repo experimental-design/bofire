@@ -62,10 +62,11 @@ quartodoc:
             - BotorchStrategy
             - EntingStrategy
             - MoboStrategy
-            - MultiFidelityStrategy
+            - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
             - AdditiveSoboStrategy
             - CustomSoboStrategy
+            - LLMStrategy
     - title: Data Models - Kernels
       desc: Kernel configuration data models
       contents:
@@ -115,10 +116,11 @@ quartodoc:
             - MoboStrategy
             - BotorchStrategy
             - EntingStrategy
-            - MultiFidelityStrategy
+            - MultiFidelityVarianceBasedStrategy
             - ActiveLearningStrategy
             - ShortestPathStrategy
             - StepwiseStrategy
+            - LLMStrategy
     - title: Surrogates
       desc: Surrogate model implementations
       contents:
@@ -160,6 +162,8 @@ website:
             href: docs/userguides/surrogates.qmd
           - text: "Data Models vs Functionals"
             href: docs/userguides/data_models_functionals.qmd
+          - text: "Registering Custom Types"
+            href: docs/userguides/custom_types.qmd
       - text: "Examples"
         menu:
           - text: "Basic Examples"
@@ -192,6 +196,7 @@ website:
         - docs/userguides/strategies.qmd
         - docs/userguides/surrogates.qmd
         - docs/userguides/data_models_functionals.qmd
+        - docs/userguides/custom_types.qmd
 
     - title: "Examples"
       contents:
@@ -216,6 +221,8 @@ website:
             - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
             - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
             - docs/tutorials/advanced_examples/octane_number.qmd
+            - docs/tutorials/advanced_examples/llm_molecular.qmd
+            - docs/tutorials/advanced_examples/pairwise_gp.qmd
         - section: "Benchmarks"
           contents:
             - docs/tutorials/benchmarks/index.qmd

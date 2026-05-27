@@ -29,6 +29,7 @@ specs.add_valid(
             ],
         ).model_dump(),
         "constraints": Constraints().model_dump(),
+        "context": None,
     },
 )
 
@@ -107,8 +108,8 @@ def create_spec(c):
     return lambda: {
         "inputs": Inputs(
             features=[
-                features.valid(ContinuousInput).obj(key="i1"),
-                features.valid(ContinuousInput).obj(key="i2"),
+                features.valid(ContinuousInput).obj(key="i1", bounds=[0, 1]),
+                features.valid(ContinuousInput).obj(key="i2", bounds=[0, 1]),
             ],
         ),
         "outputs": Outputs(
@@ -146,3 +147,34 @@ for c in [
         error=ValueError,
         message="Feature i3 is not a continuous input feature in the provided Inputs object.",
     )
+
+
+# NChooseK on a feature whose lower bound is non-zero and which is not allow_zero
+specs.add_invalid(
+    Domain,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="i1", bounds=(0.5, 1.0)),
+                ContinuousInput(key="i2", bounds=(0, 1)),
+            ],
+        ),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(key="o1"),
+            ],
+        ),
+        "constraints": Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=["i1", "i2"],
+                    min_count=1,
+                    max_count=1,
+                    none_also_valid=False,
+                ),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="Feature i1 must have a lower bound of 0 or `allow_zero=True`",
+)

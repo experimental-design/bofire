@@ -1,5 +1,4 @@
-from typing import Union
-
+from bofire.data_models.kernels._register import register_kernel  # noqa: F401
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
     MultiplicativeKernel,
@@ -22,6 +21,7 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
+from bofire.data_models.kernels.fidelity import DownsamplingKernel, FidelityKernel
 from bofire.data_models.kernels.kernel import (
     AggregationKernel,
     FeatureSpecificKernel,
@@ -29,18 +29,10 @@ from bofire.data_models.kernels.kernel import (
 )
 from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
 from bofire.data_models.kernels.shape import ExactWassersteinKernel, WassersteinKernel
+from bofire.data_models.unions import tagged_union
 
 
-AbstractKernel = Union[
-    Kernel,
-    CategoricalKernel,
-    ContinuousKernel,
-    MolecularKernel,
-    FeatureSpecificKernel,
-    AggregationKernel,
-]
-
-AnyContinuousKernel = Union[
+_CONTINUOUS_KERNEL_TYPES: list[type[ContinuousKernel]] = [
     MaternKernel,
     LinearKernel,
     PolynomialKernel,
@@ -49,15 +41,19 @@ AnyContinuousKernel = Union[
     InfiniteWidthBNNKernel,
 ]
 
-AnyCategoricalKernel = Union[
+AnyContinuousKernel = tagged_union(*_CONTINUOUS_KERNEL_TYPES)
+
+_CATEGORICAL_KERNEL_TYPES: list[type[CategoricalKernel]] = [
     HammingDistanceKernel,
     IndexKernel,
     PositiveIndexKernel,
 ]
 
+AnyCategoricalKernel = tagged_union(*_CATEGORICAL_KERNEL_TYPES)
+
 AnyMolecularKernel = TanimotoKernel
 
-AnyKernel = Union[
+_KERNEL_TYPES: list[type[Kernel]] = [
     AdditiveKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
@@ -75,4 +71,7 @@ AnyKernel = Union[
     WassersteinKernel,
     WedgeKernel,
     ExactWassersteinKernel,
+    DownsamplingKernel,
 ]
+
+AnyKernel = tagged_union(*_KERNEL_TYPES)

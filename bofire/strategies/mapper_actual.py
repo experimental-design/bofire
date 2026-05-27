@@ -4,10 +4,16 @@ import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.factorial import FactorialStrategy
 from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
+from bofire.strategies.llm import LLMStrategy
 from bofire.strategies.predictives.active_learning import ActiveLearningStrategy
 from bofire.strategies.predictives.enting import EntingStrategy
 from bofire.strategies.predictives.mobo import MoboStrategy
-from bofire.strategies.predictives.multi_fidelity import MultiFidelityStrategy
+from bofire.strategies.predictives.multi_fidelity import (
+    MultiFidelityVarianceBasedStrategy,
+)
+from bofire.strategies.predictives.multi_fidelity_knowledge_gradient import (
+    MultiFidelityHVKGStrategy,
+)
 from bofire.strategies.predictives.qparego import QparegoStrategy
 from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -31,7 +37,8 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.MultiplicativeSoboStrategy: MultiplicativeSoboStrategy,
     data_models.MultiplicativeAdditiveSoboStrategy: MultiplicativeAdditiveSoboStrategy,
     data_models.CustomSoboStrategy: CustomSoboStrategy,
-    data_models.MultiFidelityStrategy: MultiFidelityStrategy,
+    data_models.MultiFidelityVarianceBasedStrategy: MultiFidelityVarianceBasedStrategy,
+    data_models.MultiFidelityHVKGStrategy: MultiFidelityHVKGStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
     data_models.EntingStrategy: EntingStrategy,
     data_models.DoEStrategy: DoEStrategy,
@@ -39,6 +46,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.MoboStrategy: MoboStrategy,
     data_models.ShortestPathStrategy: ShortestPathStrategy,
     data_models.FractionalFactorialStrategy: FractionalFactorialStrategy,
+    data_models.LLMStrategy: LLMStrategy,
 }
 
 

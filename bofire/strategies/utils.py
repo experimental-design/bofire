@@ -531,16 +531,6 @@ class LinearProjectionPymooRepair(PymooRepair):
         return X_corrected
 
 
-def get_torch_bounds_from_domain(
-    domain: Domain, input_preprocessing_specs: InputTransformSpecs
-) -> torch.Tensor:
-    """Get the bounds for the optimization problem in the format required by BoTorch."""
-    lower, upper = domain.inputs.get_bounds(
-        specs=input_preprocessing_specs,
-    )
-    return torch.tensor([lower, upper], **tkwargs)
-
-
 def get_ga_problem_and_algorithm(
     data_model: GeneticAlgorithmDataModel,
     domain: Domain,

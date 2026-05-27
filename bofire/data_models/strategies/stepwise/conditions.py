@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Any, List, Literal, Optional, Union
+from typing import Annotated, Any, List, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, PositiveInt, field_validator
@@ -7,6 +7,7 @@ from pydantic import Field, PositiveInt, field_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.unions import tagged_union
 
 
 class EvaluateableCondition:
@@ -101,7 +102,11 @@ class CombiCondition(Condition, EvaluateableCondition):
     type: Literal["CombiCondition"] = "CombiCondition"
     conditions: Annotated[
         List[
-            Union[NumberOfExperimentsCondition, "CombiCondition", AlwaysTrueCondition]
+            tagged_union(
+                NumberOfExperimentsCondition,
+                "CombiCondition",
+                AlwaysTrueCondition,
+            )
         ],
         Field(min_length=2),
     ]
@@ -126,9 +131,9 @@ class CombiCondition(Condition, EvaluateableCondition):
         return False
 
 
-AnyCondition = Union[
+AnyCondition = tagged_union(
     NumberOfExperimentsCondition,
     CombiCondition,
     AlwaysTrueCondition,
     FeasibleExperimentCondition,
-]
+)
