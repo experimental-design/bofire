@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-a7243ba88abf4244d94c278c559d4e54.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-aa0976766fa8f58ef208c5a5908f30ba.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-a7243ba88abf4244d94c278c559d4e54.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-59a166e3e9355bb01da760d1eb3f594d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-f4e7e4225fb940aa85f198dbd58e9ab8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-59a166e3e9355bb01da760d1eb3f594d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -524,6 +524,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">LLM-driven Molecular Optimization</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/pairwise_gp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preference Learning with the Pairwise GP</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -721,6 +727,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#transfer-learning-bo" id="toc-transfer-learning-bo" class="nav-link" data-scroll-target="#transfer-learning-bo">Transfer Learning BO</a></li>
   <li><a href="#conditional-features-bo" id="toc-conditional-features-bo" class="nav-link" data-scroll-target="#conditional-features-bo">Conditional Features BO</a></li>
   <li><a href="#llm-driven-molecular-optimization" id="toc-llm-driven-molecular-optimization" class="nav-link" data-scroll-target="#llm-driven-molecular-optimization">LLM-driven Molecular Optimization</a></li>
+  <li><a href="#preference-learning-with-the-pairwise-gp" id="toc-preference-learning-with-the-pairwise-gp" class="nav-link" data-scroll-target="#preference-learning-with-the-pairwise-gp">Preference Learning with the Pairwise GP</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -793,6 +800,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="llm-driven-molecular-optimization" class="level3">
 <h3 class="anchored" data-anchor-id="llm-driven-molecular-optimization"><a href="../../../docs/tutorials/advanced_examples/llm_molecular.html">LLM-driven Molecular Optimization</a></h3>
 <p>Propose candidates with an <code>LLMStrategy</code> that prompts a large language model with the optimization problem and prior experiments.</p>
+</section>
+<section id="preference-learning-with-the-pairwise-gp" class="level3">
+<h3 class="anchored" data-anchor-id="preference-learning-with-the-pairwise-gp"><a href="../../../docs/tutorials/advanced_examples/pairwise_gp.html">Preference Learning with the Pairwise GP</a></h3>
+<p>Learn a latent utility function from pairwise comparison data using Pairwise Gaussian Processes.</p>
 
 
 <!-- -->
@@ -1320,7 +1331,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>Define input features that are conditionally active.</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### [LLM-driven Molecular Optimization](llm_molecular.qmd)</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Propose candidates with an <span class="in">`LLMStrategy`</span> that prompts a large language model with the optimization problem and prior experiments.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Propose candidates with an <span class="in">`LLMStrategy`</span> that prompts a large language model with the optimization problem and prior experiments.</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Preference Learning with the Pairwise GP](pairwise_gp.qmd)</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>Learn a latent utility function from pairwise comparison data using Pairwise Gaussian Processes.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

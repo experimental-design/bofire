@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-a7243ba88abf4244d94c278c559d4e54.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-aa0976766fa8f58ef208c5a5908f30ba.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-a7243ba88abf4244d94c278c559d4e54.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-59a166e3e9355bb01da760d1eb3f594d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-f4e7e4225fb940aa85f198dbd58e9ab8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-59a166e3e9355bb01da760d1eb3f594d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -556,6 +556,12 @@ window.Quarto = {
  <span class="menu-text">LLM-driven Molecular Optimization</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/pairwise_gp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preference Learning with the Pairwise GP</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -766,7 +772,7 @@ x_3 + x_4 \geq 0.1
 <p>Therefore one has to be very careful when imposing linear constraints upon decision variables that already show up in an NChooseK constraint.</p>
 <p>For practical reasons it necessary that two NChooseK constraints of the same problem must not share any variables.</p>
 <p>You can find an example for a problem with NChooseK constraints and additional linear constraints imposed on the same variables.</p>
-<div id="e5780ed5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="2a6d039f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -841,133 +847,133 @@ x_3 + x_4 \geq 0.1
 <th data-quarto-table-cell-role="th">0</th>
 <td>0.0</td>
 <td>0.0</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.900</td>
 <td>0.0</td>
-<td>0.451</td>
+<td>0.100</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.549</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>0.0</td>
+<td>0.7</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.200</td>
 <td>0.0</td>
-<td>0.0</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.496</td>
-<td>0.504</td>
-<td>0.000</td>
+<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>0.0</td>
-<td>0.1</td>
 <td>0.0</td>
+<td>0.581</td>
 <td>0.000</td>
 <td>0.000</td>
+<td>0.0</td>
+<td>0.419</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.900</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.7</td>
 <td>0.000</td>
-<td>0.200</td>
 <td>0.000</td>
-<td>0.100</td>
+<td>0.497</td>
+<td>0.0</td>
 <td>0.000</td>
+<td>0.503</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.0</td>
-<td>0.0</td>
+<td>0.7</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.900</td>
 <td>0.000</td>
 <td>0.000</td>
+<td>0.2</td>
 <td>0.100</td>
+<td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>0.0</td>
 <td>0.0</td>
+<td>0.000</td>
+<td>0.900</td>
+<td>0.000</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.455</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.545</td>
+<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>0.0</td>
-<td>0.7</td>
 <td>0.0</td>
-<td>0.200</td>
 <td>0.000</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.100</td>
+<td>0.1</td>
+<td>0.000</td>
+<td>0.900</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.0</td>
+<td>0.000</td>
+<td>0.000</td>
 <td>0.900</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
+<td>0.0</td>
 <td>0.100</td>
+<td>0.000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
+<td>0.1</td>
 <td>0.0</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.505</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.495</td>
+<td>0.000</td>
+<td>0.0</td>
+<td>0.900</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.0</td>
 <td>0.000</td>
-<td>0.502</td>
 <td>0.000</td>
-<td>0.498</td>
 <td>0.000</td>
+<td>0.9</td>
+<td>0.000</td>
+<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>0.0</td>
 <td>0.0</td>
-<td>0.1</td>
 <td>0.000</td>
+<td>0.496</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.900</td>
+<td>0.0</td>
+<td>0.504</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>0.0</td>
 <td>0.0</td>
+<td>0.700</td>
+<td>0.000</td>
+<td>0.000</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.900</td>
-<td>0.000</td>
-<td>0.100</td>
+<td>0.300</td>
 </tr>
 </tbody>
 </table>

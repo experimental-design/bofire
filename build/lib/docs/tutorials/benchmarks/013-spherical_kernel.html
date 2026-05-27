@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../../../site_libs/bootstrap/bootstrap-a7243ba88abf4244d94c278c559d4e54.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-dark-aa0976766fa8f58ef208c5a5908f30ba.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../../../site_libs/bootstrap/bootstrap-a7243ba88abf4244d94c278c559d4e54.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-59a166e3e9355bb01da760d1eb3f594d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-dark-f4e7e4225fb940aa85f198dbd58e9ab8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../../../site_libs/bootstrap/bootstrap-59a166e3e9355bb01da760d1eb3f594d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -405,7 +405,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="6cdd276a" class="cell" data-execution_count="1">
+<div id="dee58ca5" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -413,7 +413,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="8a334ebf" class="cell" data-execution_count="2">
+<div id="5b162ebf" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -441,7 +441,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="b0f3dc86" class="cell" data-execution_count="3">
+<div id="76c3ca98" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
@@ -455,7 +455,7 @@ Download complete.</code></pre>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># save all the experiments</span></span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>all_experiments <span class="op">=</span> strategy.experiments</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:181: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+<pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:185: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
   torch.from_numpy(Y.values).to(**tkwargs),</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
@@ -463,52 +463,54 @@ Download complete.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
-  warnings.warn(
-/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:796: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)</code></pre>
+  warnings.warn(</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100    x_101     x_102     x_103     x_104  \
-0  0.685903  0.425335  0.386223  0.64829  0.786647  0.032225  0.457765   
+        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
+0  0.878978  0.483172  0.674929  0.203547  0.007999  0.993274  0.086873   
 
       x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
-0  0.734912  0.097881  0.469358  ...  0.244262  0.186416  0.277618  0.667862   
+0  0.116719  0.120847  0.878096  ...  0.926725  0.954079  0.007884  0.952816   
 
        x_99    y_pred     y_sd     y_des         y  valid_y  
-0  0.333728  0.236782  0.00201 -0.236782  0.227778        1  
+0  0.049918  0.236782  0.00201 -0.236782  0.230758        1  
 
 [1 rows x 393 columns]
 Step 2/3
 New experiment:
-        x_1      x_10    x_100  x_101  x_102     x_103     x_104  x_105  \
-0  0.930712  0.822686  0.26518    1.0    0.0  0.189294  0.187052    1.0   
+        x_1      x_10     x_100    x_101     x_102     x_103     x_104  \
+0  0.879934  0.274261  0.420581  0.79342  0.032944  0.427285  0.776372   
 
-      x_106     x_107  ...     x_95  x_96      x_97      x_98      x_99  \
-0  0.384634  0.557943  ...  0.72041   1.0  0.337819  0.288115  0.834431   
+      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.411578  0.443475  0.571335  ...  0.797105  0.670807  0.353183  0.330876   
 
-     y_pred      y_sd     y_des         y  valid_y  
-0  0.201733  0.001903 -0.201733  0.235216        1  
+       x_99    y_pred     y_sd     y_des         y  valid_y  
+0  0.777228  0.236632  0.00203 -0.236632  0.234506        1  
 
 [1 rows x 393 columns]
 Step 3/3</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
-  warnings.warn(</code></pre>
+  warnings.warn(
+/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:796: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:796: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1  x_10     x_100  x_101     x_102     x_103  x_104     x_105  \
-0  0.845768   1.0  0.794827    1.0  0.336173  0.198046    0.0  0.709444   
+        x_1      x_10    x_100     x_101     x_102     x_103     x_104  \
+0  0.820173  0.148496  0.34192  0.188152  0.640131  0.795795  0.078754   
 
-      x_106  x_107  ...      x_95      x_96      x_97  x_98      x_99  \
-0  0.726032    1.0  ...  0.200613  0.642428  0.341984   1.0  0.633679   
+      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.286835  0.134962  0.948627  ...  0.370045  0.988151  0.674678  0.454617   
 
-     y_pred      y_sd     y_des         y  valid_y  
-0  0.214495  0.002069 -0.214495  0.234204        1  
+       x_99    y_pred     y_sd     y_des         y  valid_y  
+0  0.850362  0.236576  0.00203 -0.236576  0.223445        1  
 
 [1 rows x 393 columns]</code></pre>
 </div>
