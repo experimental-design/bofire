@@ -21,6 +21,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - `PairwiseGPSurrogate`, a Gaussian process surrogate that learns a latent utility function from pairwise preference/comparison data, wrapping BoTorch's `PairwiseGP`. The pairwise likelihood is selectable via `likelihood="probit"` (default) or `"logit"`.
 - `SmoothedBoxPrior` prior, and a concrete instantiable `Interval` prior constraint.
 - Aggregation of duplicated experiments in the `cross_validate` method of trainable surrogates to avoid data leakage, controlled via the `aggregate` boolean flag, default `False`.
+- `ExactWassersteinKernel`: exact W1/W2 Wasserstein-distance kernel computed over the union of unique x-breakpoints (vs. the interpolated `WassersteinKernel`). Chunked over the x-union to keep memory bounded on large problems. ([#750](https://github.com/experimental-design/bofire/pull/750))
 
 ### Changed
 
