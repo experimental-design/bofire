@@ -196,6 +196,7 @@ class TrainableSurrogate(ABC):
             experiments, _ = domain.aggregate_by_duplicates(
                 experiments=experiments,
                 prec=aggregate_prec,
+                random_state=random_state,
             )
 
         # first filter the experiments based on the model setting
