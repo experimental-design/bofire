@@ -38,7 +38,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Removed
 
-- `PieceWiseLinearGPSurrogate` and supporting code in `torch_tools.py`. Equivalent behavior is now available via the `InterpolateFeature` engineered feature with a standard GP surrogate. ([#750](https://github.com/experimental-design/bofire/pull/750))
+- `PiecewiseLinearGPSurrogate` and supporting code in `torch_tools.py`. Equivalent behavior is now available via the `InterpolateFeature` engineered feature with a standard GP surrogate. ([#750](https://github.com/experimental-design/bofire/pull/750))
 
 ### Fixed
 

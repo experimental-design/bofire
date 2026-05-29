@@ -31,7 +31,39 @@ class WassersteinKernel(FeatureSpecificKernel):
 
 
 class ExactWassersteinKernel(FeatureSpecificKernel):
-    """Kernel based on the exact 1D Wasserstein distance for piecewise-linear curves."""
+    """Kernel based on the exact 1D Wasserstein distance for piecewise-linear curves.
+
+    Each input row encodes a piecewise-linear curve via the (x, y) coordinates of
+    its break points. The kernel evaluates the Wasserstein distance between two
+    such curves exactly by interpolating both on the union of their x-grids and
+    integrating the (absolute or squared) difference analytically.
+
+    Attributes:
+        squared: If True, the squared exponential Wasserstein distance is used.
+         By default the absolute exponential form is used.
+        lengthscale_prior: Prior for the lengthscale of the kernel.
+        lengthscale_constraint: Constraint applied to the lengthscale prior.
+        idx_x: Column indices in the input tensor holding the x-coordinates of
+            the curves.
+        idx_y: Column indices in the input tensor holding the y-coordinates of
+            the curves.
+        prepend_x: Fixed x-coordinates prepended to every curve before the
+            variable section (e.g. a left anchor point).
+        prepend_y: Fixed y-coordinates prepended to every curve, paired with
+            `prepend_x`.
+        append_x: Fixed x-coordinates appended to every curve after the variable
+            section (e.g. a right anchor point).
+        append_y: Fixed y-coordinates appended to every curve, paired with
+            `append_x`.
+        normalize_y: Scalar by which the y-coordinates are divided before the
+            distance is computed.
+        normalize_x: If True, x-coordinates are rescaled by their per-curve
+            maximum so that the integration domain is normalized to [0, 1].
+        order: Order of the Wasserstein distance. `1` computes W1 (integral of
+            the absolute difference); `2` computes W2 (square root of the
+            integral of the squared difference).
+
+    """
 
     type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"
     squared: bool = False
