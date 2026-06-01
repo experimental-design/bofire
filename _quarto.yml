@@ -135,7 +135,6 @@ quartodoc:
             - EmpiricalSurrogate
             - RandomForestSurrogate
             - MLPEnsemble
-            - PiecewiseLinearGPSurrogate
 
 website:
   title: "BoFire"

@@ -194,6 +194,26 @@ specs.add_valid(
     lambda: {
         "squared": False,
         "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "lengthscale_constraint": None,
+        "features": None,
+    },
+)
+specs.add_valid(
+    kernels.ExactWassersteinKernel,
+    lambda: {
+        "squared": False,
+        "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "lengthscale_constraint": None,
+        "features": None,
+        "idx_x": [4, 5],
+        "idx_y": [0, 1, 2, 3],
+        "prepend_x": [0.0],
+        "prepend_y": [],
+        "append_x": [1.0],
+        "append_y": [],
+        "normalize_y": 100.0,
+        "normalize_x": True,
+        "order": 2,
     },
 )
 specs.add_valid(

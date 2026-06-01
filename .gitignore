@@ -163,4 +163,5 @@ notebook_test_stats.csv
 
 **/.jupyter_cache
 
+# ignore scripts
 scripts/*

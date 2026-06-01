@@ -21,6 +21,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - `PairwiseGPSurrogate`, a Gaussian process surrogate that learns a latent utility function from pairwise preference/comparison data, wrapping BoTorch's `PairwiseGP`. The pairwise likelihood is selectable via `likelihood="probit"` (default) or `"logit"`.
 - `SmoothedBoxPrior` prior, and a concrete instantiable `Interval` prior constraint.
 - Aggregation of duplicated experiments in the `cross_validate` method of trainable surrogates to avoid data leakage, controlled via the `aggregate` boolean flag, default `False`.
+- `ExactWassersteinKernel`: exact W1/W2 Wasserstein-distance kernel computed over the union of unique x-breakpoints (vs. the interpolated `WassersteinKernel`). Chunked over the x-union to keep memory bounded on large problems. ([#750](https://github.com/experimental-design/bofire/pull/750))
 
 ### Changed
 
@@ -33,6 +34,11 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Static type checking was migrated from `pyright` to `ty`.
 - Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
 - Objective bounds validation for `IdentityObjective`-based objectives is now strict (`lower < upper`) to prevent degenerate normalization ranges.
+- `WassersteinKernel` is now a `FeatureSpecificKernel` and accepts an optional `lengthscale_constraint`. ([#750](https://github.com/experimental-design/bofire/pull/750))
+
+### Removed
+
+- `PiecewiseLinearGPSurrogate` and supporting code in `torch_tools.py`. Equivalent behavior is now available via the `InterpolateFeature` engineered feature with a standard GP surrogate. ([#750](https://github.com/experimental-design/bofire/pull/750))
 
 ### Fixed
 
@@ -40,3 +46,4 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - `noise_prior` and `noise_constraint` set on `SingleTaskGP`, `MultiTaskGP`, `TanimotoGP`, and `RobustSingleTaskGP` surrogates now actually influence the GP fit. Previously they were assigned via attribute on `model.likelihood.noise_covar` after model construction, which did not populate gpytorch's `_priors` / `_constraints` registries — so the user-supplied prior was silently ignored by the marginal log-likelihood and the user-supplied constraint's bounds were silently not enforced. ([#762](https://github.com/experimental-design/bofire/issues/762), [#763](https://github.com/experimental-design/bofire/pull/763), [#766](https://github.com/experimental-design/bofire/pull/766))
 - Flaky tests in the test pipeline
 - Serialization tests now explicitly assert the expected `DeprecationWarning` for deprecated `FactorialStrategy` specs instead of treating it as an unhandled warning.
+- Added soft divide in `interp1d` (`torch_tools.py`) to prevent division-by-zero errors on initial candidates that violated inequality constraints. ([#750](https://github.com/experimental-design/bofire/pull/750))

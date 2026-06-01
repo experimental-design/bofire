@@ -21,7 +21,6 @@ from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.robust_single_task_gp import RobustSingleTaskGPSurrogate
-from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.tanimoto_gp_surrogate import TanimotoGPSurrogate
@@ -96,7 +95,6 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
     data_models.SingleTaskIBNNSurrogate: SingleTaskGPSurrogate,
-    data_models.PiecewiseLinearGPSurrogate: PiecewiseLinearGPSurrogate,
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
     data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
     data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,

@@ -6,6 +6,7 @@ from bofire.data_models.features.api import (
     CategoricalMolecularInput,
     CategoricalOutput,
     CategoricalTaskInput,
+    CloneFeature,
     ContinuousInput,
     ContinuousOutput,
     MeanFeature,
@@ -18,7 +19,6 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
-    WassersteinKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
@@ -32,11 +32,9 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     GreaterThan,
-    LogNormalPrior,
 )
 from bofire.data_models.surrogates.api import Normalize, ScalerEnum
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
-from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -71,6 +69,42 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "input_preprocessing_specs": {},
+        "categorical_encodings": {},
+        "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+)
+
+specs.add_valid(
+    models.SingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=[0, 1]),
+                ContinuousInput(key="b", bounds=[0, 1]),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True,
+                nu=2.5,
+                lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures(
+            features=[CloneFeature(key="__clone_continuous__", features=["a"])]
+        ).model_dump(),
+        "scaler": Normalize(features=["__clone_continuous__"]).model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
+        "noise_constraint": None,
         "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
@@ -999,194 +1033,6 @@ specs.add_invalid(
     error=ValueError,
     message="The task feature task has to be encoded as ordinal",
 )
-
-
-specs.add_valid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(2)]
-            + [ContinuousInput(key=f"t_{3}", bounds=(2, 60))],
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": [0, 1],
-        "n_interpolation_points": 1000,
-        "x_keys": ["t_1", "t_2"],
-        "y_keys": [f"phi_{i}" for i in range(4)],
-        "continuous_keys": ["t_3"],
-        "prepend_x": [0.0],
-        "append_x": [1.0],
-        "prepend_y": [],
-        "append_y": [],
-        "normalize_y": 100.0,
-        "shape_kernel": WassersteinKernel(
-            squared=False,
-            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-        ).model_dump(),
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "outputscale_prior": THREESIX_SCALE_PRIOR().model_dump(),
-        "dump": None,
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "input_preprocessing_specs": {},
-        "categorical_encodings": {},
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "hyperconfig": PiecewiseLinearGPSurrogateHyperconfig().model_dump(),
-    },
-)
-
-specs.add_invalid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(2)],
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
-        "n_interpolation_points": 1000,
-        "x_keys": ["t_1", "t_2"],
-        "y_keys": [f"phi_{i}" for i in range(4)],
-        "continuous_keys": [],
-        "prepend_x": [0.0],
-        "append_x": [1.0],
-        "prepend_y": [],
-        "append_y": [],
-        "normalize_y": 100.0,
-        "shape_kernel": WassersteinKernel(
-            squared=False,
-            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-        ).model_dump(),
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "outputscale_prior": THREESIX_SCALE_PRIOR().model_dump(),
-        "dump": None,
-        "hyperconfig": None,
-        "input_preprocessing_specs": {},
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-    },
-    error=ValueError,
-    message="Continuous kernel specified but no features for continuous kernel.",
-)
-
-specs.add_invalid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i + 1}", bounds=(0, 1)) for i in range(3)],
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
-        "n_interpolation_points": 1000,
-        "x_keys": [],
-        "y_keys": [],
-        "continuous_keys": ["t_1", "t_2", "t_3"] + [f"phi_{i}" for i in range(4)],
-        "prepend_x": [0.0],
-        "append_x": [1.0],
-        "prepend_y": [],
-        "append_y": [],
-        "normalize_y": 100.0,
-        "shape_kernel": WassersteinKernel(
-            squared=False,
-            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-        ).model_dump(),
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "outputscale_prior": THREESIX_SCALE_PRIOR().model_dump(),
-        "dump": None,
-        "hyperconfig": None,
-        "input_preprocessing_specs": {},
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-    },
-    error=ValueError,
-    message="No features for interpolation. Please provide `x_keys` and `y_keys`.",
-)
-
-
-specs.add_invalid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)],
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
-        "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(3)],
-        "y_keys": [f"y_{i}" for i in range(4)],
-        "continuous_keys": ["x_3"],
-        "prepend_x": [],
-        "append_x": [],
-        "prepend_y": [],
-        "append_y": [],
-        "normalize_y": 100,
-        "shape_kernel": WassersteinKernel(
-            squared=False,
-            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-        ).model_dump(),
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "outputscale_prior": THREESIX_SCALE_PRIOR().model_dump(),
-        "dump": None,
-        "hyperconfig": None,
-        "input_preprocessing_specs": {},
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-    },
-    error=ValueError,
-    message="Different number of x and y values for interpolation.",
-)
-
-specs.add_invalid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)],
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
-        "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(3)],
-        "y_keys": [f"y_{i}" for i in range(4)],
-        "continuous_keys": ["x_3", "dummy"],
-        "prepend_x": [],
-        "append_x": [60],
-        "prepend_y": [],
-        "append_y": [],
-        "shape_kernel": WassersteinKernel(
-            squared=False,
-            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-        ).model_dump(),
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "outputscale_prior": THREESIX_SCALE_PRIOR().model_dump(),
-        "dump": None,
-        "hyperconfig": None,
-        "input_preprocessing_specs": {},
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-    },
-    error=ValueError,
-    message="Feature keys do not match input keys.",
-)
-
 specs.add_valid(
     models.PairwiseGPSurrogate,
     lambda: {
