@@ -32,10 +32,7 @@ from botorch.acquisition.objective import (
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
     AnyUnconstrainedAcquisitionFunction,
-    qLogNEI,
     qLogPF,
-    qNEI,
-    qPI,
     qSR,
     qUCB,
 )
@@ -89,6 +86,8 @@ class SoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        params = self.acquisition_function.model_dump()
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,
@@ -96,26 +95,12 @@ class SoboStrategy(BotorchStrategy):
             X_observed=X_train,
             X_pending=X_pending,
             constraints=constraint_callables,
-            mc_samples=self.acquisition_function.n_mc_samples
-            if hasattr(self.acquisition_function, "n_mc_samples")
-            else 512,
-            beta=(
-                self.acquisition_function.beta
-                if isinstance(self.acquisition_function, qUCB)
-                else 0.2
-            ),
-            tau=(
-                self.acquisition_function.tau
-                if isinstance(self.acquisition_function, qPI)
-                else 1e-3
-            ),
+            mc_samples=params.get("n_mc_samples", 512),
+            beta=params.get("beta", 0.2),
+            tau=params.get("tau", 1e-3),
             eta=torch.tensor(etas).to(**tkwargs),
             cache_root=None,
-            prune_baseline=(
-                self.acquisition_function.prune_baseline
-                if isinstance(self.acquisition_function, (qNEI, qLogNEI))
-                else True
-            ),
+            prune_baseline=params.get("prune_baseline", True),
         )
         return [acqf]
 
