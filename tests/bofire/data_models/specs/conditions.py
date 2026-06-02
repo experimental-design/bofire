@@ -3,6 +3,7 @@ from bofire.data_models.strategies.api import (
     CombiCondition,
     ExpMinRegretGapCondition,
     FeasibleExperimentCondition,
+    LogEIPCCondition,
     NumberOfExperimentsCondition,
     ProbabilisticRegretBoundCondition,
     UCBLCBRegretBoundCondition,
@@ -85,6 +86,20 @@ specs.add_valid(
         "min_experiments": 5,
         "beta_scale": 1.0,
         "n_samples_lcb": 1000,
+    },
+)
+
+specs.add_valid(
+    LogEIPCCondition,
+    lambda: {
+        "lambda_cost": 1.0,
+        "cost_column": None,
+        "cost_value": 1.0,
+        "alpha": 1.0,
+        "min_experiments": 5,
+        "n_samples": 2000,
+        "search_method": "sample",
+        "cost_model": "mean",
     },
 )
 

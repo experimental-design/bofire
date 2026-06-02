@@ -179,13 +179,16 @@ class TestRegretBoundConvergence:
 
         torch.manual_seed(42)
 
+        # Seed the initial design and the acquisition optimizer so the whole
+        # run is deterministic — otherwise the "generally decreases" check is
+        # flaky across runs.
         random_strategy = RandomStrategy(
-            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+            data_model=RandomStrategyDataModel(domain=benchmark.domain, seed=42)
         )
         experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
 
         strategy = SoboStrategy(
-            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+            data_model=SoboStrategyDataModel(domain=benchmark.domain, seed=42)
         )
         strategy.tell(experiments)
         evaluator = UCBLCBRegretEvaluator()
