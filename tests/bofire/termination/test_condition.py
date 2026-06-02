@@ -10,6 +10,7 @@ from bofire.data_models.strategies.api import (
     ExpMinRegretGapCondition,
     LogEIPCCondition,
     NumberOfExperimentsCondition,
+    ProbabilisticRegretBoundCondition,
     Step,
     UCBLCBRegretBoundCondition,
 )
@@ -793,6 +794,202 @@ class TestLogEIPCConditionDataModel:
         strategy = StepwiseStrategy(data_model=data_model)
 
         for _i in range(15):
+            try:
+                candidates = strategy.ask(1)
+            except OptimizationComplete:
+                break
+            candidates = candidates[domain.inputs.get_keys()]
+            experiments = benchmark.f(candidates, return_complete=True)
+            strategy.tell(experiments)
+
+
+class TestProbabilisticRegretBoundConditionDataModel:
+    """Tests for ProbabilisticRegretBoundCondition data model."""
+
+    def test_defaults(self):
+        cond = ProbabilisticRegretBoundCondition()
+        assert cond.epsilon is None
+        assert cond.epsilon_relative == pytest.approx(0.01)
+        assert cond.delta_mod == pytest.approx(0.05)
+        assert cond.delta_est == pytest.approx(0.05)
+        assert cond.enforce_convergence is True
+        assert cond.n_samples_max == 1024
+        assert cond.min_experiments == 5
+        assert cond.n_starts == 8
+        assert cond.n_random == 512
+        assert cond.n_test_points == 1
+
+    def test_custom_params(self):
+        cond = ProbabilisticRegretBoundCondition(
+            epsilon=0.5,
+            delta_mod=0.03,
+            delta_est=0.03,
+            enforce_convergence=False,
+            n_samples_max=256,
+            min_experiments=10,
+            n_starts=4,
+            n_random=128,
+            n_test_points=3,
+        )
+        assert cond.epsilon == pytest.approx(0.5)
+        assert cond.delta_mod == pytest.approx(0.03)
+        assert cond.delta_est == pytest.approx(0.03)
+        assert cond.enforce_convergence is False
+        assert cond.n_samples_max == 256
+        assert cond.min_experiments == 10
+        assert cond.n_starts == 4
+        assert cond.n_random == 128
+        assert cond.n_test_points == 3
+
+    def test_serialization_roundtrip(self):
+        cond = ProbabilisticRegretBoundCondition(
+            epsilon=1.0,
+            delta_mod=0.1,
+            delta_est=0.1,
+            n_samples_max=512,
+        )
+        data = cond.model_dump()
+        restored = ProbabilisticRegretBoundCondition(**data)
+        assert restored == cond
+
+    def test_type_literal(self):
+        cond = ProbabilisticRegretBoundCondition()
+        assert cond.type == "ProbabilisticRegretBoundCondition"
+
+    def test_epsilon_none_accepted(self):
+        cond = ProbabilisticRegretBoundCondition(epsilon=None)
+        assert cond.epsilon is None
+
+    def test_delta_boundary_rejected(self):
+        with pytest.raises(Exception):
+            ProbabilisticRegretBoundCondition(delta_mod=0.0)
+        with pytest.raises(Exception):
+            ProbabilisticRegretBoundCondition(delta_mod=1.0)
+        with pytest.raises(Exception):
+            ProbabilisticRegretBoundCondition(delta_est=0.0)
+        with pytest.raises(Exception):
+            ProbabilisticRegretBoundCondition(delta_est=1.0)
+
+    def test_returns_true_without_strategy(self, benchmark):
+        cond = ProbabilisticRegretBoundCondition()
+        assert cond.evaluate(benchmark.domain, None) is True
+
+    def test_returns_true_with_unfitted_strategy(self, benchmark):
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        cond = ProbabilisticRegretBoundCondition()
+        assert cond.evaluate(benchmark.domain, None, strategy=strategy) is True
+
+    def test_returns_true_below_min_experiments(self, benchmark):
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(3), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        cond = ProbabilisticRegretBoundCondition(min_experiments=10)
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
+
+    def test_evaluate_returns_bool(self, benchmark):
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(10), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        cond = ProbabilisticRegretBoundCondition(
+            n_samples_max=32,
+            n_random=64,
+            n_starts=2,
+            min_experiments=5,
+        )
+        result = cond.evaluate(benchmark.domain, experiments, strategy=strategy)
+        assert isinstance(result, bool)
+
+    def test_huge_epsilon_stops(self, benchmark):
+        """ε >> any plausible regret → criterion satisfied → returns False."""
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(10), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        output_key = benchmark.domain.outputs.get_keys()[0]
+        y_range = float(experiments[output_key].max() - experiments[output_key].min())
+
+        cond = ProbabilisticRegretBoundCondition(
+            epsilon=100.0 * y_range,
+            delta_mod=0.495,
+            delta_est=0.495,
+            enforce_convergence=False,
+            n_samples_max=32,
+            n_random=64,
+            n_starts=2,
+            min_experiments=5,
+        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is False
+
+    def test_tiny_epsilon_keeps_going(self, benchmark):
+        """Negligibly small ε → regret rarely ≤ ε → CI converges above level → True."""
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(10), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        # epsilon_relative=1e-10 gives ε ≈ 1e-8 (floored), far below any
+        # real regret → P(regret ≤ ε) ≈ 0 → CI converges above level → True.
+        cond = ProbabilisticRegretBoundCondition(
+            epsilon=None,
+            epsilon_relative=1e-10,
+            delta_mod=0.1,
+            delta_est=0.1,
+            enforce_convergence=True,
+            n_samples_max=64,
+            n_random=64,
+            n_starts=2,
+            min_experiments=5,
+        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
+
+    def test_in_stepwise_strategy(self, benchmark):
+        """ProbabilisticRegretBoundCondition should work inside StepwiseStrategy."""
+        domain = benchmark.domain
+
+        data_model = StepwiseStrategyDataModel(
+            domain=domain,
+            steps=[
+                Step(
+                    strategy_data=RandomStrategyDataModel(domain=domain),
+                    condition=NumberOfExperimentsCondition(n_experiments=8),
+                ),
+                Step(
+                    strategy_data=SoboStrategyDataModel(domain=domain),
+                    condition=ProbabilisticRegretBoundCondition(
+                        n_samples_max=32,
+                        n_random=64,
+                        n_starts=2,
+                        min_experiments=5,
+                    ),
+                ),
+            ],
+        )
+        strategy = StepwiseStrategy(data_model=data_model)
+
+        for _ in range(12):
             try:
                 candidates = strategy.ask(1)
             except OptimizationComplete:

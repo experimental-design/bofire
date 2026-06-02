@@ -4,6 +4,7 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+from scipy.stats import beta as scipy_beta
 
 
 def compute_threshold_noise(
@@ -62,3 +63,23 @@ def compute_threshold_cv(
     if fold_std <= 0:
         return None
     return float(threshold_factor * correction * fold_std)
+
+
+def clopper_pearson_ci(k: int, n: int, risk: float) -> tuple:
+    """Exact Clopper-Pearson confidence interval for a Bernoulli parameter.
+
+    Uses the identity between the binomial CDF and the beta quantile function
+    to compute the interval without root-finding.
+
+    Args:
+        k: Number of successes out of ``n`` trials.
+        n: Total number of trials.
+        risk: Total risk level; the interval has coverage ``1 - risk``.
+
+    Returns:
+        ``(lower, upper)`` bounds on the Bernoulli parameter.
+    """
+    half = risk / 2.0
+    lower = float(scipy_beta.ppf(half, k, n - k + 1)) if k > 0 else 0.0
+    upper = float(scipy_beta.ppf(1.0 - half, k + 1, n - k)) if k < n else 1.0
+    return lower, upper

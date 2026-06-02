@@ -124,6 +124,7 @@ class CombiCondition(Condition, EvaluateableCondition):
                 "UCBLCBRegretBoundCondition",
                 "ExpMinRegretGapCondition",
                 "LogEIPCCondition",
+                "ProbabilisticRegretBoundCondition",
             ]
         ],
         Field(min_length=2),
@@ -499,6 +500,142 @@ class LogEIPCCondition(SingleCondition, EvaluateableCondition):
         return bool(metrics["max_log_eipc"] > 0)
 
 
+class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
+    """Stopping condition based on probabilistic regret bounds (Wilson, 2024).
+
+    Returns ``True`` (keep optimizing) while the estimated probability that
+    the incumbent's regret exceeds ε is above the model-risk threshold.
+    Returns ``False`` (stop) once the Clopper-Pearson sequential hypothesis
+    test certifies the criterion has been met.
+
+    The two risk parameters ``delta_mod`` and ``delta_est`` correspond directly
+    to the paper's δ_mod (model risk) and δ_est (estimation error from the
+    Monte Carlo test).  Stopping triggers when ``P̂(regret > ε) ≤ δ_mod``,
+    certified by a Clopper-Pearson test at level δ_est.
+
+    **To reproduce the paper's main experiments** use ``delta_mod = delta_est
+    = 0.025`` (total risk 5 %, 95 % guarantee).
+
+    Requires a fitted GP-based strategy passed via the ``strategy`` kwarg
+    from ``StepwiseStrategy``.  Single-output minimization only.
+
+    How ε is determined (in order of priority):
+
+    1. ``epsilon`` — absolute threshold in original Y units, if explicitly set.
+    2. ``epsilon_relative × (y_max − y_min)`` — relative threshold (default
+       ``1 %`` of the observed range when ``epsilon`` is not set).
+
+    Args:
+        epsilon: Absolute simple regret threshold in Y units.  If ``None``
+            (default), computed from ``epsilon_relative``.
+        epsilon_relative: Fractional ε relative to the observed Y range.
+            Default ``0.01`` (1 %).  Ignored when ``epsilon`` is set.
+        delta_mod: Model-risk tolerance δ_mod.  Stopping triggers when the
+            estimated probability that regret exceeds ε falls below this
+            value.  Default ``0.05``.
+        delta_est: Estimation-risk tolerance δ_est for the sequential
+            Clopper-Pearson test.  Default ``0.05``.
+        enforce_convergence: Only stop when the CP CI conclusively excludes
+            δ_mod (default ``True``).  Set to ``False`` to use the raw MC
+            estimate.
+        n_samples_max: Maximum GP path samples per BO step.  Default ``1024``.
+        min_experiments: Minimum experiments before the condition is checked.
+            Default ``5``.
+        n_starts: L-BFGS-B starts per path for path minimization.  Default ``8``.
+        n_random: Random domain points for identifying L-BFGS-B start
+            candidates.  Default ``512``.
+        n_test_points: Number of candidate points to evaluate the criterion
+            at.  ``1`` (default) tests the incumbent only; values ``> 1`` also
+            include the ``n_test_points − 1`` in-sample points with the
+            lowest GP posterior mean.
+        optim_method: scipy optimisation method for path minimization.
+            Default ``"L-BFGS-B"``.
+        optim_maxiter: Maximum iterations per optimisation start.
+            Default ``200``.
+        optim_ftol: Function-value convergence tolerance for path
+            minimization.  Default ``1e-9``.
+
+    Reference:
+        Wilson (2024): "Stopping Bayesian Optimization with Probabilistic
+            Regret Bounds" (NeurIPS 2024).
+    """
+
+    type: Literal["ProbabilisticRegretBoundCondition"] = (
+        "ProbabilisticRegretBoundCondition"
+    )
+    epsilon: Optional[PositiveFloat] = None
+    epsilon_relative: Annotated[float, Field(gt=0, le=1)] = 0.01
+    delta_mod: Annotated[float, Field(gt=0, lt=1)] = 0.05
+    delta_est: Annotated[float, Field(gt=0, lt=1)] = 0.05
+    optim_method: str = "L-BFGS-B"
+    optim_maxiter: PositiveInt = 200
+    optim_ftol: Annotated[float, Field(gt=0)] = 1e-9
+    enforce_convergence: bool = True
+    n_samples_max: PositiveInt = 1024
+    min_experiments: PositiveInt = 5
+    n_starts: PositiveInt = 8
+    n_random: PositiveInt = 512
+    n_test_points: PositiveInt = 1
+
+    _evaluator: Any = PrivateAttr(default=None)
+
+    def _get_evaluator(self):
+        if self._evaluator is None:
+            from bofire.termination.probabilistic_regret_bound import (
+                ProbabilisticRegretBoundEvaluator,
+            )
+
+            self._evaluator = ProbabilisticRegretBoundEvaluator(
+                epsilon=self.epsilon,
+                epsilon_relative=self.epsilon_relative,
+                delta_mod=self.delta_mod,
+                delta_est=self.delta_est,
+                enforce_convergence=self.enforce_convergence,
+                n_samples_max=self.n_samples_max,
+                n_starts=self.n_starts,
+                n_random=self.n_random,
+                n_test_points=self.n_test_points,
+                optim_method=self.optim_method,
+                optim_maxiter=self.optim_maxiter,
+                optim_ftol=self.optim_ftol,
+            )
+        return self._evaluator
+
+    def evaluate(
+        self, domain: Domain, experiments: Optional[pd.DataFrame], **kwargs
+    ) -> bool:
+        """Check if optimisation should continue (``True``) or stop (``False``).
+
+        Args:
+            domain: The optimisation domain.
+            experiments: Experiments conducted so far.
+            **kwargs: Must include ``strategy`` — the fitted ``BotorchStrategy``.
+
+        Returns:
+            ``True`` if optimisation should continue, ``False`` when the
+            probabilistic regret bound criterion is satisfied.
+        """
+        strategy = kwargs.get("strategy")
+
+        if strategy is None:
+            return True
+        if (
+            not getattr(strategy, "is_fitted", False)
+            or getattr(strategy, "model", None) is None
+        ):
+            return True
+        if experiments is None or len(experiments) < self.min_experiments:
+            return True
+
+        evaluator = self._get_evaluator()
+        metrics = evaluator.evaluate(strategy, experiments, len(experiments))
+
+        if not metrics:
+            return True
+
+        return not metrics["criterion_satisfied"]
+
+
 AnyCondition = Union[
     NumberOfExperimentsCondition,
     CombiCondition,
@@ -507,4 +644,5 @@ AnyCondition = Union[
     UCBLCBRegretBoundCondition,
     ExpMinRegretGapCondition,
     LogEIPCCondition,
+    ProbabilisticRegretBoundCondition,
 ]

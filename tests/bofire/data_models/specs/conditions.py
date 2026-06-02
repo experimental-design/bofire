@@ -4,6 +4,7 @@ from bofire.data_models.strategies.api import (
     ExpMinRegretGapCondition,
     FeasibleExperimentCondition,
     NumberOfExperimentsCondition,
+    ProbabilisticRegretBoundCondition,
     UCBLCBRegretBoundCondition,
 )
 from tests.bofire.data_models.specs.specs import Specs
@@ -84,5 +85,24 @@ specs.add_valid(
         "min_experiments": 5,
         "beta_scale": 1.0,
         "n_samples_lcb": 1000,
+    },
+)
+
+specs.add_valid(
+    ProbabilisticRegretBoundCondition,
+    lambda: {
+        "epsilon": None,
+        "epsilon_relative": 0.01,
+        "delta_mod": 0.05,
+        "delta_est": 0.05,
+        "optim_method": "L-BFGS-B",
+        "optim_maxiter": 200,
+        "optim_ftol": 1e-09,
+        "enforce_convergence": True,
+        "n_samples_max": 1024,
+        "min_experiments": 5,
+        "n_starts": 8,
+        "n_random": 512,
+        "n_test_points": 1,
     },
 )

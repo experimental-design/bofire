@@ -10,7 +10,13 @@ from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataMo
 from bofire.strategies.api import RandomStrategy, SoboStrategy
 from bofire.termination.exp_min_regret_gap import ExpMinRegretGapEvaluator
 from bofire.termination.log_eipc import LogEIPCEvaluator
+from bofire.termination.probabilistic_regret_bound import (
+    ProbabilisticRegretBoundEvaluator,
+    _minimize_sample_paths,
+    _run_prb_level_test,
+)
 from bofire.termination.ucb_lcb import UCBLCBRegretEvaluator
+from bofire.termination.utils import clopper_pearson_ci
 
 
 @pytest.fixture
@@ -732,3 +738,608 @@ class TestEvaluatorKwargs:
     def test_private_kwarg_raises(self):
         with pytest.raises(TypeError, match="unexpected keyword"):
             ExpMinRegretGapEvaluator(_prev_model="x")
+
+
+# ---------------------------------------------------------------------------
+# PRB helper unit tests
+# ---------------------------------------------------------------------------
+
+
+class TestClopperPearsonCI:
+    """Unit tests for the clopper_pearson_ci helper."""
+
+    def test_zero_successes_gives_lower_zero(self):
+        lower, upper = clopper_pearson_ci(k=0, n=20, risk=0.05)
+        assert lower == 0.0
+        assert 0.0 < upper < 1.0
+
+    def test_all_successes_gives_upper_one(self):
+        lower, upper = clopper_pearson_ci(k=20, n=20, risk=0.05)
+        assert lower > 0.0
+        assert upper == 1.0
+
+    def test_bounds_contain_empirical_rate(self):
+        """For k=5 out of n=20, both bounds should be > 0 and < 1."""
+        lower, upper = clopper_pearson_ci(k=5, n=20, risk=0.05)
+        assert 0.0 < lower < upper < 1.0
+
+    def test_lower_leq_upper(self):
+        for k in [0, 5, 10, 15, 20]:
+            lower, upper = clopper_pearson_ci(k=k, n=20, risk=0.05)
+            assert lower <= upper
+
+    def test_interval_shrinks_with_more_samples(self):
+        """Larger n → narrower CI for the same proportion."""
+        _, upper_small = clopper_pearson_ci(k=5, n=10, risk=0.05)
+        lower_small, _ = clopper_pearson_ci(k=5, n=10, risk=0.05)
+        _, upper_large = clopper_pearson_ci(k=50, n=100, risk=0.05)
+        lower_large, _ = clopper_pearson_ci(k=50, n=100, risk=0.05)
+        assert (upper_large - lower_large) < (upper_small - lower_small)
+
+    def test_tighter_risk_gives_wider_interval(self):
+        """Smaller risk (higher confidence) → wider CI."""
+        lower_wide, upper_wide = clopper_pearson_ci(k=5, n=20, risk=0.01)
+        lower_narrow, upper_narrow = clopper_pearson_ci(k=5, n=20, risk=0.20)
+        assert (upper_wide - lower_wide) > (upper_narrow - lower_narrow)
+
+
+class TestMinimizeSamplePaths:
+    """Unit tests for _minimize_sample_paths."""
+
+    def test_returns_correct_shape(self, trained_strategy):
+        """Should return an array of length n_samples."""
+        import torch
+        from botorch.sampling.pathwise import draw_matheron_paths
+
+        from bofire.utils.torch_tools import tkwargs
+
+        strategy, experiments = trained_strategy
+        model = strategy.model
+        bounds = strategy.domain.inputs.get_bounds(
+            specs=strategy.input_preprocessing_specs
+        )
+        lower = torch.tensor(bounds[0], **tkwargs)
+        upper = torch.tensor(bounds[1], **tkwargs)
+
+        n_samples = 4
+        paths = draw_matheron_paths(model, sample_shape=torch.Size([n_samples]))
+        minima = _minimize_sample_paths(paths, lower, upper, n_random=64, n_starts=2)
+
+        assert minima.shape == (n_samples,)
+
+    def test_minima_leq_path_at_evaluated_points(self, trained_strategy):
+        """The minimum must be ≤ the path value at each evaluated point."""
+        import torch
+        from botorch.sampling.pathwise import draw_matheron_paths
+
+        from bofire.utils.torch_tools import tkwargs
+
+        strategy, experiments = trained_strategy
+        model = strategy.model
+        input_keys = strategy.domain.inputs.get_keys()
+        transformed = strategy.domain.inputs.transform(
+            experiments[input_keys], strategy.input_preprocessing_specs
+        )
+        X = torch.from_numpy(transformed.values).to(**tkwargs)
+        bounds = strategy.domain.inputs.get_bounds(
+            specs=strategy.input_preprocessing_specs
+        )
+        lower = torch.tensor(bounds[0], **tkwargs)
+        upper = torch.tensor(bounds[1], **tkwargs)
+
+        n_samples = 3
+        paths = draw_matheron_paths(model, sample_shape=torch.Size([n_samples]))
+        minima = _minimize_sample_paths(paths, lower, upper, n_random=64, n_starts=2)
+
+        with torch.no_grad():
+            vals = paths(X).numpy()  # [n_samples, n_points]
+
+        for i in range(n_samples):
+            # minimum found by optimiser must not exceed the minimum random sample
+            assert minima[i] <= vals[i].min() + 1e-6
+
+
+class TestRunPRBLevelTest:
+    """Unit tests for _run_prb_level_test."""
+
+    def test_all_zeros_converges_below(self):
+        """When P(indicator=1)=0, all CI uppers should drop below level."""
+        n_test = 1
+        level = 0.1  # P(regret > ε) must be ≤ 0.1 to stop
+
+        def sampler_fn(n_batch):
+            return np.zeros((n_test, n_batch), dtype=np.int64)
+
+        estimates, converged_below, total_n, cis = _run_prb_level_test(
+            sampler_fn=sampler_fn,
+            level=level,
+            delta_est=0.05,
+            n_samples_max=512,
+            n_test=n_test,
+        )
+        # P̂(indicator=1) = 0/total_n = 0 < level → converged_below should be True
+        assert converged_below[0]
+        assert float(estimates[0]) == pytest.approx(0.0)
+
+    def test_all_ones_does_not_converge_below(self):
+        """When P(indicator=1)=1 >> level, no test point satisfies the criterion."""
+        n_test = 1
+        level = 0.1
+
+        def sampler_fn(n_batch):
+            return np.ones((n_test, n_batch), dtype=np.int64)
+
+        estimates, converged_below, total_n, cis = _run_prb_level_test(
+            sampler_fn=sampler_fn,
+            level=level,
+            delta_est=0.05,
+            n_samples_max=512,
+            n_test=n_test,
+        )
+        assert not converged_below[0]
+        assert float(estimates[0]) == pytest.approx(1.0)
+
+    def test_respects_n_samples_max(self):
+        """Should never draw more than n_samples_max total indicators."""
+        n_test = 1
+        calls = []
+
+        def sampler_fn(n_batch):
+            calls.append(n_batch)
+            return np.zeros((n_test, n_batch), dtype=np.int64)
+
+        _, _, total_n, _ = _run_prb_level_test(
+            sampler_fn=sampler_fn,
+            level=0.5,  # hard to satisfy quickly
+            delta_est=0.05,
+            n_samples_max=128,
+            n_test=n_test,
+        )
+        assert total_n <= 128
+
+    def test_multiple_test_points(self):
+        """With n_test > 1, best test point should dominate."""
+        n_test = 3
+        level = 0.1
+
+        def sampler_fn(n_batch):
+            # Point 0: always 0 (criterion met); points 1, 2: always 1
+            indicators = np.ones((n_test, n_batch), dtype=np.int64)
+            indicators[0] = 0
+            return indicators
+
+        estimates, converged_below, total_n, cis = _run_prb_level_test(
+            sampler_fn=sampler_fn,
+            level=level,
+            delta_est=0.05,
+            n_samples_max=512,
+            n_test=n_test,
+        )
+        # Point 0 has 0 failures → converged below
+        assert converged_below[0]
+        # Points 1 and 2 have all failures → not converged below
+        assert not converged_below[1]
+        assert not converged_below[2]
+
+    def test_ci_contains_estimate(self):
+        """The CI should contain the empirical estimate."""
+        n_test = 1
+
+        def sampler_fn(n_batch):
+            rng = np.random.default_rng(0)
+            return rng.integers(0, 2, size=(n_test, n_batch))
+
+        estimates, _, _, cis = _run_prb_level_test(
+            sampler_fn=sampler_fn,
+            level=0.5,
+            delta_est=0.05,
+            n_samples_max=256,
+            n_test=n_test,
+        )
+        assert cis[0, 0] <= estimates[0] <= cis[0, 1]
+
+
+class TestProbabilisticRegretBoundEvaluator:
+    """Integration tests for ProbabilisticRegretBoundEvaluator."""
+
+    # Use small resource budgets to keep tests fast.
+    _fast_kwargs = {
+        "n_samples_max": 32,
+        "n_random": 64,
+        "n_starts": 2,
+        "initial_batch": 16,
+    }
+
+    def test_returns_expected_keys(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        expected = {
+            "prob_regret_ok",
+            "epsilon",
+            "delta_mod",
+            "criterion_satisfied",
+            "n_samples_used",
+            "ci_lower",
+            "ci_upper",
+            "converged",
+        }
+        assert expected == set(result.keys())
+
+    def test_prob_regret_ok_in_unit_interval(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert 0.0 <= result["prob_regret_ok"] <= 1.0
+
+    def test_ci_valid(self, trained_strategy):
+        """CI should satisfy 0 ≤ lower ≤ estimate ≤ upper ≤ 1."""
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert 0.0 <= result["ci_lower"]
+        assert result["ci_lower"] <= result["prob_regret_ok"] + 1e-9
+        assert result["prob_regret_ok"] <= result["ci_upper"] + 1e-9
+        assert result["ci_upper"] <= 1.0
+
+    def test_criterion_satisfied_is_bool(self, trained_strategy):
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert isinstance(result["criterion_satisfied"], bool)
+
+    def test_n_samples_used_leq_max(self, trained_strategy):
+        """Should never exceed n_samples_max total path samples."""
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["n_samples_used"] <= self._fast_kwargs["n_samples_max"]
+
+    def test_epsilon_computed_from_relative_when_not_set(self, trained_strategy):
+        """When epsilon is None, ε = epsilon_relative * (y_max - y_min)."""
+        strategy, experiments = trained_strategy
+        output_key = strategy.domain.outputs.get_keys()[0]
+        y_range = float(experiments[output_key].max() - experiments[output_key].min())
+
+        evaluator = ProbabilisticRegretBoundEvaluator(
+            epsilon=None, epsilon_relative=0.05, **self._fast_kwargs
+        )
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["epsilon"] == pytest.approx(0.05 * y_range, rel=1e-6)
+
+    def test_epsilon_override_used_when_set(self, trained_strategy):
+        """When epsilon is set, it must be used directly."""
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(epsilon=2.5, **self._fast_kwargs)
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["epsilon"] == pytest.approx(2.5)
+
+    def test_very_large_epsilon_gives_high_prob(self, trained_strategy):
+        """ε much larger than any plausible regret → P(regret ≤ ε) should be high."""
+        strategy, experiments = trained_strategy
+        output_key = strategy.domain.outputs.get_keys()[0]
+        y_range = float(experiments[output_key].max() - experiments[output_key].min())
+
+        evaluator = ProbabilisticRegretBoundEvaluator(
+            epsilon=100.0 * y_range,  # absurdly large ε
+            **self._fast_kwargs,
+        )
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["prob_regret_ok"] > 0.8
+
+    def test_very_small_epsilon_gives_low_prob(self, trained_strategy):
+        """ε = 0 → the path minimum always equals the optimum → P(regret ≤ 0) = 0."""
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(
+            epsilon=0.0,
+            enforce_convergence=False,
+            **self._fast_kwargs,
+        )
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result["prob_regret_ok"] < 0.3
+
+    def test_returns_empty_when_not_fitted(self, benchmark):
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, pd.DataFrame(), 0)
+
+        assert result == {}
+
+    def test_returns_empty_with_single_experiment(self, benchmark):
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(1), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        evaluator = ProbabilisticRegretBoundEvaluator(**self._fast_kwargs)
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert result == {}
+
+    def test_n_test_points_greater_than_one(self, trained_strategy):
+        """n_test_points > 1 should still produce a valid result."""
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(
+            n_test_points=3, **self._fast_kwargs
+        )
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        assert 0.0 <= result["prob_regret_ok"] <= 1.0
+
+    def test_enforce_convergence_false_uses_raw_estimate(self, trained_strategy):
+        """With enforce_convergence=False, criterion_satisfied depends on raw estimate."""
+        strategy, experiments = trained_strategy
+        evaluator = ProbabilisticRegretBoundEvaluator(
+            epsilon=1000.0,  # huge ε: prob_regret_ok should be ~1.0
+            delta_mod=0.5,  # stop when P(regret > ε) ≤ 0.5 (very loose)
+            enforce_convergence=False,
+            **self._fast_kwargs,
+        )
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        # With ε=1000 (all regrets < ε), P(regret > ε) ≈ 0 ≤ delta_mod=0.5 → True
+        assert result["criterion_satisfied"] is True
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Conformance tests — verify implementation matches Wilson (2024) / trieste_stopping
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+class TestClopperPearsonExactFormula:
+    """Verify clopper_pearson_ci matches the analytical beta-distribution formula
+    from Clopper & Pearson (1934).  The reference implementation in trieste_stopping
+    uses the same formula; any deviation here means the CI bounds diverge."""
+
+    def test_matches_scipy_beta_ppf(self):
+        """Lower = B(α/2; k, n−k+1) and upper = B(1−α/2; k+1, n−k)."""
+        from scipy.stats import beta as scipy_beta
+
+        k, n, risk = 7, 30, 0.05
+        lower, upper = clopper_pearson_ci(k, n, risk)
+
+        expected_lower = float(scipy_beta.ppf(risk / 2.0, k, n - k + 1))
+        expected_upper = float(scipy_beta.ppf(1.0 - risk / 2.0, k + 1, n - k))
+
+        assert abs(lower - expected_lower) < 1e-10, (
+            f"lower={lower:.10f} != expected={expected_lower:.10f}"
+        )
+        assert abs(upper - expected_upper) < 1e-10, (
+            f"upper={upper:.10f} != expected={expected_upper:.10f}"
+        )
+
+    def test_boundary_k0_lower_exactly_zero(self):
+        """k=0 → lower must be *exactly* 0.0, not just near-zero."""
+        lower, _ = clopper_pearson_ci(k=0, n=50, risk=0.05)
+        assert lower == 0.0
+
+    def test_boundary_kn_upper_exactly_one(self):
+        """k=n → upper must be *exactly* 1.0, not just near-one."""
+        _, upper = clopper_pearson_ci(k=50, n=50, risk=0.05)
+        assert upper == 1.0
+
+    def test_symmetric_around_half(self):
+        """For k=n/2 with symmetric risk, (lower + upper) / 2 ≈ 0.5."""
+        lower, upper = clopper_pearson_ci(k=50, n=100, risk=0.05)
+        assert abs((lower + upper) / 2.0 - 0.5) < 0.01
+
+
+class TestRunPRBLevelTestScheduleAndGuarantee:
+    """Verify Algorithm 2 schedule parameters from Wilson (2024) Section 3.2.
+
+    Paper: d_j = ((α−1)/α) · δ_est · j^(−α), n_j = ⌈β^(j−1) · N⌉, α=1.1, β=1.5.
+    Reference code: trieste_stopping/stopping/utils/convergence.py."""
+
+    def test_batch_growth_schedule(self):
+        """Batches are increments of cumulative targets n_j = int(N·β^(j−1)).
+
+        Matching trieste_stopping: the schedule value is the *cumulative* target,
+        so the batch drawn at step j is n_j − n_{j−1}, not n_j itself.
+        Cumulative totals: 16, 24, 36, 54, …  Batches: 16, 8, 12, 18, …
+        """
+        batches_seen = []
+
+        def sampler_fn(n_batch):
+            batches_seen.append(n_batch)
+            # p≈0.5 so convergence takes several steps
+            rng = np.random.default_rng(0)
+            return rng.integers(0, 2, size=(1, n_batch))
+
+        initial_batch, batch_growth, n_samples_max = 16, 1.5, 300
+
+        _run_prb_level_test(
+            sampler_fn=sampler_fn,
+            level=0.5,
+            delta_est=0.05,
+            n_samples_max=n_samples_max,
+            n_test=1,
+            initial_batch=initial_batch,
+            batch_growth=batch_growth,
+        )
+
+        cumul = 0
+        for j, actual in enumerate(batches_seen):
+            n_target = int(initial_batch * batch_growth**j)
+            expected = min(n_target - cumul, n_samples_max - cumul)
+            assert actual == expected, (
+                f"Step {j + 1}: expected increment={expected} "
+                f"(cumul target {n_target}), got batch={actual}"
+            )
+            cumul += actual
+
+    def test_per_step_risk_schedule_sums_to_leq_delta_est(self):
+        """Σ_j d_j = Σ_j ((α−1)/α) · δ_est · j^(−α) ≤ δ_est for α=1.1.
+
+        This is the key budget constraint from Wilson (2024) Section 3.2 that
+        guarantees the total false-positive risk is bounded."""
+        delta_est = 0.1
+        alpha = 1.1
+
+        partial_sum = sum(
+            ((alpha - 1) / alpha) * delta_est * (step**-alpha)
+            for step in range(1, 10_000)
+        )
+        assert partial_sum <= delta_est + 1e-6, (
+            f"Risk schedule partial sum {partial_sum:.6f} exceeds δ_est={delta_est}"
+        )
+
+    def test_type1_error_rate_bounded_by_delta_est(self):
+        """When true p >> level, the false-positive rate must be ≤ δ_est.
+
+        False positive = CP test incorrectly concludes P(indicator=1) ≤ level
+        when the true probability is much higher.  Wilson (2024) Proposition 2
+        guarantees this rate is ≤ δ_est."""
+        true_p = 0.9  # well above level
+        level = 0.1
+        delta_est = 0.05
+        n_trials = 200
+        rng = np.random.default_rng(20240101)
+
+        false_positives = sum(
+            _run_prb_level_test(
+                sampler_fn=lambda n, _r=rng: (_r.random((1, n)) < true_p).astype(
+                    np.int64
+                ),
+                level=level,
+                delta_est=delta_est,
+                n_samples_max=512,
+                n_test=1,
+            )[1][0]  # converged_below[0]
+            for _ in range(n_trials)
+        )
+
+        # The theoretical bound is delta_est; allow 3× slack for finite-sample
+        # randomness — a genuinely buggy implementation would far exceed this.
+        observed_rate = false_positives / n_trials
+        assert observed_rate <= 3 * delta_est, (
+            f"Type-I error {false_positives}/{n_trials}={observed_rate:.3f} "
+            f"exceeds 3·δ_est={3 * delta_est:.3f}"
+        )
+
+
+class TestPRBKnownAnswerEstimation:
+    """Known-answer Ψ tests: compare _evaluate_core against analytical expectations.
+
+    Setup: f(x) = cos(2πx) on [0,1] with near-noiseless observations.
+      - True minimum  at x=0.5  (f=−1): regret≈0  → Ψ(x;ε=0.1) ≈ 1
+      - True maximum  at x=0.0  (f=+1): regret≈2  → Ψ(x;ε=0.1) ≈ 0
+
+    This catches bugs in: regret sign, path minimisation, ε threshold, and the
+    conversion from P(regret>ε) to prob_regret_ok.
+    """
+
+    @pytest.fixture
+    def cosine_gp(self):
+        """Near-noiseless GP fitted to cos(2πx) at 9 equally-spaced points."""
+        import torch
+        from botorch.models import SingleTaskGP
+        from gpytorch.kernels import MaternKernel, ScaleKernel
+
+        NOISE_VAR = 1e-4
+        X_obs = torch.linspace(0.0, 1.0, 9, dtype=torch.float64).unsqueeze(-1)
+        Y_obs = torch.cos(torch.tensor(2 * np.pi) * X_obs)
+
+        covar = ScaleKernel(MaternKernel(nu=2.5))
+        gp = SingleTaskGP(X_obs, Y_obs, covar_module=covar)
+        with torch.no_grad():
+            gp.covar_module.outputscale = torch.tensor(1.0, dtype=torch.float64)
+            gp.covar_module.base_kernel.lengthscale = torch.tensor(
+                0.25, dtype=torch.float64
+            )
+            gp.likelihood.noise = torch.tensor(NOISE_VAR, dtype=torch.float64)
+        gp.eval()
+        return gp
+
+    def _make_evaluator(self, epsilon):
+        return ProbabilisticRegretBoundEvaluator(
+            epsilon=epsilon,
+            enforce_convergence=False,
+            n_samples_max=1500,
+            n_random=128,
+            n_starts=4,
+        )
+
+    def test_psi_near_one_at_true_minimum(self, cosine_gp):
+        """At x=0.5 (f=−1, true minimum): regret≈0 → Ψ should be close to 1."""
+        import torch
+
+        lower = torch.zeros(1, dtype=torch.float64)
+        upper = torch.ones(1, dtype=torch.float64)
+        X_min = torch.tensor([[0.5]], dtype=torch.float64)
+
+        result = self._make_evaluator(0.1)._evaluate_core(
+            cosine_gp, X_min, lower, upper, epsilon=0.1
+        )
+
+        assert result["prob_regret_ok"] > 0.85, (
+            f"Ψ at true minimum should be ≈1 (got {result['prob_regret_ok']:.3f}). "
+            "Likely cause: regret formula inverted or path minimisation broken."
+        )
+
+    def test_psi_near_zero_at_true_maximum(self, cosine_gp):
+        """At x=0.0 (f=+1, true maximum): regret≈2 >> ε=0.1 → Ψ should be ≈0."""
+        import torch
+
+        lower = torch.zeros(1, dtype=torch.float64)
+        upper = torch.ones(1, dtype=torch.float64)
+        X_max = torch.tensor([[0.0]], dtype=torch.float64)
+
+        result = self._make_evaluator(0.1)._evaluate_core(
+            cosine_gp, X_max, lower, upper, epsilon=0.1
+        )
+
+        assert result["prob_regret_ok"] < 0.10, (
+            f"Ψ at true maximum should be ≈0 (got {result['prob_regret_ok']:.3f}). "
+            "Likely cause: regret sign wrong (maximising instead of minimising)."
+        )
+
+    def test_psi_monotone_increasing_in_epsilon(self, cosine_gp):
+        """Ψ(x; ε) must be non-decreasing in ε for any fixed x.
+
+        Monotonicity is a basic correctness requirement: a larger tolerance
+        can only make more paths satisfy regret ≤ ε."""
+        import torch
+
+        lower = torch.zeros(1, dtype=torch.float64)
+        upper = torch.ones(1, dtype=torch.float64)
+        # x=0.25: intermediate regret, so Ψ should transition from low to high
+        X_test = torch.tensor([[0.25]], dtype=torch.float64)
+
+        psi_values = []
+        for eps in [0.05, 0.5, 2.0]:
+            ev = ProbabilisticRegretBoundEvaluator(
+                epsilon=eps,
+                enforce_convergence=False,
+                n_samples_max=500,
+                n_random=64,
+                n_starts=2,
+            )
+            result = ev._evaluate_core(cosine_gp, X_test, lower, upper, epsilon=eps)
+            psi_values.append(result["prob_regret_ok"])
+
+        assert psi_values[0] <= psi_values[1] + 0.05, (
+            f"Ψ not monotone: ε=0.05→{psi_values[0]:.3f}, ε=0.5→{psi_values[1]:.3f}"
+        )
+        assert psi_values[1] <= psi_values[2] + 0.05, (
+            f"Ψ not monotone: ε=0.5→{psi_values[1]:.3f}, ε=2.0→{psi_values[2]:.3f}"
+        )

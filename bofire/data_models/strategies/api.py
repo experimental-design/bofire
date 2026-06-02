@@ -62,6 +62,7 @@ from bofire.data_models.strategies.stepwise.conditions import (
     FeasibleExperimentCondition,
     LogEIPCCondition,
     NumberOfExperimentsCondition,
+    ProbabilisticRegretBoundCondition,
     UCBLCBRegretBoundCondition,
 )
 from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
