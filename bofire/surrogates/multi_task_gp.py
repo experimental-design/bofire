@@ -8,12 +8,13 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.priors.api import LKJPrior
 
 # from bofire.data_models.molfeatures.api import MolFeatures
@@ -28,7 +29,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         data_model: DataModel,
         **kwargs,
     ):
-        self.n_tasks = len(data_model.inputs.get(TaskInput).features[0].categories)
+        self.n_tasks = len(
+            data_model.inputs.get(CategoricalTaskInput).features[0].categories
+        )
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
@@ -39,7 +42,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             # set the number of tasks in the prior
             self.task_prior.n_tasks = self.n_tasks
         # obtain the name of the task feature
-        self.task_feature_key = data_model.inputs.get_keys(TaskInput)[0]
+        self.task_feature_key = data_model.inputs.get_keys(CategoricalTaskInput)[0]
 
         super().__init__(data_model=data_model, **kwargs)
 
@@ -55,6 +58,13 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ) -> None:
+        likelihood = GaussianLikelihood(
+            noise_prior=priors.map(self.noise_prior),
+            noise_constraint=priors.map(self.noise_constraint)
+            if self.noise_constraint is not None
+            else None,
+        )
+
         self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -72,8 +82,13 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 ),
                 features_to_idx_mapper=self.get_feature_indices,
             ),
+            likelihood=likelihood,
             outcome_transform=outcome_transform,
             input_transform=input_transform,
+            # Pass None explicitly to avoid the default BetaPrior introduced in
+            # botorch PR #3271, which registers lambdas in PositiveIndexKernel
+            # (PR #3267) and breaks torch.save-based serialization.
+            task_covar_prior=None,
         )
 
         if isinstance(self.task_prior, LKJPrior):
@@ -85,11 +100,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             # self.model.task_covar_module.register_prior(
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
-        if self.noise_constraint is not None:
-            self.model.likelihood.noise_covar.raw_noise_constraint = priors.map(
-                self.noise_constraint
-            )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)

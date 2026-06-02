@@ -1,3 +1,5 @@
+import pytest
+
 from tests.bofire.data_models.specs.api import Spec
 
 
@@ -63,7 +65,14 @@ def test_acquisition_function_should_be_serializable(acquisition_function_spec: 
 
 def test_strategy_should_be_serializable(strategy_spec: Spec):
     spec = strategy_spec.typed_spec()
-    obj = strategy_spec.cls(**spec)
+    if strategy_spec.cls.__name__ == "FactorialStrategy":
+        with pytest.warns(
+            DeprecationWarning,
+            match="FactorialStrategy is deprecated",
+        ):
+            obj = strategy_spec.cls(**spec)
+    else:
+        obj = strategy_spec.cls(**spec)
     # TODO: can we unhide the comparison of surrogate_specs?
     data = {k: v for k, v in obj.model_dump().items() if k != "surrogate_specs"}
     for k, v in data.items():
@@ -126,4 +135,10 @@ def test_constraints_should_be_serializable(constraints_spec: Spec):
 def test_local_search_config_should_be_serializable(local_search_config_spec: Spec):
     spec = local_search_config_spec.typed_spec()
     obj = local_search_config_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
+def test_llm_should_be_serializable(llm_spec: Spec):
+    spec = llm_spec.typed_spec()
+    obj = llm_spec.cls(**spec)
     assert obj.model_dump() == spec

@@ -17,6 +17,8 @@ import bofire.kernels.shape as shapeKernels
 from bofire.data_models.constraints.condition import ThresholdCondition
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
+    DownsamplingKernel,
+    ExactWassersteinKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
     IndexKernel,
@@ -55,6 +57,7 @@ EQUIVALENTS = {
     IndexKernel: GpytorchIndexKernel,
     PositiveIndexKernel: GpytorchIndexKernel,
     WassersteinKernel: shapeKernels.WassersteinKernel,
+    ExactWassersteinKernel: shapeKernels.ExactWassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
     WedgeKernel: conditionalKernels.WedgeKernel,
@@ -64,7 +67,10 @@ EQUIVALENTS = {
 
 def test_map(kernel_spec: Spec):
     kernel = kernel_spec.cls(**kernel_spec.typed_spec())
-    if isinstance(kernel, HammingDistanceKernel) and kernel.features is not None:
+    if (
+        isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel))
+        and kernel.features is not None
+    ):
         return
     gkernel = kernels.map(
         kernel,
@@ -243,6 +249,30 @@ def test_map_wasserstein_kernel():
     )
     assert k.squared is True
     assert hasattr(k, "lengthscale_prior") is False
+
+
+def test_map_exact_wasserstein_kernel_auto_chunking():
+    kernel = ExactWassersteinKernel(
+        squared=False,
+        idx_x=[4, 5],
+        idx_y=[0, 1, 2, 3],
+        prepend_x=[0.0],
+        prepend_y=[],
+        append_x=[1.0],
+        append_y=[],
+        normalize_y=100.0,
+        normalize_x=True,
+        order=2,
+    )
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(6)),
+        features_to_idx_mapper=None,
+    )
+    assert isinstance(k, shapeKernels.ExactWassersteinKernel)
+    assert k.pair_chunk_size is None
+    assert k.order == 2
 
 
 def test_map_HammingDistanceKernel_to_categorical_without_ard():

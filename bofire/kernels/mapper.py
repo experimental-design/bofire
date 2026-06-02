@@ -3,6 +3,7 @@ from typing import Callable, List, Optional, Type
 import gpytorch
 import torch
 from botorch.models.kernels.categorical import CategoricalKernel
+from botorch.models.kernels.downsampling import DownsamplingKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
 from botorch.models.kernels.positive_index import PositiveIndexKernel
 from gpytorch.kernels import IndexKernel
@@ -17,7 +18,7 @@ from bofire.kernels.conditional import (
     compute_base_kernel_active_dims,
 )
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
-from bofire.kernels.shape import WassersteinKernel
+from bofire.kernels.shape import ExactWassersteinKernel, WassersteinKernel
 from bofire.kernels.spherical_kernels import SphericalLinearKernel
 
 
@@ -358,6 +359,7 @@ def map_WassersteinKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
     **kwargs,
 ) -> WassersteinKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return WassersteinKernel(
         squared=data_model.squared,
         lengthscale_prior=(
@@ -365,6 +367,51 @@ def map_WassersteinKernel(
             if data_model.lengthscale_prior is not None
             else None
         ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
+            else None
+        ),
+        active_dims=active_dims,
+    )
+
+
+def map_ExactWassersteinKernel(
+    data_model: data_models.ExactWassersteinKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
+) -> ExactWassersteinKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    idx_x = torch.as_tensor(data_model.idx_x, dtype=torch.long)
+    idx_y = torch.as_tensor(data_model.idx_y, dtype=torch.long)
+    prepend_x = torch.tensor(data_model.prepend_x, dtype=torch.double)
+    prepend_y = torch.tensor(data_model.prepend_y, dtype=torch.double)
+    append_x = torch.tensor(data_model.append_x, dtype=torch.double)
+    append_y = torch.tensor(data_model.append_y, dtype=torch.double)
+    normalize_y = torch.tensor(data_model.normalize_y, dtype=torch.double)
+    return ExactWassersteinKernel(
+        squared=data_model.squared,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+        lengthscale_constraint=(
+            priors.map(data_model.lengthscale_constraint)
+            if data_model.lengthscale_constraint is not None
+            else None
+        ),
+        idx_x=idx_x,
+        idx_y=idx_y,
+        prepend_x=prepend_x,
+        prepend_y=prepend_y,
+        append_x=append_x,
+        append_y=append_y,
+        normalize_y=normalize_y,
+        normalize_x=data_model.normalize_x,
+        order=data_model.order,
         active_dims=active_dims,
     )
 
@@ -474,6 +521,39 @@ def map_SphericalLinearKernel(
     )
 
 
+def map_DownsamplingKernel(
+    data_model: data_models.DownsamplingKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> DownsamplingKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return DownsamplingKernel(
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+        offset_prior=(
+            priors.map(data_model.offset_prior, d=1)
+            if data_model.offset_prior is not None
+            else None
+        ),
+        offset_constraint=(
+            priors.map(data_model.offset_constraint)
+            if data_model.offset_constraint is not None
+            else None
+        ),
+        power_prior=(
+            priors.map(data_model.power_prior, d=1)
+            if data_model.power_prior is not None
+            else None
+        ),
+        power_constraint=(
+            priors.map(data_model.power_constraint)
+            if data_model.power_constraint is not None
+            else None
+        ),
+    )
+
+
 KERNEL_MAP = {
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
@@ -488,9 +568,11 @@ KERNEL_MAP = {
     data_models.IndexKernel: map_IndexKernel,
     data_models.PositiveIndexKernel: map_PositiveIndexKernel,
     data_models.WassersteinKernel: map_WassersteinKernel,
+    data_models.ExactWassersteinKernel: map_ExactWassersteinKernel,
     data_models.PolynomialFeatureInteractionKernel: map_PolynomialFeatureInteractionKernel,
     data_models.WedgeKernel: map_WedgeKernel,
     data_models.SphericalLinearKernel: map_SphericalLinearKernel,
+    data_models.DownsamplingKernel: map_DownsamplingKernel,
 }
 
 

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Optional, Union
+from typing import Annotated, Any, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -11,7 +11,11 @@ from bofire.data_models.base import BaseModel
 class Objective(BaseModel):
     """The base class for all objectives"""
 
-    type: str
+    type: Any
+
+    @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this objective."""
 
     @abstractmethod
     def __call__(

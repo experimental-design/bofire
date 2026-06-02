@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.10','3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.10', '3.14' ]
+        python-version: [ '3.11', '3.14' ]
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
         run: |
           conda install -c conda-forge cyipopt
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install ".[optimization,tests,cheminfo,entmoot]"
+          pip install ".[optimization,tests,cheminfo,entmoot,llm]"
 
       - name: Run tests
         shell: bash -l {0}
@@ -113,7 +113,7 @@ jobs:
           pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
           export ALLOW_LATEST_GPYTORCH_LINOP=true
           pip install --upgrade git+https://github.com/pytorch/botorch.git
-          pip install ".[optimization,tests,cheminfo,entmoot]"
+          pip install ".[optimization,tests,cheminfo,entmoot,llm]"
 
       - name: Run tests
         shell: bash -l {0}

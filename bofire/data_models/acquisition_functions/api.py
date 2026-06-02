@@ -1,5 +1,3 @@
-from typing import Union
-
 from bofire.data_models.acquisition_functions.acquisition_function import (
     AcquisitionFunction,
     MultiObjectiveAcquisitionFunction,
@@ -12,6 +10,7 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qLogNEHVI,
     qLogNEI,
     qLogPF,
+    qMFHVKG,
     qNegIntPosVar,
     qNEHVI,
     qNEI,
@@ -19,15 +18,10 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qSR,
     qUCB,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AbstractAcquisitionFunction = [
-    AcquisitionFunction,
-    SingleObjectiveAcquisitionFunction,
-    MultiObjectiveAcquisitionFunction,
-]
-
-AnyAcquisitionFunction = Union[
+AnyAcquisitionFunction = tagged_union(
     qNEI,
     qEI,
     qSR,
@@ -39,19 +33,21 @@ AnyAcquisitionFunction = Union[
     qLogEHVI,
     qNEHVI,
     qLogNEHVI,
+    qMFHVKG,
     qNegIntPosVar,
     qLogPF,
-    pTS,
-]
+)
 
-AnySingleObjectiveAcquisitionFunction = Union[
+AnySingleObjectiveAcquisitionFunction = tagged_union(
     qNEI, qEI, qSR, qUCB, qPI, qLogEI, qLogNEI, qLogPF, pTS
-]
+)
 
-AnyMultiObjectiveAcquisitionFunction = Union[qEHVI, qLogEHVI, qNEHVI, qLogNEHVI]
+AnyMultiObjectiveAcquisitionFunction = tagged_union(
+    qEHVI, qLogEHVI, qNEHVI, qLogNEHVI, qMFHVKG
+)
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar
 
 # Acquisition function that cannot handle constraints intrinsically but fall back to constructing
 # a constrainted MC acquisition objective.
-AnyUnconstrainedAcquisitionFunction = Union[qSR, qUCB, pTS]
+AnyUnconstrainedAcquisitionFunction = tagged_union(qSR, qUCB, pTS)

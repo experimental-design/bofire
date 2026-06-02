@@ -1,5 +1,6 @@
 import importlib
 
+import gpytorch
 import pandas as pd
 import pytest
 import torch
@@ -14,18 +15,22 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
-    TaskInput,
 )
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     LKJ_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
+    GammaPrior,
     GreaterThan,
+    LogNormalPrior,
 )
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
@@ -68,16 +73,19 @@ def test_MultiTaskGPHyperconfig():
     if candidate.prior == "mbo":
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         assert surrogate_data.kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
-    else:
+    elif candidate.prior == "threesix":
         assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         assert surrogate_data.kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
+    else:
+        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert surrogate_data.kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
 
 
 def test_MultiTask_input_preprocessing():
     # test that if no input_preprocessing_specs are provided, the ordinal encoding is used
     inputs = Inputs(
         features=[ContinuousInput(key="x", bounds=(-1, 1))]
-        + [TaskInput(key="task_id", categories=["1", "2"])],
+        + [CategoricalTaskInput(key="task_id", categories=["1", "2"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs)
@@ -89,7 +97,7 @@ def test_MultiTask_input_preprocessing():
     inputs = Inputs(
         features=[ContinuousInput(key="x", bounds=(-1, 1))]
         + [CategoricalInput(key="categories", categories=["1", "2"])]
-        + [TaskInput(key="task_id", categories=["1", "2"])],
+        + [CategoricalTaskInput(key="task_id", categories=["1", "2"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(
@@ -221,3 +229,78 @@ def test_MultiTaskGPModel_noise_constraint():
         model.model.likelihood.noise_covar.raw_noise_constraint.lower_bound
     )
     assert lower_bound >= 5e-4
+
+
+# --- Regression tests for issue #762: noise_prior registration on MultiTaskGP ---
+
+
+def _get_registered_noise_prior(model):
+    """Return the noise prior actually registered in ``model.likelihood`` (the
+    entry MLL reads from ``_priors`` via ``named_priors()``). Returns ``None``
+    if not registered.
+    """
+    priors = {n: p for n, _, p, _, _ in model.likelihood.named_priors()}
+    return priors.get("noise_covar.noise_prior")
+
+
+def _multi_task_experiments():
+    benchmark = MultiTaskHimmelblau()
+    inputs = benchmark.domain.inputs
+    exp1 = benchmark.f(
+        inputs.sample(5, seed=42).assign(task_id="task_1"), return_complete=True
+    )
+    exp2 = benchmark.f(
+        inputs.sample(5, seed=43).assign(task_id="task_2"), return_complete=True
+    )
+    return benchmark, pd.concat([exp1, exp2], ignore_index=True)
+
+
+def test_noise_prior_registered_for_multi_task_gp():
+    torch.manual_seed(42)
+    benchmark, experiments = _multi_task_experiments()
+
+    surrogate = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+        )
+    )
+    surrogate.fit(experiments)
+
+    prior = _get_registered_noise_prior(surrogate.model)
+    assert isinstance(prior, gpytorch.priors.GammaPrior), (
+        f"User-supplied GammaPrior must be in the likelihood's _priors registry "
+        f"(got {type(prior).__name__})"
+    )
+
+
+def test_noise_prior_directional_effect_on_multi_task_gp():
+    """Tiny-noise prior vs large-noise prior should pull the fitted noise in
+    opposite directions. Before the fix, fitted noise was identical regardless
+    of the user-supplied prior.
+    """
+    torch.manual_seed(42)
+    benchmark, experiments = _multi_task_experiments()
+
+    small_noise = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            noise_prior=LogNormalPrior(loc=-8.0, scale=0.1),  # mode ~ 3e-4
+        )
+    )
+    large_noise = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            noise_prior=GammaPrior(concentration=1.1, rate=0.001),  # mode = 100
+        )
+    )
+    small_noise.fit(experiments)
+    large_noise.fit(experiments)
+
+    assert (
+        large_noise.model.likelihood.noise.item()
+        > small_noise.model.likelihood.noise.item()
+    )

@@ -1,6 +1,6 @@
 """Registration utilities for custom prior and prior constraint types."""
 
-from typing import Union
+from bofire.data_models.unions import tagged_union
 
 
 def _rebuild_dependent_models() -> None:
@@ -26,7 +26,10 @@ def _rebuild_dependent_models() -> None:
         RBFKernel,
         SphericalLinearKernel,
     )
-    from bofire.data_models.kernels.shape import WassersteinKernel
+    from bofire.data_models.kernels.shape import (
+        ExactWassersteinKernel,
+        WassersteinKernel,
+    )
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
@@ -37,7 +40,6 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.surrogates.robust_single_task_gp import (
         RobustSingleTaskGPSurrogate,
     )
-    from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
         SingleTaskGPHyperconfig,
         SingleTaskGPSurrogate,
@@ -61,12 +63,11 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "angle_prior"),
         (WedgeKernel, "radius_prior"),
         (WassersteinKernel, "lengthscale_prior"),
+        (ExactWassersteinKernel, "lengthscale_prior"),
         (SingleTaskGPSurrogate, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
         (MixedSingleTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
-        (PiecewiseLinearGPSurrogate, "outputscale_prior"),
-        (PiecewiseLinearGPSurrogate, "noise_prior"),
         (PolynomialSurrogate, "noise_prior"),
         (LinearSurrogate, "noise_prior"),
         (RobustSingleTaskGPSurrogate, "noise_prior"),
@@ -89,6 +90,7 @@ def _rebuild_dependent_models() -> None:
         (TanimotoGPSurrogate, "noise_constraint"),
         (PolynomialSurrogate, "noise_constraint"),
         (LinearSurrogate, "noise_constraint"),
+        (RobustSingleTaskGPSurrogate, "noise_constraint"),
         (SingleTaskGPHyperconfig, "lengthscale_constraint"),
         (SingleTaskGPHyperconfig, "outputscale_constraint"),
     ]:
@@ -104,6 +106,7 @@ def _rebuild_dependent_models() -> None:
         IndexKernel,
         PositiveIndexKernel,
         WassersteinKernel,
+        ExactWassersteinKernel,
     ]:
         cls.model_rebuild(force=True)
 
@@ -126,7 +129,6 @@ def _rebuild_dependent_models() -> None:
         MultiTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
         TanimotoGPSurrogate,
-        PiecewiseLinearGPSurrogate,
         PolynomialSurrogate,
         LinearSurrogate,
         RobustSingleTaskGPSurrogate,
@@ -152,7 +154,7 @@ def register_prior(data_model_cls: type) -> None:
     if data_model_cls in priors_api._PRIOR_TYPES:
         return
     priors_api._PRIOR_TYPES.append(data_model_cls)
-    priors_api.AnyPrior = Union[tuple(priors_api._PRIOR_TYPES)]
+    priors_api.AnyPrior = tagged_union(*priors_api._PRIOR_TYPES)
     _rebuild_dependent_models()
 
 
@@ -171,5 +173,5 @@ def register_prior_constraint(data_model_cls: type) -> None:
     if data_model_cls in priors_api._PRIOR_CONSTRAINT_TYPES:
         return
     priors_api._PRIOR_CONSTRAINT_TYPES.append(data_model_cls)
-    priors_api.AnyPriorConstraint = Union[tuple(priors_api._PRIOR_CONSTRAINT_TYPES)]
+    priors_api.AnyPriorConstraint = tagged_union(*priors_api._PRIOR_CONSTRAINT_TYPES)
     _rebuild_dependent_models()

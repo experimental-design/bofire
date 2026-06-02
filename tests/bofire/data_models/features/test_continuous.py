@@ -91,6 +91,63 @@ def test_continuous_input_feature_get_bounds_local():
         feat.get_bounds(reference_value=0.3, values=pd.Series([0.1, 0.2], name="if2"))
 
 
+def test_continuous_input_is_semicontinuous():
+    # allow_zero=True with strictly positive lb → semi-continuous
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=True)
+    assert feat.is_semicontinuous
+
+    # allow_zero=False → not semi-continuous regardless of bounds.
+    # (allow_zero=True with lb=0 is forbidden by the pydantic validator,
+    # so the only "not semi-continuous" case for a non-degenerate
+    # feature is allow_zero=False.)
+    feat = ContinuousInput(key="x", bounds=(0.0, 1.0), allow_zero=False)
+    assert not feat.is_semicontinuous
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=False)
+    assert not feat.is_semicontinuous
+
+
+def test_continuous_input_feature_get_bounds_relax_allow_zero():
+    """`relax_allow_zero=True` exposes the convex-relaxation lower bound
+    (0) for semi-continuous features, both with and without a local
+    reference. Fixed features ignore the flag (they always report their
+    fixed value).
+    """
+    # Semi-continuous, no reference: lower drops from lb=0.2 to 0.
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=True)
+    lower, upper = feat.get_bounds()
+    assert np.isclose(lower[0], 0.2)
+    lower, upper = feat.get_bounds(relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.0)
+    assert np.isclose(upper[0], 1.0)
+
+    # Semi-continuous + local reference: the effective lower (0 under
+    # relaxation) clamps the local window's lower edge.
+    feat = ContinuousInput(
+        key="x",
+        bounds=(0.2, 1.0),
+        allow_zero=True,
+        local_relative_bounds=(0.3, 0.3),
+    )
+    # Without relaxation, local lower is max(0.3 - 0.3, 0.2) = 0.2.
+    lower, upper = feat.get_bounds(reference_value=0.3)
+    assert np.isclose(lower[0], 0.2)
+    # With relaxation, local lower is max(0.3 - 0.3, 0.0) = 0.0.
+    lower, upper = feat.get_bounds(reference_value=0.3, relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.0)
+
+    # Non-semi-continuous (allow_zero=False): flag is a no-op.
+    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=False)
+    lower, upper = feat.get_bounds(relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.2)
+
+    # Fixed feature ignores the flag (allow_zero is incompatible with a
+    # positively-fixed feature; use allow_zero=False here).
+    feat = ContinuousInput(key="x", bounds=(0.5, 0.5), allow_zero=False)
+    lower, upper = feat.get_bounds(relax_allow_zero=True)
+    assert np.isclose(lower[0], 0.5)
+    assert np.isclose(upper[0], 0.5)
+
+
 @pytest.mark.parametrize(
     "input_feature, values, strict",
     [
@@ -324,3 +381,50 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
+
+def test_continuous_input_to_pydantic_field():
+    feat = ContinuousInput(key="temp", bounds=(20.0, 200.0))
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is float
+    assert field_info.metadata[0].ge == 20.0
+    assert field_info.metadata[1].le == 200.0
+    assert field_info.description == "Continuous, bounds [20.0, 200.0]"
+
+
+def test_continuous_input_to_pydantic_field_with_context():
+    feat = ContinuousInput(key="temp", bounds=(20.0, 200.0), context="Temperature in C")
+    _, field_info = feat.to_pydantic_field()
+    assert (
+        field_info.description == "Continuous, bounds [20.0, 200.0] — Temperature in C"
+    )
+
+
+def test_continuous_input_to_pydantic_field_allow_zero():
+    feat = ContinuousInput(key="x", bounds=(0.01, 0.5), allow_zero=True)
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.metadata[0].ge == 0.0
+    assert (
+        field_info.description
+        == "Continuous, bounds [0.01, 0.5] — can also be 0 (inactive)"
+    )
+
+
+def test_continuous_output_to_description():
+    from bofire.data_models.features.api import ContinuousOutput
+    from bofire.data_models.objectives.api import MaximizeObjective
+
+    feat = ContinuousOutput(
+        key="yield",
+        objective=MaximizeObjective(w=1.0),
+        context="Target >90%",
+    )
+    assert feat.to_description() == "yield: Maximize — Target >90%"
+
+
+def test_continuous_output_to_description_no_context():
+    from bofire.data_models.features.api import ContinuousOutput
+    from bofire.data_models.objectives.api import MinimizeObjective
+
+    feat = ContinuousOutput(key="yield", objective=MinimizeObjective(w=1.0))
+    assert feat.to_description() == "yield: Minimize"

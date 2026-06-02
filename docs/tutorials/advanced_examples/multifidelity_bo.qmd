@@ -15,7 +15,7 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Ackley, Benchmark, Branin
 from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 ```
 
@@ -57,12 +57,12 @@ points, to demonstrate the strength of being able to query low fidelities). Belo
 define the problem domain, and the strategies we will use to optimize.
 
 As a baseline, we use the `SoboStrategy` with the `MultiTaskSurrogate`, as in the
-previous notebook. We also introduce the `MultiFidelityStrategy` here, which uses
+previous notebook. We also introduce the `MultiFidelityVarianceBasedStrategy` here, which uses
 the same surrogate, but is able to query the lower fidelity functions using a
 variance-based acquisition function [Kandasamy et al. 2016, Folch et al. 2023].
 
 Both strategies first select a design point $x$ by optimizing the target fidelity.
-The `MultiFidelityStrategy` then selects the fidelity, $m$, by selecting the
+The `MultiFidelityVarianceBasedStrategy` then selects the fidelity, $m$, by selecting the
 lowest fidelity that has a variance over a fixed threshold. This means that the
 strategy will explore the cheapest fidelities first, and only query the expensive
 fidelities when there is no information to be gained by the cheap approximations.
@@ -73,7 +73,7 @@ class BraninMultiTask(Benchmark):
         super().__init__(**kwargs)
         self._branin = Branin()
         self._ackley = Ackley()
-        task_input = TaskInput(
+        task_input = CategoricalTaskInput(
             key="task",
             categories=["task_hf", "task_lf"],
             allowed=[True, low_fidelity_allowed],
@@ -121,13 +121,13 @@ create_data_set(0)
 ```
 
 ```{python}
-from bofire.data_models.strategies.api import MultiFidelityStrategy
+from bofire.data_models.strategies.api import MultiFidelityVarianceBasedStrategy
 
 
 # It isn't necessary to define the surrogate specs here, as the MFStrategy
 # will use a MultiTaskGP by default.
 
-mf_data_model = MultiFidelityStrategy(
+mf_data_model = MultiFidelityVarianceBasedStrategy(
     domain=mf_benchmark.domain,
     acquisition_function=qLogEI(),
     fidelity_thresholds=0.1,
