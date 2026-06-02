@@ -3,12 +3,18 @@ from typing import Annotated, Any, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, PositiveFloat, PositiveInt, PrivateAttr, field_validator, model_validator
+from pydantic import (
+    Field,
+    PositiveFloat,
+    PositiveInt,
+    PrivateAttr,
+    field_validator,
+    model_validator,
+)
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
-
 
 
 class EvaluateableCondition:
@@ -117,6 +123,7 @@ class CombiCondition(Condition, EvaluateableCondition):
                 AlwaysTrueCondition,
                 "UCBLCBRegretBoundCondition",
                 "ExpMinRegretGapCondition",
+                "LogEIPCCondition",
             ]
         ],
         Field(min_length=2),
@@ -217,15 +224,16 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
 
         if strategy is None:
             return True
-        if not getattr(strategy, "is_fitted", False) or getattr(
-            strategy, "model", None
-        ) is None:
+        if (
+            not getattr(strategy, "is_fitted", False)
+            or getattr(strategy, "model", None) is None
+        ):
             return True
 
         if experiments is None or len(experiments) < self.min_experiments:
             return True
 
-        from bofire.termination.evaluator import UCBLCBRegretEvaluator
+        from bofire.termination.ucb_lcb import UCBLCBRegretEvaluator
 
         evaluator = UCBLCBRegretEvaluator()
 
@@ -251,7 +259,9 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
                     return True
 
         metrics = evaluator.evaluate(
-            eval_strategy, eval_experiments, len(experiments),
+            eval_strategy,
+            eval_experiments,
+            len(experiments),
         )
 
         if not metrics:
@@ -259,7 +269,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
 
         regret_bound = metrics["regret_bound"]
 
-        from bofire.termination.thresholds import (
+        from bofire.termination.utils import (
             compute_threshold_cv,
             compute_threshold_noise,
         )
@@ -268,11 +278,14 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
 
         if isinstance(self.noise_variance, (int, float)):
             epsilon_bo = compute_threshold_noise(
-                self.noise_variance, self.threshold_factor,
+                self.noise_variance,
+                self.threshold_factor,
             )
         elif self.noise_variance == "cv":
             epsilon_bo = compute_threshold_cv(
-                experiments, output_key, self.cv_fold_columns,
+                experiments,
+                output_key,
+                self.cv_fold_columns,
                 self.threshold_factor,
             )
         else:
@@ -334,7 +347,7 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
 
     def _get_evaluator(self):
         if self._evaluator is None:
-            from bofire.termination.evaluator import ExpMinRegretGapEvaluator
+            from bofire.termination.exp_min_regret_gap import ExpMinRegretGapEvaluator
 
             self._evaluator = ExpMinRegretGapEvaluator(
                 delta=self.delta,
@@ -363,9 +376,10 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
 
         if strategy is None:
             return True
-        if not getattr(strategy, "is_fitted", False) or getattr(
-            strategy, "model", None
-        ) is None:
+        if (
+            not getattr(strategy, "is_fitted", False)
+            or getattr(strategy, "model", None) is None
+        ):
             return True
 
         if experiments is None or len(experiments) < self.min_experiments:
@@ -416,7 +430,13 @@ class LogEIPCCondition(SingleCondition, EvaluateableCondition):
         alpha: Exponent applied to the cost in the LogEIPC formula. ``1.0``
             (default) matches the paper's primary formulation.
         min_experiments: Minimum experiments before the condition is checked.
+            Default ``5``.
         n_samples: Random domain samples used to approximate the max LogEIPC.
+            Default ``2000``.
+        search_method: How to find the max LogEIPC — ``"sample"`` uses random
+            grid search (default); ``"optimize"`` uses gradient-based search.
+        cost_model: How cost is estimated — ``"mean"`` uses the running mean
+            of past costs (default); ``"gp"`` fits a GP to predict cost.
 
     Reference:
         Xie et al. (2025): "Cost-Aware Stopping for Bayesian Optimization"
@@ -451,15 +471,16 @@ class LogEIPCCondition(SingleCondition, EvaluateableCondition):
 
         if strategy is None:
             return True
-        if not getattr(strategy, "is_fitted", False) or getattr(
-            strategy, "model", None
-        ) is None:
+        if (
+            not getattr(strategy, "is_fitted", False)
+            or getattr(strategy, "model", None) is None
+        ):
             return True
 
         if experiments is None or len(experiments) < self.min_experiments:
             return True
 
-        from bofire.termination.evaluator import LogEIPCEvaluator
+        from bofire.termination.log_eipc import LogEIPCEvaluator
 
         evaluator = LogEIPCEvaluator(
             lambda_cost=self.lambda_cost,

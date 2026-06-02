@@ -1,15 +1,16 @@
 """Tests for termination evaluators."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from bofire.benchmarks.single import Himmelblau
-import numpy as np
-
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
 from bofire.strategies.api import RandomStrategy, SoboStrategy
-from bofire.termination.evaluator import ExpMinRegretGapEvaluator, LogEIPCEvaluator, UCBLCBRegretEvaluator
+from bofire.termination.exp_min_regret_gap import ExpMinRegretGapEvaluator
+from bofire.termination.log_eipc import LogEIPCEvaluator
+from bofire.termination.ucb_lcb import UCBLCBRegretEvaluator
 
 
 @pytest.fixture
@@ -230,7 +231,8 @@ class TestExpMinRegretGapEvaluator:
         new_exp = benchmark.f(candidates)
         new_xy = pd.concat([candidates, new_exp], axis=1)
         experiments2 = pd.concat(
-            [experiments1, new_xy], ignore_index=True,
+            [experiments1, new_xy],
+            ignore_index=True,
         )
 
         strategy2 = SoboStrategy(
@@ -355,7 +357,8 @@ class TestExpMinRegretGapEvaluator:
             new_exp = benchmark.f(candidates)
             new_xy = pd.concat([candidates, new_exp], axis=1)
             experiments = pd.concat(
-                [experiments, new_xy], ignore_index=True,
+                [experiments, new_xy],
+                ignore_index=True,
             )
 
             strategy = SoboStrategy(
@@ -387,7 +390,8 @@ class TestExpMinRegretGapEvaluator:
             new_exp = benchmark.f(candidates)
             new_xy = pd.concat([candidates, new_exp], axis=1)
             experiments = pd.concat(
-                [experiments, new_xy], ignore_index=True,
+                [experiments, new_xy],
+                ignore_index=True,
             )
 
             strategy = SoboStrategy(
@@ -536,7 +540,12 @@ class TestLogEIPCEvaluator:
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
-        assert set(result.keys()) == {"max_log_eipc", "best_f", "cost_estimate", "lambda_cost"}
+        assert set(result.keys()) == {
+            "max_log_eipc",
+            "best_f",
+            "cost_estimate",
+            "lambda_cost",
+        }
 
     def test_max_log_eipc_is_float(self, trained_strategy):
         strategy, experiments = trained_strategy
@@ -595,8 +604,12 @@ class TestLogEIPCEvaluator:
         """Higher lambda_cost shifts the threshold up, lowering max_log_eipc."""
         strategy, experiments = trained_strategy
 
-        result_low = LogEIPCEvaluator(lambda_cost=0.01).evaluate(strategy, experiments, 0)
-        result_high = LogEIPCEvaluator(lambda_cost=100.0).evaluate(strategy, experiments, 0)
+        result_low = LogEIPCEvaluator(lambda_cost=0.01).evaluate(
+            strategy, experiments, 0
+        )
+        result_high = LogEIPCEvaluator(lambda_cost=100.0).evaluate(
+            strategy, experiments, 0
+        )
 
         assert result_high["max_log_eipc"] < result_low["max_log_eipc"]
 
@@ -654,9 +667,7 @@ class TestLogEIPCEvaluator:
         experiments = experiments.copy()
         experiments["cost"] = np.random.uniform(1.0, 3.0, len(experiments))
 
-        evaluator = LogEIPCEvaluator(
-            cost_column="cost", cost_model="gp"
-        )
+        evaluator = LogEIPCEvaluator(cost_column="cost", cost_model="gp")
         result = evaluator.evaluate(strategy, experiments, 0)
 
         assert isinstance(result["max_log_eipc"], float)
@@ -679,12 +690,12 @@ class TestLogEIPCEvaluator:
         # Costs increase with x_1 — spatial variation the GP can learn
         experiments["cost"] = 1.0 + experiments["x_1"].abs()
 
-        r_mean = LogEIPCEvaluator(
-            cost_column="cost", cost_model="mean"
-        ).evaluate(strategy, experiments, 0)
-        r_gp = LogEIPCEvaluator(
-            cost_column="cost", cost_model="gp"
-        ).evaluate(strategy, experiments, 0)
+        r_mean = LogEIPCEvaluator(cost_column="cost", cost_model="mean").evaluate(
+            strategy, experiments, 0
+        )
+        r_gp = LogEIPCEvaluator(cost_column="cost", cost_model="gp").evaluate(
+            strategy, experiments, 0
+        )
 
         # GP-based costs are per-point so max_log_eipc will generally differ
         assert r_mean["max_log_eipc"] != pytest.approx(r_gp["max_log_eipc"])
@@ -694,9 +705,7 @@ class TestEvaluatorKwargs:
     """Tests for overriding evaluator parameters via constructor kwargs."""
 
     def test_ucblcb_kwargs_override_defaults(self):
-        evaluator = UCBLCBRegretEvaluator(
-            delta=0.05, beta_scale=1.0, n_samples_lcb=500
-        )
+        evaluator = UCBLCBRegretEvaluator(delta=0.05, beta_scale=1.0, n_samples_lcb=500)
         assert evaluator.delta == 0.05
         assert evaluator.beta_scale == 1.0
         assert evaluator.n_samples_lcb == 500

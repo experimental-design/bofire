@@ -1,9 +1,4 @@
-"""Threshold helpers used by termination conditions.
-
-These pure numeric helpers translate various noise / variability estimates
-into a stopping threshold (``epsilon_BO``) consumed by
-:class:`UCBLCBRegretBoundCondition`.
-"""
+"""Pure utility helpers for the termination module."""
 
 from typing import List, Optional
 
@@ -58,10 +53,7 @@ def compute_threshold_cv(
     if len(y_values) < 1:
         return None
     incumbent_idx = y_values.idxmin()
-    fold_scores = (
-        experiments.loc[incumbent_idx, cv_fold_columns]
-        .values.astype(float)
-    )
+    fold_scores = experiments.loc[incumbent_idx, cv_fold_columns].values.astype(float)
     if np.any(np.isnan(fold_scores)):
         return None
     k = len(cv_fold_columns)

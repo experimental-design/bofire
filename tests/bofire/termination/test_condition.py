@@ -10,11 +10,13 @@ from bofire.data_models.strategies.api import (
     ExpMinRegretGapCondition,
     LogEIPCCondition,
     NumberOfExperimentsCondition,
-    RandomStrategy as RandomStrategyDataModel,
-    SoboStrategy as SoboStrategyDataModel,
     Step,
-    StepwiseStrategy as StepwiseStrategyDataModel,
     UCBLCBRegretBoundCondition,
+)
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
+from bofire.data_models.strategies.api import (
+    StepwiseStrategy as StepwiseStrategyDataModel,
 )
 from bofire.strategies.api import (
     OptimizationComplete,
@@ -81,10 +83,7 @@ class TestUCBLCBRegretBoundConditionDataModel:
         strategy.tell(experiments)
 
         cond = UCBLCBRegretBoundCondition(min_experiments=10)
-        assert (
-            cond.evaluate(benchmark.domain, experiments, strategy=strategy)
-            is True
-        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
 
     def test_evaluates_regret_bound(self, benchmark):
         """With a fitted strategy and enough data, condition computes the regret bound."""
@@ -151,9 +150,7 @@ class TestUCBLCBRegretBoundConditionDataModel:
             UCBLCBRegretBoundCondition(noise_variance="cv")
 
         with pytest.raises(ValueError, match="cv_fold_columns"):
-            UCBLCBRegretBoundCondition(
-                noise_variance="cv", cv_fold_columns=["fold_0"]
-            )
+            UCBLCBRegretBoundCondition(noise_variance="cv", cv_fold_columns=["fold_0"])
 
         # Valid: 2+ fold columns
         cond = UCBLCBRegretBoundCondition(
@@ -300,10 +297,7 @@ class TestUCBLCBRegretBoundConditionDataModel:
             min_topq=5,
             min_experiments=5,
         )
-        assert (
-            cond.evaluate(benchmark.domain, experiments, strategy=strategy)
-            is False
-        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is False
 
         # topq=0.5 with very tight threshold → should NOT terminate
         cond_tight = UCBLCBRegretBoundCondition(
@@ -332,12 +326,11 @@ class TestUCBLCBRegretBoundConditionDataModel:
 
         # Generous threshold with topq=1.0 → should terminate
         cond = UCBLCBRegretBoundCondition(
-            noise_variance=1e6, topq=1.0, min_experiments=5,
+            noise_variance=1e6,
+            topq=1.0,
+            min_experiments=5,
         )
-        assert (
-            cond.evaluate(benchmark.domain, experiments, strategy=strategy)
-            is False
-        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is False
 
 
 class TestStepwiseStrategyTermination:
@@ -371,7 +364,9 @@ class TestStepwiseStrategyTermination:
 
         # Run the loop until OptimizationComplete is raised
         terminated = False
-        for i in range(50):
+        n_iterations = 0
+        for _ in range(50):
+            n_iterations += 1
             try:
                 candidates = strategy.ask(1)
             except OptimizationComplete:
@@ -383,7 +378,7 @@ class TestStepwiseStrategyTermination:
             strategy.tell(experiments)
 
         assert terminated, "Expected OptimizationComplete to be raised"
-        assert i < 49, "Should terminate before max iterations"
+        assert n_iterations < 50, "Should terminate before max iterations"
 
     def test_no_termination_with_always_true_fallback(self, benchmark):
         """With AlwaysTrueCondition as last step, no OptimizationComplete is raised."""
@@ -405,7 +400,7 @@ class TestStepwiseStrategyTermination:
         strategy = StepwiseStrategy(data_model=data_model)
 
         # Should run all 8 iterations without raising
-        for i in range(8):
+        for _i in range(8):
             candidates = strategy.ask(1)
             candidates = candidates[domain.inputs.get_keys()]
             experiments = benchmark.f(candidates, return_complete=True)
@@ -436,7 +431,7 @@ class TestStepwiseStrategyTermination:
         strategy = StepwiseStrategy(data_model=data_model)
 
         # Should run all iterations without raising (min_experiments not met)
-        for i in range(8):
+        for _i in range(8):
             candidates = strategy.ask(1)
             candidates = candidates[domain.inputs.get_keys()]
             experiments = benchmark.f(candidates, return_complete=True)
@@ -480,7 +475,9 @@ class TestExpMinRegretGapConditionDataModel:
 
     def test_serialization_median(self):
         cond = ExpMinRegretGapCondition(
-            threshold_mode="median", rate=0.2, start_timing=15,
+            threshold_mode="median",
+            rate=0.2,
+            start_timing=15,
         )
         data = cond.model_dump()
         restored = ExpMinRegretGapCondition(**data)
@@ -514,10 +511,7 @@ class TestExpMinRegretGapConditionDataModel:
         strategy.tell(experiments)
 
         cond = ExpMinRegretGapCondition(min_experiments=10)
-        assert (
-            cond.evaluate(benchmark.domain, experiments, strategy=strategy)
-            is True
-        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
 
     def test_first_call_returns_true(self, benchmark):
         """First call (no previous model) should always return True."""
@@ -531,10 +525,7 @@ class TestExpMinRegretGapConditionDataModel:
         strategy.tell(experiments)
 
         cond = ExpMinRegretGapCondition(min_experiments=5)
-        assert (
-            cond.evaluate(benchmark.domain, experiments, strategy=strategy)
-            is True
-        )
+        assert cond.evaluate(benchmark.domain, experiments, strategy=strategy) is True
 
     def test_evaluator_is_stateful(self, benchmark):
         """The same evaluator should be reused across calls."""
@@ -557,7 +548,8 @@ class TestExpMinRegretGapConditionDataModel:
         new_exp = benchmark.f(candidates)
         new_xy = pd.concat([candidates, new_exp], axis=1)
         experiments2 = pd.concat(
-            [experiments, new_xy], ignore_index=True,
+            [experiments, new_xy],
+            ignore_index=True,
         )
         strategy2 = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
@@ -570,7 +562,8 @@ class TestExpMinRegretGapConditionDataModel:
     def test_adaptive_mode_runs(self, benchmark):
         """Adaptive threshold mode should run without errors over 2 iterations."""
         cond = ExpMinRegretGapCondition(
-            threshold_mode="adaptive", min_experiments=5,
+            threshold_mode="adaptive",
+            min_experiments=5,
         )
         random = RandomStrategy(
             data_model=RandomStrategyDataModel(domain=benchmark.domain)
@@ -590,7 +583,8 @@ class TestExpMinRegretGapConditionDataModel:
         new_exp = benchmark.f(candidates)
         new_xy = pd.concat([candidates, new_exp], axis=1)
         experiments2 = pd.concat(
-            [experiments, new_xy], ignore_index=True,
+            [experiments, new_xy],
+            ignore_index=True,
         )
         strategy2 = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
@@ -604,7 +598,9 @@ class TestExpMinRegretGapConditionDataModel:
     def test_median_mode_returns_true_before_start_timing(self, benchmark):
         """Median mode should return True before start_timing values collected."""
         cond = ExpMinRegretGapCondition(
-            threshold_mode="median", start_timing=100, min_experiments=5,
+            threshold_mode="median",
+            start_timing=100,
+            min_experiments=5,
         )
         random = RandomStrategy(
             data_model=RandomStrategyDataModel(domain=benchmark.domain)
@@ -621,7 +617,8 @@ class TestExpMinRegretGapConditionDataModel:
         new_exp = benchmark.f(candidates)
         new_xy = pd.concat([candidates, new_exp], axis=1)
         experiments2 = pd.concat(
-            [experiments, new_xy], ignore_index=True,
+            [experiments, new_xy],
+            ignore_index=True,
         )
         strategy2 = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
@@ -655,7 +652,7 @@ class TestExpMinRegretGapConditionDataModel:
         strategy = StepwiseStrategy(data_model=data_model)
 
         # Should run without errors for several iterations
-        for i in range(15):
+        for _i in range(15):
             try:
                 candidates = strategy.ask(1)
             except OptimizationComplete:
@@ -795,7 +792,7 @@ class TestLogEIPCConditionDataModel:
         )
         strategy = StepwiseStrategy(data_model=data_model)
 
-        for i in range(15):
+        for _i in range(15):
             try:
                 candidates = strategy.ask(1)
             except OptimizationComplete:
