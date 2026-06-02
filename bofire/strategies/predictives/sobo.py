@@ -9,6 +9,7 @@ from bofire.data_models.api import Domain
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.data_models.unions import unwrap_annotated
 from bofire.strategies.strategy import make_strategy
 
 
@@ -158,7 +159,8 @@ class SoboStrategy(BotorchStrategy):
 
         # special cases of qUCB and qSR do not work with separate constraints
         if isinstance(
-            self.acquisition_function, AnyUnconstrainedAcquisitionFunction
+            self.acquisition_function,
+            unwrap_annotated(AnyUnconstrainedAcquisitionFunction)[0],
         ) and (constraint_callables is not None):
             return (
                 ConstrainedMCObjective(
@@ -257,7 +259,8 @@ class AdditiveSoboStrategy(SoboStrategy):
 
             # special cases of qUCB and qSRdo not work with separate constraints
             if isinstance(
-                self.acquisition_function, AnyUnconstrainedAcquisitionFunction
+                self.acquisition_function,
+                unwrap_annotated(AnyUnconstrainedAcquisitionFunction)[0],
             ):
                 return (
                     ConstrainedMCObjective(
