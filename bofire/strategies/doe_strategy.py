@@ -118,6 +118,7 @@ class DoEStrategy(Strategy):
             partially_fixed_experiments=relaxed_candidates,  # technically fixed experiments are also partially_fixed, so we only use this
             ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
+            seed=self.seed,
         )
 
         # if cats or discrete var present, need to filture out all the aux vars and project back into original domain

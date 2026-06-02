@@ -23,7 +23,7 @@ classifiers = [
     "Intended Audience :: Developers",
 ]
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10.0"
+requires-python = ">=3.11.0, <3.15"
 dependencies = [
     "numpy",
     "pandas",
@@ -42,15 +42,16 @@ optimization = [
     "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL,SCIP]",
+    "cvxpy[CLARABEL,SCIP]<=1.8.2",
     "scikit-learn>=1.0.0",
     "pymoo>=0.6.0",
     "shap>=0.48.0",
 ]
 entmoot = [
     "pyomo<=6.9.4",
-    "entmoot>=2.0.6",
+    "entmoot>=2.1.1",
 ] # we pin the pyomo version here due to compatibility issues
+llm = ["pydantic-ai>=0.1"]
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
@@ -62,9 +63,9 @@ all = [
     "formulaic==1.0.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
-    "cvxpy[CLARABEL,SCIP]",
+    "cvxpy[CLARABEL,SCIP]<=1.8.2",
     "scikit-learn>=1.0.0",
-    "entmoot>=2.0.6",
+    "entmoot>=2.1.1",
     "pyomo<=6.9.4",
     "rdkit>=2023.3.2",
     "mordredcommunity>=2.0.1",
@@ -83,6 +84,7 @@ all = [
     "seaborn",
     "pymoo>=0.6.0",
     "shap>=0.48.0",
+    "pydantic-ai>=0.1",
 ]
 
 [tool.setuptools.packages]
@@ -97,7 +99,7 @@ write_to = "./bofire/version.py"
 fallback_version = "0.0.0.dev0+unknown"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py311"
 line-length = 88
 output-format = "concise"
 
@@ -136,6 +138,10 @@ max-complexity = 19
 "bofire/data_models/features/api.py" = ["F401"]
 "bofire/data_models/strategies/api.py" = ["F401"]
 "bofire/data_models/dataframes/api.py" = ["F401"]
+"bofire/data_models/constraints/api.py" = ["F401"]
+"bofire/data_models/kernels/api.py" = ["F401"]
+"bofire/data_models/acquisition_functions/api.py" = ["F401"]
+"bofire/data_models/objectives/api.py" = ["F401"]
 "bofire/plot/api.py" = ["F401"]
 "bofire/data_models/domain/api.py" = ["F401"]
 
@@ -158,6 +164,9 @@ invalid-assignment = "warn"
 invalid-return-type = "warn"
 # BoFire intentionally narrows parameter types in subclass overrides.
 invalid-method-override = "warn"
+# Dynamic union rebuilding uses Union[tuple(list)] which is valid at
+# runtime but not statically analysable.
+invalid-type-form = "ignore"
 
 [tool.ty.analysis]
 # Optional dependencies that may not be installed or lack py.typed markers

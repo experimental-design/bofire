@@ -40,6 +40,7 @@ class BotorchSurrogate(Surrogate):
         self.categorical_encodings: InputTransformSpecs = (
             data_model.categorical_encodings
         )
+        self.engineered_features = data_model.engineered_features
         super().__init__(data_model=data_model, **kwargs)
 
     def _predict(self, transformed_X: pd.DataFrame):
@@ -101,30 +102,16 @@ class BotorchSurrogate(Surrogate):
         buffer = io.BytesIO(base64.b64decode(data.encode()))
         self.model = torch.load(buffer, weights_only=False)
 
-
-class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
-    def __init__(
-        self,
-        data_model: TrainableDataModel,
-        input_transform: Optional[Union[InputTransform, None]] = None,
-        **kwargs,
-    ):
-        self.scaler = data_model.scaler
-        self.output_scaler = data_model.output_scaler
-        self.engineered_features = data_model.engineered_features
-        self._input_transform: Union[InputTransform, None] = input_transform
-        super().__init__(data_model=data_model, **kwargs)
-
-    @property
-    def re_init_kwargs(self) -> dict:
-        return {"input_transform": self._input_transform}
-
     def get_feature_indices(
         self,
         feature_keys: List[str],
     ) -> List[int]:
         """Returns the indices of the specified features (both original and engineered)
         after applying all input transforms.
+
+        Used as the ``features_to_idx_mapper`` when mapping feature-specific
+        kernels, so a kernel restricted to a subset of feature keys can resolve
+        them to tensor column indices.
 
         Args:
             feature_keys: The feature keys to get the indices for.
@@ -160,6 +147,23 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
         return indices
 
+
+class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+    def __init__(
+        self,
+        data_model: TrainableDataModel,
+        input_transform: Optional[Union[InputTransform, None]] = None,
+        **kwargs,
+    ):
+        self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
+        self._input_transform: Union[InputTransform, None] = input_transform
+        super().__init__(data_model=data_model, **kwargs)
+
+    @property
+    def re_init_kwargs(self) -> dict:
+        return {"input_transform": self._input_transform}
+
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         if self._input_transform is None:
             self._input_transform = get_input_transform(
@@ -167,6 +171,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                 engineered_features=self.engineered_features,
                 scaler_type=self.scaler,
                 categorical_encodings=self.categorical_encodings,
+                X=X,
             )
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         # in case of classification we need to convert y from str to int

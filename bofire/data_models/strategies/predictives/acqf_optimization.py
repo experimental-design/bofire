@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Literal, Optional, Type, Union
+from typing import Literal, Optional, Type
 
 from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import BotorchSurrogates
 from bofire.data_models.types import IntPowerOfTwo
+from bofire.data_models.unions import tagged_union
 
 
 class AcquisitionOptimizer(BaseModel):
@@ -112,6 +113,26 @@ class BotorchOptimizer(AcquisitionOptimizer):
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
 
+    # NChooseK / semi-continuous pruning hyperparameters. See
+    # `bofire.strategies.predictives._nchoosek_pruning.prune_nchoosek` for
+    # full semantics.
+    per_step_local_reopt: bool = Field(
+        default=False,
+        description=(
+            "When pruning is applicable, refine each per-feature variant "
+            "via optimize_acqf in addition to the QP projection. More "
+            "accurate but multiplies cost by the local solver."
+        ),
+    )
+    final_local_reopt: bool = Field(
+        default=True,
+        description=(
+            "When pruning is applicable, run a single optimize_acqf "
+            "clean-up after the greedy loop with zeroed and active "
+            "semi-continuous features pinned."
+        ),
+    )
+
     @field_validator("batch_limit")
     @classmethod
     def validate_batch_limit(cls, batch_limit: int, info):
@@ -154,6 +175,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     > 0
                 ):
                     raise ValueError("LSR-BO only supported for linear constraints.")
+                # Semi-continuous features (`allow_zero=True` with
+                # `bounds[0] > 0`) create a disconnected feasible region
+                # `{0} ∪ [lb, ub]` that LSR-BO's QP-based shortest-path
+                # cannot interpolate across without producing infeasible
+                # intermediate steps. The local AF solver would also
+                # produce fractional candidates in the gap `(0, lb)`.
+                for feat in domain.inputs.get(ContinuousInput):
+                    assert isinstance(feat, ContinuousInput)
+                    if feat.is_semicontinuous:
+                        raise ValueError(
+                            "LSR-BO is not supported for domains with "
+                            "semi-continuous features (`allow_zero=True` "
+                            "with `bounds[0] > 0`). Feature "
+                            f"{feat.key!r} violates this."
+                        )
 
         def validate_interpoint_constraints(domain: Domain):
             if domain.constraints.get(InterpointConstraint) and len(
@@ -241,4 +277,4 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         pass
 
 
-AnyAcqfOptimizer = Union[BotorchOptimizer, GeneticAlgorithmOptimizer]
+AnyAcqfOptimizer = tagged_union(BotorchOptimizer, GeneticAlgorithmOptimizer)

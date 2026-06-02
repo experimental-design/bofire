@@ -148,19 +148,22 @@ class NonlinearConstraint(IntrapointConstraint):
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         if isinstance(self.expression, str):
-            return experiments.eval(self.expression)
+            return experiments.eval(self.expression, engine="python")
         elif isinstance(self.expression, Callable):
             func_input = {
                 col: torch_tensor(experiments[col], requires_grad=False)
                 for col in experiments.columns
             }
-            return pd.Series(self.expression(**func_input).cpu().numpy())
+            return pd.Series(
+                self.expression(**func_input).cpu().numpy(),
+                index=experiments.index,  # Preserves orogonal indices instead of creating new ones.
+            )
         raise ValueError("expression must be a string or callable")
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self.jacobian_expression is not None:
             if isinstance(self.jacobian_expression, str):
-                res = experiments.eval(self.jacobian_expression)
+                res = experiments.eval(self.jacobian_expression, engine="python")
                 for i, col in enumerate(res):
                     if not hasattr(col, "__iter__"):
                         res[i] = pd.Series(np.repeat(col, experiments.shape[0]))
@@ -227,7 +230,7 @@ class NonlinearConstraint(IntrapointConstraint):
         """
         if self.hessian_expression is not None:
             if isinstance(self.hessian_expression, str):
-                res = experiments.eval(self.hessian_expression)
+                res = experiments.eval(self.hessian_expression, engine="python")
             else:
                 if not isinstance(self.hessian_expression, Callable):
                     raise ValueError(
@@ -295,6 +298,9 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
 
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """Nonlinear inequality constraint of the form 'expression <= 0'.
@@ -305,3 +311,6 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
+
+    def to_description(self) -> str:
+        raise NotImplementedError

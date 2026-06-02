@@ -1,8 +1,8 @@
-from bofire.data_models.features.api import TaskInput
+from bofire.data_models.features.api import CategoricalTaskInput
 
 
 def test_validate_fidelities_default_generation():
-    feat = TaskInput(
+    feat = CategoricalTaskInput(
         key="task",
         categories=["p1", "p2"],
     )

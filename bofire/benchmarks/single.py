@@ -15,10 +15,10 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    TaskInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -414,6 +414,7 @@ class Himmelblau(Benchmark):
         X_temp = X.eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
             inplace=False,
+            engine="python",
         )
         Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
         return Y
@@ -486,7 +487,9 @@ class MultiTaskHimmelblau(Benchmark):
         self.use_constraints = use_constraints
         inputs = []
 
-        inputs.append(TaskInput(key="task_id", categories=["task_1", "task_2"]))
+        inputs.append(
+            CategoricalTaskInput(key="task_id", categories=["task_1", "task_2"])
+        )
         inputs.append(ContinuousInput(key="x_1", bounds=[-6, 6]))
         inputs.append(ContinuousInput(key="x_2", bounds=[-6, 6]))
 
@@ -516,6 +519,7 @@ class MultiTaskHimmelblau(Benchmark):
         X_temp = X.query("task_id == 'task_1'").eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
             inplace=False,
+            engine="python",
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1
@@ -523,6 +527,7 @@ class MultiTaskHimmelblau(Benchmark):
         X_temp = X.query("task_id == 'task_2'").eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2",
             inplace=False,
+            engine="python",
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1

@@ -15,6 +15,7 @@ from pydantic import (
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.unions import tagged_union
 
 
 class EvaluateableCondition:
@@ -117,7 +118,7 @@ class CombiCondition(Condition, EvaluateableCondition):
     type: Literal["CombiCondition"] = "CombiCondition"
     conditions: Annotated[
         List[
-            Union[
+            tagged_union(
                 NumberOfExperimentsCondition,
                 "CombiCondition",
                 AlwaysTrueCondition,
@@ -125,7 +126,7 @@ class CombiCondition(Condition, EvaluateableCondition):
                 "ExpMinRegretGapCondition",
                 "LogEIPCCondition",
                 "ProbabilisticRegretBoundCondition",
-            ]
+            )
         ],
         Field(min_length=2),
     ]
@@ -636,7 +637,7 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
         return not metrics["criterion_satisfied"]
 
 
-AnyCondition = Union[
+AnyCondition = tagged_union(
     NumberOfExperimentsCondition,
     CombiCondition,
     AlwaysTrueCondition,
@@ -645,4 +646,4 @@ AnyCondition = Union[
     ExpMinRegretGapCondition,
     LogEIPCCondition,
     ProbabilisticRegretBoundCondition,
-]
+)

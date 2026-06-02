@@ -25,6 +25,8 @@ from bofire.data_models.surrogates.api import (
     RegressionMLPEnsemble,
     ScalerEnum,
 )
+from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
+from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.surrogates.mlp import MLP, MLPDataset, _MLPEnsemble, fit_mlp
 from bofire.utils.torch_tools import tkwargs
 
@@ -178,12 +180,12 @@ def test_mlp_ensemble_forward():
 @pytest.mark.parametrize(
     "scaler, output_scaler",
     [
-        [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.LOG],
-        [ScalerEnum.STANDARDIZE, ScalerEnum.CHAINED_LOG_STANDARDIZE],
-        [ScalerEnum.IDENTITY, ScalerEnum.CHAINED_LOG_STANDARDIZE],
+        [NormalizeScaler(), ScalerEnum.IDENTITY],
+        [StandardizeScaler(), ScalerEnum.STANDARDIZE],
+        [None, ScalerEnum.STANDARDIZE],
+        [StandardizeScaler(), ScalerEnum.LOG],
+        [StandardizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE],
+        [None, ScalerEnum.CHAINED_LOG_STANDARDIZE],
     ],
 )
 def test_mlp_ensemble_fit(scaler, output_scaler):
@@ -202,9 +204,9 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
     surrogate.fit(experiments=experiments)
 
-    if scaler == ScalerEnum.NORMALIZE:
+    if isinstance(scaler, NormalizeScaler):
         assert isinstance(surrogate.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
+    elif isinstance(scaler, StandardizeScaler):
         assert isinstance(surrogate.model.input_transform, InputStandardize)
     else:
         with pytest.raises(AttributeError):
@@ -229,7 +231,7 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
 
 @pytest.mark.parametrize(
     "scaler",
-    [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY],
+    [NormalizeScaler(), StandardizeScaler(), None],
 )
 def test_mlp_ensemble_fit_categorical(scaler):
     inputs = Inputs(
@@ -244,7 +246,11 @@ def test_mlp_ensemble_fit_categorical(scaler):
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
@@ -259,7 +265,7 @@ def test_mlp_ensemble_fit_categorical(scaler):
     surrogate = surrogates.map(ens)
     surrogate.fit(experiments=experiments)
 
-    if scaler == ScalerEnum.IDENTITY:
+    if scaler is None:
         assert isinstance(surrogate.model.input_transform, NumericToCategoricalEncoding)
     else:
         assert isinstance(surrogate.model.input_transform, ChainedInputTransform)

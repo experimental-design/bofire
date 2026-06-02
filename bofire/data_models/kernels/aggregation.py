@@ -6,6 +6,7 @@ from bofire.data_models.kernels.categorical import (
     IndexKernel,
     PositiveIndexKernel,
 )
+from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -14,9 +15,10 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
+from bofire.data_models.kernels.fidelity import DownsamplingKernel
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
-from bofire.data_models.kernels.shape import WassersteinKernel
+from bofire.data_models.kernels.shape import ExactWassersteinKernel, WassersteinKernel
 from bofire.data_models.priors.api import AnyGeneralPrior, AnyPriorConstraint
 
 
@@ -32,6 +34,10 @@ class AdditiveKernel(AggregationKernel):
             IndexKernel,
             PositiveIndexKernel,
             TanimotoKernel,
+            WassersteinKernel,
+            ExactWassersteinKernel,
+            DownsamplingKernel,
+            WedgeKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
             "ScaleKernel",
@@ -53,6 +59,10 @@ class MultiplicativeKernel(AggregationKernel):
             PositiveIndexKernel,
             AdditiveKernel,
             TanimotoKernel,
+            WassersteinKernel,
+            ExactWassersteinKernel,
+            DownsamplingKernel,
+            WedgeKernel,
             "MultiplicativeKernel",
             "ScaleKernel",
         ]
@@ -72,8 +82,11 @@ class ScaleKernel(AggregationKernel):
         AdditiveKernel,
         MultiplicativeKernel,
         TanimotoKernel,
+        DownsamplingKernel,
+        WedgeKernel,
         "ScaleKernel",
         WassersteinKernel,
+        ExactWassersteinKernel,
     ]
     outputscale_prior: Optional[AnyGeneralPrior] = None
     outputscale_constraint: Optional[AnyPriorConstraint] = None
@@ -136,6 +149,7 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             TanimotoKernel,
             InfiniteWidthBNNKernel,
             WassersteinKernel,
+            ExactWassersteinKernel,
         ]
     ]
     max_degree: int

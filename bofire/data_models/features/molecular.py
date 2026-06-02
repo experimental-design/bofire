@@ -25,6 +25,12 @@ class ContinuousMolecularInput(ContinuousInput):
     order_id: ClassVar[int] = 4
     molecule: str
 
+    def _description_prefix(self) -> str:
+        return (
+            f"Continuous molecular (SMILES: {self.molecule}), "
+            f"bounds [{self.bounds[0]}, {self.bounds[1]}]"
+        )
+
     @field_validator("molecule")
     @classmethod
     def validate_smiles(cls, v: str) -> str:
@@ -48,6 +54,11 @@ class CategoricalMolecularInput(CategoricalInput):
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
+
+    def _description_prefix(self) -> str:
+        return (
+            f"Categorical molecular (SMILES), allowed: {self.get_allowed_categories()}"
+        )
 
     @field_validator("categories")
     @classmethod
@@ -93,6 +104,7 @@ class CategoricalMolecularInput(CategoricalInput):
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         if isinstance(transform_type, CategoricalEncodingEnum):
             # we are just using the standard categorical transformations
