@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-from bofire.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
 from bofire.utils.torch_tools import tkwargs
 
 

@@ -9,8 +9,8 @@ from botorch.models.model import Model
 from botorch.sampling.pathwise import draw_matheron_paths
 from scipy.optimize import minimize as scipy_minimize
 
-from bofire.termination.evaluator import TerminationEvaluator
-from bofire.termination.utils import clopper_pearson_ci
+from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.utils import clopper_pearson_ci
 from bofire.utils.torch_tools import tkwargs
 
 

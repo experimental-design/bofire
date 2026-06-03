@@ -235,7 +235,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
         if experiments is None or len(experiments) < self.min_experiments:
             return True
 
-        from bofire.termination.ucb_lcb import UCBLCBRegretEvaluator
+        from bofire.strategies.stepwise.termination.ucb_lcb import UCBLCBRegretEvaluator
 
         evaluator = UCBLCBRegretEvaluator()
 
@@ -271,7 +271,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
 
         regret_bound = metrics["regret_bound"]
 
-        from bofire.termination.utils import (
+        from bofire.strategies.stepwise.termination.utils import (
             compute_threshold_cv,
             compute_threshold_noise,
         )
@@ -349,7 +349,9 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
 
     def _get_evaluator(self):
         if self._evaluator is None:
-            from bofire.termination.exp_min_regret_gap import ExpMinRegretGapEvaluator
+            from bofire.strategies.stepwise.termination.exp_min_regret_gap import (
+                ExpMinRegretGapEvaluator,
+            )
 
             self._evaluator = ExpMinRegretGapEvaluator(
                 delta=self.delta,
@@ -482,7 +484,7 @@ class LogEIPCCondition(SingleCondition, EvaluateableCondition):
         if experiments is None or len(experiments) < self.min_experiments:
             return True
 
-        from bofire.termination.log_eipc import LogEIPCEvaluator
+        from bofire.strategies.stepwise.termination.log_eipc import LogEIPCEvaluator
 
         evaluator = LogEIPCEvaluator(
             lambda_cost=self.lambda_cost,
@@ -582,7 +584,7 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
 
     def _get_evaluator(self):
         if self._evaluator is None:
-            from bofire.termination.probabilistic_regret_bound import (
+            from bofire.strategies.stepwise.termination.probabilistic_regret_bound import (
                 ProbabilisticRegretBoundEvaluator,
             )
 

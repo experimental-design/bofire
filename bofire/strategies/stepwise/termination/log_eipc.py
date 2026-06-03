@@ -17,7 +17,7 @@ from botorch.models.model import Model
 from botorch.utils.transforms import t_batch_mode_transform
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from bofire.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
 from bofire.utils.torch_tools import tkwargs
 
 

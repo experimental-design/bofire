@@ -10,7 +10,7 @@ import torch
 from botorch.models.model import Model
 from scipy.stats import norm
 
-from bofire.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
 from bofire.utils.torch_tools import tkwargs
 
 
