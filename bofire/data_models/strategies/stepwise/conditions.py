@@ -188,6 +188,18 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             strategy's GP is unaffected.
         min_topq: Minimum observations kept under top-q filtering.
         min_experiments: Minimum experiments before termination is checked.
+        delta: Confidence parameter for the GP-UCB beta formula. Default ``0.1``.
+        beta_scale: Scaling factor for the GP-UCB beta. Default ``0.2``
+            (Makarova et al.).
+        n_samples_lcb: Random domain points for the min-LCB estimate when
+            ``lcb_method="sample"``. Default ``2000``.
+        batch_size: GP posterior evaluation batch size during sampling.
+            Default ``512``.
+        lcb_method: How the domain-wide minimum LCB is found — ``"sample"``
+            (default) draws random points; ``"optimize"`` uses the acquisition
+            optimizer.
+        fallback_noise_variance: Noise variance used when it cannot be read
+            from the GP likelihood. Default ``1e-4``.
     """
 
     type: Literal["UCBLCBRegretBoundCondition"] = "UCBLCBRegretBoundCondition"
@@ -197,6 +209,12 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
     topq: Annotated[float, Field(gt=0, le=1)] = 1.0
     min_topq: PositiveInt = 20
     min_experiments: PositiveInt = 5
+    delta: PositiveFloat = 0.1
+    beta_scale: PositiveFloat = 0.2
+    n_samples_lcb: PositiveInt = 2000
+    batch_size: PositiveInt = 512
+    lcb_method: Literal["sample", "optimize"] = "sample"
+    fallback_noise_variance: PositiveFloat = 1e-4
 
     @model_validator(mode="after")
     def validate_cv_fold_columns(self):
@@ -237,7 +255,14 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
 
         from bofire.strategies.stepwise.termination.ucb_lcb import UCBLCBRegretEvaluator
 
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UCBLCBRegretEvaluator(
+            delta=self.delta,
+            beta_scale=self.beta_scale,
+            fallback_noise_variance=self.fallback_noise_variance,
+            n_samples_lcb=self.n_samples_lcb,
+            batch_size=self.batch_size,
+            lcb_method=self.lcb_method,
+        )
 
         # Top-q filtering: refit the regret-bound GP on the best fraction.
         eval_strategy = strategy
@@ -542,6 +567,10 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
             δ_mod (default ``True``).  Set to ``False`` to use the raw MC
             estimate.
         n_samples_max: Maximum GP path samples per BO step.  Default ``1024``.
+        initial_batch: Initial cumulative sample target for the Clopper-Pearson
+            level test.  Default ``16``.
+        batch_growth: Geometric growth factor for the cumulative sample
+            schedule (must be ``> 1``).  Default ``1.5``.
         min_experiments: Minimum experiments before the condition is checked.
             Default ``5``.
         n_starts: L-BFGS-B starts per path for path minimization.  Default ``8``.
@@ -575,6 +604,8 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
     optim_ftol: Annotated[float, Field(gt=0)] = 1e-9
     enforce_convergence: bool = True
     n_samples_max: PositiveInt = 1024
+    initial_batch: PositiveInt = 16
+    batch_growth: Annotated[float, Field(gt=1.0)] = 1.5
     min_experiments: PositiveInt = 5
     n_starts: PositiveInt = 8
     n_random: PositiveInt = 512
@@ -595,6 +626,8 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
                 delta_est=self.delta_est,
                 enforce_convergence=self.enforce_convergence,
                 n_samples_max=self.n_samples_max,
+                initial_batch=self.initial_batch,
+                batch_growth=self.batch_growth,
                 n_starts=self.n_starts,
                 n_random=self.n_random,
                 n_test_points=self.n_test_points,
