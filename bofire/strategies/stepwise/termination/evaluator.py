@@ -89,19 +89,63 @@ class TerminationEvaluator(ABC):
             try:
                 return float(model.outcome_transform.stdvs.item())
             except Exception:
+                # outcome_transform exposes no scalar stdvs (e.g. it is not a
+                # Standardize transform); fall back to the unit output scale.
                 pass
         return 1.0
+
+    @staticmethod
+    def _objective_sign(strategy) -> Optional[float]:
+        """Sign mapping the objective into a "minimise ``g = sign * f``" frame.
+
+        Returns ``+1.0`` for a ``MinimizeObjective``, ``-1.0`` for a
+        ``MaximizeObjective``, and ``None`` for any other objective
+        (``CloseToTargetObjective``, sigmoid, desirability, ...) — for which the
+        regret-to-optimum bound logic does not apply, so the caller should skip
+        evaluation and return empty metrics.
+
+        BoFire trains the GP on raw Y and applies the objective sense only in
+        the acquisition, so the evaluators multiply posterior means and
+        observations by this sign to make "lower is better" hold in both
+        directions.
+        """
+        from bofire.data_models.objectives.api import (
+            MaximizeObjective,
+            MinimizeObjective,
+        )
+
+        try:
+            outputs = strategy.domain.outputs.get()
+        except Exception:
+            return None
+        if len(outputs) != 1:
+            return None
+        objective = outputs[0].objective
+        if isinstance(objective, MinimizeObjective):
+            return 1.0
+        if isinstance(objective, MaximizeObjective):
+            return -1.0
+        return None
 
     @staticmethod
     def _min_ucb_at_points(
         model: Model,
         X: torch.Tensor,
         sqrt_beta: float,
+        sign: float = 1.0,
     ) -> float:
-        """Return min UCB = mu + sqrt(beta)*sigma over ``X``."""
-        ucb = UpperConfidenceBound(model=model, beta=sqrt_beta**2)
+        """Return ``min_x [sign*mu(x) + sqrt(beta)*sigma(x)]`` over ``X``.
+
+        ``sign`` maps the problem into the "minimise ``g = sign*f``" frame
+        (``+1`` minimise, ``-1`` maximise); the upper confidence bound is taken
+        in that frame.
+        """
         with torch.no_grad():
-            return float(ucb(X.unsqueeze(-2)).min().item())
+            post = model.posterior(X)
+            m = post.mean.squeeze(-1)
+            s = post.variance.squeeze(-1).clamp_min(0.0).sqrt()
+            g_ucb = sign * m + sqrt_beta * s
+            return float(g_ucb.min().item())
 
     @staticmethod
     def _min_lcb_by_sampling(
@@ -112,8 +156,9 @@ class TerminationEvaluator(ABC):
         bounds_upper: torch.Tensor,
         n_samples: int = 2000,
         batch_size: int = 512,
+        sign: float = 1.0,
     ) -> float:
-        """Return min LCB = mu - sqrt(beta)*sigma via random sampling."""
+        """Return ``min [sign*mu - sqrt(beta)*sigma]`` via random sampling."""
         n_dims = bounds_lower.shape[0]
         X_random = bounds_lower + (bounds_upper - bounds_lower) * torch.rand(
             n_samples, n_dims, **tkwargs
@@ -127,7 +172,7 @@ class TerminationEvaluator(ABC):
                 post = model.posterior(X_batch)
                 m = post.mean.squeeze(-1)
                 s = post.variance.squeeze(-1).sqrt()
-                lcb = m - sqrt_beta * s
+                lcb = sign * m - sqrt_beta * s
                 batch_min = float(lcb.min().item())
                 if batch_min < min_lcb:
                     min_lcb = batch_min
@@ -138,14 +183,20 @@ class TerminationEvaluator(ABC):
         strategy,
         experiments: pd.DataFrame,
         sqrt_beta: float,
+        sign: float = 1.0,
     ) -> float:
-        """Minimise LCB over the domain via the strategy's acqf optimizer."""
-        neg_lcb = UpperConfidenceBound(
-            model=strategy.model, beta=float(sqrt_beta) ** 2, maximize=False
+        """Minimise ``sign*mu - sqrt(beta)*sigma`` over the domain via the optimizer.
+
+        For ``sign = +1`` this finds the domain-wide minimum LCB; for
+        ``sign = -1`` (maximisation) the equivalent quantity is the negated
+        maximum UCB, found by optimising the UCB with ``maximize=True``.
+        """
+        acqf = UpperConfidenceBound(
+            model=strategy.model, beta=float(sqrt_beta) ** 2, maximize=(sign < 0)
         )
         candidates = strategy.acqf_optimizer.optimize(
             candidate_count=1,
-            acqfs=[neg_lcb],
+            acqfs=[acqf],
             domain=strategy.domain,
             experiments=experiments,
         )
@@ -160,7 +211,7 @@ class TerminationEvaluator(ABC):
             mean_best = posterior_best.mean.squeeze(-1)
             std_best = posterior_best.variance.squeeze(-1).sqrt()
 
-        return float((mean_best - sqrt_beta * std_best).item())
+        return float((sign * mean_best - sqrt_beta * std_best).item())
 
     def _ucb_lcb_regret_bound(
         self,
@@ -173,16 +224,21 @@ class TerminationEvaluator(ABC):
         batch_size: int = 512,
         strategy=None,
         experiments: Optional[pd.DataFrame] = None,
+        sign: float = 1.0,
     ) -> tuple:
         """Upper bound on simple regret via the UCB-LCB gap.
 
-        Returns ``(regret_bound, min_ucb, min_lcb)`` with
-        ``regret_bound = max(0, min_UCB(evaluated) - min_LCB(domain))``.
+        Computed in the "minimise ``g = sign*f``" frame, so it works for both
+        minimisation (``sign=+1``) and maximisation (``sign=-1``).  Returns
+        ``(regret_bound, min_ucb, min_lcb)`` with
+        ``regret_bound = max(0, min_UCB(evaluated) - min_LCB(domain))`` where the
+        bounds are in that frame.
         """
         min_ucb = TerminationEvaluator._min_ucb_at_points(
             model,
             X_evaluated,
             sqrt_beta,
+            sign,
         )
 
         if (
@@ -190,7 +246,7 @@ class TerminationEvaluator(ABC):
             and strategy is not None
             and experiments is not None
         ):
-            min_lcb = self._min_lcb_optimize(strategy, experiments, sqrt_beta)
+            min_lcb = self._min_lcb_optimize(strategy, experiments, sqrt_beta, sign)
         else:
             min_lcb = TerminationEvaluator._min_lcb_by_sampling(
                 model,
@@ -200,6 +256,7 @@ class TerminationEvaluator(ABC):
                 bounds_upper,
                 n_samples,
                 batch_size,
+                sign,
             )
         return max(0.0, min_ucb - min_lcb), min_ucb, min_lcb
 

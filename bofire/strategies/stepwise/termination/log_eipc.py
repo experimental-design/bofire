@@ -263,6 +263,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
         bounds_lower: torch.Tensor,
         bounds_upper: torch.Tensor,
         cost_estimate: float,
+        maximize: bool = False,
     ) -> float:
         """Return max LogEIPC over the domain by random sampling.
 
@@ -276,7 +277,9 @@ class LogEIPCEvaluator(TerminationEvaluator):
         max_log_eipc = float("-inf")
         for start in range(0, self.n_samples, self.batch_size):
             X_batch = X_random[start : start + self.batch_size]
-            batch_vals = self.compute_log_eipc_at(model, X_batch, best_f, cost_estimate)
+            batch_vals = self.compute_log_eipc_at(
+                model, X_batch, best_f, cost_estimate, maximize
+            )
             batch_max = float(batch_vals.max())
             if batch_max > max_log_eipc:
                 max_log_eipc = batch_max
@@ -288,6 +291,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
         experiments: pd.DataFrame,
         best_f: float,
         cost_estimate: float,
+        maximize: bool = False,
     ) -> float:
         """Return max LogEIPC via BoFire's acquisition function optimizer.
 
@@ -302,6 +306,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
             best_f=best_f,
             cost_callable=self._effective_cost_callable(cost_estimate),
             alpha=self.alpha,
+            maximize=maximize,
         )
         candidates = strategy.acqf_optimizer.optimize(
             candidate_count=1,
@@ -323,6 +328,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
         X: torch.Tensor,
         best_f: float,
         cost_estimate: float,
+        maximize: bool = False,
     ) -> np.ndarray:
         """Evaluate LogEIPC at given points. Useful for plotting over a dense grid.
 
@@ -334,11 +340,15 @@ class LogEIPCEvaluator(TerminationEvaluator):
             X: Candidate points shaped ``(n, d)`` in transformed input space.
             best_f: Best observed objective value (original scale).
             cost_estimate: Scalar cost fallback (used when ``cost_callable`` is None).
+            maximize: If ``True``, expected improvement is computed for a
+                maximisation objective (improvement above ``best_f``).
 
         Returns:
             Array of shape ``(n,)`` with LogEIPC values.
         """
-        logei_acqf = LogExpectedImprovement(model=model, best_f=best_f, maximize=False)
+        logei_acqf = LogExpectedImprovement(
+            model=model, best_f=best_f, maximize=maximize
+        )
         with torch.no_grad():
             log_ei = logei_acqf(X.unsqueeze(-2))  # (n,)
             costs = self._effective_cost_callable(cost_estimate)(X)  # (n,)
@@ -362,9 +372,16 @@ class LogEIPCEvaluator(TerminationEvaluator):
             return {}
         if strategy.model.num_outputs != 1:
             return {}
+        sign = self._objective_sign(strategy)
+        if sign is None:
+            return {}
+        maximize = sign < 0
 
         output_key = strategy.domain.outputs.get_keys()[0]
-        best_f = float(experiments[output_key].min())
+        # Best observed value (EI baseline): max for maximisation, min otherwise.
+        best_f = float(
+            experiments[output_key].max() if maximize else experiments[output_key].min()
+        )
 
         cost_estimate = self._get_cost_estimate(experiments)
         if cost_estimate <= 0:
@@ -381,7 +398,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
 
         if self.search_method == "optimize":
             max_log_eipc = self._optimize_max_log_eipc(
-                strategy, experiments, best_f, cost_estimate
+                strategy, experiments, best_f, cost_estimate, maximize
             )
         else:
             bounds = strategy.domain.inputs.get_bounds(
@@ -390,7 +407,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
             lower = torch.tensor(bounds[0], **tkwargs)
             upper = torch.tensor(bounds[1], **tkwargs)
             max_log_eipc = self._compute_max_log_eipc(
-                strategy.model, best_f, lower, upper, cost_estimate
+                strategy.model, best_f, lower, upper, cost_estimate, maximize
             )
 
         self.cost_callable = _saved_callable  # restore after GP override

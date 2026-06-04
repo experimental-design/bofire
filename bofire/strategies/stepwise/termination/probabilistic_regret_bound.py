@@ -23,14 +23,19 @@ def _minimize_sample_paths(
     method: str = "L-BFGS-B",
     maxiter: int = 200,
     ftol: float = 1e-9,
+    sign: float = 1.0,
 ) -> np.ndarray:
-    """Find the minimum value of each GP posterior sample path.
+    """Find the minimum value of ``sign * f`` for each GP posterior sample path.
+
+    With ``sign = +1`` this is the per-path minimum (minimisation); with
+    ``sign = -1`` it is the negated per-path maximum (maximisation), so the
+    returned value is always the optimum in the "minimise ``g = sign*f``" frame.
 
     Uses a two-phase approach:
 
     1. **Random search** — evaluate all paths at ``n_random`` uniformly drawn
        domain points to identify the ``n_starts`` most promising starting
-       points per trajectory.
+       points per trajectory (lowest ``sign * f``).
     2. **Local refinement** — run ``method`` from each of those starts.
 
     Args:
@@ -45,9 +50,10 @@ def _minimize_sample_paths(
             gradient-compatible bounded methods: ``"TNC"``, ``"SLSQP"``.
         maxiter: Maximum number of optimiser iterations per start.
         ftol: Absolute function-value tolerance for convergence.
+        sign: ``+1`` to minimise the paths, ``-1`` to maximise them.
 
     Returns:
-        Array of shape ``[n_samples]`` with the minimum value per path.
+        Array of shape ``[n_samples]`` with ``min_x sign*f^i(x)`` per path.
     """
     d = bounds_lower.shape[0]
     dtype = bounds_lower.dtype
@@ -58,7 +64,7 @@ def _minimize_sample_paths(
         n_random, d, dtype=dtype
     )
     with torch.no_grad():
-        vals_rand = paths(X_rand)  # [n_samples, n_random]
+        vals_rand = sign * paths(X_rand)  # [n_samples, n_random], in g-space
     n_samples = vals_rand.shape[0]
 
     n_top = min(n_starts, n_random)
@@ -75,7 +81,7 @@ def _minimize_sample_paths(
             def obj(x_np, _i=i):
                 x_t = torch.tensor(x_np, dtype=dtype).unsqueeze(0)
                 x_t.requires_grad_(True)
-                val = paths(x_t)[_i].squeeze()
+                val = sign * paths(x_t)[_i].squeeze()
                 grad = torch.autograd.grad(val, x_t)[0]
                 return float(val.item()), grad.squeeze(0).detach().numpy().copy()
 
@@ -308,18 +314,20 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         model: Model,
         X_all: torch.Tensor,
         incumbent_pos: int,
+        sign: float = 1.0,
     ) -> torch.Tensor:
         """Return test points in transformed input space.
 
         The incumbent is always first.  Additional slots are filled with the
-        in-sample points that have the lowest GP posterior mean.
+        in-sample points that are best under the model — lowest ``sign * mu``
+        (lowest posterior mean for minimisation, highest for maximisation).
         """
         x_incumbent = X_all[[incumbent_pos]]  # [1, d]
         if self.n_test_points == 1:
             return x_incumbent
 
         with torch.no_grad():
-            means = model.posterior(X_all).mean.squeeze(-1)  # [n]
+            means = sign * model.posterior(X_all).mean.squeeze(-1)  # [n], g-space
 
         sorted_pos = means.argsort().tolist()
         extras = [X_all[[pos]] for pos in sorted_pos if pos != incumbent_pos][
@@ -335,6 +343,7 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         bounds_lower: torch.Tensor,
         bounds_upper: torch.Tensor,
         epsilon: float,
+        sign: float = 1.0,
     ) -> Dict[str, Any]:
         """Core evaluation logic called by ``evaluate``.
 
@@ -344,6 +353,10 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
             bounds_lower: Lower bounds of the (transformed) domain, ``[d]``.
             bounds_upper: Upper bounds, ``[d]``.
             epsilon: Absolute regret threshold in original Y units.
+            sign: ``+1`` for minimisation, ``-1`` for maximisation.  Regret is
+                computed in the "minimise ``g = sign*f``" frame, so for
+                maximisation paths are maximised and the regret is
+                ``g(x) - min_g = sign*f(x) - min_x sign*f(x) = max f - f(x)``.
 
         Returns:
             Metrics dict, or empty dict on failure.
@@ -368,10 +381,11 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
                 self.optim_method,
                 self.optim_maxiter,
                 self.optim_ftol,
+                sign,
             )
             with torch.no_grad():
-                path_vals = paths(X_test).numpy()  # [n_batch, n_test]
-            regrets = path_vals - minima[:, np.newaxis]  # [n_batch, n_test]
+                path_vals = sign * paths(X_test).numpy()  # [n_batch, n_test], g-space
+            regrets = path_vals - minima[:, np.newaxis]  # [n_batch, n_test], ≥ 0
             return (regrets > epsilon).astype(np.int64).T  # [n_test, n_batch]
 
         try:
@@ -434,6 +448,9 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
             return {}
         if strategy.model.num_outputs != 1:
             return {}
+        sign = self._objective_sign(strategy)
+        if sign is None:
+            return {}
 
         model = strategy.model
         input_keys = strategy.domain.inputs.get_keys()
@@ -448,10 +465,11 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
             experiments[input_keys], strategy.input_preprocessing_specs
         )
         X_all = torch.from_numpy(transformed.values).to(**tkwargs)
-        incumbent_pos = int(np.argmin(y_vals))
+        # Incumbent is the best point in the "minimise sign*y" frame.
+        incumbent_pos = int(np.argmin(sign * y_vals))
 
         try:
-            X_test = self._get_test_points(model, X_all, incumbent_pos)
+            X_test = self._get_test_points(model, X_all, incumbent_pos, sign)
         except Exception:
             return {}
 
@@ -461,4 +479,4 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         lower = torch.tensor(bounds[0], **tkwargs)
         upper = torch.tensor(bounds[1], **tkwargs)
 
-        return self._evaluate_core(model, X_test, lower, upper, epsilon)
+        return self._evaluate_core(model, X_test, lower, upper, epsilon, sign)

@@ -154,11 +154,15 @@ class ExpMinRegretGapEvaluator(TerminationEvaluator):
         model: Model,
         X_new_incumbent: torch.Tensor,
         X_old_incumbent: torch.Tensor,
+        sign: float = 1.0,
     ) -> float:
         """Expected improvement from switching incumbents.
 
-        If the incumbent changed, computes E[max(f(x*_new) - f(x*_old), 0)]
-        under the new GP's joint posterior at the two incumbent locations.
+        If the incumbent changed, computes ``E[max(g(x*_new) - g(x*_old), 0)]``
+        under the new GP's joint posterior at the two incumbent locations, in
+        the "minimise ``g = sign*f``" frame (``sign`` flips the improvement
+        direction for maximisation).  The difference's variance is unchanged
+        by ``sign``.
         """
         X_pair = torch.cat([X_new_incumbent, X_old_incumbent], dim=0)
         with torch.no_grad():
@@ -166,7 +170,7 @@ class ExpMinRegretGapEvaluator(TerminationEvaluator):
             mu = posterior.mean.squeeze(-1)
             cov = posterior.distribution.covariance_matrix
 
-        g = float((mu[0] - mu[1]).item())
+        g = sign * float((mu[0] - mu[1]).item())
         var_diff = float((cov[0, 0] - 2 * cov[0, 1] + cov[1, 1]).item())
 
         if var_diff <= 0:
@@ -195,13 +199,18 @@ class ExpMinRegretGapEvaluator(TerminationEvaluator):
             return {}
         if strategy.model.num_outputs != 1:
             return {}
+        sign = self._objective_sign(strategy)
+        if sign is None:
+            return {}
 
         input_keys = strategy.domain.inputs.get_keys()
         output_key = strategy.domain.outputs.get_keys()[0]
         dimensionality = len(input_keys)
         n_experiments = len(experiments)
 
-        incumbent_idx = int(experiments[output_key].idxmin())
+        # Incumbent is the best point in the "minimise sign*y" frame:
+        # argmin(y) for minimisation, argmax(y) for maximisation.
+        incumbent_idx = int((sign * experiments[output_key]).idxmin())
 
         # First call: save state and return empty.
         if self._prev_model is None or n_experiments <= self._prev_n_experiments:
@@ -272,6 +281,7 @@ class ExpMinRegretGapEvaluator(TerminationEvaluator):
             self.batch_size,
             strategy=strategy,
             experiments=experiments,
+            sign=sign,
         )
 
         # ei_diff: expected improvement from switching incumbents.
@@ -279,7 +289,7 @@ class ExpMinRegretGapEvaluator(TerminationEvaluator):
             ei_diff = 0.0
         else:
             ei_diff = self._compute_ei_diff(
-                strategy.model, x_incumbent_new, x_incumbent_old
+                strategy.model, x_incumbent_new, x_incumbent_old, sign=sign
             )
 
         stopping_value = delta_f + ei_diff + kappa * np.sqrt(0.5 * kl)

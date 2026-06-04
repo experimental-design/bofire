@@ -1348,3 +1348,195 @@ class TestPRBKnownAnswerEstimation:
         assert psi_values[1] <= psi_values[2] + 0.05, (
             f"Ψ not monotone: ε=0.5→{psi_values[1]:.3f}, ε=2.0→{psi_values[2]:.3f}"
         )
+
+
+def _fit_strategy(objective, X, y, seed=0):
+    """Fit a SoboStrategy on (X, y) with a single output using ``objective``."""
+    import torch
+
+    from bofire.data_models.domain.api import Domain, Inputs, Outputs
+    from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+
+    torch.manual_seed(seed)
+    d = X.shape[1]
+    domain = Domain(
+        inputs=Inputs(
+            features=[ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(d)]
+        ),
+        outputs=Outputs(features=[ContinuousOutput(key="y", objective=objective)]),
+    )
+    exp = pd.DataFrame(X, columns=[f"x{i}" for i in range(d)])
+    exp["y"] = y
+    exp["valid_y"] = 1
+    strategy = SoboStrategy(data_model=SoboStrategyDataModel(domain=domain))
+    strategy.tell(exp)
+    return strategy, exp
+
+
+class TestObjectiveDirection:
+    """Termination evaluators support both minimisation and maximisation.
+
+    The core correctness check is **negation invariance**: minimising ``y`` and
+    maximising ``-y`` are the same optimisation problem, and BoFire's GP
+    posterior mean is linear in the (standardised) targets, so a correct
+    direction-aware evaluator must produce identical metrics for
+    ``(MinimizeObjective, y)`` and ``(MaximizeObjective, -y)``.
+    """
+
+    def _xy(self):
+        rng = np.random.default_rng(1)
+        X = rng.random((12, 2))
+        # A smooth, non-trivial response so the regret bounds are well-defined.
+        y = (X[:, 0] - 0.4) ** 2 + 0.5 * (X[:, 1] - 0.7) ** 2
+        return X, y
+
+    def _pair(self):
+        from bofire.data_models.objectives.api import (
+            MaximizeObjective,
+            MinimizeObjective,
+        )
+
+        X, y = self._xy()
+        strat_min, exp_min = _fit_strategy(MinimizeObjective(), X, y)
+        strat_max, exp_max = _fit_strategy(MaximizeObjective(), X, -y)
+        return (strat_min, exp_min), (strat_max, exp_max)
+
+    def test_ucblcb_negation_invariance(self):
+        import torch
+
+        (strat_min, exp_min), (strat_max, exp_max) = self._pair()
+        ev = UCBLCBRegretEvaluator()
+        torch.manual_seed(7)
+        m_min = ev.evaluate(strat_min, exp_min, 0)
+        torch.manual_seed(7)
+        m_max = ev.evaluate(strat_max, exp_max, 0)
+
+        assert m_min and m_max  # neither rejected
+        assert m_min["regret_bound"] == pytest.approx(
+            m_max["regret_bound"], rel=0.02, abs=1e-3
+        )
+
+    def test_logeipc_negation_invariance(self):
+        import torch
+
+        (strat_min, exp_min), (strat_max, exp_max) = self._pair()
+        ev = LogEIPCEvaluator(n_samples=2000)
+        torch.manual_seed(7)
+        m_min = ev.evaluate(strat_min, exp_min, 0)
+        torch.manual_seed(7)
+        m_max = ev.evaluate(strat_max, exp_max, 0)
+
+        assert m_min and m_max
+        assert m_min["max_log_eipc"] == pytest.approx(
+            m_max["max_log_eipc"], rel=0.02, abs=1e-3
+        )
+        # best_f flips sign between the two framings.
+        assert m_min["best_f"] == pytest.approx(-m_max["best_f"], rel=1e-6, abs=1e-9)
+
+    def test_expminregretgap_negation_invariance(self):
+        """Stateful: first call seeds state, second (after a new point) scores."""
+        import torch
+
+        from bofire.data_models.objectives.api import (
+            MaximizeObjective,
+            MinimizeObjective,
+        )
+
+        X, y = self._xy()
+        x_new = np.array([[0.42, 0.68]])
+        y_new = float((x_new[0, 0] - 0.4) ** 2 + 0.5 * (x_new[0, 1] - 0.7) ** 2)
+
+        def run(objective, sign):
+            strat, exp = _fit_strategy(objective, X, sign * y)
+            ev = ExpMinRegretGapEvaluator()
+            torch.manual_seed(7)
+            assert ev.evaluate(strat, exp, 0) == {}  # first call seeds state
+            exp2 = pd.concat(
+                [
+                    exp,
+                    pd.DataFrame(
+                        {
+                            "x0": x_new[:, 0],
+                            "x1": x_new[:, 1],
+                            "y": [sign * y_new],
+                            "valid_y": [1],
+                        }
+                    ),
+                ],
+                ignore_index=True,
+            )
+            strat.tell(exp2)
+            torch.manual_seed(7)
+            return ev.evaluate(strat, exp2, 1)
+
+        m_min = run(MinimizeObjective(), 1.0)
+        m_max = run(MaximizeObjective(), -1.0)
+        assert m_min and m_max
+        assert m_min["stopping_value"] == pytest.approx(
+            m_max["stopping_value"], rel=0.05, abs=1e-3
+        )
+
+    def test_prb_maximization_known_answer(self):
+        """PRB on a maximisation problem: f(x)=cos(2πx), global max at x=0.
+
+        At the true maximum (x=0) regret≈0 → Ψ≈1; at the true minimum
+        (x=0.5, the worst point for maximisation) regret≈2 → Ψ≈0.
+        """
+        import torch
+        from botorch.models import SingleTaskGP
+        from gpytorch.kernels import MaternKernel, ScaleKernel
+
+        X_obs = torch.linspace(0.0, 1.0, 9, dtype=torch.float64).unsqueeze(-1)
+        Y_obs = torch.cos(torch.tensor(2 * np.pi) * X_obs)
+        gp = SingleTaskGP(X_obs, Y_obs, covar_module=ScaleKernel(MaternKernel(nu=2.5)))
+        with torch.no_grad():
+            gp.covar_module.outputscale = torch.tensor(1.0, dtype=torch.float64)
+            gp.covar_module.base_kernel.lengthscale = torch.tensor(
+                0.25, dtype=torch.float64
+            )
+            gp.likelihood.noise = torch.tensor(1e-4, dtype=torch.float64)
+        gp.eval()
+
+        lower = torch.zeros(1, dtype=torch.float64)
+        upper = torch.ones(1, dtype=torch.float64)
+        ev = ProbabilisticRegretBoundEvaluator(
+            epsilon=0.1,
+            enforce_convergence=False,
+            n_samples_max=1500,
+            n_random=128,
+            n_starts=4,
+        )
+
+        at_max = ev._evaluate_core(
+            gp, torch.tensor([[0.0]], dtype=torch.float64), lower, upper, 0.1, sign=-1.0
+        )
+        at_min = ev._evaluate_core(
+            gp, torch.tensor([[0.5]], dtype=torch.float64), lower, upper, 0.1, sign=-1.0
+        )
+        assert at_max["prob_regret_ok"] > 0.85, (
+            f"Ψ at the true maximum should be ≈1, got {at_max['prob_regret_ok']:.3f}"
+        )
+        assert at_min["prob_regret_ok"] < 0.10, (
+            f"Ψ at the true minimum should be ≈0, got {at_min['prob_regret_ok']:.3f}"
+        )
+
+    def test_unsupported_objective_rejected(self):
+        """Objectives that are neither Minimize nor Maximize → empty metrics."""
+        from bofire.data_models.objectives.api import CloseToTargetObjective
+
+        X, y = self._xy()
+        strat, exp = _fit_strategy(
+            CloseToTargetObjective(target_value=1.0, exponent=2), X, y
+        )
+        evaluators = [
+            UCBLCBRegretEvaluator(),
+            ExpMinRegretGapEvaluator(),
+            LogEIPCEvaluator(),
+            ProbabilisticRegretBoundEvaluator(
+                n_samples_max=32, n_random=64, n_starts=2
+            ),
+        ]
+        for ev in evaluators:
+            assert ev.evaluate(strat, exp, 0) == {}, (
+                f"{type(ev).__name__} should reject a CloseToTargetObjective"
+            )

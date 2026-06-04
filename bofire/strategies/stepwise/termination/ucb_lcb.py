@@ -88,6 +88,9 @@ class UCBLCBRegretEvaluator(TerminationEvaluator):
 
         if strategy.model.num_outputs != 1:
             return {}
+        sign = self._objective_sign(strategy)
+        if sign is None:
+            return {}
 
         input_keys = strategy.domain.inputs.get_keys()
         dimensionality = len(input_keys)
@@ -118,6 +121,7 @@ class UCBLCBRegretEvaluator(TerminationEvaluator):
             self.batch_size,
             strategy=strategy,
             experiments=experiments,
+            sign=sign,
         )
 
         # Noise variance from the GP likelihood (used by conditions to
