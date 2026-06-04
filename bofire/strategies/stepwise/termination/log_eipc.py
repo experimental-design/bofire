@@ -370,10 +370,10 @@ class LogEIPCEvaluator(TerminationEvaluator):
             return {}
         if strategy.model.num_outputs != 1:
             return {}
-        sign = self._objective_sign(strategy)
-        if sign is None:
+        direction = self._objective_sign(strategy)
+        if direction is None:
             return {}
-        maximize = sign < 0
+        maximize = direction > 0
 
         output_key = strategy.domain.outputs.get_keys()[0]
         # Best observed value (EI baseline): max for maximisation, min otherwise.

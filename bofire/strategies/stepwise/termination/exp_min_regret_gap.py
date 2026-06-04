@@ -199,9 +199,10 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
             return {}
         if strategy.model.num_outputs != 1:
             return {}
-        sign = self._objective_sign(strategy)
-        if sign is None:
+        direction = self._objective_sign(strategy)
+        if direction is None:
             return {}
+        sign = -direction  # minimisation frame: +1 minimise / -1 maximise
 
         input_keys = strategy.domain.inputs.get_keys()
         output_key = strategy.domain.outputs.get_keys()[0]

@@ -449,9 +449,10 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
             return {}
         if strategy.model.num_outputs != 1:
             return {}
-        sign = self._objective_sign(strategy)
-        if sign is None:
+        direction = self._objective_sign(strategy)
+        if direction is None:
             return {}
+        sign = -direction  # minimisation frame: +1 minimise / -1 maximise
 
         model = strategy.model
         input_keys = strategy.domain.inputs.get_keys()

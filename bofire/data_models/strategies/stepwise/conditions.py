@@ -267,11 +267,13 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             lcb_method=self.lcb_method,
         )
 
-        # Objective direction: +1 (minimise) / -1 (maximise); the regret bound
-        # does not apply to other objectives, so keep optimizing.
-        sign = evaluator._objective_sign(strategy)
-        if sign is None:
+        # Objective direction (+1 maximise / -1 minimise, BoFire convention);
+        # the regret bound does not apply to other objectives, so keep
+        # optimizing.  Negate to the minimisation frame used below.
+        direction = evaluator._objective_sign(strategy)
+        if direction is None:
             return True
+        sign = -direction  # +1 minimise / -1 maximise
 
         # Top-q filtering: refit the regret-bound GP on the best fraction —
         # the lowest ``sign * y`` (lowest y for minimisation, highest for

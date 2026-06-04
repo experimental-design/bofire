@@ -23,18 +23,19 @@ class TerminationEvaluator(ABC):
 
     @staticmethod
     def _objective_sign(strategy) -> Optional[float]:
-        """Sign mapping the objective into a "minimise ``g = sign * f``" frame.
+        """Optimization direction of the single output (BoFire convention).
 
-        Returns ``+1.0`` for a ``MinimizeObjective``, ``-1.0`` for a
-        ``MaximizeObjective``, and ``None`` for any other objective
-        (``CloseToTargetObjective``, sigmoid, desirability, ...) — for which the
+        Returns ``+1.0`` for a ``MaximizeObjective`` and ``-1.0`` for a
+        ``MinimizeObjective`` — the same ``+1 = maximize`` convention as
+        :func:`bofire.utils.multiobjective.get_ref_point_mask` and BoTorch
+        (which maximizes).  Returns ``None`` for any other objective
+        (``CloseToTargetObjective``, sigmoid, desirability, ...), for which the
         regret-to-optimum bound logic does not apply, so the caller should skip
         evaluation and return empty metrics.
 
-        BoFire trains the GP on raw Y and applies the objective sense only in
-        the acquisition, so the evaluators multiply posterior means and
-        observations by this sign to make "lower is better" hold in both
-        directions.
+        The regret evaluators read the GP posterior in raw Y units and work in a
+        "lower is better" frame, so they negate this value
+        (``sign = -direction``) to obtain their minimisation-frame sign.
         """
         from bofire.data_models.objectives.api import (
             MaximizeObjective,
@@ -48,9 +49,9 @@ class TerminationEvaluator(ABC):
         if len(outputs) != 1:
             return None
         objective = outputs[0].objective
-        if isinstance(objective, MinimizeObjective):
-            return 1.0
         if isinstance(objective, MaximizeObjective):
+            return 1.0
+        if isinstance(objective, MinimizeObjective):
             return -1.0
         return None
 
