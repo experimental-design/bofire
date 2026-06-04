@@ -229,7 +229,7 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
        conclusively excludes ``delta_mod``, or ``n_samples_max`` is exhausted.
 
     Requires a BoTorch ``SingleTaskGP``-compatible model (RBF, Matérn, and
-    most stationary kernels).  Single-output minimisation only.
+    most stationary kernels).  Single-output only.
 
     Args:
         epsilon: Absolute simple regret threshold in original Y units.  If
@@ -260,8 +260,8 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         optim_ftol: Function-value convergence tolerance.  Default ``1e-9``.
         n_test_points: Candidate points to evaluate the criterion at.  ``1``
             (default) tests the incumbent only; values ``> 1`` also include
-            the ``n_test_points − 1`` in-sample points with the lowest GP
-            posterior mean.
+            the ``n_test_points − 1`` in-sample points that are best under the
+            GP posterior mean.
 
     References:
         Wilson (2024): "Stopping Bayesian Optimization with Probabilistic

@@ -29,7 +29,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
     posterior at the newly observed point.
 
     Stateful: stores the previous GP model and incumbent index between calls.
-    The first call always returns an empty dict. Single-output minimisation only.
+    The first call always returns an empty dict. Single-output only.
 
     Args:
         delta: Confidence parameter for the GP-UCB beta formula and the

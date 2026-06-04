@@ -18,7 +18,7 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
     triggered when this gap is small — meaning the best candidate already
     evaluated is nearly as good as the best anywhere in the domain.
 
-    Single-output minimisation only.
+    Single-output only.
 
     Args:
         delta: Confidence parameter for the GP-UCB beta formula. Default ``0.1``.

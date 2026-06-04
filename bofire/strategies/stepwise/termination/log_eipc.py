@@ -110,7 +110,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
     Equivalently: stop when ``max_x EI(x) <= lambda_cost * c(x)^alpha``.
 
     Ideal for chemical experiments where reagent, time, or equipment costs
-    matter. Single-output minimisation only.
+    matter. Single-output only.
 
     Args:
         lambda_cost: Exchange rate between improvement and cost.  Stopping

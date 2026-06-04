@@ -558,7 +558,7 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
     = 0.025`` (total risk 5 %, 95 % guarantee).
 
     Requires a fitted GP-based strategy passed via the ``strategy`` kwarg
-    from ``StepwiseStrategy``.  Single-output minimization only.
+    from ``StepwiseStrategy``.  Single-output only.
 
     How ε is determined (in order of priority):
 
@@ -591,8 +591,8 @@ class ProbabilisticRegretBoundCondition(SingleCondition, EvaluateableCondition):
             candidates.  Default ``512``.
         n_test_points: Number of candidate points to evaluate the criterion
             at.  ``1`` (default) tests the incumbent only; values ``> 1`` also
-            include the ``n_test_points − 1`` in-sample points with the
-            lowest GP posterior mean.
+            include the ``n_test_points − 1`` in-sample points that are best
+            under the GP posterior mean.
         optim_method: scipy optimisation method for path minimization.
             Default ``"L-BFGS-B"``.
         optim_maxiter: Maximum iterations per optimisation start.
