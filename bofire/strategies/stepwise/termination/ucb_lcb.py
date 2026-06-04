@@ -6,11 +6,11 @@ import numpy as np
 import pandas as pd
 import torch
 
-from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.evaluator import RegretBoundEvaluator
 from bofire.utils.torch_tools import tkwargs
 
 
-class UCBLCBRegretEvaluator(TerminationEvaluator):
+class UCBLCBRegretEvaluator(RegretBoundEvaluator):
     """Evaluator for the UCB-LCB regret bound based on the approach from Makarova et al., 2022.
 
     The bound is ``min_{x in evaluated} UCB(x) - min_{x in domain} LCB(x)``

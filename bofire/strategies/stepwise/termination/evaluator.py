@@ -13,10 +13,72 @@ from bofire.utils.torch_tools import tkwargs
 
 
 class TerminationEvaluator(ABC):
-    """Base class for termination evaluators.
+    """Base class for all termination evaluators.
 
     Computes metrics from a BO strategy that termination conditions use to
-    decide whether to stop.
+    decide whether to stop.  This base holds only behaviour shared by *every*
+    evaluator; the GP-UCB / confidence-bound machinery (which only some
+    criteria use) lives in :class:`RegretBoundEvaluator`.
+    """
+
+    @staticmethod
+    def _objective_sign(strategy) -> Optional[float]:
+        """Sign mapping the objective into a "minimise ``g = sign * f``" frame.
+
+        Returns ``+1.0`` for a ``MinimizeObjective``, ``-1.0`` for a
+        ``MaximizeObjective``, and ``None`` for any other objective
+        (``CloseToTargetObjective``, sigmoid, desirability, ...) — for which the
+        regret-to-optimum bound logic does not apply, so the caller should skip
+        evaluation and return empty metrics.
+
+        BoFire trains the GP on raw Y and applies the objective sense only in
+        the acquisition, so the evaluators multiply posterior means and
+        observations by this sign to make "lower is better" hold in both
+        directions.
+        """
+        from bofire.data_models.objectives.api import (
+            MaximizeObjective,
+            MinimizeObjective,
+        )
+
+        try:
+            outputs = strategy.domain.outputs.get()
+        except Exception:
+            return None
+        if len(outputs) != 1:
+            return None
+        objective = outputs[0].objective
+        if isinstance(objective, MinimizeObjective):
+            return 1.0
+        if isinstance(objective, MaximizeObjective):
+            return -1.0
+        return None
+
+    @abstractmethod
+    def evaluate(
+        self,
+        strategy,  # BotorchStrategy
+        experiments: pd.DataFrame,
+        iteration: int,
+    ) -> Dict[str, Any]:
+        """Return a dict of termination metrics for the current iteration."""
+        pass
+
+
+class RegretBoundEvaluator(TerminationEvaluator):
+    """Base class for GP-UCB / simple-regret-bound termination evaluators.
+
+    Holds the GP-UCB ``beta`` schedule and the UCB-LCB confidence-bound
+    machinery shared by the criteria that build confidence bounds:
+    :class:`UCBLCBRegretEvaluator` (Makarova et al., 2022) and
+    :class:`ExpMinRegretGapEvaluator` (Ishibashi et al., 2023).
+
+    Criteria that do not use confidence bounds — the cost-aware
+    ``LogEIPCEvaluator`` and ``ProbabilisticRegretBoundEvaluator`` — inherit
+    :class:`TerminationEvaluator` directly and carry none of these parameters.
+
+    Subclasses are expected to define ``self.lcb_method`` (``"sample"`` or
+    ``"optimize"``), which selects how the domain-wide minimum LCB is found.
 
     Args:
         delta: Confidence parameter for the GP-UCB beta formula (Srinivas et
@@ -93,39 +155,6 @@ class TerminationEvaluator(ABC):
                 # Standardize transform); fall back to the unit output scale.
                 pass
         return 1.0
-
-    @staticmethod
-    def _objective_sign(strategy) -> Optional[float]:
-        """Sign mapping the objective into a "minimise ``g = sign * f``" frame.
-
-        Returns ``+1.0`` for a ``MinimizeObjective``, ``-1.0`` for a
-        ``MaximizeObjective``, and ``None`` for any other objective
-        (``CloseToTargetObjective``, sigmoid, desirability, ...) — for which the
-        regret-to-optimum bound logic does not apply, so the caller should skip
-        evaluation and return empty metrics.
-
-        BoFire trains the GP on raw Y and applies the objective sense only in
-        the acquisition, so the evaluators multiply posterior means and
-        observations by this sign to make "lower is better" hold in both
-        directions.
-        """
-        from bofire.data_models.objectives.api import (
-            MaximizeObjective,
-            MinimizeObjective,
-        )
-
-        try:
-            outputs = strategy.domain.outputs.get()
-        except Exception:
-            return None
-        if len(outputs) != 1:
-            return None
-        objective = outputs[0].objective
-        if isinstance(objective, MinimizeObjective):
-            return 1.0
-        if isinstance(objective, MaximizeObjective):
-            return -1.0
-        return None
 
     @staticmethod
     def _min_ucb_at_points(
@@ -234,7 +263,7 @@ class TerminationEvaluator(ABC):
         ``regret_bound = max(0, min_UCB(evaluated) - min_LCB(domain))`` where the
         bounds are in that frame.
         """
-        min_ucb = TerminationEvaluator._min_ucb_at_points(
+        min_ucb = self._min_ucb_at_points(
             model,
             X_evaluated,
             sqrt_beta,
@@ -248,7 +277,7 @@ class TerminationEvaluator(ABC):
         ):
             min_lcb = self._min_lcb_optimize(strategy, experiments, sqrt_beta, sign)
         else:
-            min_lcb = TerminationEvaluator._min_lcb_by_sampling(
+            min_lcb = self._min_lcb_by_sampling(
                 model,
                 X_evaluated,
                 sqrt_beta,
@@ -259,13 +288,3 @@ class TerminationEvaluator(ABC):
                 sign,
             )
         return max(0.0, min_ucb - min_lcb), min_ucb, min_lcb
-
-    @abstractmethod
-    def evaluate(
-        self,
-        strategy,  # BotorchStrategy
-        experiments: pd.DataFrame,
-        iteration: int,
-    ) -> Dict[str, Any]:
-        """Return a dict of termination metrics for the current iteration."""
-        pass

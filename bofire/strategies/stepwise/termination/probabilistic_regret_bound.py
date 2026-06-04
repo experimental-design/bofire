@@ -286,7 +286,8 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         optim_maxiter: int = 200,
         optim_ftol: float = 1e-9,
     ):
-        super().__init__()
+        # Confidence-bound-free criterion: inherits the slim TerminationEvaluator
+        # base directly (no GP-UCB beta parameters).
         self.epsilon = epsilon
         self.epsilon_relative = epsilon_relative
         self.delta_mod = delta_mod

@@ -176,10 +176,8 @@ class LogEIPCEvaluator(TerminationEvaluator):
         search_method: Literal["sample", "optimize"] = "sample",
         cost_model: Literal["mean", "gp"] = "mean",
     ):
-        # TerminationEvaluator base class holds beta parameters for UCB/LCB;
-        # LogEIPC does not use them but we call super().__init__() for
-        # get_output_scale and other shared utilities.
-        super().__init__()
+        # LogEIPC is a confidence-bound-free criterion, so it inherits the slim
+        # TerminationEvaluator base directly (no GP-UCB beta parameters).
         self.lambda_cost = lambda_cost
         self.cost_column = cost_column
         self.cost_value = cost_value

@@ -10,11 +10,11 @@ import torch
 from botorch.models.model import Model
 from scipy.stats import norm
 
-from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.evaluator import RegretBoundEvaluator
 from bofire.utils.torch_tools import tkwargs
 
 
-class ExpMinRegretGapEvaluator(TerminationEvaluator):
+class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
     """Evaluator for the expected minimum regret gap from Ishibashi et al., 2023.
 
     Computes a stopping value that upper-bounds the change in expected minimum

@@ -1,6 +1,9 @@
 """API exports for termination module."""
 
-from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
+from bofire.strategies.stepwise.termination.evaluator import (
+    RegretBoundEvaluator,
+    TerminationEvaluator,
+)
 from bofire.strategies.stepwise.termination.exp_min_regret_gap import (
     ExpMinRegretGapEvaluator,
 )
@@ -19,6 +22,7 @@ __all__ = [
     "LogEIPCEvaluator",
     "LogExpectedImprovementPerCost",
     "ProbabilisticRegretBoundEvaluator",
+    "RegretBoundEvaluator",
     "TerminationEvaluator",
     "UCBLCBRegretEvaluator",
 ]
