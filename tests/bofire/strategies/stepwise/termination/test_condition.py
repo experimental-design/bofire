@@ -254,9 +254,9 @@ class TestUCBLCBRegretBoundConditionDataModel:
         assert correction == pytest.approx(np.sqrt(0.2 + 0.25), rel=1e-10)
 
     def test_topq_defaults(self):
-        """Default topq=1.0 (no filtering), min_topq=20."""
+        """Default topq=0.5 (Makarova et al.), min_topq=20."""
         cond = UCBLCBRegretBoundCondition()
-        assert cond.topq == 1.0
+        assert cond.topq == 0.5
         assert cond.min_topq == 20
 
     def test_topq_custom(self):
@@ -997,3 +997,69 @@ class TestProbabilisticRegretBoundConditionDataModel:
             candidates = candidates[domain.inputs.get_keys()]
             experiments = benchmark.f(candidates, return_complete=True)
             strategy.tell(experiments)
+
+
+class TestUCBLCBTopQDirection:
+    """Top-q filtering in UCBLCBRegretBoundCondition is objective-aware.
+
+    It refits the regret-bound GP on the best fraction of observations.  For
+    minimisation the "best" are the lowest-y points; for maximisation the
+    highest-y.  Minimising ``y`` and maximising ``-y`` are the same problem, so
+    the condition must reach the same stop decision in both framings.
+    """
+
+    @staticmethod
+    def _fit(objective, X, y, seed=0):
+        import torch
+
+        from bofire.data_models.domain.api import Domain, Inputs, Outputs
+        from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+
+        torch.manual_seed(seed)
+        domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0))
+                    for i in range(X.shape[1])
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="y", objective=objective)]),
+        )
+        exp = pd.DataFrame(X, columns=[f"x{i}" for i in range(X.shape[1])])
+        exp["y"] = y
+        exp["valid_y"] = 1
+        strat = SoboStrategy(data_model=SoboStrategyDataModel(domain=domain))
+        strat.tell(exp)
+        return strat, domain, exp
+
+    def test_topq_negation_invariance_decision(self):
+        import torch
+
+        from bofire.data_models.objectives.api import (
+            MaximizeObjective,
+            MinimizeObjective,
+        )
+
+        rng = np.random.default_rng(3)
+        X = rng.random((12, 2))
+        y = (X[:, 0] - 0.3) ** 2 + 0.5 * (X[:, 1] - 0.6) ** 2
+
+        common = {
+            "topq": 0.5,
+            "min_topq": 3,
+            "min_experiments": 3,
+            "noise_variance": 1e-3,
+            "threshold_factor": 1.0,
+        }
+
+        strat_min, dom_min, exp_min = self._fit(MinimizeObjective(), X, y)
+        strat_max, dom_max, exp_max = self._fit(MaximizeObjective(), X, -y)
+
+        cond = UCBLCBRegretBoundCondition(**common)
+        torch.manual_seed(11)
+        dec_min = cond.evaluate(dom_min, exp_min, strategy=strat_min)
+        torch.manual_seed(11)
+        dec_max = cond.evaluate(dom_max, exp_max, strategy=strat_max)
+
+        assert isinstance(dec_min, bool) and isinstance(dec_max, bool)
+        assert dec_min == dec_max  # top-q picked the equivalent rows in both

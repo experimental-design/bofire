@@ -184,8 +184,11 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
         cv_fold_columns: Column names with per-fold CV scores; required
             when ``noise_variance="cv"``.
         topq: Fraction of best observations used for the internal
-            regret-bound GP. ``1.0`` disables filtering. The main
-            strategy's GP is unaffected.
+            regret-bound GP. Default ``0.5`` — Makarova et al. (2022) found
+            fitting the bound on the best ~50 % of observations works best.
+            Set to ``1.0`` to disable filtering and use all observations. The
+            main strategy's GP is unaffected. Only engages once more than
+            ``min_topq`` observations are available.
         min_topq: Minimum observations kept under top-q filtering.
         min_experiments: Minimum experiments before termination is checked.
         delta: Confidence parameter for the GP-UCB beta formula. Default ``0.1``.
@@ -206,7 +209,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
     noise_variance: Optional[Union[PositiveFloat, Literal["cv"]]] = None
     threshold_factor: PositiveFloat = 1.0
     cv_fold_columns: Optional[List[str]] = None
-    topq: Annotated[float, Field(gt=0, le=1)] = 1.0
+    topq: Annotated[float, Field(gt=0, le=1)] = 0.5
     min_topq: PositiveInt = 20
     min_experiments: PositiveInt = 5
     delta: PositiveFloat = 0.1
@@ -264,7 +267,15 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             lcb_method=self.lcb_method,
         )
 
-        # Top-q filtering: refit the regret-bound GP on the best fraction.
+        # Objective direction: +1 (minimise) / -1 (maximise); the regret bound
+        # does not apply to other objectives, so keep optimizing.
+        sign = evaluator._objective_sign(strategy)
+        if sign is None:
+            return True
+
+        # Top-q filtering: refit the regret-bound GP on the best fraction —
+        # the lowest ``sign * y`` (lowest y for minimisation, highest for
+        # maximisation).
         eval_strategy = strategy
         eval_experiments = experiments
         if self.topq < 1.0:
@@ -273,7 +284,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             n = len(y_values)
             topn = max(self.min_topq, int(n * self.topq))
             if topn < n:
-                top_indices = np.argsort(y_values)[:topn]
+                top_indices = np.argsort(sign * y_values)[:topn]
                 eval_experiments = experiments.iloc[top_indices].reset_index(
                     drop=True,
                 )
