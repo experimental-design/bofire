@@ -1,6 +1,7 @@
 import importlib.util
 import re
 import sys
+import warnings
 from copy import copy
 from itertools import combinations
 from typing import List, Optional, Tuple, Union, cast
@@ -22,7 +23,11 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.features.api import CategoricalInput, NumericalInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    DiscreteInput,
+    NumericalInput,
+)
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.doe_problem import (
@@ -61,7 +66,7 @@ def represent_categories_as_by_their_states(
 
 
 def formula_str_to_fully_continuous(
-    formula: str,
+    formula_str: str,
     inputs: Inputs,
 ) -> str:
     """Converts a formula with categorical variables to a formula with only continuous variables by identifying the categorical variables and replacing them with their one-hot encoded counterparts.
@@ -76,11 +81,22 @@ def formula_str_to_fully_continuous(
         )
         # Use word boundaries to match only complete variable names
         pattern = r"\b" + re.escape(cat_input.key) + r"\b"
-        formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
+        formula_str = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula_str)
 
-    return str(
-        Formula(formula)
+    formula = Formula(
+        formula_str
     )  # formula casting for expansion of terms like (a+b)*(c+d)
+    for _input in inputs.get([DiscreteInput]):
+        for k in range(
+            2, len(_input.values) + 1
+        ):  # arbitrary upper bound on number of levels of discrete input
+            if (len(_input.values) <= k) and (_input.key + f" ** {k}" in formula.root):
+                warnings.warn(
+                    f"Discrete input {_input.key} with {len(_input.values)} levels cannot represent a term of order {k} or higher.",
+                    UserWarning,
+                )
+                break
+    return str(formula)
 
 
 def get_formula_from_string(
@@ -92,8 +108,7 @@ def get_formula_from_string(
 
     Args:
         model_type (str or Formula): A formula containing all model terms.
-        domain (Domain): A domain that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+        inputs (Inputs, optional): The inputs to be used in the formula. Defaults to None. If the model_type is a string describing a model type (e.g. "linear"), inputs must be provided to determine the formula. If the model_type is already a formula, inputs are not necessary and ignored if provided.
         rhs_only (bool): The function returns only the right hand side of the formula if set to True.
 
     Returns:
@@ -163,7 +178,7 @@ def get_formula_from_string(
         if inputs is not None:
             if len(inputs.get([CategoricalInput])) > 0:
                 model_type = formula_str_to_fully_continuous(
-                    formula=model_type,
+                    formula_str=model_type,
                     inputs=inputs,
                 )
         formula = model_type + "   "
@@ -239,8 +254,11 @@ def quadratic_terms(
         A string describing the model that was given as string or keyword.
 
     """
+    _inputs = list(inputs.get([ContinuousInput])) + [
+        input for input in inputs.get([DiscreteInput]) if len(input.values) > 2
+    ]
 
-    formula = "".join(["{" + input.key + "**2} + " for input in inputs])
+    formula = "".join(["{" + input.key + "**2} + " for input in _inputs])
     return formula
 
 

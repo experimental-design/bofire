@@ -181,10 +181,11 @@ def test_n_zero_eigvals_constrained():
     # thus there was one degree of freedom more if quadratic terms where added.
     # Here, discretes are sampled within their respective domain, thus discrete2==discrete2**2 always
     # thus we have one degree of freedom less.
+    # discrete2**2 (with only two levels) is no longer in the formula so  counts for linear-and quadratic and quadratic are updated accordingly.
     assert n_zero_eigvals(domain, "linear") == 1
-    assert n_zero_eigvals(domain, "linear-and-quadratic") == 2
+    assert n_zero_eigvals(domain, "linear-and-quadratic") == 1
     assert n_zero_eigvals(domain, "linear-and-interactions") == 3
-    assert n_zero_eigvals(domain, "fully-quadratic") == 7
+    assert n_zero_eigvals(domain, "fully-quadratic") == 6
 
     # TODO: NChooseK?
 
@@ -233,7 +234,7 @@ def test_number_of_model_terms():
     formula = get_formula_from_string(
         inputs=domain.inputs, model_type="linear-and-quadratic"
     )
-    assert len(formula) == 11
+    assert len(formula) == 10  # discrete2 has only 2 levels, no quadratic term
 
     formula = get_formula_from_string(
         inputs=domain.inputs,
@@ -244,7 +245,7 @@ def test_number_of_model_terms():
     formula = get_formula_from_string(
         inputs=domain.inputs, model_type="fully-quadratic"
     )
-    assert len(formula) == 21
+    assert len(formula) == 20  # discrete2 has only 2 levels, no quadratic term
 
 
 def test_constraints_as_scipy_constraints():
@@ -633,7 +634,7 @@ def test_convert_formula_to_string():
 def test_formula_discrete_handled_like_continuous():
     domain_w_discrete = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
-        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        + [DiscreteInput(key=f"x{i}", values=[0, 1, 2]) for i in range(3, 5)],
         outputs=[ContinuousOutput(key="y")],
     )
     domain_wo_discrete = Domain.from_lists(
@@ -654,6 +655,48 @@ def test_formula_discrete_handled_like_continuous():
         formula_wo_discrete = get_formula_from_string(
             inputs=domain_wo_discrete.inputs, model_type=model_type
         )
+        assert formula_w_discrete == formula_wo_discrete
+
+
+def test_formula_discrete_too_few_levels():
+    domain_w_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    domain_wo_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for model_type in [
+        "linear",
+        "linear-and-interactions",
+    ]:
+        formula_w_discrete = get_formula_from_string(
+            inputs=domain_w_discrete.inputs, model_type=model_type
+        )
+        formula_wo_discrete = get_formula_from_string(
+            inputs=domain_wo_discrete.inputs, model_type=model_type
+        )
+        assert formula_w_discrete == formula_wo_discrete
+
+    for model_type in [
+        "linear-and-quadratic",
+        "fully-quadratic",
+    ]:
+        formula_w_discrete = str(
+            get_formula_from_string(
+                inputs=domain_w_discrete.inputs, model_type=model_type
+            )
+        )
+
+        formula_wo_discrete = str(
+            get_formula_from_string(
+                inputs=domain_wo_discrete.inputs, model_type=model_type
+            )
+        ).replace(" + x3 ** 2 + x4 ** 2", "")
         assert formula_w_discrete == formula_wo_discrete
 
 
@@ -692,7 +735,7 @@ def test_formula_str_to_fully_continuous():
 
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
 
@@ -704,7 +747,7 @@ def test_formula_str_to_fully_continuous():
 
     custom_formula = "color + temperature + pressure + color_intensity"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = (
@@ -716,7 +759,7 @@ def test_formula_str_to_fully_continuous():
 
     custom_formula = "material + temperature + pressure"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_material_plastic + temperature + pressure"
@@ -727,7 +770,7 @@ def test_formula_str_to_fully_continuous():
     custom_formula = "temperature:material + color_intensity + pressure:color"
 
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + color_intensity + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
@@ -737,13 +780,54 @@ def test_formula_str_to_fully_continuous():
 
     custom_formula = "1 + color + material + temperature + pressure + color:material + temperature:material + pressure:color + color_intensity"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + color_intensity + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
     assert (
         str(continuous_formula) == expected_formula
     ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
+def test_formula_str_does_not_match_discrete_levels_emmits_warning():
+    # Create a small example problem with categorical, continuous, and discrete variables
+
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[0, 1],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    # This includes interaction between color and material
+    custom_formula = "color + material + temperature + { pressure ** 2 } + color:material + color_intensity"
+    with pytest.warns(
+        UserWarning,
+        match="Discrete input pressure with 2 levels cannot represent a term of order 2 or higher.",
+    ):
+        formula_str_to_fully_continuous(
+            formula_str=custom_formula,
+            inputs=inputs,
+        )
 
 
 def test_formula_str_to_fully_continuous_only_categoricals():
@@ -769,7 +853,7 @@ def test_formula_str_to_fully_continuous_only_categoricals():
     custom_formula = "color + material + color:material + material:material_shape"
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     # Assert the expected formula explicitly
@@ -784,7 +868,7 @@ def test_formula_str_to_fully_continuous_only_categoricals():
 
     custom_formula = "material:color + material_shape"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_material_shape_circle + aux_material_plastic:aux_color_red + aux_material_plastic:aux_color_blue"
@@ -817,7 +901,7 @@ def only_continuous_inputs_formula_str_to_fully_continuous():
 
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
 
