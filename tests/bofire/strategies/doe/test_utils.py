@@ -735,7 +735,7 @@ def test_formula_str_to_fully_continuous():
 
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
 
@@ -747,7 +747,7 @@ def test_formula_str_to_fully_continuous():
 
     custom_formula = "color + temperature + pressure + color_intensity"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = (
@@ -759,7 +759,7 @@ def test_formula_str_to_fully_continuous():
 
     custom_formula = "material + temperature + pressure"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_material_plastic + temperature + pressure"
@@ -770,7 +770,7 @@ def test_formula_str_to_fully_continuous():
     custom_formula = "temperature:material + color_intensity + pressure:color"
 
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + color_intensity + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
@@ -780,7 +780,7 @@ def test_formula_str_to_fully_continuous():
 
     custom_formula = "1 + color + material + temperature + pressure + color:material + temperature:material + pressure:color + color_intensity"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + color_intensity + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
@@ -825,7 +825,7 @@ def test_formula_str_does_not_match_discrete_levels_emmits_warning():
         match="Discrete input pressure with 2 levels cannot represent a term of order 2 or higher.",
     ):
         formula_str_to_fully_continuous(
-            formula=custom_formula,
+            formula_str=custom_formula,
             inputs=inputs,
         )
 
@@ -853,7 +853,7 @@ def test_formula_str_to_fully_continuous_only_categoricals():
     custom_formula = "color + material + color:material + material:material_shape"
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     # Assert the expected formula explicitly
@@ -868,7 +868,7 @@ def test_formula_str_to_fully_continuous_only_categoricals():
 
     custom_formula = "material:color + material_shape"
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
     expected_formula = "1 + aux_material_shape_circle + aux_material_plastic:aux_color_red + aux_material_plastic:aux_color_blue"
@@ -901,7 +901,7 @@ def only_continuous_inputs_formula_str_to_fully_continuous():
 
     # Convert to fully continuous representation
     continuous_formula = formula_str_to_fully_continuous(
-        formula=custom_formula,
+        formula_str=custom_formula,
         inputs=inputs,
     )
 
