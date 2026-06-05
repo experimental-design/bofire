@@ -81,7 +81,7 @@ def formula_str_to_fully_continuous(
         )
         # Use word boundaries to match only complete variable names
         pattern = r"\b" + re.escape(cat_input.key) + r"\b"
-        formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
+        formula_str = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula_str)
 
     formula = Formula(
         formula_str
@@ -178,7 +178,7 @@ def get_formula_from_string(
         if inputs is not None:
             if len(inputs.get([CategoricalInput])) > 0:
                 model_type = formula_str_to_fully_continuous(
-                    formula=model_type,
+                    formula_str=model_type,
                     inputs=inputs,
                 )
         formula = model_type + "   "
