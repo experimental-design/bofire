@@ -31,6 +31,17 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - `SmoothedBoxPrior` prior, and a concrete instantiable `Interval` prior constraint.
 - Aggregation of duplicated experiments in the `cross_validate` method of trainable surrogates to avoid data leakage, controlled via the `aggregate` boolean flag, default `False`.
 - `ExactWassersteinKernel`: exact W1/W2 Wasserstein-distance kernel computed over the union of unique x-breakpoints (vs. the interpolated `WassersteinKernel`). Chunked over the x-union to keep memory bounded on large problems. ([#750](https://github.com/experimental-design/bofire/pull/750))
+- Support for multi-output, multi-fidelity Bayesian optimization (MOMF), including a split of `TaskInput` into continuous and categorical task variants.
+- LLM-based strategy with provider infrastructure for agentic optimization workflows, plus `context` fields and `to_description()` / `to_pydantic_field()` helpers on data models to support natural-language descriptions of domains.
+- `Log` and `ChainedOutputTransform` output transforms for surrogate models.
+- `ContinuousMolecularInput` feature and decorrelated molecular features.
+- `SphericalLinearKernel`.
+- `IndexKernel` and `PositiveIndexKernel` for categorical/task indices.
+- `EnsembleMapSaasSingleTaskGPSurrogate`, an ensemble MAP variant of the SAAS single-task GP.
+- **Breaking**: `InterpolateFeature` engineered feature, replacing the dedicated `PiecewiseLinearGPSurrogate` with a more flexible engineered-feature based approach.
+- Public `register()` functions/decorators that let downstream packages register custom strategies, surrogates, kernels, priors, and engineered features into BoFire's type unions.
+- Exposed sampling method, `n_burnin`, and `n_thinning` parameters on `RandomStrategy` for finer control over constrained sampling.
+- `allow_zero` flag for NChooseK sampling in `RandomStrategy`.
 
 ### Changed
 
@@ -38,6 +49,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - **Breaking**: Botorch >= 0.18.0
 - **Breaking**: Python >= 3.11
 - **Breaking**: For all botorch surrogate that are trainable, the `scaler` keyword used on defining how to scale the inputs before entering the actual model/kernel, do not expect anymore an enum but instance of a `Scaler` class like `Normalize` or `Standardize`. Via this, it can be controlled on which features the scaler should operate.
+- **Breaking**: Switched the cheminformatics dependency from the unmaintained `mordred` to `mordredcommunity`.
 - Interval.initial_value` (covering `NonTransformedInterval` and `LogTransformedInterval`) is now `Optional[PositiveFloat] = None` — previously a required `PositiveFloat`. This matches gpytorch's and botorch's contract: a `None` initial value means no warm-start at registration time. Existing code that sets `initial_value` keeps working unchanged.
 - `noise_constraint` default on the GP surrogates (`SingleTaskGP`, `MultiTaskGP`, `MixedSingleTaskGP`, `TanimotoGP`, `RobustSingleTaskGP`, `LinearSurrogate`, `PolynomialSurrogate`) changed from `None` to `GreaterThan(lower_bound=1e-4)`, mirroring BoTorch's `SingleTaskGP` factory default. `None` is still accepted, so previously-serialised specs continue to round-trip.
 - `MultiTaskGPSurrogate`'s default kernel and noise prior now match BoTorch's `MultiTaskGP` default (`RBFKernel(ard=True)` with the HVARFNER lengthscale prior, `LogNormalPrior(-4, 1)` noise prior) and align with `SingleTaskGPSurrogate`. Previously defaulted to `MaternKernel(nu=2.5)` with `GammaPrior(3.0, 6.0)` lengthscale prior and `GammaPrior(1.1, 0.05)` noise prior.
@@ -46,10 +58,14 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
 - Objective bounds validation for `IdentityObjective`-based objectives is now strict (`lower < upper`) to prevent degenerate normalization ranges.
 - `WassersteinKernel` is now a `FeatureSpecificKernel` and accepts an optional `lengthscale_constraint`. ([#750](https://github.com/experimental-design/bofire/pull/750))
+- Refactored `Any*` type aliases throughout the data models to Pydantic discriminated unions (`Field(discriminator="type")`) for faster validation and clearer error messages.
+- `RandomStrategy` NChooseK sampling now scales to large combinatorial spaces via on-demand sampling.
+- Pre-compute the Tanimoto similarity matrix inside the Tanimoto GP for substantial speed-ups, with a configurable calculation mode.
 
 ### Removed
 
 - `PiecewiseLinearGPSurrogate` and supporting code in `torch_tools.py`. Equivalent behavior is now available via the `InterpolateFeature` engineered feature with a standard GP surrogate. ([#750](https://github.com/experimental-design/bofire/pull/750))
+- Removed the bundled `bofire_theme.mp3` audio file from the base install.
 
 ### Fixed
 
@@ -58,3 +74,8 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Flaky tests in the test pipeline
 - Serialization tests now explicitly assert the expected `DeprecationWarning` for deprecated `FactorialStrategy` specs instead of treating it as an unhandled warning.
 - Added soft divide in `interp1d` (`torch_tools.py`) to prevent division-by-zero errors on initial candidates that violated inequality constraints. ([#750](https://github.com/experimental-design/bofire/pull/750))
+- Fixed bug with discrete variables in the DoE strategy and added handling for adversarial user input.
+- Fixed Jacobian/Hessian evaluation for list expressions in `NonlinearConstraint`.
+- Fixed `MultiTaskGPSurrogate` serialization that was broken by the new BoTorch default task `BetaPrior` (now passes `task_covar_prior=None`).
+- `NonlinearConstraint` evaluation now preserves the original DataFrame index.
+- `CategoricalDescriptorInput` now supports being used with only one descriptor.
