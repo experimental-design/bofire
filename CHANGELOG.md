@@ -8,6 +8,14 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.4.0] - 2026-06-08
+
+### Added
+
 - Support for python 3.14
 - `CloneFeatures` engineered feature, that can be used to create a copy of a set of features, this can be useful if one wants to further process features differently (different scalers, different kernels etc.)
 - Explicit Interaction features (like `x_1 * x_2`) for botorch based surrogates via the engineered features mechanism.
