@@ -26,12 +26,14 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Changed
 
+- **Breaking**: Entmoot >= 2.1.1
+- **Breaking**: Botorch >= 0.18.0
+- **Breaking**: Python >= 3.11
 - **Breaking**: For all botorch surrogate that are trainable, the `scaler` keyword used on defining how to scale the inputs before entering the actual model/kernel, do not expect anymore an enum but instance of a `Scaler` class like `Normalize` or `Standardize`. Via this, it can be controlled on which features the scaler should operate.
 - Interval.initial_value` (covering `NonTransformedInterval` and `LogTransformedInterval`) is now `Optional[PositiveFloat] = None` — previously a required `PositiveFloat`. This matches gpytorch's and botorch's contract: a `None` initial value means no warm-start at registration time. Existing code that sets `initial_value` keeps working unchanged.
 - `noise_constraint` default on the GP surrogates (`SingleTaskGP`, `MultiTaskGP`, `MixedSingleTaskGP`, `TanimotoGP`, `RobustSingleTaskGP`, `LinearSurrogate`, `PolynomialSurrogate`) changed from `None` to `GreaterThan(lower_bound=1e-4)`, mirroring BoTorch's `SingleTaskGP` factory default. `None` is still accepted, so previously-serialised specs continue to round-trip.
 - `MultiTaskGPSurrogate`'s default kernel and noise prior now match BoTorch's `MultiTaskGP` default (`RBFKernel(ard=True)` with the HVARFNER lengthscale prior, `LogNormalPrior(-4, 1)` noise prior) and align with `SingleTaskGPSurrogate`. Previously defaulted to `MaternKernel(nu=2.5)` with `GammaPrior(3.0, 6.0)` lengthscale prior and `GammaPrior(1.1, 0.05)` noise prior.
 - `MultiTaskGPHyperconfig.prior` categories changed from `["mbo", "botorch"]` to `["mbo", "threesix", "hvarfner"]`, matching `SingleTaskGPHyperconfig`. The old `"botorch"` label mapped to the THREESIX prior; the new `"hvarfner"` label uses BoTorch's current default HVARFNER prior.
-- Entmoot >=2.1.1
 - Static type checking was migrated from `pyright` to `ty`.
 - Refactored weighted engineered-feature surrogate mapping to share implementation across weighted sum/mean and molecular weighted sum/mean.
 - Objective bounds validation for `IdentityObjective`-based objectives is now strict (`lower < upper`) to prevent degenerate normalization ranges.
