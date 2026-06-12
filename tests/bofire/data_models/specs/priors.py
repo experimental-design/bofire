@@ -108,6 +108,35 @@ specs.add_valid(
 
 
 specs.add_valid(
+    priors.DimensionalityScaledGammaPrior,
+    lambda: {
+        "concentration": random.random() + 0.1,
+        "concentration_scaling": random.random(),
+        "rate": random.random() + 0.1,
+        "rate_power": random.random() - 0.5,
+    },
+)
+
+for value in [-1.0, 0.0]:
+    specs.add_invalid(
+        priors.DimensionalityScaledGammaPrior,
+        lambda value=value: {
+            "concentration": value,
+            "rate": random.random() + 0.1,
+        },
+        error=ValidationError,
+    )
+    specs.add_invalid(
+        priors.DimensionalityScaledGammaPrior,
+        lambda value=value: {
+            "concentration": random.random() + 0.1,
+            "rate": value,
+        },
+        error=ValidationError,
+    )
+
+
+specs.add_valid(
     priors.SmoothedBoxPrior,
     lambda: {
         "lower_bound": 0.01,

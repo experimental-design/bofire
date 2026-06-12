@@ -240,7 +240,10 @@ def map_ScaleKernel(
             **kwargs,
         ),
         outputscale_prior=(
-            priors.map(data_model.outputscale_prior)
+            priors.map(
+                data_model.outputscale_prior,
+                **({"d": len(active_dims)} if active_dims is not None else {}),
+            )
             if data_model.outputscale_prior is not None
             else None
         ),

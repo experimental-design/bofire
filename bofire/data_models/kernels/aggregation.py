@@ -19,7 +19,7 @@ from bofire.data_models.kernels.fidelity import DownsamplingKernel
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import ExactWassersteinKernel, WassersteinKernel
-from bofire.data_models.priors.api import AnyGeneralPrior, AnyPriorConstraint
+from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior, AnyPriorConstraint
 
 
 class AdditiveKernel(AggregationKernel):
@@ -88,7 +88,9 @@ class ScaleKernel(AggregationKernel):
         WassersteinKernel,
         ExactWassersteinKernel,
     ]
-    outputscale_prior: Optional[AnyGeneralPrior] = None
+    # AnyPrior (not AnyGeneralPrior) so dimensionality-scaled priors are accepted; the
+    # ScaleKernel mapper forwards the dimensionality d to the outputscale prior.
+    outputscale_prior: Optional[AnyPrior] = None
     outputscale_constraint: Optional[AnyPriorConstraint] = None
 
 

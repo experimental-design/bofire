@@ -62,6 +62,7 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "lengthscale_prior"),
         (WedgeKernel, "angle_prior"),
         (WedgeKernel, "radius_prior"),
+        (ScaleKernel, "outputscale_prior"),
         (WassersteinKernel, "lengthscale_prior"),
         (ExactWassersteinKernel, "lengthscale_prior"),
         (SingleTaskGPSurrogate, "noise_prior"),

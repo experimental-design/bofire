@@ -103,6 +103,17 @@ def map_DimensionalityScaledLogNormalPrior(
     )
 
 
+def map_DimensionalityScaledGammaPrior(
+    data_model: data_models.DimensionalityScaledGammaPrior,
+    d: int,
+) -> gpytorch.priors.GammaPrior:
+    return gpytorch.priors.GammaPrior(
+        concentration=data_model.concentration
+        + math.sqrt(d) * data_model.concentration_scaling,
+        rate=data_model.rate * d**data_model.rate_power,
+    )
+
+
 def map_SmoothedBoxPrior(
     data_model: data_models.SmoothedBoxPrior,
     **kwargs,
@@ -174,6 +185,7 @@ PRIOR_MAP = {
     data_models.LKJPrior: map_LKJPrior,
     data_models.LogNormalPrior: map_LogNormalPrior,
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
+    data_models.DimensionalityScaledGammaPrior: map_DimensionalityScaledGammaPrior,
     data_models.SmoothedBoxPrior: map_SmoothedBoxPrior,
     data_models.Interval: map_Interval,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
