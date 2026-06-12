@@ -30,15 +30,23 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
             observation count (``t = num_observed - beta_t_offset``).
         fallback_noise_variance: Noise variance used when it cannot be read
             from the GP likelihood (e.g. deterministic surrogates). Default ``1e-4``.
-        n_samples_lcb: Number of random domain points used when
-            ``lcb_method="sample"`` to approximate the minimum LCB over the
-            domain. Default ``2000``.
-        batch_size: Batch size for GP posterior evaluation during sampling.
-            Default ``512``.
         lcb_method: How the domain-wide minimum LCB is found.
             ``"sample"`` (default) draws ``n_samples_lcb`` random points —
             matches the reference implementation.  ``"optimize"`` uses
             BoFire's acquisition function optimizer for higher accuracy.
+        n_samples_lcb: Number of random domain points used when
+            ``lcb_method="sample"`` to approximate the minimum LCB over the
+            domain. Default ``2000``.
+        batch_size: If set, chunk GP posterior evaluation during sampling into
+            batches of this size to bound memory.  ``None`` (default) evaluates
+            all points in a single posterior call.
+        topq: Fraction of best observations used for the regret-bound GP.
+            Makarova et al. (2022) found fitting the bound on the best ~50 %
+            of observations works best.  ``1.0`` (default) uses all
+            observations; values below 1 refit a copy of the strategy on the
+            best fraction (the main strategy's GP is unaffected).  Only
+            engages once more than ``min_topq`` observations are available.
+        min_topq: Minimum observations kept under top-q filtering. Default ``20``.
 
     References:
         Makarova et al. (2022): "Automatic Termination for Hyperparameter
@@ -56,9 +64,11 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
         beta_min: float = 0.01,
         beta_t_offset: Optional[int] = None,
         fallback_noise_variance: float = 1e-4,
-        n_samples_lcb: int = 2000,
-        batch_size: int = 512,
         lcb_method: Literal["sample", "optimize"] = "sample",
+        n_samples_lcb: int = 2000,
+        batch_size: Optional[int] = None,
+        topq: float = 1.0,
+        min_topq: int = 20,
     ):
         super().__init__(
             delta=delta,
@@ -67,11 +77,47 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
             beta_log_denominator=beta_log_denominator,
             beta_min=beta_min,
             beta_t_offset=beta_t_offset,
+            lcb_method=lcb_method,
         )
         self.fallback_noise_variance = fallback_noise_variance
         self.n_samples_lcb = n_samples_lcb
         self.batch_size = batch_size
-        self.lcb_method = lcb_method
+        self.topq = topq
+        self.min_topq = min_topq
+
+    def _apply_topq(
+        self,
+        strategy,
+        experiments: pd.DataFrame,
+        sign: float,
+    ) -> Optional[tuple]:
+        """Refit a copy of the strategy on the best ``topq`` fraction.
+
+        Returns ``(eval_strategy, eval_experiments)``, or ``None`` when the
+        refit fails (callers should skip evaluation).  With ``topq=1.0`` or
+        too few observations, returns the inputs unchanged.
+        """
+        if self.topq >= 1.0:
+            return strategy, experiments
+        output_key = strategy.domain.outputs.get_keys()[0]
+        y_values = experiments[output_key].values
+        n = len(y_values)
+        topn = max(self.min_topq, int(n * self.topq))
+        if topn >= n:
+            return strategy, experiments
+        # Best = lowest ``sign * y`` (lowest y for minimisation, highest for
+        # maximisation).
+        top_indices = np.argsort(sign * y_values)[:topn]
+        eval_experiments = experiments.iloc[top_indices].reset_index(drop=True)
+
+        from bofire.strategies.mapper import map as map_strategy
+
+        try:
+            eval_strategy = map_strategy(strategy._data_model)
+            eval_strategy.tell(eval_experiments)
+        except Exception:
+            return None
+        return eval_strategy, eval_experiments
 
     def evaluate(
         self,
@@ -92,6 +138,12 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
         if direction is None:
             return {}
         sign = -direction  # minimisation frame: +1 minimise / -1 maximise
+
+        # Top-q: compute the bound from a copy refit on the best fraction.
+        filtered = self._apply_topq(strategy, experiments, sign)
+        if filtered is None:
+            return {}
+        strategy, experiments = filtered
 
         input_keys = strategy.domain.inputs.get_keys()
         dimensionality = len(input_keys)

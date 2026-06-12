@@ -158,6 +158,31 @@ class TestUCBLCBRegretEvaluator:
 
         assert result["estimated_noise_variance"] > 0
 
+    def test_topq_filters_to_best_fraction(self, benchmark):
+        """topq < 1 refits on the best fraction; beta then uses the filtered count."""
+        random_strategy = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random_strategy.ask(30), return_complete=True)
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(domain=benchmark.domain)
+        )
+        strategy.tell(experiments)
+
+        result_full = UCBLCBRegretEvaluator().evaluate(strategy, experiments, 0)
+        result_topq = UCBLCBRegretEvaluator(topq=0.5, min_topq=5).evaluate(
+            strategy, experiments, 0
+        )
+
+        assert result_full and result_topq
+        # Filtering engaged: beta grows with the observation count, so the
+        # 15-point bound GP must have a smaller beta than the 30-point one.
+        d = len(benchmark.domain.inputs.get_keys())
+        assert result_topq["beta"] == pytest.approx(
+            UCBLCBRegretEvaluator()._compute_beta(d, 15)
+        )
+        assert result_topq["beta"] < result_full["beta"]
+
     def test_estimated_noise_variance_in_original_scale(self, trained_strategy):
         """The estimated noise must be un-standardized (* y_std**2) exactly once.
 

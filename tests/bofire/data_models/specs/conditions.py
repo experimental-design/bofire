@@ -51,7 +51,7 @@ specs.add_valid(
         "delta": 0.1,
         "beta_scale": 0.2,
         "n_samples_lcb": 2000,
-        "batch_size": 512,
+        "batch_size": None,
         "lcb_method": "sample",
         "fallback_noise_variance": 1e-4,
     },
@@ -85,6 +85,7 @@ specs.add_valid(
         "min_experiments": 5,
         "beta_scale": 1.0,
         "n_samples_lcb": 1000,
+        "noise_var_override": None,
     },
 )
 
@@ -98,6 +99,7 @@ specs.add_valid(
         "min_experiments": 5,
         "beta_scale": 1.0,
         "n_samples_lcb": 1000,
+        "noise_var_override": 1e-6,
     },
 )
 

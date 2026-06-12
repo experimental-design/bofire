@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from typing import Annotated, Any, List, Literal, Optional, Union
 
-import numpy as np
 import pandas as pd
 from pydantic import (
     Field,
@@ -196,8 +195,9 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             (Makarova et al.).
         n_samples_lcb: Random domain points for the min-LCB estimate when
             ``lcb_method="sample"``. Default ``2000``.
-        batch_size: GP posterior evaluation batch size during sampling.
-            Default ``512``.
+        batch_size: If set, chunk GP posterior evaluation into batches of this
+            size during sampling to bound memory.  ``None`` (default) evaluates
+            all points in a single posterior call.
         lcb_method: How the domain-wide minimum LCB is found — ``"sample"``
             (default) draws random points; ``"optimize"`` uses the acquisition
             optimizer.
@@ -215,7 +215,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
     delta: PositiveFloat = 0.1
     beta_scale: PositiveFloat = 0.2
     n_samples_lcb: PositiveInt = 2000
-    batch_size: PositiveInt = 512
+    batch_size: Optional[PositiveInt] = None
     lcb_method: Literal["sample", "optimize"] = "sample"
     fallback_noise_variance: PositiveFloat = 1e-4
 
@@ -265,44 +265,20 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
             n_samples_lcb=self.n_samples_lcb,
             batch_size=self.batch_size,
             lcb_method=self.lcb_method,
+            topq=self.topq,
+            min_topq=self.min_topq,
         )
 
         # Objective direction (+1 maximise / -1 minimise, BoFire convention);
         # the regret bound does not apply to other objectives, so keep
-        # optimizing.  Negate to the minimisation frame used below.
+        # optimizing.  Negate to the minimisation frame used for the CV
+        # threshold below.
         direction = evaluator._objective_sign(strategy)
         if direction is None:
             return True
         sign = -direction  # +1 minimise / -1 maximise
 
-        # Top-q filtering: refit the regret-bound GP on the best fraction —
-        # the lowest ``sign * y`` (lowest y for minimisation, highest for
-        # maximisation).
-        eval_strategy = strategy
-        eval_experiments = experiments
-        if self.topq < 1.0:
-            output_key = domain.outputs.get_keys()[0]
-            y_values = experiments[output_key].values
-            n = len(y_values)
-            topn = max(self.min_topq, int(n * self.topq))
-            if topn < n:
-                top_indices = np.argsort(sign * y_values)[:topn]
-                eval_experiments = experiments.iloc[top_indices].reset_index(
-                    drop=True,
-                )
-                from bofire.strategies.mapper import map as map_strategy
-
-                try:
-                    eval_strategy = map_strategy(strategy._data_model)
-                    eval_strategy.tell(eval_experiments)
-                except Exception:
-                    return True
-
-        metrics = evaluator.evaluate(
-            eval_strategy,
-            eval_experiments,
-            len(experiments),
-        )
+        metrics = evaluator.evaluate(strategy, experiments, len(experiments))
 
         if not metrics:
             return True
@@ -327,6 +303,7 @@ class UCBLCBRegretBoundCondition(SingleCondition, EvaluateableCondition):
                 output_key,
                 self.cv_fold_columns,
                 self.threshold_factor,
+                sign=sign,
             )
         else:
             epsilon_bo = compute_threshold_noise(
@@ -350,16 +327,17 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
     Two threshold modes:
 
     - ``"adaptive"`` (default): theoretically motivated threshold from the
-      GP noise and posterior variances; Ishibashi et al. (2023), eq. (16).
+      GP noise and posterior variances (Ishibashi et al., 2023).
     - ``"median"``: heuristic ``rate * median(early values)`` over the
       first ``start_timing`` stopping values.
 
     Stateful: keeps the previous-iteration GP model to compare consecutive
     posteriors. Always returns ``True`` before ``min_experiments`` is
-    reached.
+    reached. The state lives in a private attribute and is not serialized;
+    after deserialization the criterion silently re-primes on the next call.
 
     Reference:
-        Ishibashi & Ye (2023): "A stopping criterion for Bayesian optimization
+        Ishibashi et al. (2023): "A stopping criterion for Bayesian optimization
         by the gap of expected minimum simple regrets" (AISTATS 2023).
 
     Attributes:
@@ -372,6 +350,10 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
         min_experiments: Minimum experiments before checking.
         beta_scale: Scaling factor for the GP-UCB beta parameter.
         n_samples_lcb: Random samples for the min-LCB estimate in kappa.
+        noise_var_override: If set, replaces the GP's learned noise variance
+            when computing the adaptive threshold.  Use a small value (e.g.
+            ``1e-6``) for exact (noise-free) objectives, where the GP can
+            otherwise over-estimate noise early and trigger a premature stop.
     """
 
     type: Literal["ExpMinRegretGapCondition"] = "ExpMinRegretGapCondition"
@@ -382,6 +364,7 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
     min_experiments: PositiveInt = 5
     beta_scale: PositiveFloat = 1.0
     n_samples_lcb: PositiveInt = 1000
+    noise_var_override: Optional[PositiveFloat] = None
 
     _evaluator: Any = PrivateAttr(default=None)
 
@@ -397,6 +380,10 @@ class ExpMinRegretGapCondition(SingleCondition, EvaluateableCondition):
                 start_timing=self.start_timing,
                 beta_scale=self.beta_scale,
                 n_samples_lcb=self.n_samples_lcb,
+                noise_var_override=self.noise_var_override,
+                # Compute both thresholds; ``evaluate`` below picks the one
+                # matching this condition's ``threshold_mode``.
+                threshold_mode="adaptive_median",
             )
         return self._evaluator
 
