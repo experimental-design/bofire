@@ -14,6 +14,7 @@ from botorch.optim.optimize import (
     optimize_acqf_mixed,
 )
 from botorch.optim.optimize_mixed import optimize_acqf_mixed_alternating
+from pounce import minimize as minimize_pounce
 from pydantic import BaseModel, model_validator
 from torch import Tensor
 
@@ -306,7 +307,7 @@ class _OptimizeAcqfInput(_OptimizeAcqfInputBase):
     q: int
     num_restarts: int
     raw_samples: int
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, bool | float | int | str | Callable] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
@@ -314,6 +315,7 @@ class _OptimizeAcqfInput(_OptimizeAcqfInputBase):
     sequential: bool
     ic_generator: Callable | None
     generator: Any
+    retry_on_optimization_warning: bool
 
 
 class _OptimizeAcqfMixedInput(_OptimizeAcqfInputBase):
@@ -323,12 +325,13 @@ class _OptimizeAcqfMixedInput(_OptimizeAcqfInputBase):
     num_restarts: int
     fixed_features_list: List[Dict[int, float]]  # it has to have more than two items
     raw_samples: int
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, bool | float | int | str | Callable] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
     ic_generator: Callable | None
     ic_gen_kwargs: Dict
+    retry_on_optimization_warning: bool
 
 
 class _OptimizeAcqfListInput(_OptimizeAcqfInputBase):
@@ -336,7 +339,7 @@ class _OptimizeAcqfListInput(_OptimizeAcqfInputBase):
     bounds: Tensor
     num_restarts: int
     raw_samples: int
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, bool | float | int | str | Callable] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
@@ -344,6 +347,7 @@ class _OptimizeAcqfListInput(_OptimizeAcqfInputBase):
     fixed_features_list: List[Dict[int, float]] | None
     ic_generator: Callable | None
     ic_gen_kwargs: Dict
+    retry_on_optimization_warning: bool
 
     @model_validator(mode="after")
     def validate_fixed_features(self):
@@ -359,13 +363,14 @@ class _OptimizeAcqfMixedAlternatingInput(_OptimizeAcqfInputBase):
     bounds: Tensor
     discrete_dims: Dict[int, List[float]] | None
     cat_dims: Dict[int, List[int]] | None
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, bool | float | int | str | Callable] | None
     q: int
     num_restarts: int
     raw_samples: int
     fixed_features: dict[int, float] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
+    retry_on_optimization_warning: bool
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
@@ -380,6 +385,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         self.per_step_local_reopt = data_model.per_step_local_reopt
         self.final_local_reopt = data_model.final_local_reopt
+        self.use_ipopt = data_model.use_ipopt
+        self.optimizer_options = data_model.optimizer_options
+        self.retry_on_optimization_warning = data_model.retry_on_optimization_warning
 
         super().__init__(data_model)
 
@@ -417,7 +425,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             acqfs=acqfs,
             bounds=bounds,
         )
-        # print(candidates)
 
         if pruning_applicable:
             candidates = self._prune(
@@ -426,8 +433,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 domain=domain,
                 bounds=bounds,
             )
-
-        # print(candidates)
 
         candidates = self._candidates_tensor_to_dataframe(candidates, domain)
 
@@ -604,7 +609,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         constraint_types = [ProductConstraint]
         if not pruning_applicable:
             constraint_types.append(NChooseKConstraint)
-        return {
+        options = {
             "batch_limit": (
                 self.batch_limit
                 if len(domain.constraints.get(constraint_types)) == 0
@@ -612,6 +617,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
             ),
             "maxiter": self.maxiter,
         }
+        if len(domain.constraints.get()) > 0 and self.use_ipopt:
+            options["method"] = minimize_pounce
+        # User-provided overrides land last so they win over BoFire defaults
+        # (and can also override "method" with a custom callable solver).
+        options.update(self.optimizer_options)
+        return options
 
     def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
         if n_acqfs > 1:
@@ -712,6 +723,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 if ic_generator is not None
                 else None,
                 fixed_features=self.get_fixed_features(domain=domain),
+                retry_on_optimization_warning=self.retry_on_optimization_warning,
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED:
             return _OptimizeAcqfMixedInput(
@@ -727,6 +739,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 ic_generator=ic_generator,
                 ic_gen_kwargs=ic_gen_kwargs,
                 fixed_features_list=self.get_categorical_combinations(domain),
+                retry_on_optimization_warning=self.retry_on_optimization_warning,
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_LIST:
             n_combos = domain.inputs.get_number_of_categorical_combinations()
@@ -747,6 +760,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 fixed_features=self.get_fixed_features(domain=domain)
                 if n_combos == 1
                 else None,
+                retry_on_optimization_warning=self.retry_on_optimization_warning,
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING:
             fixed_keys = domain.inputs.get_fixed().get_keys()
@@ -771,6 +785,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
                 },
+                retry_on_optimization_warning=self.retry_on_optimization_warning,
             )
         else:
             raise ValueError(f"Unknown optimizer: {optimizer}")
