@@ -328,7 +328,8 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
             return x_incumbent
 
         with torch.no_grad():
-            means = sign * model.posterior(X_all).mean.squeeze(-1)  # [n], g-space
+            post_mean = model.posterior(X_all).mean  # ty: ignore[unresolved-attribute]
+            means = sign * post_mean.squeeze(-1)  # [n], g-space
 
         sorted_pos = means.argsort().tolist()
         extras = [X_all[[pos]] for pos in sorted_pos if pos != incumbent_pos][

@@ -86,8 +86,9 @@ class LogExpectedImprovementPerCost(AnalyticAcquisitionFunction):
         posterior = self.model.posterior(
             X.squeeze(-2), posterior_transform=self.posterior_transform
         )
-        mean = posterior.mean.squeeze(-1)
-        sigma = posterior.variance.squeeze(-1).clamp_min(1e-12).sqrt()
+        mean = posterior.mean.squeeze(-1)  # ty: ignore[unresolved-attribute]
+        var = posterior.variance  # ty: ignore[unresolved-attribute]
+        sigma = var.squeeze(-1).clamp_min(1e-12).sqrt()
         u = (mean - self.best_f.expand_as(mean)) / sigma
         if not self.maximize:
             u = -u
@@ -394,21 +395,22 @@ class LogEIPCEvaluator(TerminationEvaluator):
             if fitted is not None:
                 self.cost_callable = fitted
 
-        if self.search_method == "optimize":
-            max_log_eipc = self._optimize_max_log_eipc(
-                strategy, experiments, best_f, cost_estimate, maximize
-            )
-        else:
-            bounds = strategy.domain.inputs.get_bounds(
-                specs=strategy.input_preprocessing_specs
-            )
-            lower = torch.tensor(bounds[0], **tkwargs)
-            upper = torch.tensor(bounds[1], **tkwargs)
-            max_log_eipc = self._compute_max_log_eipc(
-                strategy.model, best_f, lower, upper, cost_estimate, maximize
-            )
-
-        self.cost_callable = _saved_callable  # restore after GP override
+        try:
+            if self.search_method == "optimize":
+                max_log_eipc = self._optimize_max_log_eipc(
+                    strategy, experiments, best_f, cost_estimate, maximize
+                )
+            else:
+                bounds = strategy.domain.inputs.get_bounds(
+                    specs=strategy.input_preprocessing_specs
+                )
+                lower = torch.tensor(bounds[0], **tkwargs)
+                upper = torch.tensor(bounds[1], **tkwargs)
+                max_log_eipc = self._compute_max_log_eipc(
+                    strategy.model, best_f, lower, upper, cost_estimate, maximize
+                )
+        finally:
+            self.cost_callable = _saved_callable  # restore after GP override
 
         return {
             "max_log_eipc": max_log_eipc,

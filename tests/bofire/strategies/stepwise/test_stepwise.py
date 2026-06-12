@@ -18,6 +18,7 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.stepwise.stepwise import (
     validate_domain_compatibility,
 )
+from bofire.strategies.stepwise.stepwise import OptimizationComplete
 
 
 def test_validate_domain_compatibility():
@@ -128,9 +129,6 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     else:
         assert strategy.surrogates == _strategy.surrogates  # type: ignore
         assert strategy.surrogates_specs == _strategy.surrogate_specs  # type: ignore
-
-
-from bofire.strategies.stepwise.stepwise import OptimizationComplete
 
 
 def test_StepWiseStrategy_get_step_invalid():
