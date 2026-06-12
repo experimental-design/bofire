@@ -35,7 +35,7 @@ dependencies = [
 
 [project.optional-dependencies]
 optimization = [
-    "botorch>=0.18.0",
+    "botorch[fully_bayesian]>=0.18.1",
     "numpy",
     "multiprocess",
     "plotly",
@@ -56,7 +56,7 @@ cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.18.0",
+    "botorch[fully_bayesian]>=0.18.1",
     "numpy",
     "multiprocess",
     "plotly",
