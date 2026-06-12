@@ -97,9 +97,12 @@ def map_DimensionalityScaledLogNormalPrior(
     data_model: data_models.DimensionalityScaledLogNormalPrior,
     d: int,
 ) -> gpytorch.priors.LogNormalPrior:
-    return gpytorch.priors.LogNormalPrior(
-        loc=data_model.loc + math.log(d) * data_model.loc_scaling,
-        scale=(data_model.scale**2 + math.log(d) * data_model.scale_scaling) ** 0.5,
+    # a dimensionality-scaled log-normal is a plain log-normal with effective params
+    return map_LogNormalPrior(
+        data_models.LogNormalPrior(
+            loc=data_model.loc + math.log(d) * data_model.loc_scaling,
+            scale=(data_model.scale**2 + math.log(d) * data_model.scale_scaling) ** 0.5,
+        )
     )
 
 
@@ -107,10 +110,13 @@ def map_DimensionalityScaledGammaPrior(
     data_model: data_models.DimensionalityScaledGammaPrior,
     d: int,
 ) -> gpytorch.priors.GammaPrior:
-    return gpytorch.priors.GammaPrior(
-        concentration=data_model.concentration
-        + math.sqrt(d) * data_model.concentration_scaling,
-        rate=data_model.rate * d**data_model.rate_power,
+    # a dimensionality-scaled gamma is a plain gamma with effective params
+    return map_GammaPrior(
+        data_models.GammaPrior(
+            concentration=data_model.concentration
+            + math.sqrt(d) * data_model.concentration_scaling,
+            rate=data_model.rate * d**data_model.rate_power,
+        )
     )
 
 
