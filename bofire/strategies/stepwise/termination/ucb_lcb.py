@@ -125,10 +125,13 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
             sign=sign,
         )
 
-        # Noise variance from the GP likelihood (used by conditions to
-        # compute the termination threshold).
+        # Likelihood noise for the threshold, un-standardized to match the
+        # original-scale regret bound (Standardize learns noise in std space).
         try:
-            estimated_noise_var = strategy.model.likelihood.noise.item()
+            estimated_noise_var = (
+                strategy.model.likelihood.noise.item()
+                * self.get_output_scale(strategy.model) ** 2
+            )
         except Exception:
             estimated_noise_var = self.fallback_noise_variance
 

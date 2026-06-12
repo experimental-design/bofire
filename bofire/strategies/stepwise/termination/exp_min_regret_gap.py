@@ -47,7 +47,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
             Default ``512``.
         threshold_mode: How the stopping threshold is computed.
             ``"adaptive"`` uses the theoretically motivated threshold from the
-            GP noise and posterior variances (eq. 16 in the paper).
+            GP noise and posterior variances.
             ``"median"`` uses ``rate * median`` of the first ``start_timing``
             stopping values. ``"adaptive_median"`` (default) combines both —
             stops when either threshold is exceeded.
@@ -56,6 +56,8 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         rate: Fraction of the median used as the median threshold.
             Default ``0.1``.
         noise_var_override: If set, overrides the GP's learned noise variance.
+            Given in standardized output scale (like the learned noise); it is
+            un-standardized internally to match the original-scale posteriors.
             Set to ``1e-6`` for noise-free synthetic benchmarks to match the
             reference implementation.
         lcb_method: How the domain-wide minimum LCB (``kappa``) is found.
@@ -91,13 +93,13 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
             beta_log_denominator=beta_log_denominator,
             beta_min=beta_min,
             beta_t_offset=beta_t_offset,
+            lcb_method=lcb_method,
         )
         self.n_samples_lcb = n_samples_lcb
         self.batch_size = batch_size
         self.threshold_mode = threshold_mode
         self.start_timing = start_timing
         self.rate = rate
-        self.lcb_method = lcb_method
         # If set, overrides the GP's learned noise variance (the reference
         # implementation uses ~1e-6 for noise-free synthetic functions).
         self.noise_var_override = noise_var_override
@@ -111,26 +113,18 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
 
     @staticmethod
     def _get_noise_variance(model) -> float:
-        """Return GP noise variance in the original (un-standardized) output scale.
+        """Return the GP's learned noise variance in standardized output scale.
 
         BoTorch models with a ``Standardize`` outcome transform learn noise in
-        standardized space, but posteriors are returned in the original scale,
-        so the noise must be un-standardized to match:
-        ``noise_var_original = noise_var_standardized * y_std**2``.
+        standardized space.  The caller (``evaluate``) un-standardizes it once
+        (``* y_std**2``) so it matches the original-scale posteriors -- the
+        same convention as ``noise_var_override``, which is also given in
+        standardized scale.
         """
         try:
-            noise_var = model.likelihood.noise.item()
+            return float(model.likelihood.noise.item())
         except Exception:
             return 1e-4
-
-        if hasattr(model, "outcome_transform"):
-            try:
-                y_std = model.outcome_transform.stdvs.item()
-                noise_var = noise_var * y_std**2
-            except Exception:
-                pass
-
-        return noise_var
 
     def _calc_kl_qp_fast(
         self,
@@ -167,8 +161,9 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         X_pair = torch.cat([X_new_incumbent, X_old_incumbent], dim=0)
         with torch.no_grad():
             posterior = model.posterior(X_pair)
-            mu = posterior.mean.squeeze(-1)
-            cov = posterior.distribution.covariance_matrix
+            mu = posterior.mean.squeeze(-1)  # ty: ignore[unresolved-attribute]
+            mvn = posterior.distribution  # ty: ignore[unresolved-attribute]
+            cov = mvn.covariance_matrix
 
         g = sign * float((mu[0] - mu[1]).item())
         var_diff = float((cov[0, 0] - 2 * cov[0, 1] + cov[1, 1]).item())
@@ -232,15 +227,16 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         x_incumbent_new = X_all[[incumbent_idx]]
         x_incumbent_old = X_all[[self._prev_incumbent_idx]]
 
-        # Use the old data count for beta, matching the reference implementation.
-        sqrt_beta = np.sqrt(
-            self._compute_beta(dimensionality, self._prev_n_experiments)
-        )
+        # GP-UCB pairs round-t beta with the (t-1)-point posterior (Srinivas
+        # Thm. 1); reference: beta from ``X.shape[0]``, kappa from old model.
+        sqrt_beta = np.sqrt(self._compute_beta(dimensionality, n_experiments))
 
         with torch.no_grad():
             old_posterior = self._prev_model.posterior(x_new)
-            old_mean = float(old_posterior.mean.squeeze().item())
-            old_var = float(old_posterior.variance.squeeze().item())
+            mean_t = old_posterior.mean  # ty: ignore[unresolved-attribute]
+            var_t = old_posterior.variance  # ty: ignore[unresolved-attribute]
+            old_mean = float(mean_t.squeeze().item())
+            old_var = float(var_t.squeeze().item())
 
         noise_var = (
             self.noise_var_override
@@ -248,10 +244,8 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
             else self._get_noise_variance(strategy.model)
         )
 
-        # BoTorch with Standardize: noise_var is in standardized space but
-        # posterior returns original-scale predictions. Un-standardize noise
-        # so all quantities are in the same scale (matching reference which
-        # uses normalize_Y=False where everything is natively in raw scale).
+        # Un-standardize the noise once so it matches the original-scale
+        # posteriors (the reference works natively in raw scale).
         y_std = self.get_output_scale(strategy.model)
         noise_var_original = noise_var * y_std**2
 
@@ -259,9 +253,9 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
 
         # delta_f: change in predicted incumbent value.
         with torch.no_grad():
-            old_mu_at_old_inc = float(
-                self._prev_model.posterior(x_incumbent_old).mean.squeeze().item()
-            )
+            old_post_inc = self._prev_model.posterior(x_incumbent_old)
+            old_mu = old_post_inc.mean  # ty: ignore[unresolved-attribute]
+            old_mu_at_old_inc = float(old_mu.squeeze().item())
             new_mu_at_new_inc = float(
                 strategy.model.posterior(x_incumbent_new).mean.squeeze().item()
             )
@@ -350,7 +344,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         noise_var: float,
         kappa: float,
     ) -> Optional[float]:
-        """Adaptive threshold from Ishibashi et al. (2023), eq. (16).
+        """Adaptive threshold from Ishibashi et al. (2023).
 
         All inputs are in raw Y scale (the reference implementation uses
         ``normalize_Y=False``).
@@ -369,9 +363,9 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         c = np.sqrt(-2.0 * np.log(self.delta))
         precision = 1.0 / noise_var
         with torch.no_grad():
-            var_old_incumbent = float(
-                old_model.posterior(x_incumbent_new).variance.squeeze().item()
-            )
+            post_inc = old_model.posterior(x_incumbent_new)
+            var_inc = post_inc.variance  # ty: ignore[unresolved-attribute]
+            var_old_incumbent = float(var_inc.squeeze().item())
 
         denom = np.sqrt(precision) * (var_old_new + noise_var)
         if denom <= 0:

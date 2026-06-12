@@ -32,19 +32,22 @@ def compute_threshold_cv(
     output_key: str,
     cv_fold_columns: List[str],
     threshold_factor: float = 1.0,
+    sign: float = 1.0,
 ) -> Optional[float]:
     """Compute a threshold from cross-validation fold variability.
 
     Uses the corrected std of the incumbent's per-fold scores
     (C. Nadeau and Y. Bengio, NeurIPS 2003):
     ``threshold = threshold_factor * sqrt(1/K + 1/(K-1)) * std(fold_scores)``.
-    The incumbent is the row minimising ``output_key``.
+    The incumbent is the row minimising ``sign * output_key``.
 
     Args:
         experiments: Experiments conducted so far.
         output_key: Output column used to locate the incumbent.
         cv_fold_columns: Columns containing the per-fold CV scores.
         threshold_factor: Multiplier (``decay`` in Makarova et al. 2022).
+        sign: ``+1`` (default) when the objective is minimised (incumbent =
+            argmin of ``output_key``), ``-1`` when maximised (argmax).
 
     Returns:
         The corrected CV threshold, or ``None`` if fold scores contain NaN
@@ -53,7 +56,7 @@ def compute_threshold_cv(
     y_values = experiments[output_key].dropna()
     if len(y_values) < 1:
         return None
-    incumbent_idx = y_values.idxmin()
+    incumbent_idx = (sign * y_values).idxmin()
     fold_scores = experiments.loc[incumbent_idx, cv_fold_columns].values.astype(float)
     if np.any(np.isnan(fold_scores)):
         return None

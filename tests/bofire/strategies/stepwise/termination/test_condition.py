@@ -138,10 +138,15 @@ class TestUCBLCBRegretBoundConditionDataModel:
             is False
         )
 
-        # Default threshold_factor (1.0) with GP noise ~1e-4 → should NOT terminate
-        cond_default = UCBLCBRegretBoundCondition(min_experiments=5)
+        # Tiny threshold_factor → threshold ~ 0 → should NOT terminate.  (With
+        # the default factor the outcome depends on the magnitude of the
+        # learned noise, which varies with the GP fit; the exact original-scale
+        # noise convention is pinned in test_evaluator.py.)
+        cond_strict = UCBLCBRegretBoundCondition(
+            threshold_factor=1e-12, min_experiments=5
+        )
         assert (
-            cond_default.evaluate(benchmark.domain, experiments, strategy=strategy)
+            cond_strict.evaluate(benchmark.domain, experiments, strategy=strategy)
             is True
         )
 

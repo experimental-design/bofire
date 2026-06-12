@@ -1,7 +1,7 @@
 """Termination evaluators that compute metrics for termination conditions."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -78,9 +78,6 @@ class RegretBoundEvaluator(TerminationEvaluator):
     ``LogEIPCEvaluator`` and ``ProbabilisticRegretBoundEvaluator`` — inherit
     :class:`TerminationEvaluator` directly and carry none of these parameters.
 
-    Subclasses are expected to define ``self.lcb_method`` (``"sample"`` or
-    ``"optimize"``), which selects how the domain-wide minimum LCB is found.
-
     Args:
         delta: Confidence parameter for the GP-UCB beta formula (Srinivas et
             al., 2010). Controls how optimistic the confidence bounds are.
@@ -97,6 +94,9 @@ class RegretBoundEvaluator(TerminationEvaluator):
             ``t = num_observed - beta_t_offset`` instead of the total
             observation count.  Useful when papers index beta by BO iteration
             rather than total evaluations (e.g. excluding the random init).
+        lcb_method: How the domain-wide minimum LCB is found.  ``"sample"``
+            (default) draws random points; ``"optimize"`` uses the acquisition
+            optimizer.
     """
 
     def __init__(
@@ -107,6 +107,7 @@ class RegretBoundEvaluator(TerminationEvaluator):
         beta_log_denominator: float = 6.0,
         beta_min: float = 0.01,
         beta_t_offset: Optional[int] = None,
+        lcb_method: Literal["sample", "optimize"] = "sample",
     ):
         # GP-UCB beta parameters (Srinivas et al., 2010).
         self.delta = delta
@@ -117,12 +118,16 @@ class RegretBoundEvaluator(TerminationEvaluator):
         # If set, use ``t = num_observed - beta_t_offset`` in the beta formula
         # (for papers that index beta by BO iteration rather than observation count).
         self.beta_t_offset = beta_t_offset
+        self.lcb_method = lcb_method
 
     def _compute_beta(self, dimensionality: int, num_observed: int) -> float:
-        """Compute beta for UCB/LCB via the GP-UCB formula.
+        """Compute beta for UCB/LCB via the GP-UCB schedule of Srinivas et al.
 
-        ``beta_t = beta_scale * 2 * log(d * t^2 * pi^2 / (6 * delta))``.
-        Makarova et al. use ``beta_scale=0.2``; Ishibashi et al. use ``1.0``.
+        ``beta_t = beta_scale * 2 * log(d * t^2 * pi^2 / (6 * delta))``
+        (Theorem 1 in Srinivas et al. (2010), "Gaussian Process Optimization
+        in the Bandit Setting", finite-domain form).  Their experiments scale
+        the theoretical beta down by a factor of 5, which is Makarova et
+        al.'s ``beta_scale=0.2``; Ishibashi et al. use ``beta_scale=1.0``.
         """
         t = num_observed
         if self.beta_t_offset is not None:
@@ -172,8 +177,9 @@ class RegretBoundEvaluator(TerminationEvaluator):
         """
         with torch.no_grad():
             post = model.posterior(X)
-            m = post.mean.squeeze(-1)
-            s = post.variance.squeeze(-1).clamp_min(0.0).sqrt()
+            m = post.mean.squeeze(-1)  # ty: ignore[unresolved-attribute]
+            var = post.variance  # ty: ignore[unresolved-attribute]
+            s = var.squeeze(-1).clamp_min(0.0).sqrt()
             g_ucb = sign * m + sqrt_beta * s
             return float(g_ucb.min().item())
 
@@ -185,7 +191,7 @@ class RegretBoundEvaluator(TerminationEvaluator):
         bounds_lower: torch.Tensor,
         bounds_upper: torch.Tensor,
         n_samples: int = 2000,
-        batch_size: int = 512,
+        batch_size: Optional[int] = None,
         sign: float = 1.0,
     ) -> float:
         """Return ``min [sign*mu - sqrt(beta)*sigma]`` via random sampling."""
@@ -195,13 +201,19 @@ class RegretBoundEvaluator(TerminationEvaluator):
         )
         X_candidates = torch.cat([X_random, X_evaluated], dim=0)
 
+        # ``None`` evaluates every candidate in a single posterior call; an
+        # explicit size chunks the evaluation to bound memory for large
+        # ``n_samples``.
+        if batch_size is None:
+            batch_size = X_candidates.shape[0]
+
         min_lcb = float("inf")
         with torch.no_grad():
             for start in range(0, X_candidates.shape[0], batch_size):
                 X_batch = X_candidates[start : start + batch_size]
                 post = model.posterior(X_batch)
-                m = post.mean.squeeze(-1)
-                s = post.variance.squeeze(-1).sqrt()
+                m = post.mean.squeeze(-1)  # ty: ignore[unresolved-attribute]
+                s = post.variance.squeeze(-1).sqrt()  # ty: ignore[unresolved-attribute]
                 lcb = sign * m - sqrt_beta * s
                 batch_min = float(lcb.min().item())
                 if batch_min < min_lcb:
@@ -215,11 +227,23 @@ class RegretBoundEvaluator(TerminationEvaluator):
         sqrt_beta: float,
         sign: float = 1.0,
     ) -> float:
-        """Minimise ``sign*mu - sqrt(beta)*sigma`` over the domain via the optimizer.
+        """Minimise the bound ``sign*mu - sqrt(beta)*sigma`` over the domain.
 
-        For ``sign = +1`` this finds the domain-wide minimum LCB; for
-        ``sign = -1`` (maximisation) the equivalent quantity is the negated
-        maximum UCB, found by optimising the UCB with ``maximize=True``.
+        This bound is the lower confidence bound in the "minimise ``g = sign*f``"
+        frame.  BoTorch's optimizer only *maximises*, so rather than minimise the
+        bound directly we maximise its negation ``-sign*mu + sqrt(beta)*sigma``,
+        which is exactly a BoTorch ``UpperConfidenceBound`` with
+        ``maximize=(sign < 0)``.  Its maximiser is the point where the bound is
+        smallest:
+
+        - ``sign = +1`` (minimisation): the acqf is ``-mu + sqrt(beta)*sigma``,
+          so maximising it locates the minimum of the LCB ``mu - sqrt(beta)*sigma``.
+        - ``sign = -1`` (maximisation): the acqf is the ordinary UCB
+          ``mu + sqrt(beta)*sigma``, whose maximiser is the same point (there the
+          bound equals ``-(mu + sqrt(beta)*sigma)``, i.e. minus the UCB).
+
+        The bound ``sign*mu - sqrt(beta)*sigma`` is then evaluated at that point
+        and returned.
         """
         acqf = UpperConfidenceBound(
             model=strategy.model, beta=float(sqrt_beta) ** 2, maximize=(sign < 0)
@@ -251,7 +275,7 @@ class RegretBoundEvaluator(TerminationEvaluator):
         bounds_lower: torch.Tensor,
         bounds_upper: torch.Tensor,
         n_samples: int = 2000,
-        batch_size: int = 512,
+        batch_size: Optional[int] = None,
         strategy=None,
         experiments: Optional[pd.DataFrame] = None,
         sign: float = 1.0,

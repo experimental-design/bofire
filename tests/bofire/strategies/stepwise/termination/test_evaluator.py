@@ -158,6 +158,25 @@ class TestUCBLCBRegretEvaluator:
 
         assert result["estimated_noise_variance"] > 0
 
+    def test_estimated_noise_variance_in_original_scale(self, trained_strategy):
+        """The estimated noise must be un-standardized (* y_std**2) exactly once.
+
+        The regret bound is in original output scale (Standardize posteriors
+        are back-transformed), so the noise-derived threshold must be in the
+        same scale.
+        """
+        strategy, experiments = trained_strategy
+        evaluator = UCBLCBRegretEvaluator()
+
+        result = evaluator.evaluate(strategy, experiments, 0)
+
+        noise_standardized = strategy.model.likelihood.noise.item()
+        y_std = UCBLCBRegretEvaluator.get_output_scale(strategy.model)
+        assert y_std > 1.0  # Himmelblau spans hundreds -> Standardize is active
+        assert result["estimated_noise_variance"] == pytest.approx(
+            noise_standardized * y_std**2, rel=1e-9
+        )
+
 
 class TestRegretBoundConvergence:
     """Integration tests verifying regret bound behavior over BO iterations."""
@@ -336,6 +355,27 @@ class TestExpMinRegretGapEvaluator:
 
         assert result["threshold_adaptive"] is not None
         assert result["threshold_adaptive"] > 0
+
+    def test_automatic_noise_matches_override_convention(self, bo_loop_strategies):
+        """Automatic (learned) noise must follow the same scale convention as
+        ``noise_var_override``: standardized noise, un-standardized exactly once.
+        """
+        strategy1, exp1, strategy2, exp2 = bo_loop_strategies
+
+        noise_standardized = strategy2.model.likelihood.noise.item()
+        auto = ExpMinRegretGapEvaluator()
+        override = ExpMinRegretGapEvaluator(noise_var_override=noise_standardized)
+
+        auto.evaluate(strategy1, exp1, 0)
+        override.evaluate(strategy1, exp1, 0)
+        result_auto = auto.evaluate(strategy2, exp2, 1)
+        result_override = override.evaluate(strategy2, exp2, 1)
+
+        y_std = ExpMinRegretGapEvaluator.get_output_scale(strategy2.model)
+        assert y_std > 1.0  # Himmelblau spans hundreds -> Standardize is active
+        expected = noise_standardized * y_std**2
+        assert result_auto["noise_variance"] == pytest.approx(expected, rel=1e-9)
+        assert result_override["noise_variance"] == pytest.approx(expected, rel=1e-9)
 
     def test_median_threshold_none_before_start_timing(self, bo_loop_strategies):
         """Median threshold should be None when fewer than start_timing values."""
@@ -1126,12 +1166,12 @@ class TestClopperPearsonExactFormula:
         expected_lower = float(scipy_beta.ppf(risk / 2.0, k, n - k + 1))
         expected_upper = float(scipy_beta.ppf(1.0 - risk / 2.0, k + 1, n - k))
 
-        assert abs(lower - expected_lower) < 1e-10, (
-            f"lower={lower:.10f} != expected={expected_lower:.10f}"
-        )
-        assert abs(upper - expected_upper) < 1e-10, (
-            f"upper={upper:.10f} != expected={expected_upper:.10f}"
-        )
+        assert (
+            abs(lower - expected_lower) < 1e-10
+        ), f"lower={lower:.10f} != expected={expected_lower:.10f}"
+        assert (
+            abs(upper - expected_upper) < 1e-10
+        ), f"upper={upper:.10f} != expected={expected_upper:.10f}"
 
     def test_boundary_k0_lower_exactly_zero(self):
         """k=0 → lower must be *exactly* 0.0, not just near-zero."""
@@ -1204,9 +1244,9 @@ class TestRunPRBLevelTestScheduleAndGuarantee:
             ((alpha - 1) / alpha) * delta_est * (step**-alpha)
             for step in range(1, 10_000)
         )
-        assert partial_sum <= delta_est + 1e-6, (
-            f"Risk schedule partial sum {partial_sum:.6f} exceeds δ_est={delta_est}"
-        )
+        assert (
+            partial_sum <= delta_est + 1e-6
+        ), f"Risk schedule partial sum {partial_sum:.6f} exceeds δ_est={delta_est}"
 
     def test_type1_error_rate_bounded_by_delta_est(self):
         """When true p >> level, the false-positive rate must be ≤ δ_est.
@@ -1342,12 +1382,12 @@ class TestPRBKnownAnswerEstimation:
             result = ev._evaluate_core(cosine_gp, X_test, lower, upper, epsilon=eps)
             psi_values.append(result["prob_regret_ok"])
 
-        assert psi_values[0] <= psi_values[1] + 0.05, (
-            f"Ψ not monotone: ε=0.05→{psi_values[0]:.3f}, ε=0.5→{psi_values[1]:.3f}"
-        )
-        assert psi_values[1] <= psi_values[2] + 0.05, (
-            f"Ψ not monotone: ε=0.5→{psi_values[1]:.3f}, ε=2.0→{psi_values[2]:.3f}"
-        )
+        assert (
+            psi_values[0] <= psi_values[1] + 0.05
+        ), f"Ψ not monotone: ε=0.05→{psi_values[0]:.3f}, ε=0.5→{psi_values[1]:.3f}"
+        assert (
+            psi_values[1] <= psi_values[2] + 0.05
+        ), f"Ψ not monotone: ε=0.5→{psi_values[1]:.3f}, ε=2.0→{psi_values[2]:.3f}"
 
 
 def _fit_strategy(objective, X, y, seed=0):
@@ -1513,12 +1553,12 @@ class TestObjectiveDirection:
         at_min = ev._evaluate_core(
             gp, torch.tensor([[0.5]], dtype=torch.float64), lower, upper, 0.1, sign=-1.0
         )
-        assert at_max["prob_regret_ok"] > 0.85, (
-            f"Ψ at the true maximum should be ≈1, got {at_max['prob_regret_ok']:.3f}"
-        )
-        assert at_min["prob_regret_ok"] < 0.10, (
-            f"Ψ at the true minimum should be ≈0, got {at_min['prob_regret_ok']:.3f}"
-        )
+        assert (
+            at_max["prob_regret_ok"] > 0.85
+        ), f"Ψ at the true maximum should be ≈1, got {at_max['prob_regret_ok']:.3f}"
+        assert (
+            at_min["prob_regret_ok"] < 0.10
+        ), f"Ψ at the true minimum should be ≈0, got {at_min['prob_regret_ok']:.3f}"
 
     def test_unsupported_objective_rejected(self):
         """Objectives that are neither Minimize nor Maximize → empty metrics."""
@@ -1537,6 +1577,6 @@ class TestObjectiveDirection:
             ),
         ]
         for ev in evaluators:
-            assert ev.evaluate(strat, exp, 0) == {}, (
-                f"{type(ev).__name__} should reject a CloseToTargetObjective"
-            )
+            assert (
+                ev.evaluate(strat, exp, 0) == {}
+            ), f"{type(ev).__name__} should reject a CloseToTargetObjective"
