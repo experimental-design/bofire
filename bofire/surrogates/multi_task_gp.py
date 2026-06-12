@@ -58,8 +58,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ) -> None:
+        n_dim = tX.shape[-1]
         likelihood = GaussianLikelihood(
-            noise_prior=priors.map(self.noise_prior),
+            noise_prior=priors.map(self.noise_prior, d=n_dim),
             noise_constraint=priors.map(self.noise_constraint)
             if self.noise_constraint is not None
             else None,

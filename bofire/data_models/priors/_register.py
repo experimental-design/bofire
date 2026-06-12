@@ -22,7 +22,9 @@ def _rebuild_dependent_models() -> None:
     )
     from bofire.data_models.kernels.conditional import WedgeKernel
     from bofire.data_models.kernels.continuous import (
+        LinearKernel,
         MaternKernel,
+        PolynomialKernel,
         RBFKernel,
         SphericalLinearKernel,
     )
@@ -63,6 +65,9 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "angle_prior"),
         (WedgeKernel, "radius_prior"),
         (ScaleKernel, "outputscale_prior"),
+        (LinearKernel, "variance_prior"),
+        (PolynomialKernel, "offset_prior"),
+        (PolynomialFeatureInteractionKernel, "outputscale_prior"),
         (WassersteinKernel, "lengthscale_prior"),
         (ExactWassersteinKernel, "lengthscale_prior"),
         (SingleTaskGPSurrogate, "noise_prior"),
@@ -102,6 +107,8 @@ def _rebuild_dependent_models() -> None:
     for cls in [
         RBFKernel,
         MaternKernel,
+        LinearKernel,
+        PolynomialKernel,
         SphericalLinearKernel,
         HammingDistanceKernel,
         IndexKernel,

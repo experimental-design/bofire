@@ -39,6 +39,7 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.priors.api import (
     CHEN_OUTPUTSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    DimensionalityScaledGammaPrior,
     GammaPrior,
     LogTransformedInterval,
 )
@@ -129,6 +130,36 @@ def test_map_scale_kernel_dimensionality_scaled_outputscale():
     m = 0.4 * math.sqrt(d) + 4
     assert k.outputscale_prior.concentration == pytest.approx(m)
     assert k.outputscale_prior.rate == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        LinearKernel(variance_prior=DimensionalityScaledGammaPrior()),
+        PolynomialKernel(offset_prior=DimensionalityScaledGammaPrior()),
+        PolynomialFeatureInteractionKernel(
+            kernels=[RBFKernel(), MaternKernel()],
+            max_degree=2,
+            include_self_interactions=False,
+            outputscale_prior=DimensionalityScaledGammaPrior(),
+        ),
+        IndexKernel(num_categories=3, rank=1, prior=DimensionalityScaledGammaPrior()),
+        PositiveIndexKernel(
+            num_categories=3, rank=1, task_prior=DimensionalityScaledGammaPrior()
+        ),
+    ],
+)
+def test_map_dimensionality_scaled_prior_on_general_fields(kernel):
+    # these prior fields previously only accepted non-dimensionality-scaled priors
+    # (AnyGeneralPrior). They now accept any prior, and the mapper threads the
+    # dimensionality d to them, so mapping must not raise a missing-`d` error.
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+    assert k is not None
 
 
 def test_map_polynomial_kernel():

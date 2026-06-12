@@ -19,7 +19,7 @@ from bofire.data_models.kernels.fidelity import DownsamplingKernel
 from bofire.data_models.kernels.kernel import AggregationKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import ExactWassersteinKernel, WassersteinKernel
-from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior, AnyPriorConstraint
+from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class AdditiveKernel(AggregationKernel):
@@ -88,8 +88,8 @@ class ScaleKernel(AggregationKernel):
         WassersteinKernel,
         ExactWassersteinKernel,
     ]
-    # AnyPrior (not AnyGeneralPrior) so dimensionality-scaled priors are accepted; the
-    # ScaleKernel mapper forwards the dimensionality d to the outputscale prior.
+    # the ScaleKernel mapper forwards the dimensionality d to the outputscale prior, so
+    # dimensionality-scaled priors are supported here.
     outputscale_prior: Optional[AnyPrior] = None
     outputscale_constraint: Optional[AnyPriorConstraint] = None
 
@@ -156,7 +156,7 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
     ]
     max_degree: int
     include_self_interactions: bool
-    outputscale_prior: Optional[AnyGeneralPrior] = None
+    outputscale_prior: Optional[AnyPrior] = None
 
 
 AdditiveKernel.model_rebuild()

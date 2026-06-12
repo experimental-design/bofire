@@ -52,11 +52,10 @@ _PRIOR_CONSTRAINT_TYPES: list[type] = [
 AnyPriorConstraint = tagged_union(*_PRIOR_CONSTRAINT_TYPES)
 
 
-# these are priors that are generally applicable
-# and do not depend on problem specific extra parameters
-AnyGeneralPrior = tagged_union(
-    GammaPrior, NormalPrior, LKJPrior, LogNormalPrior, SmoothedBoxPrior
-)
+# Deprecated alias kept for backwards compatibility. All prior map sites now receive the
+# problem dimensionality `d` (priors that do not need it ignore it), so there is no longer a
+# need for a separate union excluding the dimensionality-scaled priors. Use AnyPrior instead.
+AnyGeneralPrior = AnyPrior
 
 # default priors of interest
 # botorch defaults

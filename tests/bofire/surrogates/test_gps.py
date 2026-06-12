@@ -52,6 +52,7 @@ from bofire.data_models.priors.api import (
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    DimensionalityScaledGammaPrior,
     GammaPrior,
     LogNormalPrior,
 )
@@ -179,6 +180,22 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     model2.loads(dump)
     preds2 = model2.predict(samples)
     assert_frame_equal(preds, preds2)
+
+
+def test_SingleTaskGPModel_with_dimensionality_scaled_noise_prior():
+    # regression: a dimensionality-scaled prior on noise_prior previously crashed at fit
+    # because the noise map site did not pass the dimensionality `d`. It now fits cleanly.
+    bench = Himmelblau()
+    experiments = bench.f(bench.domain.inputs.sample(20), return_complete=True)
+
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
+        noise_prior=DimensionalityScaledGammaPrior(),
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(experiments)
+    assert surrogate.model is not None
 
 
 def test_SingleTaskGPModel_with_engineered_features():
