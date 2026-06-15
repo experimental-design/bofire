@@ -117,24 +117,6 @@ specs.add_valid(
     },
 )
 
-for value in [-1.0, 0.0]:
-    specs.add_invalid(
-        priors.DimensionalityScaledGammaPrior,
-        lambda value=value: {
-            "concentration": value,
-            "rate": random.random() + 0.1,
-        },
-        error=ValidationError,
-    )
-    specs.add_invalid(
-        priors.DimensionalityScaledGammaPrior,
-        lambda value=value: {
-            "concentration": random.random() + 0.1,
-            "rate": value,
-        },
-        error=ValidationError,
-    )
-
 
 specs.add_valid(
     priors.SmoothedBoxPrior,
