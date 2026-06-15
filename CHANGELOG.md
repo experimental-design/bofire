@@ -12,6 +12,14 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Fixed
 
+## [0.4.1] - 2026-06-16
+
+### Added
+- Support for dimensionality scaled gamma priors.
+
+### Changed
+- **Breaking**: Botorch >= 0.18.1
+
 ## [0.4.0] - 2026-06-08
 
 ### Added
