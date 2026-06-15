@@ -155,7 +155,7 @@ def map_LinearKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
         variance_prior=(
-            priors.map(data_model.variance_prior)
+            priors.map(data_model.variance_prior, d=len(active_dims))
             if data_model.variance_prior is not None
             else None
         ),
@@ -175,7 +175,7 @@ def map_PolynomialKernel(
         active_dims=active_dims,
         power=data_model.power,
         offset_prior=(
-            priors.map(data_model.offset_prior)
+            priors.map(data_model.offset_prior, d=len(active_dims))
             if data_model.offset_prior is not None
             else None
         ),
@@ -240,7 +240,7 @@ def map_ScaleKernel(
             **kwargs,
         ),
         outputscale_prior=(
-            priors.map(data_model.outputscale_prior)
+            priors.map(data_model.outputscale_prior, d=len(active_dims))
             if data_model.outputscale_prior is not None
             else None
         ),
@@ -309,7 +309,11 @@ def map_IndexKernel(
         num_tasks=data_model.num_categories,
         rank=data_model.rank,
         active_dims=active_dims,
-        prior=(priors.map(data_model.prior) if data_model.prior is not None else None),
+        prior=(
+            priors.map(data_model.prior, d=len(active_dims))
+            if data_model.prior is not None
+            else None
+        ),
         var_constraint=(
             priors.map(data_model.var_constraint)
             if data_model.var_constraint is not None
@@ -332,12 +336,12 @@ def map_PositiveIndexKernel(
         rank=data_model.rank,
         active_dims=active_dims,
         task_prior=(
-            priors.map(data_model.task_prior)
+            priors.map(data_model.task_prior, d=len(active_dims))
             if data_model.task_prior is not None
             else None
         ),
         diag_prior=(
-            priors.map(data_model.diag_prior)
+            priors.map(data_model.diag_prior, d=len(active_dims))
             if data_model.diag_prior is not None
             else None
         ),

@@ -1,3 +1,4 @@
+import math
 from functools import partial
 
 from bofire.data_models.priors._register import (
@@ -10,7 +11,7 @@ from bofire.data_models.priors.constraint import (
     Positive,
     PriorConstraint,
 )
-from bofire.data_models.priors.gamma import GammaPrior
+from bofire.data_models.priors.gamma import DimensionalityScaledGammaPrior, GammaPrior
 from bofire.data_models.priors.interval import (
     Interval,
     LogTransformedInterval,
@@ -29,6 +30,7 @@ from bofire.data_models.unions import tagged_union
 
 _PRIOR_TYPES: list[type[Prior]] = [
     GammaPrior,
+    DimensionalityScaledGammaPrior,
     NormalPrior,
     LKJPrior,
     LogNormalPrior,
@@ -49,12 +51,6 @@ _PRIOR_CONSTRAINT_TYPES: list[type] = [
 
 AnyPriorConstraint = tagged_union(*_PRIOR_CONSTRAINT_TYPES)
 
-
-# these are priors that are generally applicable
-# and do not depend on problem specific extra parameters
-AnyGeneralPrior = tagged_union(
-    GammaPrior, NormalPrior, LKJPrior, LogNormalPrior, SmoothedBoxPrior
-)
 
 # default priors of interest
 # botorch defaults
@@ -123,6 +119,41 @@ PAIRWISEGP_OUTPUTSCALE_CONSTRAINT = partial(
 # Hvarfner priors
 HVARFNER_NOISE_PRIOR = partial(LogNormalPrior, loc=-4, scale=1)
 HVARFNER_LENGTHSCALE_PRIOR = DimensionalityScaledLogNormalPrior
+
+# CHEN priors
+# Dimension-aware hyperpriors proposed by Chen, Fleck and Stuyver, "Leveraging
+# Hidden-Space Representations Effectively in Bayesian Optimization for Experiment
+# Design through Dimension-Aware Hyperpriors", ChemRxiv (2026),
+# https://doi.org/10.26434/chemrxiv.10001986/v2 (the CHEN preset in BayBE).
+# The lengthscale follows a Gamma(2m, 2) and the outputscale a Gamma(m, 1) with
+# m = 0.4 * sqrt(d) + 4, i.e. the concentration grows with the square root of the
+# problem dimensionality d.
+CHEN_LENGTHSCALE_PRIOR = partial(
+    DimensionalityScaledGammaPrior,
+    concentration=8.0,  # 2 * 4
+    concentration_scaling=0.8,  # 2 * 0.4
+    rate=2.0,
+    rate_power=0.0,
+)
+CHEN_OUTPUTSCALE_PRIOR = partial(
+    DimensionalityScaledGammaPrior,
+    concentration=4.0,
+    concentration_scaling=0.4,
+    rate=1.0,
+    rate_power=0.0,
+)
+
+# Dimensionality-scaled threesix lengthscale prior (BayBE's new default for search
+# spaces without molecular parameters): keep the threesix concentration of 3 and scale
+# the rate by d ** -0.5 so the lengthscale mode grows with sqrt(d). The base rate is
+# calibrated such that the mode matches the Hvarfner log-normal lengthscale prior.
+DIMENSIONALITY_SCALED_THREESIX_LENGTHSCALE_PRIOR = partial(
+    DimensionalityScaledGammaPrior,
+    concentration=3.0,
+    concentration_scaling=0.0,
+    rate=2.0 / math.exp(math.sqrt(2) - 3),  # ~10.16
+    rate_power=-0.5,
+)
 
 # EDBO priors:
 # adapted from the EDBO paper https://github.com/b-shields/edbo/blob/master/edbo/bro.py#L664
