@@ -52,11 +52,6 @@ _PRIOR_CONSTRAINT_TYPES: list[type] = [
 AnyPriorConstraint = tagged_union(*_PRIOR_CONSTRAINT_TYPES)
 
 
-# Deprecated alias kept for backwards compatibility. All prior map sites now receive the
-# problem dimensionality `d` (priors that do not need it ignore it), so there is no longer a
-# need for a separate union excluding the dimensionality-scaled priors. Use AnyPrior instead.
-AnyGeneralPrior = AnyPrior
-
 # default priors of interest
 # botorch defaults
 THREESIX_LENGTHSCALE_PRIOR = partial(GammaPrior, concentration=3.0, rate=6.0)

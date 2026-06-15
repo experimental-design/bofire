@@ -131,13 +131,13 @@ def test_chen_and_threesix_constants_map(d):
     # CHEN: lengthscale Gamma(2m, 2), outputscale Gamma(m, 1), m = 0.4*sqrt(d) + 4
     m = 0.4 * math.sqrt(d) + 4
     ls = priors.map(CHEN_LENGTHSCALE_PRIOR(), d=d)
-    assert ls.concentration == pytest.approx(2 * m)
-    assert ls.rate == pytest.approx(2.0)
+    assert ls.concentration == 2 * m
+    assert ls.rate == 2.0
     os = priors.map(CHEN_OUTPUTSCALE_PRIOR(), d=d)
-    assert os.concentration == pytest.approx(m)
-    assert os.rate == pytest.approx(1.0)
+    assert os.concentration == m
+    assert os.rate == 1.0
 
     # dimensionality-scaled threesix: concentration 3, rate base ~10.16 scaled by d**-0.5
     threesix = priors.map(DIMENSIONALITY_SCALED_THREESIX_LENGTHSCALE_PRIOR(), d=d)
-    assert threesix.concentration == pytest.approx(3.0)
-    assert threesix.rate == pytest.approx(2.0 / math.exp(math.sqrt(2) - 3) * d**-0.5)
+    assert threesix.concentration == 3.0
+    assert threesix.rate == 2.0 / math.exp(math.sqrt(2) - 3) * d**-0.5

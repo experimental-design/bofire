@@ -149,10 +149,9 @@ def test_map_scale_kernel_dimensionality_scaled_outputscale():
         ),
     ],
 )
-def test_map_dimensionality_scaled_prior_on_general_fields(kernel):
-    # these prior fields previously only accepted non-dimensionality-scaled priors
-    # (AnyGeneralPrior). They now accept any prior, and the mapper threads the
-    # dimensionality d to them, so mapping must not raise a missing-`d` error.
+def test_map_dimensionality_scaled_prior_on_kernel_prior_fields(kernel):
+    # every kernel prior field accepts a dimensionality-scaled prior; the mapper threads
+    # the dimensionality d to them, so mapping must not raise a missing-`d` error.
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),
