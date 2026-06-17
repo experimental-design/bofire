@@ -16,6 +16,7 @@ Constraint = Union[
 def register(
     data_model_cls: Type,
     map_fn: Optional[Callable] = None,
+    overwrite: bool = False,
 ):
     """Register a custom prior/constraint mapping from data model to factory function.
 
@@ -33,21 +34,26 @@ def register(
         data_model_cls: The Pydantic data model class.
         map_fn: A callable that takes ``(data_model, **kwargs)`` and returns a
             gpytorch prior or constraint. If not provided, returns a decorator.
+        overwrite: If ``True``, replace an existing prior/constraint registered
+            under the same ``type`` discriminator instead of raising.
 
     Returns:
         The mapping function (unchanged) when used as a decorator, None otherwise.
     """
+    from bofire.data_models._register_utils import pop_conflicting_map_keys
 
     def _register(fn: Callable) -> Callable:
-        PRIOR_MAP[data_model_cls] = fn
-
-        # Also register with the data model unions so Pydantic accepts the type
+        # Register with the data model unions first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
         if issubclass(data_model_cls, data_models.Prior):
-            data_models.register_prior(data_model_cls)
+            data_models.register_prior(data_model_cls, overwrite=overwrite)
         elif issubclass(
             data_model_cls, (data_models.PriorConstraint, data_models.Interval)
         ):
-            data_models.register_prior_constraint(data_model_cls)
+            data_models.register_prior_constraint(data_model_cls, overwrite=overwrite)
+
+        pop_conflicting_map_keys(PRIOR_MAP, data_model_cls)
+        PRIOR_MAP[data_model_cls] = fn
 
         return fn
 

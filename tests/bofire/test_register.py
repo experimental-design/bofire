@@ -3,6 +3,7 @@ from typing import Literal, Type
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
@@ -1114,3 +1115,366 @@ class TestRebuildCoverage:
                     ):
                         found.add((obj, field_name))
         return found
+
+
+# ---------------------------------------------------------------------------
+# Duplicate registration: clear error by default + overwrite to replace
+#
+# Re-running registration code re-defines the data model as a *new* class
+# object that keeps the same ``type`` discriminator. The identity-based guard
+# used to miss this and silently append a duplicate, which later produced a
+# cryptic ``Value '...' for discriminator 'type' mapped to multiple choices``
+# error when a dependent discriminated union was built. These tests pin the
+# fixed behaviour.
+# ---------------------------------------------------------------------------
+
+
+def _make_strategy_dm():
+    """Build a fresh strategy data model class with a fixed ``type`` literal."""
+
+    class _DupStrategyDataModel(StrategyDataModel):
+        type: Literal["DupStrategy"] = "DupStrategy"
+
+        def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
+            return True
+
+        @classmethod
+        def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+            return True
+
+    return _DupStrategyDataModel
+
+
+def _make_kernel_dm():
+    class _DupKernelDataModel(KernelDataModel):
+        type: Literal["DupKernel"] = "DupKernel"
+
+    return _DupKernelDataModel
+
+
+def _make_prior_dm():
+    class _DupPriorDataModel(PriorDataModel):
+        type: Literal["DupPrior"] = "DupPrior"
+
+    return _DupPriorDataModel
+
+
+class TestDuplicateStrategyRegistration:
+    def _cleanup(self):
+        import bofire.data_models.strategies.actual_strategy_type as ast_mod
+        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
+
+        for cls in list(ast_mod._ACTUAL_STRATEGY_TYPES):
+            if getattr(cls, "__name__", "") == "_DupStrategyDataModel":
+                ast_mod._ACTUAL_STRATEGY_TYPES.remove(cls)
+        for cls in list(ACTUAL_MAP):
+            if getattr(cls, "__name__", "") == "_DupStrategyDataModel":
+                ACTUAL_MAP.pop(cls, None)
+
+    def test_same_class_is_noop(self):
+        import bofire.strategies.api as strategies_api
+
+        self._cleanup()
+        try:
+            DM = _make_strategy_dm()
+            strategies_api.register(DM, _CustomStrategy)
+            # Registering the identical class object again is a silent no-op.
+            strategies_api.register(DM, _CustomStrategy)
+            import bofire.data_models.strategies.actual_strategy_type as ast_mod
+
+            assert ast_mod._ACTUAL_STRATEGY_TYPES.count(DM) == 1
+        finally:
+            self._cleanup()
+
+    def test_conflicting_class_raises_clear_error(self):
+        import bofire.strategies.api as strategies_api
+
+        self._cleanup()
+        try:
+            strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+            with pytest.raises(ValueError, match="already registered"):
+                strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+        finally:
+            self._cleanup()
+
+    def test_overwrite_replaces_and_builds(self):
+        import bofire.strategies.api as strategies_api
+        from bofire.data_models.strategies.stepwise.stepwise import Step
+        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
+
+        self._cleanup()
+        try:
+            DM1 = _make_strategy_dm()
+            DM2 = _make_strategy_dm()
+            strategies_api.register(DM1, _CustomStrategy)
+            strategies_api.register(DM2, _CustomStrategy, overwrite=True)
+
+            # The previously cryptic discriminator error must no longer occur.
+            step = Step(
+                strategy_data=DM2(domain=_make_domain()),
+                condition={"type": "AlwaysTrueCondition"},
+            )
+            assert type(step.strategy_data) is DM2
+            # Stale mapper entry for the replaced class is dropped.
+            assert DM1 not in ACTUAL_MAP
+            assert ACTUAL_MAP[DM2] is _CustomStrategy
+        finally:
+            self._cleanup()
+
+
+class TestDuplicateKernelRegistration:
+    def _cleanup(self):
+        import bofire.data_models.kernels.api as kernels_api
+        from bofire.kernels.mapper import KERNEL_MAP
+
+        for registry in (
+            kernels_api._KERNEL_TYPES,
+            kernels_api._CONTINUOUS_KERNEL_TYPES,
+            kernels_api._CATEGORICAL_KERNEL_TYPES,
+        ):
+            for cls in list(registry):
+                if getattr(cls, "__name__", "") == "_DupKernelDataModel":
+                    registry.remove(cls)
+        for cls in list(KERNEL_MAP):
+            if getattr(cls, "__name__", "") == "_DupKernelDataModel":
+                KERNEL_MAP.pop(cls, None)
+
+    def test_conflicting_class_raises_clear_error(self):
+        import bofire.kernels.api as kernels_api
+
+        self._cleanup()
+        try:
+            kernels_api.register(_make_kernel_dm(), lambda *a: MagicMock())
+            with pytest.raises(ValueError, match="already registered"):
+                kernels_api.register(_make_kernel_dm(), lambda *a: MagicMock())
+        finally:
+            self._cleanup()
+
+    def test_overwrite_self_heals_inline_unions(self):
+        """Overwriting must replace the stale member in aggregation kernel
+        inline unions instead of leaving a duplicate discriminator tag."""
+        import bofire.kernels.api as kernels_api
+        from bofire.data_models.kernels.aggregation import AdditiveKernel
+        from bofire.data_models.kernels.continuous import RBFKernel
+
+        self._cleanup()
+        try:
+            K1 = _make_kernel_dm()
+            K2 = _make_kernel_dm()
+            kernels_api.register(K1, lambda *a: MagicMock())
+            kernels_api.register(K2, lambda *a: MagicMock(), overwrite=True)
+
+            ak = AdditiveKernel(kernels=[RBFKernel(), K2()])
+            assert type(ak.kernels[1]) is K2
+        finally:
+            self._cleanup()
+
+
+class TestDuplicatePriorRegistration:
+    def _cleanup(self):
+        import bofire.data_models.priors.api as priors_api
+        from bofire.priors.mapper import PRIOR_MAP
+
+        for cls in list(priors_api._PRIOR_TYPES):
+            if getattr(cls, "__name__", "") == "_DupPriorDataModel":
+                priors_api._PRIOR_TYPES.remove(cls)
+        for cls in list(PRIOR_MAP):
+            if getattr(cls, "__name__", "") == "_DupPriorDataModel":
+                PRIOR_MAP.pop(cls, None)
+
+    def test_conflicting_class_raises_clear_error(self):
+        import bofire.priors.api as priors_api
+
+        self._cleanup()
+        try:
+            priors_api.register(_make_prior_dm(), lambda dm, **kw: MagicMock())
+            with pytest.raises(ValueError, match="already registered"):
+                priors_api.register(_make_prior_dm(), lambda dm, **kw: MagicMock())
+        finally:
+            self._cleanup()
+
+    def test_overwrite_replaces_and_builds(self):
+        import bofire.priors.api as priors_api
+        from bofire.data_models.kernels.continuous import RBFKernel
+
+        self._cleanup()
+        try:
+            P1 = _make_prior_dm()
+            P2 = _make_prior_dm()
+            priors_api.register(P1, lambda dm, **kw: MagicMock())
+            priors_api.register(P2, lambda dm, **kw: MagicMock(), overwrite=True)
+
+            k = RBFKernel(lengthscale_prior=P2())
+            assert type(k.lengthscale_prior) is P2
+        finally:
+            self._cleanup()
+
+
+class TestDuplicateBotorchSurrogateRegistration:
+    def _cleanup(self):
+        from bofire.data_models.surrogates.botorch_surrogates import (
+            _BOTORCH_SURROGATE_TYPES,
+        )
+        from bofire.surrogates.mapper import SURROGATE_MAP
+
+        for cls in list(_BOTORCH_SURROGATE_TYPES):
+            if getattr(cls, "__name__", "") == "_DupBotorchDataModel":
+                _BOTORCH_SURROGATE_TYPES.remove(cls)
+        for cls in list(SURROGATE_MAP):
+            if getattr(cls, "__name__", "") == "_DupBotorchDataModel":
+                SURROGATE_MAP.pop(cls, None)
+
+    @staticmethod
+    def _make_dm():
+        class _DupBotorchDataModel(BotorchSurrogate):
+            type: Literal["DupBotorch"] = "DupBotorch"
+
+            @classmethod
+            def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+                return True
+
+        return _DupBotorchDataModel
+
+    def test_conflicting_class_raises_clear_error(self):
+        import bofire.surrogates.api as surrogates_api
+
+        self._cleanup()
+        try:
+            surrogates_api.register(self._make_dm(), _CustomBotorchSurrogate)
+            with pytest.raises(ValueError, match="already registered"):
+                surrogates_api.register(self._make_dm(), _CustomBotorchSurrogate)
+        finally:
+            self._cleanup()
+
+    def test_overwrite_replaces_and_builds(self):
+        import bofire.surrogates.api as surrogates_api
+        from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+
+        self._cleanup()
+        try:
+            DM1 = self._make_dm()
+            DM2 = self._make_dm()
+            surrogates_api.register(DM1, _CustomBotorchSurrogate)
+            surrogates_api.register(DM2, _CustomBotorchSurrogate, overwrite=True)
+
+            bs = BotorchSurrogates(surrogates=[DM2(inputs=_INPUTS, outputs=_OUTPUTS)])
+            assert type(bs.surrogates[0]) is DM2
+        finally:
+            self._cleanup()
+
+
+class TestDuplicateEngineeredFeatureRegistration:
+    def _cleanup(self):
+        from bofire.data_models.features.api import _ENGINEERED_FEATURE_TYPES
+        from bofire.surrogates.engineered_features import AGGREGATE_MAP
+
+        for cls in list(_ENGINEERED_FEATURE_TYPES):
+            if getattr(cls, "__name__", "") == "_DupEngineered":
+                _ENGINEERED_FEATURE_TYPES.remove(cls)
+        for cls in list(AGGREGATE_MAP):
+            if getattr(cls, "__name__", "") == "_DupEngineered":
+                AGGREGATE_MAP.pop(cls, None)
+
+    @staticmethod
+    def _make_dm():
+        class _DupEngineered(EngineeredFeature):
+            type: Literal["DupEngineered"] = "DupEngineered"
+            order_id = 102
+
+            @property
+            def n_transformed_inputs(self) -> int:
+                return 1
+
+        return _DupEngineered
+
+    def test_conflicting_class_raises_clear_error(self):
+        from bofire.surrogates.engineered_features import register
+
+        self._cleanup()
+        try:
+            register(self._make_dm(), lambda i, t, f: MagicMock())
+            with pytest.raises(ValueError, match="already registered"):
+                register(self._make_dm(), lambda i, t, f: MagicMock())
+        finally:
+            self._cleanup()
+
+    def test_overwrite_replaces_and_builds(self):
+        from bofire.data_models.domain.features import EngineeredFeatures
+        from bofire.surrogates.engineered_features import register
+
+        self._cleanup()
+        try:
+            E1 = self._make_dm()
+            E2 = self._make_dm()
+            register(E1, lambda i, t, f: MagicMock())
+            register(E2, lambda i, t, f: MagicMock(), overwrite=True)
+
+            ef = EngineeredFeatures(features=[E2(key="test", features=["a", "b"])])
+            assert type(ef.features[0]) is E2
+        finally:
+            self._cleanup()
+
+
+class TestDuplicateLLMProviderRegistration:
+    def _cleanup(self):
+        import bofire.data_models.llm.api as llm_api
+        from bofire.data_models.unions import tagged_union, to_list
+        from bofire.llm.mapper import LLM_MAP
+
+        kept = [
+            t
+            for t in to_list(llm_api.AnyLLMProvider)
+            if getattr(t, "__name__", "") != "_DupLLMProvider"
+        ]
+        llm_api.AnyLLMProvider = tagged_union(*kept)
+        for cls in list(LLM_MAP):
+            if getattr(cls, "__name__", "") == "_DupLLMProvider":
+                LLM_MAP.pop(cls, None)
+
+    @staticmethod
+    def _make_dm():
+        class _DupLLMProvider(LLMProvider):
+            type: Literal["DupLLMProvider"] = "DupLLMProvider"
+            model: str = "fake"
+            api_key_env_var: str = "FAKE"
+
+        return _DupLLMProvider
+
+    def test_conflicting_class_raises_clear_error(self):
+        import bofire.llm.mapper as llm_mapper
+
+        self._cleanup()
+        try:
+            llm_mapper.register(self._make_dm(), lambda dm: MagicMock())
+            with pytest.raises(ValueError, match="already registered"):
+                llm_mapper.register(self._make_dm(), lambda dm: MagicMock())
+        finally:
+            self._cleanup()
+
+    def test_overwrite_replaces_and_builds(self):
+        import bofire.llm.mapper as llm_mapper
+        from bofire.data_models.objectives.api import MaximizeObjective
+        from bofire.data_models.strategies.api import (
+            LLMStrategy as LLMStrategyDataModel,
+        )
+
+        self._cleanup()
+        try:
+            P1 = self._make_dm()
+            P2 = self._make_dm()
+            llm_mapper.register(P1, lambda dm: MagicMock())
+            llm_mapper.register(P2, lambda dm: MagicMock(), overwrite=True)
+
+            domain = Domain(
+                inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+                outputs=Outputs(
+                    features=[
+                        ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))
+                    ]
+                ),
+            )
+            data_model = LLMStrategyDataModel(domain=domain, llm=P2())
+            assert type(data_model.llm) is P2
+            assert P1 not in llm_mapper.LLM_MAP
+        finally:
+            self._cleanup()

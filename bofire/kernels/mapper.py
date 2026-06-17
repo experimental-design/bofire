@@ -25,6 +25,7 @@ from bofire.kernels.spherical_kernels import SphericalLinearKernel
 def register(
     data_model_cls: Type[data_models.Kernel],
     map_fn: Optional[Callable] = None,
+    overwrite: bool = False,
 ):
     """Register a custom kernel mapping from data model to factory function.
 
@@ -43,16 +44,21 @@ def register(
         map_fn: A callable that takes ``(data_model, batch_shape, active_dims,
             features_to_idx_mapper)`` and returns a gpytorch kernel. If not
             provided, returns a decorator.
+        overwrite: If ``True``, replace an existing kernel registered under the
+            same ``type`` discriminator instead of raising.
 
     Returns:
         The mapping function (unchanged) when used as a decorator, None otherwise.
     """
+    from bofire.data_models._register_utils import pop_conflicting_map_keys
 
     def _register(fn: Callable) -> Callable:
-        KERNEL_MAP[data_model_cls] = fn
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
+        data_models.register_kernel(data_model_cls, overwrite=overwrite)
 
-        # Also register with the data model union so Pydantic accepts the type
-        data_models.register_kernel(data_model_cls)
+        pop_conflicting_map_keys(KERNEL_MAP, data_model_cls)
+        KERNEL_MAP[data_model_cls] = fn
 
         return fn
 

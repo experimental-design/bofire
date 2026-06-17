@@ -25,6 +25,7 @@ from bofire.utils.torch_tools import interp1d
 def register(
     data_model_cls: Type[EngineeredFeature],
     map_fn: Optional[Callable] = None,
+    overwrite: bool = False,
 ):
     """Register a custom engineered feature mapping from data model to factory function.
 
@@ -43,18 +44,22 @@ def register(
         map_fn: A callable that takes ``(inputs, transform_specs, feature)``
             and returns a ``botorch.models.transforms.input.AppendFeatures``
             instance. If not provided, returns a decorator.
+        overwrite: If ``True``, replace an existing engineered feature
+            registered under the same ``type`` discriminator instead of raising.
 
     Returns:
         The mapping function (unchanged) when used as a decorator, None otherwise.
     """
+    from bofire.data_models._register_utils import pop_conflicting_map_keys
+    from bofire.data_models.features.api import register_engineered_feature
 
     def _register(fn: Callable) -> Callable:
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
+        register_engineered_feature(data_model_cls, overwrite=overwrite)
+
+        pop_conflicting_map_keys(AGGREGATE_MAP, data_model_cls)
         AGGREGATE_MAP[data_model_cls] = fn
-
-        # Also register with the data model union so Pydantic accepts the type
-        from bofire.data_models.features.api import register_engineered_feature
-
-        register_engineered_feature(data_model_cls)
 
         return fn
 

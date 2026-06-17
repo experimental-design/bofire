@@ -58,6 +58,7 @@ AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
 
 def register_botorch_surrogate(
     data_model_cls: Type[BotorchSurrogate],
+    overwrite: bool = False,
 ) -> None:
     """Register a custom BotorchSurrogate type so it is accepted by BotorchSurrogates.
 
@@ -67,11 +68,24 @@ def register_botorch_surrogate(
 
     Args:
         data_model_cls: A concrete subclass of ``BotorchSurrogate``.
+        overwrite: If ``True``, replace an existing botorch surrogate registered
+            under the same ``type`` discriminator instead of raising.
+
+    Raises:
+        ValueError: If a different botorch surrogate with the same ``type`` is
+            already registered and *overwrite* is ``False``.
     """
+    from bofire.data_models._register_utils import register_into
+
     global AnyBotorchSurrogate
-    if data_model_cls in _BOTORCH_SURROGATE_TYPES:
+    action, _ = register_into(
+        _BOTORCH_SURROGATE_TYPES,
+        data_model_cls,
+        overwrite=overwrite,
+        kind="botorch surrogate",
+    )
+    if action == "noop":
         return
-    _BOTORCH_SURROGATE_TYPES.append(data_model_cls)
     AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
     new_annotation = List[AnyBotorchSurrogate]
     BotorchSurrogates.__annotations__["surrogates"] = new_annotation

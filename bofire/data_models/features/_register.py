@@ -3,7 +3,7 @@
 from bofire.data_models.unions import tagged_union
 
 
-def register_engineered_feature(data_model_cls: type) -> None:
+def register_engineered_feature(data_model_cls: type, overwrite: bool = False) -> None:
     """Register a custom engineered feature type so it is accepted in EngineeredFeatures.
 
     This appends the type to the internal registry, rebuilds the
@@ -12,18 +12,28 @@ def register_engineered_feature(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``EngineeredFeature``.
+        overwrite: If ``True``, replace an existing engineered feature
+            registered under the same ``type`` discriminator instead of raising.
+
+    Raises:
+        ValueError: If a different engineered feature with the same ``type`` is
+            already registered and *overwrite* is ``False``.
     """
     import bofire.data_models.features.api as features_api
+    from bofire.data_models._register_utils import append_to_union_field, register_into
+    from bofire.data_models.domain.features import EngineeredFeatures
 
-    if data_model_cls in features_api._ENGINEERED_FEATURE_TYPES:
+    action, _ = register_into(
+        features_api._ENGINEERED_FEATURE_TYPES,
+        data_model_cls,
+        overwrite=overwrite,
+        kind="engineered feature",
+    )
+    if action == "noop":
         return
-    features_api._ENGINEERED_FEATURE_TYPES.append(data_model_cls)
     features_api.AnyEngineeredFeature = tagged_union(
         *features_api._ENGINEERED_FEATURE_TYPES
     )
-
-    from bofire.data_models._register_utils import append_to_union_field
-    from bofire.data_models.domain.features import EngineeredFeatures
 
     append_to_union_field(EngineeredFeatures, "features", data_model_cls)
     EngineeredFeatures.model_rebuild(force=True)

@@ -24,6 +24,7 @@ LLM_MAP: dict[Type[LLMProvider], Callable] = {}
 def register(
     data_model_cls: Type[LLMProvider],
     map_fn: Optional[Callable] = None,
+    overwrite: bool = False,
 ):
     """Register a custom LLM provider mapping from data model to factory function.
 
@@ -41,16 +42,21 @@ def register(
         data_model_cls: The Pydantic data model class.
         map_fn: A callable that takes the data model instance and returns a
             pydantic-ai ``Model``. If not provided, returns a decorator.
+        overwrite: If ``True``, replace an existing provider registered under
+            the same ``type`` discriminator instead of raising.
 
     Returns:
         The mapping function (unchanged) when used as a decorator, None otherwise.
     """
+    from bofire.data_models._register_utils import pop_conflicting_map_keys
 
     def _register(fn: Callable) -> Callable:
-        LLM_MAP[data_model_cls] = fn
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
+        data_models.register_llm_provider(data_model_cls, overwrite=overwrite)
 
-        # Also register with the data model union so Pydantic accepts the type
-        data_models.register_llm_provider(data_model_cls)
+        pop_conflicting_map_keys(LLM_MAP, data_model_cls)
+        LLM_MAP[data_model_cls] = fn
 
         return fn
 
