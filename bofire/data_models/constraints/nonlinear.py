@@ -345,6 +345,7 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
         eps = max(tol * 1e-9, 1e-15, 1e-9)
         result = pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
         return result
+
     def to_description(self) -> str:
         raise NotImplementedError
 

@@ -24,9 +24,9 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
-    NonlinearConstraint,
     ProductConstraint,
     ProductInequalityConstraint,
 )
@@ -59,7 +59,6 @@ from bofire.strategies.predictives._nchoosek_pruning import (
     prune_nchoosek,
     semicontinuous_specs_from_domain,
 )
-from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
@@ -496,6 +495,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             with torch.no_grad():
                 X_flat.clamp_(bounds[0], bounds[1])
         return X_flat.detach().reshape(shape)
+
     def _prune(
         self,
         candidates: Tensor,
