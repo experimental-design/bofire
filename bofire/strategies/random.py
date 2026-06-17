@@ -8,6 +8,7 @@ import pandas as pd
 import torch
 from botorch.optim.initializers import sample_q_batches_from_polytope
 from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
+from pydantic.types import PositiveInt
 from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
@@ -55,19 +56,13 @@ class RandomStrategy(Strategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        # self.num_base_samples = data_model.num_base_samples
-        if data_model.num_base_samples is None:
-            num_inputs = len(self.domain.inputs.get())
-            self.num_base_samples = 1024 * num_inputs
-        else:
-            self.num_base_samples = data_model.num_base_samples
+        self.num_base_samples = data_model.num_base_samples
         self.max_iters = data_model.max_iters
         self.fallback_sampling_method = data_model.fallback_sampling_method
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
         self.sampler_kwargs = data_model.sampler_kwargs
 
-        # from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
         needs_relaxed_tol = any(
             isinstance(
                 c,
@@ -79,15 +74,7 @@ class RandomStrategy(Strategy):
             )
             for c in self.domain.constraints
         )
-        if needs_relaxed_tol:
-            self._validation_tol = 1e-3  # Relaxed for complex constraints
-        else:
-            self._validation_tol = 1e-6  # Standard for simple linear constraints
-            # Check for nonlinear equality constraints
-        # if any(isinstance(c, NonlinearEqualityConstraint) for c in self.domain.constraints):
-        #    self._validation_tol = 1e-3  # Relaxed for nonlinear equality
-        # else:
-        #    self._validation_tol = 1e-6  # Standard for linear/other constraints
+        self._validation_tol = 1e-3 if needs_relaxed_tol else 1e-6
 
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
@@ -98,66 +85,47 @@ class RandomStrategy(Strategy):
         """
         return True
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
-        """Generate random samples that satisfy constraints.
+    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+        """Generate candidate samples using the random strategy.
+
+        If the domain is compatible with polytope sampling, it uses the polytope sampling to generate
+        candidate samples. Otherwise, it performs rejection sampling by repeatedly generating candidate
+        samples until the desired number of valid samples is obtained.
 
         Args:
-            candidate_count: Number of candidates to generate
+            candidate_count (PositiveInt): The number of candidate samples to generate.
 
         Returns:
-            DataFrame with valid candidates
+            pd.DataFrame: A DataFrame containing the generated candidate samples.
 
-        Raises:
-            ValueError: If unable to generate enough valid samples
         """
-        # Check if NChooseK constraints exist - use specialized sampling
-        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
-            return self._sample_with_nchooseks(candidate_count=candidate_count)
-
-        if len(self.domain.constraints.get([InterpointEqualityConstraint])) > 0:
-            return self._sample_with_nchooseks(
-                candidate_count=candidate_count
-            )  # ← Reuse this!
-
-        # Check if linear constraints exist - use polytope sampling
-        if (
-            len(
-                self.domain.constraints.get(
-                    [LinearEqualityConstraint, LinearInequalityConstraint]
-                )
-            )
-            > 0
+        # no nonlinear constraints present --> no rejection sampling needed
+        if len(self.domain.constraints) == len(
+            self.domain.constraints.get(
+                [
+                    LinearInequalityConstraint,
+                    LinearEqualityConstraint,
+                    NChooseKConstraint,
+                    InterpointEqualityConstraint,
+                ],
+            ),
         ):
-            return self._sample_from_polytope(
-                domain=self.domain,
-                fallback_sampling_method=self.fallback_sampling_method,
-                n_burnin=self.n_burnin,
-                n_thinning=self.n_thinning,
-                seed=self._get_seed(),
-                n=candidate_count,
-                sampler_kwargs=self.sampler_kwargs,
-            )
-
-        # Otherwise use rejection sampling for nonlinear-only constraints
-        valid_samples = []
-        n_found = 0
+            return self._sample_with_nchooseks(candidate_count)
+        # perform the rejection sampling
+        num_base_samples = self.num_base_samples or candidate_count
         n_iters = 0
-
-        while n_found < candidate_count and n_iters < self.max_iters:
-            samples = self.domain.inputs.sample(n=self.num_base_samples)
+        n_found = 0
+        valid_samples = []
+        while n_found < candidate_count:
+            if n_iters > self.max_iters:
+                raise ValueError("Maximum iterations exceeded in rejection sampling.")
+            samples = self._sample_with_nchooseks(num_base_samples)
             valid = self.domain.constraints.is_fulfilled(
                 samples, tol=self._validation_tol
             )
             n_found += np.sum(valid)
-            valid_samples.append(samples[valid.values])  # ← FIX: Add .values
+            valid_samples.append(samples[valid.values])
             n_iters += 1
-
-        # Check if we found enough samples
-        if n_found < candidate_count:
-            raise ValueError(
-                "Maximum iterations exceeded in rejection sampling."  # ← FIX: Match test expectation
-            )
-
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
     def _sample_with_nchooseks(

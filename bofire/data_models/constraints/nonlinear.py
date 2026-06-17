@@ -1,6 +1,6 @@
 import inspect
 import warnings
-from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Union
+from typing import Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -14,9 +14,7 @@ try:
 
     torch_tensor = torch.tensor
     torch_diag = torch.diag
-    _TORCH_AVAILABLE = True
 except ImportError:
-    _TORCH_AVAILABLE = False
 
     def error_func(*args, **kwargs):
         raise NotImplementedError("torch must be installed to use this functionality")
@@ -25,9 +23,6 @@ except ImportError:
     torch_tensor = error_func
     torch_diag = error_func
     torch_hessian = error_func  # ty: ignore[invalid-assignment]
-
-if TYPE_CHECKING:  # pragma: no cover
-    import torch as _torch
 
 from bofire.data_models.constraints.constraint import (
     EqualityConstraint,
@@ -171,101 +166,20 @@ class NonlinearConstraint(IntrapointConstraint):
 
         return hessian_expression
 
-    def __call__(
-        self, experiments: Union[pd.DataFrame, "_torch.Tensor"]
-    ) -> Union[pd.Series, "_torch.Tensor"]:
-        """Evaluate the constraint.
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        """Evaluate the constraint on a DataFrame of experiments.
 
-        Args:
-            experiments: Either a DataFrame with feature columns or a PyTorch tensor
-
-        Returns:
-            Constraint values as Series (for DataFrame) or Tensor (for Tensor input)
+        For BoTorch / tensor evaluation, use the callables from
+        :func:`bofire.utils.torch_tools.get_nonlinear_constraints`.
         """
-        # Handle Tensor input from BoTorch
-        if _TORCH_AVAILABLE and isinstance(experiments, torch.Tensor):
-            # Handle 3D tensor from BoTorch: [n_restarts, q, n_features]
-            if experiments.ndim == 3:
-                batch_size, q, n_features = experiments.shape
-                # Reshape to 2D: [batch_size * q, n_features]
-                experiments_2d = experiments.reshape(-1, n_features)
-                # Evaluate and reshape back
-                results_2d = self.__call__(experiments_2d)
-                return results_2d.reshape(batch_size, q)
-
-            if isinstance(self.expression, str):
-                # For string expressions, convert tensor to dict
-                if experiments.ndim == 1:
-                    # Single point: shape (n_features,)
-                    feature_dict = {
-                        feat: experiments[i] for i, feat in enumerate(self.features)
-                    }
-                    # Use eval with torch operations available
-                    return eval(
-                        self.expression,
-                        {"__builtins__": {}, "torch": torch},
-                        feature_dict,
-                    )
-                else:
-                    # Batch: shape (batch_size, n_features)
-                    results = []
-                    for point in experiments:
-                        feature_dict = {
-                            feat: point[i] for i, feat in enumerate(self.features)
-                        }
-                        result = eval(
-                            self.expression,
-                            {"__builtins__": {}, "torch": torch},
-                            feature_dict,
-                        )
-                        results.append(result)
-                    return torch.stack(results)
-
-            elif isinstance(self.expression, Callable):
-                # Callable expression - pass as dict
-                if experiments.ndim == 1:
-                    feature_dict = {
-                        feat: experiments[i] for i, feat in enumerate(self.features)
-                    }
-                    return self.expression(**feature_dict)
-                else:
-                    # Batch processing
-                    results = []
-                    for point in experiments:
-                        feature_dict = {
-                            feat: point[i] for i, feat in enumerate(self.features)
-                        }
-                        results.append(self.expression(**feature_dict))
-                    return torch.stack(results)
-
-        #  Handle DataFrame input (existing logic)
         if isinstance(self.expression, str):
             return experiments.eval(self.expression)
-        elif isinstance(self.expression, Callable):
-            # Support both:
-            # - torch installed: pass torch tensors (enables torch-based callables)
-            # - torch not installed: pass numpy arrays (enables numpy-based callables)
-            if _TORCH_AVAILABLE:
-                func_input = {
-                    col: torch.tensor(
-                        experiments[col].values,
-                        dtype=torch.float64,
-                        requires_grad=False,
-                    )
-                    for col in experiments.columns
-                }
-                out = self.expression(**func_input)
-                if hasattr(out, "detach"):
-                    out = out.detach().cpu().numpy()
-                return pd.Series(
-                    np.asarray(out),
-                    index=experiments.index,  # Preserve original indices
-                )
-
-            func_input = {
-                col: experiments[col].to_numpy() for col in experiments.columns
-            }
+        if isinstance(self.expression, Callable):
+            args = inspect.getfullargspec(self.expression).args
+            func_input = {arg: experiments[arg].to_numpy() for arg in args}
             out = self.expression(**func_input)
+            if hasattr(out, "detach"):
+                out = out.detach().cpu().numpy()
             return pd.Series(np.asarray(out), index=experiments.index)
         raise ValueError("expression must be a string or callable")
 

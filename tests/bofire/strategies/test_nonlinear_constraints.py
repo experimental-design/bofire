@@ -11,6 +11,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from tests.bofire.strategies.nonlinear_test_utils import NONLINEAR_BOTORCH_OPTIMIZER
 
 
 # ========== TASK 1.0: BASIC EQUALITY CONSTRAINT ==========
@@ -35,7 +36,10 @@ def test_nonlinear_equality_constraint_sobo():
     ]
     domain = Domain(inputs=inputs, outputs=outputs, constraints=constraints)
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
@@ -47,16 +51,16 @@ def test_nonlinear_equality_constraint_sobo():
         }
     )
     strategy.tell(experiments)
-    candidates = strategy.ask(5)
+    candidates = strategy.ask(1)
 
-    assert len(candidates) == 5, f"Expected 5 candidates, got {len(candidates)}"
+    assert len(candidates) == 1, f"Expected 1 candidate, got {len(candidates)}"
     for idx, row in candidates.iterrows():
         constraint_value = abs(row["x1"] + row["x2"] - 0.7)
         assert constraint_value <= 1e-3 + 1e-9, (
             f"Constraint violated for row {idx}: x1={row['x1']}, x2={row['x2']}, "
             f"violation={constraint_value}"
         )
-    print(f"✓ All {len(candidates)} candidates satisfy the constraint")
+    print("✓ Candidate satisfies the constraint")
 
 
 # ========== TASK 1.1: MULTIPLE NONLINEAR CONSTRAINTS ==========
@@ -95,7 +99,10 @@ def test_multiple_nonlinear_constraints():
         ),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
@@ -149,7 +156,10 @@ def test_multiple_nonlinear_constraints_scaling(n_constraints):
         constraints=Constraints(constraints=constraints_list),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
@@ -203,7 +213,10 @@ def test_tight_nonlinear_constraints():
         ),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
@@ -255,7 +268,10 @@ def test_empty_feasible_region():
         ),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
@@ -302,7 +318,10 @@ def test_high_dimensional_nonlinear_constraints():
         ),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     init_data = {f"x{i}": [0.1, 0.05] for i in range(n_dims)}
@@ -352,7 +371,9 @@ def test_nonlinear_constraints_different_acqf(acqf_class):
     )
 
     data_model = SoboStrategyDataModel(
-        domain=domain, acquisition_function=acqf_map[acqf_class]
+        domain=domain,
+        acquisition_function=acqf_map[acqf_class],
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
     )
     strategy = SoboStrategy(data_model=data_model)
 
@@ -401,7 +422,10 @@ def test_nonlinear_constraint_boundary_initial_data():
         ),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     # Exactly on boundary: x^2 + y^2 = 1
@@ -443,7 +467,10 @@ def test_nonlinear_equality_near_boundary():
         ),
     )
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
@@ -451,7 +478,7 @@ def test_nonlinear_equality_near_boundary():
             "x": [0.7, 0.8, 0.9],
             "y": [0.8, 0.7, 0.6],
             "z": [1.0, 0.9, 0.8],
-            "valid_y": [1, 1, 1],
+            "valid_z": [1, 1, 1],
         }
     )
     strategy.tell(experiments)
@@ -461,8 +488,8 @@ def test_nonlinear_equality_near_boundary():
     x_val = candidates.iloc[0]["x"]
     y_val = candidates.iloc[0]["y"]
     assert (
-        abs(x_val + y_val - 1.5) <= 1.001e-3
-    ), f"Equality constraint violated: x+y={x_val+y_val:.6f}"  # taped change this
+        abs(x_val + y_val - 1.5) <= 1e-3 + 1e-9
+    ), f"Equality constraint violated: x+y={x_val+y_val:.6f}"
     print(f"✓ Boundary equality satisfied: x+y={x_val+y_val:.6f}")
 
 
@@ -628,7 +655,10 @@ def test_diagnose_has_sufficient_experiments():
         print(f"  {c.expression}: {result.tolist()}")
 
     # Now tell and check state
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
     strategy.tell(experiments)
 

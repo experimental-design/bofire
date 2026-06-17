@@ -6,6 +6,11 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
+from bofire.data_models.constraints.api import (
+    NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
@@ -38,15 +43,18 @@ class Strategy(ABC):
         self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
-        # Default validation tolerance - subclasses can override this
-        # Check if domain has nonlinear equality constraints
-        from bofire.data_models.constraints.api import NonlinearEqualityConstraint
-
-        has_nonlinear_equality = any(
-            isinstance(c, NonlinearEqualityConstraint)
+        needs_relaxed_tol = any(
+            isinstance(
+                c,
+                (
+                    NonlinearEqualityConstraint,
+                    NonlinearInequalityConstraint,
+                    NChooseKConstraint,
+                ),
+            )
             for c in data_model.domain.constraints
         )
-        self._validation_tol = 1e-3 if has_nonlinear_equality else 1e-3
+        self._validation_tol = 1e-3 if needs_relaxed_tol else 1e-5
 
     @property
     def domain(self) -> Domain:

@@ -21,6 +21,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.constraints.nonlinear import NonlinearConstraint
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -256,6 +257,94 @@ def get_product_constraints(
     return constraints
 
 
+def _nonlinear_constraint_feature_indices(
+    constraint: NonlinearConstraint,
+    domain: Domain,
+) -> list[int]:
+    cont_keys = domain.inputs.get_keys(ContinuousInput)
+    return [cont_keys.index(key) for key in constraint.features]
+
+
+def evaluate_nonlinear_constraint_on_tensor(
+    constraint: NonlinearConstraint,
+    x: Tensor,
+    feature_indices: list[int],
+) -> Tensor:
+    """Evaluate a nonlinear constraint expression on a BoTorch input tensor."""
+    if x.ndim == 3:
+        batch_size, q, _ = x.shape
+        x_2d = x.reshape(-1, x.shape[-1])
+        return evaluate_nonlinear_constraint_on_tensor(
+            constraint, x_2d, feature_indices
+        ).reshape(batch_size, q)
+
+    sub = x[..., feature_indices]
+    if isinstance(constraint.expression, str):
+        if sub.ndim == 1:
+            feature_dict = {feat: sub[i] for i, feat in enumerate(constraint.features)}
+            return eval(
+                constraint.expression,
+                {"__builtins__": {}, "torch": torch},
+                feature_dict,
+            )
+        results = []
+        for point in sub:
+            feature_dict = {
+                feat: point[i] for i, feat in enumerate(constraint.features)
+            }
+            results.append(
+                eval(
+                    constraint.expression,
+                    {"__builtins__": {}, "torch": torch},
+                    feature_dict,
+                )
+            )
+        return torch.stack(results)
+
+    if isinstance(constraint.expression, Callable):
+        if sub.ndim == 1:
+            feature_dict = {feat: sub[i] for i, feat in enumerate(constraint.features)}
+            return constraint.expression(**feature_dict)
+        results = []
+        for point in sub:
+            feature_dict = {
+                feat: point[i] for i, feat in enumerate(constraint.features)
+            }
+            results.append(constraint.expression(**feature_dict))
+        return torch.stack(results)
+
+    raise ValueError("expression must be a string or callable")
+
+
+def _nonlinear_inequality_botorch_callable(
+    constraint: NonlinearInequalityConstraint,
+    feature_indices: list[int],
+) -> Callable[[Tensor], Tensor]:
+    def constraint_fn(x: Tensor) -> Tensor:
+        return -evaluate_nonlinear_constraint_on_tensor(constraint, x, feature_indices)
+
+    return constraint_fn
+
+
+def _nonlinear_equality_botorch_callables(
+    constraint: NonlinearEqualityConstraint,
+    feature_indices: list[int],
+    equality_tolerance: float,
+) -> tuple[Callable[[Tensor], Tensor], Callable[[Tensor], Tensor]]:
+    def constraint_fn_upper(x: Tensor) -> Tensor:
+        return equality_tolerance - evaluate_nonlinear_constraint_on_tensor(
+            constraint, x, feature_indices
+        )
+
+    def constraint_fn_lower(x: Tensor) -> Tensor:
+        return (
+            evaluate_nonlinear_constraint_on_tensor(constraint, x, feature_indices)
+            + equality_tolerance
+        )
+
+    return constraint_fn_upper, constraint_fn_lower
+
+
 def get_nonlinear_constraints(
     domain: Domain,
     includes: Optional[List[Type[Constraint]]] = None,
@@ -310,40 +399,19 @@ def get_nonlinear_constraints(
     # Handle NonlinearInequalityConstraint
     if NonlinearInequalityConstraint in includes:
         for constraint in domain.constraints.get(NonlinearInequalityConstraint):
-            # Create a wrapper that converts to the expected format
-            # The constraint should evaluate to <= 0
-            def make_constraint_callable(c):
-                def constraint_fn(x: Tensor) -> Tensor:
-                    # c.__call__ expects x with shape (batch_size, n_features)
-                    # Returns a tensor of shape (batch_size,) with values <= 0 for feasible points
-                    return -c(x)
+            feature_indices = _nonlinear_constraint_feature_indices(constraint, domain)
+            callables.append(
+                (
+                    _nonlinear_inequality_botorch_callable(constraint, feature_indices),
+                    True,
+                )
+            )
 
-                return constraint_fn
-
-            callables.append((make_constraint_callable(constraint), True))
-
-    # Handle NonlinearEqualityConstraint by converting to inequality pairs
     if NonlinearEqualityConstraint in includes:
         for constraint in domain.constraints.get(NonlinearEqualityConstraint):
-            # Convert equality f(x) = 0 to two inequalities:
-            # 1. f(x) <= tolerance  =>  f(x) - tolerance <= 0
-            # 2. -f(x) <= tolerance  =>  -f(x) - tolerance <= 0
-
-            def make_equality_constraint_pair(c, tol):
-                # First inequality: f(x) - tolerance <= 0
-                def constraint_fn_upper(x: Tensor) -> Tensor:
-                    return tol - c(x)  # c(x)-tol
-
-                # Second inequality: -f(x) - tolerance <= 0
-                def constraint_fn_lower(x: Tensor) -> Tensor:
-                    return (
-                        c(x) + tol
-                    )  # tol -c(x).  Bofrire feasibility >=0 Botorch 0<=feasibility
-
-                return constraint_fn_upper, constraint_fn_lower
-
-            upper_fn, lower_fn = make_equality_constraint_pair(
-                constraint, equality_tolerance
+            feature_indices = _nonlinear_constraint_feature_indices(constraint, domain)
+            upper_fn, lower_fn = _nonlinear_equality_botorch_callables(
+                constraint, feature_indices, equality_tolerance
             )
             callables.append((upper_fn, True))
             callables.append((lower_fn, True))

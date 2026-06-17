@@ -545,15 +545,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         """
         assert self.batch_limit is not None
+        force_batch_limit_one = (
+            len(
+                domain.constraints.get(
+                    [
+                        NChooseKConstraint,
+                        ProductConstraint,
+                        NonlinearInequalityConstraint,
+                        NonlinearEqualityConstraint,
+                    ],
+                ),
+            )
+            > 0
+        )
         return {
-            "batch_limit": (
-                self.batch_limit
-                if len(
-                    domain.constraints.get([NChooseKConstraint, ProductConstraint]),
-                )
-                == 0
-                else 1
-            ),
+            "batch_limit": 1 if force_batch_limit_one else self.batch_limit,
             "maxiter": self.maxiter,
         }
 

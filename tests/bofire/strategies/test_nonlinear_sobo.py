@@ -7,6 +7,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.api import SoboStrategy
+from tests.bofire.strategies.nonlinear_test_utils import NONLINEAR_BOTORCH_OPTIMIZER
 
 
 def test_sobo_with_nonlinear_inequality():
@@ -28,8 +29,10 @@ def test_sobo_with_nonlinear_inequality():
         ],
     )
 
-    # ✅ CORRECT INITIALIZATION
-    strategy = SoboStrategy.make(domain=domain)
+    strategy = SoboStrategy.make(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
 
     # Add some initial data
     experiments = pd.DataFrame(
@@ -68,10 +71,12 @@ def test_sobo_with_nonlinear_equality():
         ],
     )
 
-    # ⚠️ IMPORTANT: Set batch_limit=1 for nonlinear constraints
     from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
 
-    data_model = SoboStrategyDataModel(domain=domain)
+    data_model = SoboStrategyDataModel(
+        domain=domain,
+        acquisition_optimizer=NONLINEAR_BOTORCH_OPTIMIZER,
+    )
     strategy = SoboStrategy(data_model=data_model)
 
     experiments = pd.DataFrame(
