@@ -719,7 +719,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             return OptimizerEnum.OPTIMIZE_ACQF_MIXED
         return OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
 
-    def _get_nonlinear_constraint_setup(
+    def _get_nonlinear_constraint_setup(  # noqa: C901
         self,
         domain: Domain,
     ) -> tuple[
