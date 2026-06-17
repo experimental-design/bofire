@@ -16,6 +16,7 @@ from bofire.benchmarks.multi import (
     TNK,
     ZDT1,
     CrossCoupling,
+    MOMFBraninCurrin,
     SnarBenchmark,
 )
 from bofire.benchmarks.single import (
@@ -39,6 +40,7 @@ AnyMultiBenchmark = Union[
     SnarBenchmark,
     BNH,
     TNK,
+    MOMFBraninCurrin,
 ]
 AnySingleBenchmark = Union[
     Ackley,

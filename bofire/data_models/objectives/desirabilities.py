@@ -76,6 +76,9 @@ class IncreasingDesirabilityObjective(DesirabilityObjective):
     type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"
     log_shape_factor: float = 0.0
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
     def call_numpy(
         self,
         x: np.ndarray,
@@ -124,6 +127,9 @@ class DecreasingDesirabilityObjective(DesirabilityObjective):
 
     type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"
     log_shape_factor: float = 0.0
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -174,6 +180,9 @@ class PeakDesirabilityObjective(DesirabilityObjective):
     log_shape_factor_decreasing: float = 0.0  # often named log_t
     peak_position: float = 0.5  # often named T
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
     def call_numpy(
         self,
         x: np.ndarray,
@@ -215,6 +224,9 @@ class PeakDesirabilityObjective(DesirabilityObjective):
 
 class InRangeDesirability(DesirabilityObjective):
     type: Literal["InRangeDesirability"] = "InRangeDesirability"
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def call_numpy(
         self,

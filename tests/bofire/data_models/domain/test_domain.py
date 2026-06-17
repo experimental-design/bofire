@@ -19,11 +19,16 @@ from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     Feature,
 )
-from bofire.data_models.objectives.api import TargetObjective
+from bofire.data_models.objectives.api import (
+    ConstrainedCategoricalObjective,
+    MaximizeObjective,
+    TargetObjective,
+)
 from bofire.utils.subdomain import get_subdomain
 
 
@@ -74,6 +79,27 @@ def constraint_list(input_list):
             rhs=11,
         ),
     ]
+
+
+def test_domain_accepts_single_feature_and_constraint():
+    """Single Input/Output/Constraint instances should be wrapped into containers."""
+    input_a = ContinuousInput(key="x1", bounds=(0, 1))
+    input_b = ContinuousInput(key="x2", bounds=(0, 1))
+    single_output = ContinuousOutput(key="y", objective=obj)
+    single_constraint = LinearEqualityConstraint(
+        features=["x1", "x2"], coefficients=[1.0, 1.0], rhs=0.5
+    )
+    domain_single_output = Domain(
+        inputs=[input_a, input_b],
+        outputs=single_output,
+        constraints=single_constraint,
+    )
+    assert domain_single_output.outputs == Outputs(features=[single_output])
+    assert domain_single_output.constraints == Constraints(
+        constraints=[single_constraint]
+    )
+    domain_single_input = Domain(inputs=input_a)
+    assert domain_single_input.inputs == Inputs(features=[input_a])
 
 
 def test_from_lists(input_list, output_list, constraint_list):
@@ -378,6 +404,145 @@ def test_aggregate_by_duplicates_error():
         domain.aggregate_by_duplicates(full, prec=2, method="25")
 
 
+def _categorical_output(key: str, categories) -> CategoricalOutput:
+    return CategoricalOutput(
+        key=key,
+        categories=list(categories),
+        objective=ConstrainedCategoricalObjective(
+            categories=list(categories),
+            desirability=[True] + [False] * (len(categories) - 1),
+        ),
+    )
+
+
+def test_aggregate_by_duplicates_with_categorical_output_matching():
+    """Duplicates that agree on the categorical output merge cleanly.
+
+    The continuous output is averaged; the categorical output label is
+    preserved."""
+    full = pd.DataFrame.from_dict(
+        {
+            "x1": [1.0, 2.0, 3.0, 1.0],
+            "x2": [1.0, 2.0, 3.0, 1.0],
+            "out1": [4.0, 5.0, 6.0, 3.0],
+            "color": ["red", "blue", "blue", "red"],
+            "valid_out1": [1, 1, 1, 1],
+            "valid_color": [1, 1, 1, 1],
+        },
+    )
+    expected = pd.DataFrame.from_dict(
+        {
+            "labcode": ["1-4", "2", "3"],
+            "x1": [1.0, 2.0, 3.0],
+            "x2": [1.0, 2.0, 3.0],
+            "out1": [3.5, 5.0, 6.0],
+            "color": ["red", "blue", "blue"],
+            "valid_out1": [1, 1, 1],
+            "valid_color": [1, 1, 1],
+        },
+    )
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, _categorical_output("color", ["red", "blue"])]),
+    )
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full,
+        prec=2,
+    )
+    assert duplicated_labcodes == [["1", "4"]]
+    assert_frame_equal(aggregated, expected, check_dtype=False, check_like=True)
+
+
+def test_aggregate_by_duplicates_with_categorical_output_conflict():
+    """Duplicates that disagree on the categorical output are resolved by
+    majority vote. Ties resolve randomly among the tied values."""
+    full = pd.DataFrame.from_dict(
+        {
+            # rows 0-2 share inputs (1.0, 1.0) with two reds and one blue
+            #   -> majority "red"
+            # rows 3-4 share inputs (2.0, 2.0) with one red and one blue
+            #   -> tie, random pick among the tied labels
+            # row 5 is a singleton
+            "x1": [1.0, 1.0, 1.0, 2.0, 2.0, 3.0],
+            "x2": [1.0, 1.0, 1.0, 2.0, 2.0, 3.0],
+            "out1": [4.0, 3.0, 5.0, 5.0, 6.0, 7.0],
+            "color": ["red", "red", "blue", "red", "blue", "blue"],
+            "valid_out1": [1, 1, 1, 1, 1, 1],
+            "valid_color": [1, 1, 1, 1, 1, 1],
+        },
+    )
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, _categorical_output("color", ["red", "blue"])]),
+    )
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full,
+        prec=2,
+    )
+
+    expected_without_tie = pd.DataFrame.from_dict(
+        {
+            "labcode": ["1-2-3", "6"],
+            "x1": [1.0, 3.0],
+            "x2": [1.0, 3.0],
+            "out1": [4.0, 7.0],
+            "color": ["red", "blue"],
+            "valid_out1": [1, 1],
+            "valid_color": [1, 1],
+        },
+    )
+    assert duplicated_labcodes == [["1", "2", "3"], ["4", "5"]]
+    assert_frame_equal(
+        aggregated.loc[aggregated["labcode"].isin(["1-2-3", "6"])].reset_index(
+            drop=True
+        ),
+        expected_without_tie,
+        check_dtype=False,
+        check_like=True,
+    )
+
+    tie_row = aggregated.loc[aggregated["labcode"] == "4-5"].squeeze()
+    assert tie_row["x1"] == 2.0
+    assert tie_row["x2"] == 2.0
+    assert tie_row["out1"] == 5.5
+    assert tie_row["color"] in {"red", "blue"}
+    assert tie_row["valid_out1"] == 1
+    assert tie_row["valid_color"] == 1
+
+
+def test_aggregate_by_duplicates_prec_rounds_inputs():
+    """The `prec` argument actually rounds continuous inputs before grouping:
+    rows that differ only below the precision threshold collapse together;
+    rows that differ at or above it stay separate."""
+    full = pd.DataFrame.from_dict(
+        {
+            "x1": [1.0001, 1.0002, 1.01, 2.0],
+            "x2": [1.0, 1.0, 1.0, 2.0],
+            "out1": [10.0, 20.0, 30.0, 40.0],
+            "out2": [-10.0, -20.0, -30.0, -40.0],
+            "valid_out1": [1, 1, 1, 1],
+            "valid_out2": [1, 1, 1, 1],
+        },
+    )
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, of2]),
+    )
+
+    # prec=3: 1.0001 and 1.0002 both round to 1.000 -> merged.
+    #         1.01 stays distinct.
+    aggregated, dup = domain.aggregate_by_duplicates(full, prec=3)
+    assert dup == [["1", "2"]]
+    assert len(aggregated) == 3
+    # rounded inputs are returned, not the originals
+    assert sorted(aggregated["x1"].tolist()) == [1.0, 1.01, 2.0]
+
+    # prec=4: 1.0001 and 1.0002 stay distinct -> nothing aggregates.
+    aggregated, dup = domain.aggregate_by_duplicates(full, prec=4)
+    assert dup == []
+    assert len(aggregated) == 4
+
+
 domain = Domain(
     inputs=Inputs(features=[if1, if2]),
     outputs=Outputs(features=[of1, of2, of1_, of2_]),
@@ -485,4 +650,46 @@ def test_is_fulfilled():
     assert_series_equal(
         domain.is_fulfilled(experiments),
         pd.Series([True, False, False], index=experiments.index),
+    )
+
+
+def test_domain_to_description():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    assert domain.to_description() == "\n## Objectives\n- y: Maximize"
+
+
+def test_domain_to_description_with_context():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+    )
+    domain.context = "Optimizing a reaction"
+    assert domain.to_description() == (
+        "## Problem Context\nOptimizing a reaction\n\n## Objectives\n- y: Maximize"
+    )
+
+
+def test_domain_to_description_with_constraints():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=[1.0, 1.0],
+                rhs=1.5,
+                context="Budget constraint",
+            )
+        ],
+    )
+    assert domain.to_description() == (
+        "\n## Objectives\n- y: Maximize\n"
+        "\n## Constraints (candidates MUST satisfy all of these)\n"
+        "- 1.0*x1 + 1.0*x2 <= 1.5 — Budget constraint"
     )

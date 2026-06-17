@@ -105,3 +105,42 @@ specs.add_valid(
         "scale_scaling": random.random(),
     },
 )
+
+
+specs.add_valid(
+    priors.DimensionalityScaledGammaPrior,
+    lambda: {
+        "concentration": random.random() + 0.1,
+        "concentration_scaling": random.random(),
+        "rate": random.random() + 0.1,
+        "rate_power": random.random() - 0.5,
+    },
+)
+
+
+specs.add_valid(
+    priors.SmoothedBoxPrior,
+    lambda: {
+        "lower_bound": 0.01,
+        "upper_bound": 100.0,
+        "sigma": 0.01,
+    },
+)
+
+specs.add_invalid(
+    priors.SmoothedBoxPrior,
+    lambda: {"lower_bound": 4.0, "upper_bound": 1.0, "sigma": 0.01},
+    error=ValueError,
+    message="The lower bound must be less than the upper bound for an interval.",
+)
+
+for sigma in [-1.0, 0.0]:
+    specs.add_invalid(
+        priors.SmoothedBoxPrior,
+        lambda sigma=sigma: {
+            "lower_bound": 0.01,
+            "upper_bound": 100.0,
+            "sigma": sigma,
+        },
+        error=ValidationError,
+    )

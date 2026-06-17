@@ -1,5 +1,5 @@
 import math
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ class InterpointConstraint(Constraint):
     candidates when asking a strategy for returning more than one candidate.
     """
 
-    type: str
+    type: Any
 
 
 class InterpointEqualityConstraint(InterpointConstraint):
@@ -32,6 +32,9 @@ class InterpointEqualityConstraint(InterpointConstraint):
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
     features: Annotated[List[str], Field(min_length=1), Field(max_length=1)]
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     @property
     def feature(self) -> str:

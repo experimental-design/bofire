@@ -3,6 +3,7 @@ from typing import Any, Literal, Optional
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import NonRestrictedFeatureKeys
+from bofire.data_models.unions import tagged_union
 
 
 class ScalerEnum(str, Enum):
@@ -29,4 +30,4 @@ class Standardize(Scaler):
     type: Literal["Standardize"] = "Standardize"
 
 
-AnyScaler = Optional[Normalize | Standardize]
+AnyScaler = Optional[tagged_union(Normalize, Standardize)]

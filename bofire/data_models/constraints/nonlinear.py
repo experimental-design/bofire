@@ -186,7 +186,7 @@ class NonlinearConstraint(IntrapointConstraint):
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self.jacobian_expression is not None:
             if isinstance(self.jacobian_expression, str):
-                res = experiments.eval(self.jacobian_expression)
+                res = experiments.eval(self.jacobian_expression, engine="python")
                 for i, col in enumerate(res):
                     if not hasattr(col, "__iter__"):
                         res[i] = pd.Series(np.repeat(col, experiments.shape[0]))
@@ -253,7 +253,7 @@ class NonlinearConstraint(IntrapointConstraint):
         """
         if self.hessian_expression is not None:
             if isinstance(self.hessian_expression, str):
-                res = experiments.eval(self.hessian_expression)
+                res = experiments.eval(self.hessian_expression, engine="python")
             else:
                 if not isinstance(self.hessian_expression, Callable):
                     raise ValueError(
@@ -345,6 +345,8 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
         eps = max(tol * 1e-9, 1e-15, 1e-9)
         result = pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
         return result
+    def to_description(self) -> str:
+        raise NotImplementedError
 
 
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
@@ -356,3 +358,6 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
+
+    def to_description(self) -> str:
+        raise NotImplementedError

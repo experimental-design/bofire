@@ -1,6 +1,7 @@
 import importlib.util
 import re
 import sys
+import warnings
 from copy import copy
 from itertools import combinations
 from typing import List, Optional, Tuple, Union, cast
@@ -22,7 +23,11 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.features.api import CategoricalInput, NumericalInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    DiscreteInput,
+    NumericalInput,
+)
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.doe_problem import (
@@ -61,7 +66,7 @@ def represent_categories_as_by_their_states(
 
 
 def formula_str_to_fully_continuous(
-    formula: str,
+    formula_str: str,
     inputs: Inputs,
 ) -> str:
     """Converts a formula with categorical variables to a formula with only continuous variables by identifying the categorical variables and replacing them with their one-hot encoded counterparts.
@@ -76,11 +81,22 @@ def formula_str_to_fully_continuous(
         )
         # Use word boundaries to match only complete variable names
         pattern = r"\b" + re.escape(cat_input.key) + r"\b"
-        formula = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula)
+        formula_str = re.sub(pattern, "(" + f"{one_hot_terms}" + ")", formula_str)
 
-    return str(
-        Formula(formula)
+    formula = Formula(
+        formula_str
     )  # formula casting for expansion of terms like (a+b)*(c+d)
+    for _input in inputs.get([DiscreteInput]):
+        for k in range(
+            2, len(_input.values) + 1
+        ):  # arbitrary upper bound on number of levels of discrete input
+            if (len(_input.values) <= k) and (_input.key + f" ** {k}" in formula.root):
+                warnings.warn(
+                    f"Discrete input {_input.key} with {len(_input.values)} levels cannot represent a term of order {k} or higher.",
+                    UserWarning,
+                )
+                break
+    return str(formula)
 
 
 def get_formula_from_string(
@@ -92,8 +108,7 @@ def get_formula_from_string(
 
     Args:
         model_type (str or Formula): A formula containing all model terms.
-        domain (Domain): A domain that nests necessary information on
-        how to translate a problem to a formula. Contains a problem.
+        inputs (Inputs, optional): The inputs to be used in the formula. Defaults to None. If the model_type is a string describing a model type (e.g. "linear"), inputs must be provided to determine the formula. If the model_type is already a formula, inputs are not necessary and ignored if provided.
         rhs_only (bool): The function returns only the right hand side of the formula if set to True.
 
     Returns:
@@ -163,7 +178,7 @@ def get_formula_from_string(
         if inputs is not None:
             if len(inputs.get([CategoricalInput])) > 0:
                 model_type = formula_str_to_fully_continuous(
-                    formula=model_type,
+                    formula_str=model_type,
                     inputs=inputs,
                 )
         formula = model_type + "   "
@@ -239,8 +254,11 @@ def quadratic_terms(
         A string describing the model that was given as string or keyword.
 
     """
+    _inputs = list(inputs.get([ContinuousInput])) + [
+        input for input in inputs.get([DiscreteInput]) if len(input.values) > 2
+    ]
 
-    formula = "".join(["{" + input.key + "**2} + " for input in inputs])
+    formula = "".join(["{" + input.key + "**2} + " for input in _inputs])
     return formula
 
 
@@ -556,93 +574,190 @@ class ConstraintWrapper:
         return hessian
 
 
-def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
-    """Checks if NChooseK constraints of domain can be formulated as bounds.
+def _constraint_patterns(
+    all_keys: list[str],
+    constraint: NChooseKConstraint,
+) -> list[dict[int, bool]]:
+    """Generate dicts for one constraint."""
+    patterns_of_constraint = []
+    n_features = len(constraint.features)
+    ind = [i for i, key in enumerate(all_keys) if key in constraint.features]
+    for k in range(max(constraint.min_count, 1), constraint.max_count + 1):
+        n_inactive = n_features - k
+        if n_inactive > 0:
+            for combo in combinations(ind, r=n_inactive):
+                inactive_set = set(combo)
+                patterns_of_constraint.append(
+                    {idx: (idx not in inactive_set) for idx in ind}
+                )
+        else:
+            patterns_of_constraint.append({idx: True for idx in ind})
+    return patterns_of_constraint
 
-    Args:
-        domain (Domain): Domain whose NChooseK constraints should be checked
+
+def _merge_two(
+    patterns_of_constraint_a: list[dict[int, bool]],
+    patterns_of_constraint_b: list[dict[int, bool]],
+) -> list[dict[int, bool]]:
+    """Merge two pattern lists, filtering conflicts.
+
+    Uses a hash-join on shared feature indices: patterns from A are
+    bucketed by their assignment to shared keys, so each pattern from B
+    only needs to merge with the bucket that agrees on those keys.
+
+    pattern_of_constraint_a: {feature_index: is_active} dict from constraint A
+    pattern_of_constraint_b: {feature_index: is_active} dict from constraint B
+
+    returns: merged {feature_index: is_active} dict if no conflicts, else None
 
     """
-    # collect NChooseK constraints
-    if len(domain.constraints) == 0:
-        return
+    # Identify shared feature indices between the two sides.
+    shared = set(patterns_of_constraint_a[0].keys()).intersection(
+        set(patterns_of_constraint_b[0].keys())
+    )
 
-    nchoosek_constraints = []
-    for c in domain.constraints:
-        if isinstance(c, NChooseKConstraint):
-            nchoosek_constraints.append(c)
+    patterns_of_merged_constraints = []
+    if shared:
+        # Bucket patterns by their assignment on shared indices.
+        # if activation_per_feature= {0: True, 1:True , 2: False} is a pattern and shared=[0,2], the key is (True, False)
+        sorted_shared = sorted(shared)
+        map_pattern_of_shared_to_global_pattern = {
+            tuple(activation_per_feature[idx] for idx in sorted_shared): []
+            for activation_per_feature in patterns_of_constraint_a
+        }
+        for activation_per_feature in patterns_of_constraint_a:
+            pattern_of_shared = tuple(
+                activation_per_feature[idx] for idx in sorted_shared
+            )
+            map_pattern_of_shared_to_global_pattern[pattern_of_shared].append(
+                activation_per_feature
+            )
 
-    if len(nchoosek_constraints) == 0:
-        return
+        for activation_per_feature_b in patterns_of_constraint_b:
+            pattern_of_shared = tuple(
+                activation_per_feature_b[idx] for idx in sorted_shared
+            )
+            for activation_per_feature_a in map_pattern_of_shared_to_global_pattern.get(
+                pattern_of_shared, ()
+            ):
+                merged = dict(activation_per_feature_a)
+                merged.update(activation_per_feature_b)
+                patterns_of_merged_constraints.append(merged)
+    else:
+        # No shared features — full cross-product.
+        for activation_per_feature_b in patterns_of_constraint_b:
+            for activation_per_feature_a in patterns_of_constraint_a:
+                merged = dict(activation_per_feature_a)
+                merged.update(activation_per_feature_b)
+                patterns_of_merged_constraints.append(merged)
 
-    # check if the domains of all NChooseK constraints are compatible to linearization
-    for c in nchoosek_constraints:
-        for name in np.unique(c.features):
-            input = domain.inputs.get_by_key(name)
-            if input.bounds[0] > 0 or input.bounds[1] < 0:
-                raise ValueError(
-                    f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
-                    domain of the affected decision variables.",
-                )
+    return patterns_of_merged_constraints
 
-    # check if the parameter names of two nchoose overlap
-    for c in nchoosek_constraints:
-        for _c in nchoosek_constraints:
-            if c != _c:
-                for name in c.features:
-                    if name in _c.features:
-                        raise ValueError(
-                            f"Domain {domain} cannot be used for formulation as bounds. \
-                            names attribute of NChooseK constraints must be pairwise disjoint.",
-                        )
+
+def _get_nchoosek_combined_patterns(
+    domain: Domain,
+) -> list[tuple[int, ...]]:
+    """Generate combined deactivation patterns across all NChooseK constraints.
+
+    For each constraint, per-feature active/inactive patterns are generated
+    for every allowed activity level.  When multiple constraints share
+    features, patterns are merged incrementally (pairwise) rather than via
+    a single giant Cartesian product, pruning inconsistent combinations
+    early.
+
+    Consistency: If a feature is shared by multiple constraints, it must be active in all or
+    inactive in all to yield a valid combined pattern.
+
+    Returns:
+        Tuples containing the domain-level indices of features to deactivate
+        (pin to 0) for one experiment slot.  Duplicates are possible when
+        constraints are disjoint; the caller should deduplicate if needed.
+    """
+    nchoosek_constraints = [
+        c for c in domain.constraints if isinstance(c, NChooseKConstraint)
+    ]
+
+    if not nchoosek_constraints:
+        return []
+
+    all_keys = domain.inputs.get_keys()
+
+    # Incremental pairwise merge — each step only materialises a generator
+    merged_patterns = _constraint_patterns(all_keys, nchoosek_constraints[0])
+    for constraint in nchoosek_constraints[1:]:
+        merged_patterns = _merge_two(
+            merged_patterns, _constraint_patterns(all_keys, constraint)
+        )
+
+    allowed_constraint_patterns = []
+    for merged in merged_patterns:
+        allowed_constraint_patterns.append(
+            tuple(sorted(idx for idx, active in merged.items() if not active))
+        )
+    return allowed_constraint_patterns
+
+
+def _build_nchoosek_combined_patterns(
+    domain: Domain,
+) -> list[tuple[int, ...]]:
+    """Collect combined deactivation patterns.
+
+    Args:
+        domain: Domain whose NChooseK constraints should be combined.
+
+    Returns:
+        A deduplicated list of inactive-index tuples.
+
+    Raises:
+        ValueError: When no valid combined patterns exist (contradictory
+            constraints).
+    """
+    result = list(set(_get_nchoosek_combined_patterns(domain)))
+
+    if not result and any(
+        isinstance(c, NChooseKConstraint) for c in domain.constraints
+    ):
+        raise ValueError(
+            "No valid combined NChooseK patterns exist. "
+            "The overlapping constraints are contradictory."
+        )
+
+    return result
 
 
 def nchoosek_constraints_as_bounds(
     domain: Domain,
     n_experiments: int,
-) -> List:
-    """Determines the box bounds for the decision variables
+) -> list:
+    """Determines the bounds for the optimization problem that correspond to the NChooseK constraints of the domain.
 
     Args:
         domain (Domain): Domain to find the bounds for.
         n_experiments (int): number of experiments for the design to be determined.
 
     Returns:
-        A list of tuples containing bounds that respect NChooseK constraint imposed
-        onto the decision variables.
+        A list of tuples containing bounds that respect NChooseK constraints
+        imposed onto the decision variables.
 
     """
-    check_nchoosek_constraints_as_bounds(domain)
 
     # bounds without NChooseK constraints
     bounds = np.array(
         [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments,
     )
 
-    if len(domain.constraints) > 0:
-        for constraint in domain.constraints:
-            if isinstance(constraint, NChooseKConstraint):
-                n_inactive = len(constraint.features) - constraint.max_count
-                if n_inactive > 0:
-                    # find indices of constraint.names in names
-                    ind = [
-                        i
-                        for i, p in enumerate(domain.inputs.get_keys())
-                        if p in constraint.features
-                    ]
+    combined_patterns = _build_nchoosek_combined_patterns(domain)
 
-                    # find and shuffle all combinations of elements of ind of length max_active
-                    ind = np.array(list(combinations(ind, r=n_inactive)))
-                    np.random.shuffle(ind)
+    if combined_patterns:
+        np.random.shuffle(combined_patterns)
 
-                    # set bounds to zero in each experiments for the variables that should be inactive
-                    for i in range(n_experiments):
-                        ind_vanish = ind[i % len(ind)]
-                        bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
-                        if i % len(ind) == len(ind) - 1:
-                            np.random.shuffle(ind)
-    else:
-        pass
+        D = len(domain.inputs)
+        for i in range(n_experiments):
+            pattern = combined_patterns[i % len(combined_patterns)]
+            for idx in pattern:
+                bounds[idx + i * D, :] = [0, 0]
+            if i % len(combined_patterns) == (len(combined_patterns) - 1):
+                np.random.shuffle(combined_patterns)
 
     # convert bounds to list of tuples
     bounds = [(b[0], b[1]) for b in bounds]

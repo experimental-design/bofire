@@ -1,5 +1,4 @@
-from typing import Union
-
+from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput
 from bofire.data_models.features.descriptor import (
@@ -25,27 +24,25 @@ from bofire.data_models.features.molecular import (
     ContinuousMolecularInput,
 )
 from bofire.data_models.features.numerical import NumericalInput
-from bofire.data_models.features.task import TaskInput
+from bofire.data_models.features.task import (
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    TaskInput,
+)
+from bofire.data_models.unions import tagged_union
 
 
-AbstractFeature = Union[
-    Feature,
-    Input,
-    Output,
-    NumericalInput,
-]
-
-# TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
-AnyFeature = Union[
-    CategoricalOutput,
+AnyFeature = tagged_union(
     DiscreteInput,
     CategoricalInput,
+    ContinuousInput,
     ContinuousOutput,
-    ContinuousInput,
+    CategoricalOutput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    CategoricalTaskInput,
+    ContinuousTaskInput,
     SumFeature,
     MeanFeature,
     WeightedMeanFeature,
@@ -56,22 +53,23 @@ AnyFeature = Union[
     ProductFeature,
     InterpolateFeature,
     CloneFeature,
-]
+)
 
-AnyInput = Union[
+AnyInput = tagged_union(
     DiscreteInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     CategoricalMolecularInput,
-    TaskInput,
+    ContinuousTaskInput,
+    CategoricalTaskInput,
     ContinuousMolecularInput,
-]
+)
 
-AnyOutput = Union[ContinuousOutput, CategoricalOutput]
+AnyOutput = tagged_union(ContinuousOutput, CategoricalOutput)
 
-AnyEngineeredFeature = Union[
+_ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
     SumFeature,
     MeanFeature,
     WeightedMeanFeature,
@@ -82,3 +80,5 @@ AnyEngineeredFeature = Union[
     InterpolateFeature,
     CloneFeature,
 ]
+
+AnyEngineeredFeature = tagged_union(*_ENGINEERED_FEATURE_TYPES)

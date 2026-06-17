@@ -1222,3 +1222,43 @@ def test_inputs_get_feature_indices(
     assert mol_dims == expected_molecular_indices
     assert ord_dims == expected_continuous_indices
     assert cat_dims == expected_categorical_indices
+
+
+def test_inputs_to_pydantic_model():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["a", "b"]),
+        ]
+    )
+    Model = inputs.to_pydantic_model()
+    schema = Model.model_json_schema()
+    assert "x1" in schema["properties"]
+    assert "x2" in schema["properties"]
+    assert schema["properties"]["x1"]["type"] == "number"
+
+
+def test_inputs_to_pydantic_model_validates_bounds():
+    from pydantic import ValidationError
+
+    inputs = Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))])
+    Model = inputs.to_pydantic_model()
+    obj = Model(x=0.5)
+    assert obj.x == 0.5
+    with pytest.raises(ValidationError):
+        Model(x=5.0)
+
+
+def test_inputs_to_pydantic_model_validates_categories():
+    from pydantic import ValidationError
+
+    inputs = Inputs(
+        features=[
+            CategoricalInput(key="c", categories=["a", "b"], allowed=[True, False])
+        ]
+    )
+    Model = inputs.to_pydantic_model()
+    obj = Model(c="a")
+    assert obj.c == "a"
+    with pytest.raises(ValidationError):
+        Model(c="b")

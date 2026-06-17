@@ -5,6 +5,7 @@ from bofire.data_models.priors.api import (
     GammaPrior,
     LogNormalPrior,
     NonTransformedInterval,
+    SmoothedBoxPrior,
 )
 from tests.bofire.data_models.specs.prior_constraints import specs as prior_constraints
 from tests.bofire.data_models.specs.priors import specs as priors
@@ -193,6 +194,26 @@ specs.add_valid(
     lambda: {
         "squared": False,
         "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "lengthscale_constraint": None,
+        "features": None,
+    },
+)
+specs.add_valid(
+    kernels.ExactWassersteinKernel,
+    lambda: {
+        "squared": False,
+        "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+        "lengthscale_constraint": None,
+        "features": None,
+        "idx_x": [4, 5],
+        "idx_y": [0, 1, 2, 3],
+        "prepend_x": [0.0],
+        "prepend_y": [],
+        "append_x": [1.0],
+        "append_y": [],
+        "normalize_y": 100.0,
+        "normalize_x": True,
+        "order": 2,
     },
 )
 specs.add_valid(
@@ -284,6 +305,14 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    kernels.ScaleKernel,
+    lambda: {
+        "base_kernel": specs.valid(kernels.RBFKernel).obj().model_dump(),
+        "outputscale_prior": priors.valid(SmoothedBoxPrior).obj().model_dump(),
+        "outputscale_constraint": None,
+    },
+)
+specs.add_valid(
     kernels.AdditiveKernel,
     lambda: {
         "kernels": [
@@ -333,4 +362,32 @@ specs.add_valid(
         "radius_prior": priors.valid().obj().model_dump(),
         "conditions": [],
     },
+)
+specs.add_valid(
+    kernels.DownsamplingKernel,
+    lambda: {
+        "features": ["task_1"],
+        "offset_prior": priors.valid().obj().model_dump(),
+        "offset_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+        "power_prior": priors.valid().obj().model_dump(),
+        "power_constraint": prior_constraints.valid(NonTransformedInterval)
+        .obj()
+        .model_dump(),
+    },
+)
+
+specs.add_invalid(
+    kernels.DownsamplingKernel,
+    lambda: {"features": None},
+    error=ValueError,
+    message="DownsamplingKernel requires a single task feature to be provided",
+)
+
+specs.add_invalid(
+    kernels.DownsamplingKernel,
+    lambda: {"features": ["task_1", "task_2"]},
+    error=ValueError,
+    message="DownsamplingKernel requires a single task feature to be provided",
 )

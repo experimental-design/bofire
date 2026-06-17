@@ -14,8 +14,6 @@ from bofire.data_models.acquisition_functions.api import (
     AnyMultiObjectiveAcquisitionFunction,
     qEHVI,
     qLogEHVI,
-    qLogNEHVI,
-    qNEHVI,
 )
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
@@ -77,6 +75,8 @@ class MoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        params = self.acquisition_function.model_dump()
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,
@@ -89,11 +89,7 @@ class MoboStrategy(BotorchStrategy):
             mc_samples=self.acquisition_function.n_mc_samples,
             cache_root=None,
             alpha=self.acquisition_function.alpha,
-            prune_baseline=(
-                self.acquisition_function.prune_baseline
-                if isinstance(self.acquisition_function, (qLogNEHVI, qNEHVI))
-                else True
-            ),
+            prune_baseline=params.get("prune_baseline", True),
             Y=Y,
         )
         return [acqf]

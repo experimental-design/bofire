@@ -1,5 +1,5 @@
 import math
-from typing import Union
+from typing import Callable, Optional, Type, Union
 
 import gpytorch
 from botorch.utils.constraints import LogTransformedInterval, NonTransformedInterval
@@ -11,6 +11,51 @@ import bofire.data_models.priors.api as data_models
 Constraint = Union[
     Positive, GreaterThan, LessThan, LogTransformedInterval, NonTransformedInterval
 ]
+
+
+def register(
+    data_model_cls: Type,
+    map_fn: Optional[Callable] = None,
+):
+    """Register a custom prior/constraint mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyPriorDataModel)
+        def map_my_prior(data_model, **kwargs):
+            return MyGpytorchPrior(...)
+
+        # Direct call form
+        register(MyPriorDataModel, map_my_prior)
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes ``(data_model, **kwargs)`` and returns a
+            gpytorch prior or constraint. If not provided, returns a decorator.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        PRIOR_MAP[data_model_cls] = fn
+
+        # Also register with the data model unions so Pydantic accepts the type
+        if issubclass(data_model_cls, data_models.Prior):
+            data_models.register_prior(data_model_cls)
+        elif issubclass(
+            data_model_cls, (data_models.PriorConstraint, data_models.Interval)
+        ):
+            data_models.register_prior_constraint(data_model_cls)
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
 
 
 def map_NormalPrior(
@@ -52,9 +97,45 @@ def map_DimensionalityScaledLogNormalPrior(
     data_model: data_models.DimensionalityScaledLogNormalPrior,
     d: int,
 ) -> gpytorch.priors.LogNormalPrior:
-    return gpytorch.priors.LogNormalPrior(
-        loc=data_model.loc + math.log(d) * data_model.loc_scaling,
-        scale=(data_model.scale**2 + math.log(d) * data_model.scale_scaling) ** 0.5,
+    # a dimensionality-scaled log-normal is a plain log-normal with effective params
+    return map_LogNormalPrior(
+        data_models.LogNormalPrior(
+            loc=data_model.loc + math.log(d) * data_model.loc_scaling,
+            scale=(data_model.scale**2 + math.log(d) * data_model.scale_scaling) ** 0.5,
+        )
+    )
+
+
+def map_DimensionalityScaledGammaPrior(
+    data_model: data_models.DimensionalityScaledGammaPrior,
+    d: int,
+) -> gpytorch.priors.GammaPrior:
+    # a dimensionality-scaled gamma is a plain gamma with effective params
+    return map_GammaPrior(
+        data_models.GammaPrior(
+            concentration=data_model.concentration
+            + math.sqrt(d) * data_model.concentration_scaling,
+            rate=data_model.rate * d**data_model.rate_power,
+        )
+    )
+
+
+def map_SmoothedBoxPrior(
+    data_model: data_models.SmoothedBoxPrior,
+    **kwargs,
+) -> gpytorch.priors.smoothed_box_prior.SmoothedBoxPrior:
+    return gpytorch.priors.smoothed_box_prior.SmoothedBoxPrior(
+        a=data_model.lower_bound, b=data_model.upper_bound, sigma=data_model.sigma
+    )
+
+
+def map_Interval(
+    data_model: data_models.Interval,
+) -> gpytorch.constraints.Interval:
+    return gpytorch.constraints.Interval(
+        lower_bound=data_model.lower_bound,
+        upper_bound=data_model.upper_bound,
+        initial_value=data_model.initial_value,
     )
 
 
@@ -81,19 +162,27 @@ def map_LogTransformedInterval(
 def map_Positive(
     data_model: data_models.Positive,
 ) -> Positive:
-    return Positive()
+    return Positive(initial_value=data_model.initial_value)
 
 
 def map_GreaterThan(
     data_model: data_models.GreaterThan,
 ) -> GreaterThan:
-    return GreaterThan(lower_bound=data_model.lower_bound, transform=None)
+    return GreaterThan(
+        lower_bound=data_model.lower_bound,
+        transform=None,
+        initial_value=data_model.initial_value,
+    )
 
 
 def map_LessThan(
     data_model: data_models.LessThan,
 ) -> LessThan:
-    return LessThan(upper_bound=data_model.upper_bound, transform=None)
+    return LessThan(
+        upper_bound=data_model.upper_bound,
+        transform=None,
+        initial_value=data_model.initial_value,
+    )
 
 
 PRIOR_MAP = {
@@ -102,6 +191,9 @@ PRIOR_MAP = {
     data_models.LKJPrior: map_LKJPrior,
     data_models.LogNormalPrior: map_LogNormalPrior,
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
+    data_models.DimensionalityScaledGammaPrior: map_DimensionalityScaledGammaPrior,
+    data_models.SmoothedBoxPrior: map_SmoothedBoxPrior,
+    data_models.Interval: map_Interval,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
     data_models.LogTransformedInterval: map_LogTransformedInterval,
     data_models.Positive: map_Positive,

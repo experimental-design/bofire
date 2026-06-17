@@ -4,11 +4,10 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputTransform, NumericToCategoricalEncoding
+from botorch.models.transforms.input import NumericToCategoricalEncoding
 from botorch.utils.datasets import SupervisedDataset
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
-from torch.nn import Module
 
 from bofire.data_models.api import AnyObjective, Domain, Inputs, Outputs
 from bofire.data_models.constraints.api import (
@@ -48,6 +47,7 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 from bofire.strategies.strategy import Strategy
 
 
@@ -55,6 +55,37 @@ tkwargs = {
     "dtype": torch.double,
     "device": "cpu",
 }
+
+
+def get_torch_bounds_from_domain(
+    domain: Domain,
+    input_preprocessing_specs: InputTransformSpecs,
+    relax_allow_zero: bool = False,
+    reference_experiment: Optional[pd.Series] = None,
+) -> Tensor:
+    """Get the bounds for the optimization problem in the format required by BoTorch.
+
+    Args:
+        domain: Optimization problem definition.
+        input_preprocessing_specs: Per-feature transform specifications.
+        relax_allow_zero: When True, semi-continuous continuous inputs
+            (`allow_zero=True` with positive lower bound) report a relaxed
+            lower bound of 0, exposing the convex relaxation `[0, ub]` to
+            downstream optimisers. Defaults to False.
+        reference_experiment: When provided, returns local bounds centred
+            on this reference (for LSR-BO). Used with the
+            ``local_relative_bounds`` attribute on continuous inputs.
+            Defaults to None (global bounds).
+
+    Returns:
+        A `(2, d)` tensor of lower and upper bounds.
+    """
+    lower, upper = domain.inputs.get_bounds(
+        specs=input_preprocessing_specs,
+        relax_allow_zero=relax_allow_zero,
+        reference_experiment=reference_experiment,
+    )
+    return torch.tensor([lower, upper], **tkwargs)
 
 
 def get_linear_constraints(
@@ -361,6 +392,10 @@ def get_nonlinear_constraints(
         equality_tolerance (float): Tolerance for converting equality constraints to
             inequality pairs. An equality constraint f(x) = 0 is converted to:
             f(x) <= tolerance AND -f(x) <= tolerance. Defaults to 1e-6.
+        includes: List of constraint types to include. Defaults to NChooseK and
+            ProductInequality. To exclude a constraint type, simply omit it
+            from this list (e.g. pass ``[ProductInequalityConstraint]`` to
+            exclude NChooseK).
 
     Returns:
         List[Tuple[Callable[[Tensor], float], bool]]: A list of tuples where each tuple
@@ -1096,7 +1131,12 @@ def interp1d(
         torch.Tensor: The interpolated values at the x_new x-coordinates.
 
     """
-    m = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
+    dx = x[1:] - x[:-1]
+
+    # Soft-clamp spacing to avoid numerical blow-ups when x points collide.
+    dx = torch.clamp(dx, min=1e-8)
+
+    m = (y[1:] - y[:-1]) / dx
     b = y[:-1] - (m * x[:-1])
 
     idx = torch.sum(torch.ge(x_new[:, None], x[None, :]), 1) - 1
@@ -1105,105 +1145,6 @@ def interp1d(
     itp = m[idx] * x_new + b[idx]
 
     return itp
-
-
-class InterpolateTransform(InputTransform, Module):
-    """Botorch input transform that interpolates values between given x and y values."""
-
-    def __init__(
-        self,
-        new_x: Tensor,
-        idx_x: List[int],
-        idx_y: List[int],
-        prepend_x: Tensor,
-        prepend_y: Tensor,
-        append_x: Tensor,
-        append_y: Tensor,
-        normalize_y: Tensor,
-        normalize_x: bool = False,
-        keep_original: bool = False,
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
-    ):
-        super().__init__()
-        if len(set(idx_x + idx_y)) != len(idx_x) + len(idx_y):
-            raise ValueError("Indices are not unique.")
-
-        self.idx_x = torch.as_tensor(idx_x, dtype=torch.long)
-        self.idx_y = torch.as_tensor(idx_y, dtype=torch.long)
-
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-        self.new_x = new_x
-
-        self.prepend_x = prepend_x
-        self.prepend_y = prepend_y
-        self.append_x = append_x
-        self.append_y = append_y
-        self.normalize_y = normalize_y
-
-        self.keep_original = keep_original
-        self.normalize_x = normalize_x
-
-        if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
-            self.idx_y,
-        ) + len(self.prepend_y) + len(self.append_y):
-            raise ValueError("The number of x and y indices must be equal.")
-
-        if self.normalize_y.numel() != 1:
-            raise ValueError("normalize_y must be a single value.")
-
-    def _to(self, X: Tensor) -> None:
-        self.new_x = self.coefficient.to(X)
-
-    def append(self, X: Tensor, values: Tensor) -> Tensor:
-        shape = X.shape
-        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
-        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
-        return torch.cat([X, values_expanded], dim=-1)
-
-    def prepend(self, X: Tensor, values: Tensor) -> Tensor:
-        shape = X.shape
-        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
-        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
-        return torch.cat([values_expanded, X], dim=-1)
-
-    def transform(self, X: Tensor):
-        shapeX = X.shape
-
-        x = X[..., self.idx_x]
-
-        x = self.prepend(x, self.prepend_x)
-        x = self.append(x, self.append_x)
-
-        if self.normalize_x:
-            x_max = x.max(dim=-1, keepdim=True).values
-            x = x / torch.clamp(x_max, min=1e-8)
-
-        y = X[..., self.idx_y]
-
-        y = self.prepend(y, self.prepend_y)
-        y = self.append(y, self.append_y)
-
-        if self.normalize_y.numel() == 1:
-            y = y / self.normalize_y
-
-        if X.dim() == 3:
-            x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
-            y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
-
-        new_x = self.new_x.expand(x.shape[0], -1)
-        new_y = torch.vmap(interp1d)(x, y, new_x)
-
-        if X.dim() == 3:
-            new_y = new_y.reshape((shapeX[0], shapeX[1], new_y.shape[-1]))
-
-        if self.keep_original:
-            return torch.cat([new_y, X], dim=-1)
-
-        return new_y
 
 
 def create_supervised_dataset(
@@ -1257,7 +1198,7 @@ def get_categorical_encoder(
     feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
 ) -> Encoder:
     """Get the categorical transformer for a given feature."""
-    if isinstance(transform, AnyMolFeatures):
+    if isinstance(transform, tuple(to_list(AnyMolFeatures))):
         assert isinstance(feature, CategoricalMolecularInput)
         # filter out the highly-correlated descriptors
         transform.remove_correlated_descriptors(feature.categories)

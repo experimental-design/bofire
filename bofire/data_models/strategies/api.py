@@ -1,6 +1,8 @@
-from typing import Union
-
-from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
+from bofire.data_models.strategies._register import register_strategy
+from bofire.data_models.strategies.actual_strategy_type import (
+    _ACTUAL_STRATEGY_TYPES,
+    ActualStrategy,
+)
 from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     AnyOptimalityCriterion,
@@ -16,6 +18,7 @@ from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.fractional_factorial import (
     FractionalFactorialStrategy,
 )
+from bofire.data_models.strategies.llm import LLMStrategy
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     LSRBO,
@@ -38,7 +41,10 @@ from bofire.data_models.strategies.predictives.mobo import (
     RelativeToMaxMovingReferenceValue,
 )
 from bofire.data_models.strategies.predictives.multi_fidelity import (
-    MultiFidelityStrategy,
+    MultiFidelityVarianceBasedStrategy,
+)
+from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
+    MultiFidelityHVKGStrategy,
 )
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -68,18 +74,13 @@ from bofire.data_models.transforms.api import (
     DropDataTransform,
     ManipulateDataTransform,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AbstractStrategy = Union[
-    Strategy,
-    BotorchStrategy,
-    PredictiveStrategy,
-    MultiobjectiveStrategy,
-]
+_ANY_STRATEGY_TYPES = (*_ACTUAL_STRATEGY_TYPES, MetaStrategy)
+AnyStrategy = tagged_union(*_ANY_STRATEGY_TYPES)
 
-AnyStrategy = Union[ActualStrategy, MetaStrategy]
-
-AnyPredictive = Union[
+AnyPredictive = tagged_union(
     SoboStrategy,
     ActiveLearningStrategy,
     AdditiveSoboStrategy,
@@ -89,6 +90,8 @@ AnyPredictive = Union[
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,
-]
+    MultiFidelityVarianceBasedStrategy,
+    MultiFidelityHVKGStrategy,
+)
 
 AnyLocalSearchConfig = LSRBO

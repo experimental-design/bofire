@@ -14,6 +14,7 @@ from botorch.models.robust_relevance_pursuit_model import (
 )
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -54,6 +55,7 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
+        self.noise_constraint = data_model.noise_constraint
         self.prior_mean_of_support = data_model.prior_mean_of_support
         self.convex_parametrization = data_model.convex_parametrization
         self.cache_model_trace = data_model.cache_model_trace
@@ -76,9 +78,17 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         else:
             n_dim = tX.shape[-1]
 
+        likelihood = GaussianLikelihood(
+            noise_prior=priors.map(self.noise_prior, d=n_dim),
+            noise_constraint=priors.map(self.noise_constraint)
+            if self.noise_constraint is not None
+            else None,
+        )
+
         self.model = RobustRelevancePursuitSingleTaskGP(
             train_X=tX,
             train_Y=tY,
+            likelihood=likelihood,
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
@@ -92,7 +102,6 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
         if self.prior_mean_of_support is not None:
             self.model.prior_mean_of_support = self.prior_mean_of_support
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(

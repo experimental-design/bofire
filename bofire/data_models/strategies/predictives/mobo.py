@@ -21,6 +21,7 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
+from bofire.data_models.unions import tagged_union
 
 
 class ReferenceValue(BaseModel):
@@ -160,12 +161,12 @@ class ExplicitReferencePoint(ReferencePoint):
     type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"
     values: Dict[
         str,
-        Union[
+        tagged_union(
             FixedReferenceValue,
             AbsoluteMovingReferenceValue,
             RelativeMovingReferenceValue,
             RelativeToMaxMovingReferenceValue,
-        ],
+        ),
     ]
 
 
