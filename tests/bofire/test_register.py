@@ -1339,15 +1339,13 @@ class TestDuplicateEngineeredFeatureRegistration:
 class TestDuplicateLLMProviderRegistration:
     def _cleanup(self):
         import bofire.data_models.llm.api as llm_api
-        from bofire.data_models.unions import tagged_union, to_list
+        from bofire.data_models.unions import tagged_union
         from bofire.llm.mapper import LLM_MAP
 
-        kept = [
-            t
-            for t in to_list(llm_api.AnyLLMProvider)
-            if getattr(t, "__name__", "") != "_DupLLMProvider"
-        ]
-        llm_api.AnyLLMProvider = tagged_union(*kept)
+        for cls in list(llm_api._LLM_PROVIDER_TYPES):
+            if getattr(cls, "__name__", "") == "_DupLLMProvider":
+                llm_api._LLM_PROVIDER_TYPES.remove(cls)
+        llm_api.AnyLLMProvider = tagged_union(*llm_api._LLM_PROVIDER_TYPES)
         for cls in list(LLM_MAP):
             if getattr(cls, "__name__", "") == "_DupLLMProvider":
                 LLM_MAP.pop(cls, None)
