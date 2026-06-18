@@ -1118,14 +1118,18 @@ class TestRebuildCoverage:
 
 
 # ---------------------------------------------------------------------------
-# Duplicate registration: raise a clear error on a same-`type` conflict
+# Duplicate registration
 #
 # Re-running registration code re-defines the data model as a *new* class
 # object that keeps the same ``type`` discriminator. The identity-based guard
 # used to miss this and silently append a duplicate, which later produced a
 # cryptic ``Value '...' for discriminator 'type' mapped to multiple choices``
-# error when a dependent discriminated union was built. These tests pin the
-# fixed behaviour.
+# error when a dependent discriminated union was built.
+#
+# Detection lives in the shared ``register_into`` helper used by every
+# ``register_*`` function, so it is covered once here (via the strategy
+# registry as a representative end-to-end case, plus a direct unit check)
+# instead of being re-tested for every registerable.
 # ---------------------------------------------------------------------------
 
 
@@ -1145,21 +1149,7 @@ def _make_strategy_dm():
     return _DupStrategyDataModel
 
 
-def _make_kernel_dm():
-    class _DupKernelDataModel(KernelDataModel):
-        type: Literal["DupKernel"] = "DupKernel"
-
-    return _DupKernelDataModel
-
-
-def _make_prior_dm():
-    class _DupPriorDataModel(PriorDataModel):
-        type: Literal["DupPrior"] = "DupPrior"
-
-    return _DupPriorDataModel
-
-
-class TestDuplicateStrategyRegistration:
+class TestDuplicateRegistration:
     def _cleanup(self):
         import bofire.data_models.strategies.actual_strategy_type as ast_mod
         from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
@@ -1186,186 +1176,24 @@ class TestDuplicateStrategyRegistration:
         finally:
             self._cleanup()
 
-    def test_conflicting_class_raises_clear_error(self):
+    def test_conflicting_type_raises_clear_error(self):
         import bofire.strategies.api as strategies_api
 
         self._cleanup()
         try:
             strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+            # A different class object with the same ``type`` must be rejected.
             with pytest.raises(ValueError, match="already registered"):
                 strategies_api.register(_make_strategy_dm(), _CustomStrategy)
         finally:
             self._cleanup()
 
-
-class TestDuplicateKernelRegistration:
-    def _cleanup(self):
-        import bofire.data_models.kernels.api as kernels_api
-        from bofire.kernels.mapper import KERNEL_MAP
-
-        for registry in (
-            kernels_api._KERNEL_TYPES,
-            kernels_api._CONTINUOUS_KERNEL_TYPES,
-            kernels_api._CATEGORICAL_KERNEL_TYPES,
-        ):
-            for cls in list(registry):
-                if getattr(cls, "__name__", "") == "_DupKernelDataModel":
-                    registry.remove(cls)
-        for cls in list(KERNEL_MAP):
-            if getattr(cls, "__name__", "") == "_DupKernelDataModel":
-                KERNEL_MAP.pop(cls, None)
-
-    def test_conflicting_class_raises_clear_error(self):
-        import bofire.kernels.api as kernels_api
-
-        self._cleanup()
-        try:
-            kernels_api.register(_make_kernel_dm(), lambda *a: MagicMock())
-            with pytest.raises(ValueError, match="already registered"):
-                kernels_api.register(_make_kernel_dm(), lambda *a: MagicMock())
-        finally:
-            self._cleanup()
-
     def test_class_without_fixed_type_is_rejected(self):
         """A registerable must declare a fixed ``type`` discriminator."""
-        import bofire.kernels.api as kernels_api
+        from bofire.data_models._register_utils import register_into
 
-        # A bare Kernel subclass that does not pin ``type`` has no fixed
-        # discriminator value, so registration must fail loudly.
-        class _NoTypeKernel(KernelDataModel):
+        class _NoType:
             pass
 
         with pytest.raises(ValueError, match="fixed `type` discriminator"):
-            kernels_api.register(_NoTypeKernel, lambda *a: MagicMock())
-
-
-class TestDuplicatePriorRegistration:
-    def _cleanup(self):
-        import bofire.data_models.priors.api as priors_api
-        from bofire.priors.mapper import PRIOR_MAP
-
-        for cls in list(priors_api._PRIOR_TYPES):
-            if getattr(cls, "__name__", "") == "_DupPriorDataModel":
-                priors_api._PRIOR_TYPES.remove(cls)
-        for cls in list(PRIOR_MAP):
-            if getattr(cls, "__name__", "") == "_DupPriorDataModel":
-                PRIOR_MAP.pop(cls, None)
-
-    def test_conflicting_class_raises_clear_error(self):
-        import bofire.priors.api as priors_api
-
-        self._cleanup()
-        try:
-            priors_api.register(_make_prior_dm(), lambda dm, **kw: MagicMock())
-            with pytest.raises(ValueError, match="already registered"):
-                priors_api.register(_make_prior_dm(), lambda dm, **kw: MagicMock())
-        finally:
-            self._cleanup()
-
-
-class TestDuplicateBotorchSurrogateRegistration:
-    def _cleanup(self):
-        from bofire.data_models.surrogates.botorch_surrogates import (
-            _BOTORCH_SURROGATE_TYPES,
-        )
-        from bofire.surrogates.mapper import SURROGATE_MAP
-
-        for cls in list(_BOTORCH_SURROGATE_TYPES):
-            if getattr(cls, "__name__", "") == "_DupBotorchDataModel":
-                _BOTORCH_SURROGATE_TYPES.remove(cls)
-        for cls in list(SURROGATE_MAP):
-            if getattr(cls, "__name__", "") == "_DupBotorchDataModel":
-                SURROGATE_MAP.pop(cls, None)
-
-    @staticmethod
-    def _make_dm():
-        class _DupBotorchDataModel(BotorchSurrogate):
-            type: Literal["DupBotorch"] = "DupBotorch"
-
-            @classmethod
-            def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
-                return True
-
-        return _DupBotorchDataModel
-
-    def test_conflicting_class_raises_clear_error(self):
-        import bofire.surrogates.api as surrogates_api
-
-        self._cleanup()
-        try:
-            surrogates_api.register(self._make_dm(), _CustomBotorchSurrogate)
-            with pytest.raises(ValueError, match="already registered"):
-                surrogates_api.register(self._make_dm(), _CustomBotorchSurrogate)
-        finally:
-            self._cleanup()
-
-
-class TestDuplicateEngineeredFeatureRegistration:
-    def _cleanup(self):
-        from bofire.data_models.features.api import _ENGINEERED_FEATURE_TYPES
-        from bofire.surrogates.engineered_features import AGGREGATE_MAP
-
-        for cls in list(_ENGINEERED_FEATURE_TYPES):
-            if getattr(cls, "__name__", "") == "_DupEngineered":
-                _ENGINEERED_FEATURE_TYPES.remove(cls)
-        for cls in list(AGGREGATE_MAP):
-            if getattr(cls, "__name__", "") == "_DupEngineered":
-                AGGREGATE_MAP.pop(cls, None)
-
-    @staticmethod
-    def _make_dm():
-        class _DupEngineered(EngineeredFeature):
-            type: Literal["DupEngineered"] = "DupEngineered"
-            order_id = 102
-
-            @property
-            def n_transformed_inputs(self) -> int:
-                return 1
-
-        return _DupEngineered
-
-    def test_conflicting_class_raises_clear_error(self):
-        from bofire.surrogates.engineered_features import register
-
-        self._cleanup()
-        try:
-            register(self._make_dm(), lambda i, t, f: MagicMock())
-            with pytest.raises(ValueError, match="already registered"):
-                register(self._make_dm(), lambda i, t, f: MagicMock())
-        finally:
-            self._cleanup()
-
-
-class TestDuplicateLLMProviderRegistration:
-    def _cleanup(self):
-        import bofire.data_models.llm.api as llm_api
-        from bofire.data_models.unions import tagged_union
-        from bofire.llm.mapper import LLM_MAP
-
-        for cls in list(llm_api._LLM_PROVIDER_TYPES):
-            if getattr(cls, "__name__", "") == "_DupLLMProvider":
-                llm_api._LLM_PROVIDER_TYPES.remove(cls)
-        llm_api.AnyLLMProvider = tagged_union(*llm_api._LLM_PROVIDER_TYPES)
-        for cls in list(LLM_MAP):
-            if getattr(cls, "__name__", "") == "_DupLLMProvider":
-                LLM_MAP.pop(cls, None)
-
-    @staticmethod
-    def _make_dm():
-        class _DupLLMProvider(LLMProvider):
-            type: Literal["DupLLMProvider"] = "DupLLMProvider"
-            model: str = "fake"
-            api_key_env_var: str = "FAKE"
-
-        return _DupLLMProvider
-
-    def test_conflicting_class_raises_clear_error(self):
-        import bofire.llm.mapper as llm_mapper
-
-        self._cleanup()
-        try:
-            llm_mapper.register(self._make_dm(), lambda dm: MagicMock())
-            with pytest.raises(ValueError, match="already registered"):
-                llm_mapper.register(self._make_dm(), lambda dm: MagicMock())
-        finally:
-            self._cleanup()
+            register_into([], _NoType, kind="strategy")
