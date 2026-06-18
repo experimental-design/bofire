@@ -2,7 +2,7 @@
 
 import typing
 from collections.abc import Sequence
-from typing import Dict, List, Optional, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
 from pydantic_core import PydanticUndefined
 
@@ -51,93 +51,43 @@ def register_into(
     registry: List[type],
     data_model_cls: type,
     *,
-    overwrite: bool = False,
     kind: str = "type",
     discriminator: str = "type",
-) -> Tuple[bool, Optional[type]]:
-    """Insert *data_model_cls* into the *registry* list in place.
+) -> bool:
+    """Append *data_model_cls* to the *registry* list in place.
 
-    Returns ``(changed, replaced)``:
+    Returns ``True`` if the class was newly appended (callers should then
+    rebuild dependent unions/models), or ``False`` if the exact same class is
+    already registered (idempotent no-op).
 
-    - the exact class is already registered -> ``(False, None)`` (idempotent
-      no-op; callers skip the dependent-model rebuild)
-    - no conflict -> appends and returns ``(True, None)``
-    - a *different* class with the same discriminator value is registered ->
-      if *overwrite* is ``True`` the old class is replaced in place and
-      ``(True, old_cls)`` is returned, otherwise a ``ValueError`` is raised
-      describing the conflict.
-
-    The returned ``replaced`` class lets callers mirror the change onto
-    secondary registries (see :func:`swap_or_append`); callers that have none
-    can ignore it.
+    Raises ``ValueError`` if a *different* class with the same discriminator
+    value is already registered — the situation that otherwise surfaces later
+    as the cryptic ``Value '...' for discriminator '...' mapped to multiple
+    choices`` error when a dependent discriminated union is built.
 
     Args:
         registry: Mutable list of registered data model classes.
         data_model_cls: The class to register.
-        overwrite: Replace an existing same-discriminator class instead of
-            raising.
         kind: Human readable noun used in the error message (e.g. ``"strategy"``).
         discriminator: The discriminator field name (defaults to ``"type"``).
-
-    Raises:
-        ValueError: On a discriminator collision when *overwrite* is ``False``.
     """
     if data_model_cls in registry:
-        return (False, None)
+        return False
 
     conflict = find_registered_conflict(registry, data_model_cls, discriminator)
-    if conflict is None:
-        registry.append(data_model_cls)
-        return (True, None)
-
-    if not overwrite:
+    if conflict is not None:
         value = discriminator_value(data_model_cls, discriminator)
         raise ValueError(
             f"A {kind} with {discriminator}={value!r} is already registered as "
             f"'{conflict.__module__}.{conflict.__qualname__}'. This usually "
             f"happens when the same {kind} is defined and registered more than "
-            f"once (for example by re-running a notebook cell or import). Pass "
-            f"overwrite=True to replace the existing registration, or give the "
-            f"new {kind} a distinct '{discriminator}' value."
+            f"once (for example by re-running a notebook cell or import). Give "
+            f"the new {kind} a distinct '{discriminator}' value, or restart the "
+            f"interpreter to clear the previous registration."
         )
 
-    registry[registry.index(conflict)] = data_model_cls
-    return (True, conflict)
-
-
-def swap_or_append(registry: List[type], new_cls: type, replaced: Optional[type]):
-    """Mirror a registration onto a secondary registry list.
-
-    Replaces *replaced* with *new_cls* if present, otherwise appends *new_cls*
-    if not already there. Used to keep sub-category registries (e.g.
-    continuous/categorical kernels) in sync with the main registry.
-    """
-    if replaced is not None and replaced in registry:
-        registry[registry.index(replaced)] = new_cls
-    elif new_cls not in registry:
-        registry.append(new_cls)
-
-
-def pop_conflicting_map_keys(
-    map_dict: Dict[type, object], data_model_cls: type, discriminator: str = "type"
-) -> None:
-    """Drop entries from a mapper dict whose key shares *data_model_cls*'s
-    discriminator value but is a different (stale) class object.
-
-    Keeps functional-mapper dicts from accumulating dead entries when a type is
-    re-registered with ``overwrite=True``.
-    """
-    value = discriminator_value(data_model_cls, discriminator)
-    if value is None:
-        return
-    stale = [
-        key
-        for key in map_dict
-        if key is not data_model_cls
-        and discriminator_value(key, discriminator) == value
-    ]
-    for key in stale:
-        del map_dict[key]
+    registry.append(data_model_cls)
+    return True
 
 
 def _rewrap_union(types: Tuple[Type, ...], discriminator: Optional[str]):
@@ -201,9 +151,7 @@ def append_to_union_field(model_cls: type, field_name: str, new_type: type) -> N
         inner = typing.get_args(old)[0]
         inner_unwrapped, inner_meta = unwrap_annotated(inner)
         discriminator = discriminator_name(inner_meta)
-        inner_args = _drop_discriminator_conflicts(
-            typing.get_args(inner_unwrapped), new_type, discriminator
-        )
+        inner_args = typing.get_args(inner_unwrapped)
         if new_type not in inner_args:
             new_inner = _rewrap_union((*inner_args, new_type), discriminator)
             _set_field_annotation(model_cls, field_name, Sequence[new_inner])
@@ -213,28 +161,8 @@ def append_to_union_field(model_cls: type, field_name: str, new_type: type) -> N
         discriminator = discriminator_name(meta)
         args = typing.get_args(old_unwrapped)
         has_none = type(None) in args
-        non_none = _drop_discriminator_conflicts(
-            tuple(a for a in args if a is not type(None)), new_type, discriminator
-        )
+        non_none = tuple(a for a in args if a is not type(None))
         if new_type not in non_none:
             new_union = _rewrap_union((*non_none, new_type), discriminator)
             new_ann = typing.Optional[new_union] if has_none else new_union
             _set_field_annotation(model_cls, field_name, new_ann)
-
-
-def _drop_discriminator_conflicts(
-    members: Tuple[type, ...], new_type: type, discriminator: Optional[str]
-) -> Tuple[type, ...]:
-    """Remove members sharing *new_type*'s discriminator value but a different
-    identity, so re-registering a type (``overwrite=True``) replaces the stale
-    member in an inline union instead of producing a duplicate-tag union.
-    """
-    field = discriminator or "type"
-    new_value = discriminator_value(new_type, field)
-    if new_value is None:
-        return members
-    return tuple(
-        m
-        for m in members
-        if m is new_type or discriminator_value(m, field) != new_value
-    )

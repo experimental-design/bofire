@@ -106,7 +106,6 @@ def register(
     data_model_cls: Type[data_models.Surrogate],
     surrogate_cls: Optional[Type[Surrogate]] = None,
     data_model_transform: Optional[Callable] = None,
-    overwrite: bool = False,
 ):
     """Register a custom surrogate mapping from data model to functional class.
 
@@ -131,13 +130,10 @@ def register(
             returns a decorator.
         data_model_transform: Optional function that transforms the data model
             before instantiation (e.g. to convert to a simpler representation).
-        overwrite: If ``True``, replace an existing surrogate registered under
-            the same ``type`` discriminator instead of raising.
 
     Returns:
         The surrogate class (unchanged) when used as a decorator, None otherwise.
     """
-    from bofire.data_models._register_utils import pop_conflicting_map_keys
 
     def _register(cls: Type[Surrogate]) -> Type[Surrogate]:
         # For botorch surrogates, update the data model union first so a
@@ -147,12 +143,10 @@ def register(
                 register_botorch_surrogate,
             )
 
-            register_botorch_surrogate(data_model_cls, overwrite=overwrite)
+            register_botorch_surrogate(data_model_cls)
 
-        pop_conflicting_map_keys(SURROGATE_MAP, data_model_cls)
         SURROGATE_MAP[data_model_cls] = cls
         if data_model_transform is not None:
-            pop_conflicting_map_keys(DATA_MODEL_MAP, data_model_cls)
             DATA_MODEL_MAP[data_model_cls] = data_model_transform
 
         return cls

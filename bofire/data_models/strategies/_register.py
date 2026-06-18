@@ -3,7 +3,7 @@
 from bofire.data_models.unions import tagged_union
 
 
-def register_strategy(data_model_cls: type, overwrite: bool = False) -> None:
+def register_strategy(data_model_cls: type) -> None:
     """Register a custom strategy type so it is accepted in ActualStrategy fields.
 
     This appends the type to the internal registry, rebuilds the
@@ -13,13 +13,10 @@ def register_strategy(data_model_cls: type, overwrite: bool = False) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Strategy``.
-        overwrite: If ``True``, replace an existing strategy registered under
-            the same ``type`` discriminator instead of raising. Useful when
-            re-running code that re-defines and re-registers the same strategy.
 
     Raises:
-        ValueError: If a different strategy with the same ``type`` is already
-            registered and *overwrite* is ``False``.
+        ValueError: If a different strategy with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.strategies.actual_strategy_type as ast_mod
     import bofire.data_models.strategies.api as strategies_api
@@ -27,13 +24,9 @@ def register_strategy(data_model_cls: type, overwrite: bool = False) -> None:
     from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
     from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
 
-    changed, _ = register_into(
-        ast_mod._ACTUAL_STRATEGY_TYPES,
-        data_model_cls,
-        overwrite=overwrite,
-        kind="strategy",
-    )
-    if not changed:
+    if not register_into(
+        ast_mod._ACTUAL_STRATEGY_TYPES, data_model_cls, kind="strategy"
+    ):
         return
     ast_mod.ActualStrategy = tagged_union(*ast_mod._ACTUAL_STRATEGY_TYPES)
     strategies_api.AnyStrategy = tagged_union(

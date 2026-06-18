@@ -147,7 +147,7 @@ def _rebuild_dependent_models() -> None:
     BotorchSurrogates.model_rebuild(force=True)
 
 
-def register_prior(data_model_cls: type, overwrite: bool = False) -> None:
+def register_prior(data_model_cls: type) -> None:
     """Register a custom prior type so it is accepted in AnyPrior fields.
 
     This appends the type to the internal registry, rebuilds the
@@ -156,26 +156,21 @@ def register_prior(data_model_cls: type, overwrite: bool = False) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Prior``.
-        overwrite: If ``True``, replace an existing prior registered under the
-            same ``type`` discriminator instead of raising.
 
     Raises:
-        ValueError: If a different prior with the same ``type`` is already
-            registered and *overwrite* is ``False``.
+        ValueError: If a different prior with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.priors.api as priors_api
     from bofire.data_models._register_utils import register_into
 
-    changed, _ = register_into(
-        priors_api._PRIOR_TYPES, data_model_cls, overwrite=overwrite, kind="prior"
-    )
-    if not changed:
+    if not register_into(priors_api._PRIOR_TYPES, data_model_cls, kind="prior"):
         return
     priors_api.AnyPrior = tagged_union(*priors_api._PRIOR_TYPES)
     _rebuild_dependent_models()
 
 
-def register_prior_constraint(data_model_cls: type, overwrite: bool = False) -> None:
+def register_prior_constraint(data_model_cls: type) -> None:
     """Register a custom prior constraint type so it is accepted in AnyPriorConstraint fields.
 
     This appends the type to the internal registry, rebuilds the
@@ -184,23 +179,17 @@ def register_prior_constraint(data_model_cls: type, overwrite: bool = False) -> 
 
     Args:
         data_model_cls: A concrete subclass of ``PriorConstraint`` or ``Interval``.
-        overwrite: If ``True``, replace an existing prior constraint registered
-            under the same ``type`` discriminator instead of raising.
 
     Raises:
-        ValueError: If a different prior constraint with the same ``type`` is
-            already registered and *overwrite* is ``False``.
+        ValueError: If a different prior constraint with the same ``type``
+            discriminator is already registered.
     """
     import bofire.data_models.priors.api as priors_api
     from bofire.data_models._register_utils import register_into
 
-    changed, _ = register_into(
-        priors_api._PRIOR_CONSTRAINT_TYPES,
-        data_model_cls,
-        overwrite=overwrite,
-        kind="prior constraint",
-    )
-    if not changed:
+    if not register_into(
+        priors_api._PRIOR_CONSTRAINT_TYPES, data_model_cls, kind="prior constraint"
+    ):
         return
     priors_api.AnyPriorConstraint = tagged_union(*priors_api._PRIOR_CONSTRAINT_TYPES)
     _rebuild_dependent_models()

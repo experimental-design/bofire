@@ -3,7 +3,7 @@
 from bofire.data_models.unions import extract_union_args, tagged_union
 
 
-def register_llm_provider(data_model_cls: type, overwrite: bool = False) -> None:
+def register_llm_provider(data_model_cls: type) -> None:
     """Register a custom LLM provider so it is accepted in AnyLLMProvider fields.
 
     Rebuilds the ``AnyLLMProvider`` union with the new type appended, and
@@ -16,12 +16,10 @@ def register_llm_provider(data_model_cls: type, overwrite: bool = False) -> None
 
     Args:
         data_model_cls: A concrete subclass of ``LLMProvider``.
-        overwrite: If ``True``, replace an existing provider registered under
-            the same ``type`` discriminator instead of raising.
 
     Raises:
-        ValueError: If a different provider with the same ``type`` is already
-            registered and *overwrite* is ``False``.
+        ValueError: If a different provider with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.llm.api as llm_api
     from bofire.data_models._register_utils import patch_field, register_into
@@ -31,10 +29,7 @@ def register_llm_provider(data_model_cls: type, overwrite: bool = False) -> None
     # the current union members and rebuild the union from it afterwards.
     existing_types, _ = extract_union_args(llm_api.AnyLLMProvider)
     types = list(existing_types)
-    changed, _ = register_into(
-        types, data_model_cls, overwrite=overwrite, kind="LLM provider"
-    )
-    if not changed:
+    if not register_into(types, data_model_cls, kind="LLM provider"):
         return
     llm_api.AnyLLMProvider = tagged_union(*types)
 

@@ -85,7 +85,7 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     BotorchSurrogates.model_rebuild(force=True)
 
 
-def register_kernel(data_model_cls: type, overwrite: bool = False) -> None:
+def register_kernel(data_model_cls: type) -> None:
     """Register a custom kernel type so it is accepted in AnyKernel fields.
 
     This appends the type to the internal registry, rebuilds the
@@ -99,36 +99,28 @@ def register_kernel(data_model_cls: type, overwrite: bool = False) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Kernel``.
-        overwrite: If ``True``, replace an existing kernel registered under the
-            same ``type`` discriminator instead of raising.
 
     Raises:
-        ValueError: If a different kernel with the same ``type`` is already
-            registered and *overwrite* is ``False``.
+        ValueError: If a different kernel with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.kernels.api as kernels_api
-    from bofire.data_models._register_utils import register_into, swap_or_append
+    from bofire.data_models._register_utils import register_into
     from bofire.data_models.kernels.categorical import CategoricalKernel
     from bofire.data_models.kernels.continuous import ContinuousKernel
 
-    changed, replaced = register_into(
-        kernels_api._KERNEL_TYPES,
-        data_model_cls,
-        overwrite=overwrite,
-        kind="kernel",
-    )
-    if not changed:
+    if not register_into(kernels_api._KERNEL_TYPES, data_model_cls, kind="kernel"):
         return
     kernels_api.AnyKernel = tagged_union(*kernels_api._KERNEL_TYPES)
 
     # Auto-detect sub-category from base class
     if issubclass(data_model_cls, ContinuousKernel):
-        swap_or_append(kernels_api._CONTINUOUS_KERNEL_TYPES, data_model_cls, replaced)
+        kernels_api._CONTINUOUS_KERNEL_TYPES.append(data_model_cls)
         kernels_api.AnyContinuousKernel = tagged_union(
             *kernels_api._CONTINUOUS_KERNEL_TYPES
         )
     elif issubclass(data_model_cls, CategoricalKernel):
-        swap_or_append(kernels_api._CATEGORICAL_KERNEL_TYPES, data_model_cls, replaced)
+        kernels_api._CATEGORICAL_KERNEL_TYPES.append(data_model_cls)
         kernels_api.AnyCategoricalKernel = tagged_union(
             *kernels_api._CATEGORICAL_KERNEL_TYPES
         )

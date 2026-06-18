@@ -1118,7 +1118,7 @@ class TestRebuildCoverage:
 
 
 # ---------------------------------------------------------------------------
-# Duplicate registration: clear error by default + overwrite to replace
+# Duplicate registration: raise a clear error on a same-`type` conflict
 #
 # Re-running registration code re-defines the data model as a *new* class
 # object that keeps the same ``type`` discriminator. The identity-based guard
@@ -1197,30 +1197,6 @@ class TestDuplicateStrategyRegistration:
         finally:
             self._cleanup()
 
-    def test_overwrite_replaces_and_builds(self):
-        import bofire.strategies.api as strategies_api
-        from bofire.data_models.strategies.stepwise.stepwise import Step
-        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
-
-        self._cleanup()
-        try:
-            DM1 = _make_strategy_dm()
-            DM2 = _make_strategy_dm()
-            strategies_api.register(DM1, _CustomStrategy)
-            strategies_api.register(DM2, _CustomStrategy, overwrite=True)
-
-            # The previously cryptic discriminator error must no longer occur.
-            step = Step(
-                strategy_data=DM2(domain=_make_domain()),
-                condition={"type": "AlwaysTrueCondition"},
-            )
-            assert type(step.strategy_data) is DM2
-            # Stale mapper entry for the replaced class is dropped.
-            assert DM1 not in ACTUAL_MAP
-            assert ACTUAL_MAP[DM2] is _CustomStrategy
-        finally:
-            self._cleanup()
-
 
 class TestDuplicateKernelRegistration:
     def _cleanup(self):
@@ -1250,25 +1226,6 @@ class TestDuplicateKernelRegistration:
         finally:
             self._cleanup()
 
-    def test_overwrite_self_heals_inline_unions(self):
-        """Overwriting must replace the stale member in aggregation kernel
-        inline unions instead of leaving a duplicate discriminator tag."""
-        import bofire.kernels.api as kernels_api
-        from bofire.data_models.kernels.aggregation import AdditiveKernel
-        from bofire.data_models.kernels.continuous import RBFKernel
-
-        self._cleanup()
-        try:
-            K1 = _make_kernel_dm()
-            K2 = _make_kernel_dm()
-            kernels_api.register(K1, lambda *a: MagicMock())
-            kernels_api.register(K2, lambda *a: MagicMock(), overwrite=True)
-
-            ak = AdditiveKernel(kernels=[RBFKernel(), K2()])
-            assert type(ak.kernels[1]) is K2
-        finally:
-            self._cleanup()
-
 
 class TestDuplicatePriorRegistration:
     def _cleanup(self):
@@ -1290,22 +1247,6 @@ class TestDuplicatePriorRegistration:
             priors_api.register(_make_prior_dm(), lambda dm, **kw: MagicMock())
             with pytest.raises(ValueError, match="already registered"):
                 priors_api.register(_make_prior_dm(), lambda dm, **kw: MagicMock())
-        finally:
-            self._cleanup()
-
-    def test_overwrite_replaces_and_builds(self):
-        import bofire.priors.api as priors_api
-        from bofire.data_models.kernels.continuous import RBFKernel
-
-        self._cleanup()
-        try:
-            P1 = _make_prior_dm()
-            P2 = _make_prior_dm()
-            priors_api.register(P1, lambda dm, **kw: MagicMock())
-            priors_api.register(P2, lambda dm, **kw: MagicMock(), overwrite=True)
-
-            k = RBFKernel(lengthscale_prior=P2())
-            assert type(k.lengthscale_prior) is P2
         finally:
             self._cleanup()
 
@@ -1346,22 +1287,6 @@ class TestDuplicateBotorchSurrogateRegistration:
         finally:
             self._cleanup()
 
-    def test_overwrite_replaces_and_builds(self):
-        import bofire.surrogates.api as surrogates_api
-        from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-
-        self._cleanup()
-        try:
-            DM1 = self._make_dm()
-            DM2 = self._make_dm()
-            surrogates_api.register(DM1, _CustomBotorchSurrogate)
-            surrogates_api.register(DM2, _CustomBotorchSurrogate, overwrite=True)
-
-            bs = BotorchSurrogates(surrogates=[DM2(inputs=_INPUTS, outputs=_OUTPUTS)])
-            assert type(bs.surrogates[0]) is DM2
-        finally:
-            self._cleanup()
-
 
 class TestDuplicateEngineeredFeatureRegistration:
     def _cleanup(self):
@@ -1395,22 +1320,6 @@ class TestDuplicateEngineeredFeatureRegistration:
             register(self._make_dm(), lambda i, t, f: MagicMock())
             with pytest.raises(ValueError, match="already registered"):
                 register(self._make_dm(), lambda i, t, f: MagicMock())
-        finally:
-            self._cleanup()
-
-    def test_overwrite_replaces_and_builds(self):
-        from bofire.data_models.domain.features import EngineeredFeatures
-        from bofire.surrogates.engineered_features import register
-
-        self._cleanup()
-        try:
-            E1 = self._make_dm()
-            E2 = self._make_dm()
-            register(E1, lambda i, t, f: MagicMock())
-            register(E2, lambda i, t, f: MagicMock(), overwrite=True)
-
-            ef = EngineeredFeatures(features=[E2(key="test", features=["a", "b"])])
-            assert type(ef.features[0]) is E2
         finally:
             self._cleanup()
 
@@ -1448,33 +1357,5 @@ class TestDuplicateLLMProviderRegistration:
             llm_mapper.register(self._make_dm(), lambda dm: MagicMock())
             with pytest.raises(ValueError, match="already registered"):
                 llm_mapper.register(self._make_dm(), lambda dm: MagicMock())
-        finally:
-            self._cleanup()
-
-    def test_overwrite_replaces_and_builds(self):
-        import bofire.llm.mapper as llm_mapper
-        from bofire.data_models.objectives.api import MaximizeObjective
-        from bofire.data_models.strategies.api import (
-            LLMStrategy as LLMStrategyDataModel,
-        )
-
-        self._cleanup()
-        try:
-            P1 = self._make_dm()
-            P2 = self._make_dm()
-            llm_mapper.register(P1, lambda dm: MagicMock())
-            llm_mapper.register(P2, lambda dm: MagicMock(), overwrite=True)
-
-            domain = Domain(
-                inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
-                outputs=Outputs(
-                    features=[
-                        ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))
-                    ]
-                ),
-            )
-            data_model = LLMStrategyDataModel(domain=domain, llm=P2())
-            assert type(data_model.llm) is P2
-            assert P1 not in llm_mapper.LLM_MAP
         finally:
             self._cleanup()
