@@ -1226,6 +1226,18 @@ class TestDuplicateKernelRegistration:
         finally:
             self._cleanup()
 
+    def test_class_without_fixed_type_is_rejected(self):
+        """A registerable must declare a fixed ``type`` discriminator."""
+        import bofire.kernels.api as kernels_api
+
+        # A bare Kernel subclass that does not pin ``type`` has no fixed
+        # discriminator value, so registration must fail loudly.
+        class _NoTypeKernel(KernelDataModel):
+            pass
+
+        with pytest.raises(ValueError, match="fixed `type` discriminator"):
+            kernels_api.register(_NoTypeKernel, lambda *a: MagicMock())
+
 
 class TestDuplicatePriorRegistration:
     def _cleanup(self):

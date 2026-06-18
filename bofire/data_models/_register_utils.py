@@ -4,47 +4,27 @@ import typing
 from collections.abc import Sequence
 from typing import List, Optional, Tuple, Type
 
-from pydantic_core import PydanticUndefined
-
 from bofire.data_models.unions import discriminator_name, tagged_union, unwrap_annotated
 
 
-def discriminator_value(cls, discriminator: str = "type"):
-    """Return the discriminator literal value of a data model class.
+def _type_of(data_model_cls: type, kind: str) -> str:
+    """Return the ``type`` discriminator value of a registerable class.
 
-    For a field declared as ``type: Literal["Foo"] = "Foo"`` this returns
-    ``"Foo"``. Returns ``None`` if the class has no such field or it has no
-    concrete default (e.g. an abstract base class).
+    Every registerable data model must declare ``type`` as a literal with a
+    fixed string value (e.g. ``type: Literal["Foo"] = "Foo"``) — that is what
+    the discriminated unions key on. Enforce it here so the requirement fails
+    loudly at registration instead of surfacing later as an obscure Pydantic
+    union error.
     """
-    fields = getattr(cls, "model_fields", None)
-    if not fields:
-        return None
-    field = fields.get(discriminator)
-    if field is None:
-        return None
-    default = getattr(field, "default", None)
-    if default is PydanticUndefined:
-        return None
-    return default
-
-
-def find_registered_conflict(registry, data_model_cls, discriminator: str = "type"):
-    """Return an already-registered class that shares *data_model_cls*'s
-    discriminator value but is a *different* class object, or ``None``.
-
-    This is the situation that produces the cryptic Pydantic error
-    ``Value '...' for discriminator '...' mapped to multiple choices`` once a
-    dependent discriminated union is built.
-    """
-    value = discriminator_value(data_model_cls, discriminator)
-    if value is None:
-        return None
-    for existing in registry:
-        if existing is data_model_cls:
-            continue
-        if discriminator_value(existing, discriminator) == value:
-            return existing
-    return None
+    field = getattr(data_model_cls, "model_fields", {}).get("type")
+    value = getattr(field, "default", None) if field is not None else None
+    if not isinstance(value, str):
+        raise ValueError(
+            f"Cannot register {data_model_cls.__name__} as a {kind}: it must "
+            f'declare a fixed `type` discriminator (e.g. type: Literal["Foo"] '
+            f'= "Foo").'
+        )
+    return value
 
 
 def register_into(
@@ -52,7 +32,6 @@ def register_into(
     data_model_cls: type,
     *,
     kind: str = "type",
-    discriminator: str = "type",
 ) -> bool:
     """Append *data_model_cls* to the *registry* list in place.
 
@@ -60,29 +39,29 @@ def register_into(
     rebuild dependent unions/models), or ``False`` if the exact same class is
     already registered (idempotent no-op).
 
-    Raises ``ValueError`` if a *different* class with the same discriminator
-    value is already registered — the situation that otherwise surfaces later
-    as the cryptic ``Value '...' for discriminator '...' mapped to multiple
-    choices`` error when a dependent discriminated union is built.
+    Raises ``ValueError`` if the class has no fixed ``type`` discriminator, or
+    if a *different* class with the same ``type`` is already registered — the
+    latter being the situation that otherwise surfaces later as the cryptic
+    ``Value '...' for discriminator 'type' mapped to multiple choices`` error
+    when a dependent discriminated union is built.
 
     Args:
         registry: Mutable list of registered data model classes.
         data_model_cls: The class to register.
         kind: Human readable noun used in the error message (e.g. ``"strategy"``).
-        discriminator: The discriminator field name (defaults to ``"type"``).
     """
     if data_model_cls in registry:
         return False
 
-    conflict = find_registered_conflict(registry, data_model_cls, discriminator)
+    type_ = _type_of(data_model_cls, kind)
+    conflict = next((c for c in registry if _type_of(c, kind) == type_), None)
     if conflict is not None:
-        value = discriminator_value(data_model_cls, discriminator)
         raise ValueError(
-            f"A {kind} with {discriminator}={value!r} is already registered as "
+            f"A {kind} with type={type_!r} is already registered as "
             f"'{conflict.__module__}.{conflict.__qualname__}'. This usually "
             f"happens when the same {kind} is defined and registered more than "
             f"once (for example by re-running a notebook cell or import). Give "
-            f"the new {kind} a distinct '{discriminator}' value, or restart the "
+            f"the new {kind} a distinct 'type' value, or restart the "
             f"interpreter to clear the previous registration."
         )
 
