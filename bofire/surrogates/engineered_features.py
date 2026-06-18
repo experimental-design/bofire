@@ -47,14 +47,13 @@ def register(
     Returns:
         The mapping function (unchanged) when used as a decorator, None otherwise.
     """
+    from bofire.data_models.features.api import register_engineered_feature
 
     def _register(fn: Callable) -> Callable:
-        AGGREGATE_MAP[data_model_cls] = fn
-
-        # Also register with the data model union so Pydantic accepts the type
-        from bofire.data_models.features.api import register_engineered_feature
-
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
         register_engineered_feature(data_model_cls)
+        AGGREGATE_MAP[data_model_cls] = fn
 
         return fn
 

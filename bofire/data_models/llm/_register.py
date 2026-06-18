@@ -1,6 +1,6 @@
 """Registration utilities for custom LLM provider types."""
 
-from bofire.data_models.unions import extract_union_args, tagged_union
+from bofire.data_models.unions import tagged_union
 
 
 def register_llm_provider(data_model_cls: type) -> None:
@@ -16,15 +16,20 @@ def register_llm_provider(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``LLMProvider``.
+
+    Raises:
+        ValueError: If a different provider with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.llm.api as llm_api
-    from bofire.data_models._register_utils import patch_field
+    from bofire.data_models._register_utils import patch_field, register_into
     from bofire.data_models.strategies.llm import LLMStrategy
 
-    existing_types, _ = extract_union_args(llm_api.AnyLLMProvider)
-    if data_model_cls in existing_types:
+    if not register_into(
+        llm_api._LLM_PROVIDER_TYPES, data_model_cls, kind="LLM provider"
+    ):
         return
-    llm_api.AnyLLMProvider = tagged_union(*existing_types, data_model_cls)
+    llm_api.AnyLLMProvider = tagged_union(*llm_api._LLM_PROVIDER_TYPES)
 
     patch_field(LLMStrategy, "llm", llm_api.AnyLLMProvider)
     LLMStrategy.model_rebuild(force=True)

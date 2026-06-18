@@ -39,15 +39,16 @@ def register(
     """
 
     def _register(fn: Callable) -> Callable:
-        PRIOR_MAP[data_model_cls] = fn
-
-        # Also register with the data model unions so Pydantic accepts the type
+        # Register with the data model unions first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
         if issubclass(data_model_cls, data_models.Prior):
             data_models.register_prior(data_model_cls)
         elif issubclass(
             data_model_cls, (data_models.PriorConstraint, data_models.Interval)
         ):
             data_models.register_prior_constraint(data_model_cls)
+
+        PRIOR_MAP[data_model_cls] = fn
 
         return fn
 

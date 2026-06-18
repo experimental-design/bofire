@@ -47,10 +47,10 @@ def register(
     """
 
     def _register(fn: Callable) -> Callable:
-        LLM_MAP[data_model_cls] = fn
-
-        # Also register with the data model union so Pydantic accepts the type
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
         data_models.register_llm_provider(data_model_cls)
+        LLM_MAP[data_model_cls] = fn
 
         return fn
 

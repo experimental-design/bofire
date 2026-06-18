@@ -136,16 +136,19 @@ def register(
     """
 
     def _register(cls: Type[Surrogate]) -> Type[Surrogate]:
-        SURROGATE_MAP[data_model_cls] = cls
-        if data_model_transform is not None:
-            DATA_MODEL_MAP[data_model_cls] = data_model_transform
-
+        # For botorch surrogates, update the data model union first so a
+        # discriminator conflict is raised before any map is mutated.
         if issubclass(data_model_cls, data_models.BotorchSurrogate):
             from bofire.data_models.surrogates.botorch_surrogates import (
                 register_botorch_surrogate,
             )
 
             register_botorch_surrogate(data_model_cls)
+
+        SURROGATE_MAP[data_model_cls] = cls
+        if data_model_transform is not None:
+            DATA_MODEL_MAP[data_model_cls] = data_model_transform
+
         return cls
 
     if surrogate_cls is not None:

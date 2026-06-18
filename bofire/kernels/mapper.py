@@ -49,10 +49,10 @@ def register(
     """
 
     def _register(fn: Callable) -> Callable:
-        KERNEL_MAP[data_model_cls] = fn
-
-        # Also register with the data model union so Pydantic accepts the type
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
         data_models.register_kernel(data_model_cls)
+        KERNEL_MAP[data_model_cls] = fn
 
         return fn
 

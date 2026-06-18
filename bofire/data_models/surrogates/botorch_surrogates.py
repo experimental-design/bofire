@@ -67,11 +67,18 @@ def register_botorch_surrogate(
 
     Args:
         data_model_cls: A concrete subclass of ``BotorchSurrogate``.
+
+    Raises:
+        ValueError: If a different botorch surrogate with the same ``type``
+            discriminator is already registered.
     """
+    from bofire.data_models._register_utils import register_into
+
     global AnyBotorchSurrogate
-    if data_model_cls in _BOTORCH_SURROGATE_TYPES:
+    if not register_into(
+        _BOTORCH_SURROGATE_TYPES, data_model_cls, kind="botorch surrogate"
+    ):
         return
-    _BOTORCH_SURROGATE_TYPES.append(data_model_cls)
     AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
     new_annotation = List[AnyBotorchSurrogate]
     BotorchSurrogates.__annotations__["surrogates"] = new_annotation
