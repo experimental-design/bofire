@@ -148,157 +148,48 @@ class CompetingReactionsModel:
         }
 
 
-# def selectivity_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
-#     import torch
-
-#     # Arrhenius rate constants
-#     R = 8.314
-#     k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
-#     k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
-
-#     # Initial concentrations
-#     C_A0 = 2.0 * pressure
-#     C_B0 = C_A0 * feed_ratio
-
-#     # Approximate steady-state selectivity (assumes high conversion)
-#     # For consecutive reactions: S ≈ k1/k2 * sqrt(C_B0/C_A0) * tau_factor
-#     tau_factor = torch.sqrt(residence_time / 20.0)  # Normalize to reference
-#     S = (k1 / k2) * torch.sqrt(feed_ratio) * tau_factor
-
-#     return 4.5 - S
+# ============================================================================
+# CALLABLE CONSTRAINT FUNCTIONS
+# ============================================================================
 
 
-# def selectivity_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
-#     """
-#     Selectivity constraint: S ≥ 5.0
-
-#     Reformulated as: 5.0 - S ≤ 0
-#     """
-#     model = CompetingReactionsModel()
-
-#     # Convert to numpy and ensure 1D array
-#     T_vals = np.atleast_1d(temperature.detach().cpu().numpy())
-#     tau_vals = np.atleast_1d(residence_time.detach().cpu().numpy())
-#     ratio_vals = np.atleast_1d(feed_ratio.detach().cpu().numpy())
-#     P_vals = np.atleast_1d(pressure.detach().cpu().numpy())
-
-#     violations = []
-#     for i in range(len(T_vals)):
-#         result = model.simulate_batch(
-#             T=float(T_vals[i]),
-#             tau=float(tau_vals[i]),
-#             feed_ratio=float(ratio_vals[i]),
-#             pressure=float(P_vals[i]),
-#         )
-#         # ⬅️ CHANGE: Relax from 5.0 to 4.5
-#         violations.append(4.5 - result["S"])
-
-#     return torch.tensor(violations, dtype=torch.float64)
-
-
-# def conversion_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
-#     """
-#     Conversion constraint: X_A ≥ 0.90
-
-#     Reformulated as: 0.90 - X_A ≤ 0
-#     """
-#     model = CompetingReactionsModel()
-
-#     # Convert to numpy and ensure 1D array
-#     T_vals = np.atleast_1d(temperature.detach().cpu().numpy())
-#     tau_vals = np.atleast_1d(residence_time.detach().cpu().numpy())
-#     ratio_vals = np.atleast_1d(feed_ratio.detach().cpu().numpy())
-#     P_vals = np.atleast_1d(pressure.detach().cpu().numpy())
-
-#     violations = []
-#     for i in range(len(T_vals)):
-#         result = model.simulate_batch(
-#             T=float(T_vals[i]),
-#             tau=float(tau_vals[i]),
-#             feed_ratio=float(ratio_vals[i]),
-#             pressure=float(P_vals[i]),
-#         )
-#         # ⬅️ CHANGE: Relax from 0.90 to 0.85
-#         violations.append(0.85 - result["X_A"])
-
-#     return torch.tensor(violations, dtype=torch.float64)
-
-
-# def heat_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
-#     """
-#     Heat generation constraint: Q ≤ 1200 W/L (cooling capacity)
-
-#     Reformulated as: Q - 1200 ≤ 0
-#     """
-#     model = CompetingReactionsModel()
-
-#     # Convert to numpy and ensure 1D array
-#     T_vals = np.atleast_1d(temperature.detach().cpu().numpy())
-#     tau_vals = np.atleast_1d(residence_time.detach().cpu().numpy())
-#     ratio_vals = np.atleast_1d(feed_ratio.detach().cpu().numpy())
-#     P_vals = np.atleast_1d(pressure.detach().cpu().numpy())
-
-#     violations = []
-#     for i in range(len(T_vals)):
-#         result = model.simulate_batch(
-#             T=float(T_vals[i]),
-#             tau=float(tau_vals[i]),
-#             feed_ratio=float(ratio_vals[i]),
-#             pressure=float(P_vals[i]),
-#         )
-#         # ⬅️ CHANGE: Relax from 1200 to 1300
-#         violations.append(result["Q"] - 1300)
-
-#     return torch.tensor(violations, dtype=torch.float64)
+def _array_lib(x):
+    return torch if isinstance(x, torch.Tensor) else np
 
 
 def selectivity_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
-    # Arrhenius constants
+    lib = _array_lib(temperature)
     R = 8.314
-    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
-    k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
-
-    # Concentrations
+    k1 = 1e8 * lib.exp(-65000.0 / (R * temperature))
+    k2 = 5e6 * lib.exp(-75000.0 / (R * temperature))
     C_A0 = 2.0 * pressure
     C_B0 = C_A0 * feed_ratio
-
-    # Approximate selectivity (use ratio C_B0 / C_A0 instead of raw feed_ratio)
-    tau_factor = torch.sqrt(residence_time / 20.0)
-    S = (k1 / k2) * torch.sqrt(C_B0 / C_A0) * tau_factor
-
+    tau_factor = lib.sqrt(residence_time / 20.0)
+    S = (k1 / k2) * lib.sqrt(C_B0 / C_A0) * tau_factor
     return 4.5 - S
 
 
 def conversion_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    lib = _array_lib(temperature)
     R = 8.314
-    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
-
+    k1 = 1e8 * lib.exp(-65000.0 / (R * temperature))
     C_A0 = 2.0 * pressure
     C_B0 = C_A0 * feed_ratio
-
-    # Approximate conversion (first-order decay)
-    X_A = 1.0 - torch.exp(-k1 * C_B0 * residence_time)
-
+    X_A = 1.0 - lib.exp(-k1 * C_B0 * residence_time)
     return 0.85 - X_A
 
 
 def heat_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    lib = _array_lib(temperature)
     R = 8.314
-    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
-    k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
-
+    k1 = 1e8 * lib.exp(-65000.0 / (R * temperature))
+    k2 = 5e6 * lib.exp(-75000.0 / (R * temperature))
     C_A0 = 2.0 * pressure
     C_B0 = C_A0 * feed_ratio
-
-    # Approximate heat generation
-    dH1 = -85000
-    dH2 = -45000
-
-    r1 = k1 * C_A0 * C_B0 * torch.exp(-k1 * C_B0 * residence_time)
+    dH1, dH2 = -85000, -45000
+    r1 = k1 * C_A0 * C_B0 * lib.exp(-k1 * C_B0 * residence_time)
     r2 = k2 * (C_A0 / 2.0) * C_B0
-
-    Q = torch.abs(dH1 * r1 + dH2 * r2) / 60
-
+    Q = lib.abs(dH1 * r1 + dH2 * r2) / 60
     return Q - 1300
 
 
