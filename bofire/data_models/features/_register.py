@@ -23,13 +23,13 @@ def register_engineered_feature(data_model_cls: type, overwrite: bool = False) -
     from bofire.data_models._register_utils import append_to_union_field, register_into
     from bofire.data_models.domain.features import EngineeredFeatures
 
-    action, _ = register_into(
+    changed, _ = register_into(
         features_api._ENGINEERED_FEATURE_TYPES,
         data_model_cls,
         overwrite=overwrite,
         kind="engineered feature",
     )
-    if action == "noop":
+    if not changed:
         return
     features_api.AnyEngineeredFeature = tagged_union(
         *features_api._ENGINEERED_FEATURE_TYPES

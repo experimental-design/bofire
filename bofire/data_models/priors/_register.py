@@ -166,10 +166,10 @@ def register_prior(data_model_cls: type, overwrite: bool = False) -> None:
     import bofire.data_models.priors.api as priors_api
     from bofire.data_models._register_utils import register_into
 
-    action, _ = register_into(
+    changed, _ = register_into(
         priors_api._PRIOR_TYPES, data_model_cls, overwrite=overwrite, kind="prior"
     )
-    if action == "noop":
+    if not changed:
         return
     priors_api.AnyPrior = tagged_union(*priors_api._PRIOR_TYPES)
     _rebuild_dependent_models()
@@ -194,13 +194,13 @@ def register_prior_constraint(data_model_cls: type, overwrite: bool = False) -> 
     import bofire.data_models.priors.api as priors_api
     from bofire.data_models._register_utils import register_into
 
-    action, _ = register_into(
+    changed, _ = register_into(
         priors_api._PRIOR_CONSTRAINT_TYPES,
         data_model_cls,
         overwrite=overwrite,
         kind="prior constraint",
     )
-    if action == "noop":
+    if not changed:
         return
     priors_api.AnyPriorConstraint = tagged_union(*priors_api._PRIOR_CONSTRAINT_TYPES)
     _rebuild_dependent_models()

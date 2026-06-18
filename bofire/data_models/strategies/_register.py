@@ -27,13 +27,13 @@ def register_strategy(data_model_cls: type, overwrite: bool = False) -> None:
     from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
     from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
 
-    action, _ = register_into(
+    changed, _ = register_into(
         ast_mod._ACTUAL_STRATEGY_TYPES,
         data_model_cls,
         overwrite=overwrite,
         kind="strategy",
     )
-    if action == "noop":
+    if not changed:
         return
     ast_mod.ActualStrategy = tagged_union(*ast_mod._ACTUAL_STRATEGY_TYPES)
     strategies_api.AnyStrategy = tagged_union(

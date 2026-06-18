@@ -54,17 +54,22 @@ def register_into(
     overwrite: bool = False,
     kind: str = "type",
     discriminator: str = "type",
-) -> Tuple[str, Optional[type]]:
+) -> Tuple[bool, Optional[type]]:
     """Insert *data_model_cls* into the *registry* list in place.
 
-    Handles three cases:
+    Returns ``(changed, replaced)``:
 
-    - the exact class is already registered -> ``("noop", None)`` (idempotent)
-    - no conflict -> appends and returns ``("add", None)``
+    - the exact class is already registered -> ``(False, None)`` (idempotent
+      no-op; callers skip the dependent-model rebuild)
+    - no conflict -> appends and returns ``(True, None)``
     - a *different* class with the same discriminator value is registered ->
       if *overwrite* is ``True`` the old class is replaced in place and
-      ``("replace", old_cls)`` is returned, otherwise a ``ValueError`` is
-      raised describing the conflict.
+      ``(True, old_cls)`` is returned, otherwise a ``ValueError`` is raised
+      describing the conflict.
+
+    The returned ``replaced`` class lets callers mirror the change onto
+    secondary registries (see :func:`swap_or_append`); callers that have none
+    can ignore it.
 
     Args:
         registry: Mutable list of registered data model classes.
@@ -78,12 +83,12 @@ def register_into(
         ValueError: On a discriminator collision when *overwrite* is ``False``.
     """
     if data_model_cls in registry:
-        return ("noop", None)
+        return (False, None)
 
     conflict = find_registered_conflict(registry, data_model_cls, discriminator)
     if conflict is None:
         registry.append(data_model_cls)
-        return ("add", None)
+        return (True, None)
 
     if not overwrite:
         value = discriminator_value(data_model_cls, discriminator)
@@ -97,7 +102,7 @@ def register_into(
         )
 
     registry[registry.index(conflict)] = data_model_cls
-    return ("replace", conflict)
+    return (True, conflict)
 
 
 def swap_or_append(registry: List[type], new_cls: type, replaced: Optional[type]):

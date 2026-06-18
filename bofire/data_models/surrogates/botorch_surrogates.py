@@ -78,13 +78,13 @@ def register_botorch_surrogate(
     from bofire.data_models._register_utils import register_into
 
     global AnyBotorchSurrogate
-    action, _ = register_into(
+    changed, _ = register_into(
         _BOTORCH_SURROGATE_TYPES,
         data_model_cls,
         overwrite=overwrite,
         kind="botorch surrogate",
     )
-    if action == "noop":
+    if not changed:
         return
     AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
     new_annotation = List[AnyBotorchSurrogate]

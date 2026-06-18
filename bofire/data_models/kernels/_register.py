@@ -111,13 +111,13 @@ def register_kernel(data_model_cls: type, overwrite: bool = False) -> None:
     from bofire.data_models.kernels.categorical import CategoricalKernel
     from bofire.data_models.kernels.continuous import ContinuousKernel
 
-    action, replaced = register_into(
+    changed, replaced = register_into(
         kernels_api._KERNEL_TYPES,
         data_model_cls,
         overwrite=overwrite,
         kind="kernel",
     )
-    if action == "noop":
+    if not changed:
         return
     kernels_api.AnyKernel = tagged_union(*kernels_api._KERNEL_TYPES)
 

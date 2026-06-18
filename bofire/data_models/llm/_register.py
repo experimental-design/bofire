@@ -31,10 +31,10 @@ def register_llm_provider(data_model_cls: type, overwrite: bool = False) -> None
     # the current union members and rebuild the union from it afterwards.
     existing_types, _ = extract_union_args(llm_api.AnyLLMProvider)
     types = list(existing_types)
-    action, _ = register_into(
+    changed, _ = register_into(
         types, data_model_cls, overwrite=overwrite, kind="LLM provider"
     )
-    if action == "noop":
+    if not changed:
         return
     llm_api.AnyLLMProvider = tagged_union(*types)
 
