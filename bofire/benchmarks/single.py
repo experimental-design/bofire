@@ -761,20 +761,14 @@ class SixHumpCamel(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))
-                ]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
             ),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         x1 = X["x_1"].values
         x2 = X["x_2"].values
-        y = (
-            (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2
-            + x1 * x2
-            + (-4 + 4 * x2**2) * x2**2
-        )
+        y = (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2 + x1 * x2 + (-4 + 4 * x2**2) * x2**2
         return pd.DataFrame({"y": y, "valid_y": 1})
 
     def get_optima(self) -> pd.DataFrame:
@@ -807,20 +801,14 @@ class Easom(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))
-                ]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
             ),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         x1 = X["x_1"].values
         x2 = X["x_2"].values
-        y = (
-            -np.cos(x1)
-            * np.cos(x2)
-            * np.exp(-((x1 - np.pi) ** 2 + (x2 - np.pi) ** 2))
-        )
+        y = -np.cos(x1) * np.cos(x2) * np.exp(-((x1 - np.pi) ** 2 + (x2 - np.pi) ** 2))
         return pd.DataFrame({"y": y, "valid_y": 1})
 
     def get_optima(self) -> pd.DataFrame:
@@ -849,9 +837,7 @@ class Rosenbrock(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))
-                ]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
             ),
         )
 
@@ -889,9 +875,7 @@ class Booth(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))
-                ]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
             ),
         )
 
@@ -902,9 +886,7 @@ class Booth(Benchmark):
         return pd.DataFrame({"y": y, "valid_y": 1})
 
     def get_optima(self) -> pd.DataFrame:
-        return pd.DataFrame(
-            {"x_1": [1.0], "x_2": [3.0], "y": [0.0], "valid_y": [1]}
-        )
+        return pd.DataFrame({"x_1": [1.0], "x_2": [3.0], "y": [0.0], "valid_y": [1]})
 
 
 class HolderTable(Benchmark):
@@ -926,9 +908,7 @@ class HolderTable(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))
-                ]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
             ),
         )
 
@@ -936,9 +916,7 @@ class HolderTable(Benchmark):
         x1 = X["x_1"].values
         x2 = X["x_2"].values
         y = -np.abs(
-            np.sin(x1)
-            * np.cos(x2)
-            * np.exp(np.abs(1 - np.sqrt(x1**2 + x2**2) / np.pi))
+            np.sin(x1) * np.cos(x2) * np.exp(np.abs(1 - np.sqrt(x1**2 + x2**2) / np.pi))
         )
         return pd.DataFrame({"y": y, "valid_y": 1})
 
@@ -972,9 +950,7 @@ class CrossInTray(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[
-                    ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))
-                ]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
             ),
         )
 
