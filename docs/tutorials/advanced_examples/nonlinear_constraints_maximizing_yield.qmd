@@ -62,38 +62,46 @@ class CompetingReactionsModel:
 
 ## Callable constraint functions
 
-Constraints are implemented as Torch-callable functions (keyword args match feature keys).
+Constraints are callables (keyword args match feature keys). DataFrame evaluation passes NumPy
+arrays; BoTorch optimization passes torch tensors — use the same ops for both via `_array_lib`.
 
 ```{python}
+def _array_lib(x):
+    return torch if isinstance(x, torch.Tensor) else np
+
+
 def selectivity_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    lib = _array_lib(temperature)
     R = 8.314
-    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
-    k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
+    k1 = 1e8 * lib.exp(-65000.0 / (R * temperature))
+    k2 = 5e6 * lib.exp(-75000.0 / (R * temperature))
     C_A0 = 2.0 * pressure
     C_B0 = C_A0 * feed_ratio
-    tau_factor = torch.sqrt(residence_time / 20.0)
-    S = (k1 / k2) * torch.sqrt(C_B0 / C_A0) * tau_factor
+    tau_factor = lib.sqrt(residence_time / 20.0)
+    S = (k1 / k2) * lib.sqrt(C_B0 / C_A0) * tau_factor
     return 4.5 - S
 
 
 def conversion_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    lib = _array_lib(temperature)
     R = 8.314
-    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
+    k1 = 1e8 * lib.exp(-65000.0 / (R * temperature))
     C_A0 = 2.0 * pressure
     C_B0 = C_A0 * feed_ratio
-    X_A = 1.0 - torch.exp(-k1 * C_B0 * residence_time)
+    X_A = 1.0 - lib.exp(-k1 * C_B0 * residence_time)
     return 0.85 - X_A
 
 
 def heat_constraint(temperature, residence_time, feed_ratio, pressure, **kwargs):
+    lib = _array_lib(temperature)
     R = 8.314
-    k1 = 1e8 * torch.exp(-65000.0 / (R * temperature))
-    k2 = 5e6 * torch.exp(-75000.0 / (R * temperature))
+    k1 = 1e8 * lib.exp(-65000.0 / (R * temperature))
+    k2 = 5e6 * lib.exp(-75000.0 / (R * temperature))
     C_A0, C_B0 = 2.0 * pressure, 2.0 * pressure * feed_ratio
     dH1, dH2 = -85000, -45000
-    r1 = k1 * C_A0 * C_B0 * torch.exp(-k1 * C_B0 * residence_time)
+    r1 = k1 * C_A0 * C_B0 * lib.exp(-k1 * C_B0 * residence_time)
     r2 = k2 * (C_A0 / 2.0) * C_B0
-    Q = torch.abs(dH1 * r1 + dH2 * r2) / 60
+    Q = lib.abs(dH1 * r1 + dH2 * r2) / 60
     return Q - 1300
 ```
 
