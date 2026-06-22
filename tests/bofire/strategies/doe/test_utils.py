@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+import warnings
 
 import numpy as np
 import pytest
@@ -142,6 +143,41 @@ def test_get_formula_from_string():
     for i in range(351):
         assert list(model)[i] in terms
         assert terms[i] in np.array(model, dtype=str)
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        "1 + x1 + x1**2",
+        "1 + x1 + x1*x1",
+        "1 + x1 + x1 * x1",
+        "1 + x1 + x1:x1",
+    ],
+)
+def test_get_formula_from_string_warns_on_silent_term_drop(model):
+    with pytest.warns(UserWarning, match="Formulaic may silently drop model terms"):
+        formula = get_formula_from_string(model_type=model)
+    assert "x1 ** 2" not in np.array(formula, dtype=str)
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        "1 + x1 + {x1**2}",
+        "1 + x1 + {x1*x1}",
+        "1 + x1 + {x1 * x1}",
+    ],
+)
+def test_get_formula_from_string_no_warning_for_braced_quadratic_terms(model):
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        formula = get_formula_from_string(model_type=model)
+
+    assert not any(
+        "Formulaic may silently drop model terms" in str(w.message) for w in caught
+    )
+    terms = np.array(formula, dtype=str)
+    assert "x1 ** 2" in terms or "x1 * x1" in terms
 
 
 def test_n_zero_eigvals_unconstrained():
