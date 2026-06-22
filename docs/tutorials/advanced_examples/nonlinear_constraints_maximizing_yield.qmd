@@ -14,6 +14,8 @@ This tutorial optimizes a reaction system where **A + B → P** (desired) and **
 ## Reaction kinetics model
 
 ```{python}
+import os
+
 import numpy as np
 import pandas as pd
 import torch
@@ -22,6 +24,20 @@ from bofire.data_models.constraints.api import NonlinearInequalityConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+if SMOKE_TEST:
+    N_INITIAL = 5
+    N_WANT = 1
+    MAX_ATTEMPTS = 2
+    N_RESTARTS = 1
+    N_RAW_SAMPLES = 16
+else:
+    N_INITIAL = 20
+    N_WANT = 3
+    MAX_ATTEMPTS = 10
+    N_RESTARTS = 2
+    N_RAW_SAMPLES = 64
 
 
 class CompetingReactionsModel:
@@ -154,7 +170,7 @@ def generate_feasible_samples(n_samples=20):
 ## Initial experiments and constraint check
 
 ```{python}
-initial_samples = generate_feasible_samples(n_samples=20)
+initial_samples = generate_feasible_samples(n_samples=N_INITIAL)
 model = CompetingReactionsModel()
 results = []
 for _, row in initial_samples.iterrows():
@@ -182,13 +198,15 @@ from bofire.strategies.api import MoboStrategy
 
 strategy_data = MoboStrategyDataModel(
     domain=domain,
-    acquisition_optimizer=BotorchOptimizer(batch_limit=1, n_restarts=2, n_raw_samples=64),
+    acquisition_optimizer=BotorchOptimizer(
+        batch_limit=1, n_restarts=N_RESTARTS, n_raw_samples=N_RAW_SAMPLES
+    ),
 )
 strategy = MoboStrategy(data_model=strategy_data)
 strategy.tell(experiments)
 
-n_want = 3
-max_attempts = 10
+n_want = N_WANT
+max_attempts = MAX_ATTEMPTS
 candidates = None
 for _ in range(max_attempts):
     raw = strategy.ask(n_want, raise_validation_error=False, add_pending=False)
