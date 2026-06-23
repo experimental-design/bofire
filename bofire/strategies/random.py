@@ -74,7 +74,6 @@ class RandomStrategy(Strategy):
                 (
                     NonlinearEqualityConstraint,
                     NonlinearInequalityConstraint,
-                    NChooseKConstraint,
                 ),
             )
             for c in self.domain.constraints

@@ -854,9 +854,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
                 feasible_mask = torch.ones(len(X_raw), dtype=torch.bool, device=device)
                 for constraint_fn, _ in nonlinear_constraints_local:
-                    # BoTorch validates ICs with a strict atol; use a tight
-                    # tolerance so batch_initial_conditions passes validation.
-                    feasible_mask &= constraint_fn(X_raw) >= -1e-6
+                    # BoTorch validates batch_initial_conditions with a strict
+                    # >= 0 check; match that threshold exactly so every IC we
+                    # return passes BoTorch's own feasibility gate.
+                    feasible_mask &= constraint_fn(X_raw) >= 0
 
                 X_feasible = X_raw[feasible_mask]
                 if len(X_feasible) > 0:

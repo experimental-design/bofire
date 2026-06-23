@@ -8,7 +8,6 @@ from pydantic import PositiveInt
 from typing_extensions import Self
 
 from bofire.data_models.constraints.api import (
-    NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
@@ -53,7 +52,6 @@ class Strategy(ABC):
                 (
                     NonlinearEqualityConstraint,
                     NonlinearInequalityConstraint,
-                    NChooseKConstraint,
                 ),
             )
             for c in data_model.domain.constraints
