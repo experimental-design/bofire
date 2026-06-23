@@ -793,6 +793,38 @@ class BotorchOptimizer(AcquisitionOptimizer):
             )
 
         _captured_constraints = nonlinear_constraints
+        _has_nonlinear_equality = has_nonlinear_equality
+
+        def _project_onto_constraints(
+            X: Tensor,
+            constraints: list,
+            bounds: Tensor,
+            max_iter: int = 200,
+            lr: float = 0.05,
+            tol: float = 1e-5,
+        ) -> Tensor:
+            """Move candidates toward the constraint manifold via gradient descent.
+
+            Used when equality constraints define a lower-dimensional feasible
+            region where random sampling is essentially impossible.
+            """
+            X_proj = X.clone().requires_grad_(True)
+            optimizer = torch.optim.Adam([X_proj], lr=lr)
+            for _ in range(max_iter):
+                optimizer.zero_grad()
+                total_violation = torch.tensor(0.0, dtype=X.dtype, device=X.device)
+                for constraint_fn, _ in constraints:
+                    vals = constraint_fn(X_proj)
+                    total_violation = (
+                        total_violation + (torch.clamp(-vals, min=0.0) ** 2).sum()
+                    )
+                if total_violation.item() < tol:
+                    break
+                total_violation.backward()
+                optimizer.step()
+                with torch.no_grad():
+                    X_proj.clamp_(bounds[0], bounds[1])
+            return X_proj.detach()
 
         def feasible_ic_generator(
             acq_function,
@@ -806,13 +838,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
             equality_constraints=None,
             **kwargs,
         ):
-            """Generate feasible initial conditions via rejection sampling.
+            """Generate feasible initial conditions for nonlinear constraints.
 
-            NonlinearEqualityConstraints are already converted to two inequality
-            callables (±tolerance slab) by get_nonlinear_constraints, so a single
-            rejection-sampling path handles both equalities and inequalities.
-            The per-attempt sample budget is set generously (n_needed * 50) to
-            handle the thin slabs produced by tight equality tolerances.
+            Two strategies depending on whether equality constraints are present:
+
+            - **Equality constraints**: gradient-descent projection moves random
+              candidates onto the equality manifold (a lower-dimensional surface
+              where random sampling has essentially zero probability of landing).
+              All constraints are then checked strictly (>= 0).
+
+            - **Inequality-only**: rejection sampling with a generous per-attempt
+              budget (n_needed * 50) is sufficient because the feasible region
+              has positive measure.
+
+            Both paths match BoTorch's strict >= 0 feasibility gate so that
+            batch_initial_conditions passes BoTorch's own validation.
             """
             nonlinear_constraints_local = _captured_constraints
 
@@ -836,51 +876,58 @@ class BotorchOptimizer(AcquisitionOptimizer):
             lower = bounds[0].to(device=device, dtype=dtype)
             upper = bounds[1].to(device=device, dtype=dtype)
 
-            # Rejection sampling: draw uniform random points and keep those that
-            # satisfy all constraints with BoTorch's strict feasibility tolerance
-            # (>= -1e-6). The generous per-attempt budget handles both wide
-            # inequality regions and the thin slabs from equality constraints.
-            max_attempts = 20
-            raw_samples_per_attempt = max(512, n_needed * 50)
-
-            all_feasible: list[Tensor] = []
-            for _ in range(max_attempts):
+            if _has_nonlinear_equality:
+                # Equality constraints define a lower-dimensional manifold.
+                # Project a large batch of random candidates onto it, then
+                # filter by all constraints (including any co-present inequalities).
+                n_candidates = max(n_needed * 50, 512)
                 X_raw = lower + (upper - lower) * torch.rand(
-                    raw_samples_per_attempt,
-                    n_dims,
-                    device=device,
-                    dtype=dtype,
+                    n_candidates, n_dims, device=device, dtype=dtype
+                )
+                X_proj = _project_onto_constraints(
+                    X_raw, nonlinear_constraints_local, bounds=bounds
+                )
+                feasible_mask = torch.ones(len(X_proj), dtype=torch.bool, device=device)
+                for constraint_fn, _ in nonlinear_constraints_local:
+                    feasible_mask &= constraint_fn(X_proj) >= 0
+                X_feasible = X_proj[feasible_mask]
+            else:
+                # Inequality-only: rejection sampling is sufficient.
+                max_attempts = 20
+                raw_samples_per_attempt = max(512, n_needed * 50)
+                all_feasible: list[Tensor] = []
+                for _ in range(max_attempts):
+                    X_raw = lower + (upper - lower) * torch.rand(
+                        raw_samples_per_attempt, n_dims, device=device, dtype=dtype
+                    )
+                    feasible_mask = torch.ones(
+                        len(X_raw), dtype=torch.bool, device=device
+                    )
+                    for constraint_fn, _ in nonlinear_constraints_local:
+                        feasible_mask &= constraint_fn(X_raw) >= 0
+                    X_feasible_batch = X_raw[feasible_mask]
+                    if len(X_feasible_batch) > 0:
+                        all_feasible.append(X_feasible_batch)
+                    if sum(len(x) for x in all_feasible) >= n_needed:
+                        break
+                X_feasible = (
+                    torch.cat(all_feasible)
+                    if all_feasible
+                    else torch.empty(0, n_dims, device=device, dtype=dtype)
                 )
 
-                feasible_mask = torch.ones(len(X_raw), dtype=torch.bool, device=device)
-                for constraint_fn, _ in nonlinear_constraints_local:
-                    # BoTorch validates batch_initial_conditions with a strict
-                    # >= 0 check; match that threshold exactly so every IC we
-                    # return passes BoTorch's own feasibility gate.
-                    feasible_mask &= constraint_fn(X_raw) >= 0
-
-                X_feasible = X_raw[feasible_mask]
-                if len(X_feasible) > 0:
-                    all_feasible.append(X_feasible)
-
-                if sum(len(x) for x in all_feasible) >= n_needed:
-                    break
-
-            if len(all_feasible) == 0:
+            if len(X_feasible) == 0:
                 raise ValueError(
                     "Could not generate any feasible initial conditions from nonlinear constraints."
                 )
 
-            X_all = torch.cat(all_feasible)
-            if len(X_all) < n_needed:
-                # Tile the available feasible points to fill the required number.
-                # This can happen for very tight equality-constraint slabs where
-                # rejection sampling finds some but not all needed ICs. Duplicate
-                # restarts are acceptable; BoTorch optimizes each independently.
-                repeats = (n_needed + len(X_all) - 1) // len(X_all)
-                X_all = X_all.repeat(repeats, 1)
+            if len(X_feasible) < n_needed:
+                # Tile to fill n_needed. Duplicate restarts are acceptable;
+                # BoTorch optimizes each independently.
+                repeats = (n_needed + len(X_feasible) - 1) // len(X_feasible)
+                X_feasible = X_feasible.repeat(repeats, 1)
 
-            return X_all[:n_needed].reshape(num_restarts, q, n_dims)
+            return X_feasible[:n_needed].reshape(num_restarts, q, n_dims)
 
         ic_generator = feasible_ic_generator
         ic_gen_kwargs = {}
