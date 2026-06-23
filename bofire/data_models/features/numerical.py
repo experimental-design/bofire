@@ -48,7 +48,7 @@ class NumericalInput(Input):
         if use_real_bounds:
             lower, upper = self.get_bounds(
                 transform_type=None,
-                values=values,  # type: ignore
+                values=values,
             )
             lower = lower[0]
             upper = upper[0]

@@ -63,7 +63,7 @@ class Detergent(Benchmark):
                 ContinuousInput(key="x4", bounds=[0.0, 0.06]),
                 ContinuousInput(key="x5", bounds=[0.0, 0.04]),
             ],
-            outputs=[ContinuousOutput(key=f"y{i+1}") for i in range(5)],
+            outputs=[ContinuousOutput(key=f"y{i + 1}") for i in range(5)],
             constraints=[
                 LinearInequalityConstraint(
                     features=["x1", "x2", "x3", "x4", "x5"],
@@ -78,7 +78,7 @@ class Detergent(Benchmark):
             ],
         )
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         x = np.atleast_2d(X[self.domain.inputs.get_keys()])
         xp = np.stack([_poly2(xi) for xi in x], axis=0)
         return pd.DataFrame(

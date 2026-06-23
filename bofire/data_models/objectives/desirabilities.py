@@ -11,7 +11,7 @@ from bofire.data_models.objectives.identity import IdentityObjective
 class DesirabilityObjective(IdentityObjective):
     """Abstract class for desirability objectives. Works as Identity Objective"""
 
-    type: Literal["DesirabilityObjective"] = "DesirabilityObjective"  # type: ignore
+    type: Literal["DesirabilityObjective"] = "DesirabilityObjective"
     clip: bool = True
 
     @pydantic.model_validator(mode="after")
@@ -73,8 +73,11 @@ class IncreasingDesirabilityObjective(DesirabilityObjective):
             Defaults to (0, 1).
     """
 
-    type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"  # type: ignore
+    type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"
     log_shape_factor: float = 0.0
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -122,8 +125,11 @@ class DecreasingDesirabilityObjective(DesirabilityObjective):
             Defaults to (0, 1).
     """
 
-    type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"  # type: ignore
+    type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"
     log_shape_factor: float = 0.0
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -169,10 +175,13 @@ class PeakDesirabilityObjective(DesirabilityObjective):
             Defaults to (0, 1).
     """
 
-    type: Literal["PeakDesirabilityObjective"] = "PeakDesirabilityObjective"  # type: ignore
+    type: Literal["PeakDesirabilityObjective"] = "PeakDesirabilityObjective"
     log_shape_factor: float = 0.0
     log_shape_factor_decreasing: float = 0.0  # often named log_t
     peak_position: float = 0.5  # often named T
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def call_numpy(
         self,
@@ -214,7 +223,10 @@ class PeakDesirabilityObjective(DesirabilityObjective):
 
 
 class InRangeDesirability(DesirabilityObjective):
-    type: Literal["InRangeDesirability"] = "InRangeDesirability"  # type: ignore
+    type: Literal["InRangeDesirability"] = "InRangeDesirability"
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def call_numpy(
         self,

@@ -10,8 +10,8 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalMolecularInput,
+    CategoricalTaskInput,
     ContinuousOutput,
-    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernel,
@@ -31,6 +31,7 @@ from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     AnyPrior,
+    AnyPriorConstraint,
     GreaterThan,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
@@ -117,6 +118,9 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         ),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
         default_factory=lambda: MixedSingleTaskGPHyperconfig(),
     )
@@ -129,7 +133,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             CategoricalInput: CategoricalEncodingEnum.ORDINAL,
             CategoricalMolecularInput: Fingerprints(),
             CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
-            TaskInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
         }
 
     @model_validator(mode="after")

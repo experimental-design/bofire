@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.constraints.api import LinearInequalityConstraint
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
 
 
 def test_from_greater_equal():
@@ -94,3 +97,27 @@ def test_jacobian():
             np.array(spec["coefficients"])
             / np.linalg.norm(np.array(spec["coefficients"])),
         )
+
+
+def test_linear_equality_to_description():
+    c = LinearEqualityConstraint(
+        features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0
+    )
+    assert c.to_description() == "1.0*x1 + 2.0*x2 = 5.0"
+
+
+def test_linear_inequality_to_description():
+    c = LinearInequalityConstraint(
+        features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0
+    )
+    assert c.to_description() == "1.0*x1 + 2.0*x2 <= 5.0"
+
+
+def test_linear_constraint_to_description_with_context():
+    c = LinearInequalityConstraint(
+        features=["x1", "x2"],
+        coefficients=[1.0, 2.0],
+        rhs=5.0,
+        context="Safety limit",
+    )
+    assert c.to_description() == "1.0*x1 + 2.0*x2 <= 5.0 — Safety limit"

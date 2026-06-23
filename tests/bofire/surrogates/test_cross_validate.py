@@ -19,7 +19,7 @@ def test_model_cross_validate(folds):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -27,7 +27,11 @@ def test_model_cross_validate(folds):
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
     model = SingleTaskGPSurrogate(
@@ -46,7 +50,7 @@ def test_model_cross_validate_descriptor():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -62,7 +66,11 @@ def test_model_cross_validate_descriptor():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments.loc[experiments.x_2 == "b", "y"] += 5
     experiments.loc[experiments.x_2 == "c", "y"] += 10
     experiments["valid_y"] = 1
@@ -89,7 +97,7 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -98,7 +106,11 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
     experiments["labcode"] = [str(i) for i in range(10)]
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
         inputs=inputs,
@@ -140,7 +152,7 @@ def test_model_cross_validate_hooks():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -148,7 +160,11 @@ def test_model_cross_validate_hooks():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
         inputs=inputs,
@@ -194,7 +210,7 @@ def test_model_cross_validate_invalid(folds):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -202,7 +218,11 @@ def test_model_cross_validate_invalid(folds):
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
         inputs=inputs,
@@ -218,7 +238,7 @@ def test_model_cross_validate_random_state(folds):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -226,7 +246,11 @@ def test_model_cross_validate_random_state(folds):
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
     model = SingleTaskGPSurrogate(
@@ -281,7 +305,7 @@ def test_model_cross_validate_stratified(random_state):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -366,7 +390,7 @@ def test_model_cross_validate_stratified_invalid_feature_name():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -422,7 +446,7 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -479,7 +503,7 @@ def test_model_cross_validate_groupfold(random_state):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -560,12 +584,25 @@ def test_model_cross_validate_groupfold(random_state):
             train_set = set(train_index)
             assert test_set.issuperset(indices) or train_set.issuperset(indices)
 
+    # Test if aggregate is disabled when group split is supplied
+    with pytest.warns(
+        UserWarning,
+        match="Aggregation is not compatible with group split, fallback to no aggregation.",
+    ):
+        train_cv, test_cv, hook_results = model.cross_validate(
+            experiments,
+            folds=4,
+            aggregate=True,
+            random_state=random_state,
+            group_split_column="group",
+        )
+
 
 def test_model_cross_validate_invalid_group_split_column():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -573,7 +610,11 @@ def test_model_cross_validate_invalid_group_split_column():
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
         inputs=inputs,
@@ -599,11 +640,57 @@ def test_model_cross_validate_invalid_group_split_column():
         model.cross_validate(experiments, folds=5, group_split_column="group")
 
 
+def test_model_cross_validate_aggregate():
+    """Test that aggregation is on by default and removes duplicates."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i + 1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ],
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+
+    # Create experiments with duplicates
+    experiments = pd.DataFrame(
+        {
+            "x_1": [1.0, 1.0, 2.0, 2.0, 3.0],
+            "x_2": [1.0, 1.0, 2.0, 2.0, 3.0],
+            "y": [1.0, 2.0, 3.0, 4.0, 5.0],
+        }
+    )
+    experiments["valid_y"] = 1
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+
+    # With aggregate, duplicates should be merged
+    train_cv_agg, test_cv_agg, _ = model.cross_validate(
+        experiments, folds=2, aggregate=True
+    )
+
+    # Without aggregation for comparison, default is False
+    train_cv_no_agg, test_cv_no_agg, _ = model.cross_validate(experiments, folds=2)
+
+    # With aggregation, total unique observations across all test folds should be 3
+    agg_test_obs = sum(len(r.observed) for r in test_cv_agg.results)
+    assert agg_test_obs == 3
+
+    # Without aggregation, total unique test observations should be 5
+    noagg_test_obs = sum(len(r.observed) for r in test_cv_no_agg.results)
+    assert noagg_test_obs == 5
+
+
 def test_make_cv_split():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -615,7 +702,11 @@ def test_make_cv_split():
     experiments["stratified_feature"] = [
         (i % 2) == 0 for i in range(10)
     ]  # Add a stratified feature
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
         inputs=inputs,
@@ -661,7 +752,7 @@ def test_check_valid_nfolds():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)

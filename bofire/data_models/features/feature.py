@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -18,6 +19,7 @@ class Feature(BaseModel):
     type: Any
     key: str
     order_id: ClassVar[int] = -1
+    context: Optional[str] = None
 
     def __lt__(self, other) -> bool:
         """Method to compare two models to get them in the desired order.
@@ -39,6 +41,14 @@ class Feature(BaseModel):
 
 class Input(Feature):
     """Base class for all input features."""
+
+    @abstractmethod
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(type, FieldInfo)`` for use in a dynamically created Pydantic model.
+
+        Each subclass must implement this to provide appropriate type constraints
+        (e.g., ``ge``/``le`` bounds for continuous, ``Literal`` for categorical).
+        """
 
     @staticmethod
     @abstractmethod
@@ -127,6 +137,7 @@ class Input(Feature):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
         reference_value: Optional[Union[float, str]] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         """Returns the bounds of an input feature depending on the requested transform type.
 
@@ -137,6 +148,11 @@ class Input(Feature):
             reference_value (Optional[float], optional): If a reference value is provided, then the local bounds based
                 on a local search region are provided. Currently only supported for continuous inputs. For more
                 details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.
+            **kwargs: Subclass-specific options. ``ContinuousInput`` accepts
+                ``relax_allow_zero: bool`` (when True, semi-continuous features
+                report a relaxed lower bound of 0, exposing the convex relaxation
+                ``[0, ub]`` to downstream optimisers); other input types currently
+                accept no extra options and silently ignore unknown kwargs.
 
         Returns:
             Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
@@ -151,6 +167,10 @@ class Output(Feature):
         key(str): Key of the Feature.
 
     """
+
+    @abstractmethod
+    def to_description(self) -> str:
+        """Return a human-readable description of this output feature."""
 
     @abstractmethod
     def __call__(self, values: pd.Series) -> pd.Series:
@@ -171,8 +191,8 @@ class Output(Feature):
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
-        return pd.to_numeric(s, errors="coerce").notnull().all()  # type: ignore
-    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
+        return pd.to_numeric(s, errors="coerce").notnull().all()
+    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()
 
 
 def is_categorical(s: pd.Series, categories: List[str]):

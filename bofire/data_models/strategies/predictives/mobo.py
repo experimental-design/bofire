@@ -21,6 +21,7 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
+from bofire.data_models.unions import tagged_union
 
 
 class ReferenceValue(BaseModel):
@@ -160,17 +161,17 @@ class ExplicitReferencePoint(ReferencePoint):
     type: Literal["ExplicitReferencePoint"] = "ExplicitReferencePoint"
     values: Dict[
         str,
-        Union[
+        tagged_union(
             FixedReferenceValue,
             AbsoluteMovingReferenceValue,
             RelativeMovingReferenceValue,
             RelativeToMaxMovingReferenceValue,
-        ],
+        ),
     ]
 
 
 class MoboStrategy(MultiobjectiveStrategy):
-    type: Literal["MoboStrategy"] = "MoboStrategy"  # type: ignore
+    type: Literal["MoboStrategy"] = "MoboStrategy"
     ref_point: Optional[Union[ExplicitReferencePoint, Dict[str, float]]] = None
     acquisition_function: AnyMultiObjectiveAcquisitionFunction = Field(
         default_factory=lambda: qLogNEHVI(),

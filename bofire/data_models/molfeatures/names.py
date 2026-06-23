@@ -14,7 +14,7 @@ if RDKIT_AVAILABLE:
         Returns:
             List[str]: List of all Mordred descriptor names available in the mordred library.
         """
-        calc = Calculator(descriptors, ignore_3D=False)  # type: ignore
+        calc = Calculator(descriptors, ignore_3D=False)
         # Convert descriptor objects to their string names
         mordred_descriptors = [str(d) for d in calc.descriptors]
         return mordred_descriptors

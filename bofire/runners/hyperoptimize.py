@@ -77,7 +77,7 @@ def hyperoptimize(
             ),
             metric=best,
             n_runs=1,
-            n_iterations=surrogate_data.hyperconfig.n_iterations  # type: ignore
+            n_iterations=surrogate_data.hyperconfig.n_iterations  # ty: ignore[unsupported-operator]
             - len(benchmark.domain.inputs)
             - 1,
             initial_sampler=sample,

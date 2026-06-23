@@ -69,7 +69,9 @@ class ShortestPathStrategy(Strategy):
                 feat = inputs.get_by_key(key)
                 assert isinstance(feat, ContinuousInput)
                 if feat.is_fixed():
-                    b[i] -= feat.fixed_value()[0] * coef  # type: ignore
+                    fixed_val = feat.fixed_value()
+                    assert fixed_val is not None
+                    b[i] -= fixed_val[0] * coef
                 else:
                     A[i, keys.index(key)] = coef
         return A, b
@@ -105,7 +107,7 @@ class ShortestPathStrategy(Strategy):
                 self.domain.constraints.get(LinearInequalityConstraint),
             )
             constraints.append(A @ x <= b)
-        prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)  # type: ignore
+        prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)
         prob.solve(solver=cp.CLARABEL)
         step = pd.Series(index=inputs.get_keys(), data=x.value)
         # add other features based on start

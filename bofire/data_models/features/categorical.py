@@ -3,6 +3,7 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
+from pydantic.fields import FieldInfo
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -15,6 +16,24 @@ from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
 
 
+# Max number of allowed categories still encoded as ``Literal[...]`` by
+# ``to_pydantic_field``. Above this we emit ``str`` with the allowed values
+# kept in the field description; the ``Domain.validate_candidates`` pass then
+# catches invalid values at ask-time.
+#
+# Why: providers that offer constrained-decoding for structured output (OpenAI,
+# Anthropic) compile each JSON Schema enum into a token-level mask. The
+# compile cost scales with the total byte-length of all enum values, not just
+# their count. For hundreds of long strings (e.g. SMILES categories) this
+# blows the provider's compiled-schema budget and the request is rejected.
+# Observed failure: Anthropic returns 400 "Schema is too complex for
+# compilation." with ~390 SMILES. OpenAI documents a hard cap at 500 enum
+# values and an additional 7500-char combined-length cap above 250 values.
+# 32 is well below any documented limit and leaves headroom for very long
+# category strings.
+LLM_ENUM_SCHEMA_THRESHOLD = 32
+
+
 class CategoricalInput(Input):
     """Base class for all categorical input features.
 
@@ -24,7 +43,7 @@ class CategoricalInput(Input):
 
     """
 
-    type: Literal["CategoricalInput"] = "CategoricalInput"  # type: ignore
+    type: Literal["CategoricalInput"] = "CategoricalInput"
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
@@ -44,14 +63,53 @@ class CategoricalInput(Input):
 
     @model_validator(mode="after")
     def validate_categories_fitting_allowed(self):
-        if len(self.allowed) != len(self.categories):  # type: ignore
+        if len(self.allowed) != len(self.categories):
             raise ValueError("allowed must have same length as categories")
-        if sum(self.allowed) == 0:  # type: ignore
+        if sum(self.allowed) == 0:
             raise ValueError("no category is allowed")
         return self
 
+    def _description_prefix(self) -> str:
+        """Leading description string identifying this feature kind."""
+        return f"Categorical, allowed: {self.get_allowed_categories()}"
+
+    def _extra_description_parts(self) -> List[str]:
+        """Optional extras appended after the prefix, before context."""
+        return []
+
+    def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
+        """Return ``(Literal[...], Field(description=...))`` with allowed categories.
+
+        When the number of allowed categories exceeds
+        ``LLM_ENUM_SCHEMA_THRESHOLD`` the type falls back to ``str`` (the
+        allowed values stay in the description). See the module-level comment
+        on the constant for the reason.
+
+        Subclasses customize the output by overriding ``_description_prefix``
+        and/or ``_extra_description_parts``.
+
+        Example::
+
+            >>> feat = CategoricalInput(key="solvent", categories=["water", "ethanol", "toluene"])
+            >>> field_type, _ = feat.to_pydantic_field()
+            >>> # field_type = Literal['water', 'ethanol', 'toluene']
+        """
+        allowed = self.get_allowed_categories()
+        desc_parts = [self._description_prefix(), *self._extra_description_parts()]
+        if self.context:
+            desc_parts.append(self.context)
+        field_type: type = (
+            str
+            if len(allowed) > LLM_ENUM_SCHEMA_THRESHOLD
+            else Literal[tuple(allowed)]  # ty: ignore[invalid-assignment]
+        )
+        return (
+            field_type,
+            Field(description=" — ".join(desc_parts)),
+        )
+
     @staticmethod
-    def valid_transform_types() -> List[CategoricalEncodingEnum]:  # type: ignore
+    def valid_transform_types() -> List[CategoricalEncodingEnum]:
         return [
             CategoricalEncodingEnum.ONE_HOT,
             CategoricalEncodingEnum.DUMMY,
@@ -133,7 +191,7 @@ class CategoricalInput(Input):
             possible_categories = self.get_possible_categories(values)
             if len(possible_categories) != len(self.categories):
                 raise ValueError(
-                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
+                    f"Categories {list(set(self.categories) - set(possible_categories))} of feature {self.key} not used. Remove them.",
                 )
         return values
 
@@ -320,11 +378,12 @@ class CategoricalInput(Input):
             ),
         )
 
-    def get_bounds(  # type: ignore
+    def get_bounds(
         self,
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
         reference_value: Optional[str] = None,
+        **kwargs,
     ) -> Tuple[List[float], List[float]]:
         assert isinstance(transform_type, CategoricalEncodingEnum)
         if transform_type == CategoricalEncodingEnum.ORDINAL:
@@ -336,7 +395,9 @@ class CategoricalInput(Input):
             if values is None:
                 lower = [0.0 for _ in self.categories]
                 upper = [
-                    1.0 if self.allowed[i] is True else 0.0  # type: ignore
+                    1.0
+                    if self.allowed[i] is True  # ty: ignore[not-subscriptable]
+                    else 0.0
                     for i, _ in enumerate(self.categories)
                 ]
             else:
@@ -366,11 +427,14 @@ class CategoricalInput(Input):
 
 
 class CategoricalOutput(Output):
-    type: Literal["CategoricalOutput"] = "CategoricalOutput"  # type: ignore
+    type: Literal["CategoricalOutput"] = "CategoricalOutput"
     order_id: ClassVar[int] = 10
 
     categories: CategoryVals
     objective: AnyCategoricalObjective
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     @model_validator(mode="after")
     def validate_objective_categories(self):
@@ -387,14 +451,14 @@ class CategoricalOutput(Output):
             raise ValueError("categories must match to objective categories")
         return self
 
-    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],
                 index=values.index,
                 name=values.name,
             )
-        return self.objective(values, values_adapt)  # type: ignore
+        return self.objective(values, values_adapt)  # ty: ignore[invalid-return-type]
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)

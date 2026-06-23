@@ -14,6 +14,10 @@ You can learn more about contributing to BoFire here: https://github.com/experim
 
 (Write your answer here.)
 
+### Have you updated `CHANGELOG.md`?
+
+(Write your answer here.)
+
 ## Test Plan
 
 (Write your test plan here. If you changed any code, please provide us with clear instructions on how you verified that your changes work.)

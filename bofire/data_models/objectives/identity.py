@@ -18,7 +18,7 @@ class IdentityObjective(Objective):
 
     """
 
-    type: Literal["IdentityObjective"] = "IdentityObjective"  # type: ignore
+    type: Literal["IdentityObjective"] = "IdentityObjective"
     w: TWeight = 1
     bounds: Bounds = [0, 1]
 
@@ -33,21 +33,22 @@ class IdentityObjective(Objective):
     @field_validator("bounds")
     @classmethod
     def validate_lower_upper(cls, bounds):
-        """Validation function to ensure that lower bound is always greater the upper bound
+        """Validation function to ensure that lower bound is strictly below upper bound.
+
 
         Args:
             values (Dict): The attributes of the class
 
         Raises:
-            ValueError: when a lower bound higher than the upper bound is passed
+            ValueError: when bounds are not strictly increasing.
 
         Returns:
             Dict: The attributes of the class
 
         """
-        if bounds[0] > bounds[1]:
+        if bounds[0] >= bounds[1]:
             raise ValueError(
-                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}",
+                f"lower bound must be < upper bound, got {bounds[0]} >= {bounds[1]}",
             )
         return bounds
 
@@ -81,6 +82,9 @@ class MaximizeObjective(IdentityObjective):
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
 
+    def to_description(self) -> str:
+        return "Maximize"
+
 
 class MinimizeObjective(IdentityObjective):
     """Class returning the negative identity as reward.
@@ -92,6 +96,9 @@ class MinimizeObjective(IdentityObjective):
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
+
+    def to_description(self) -> str:
+        return "Minimize"
 
     def __call__(
         self,

@@ -42,7 +42,7 @@ in you local project root folder, if you want to use `pre-commit`.
 
 ## Type checks
 
-We make heavy use of [Pydantic](https://docs.pydantic.dev/) to enforce type checks during runtime. Further, we use [Pyright](https://github.com/microsoft/pyright) for static type checking. We enforce Pyright type checks in our CI/CD pipeline.
+We make heavy use of [Pydantic](https://docs.pydantic.dev/) to enforce type checks during runtime. Further, we use [ty](https://docs.astral.sh/ty/) for static type checking. We enforce ty type checks in our CI/CD pipeline.
 
 ## Tests
 

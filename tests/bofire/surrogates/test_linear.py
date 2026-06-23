@@ -5,6 +5,7 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
+from bofire.data_models.priors.api import GreaterThan
 from bofire.data_models.surrogates.api import BotorchSurrogates, LinearSurrogate
 
 
@@ -28,14 +29,23 @@ def test_LinearSurrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = LinearSurrogate(inputs=inputs, outputs=outputs)
+    surrogate_data = LinearSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        noise_constraint=GreaterThan(lower_bound=5e-4),
+    )
     surrogate = surrogates.map(surrogate_data)
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
     assert isinstance(surrogate.kernel, LinearKernel)
+    assert surrogate.noise_constraint is not None
 
     # check dump
     surrogate.fit(experiments=experiments)
+    lower_bound = float(
+        surrogate.model.likelihood.noise_covar.raw_noise_constraint.lower_bound
+    )
+    assert lower_bound >= 5e-4
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate.loads(dump)

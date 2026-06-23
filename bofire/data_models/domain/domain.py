@@ -1,8 +1,7 @@
 import collections.abc
-import itertools
 import warnings
 from collections.abc import Sequence
-from typing import Any, Dict, Literal, Optional, Tuple, Union, get_args, get_origin
+from typing import Any, Dict, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -11,15 +10,16 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
+    Constraint,
     ConstraintNotFulfilledError,
     InterpointConstraint,
-    NChooseKConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
 from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyInput,
     AnyOutput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     Input,
@@ -28,32 +28,54 @@ from bofire.data_models.features.api import (
 from bofire.data_models.objectives.api import Objective
 
 
-def isinstance_or_union(obj, of):
-    if get_origin(of) is Union:
-        of = get_args(of)
-    return isinstance(obj, of)
-
-
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
         return pd.to_numeric(s, errors="coerce").notnull().all()
-    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
+    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()
 
 
 class Domain(BaseModel):
-    type: Literal["Domain"] = "Domain"
-
-    inputs: Inputs = Field(default_factory=lambda: Inputs())
-    outputs: Outputs = Field(default_factory=lambda: Outputs())
-    constraints: Constraints = Field(default_factory=lambda: Constraints())
-
     """Representation of the optimization problem/domain
 
     Attributes:
         inputs (List[Input], optional): List of input features. Defaults to [].
         outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
+        context (str, optional): Free-text context providing additional information
+            about the optimization problem. Useful for agentic optimization where an
+            LLM agent can leverage this description to better understand the overall
+            problem, its goals, and any domain-specific knowledge.
     """
+
+    type: Literal["Domain"] = "Domain"
+
+    inputs: Inputs = Field(default_factory=lambda: Inputs())
+    outputs: Outputs = Field(default_factory=lambda: Outputs())
+    constraints: Constraints = Field(default_factory=lambda: Constraints())
+    context: Optional[str] = None
+
+    def to_description(self) -> str:
+        """Render a human-readable description of the optimization problem.
+
+        Covers problem context, objectives, and constraints. Feature details
+        are handled separately by ``Inputs.to_pydantic_model()`` which embeds
+        bounds, types, and context into the dynamic output schema.
+        """
+        lines = []
+
+        if self.context:
+            lines.append(f"## Problem Context\n{self.context}")
+
+        lines.append("\n## Objectives")
+        for feat in self.outputs:
+            lines.append(f"- {feat.to_description()}")
+
+        if len(self.constraints) > 0:
+            lines.append("\n## Constraints (candidates MUST satisfy all of these)")
+            for c in self.constraints:
+                lines.append(f"- {c.to_description()}")
+
+        return "\n".join(lines)
 
     @classmethod
     def from_lists(
@@ -77,7 +99,7 @@ class Domain(BaseModel):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
             return v
-        if isinstance_or_union(v, AnyInput):
+        if isinstance(v, Input):
             return Inputs(features=[v])
         return v
 
@@ -86,7 +108,7 @@ class Domain(BaseModel):
     def validate_outputs_list(cls, v):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
-        if isinstance_or_union(v, AnyOutput):
+        if isinstance(v, Output):
             return Outputs(features=[v])
         return v
 
@@ -95,7 +117,7 @@ class Domain(BaseModel):
     def validate_constraints_list(cls, v):
         if isinstance(v, list):
             return Constraints(constraints=v)
-        if isinstance_or_union(v, AnyConstraint):
+        if isinstance(v, Constraint):
             return Constraints(constraints=[v])
         return v
 
@@ -138,109 +160,6 @@ class Domain(BaseModel):
             c.validate_inputs(self.inputs)
         return self
 
-    # TODO: tidy this up
-    def get_nchoosek_combinations(self, exhaustive: bool = False):
-        """Get all possible NChooseK combinations
-
-        Args:
-            exhaustive (bool, optional): if True all combinations are returned. Defaults to False.
-
-        Returns:
-            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
-                unused_features_list is a list of lists containing features unused in each NChooseK combination.
-
-        """
-        if len(self.constraints.get(NChooseKConstraint)) == 0:
-            used_continuous_features = self.inputs.get_keys(ContinuousInput)
-            return used_continuous_features, []
-
-        used_features_list_all = []
-
-        # loops through each NChooseK constraint
-        for con in self.constraints.get(NChooseKConstraint):
-            assert isinstance(con, NChooseKConstraint)
-            used_features_list = []
-
-            if exhaustive:
-                for n in range(con.min_count, con.max_count + 1):
-                    used_features_list.extend(itertools.combinations(con.features, n))
-
-                if con.none_also_valid:
-                    used_features_list.append(())
-            else:
-                used_features_list.extend(
-                    itertools.combinations(con.features, con.max_count),
-                )
-
-            used_features_list_all.append(used_features_list)
-
-        used_features_list_all = list(
-            itertools.product(*used_features_list_all),
-        )  # product between NChooseK constraints
-
-        # format into a list of used features
-        used_features_list_formatted = []
-        for used_features_list in used_features_list_all:
-            used_features_list_flattened = [
-                item for sublist in used_features_list for item in sublist
-            ]
-            used_features_list_formatted.append(list(set(used_features_list_flattened)))
-
-        # sort lists
-        used_features_list_sorted = []
-        for used_features in used_features_list_formatted:
-            used_features_list_sorted.append(sorted(used_features))
-
-        # drop duplicates
-        used_features_list_no_dup = []
-        for used_features in used_features_list_sorted:
-            if used_features not in used_features_list_no_dup:
-                used_features_list_no_dup.append(used_features)
-
-        # remove combinations not fulfilling constraints
-        used_features_list_final = []
-        for combo in used_features_list_no_dup:
-            fulfil_constraints = []  # list of bools tracking if constraints are fulfilled
-            for con in self.constraints.get(NChooseKConstraint):
-                assert isinstance(con, NChooseKConstraint)
-                count = 0  # count of features in combo that are in con.features
-                for f in combo:
-                    if f in con.features:
-                        count += 1
-                if (
-                    count >= con.min_count
-                    and count <= con.max_count
-                    or count == 0
-                    and con.none_also_valid
-                ):
-                    fulfil_constraints.append(True)
-                else:
-                    fulfil_constraints.append(False)
-            if np.all(fulfil_constraints):
-                used_features_list_final.append(combo)
-
-        # features unused
-        features_in_cc = []
-        for con in self.constraints.get(NChooseKConstraint):
-            assert isinstance(con, NChooseKConstraint)
-            features_in_cc.extend(con.features)
-        features_in_cc = list(set(features_in_cc))
-        features_in_cc.sort()
-        unused_features_list = []
-        for used_features in used_features_list_final:
-            unused_features_list.append(
-                [f_key for f_key in features_in_cc if f_key not in used_features],
-            )
-
-        # postprocess
-        # used_features_list_final2 = []
-        # unused_features_list2 = []
-        # for used, unused in zip(used_features_list_final,unused_features_list):
-        #     if len(used) == 3:
-        #         used_features_list_final2.append(used), unused_features_list2.append(unused)
-
-        return used_features_list_final, unused_features_list
-
     def coerce_invalids(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Coerces all invalid output measurements to np.nan
 
@@ -262,13 +181,17 @@ class Domain(BaseModel):
         prec: int,
         delimiter: str = "-",
         method: Literal["mean", "median"] = "mean",
+        random_state: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, list]:
         """Aggregate the dataframe by duplicate experiments
 
         Duplicates are identified based on the experiments with the same input
         features. Continuous input features are rounded before identifying the
-        duplicates. Aggregation is performed by taking the average of the
-        involved output features.
+        duplicates. Continuous output features are aggregated by taking the
+        average (or median) of the involved values; categorical output
+        features are aggregated by majority vote. Ties in the majority vote
+        are broken by a random pick; pass ``random_state`` to make this
+        reproducible.
 
         Args:
             experiments (pd.DataFrame): Dataframe containing experimental data
@@ -276,7 +199,12 @@ class Domain(BaseModel):
             delimiter (str, optional): Delimiter used when combining the orig.
                 labcodes to a new one. Defaults to "-".
             method (Literal["mean", "median"], optional): Which aggregation
-                method to use. Defaults to "mean".
+                method to use for continuous outputs. Defaults to "mean".
+                Categorical outputs always use majority vote regardless of
+                this argument.
+            random_state (int, optional): Seed used only when breaking ties in
+                the categorical majority vote. Defaults to None
+                (non-deterministic).
 
         Returns:
             Tuple[pd.DataFrame, list]: Dataframe holding the aggregated
@@ -309,6 +237,25 @@ class Domain(BaseModel):
         agg: Dict[str, Any] = dict.fromkeys(
             self.outputs.get_keys(ContinuousOutput), method
         )
+
+        seed = np.random.default_rng(random_state)
+
+        def _make_categorical_aggregator(feat: str):
+            def _aggregate(values: pd.Series):
+                non_na = values.dropna()
+                if len(non_na) == 0:
+                    return np.nan
+                counts = non_na.value_counts()
+                top_count = counts.iloc[0]
+                winners = counts[counts == top_count].index.tolist()
+                if len(winners) > 1:
+                    return seed.choice(winners)
+                return winners[0]
+
+            return _aggregate
+
+        for feat in self.outputs.get_keys(CategoricalOutput):
+            agg[feat] = _make_categorical_aggregator(feat)
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1

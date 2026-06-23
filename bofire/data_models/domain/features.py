@@ -22,7 +22,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, create_model, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
@@ -37,13 +37,13 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     Feature,
     Input,
     Output,
-    TaskInput,
 )
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
@@ -54,6 +54,7 @@ from bofire.data_models.objectives.api import (
     Objective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 
 
 F = TypeVar("F", bound=AnyFeature)
@@ -82,7 +83,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:  # type: ignore
+    def __iter__(self) -> Iterator[F]:
         return iter(self.features)
 
     def __len__(self):
@@ -99,9 +100,12 @@ class _BaseFeatures(BaseModel, Generic[F]):
         new_feature_seq = list(itertools.chain(self.features, other_feature_seq))
 
         def is_feats_of_type(feats, ftype_collection, ftype_element):
+            # ``ftype_element`` may be a discriminated Annotated[Union[...], Field].
+            # Reduce to a tuple of concrete classes for ``isinstance``.
+            element_classes = tuple(to_list(ftype_element))
             return isinstance(feats, ftype_collection) or (
                 not isinstance(feats, Features)
-                and (len(feats) > 0 and isinstance(feats[0], ftype_element))
+                and (len(feats) > 0 and isinstance(feats[0], element_classes))
             )
 
         def is_infeats(feats):
@@ -174,7 +178,9 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -206,7 +212,9 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[
+            Type, List[Type], None
+        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -262,7 +270,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         features: list of the engineered features.
     """
 
-    type: Literal["EngineeredFeatures"] = "EngineeredFeatures"  # type: ignore
+    type: Literal["EngineeredFeatures"] = "EngineeredFeatures"
 
     def get_features2idx(self, offset: int = 0) -> Dict[str, Tuple[int, ...]]:
         """Get a dictionary that maps feature names to indices (used for surrogate
@@ -335,19 +343,21 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     """
 
-    type: Literal["Inputs"] = "Inputs"  # type: ignore
+    type: Literal["Inputs"] = "Inputs"
 
     @field_validator("features")
     @classmethod
     def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
         filtered = filter_by_class(
             features,
-            includes=TaskInput,
+            includes=CategoricalTaskInput,
             excludes=None,
             exact=False,
         )
         if len(filtered) > 1:
-            raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
+            raise ValueError(
+                f"Only one `CategoricalTaskInput` is allowed, got {len(filtered)}."
+            )
         return features
 
     def get_fixed(self) -> Inputs:
@@ -446,7 +456,9 @@ class Inputs(_BaseFeatures[AnyInput]):
         samples = pd.concat(res, axis=1)
 
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
+            val = feat.fixed_value()
+            assert val is not None
+            samples[feat.key] = val[0]
 
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
@@ -496,7 +508,10 @@ class Inputs(_BaseFeatures[AnyInput]):
     def get_number_of_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
+        include_semicontinuous: bool = True,
     ) -> int:
         """Get the total number of unique categorical combinations.
 
@@ -507,6 +522,13 @@ class Inputs(_BaseFeatures[AnyInput]):
             include (Feature, optional): Features to be included. Defaults to Input.
             exclude (Feature, optional): Features to be excluded, e.g. subclasses
                 of the included features. Defaults to None.
+            include_semicontinuous (bool, optional): When True (default), each
+                semi-continuous feature (`ContinuousInput` with `allow_zero=True`
+                and a positive lower bound, un-fixed) contributes a factor of 2
+                for its on/off enumeration. When False, semi-continuous features
+                are excluded from the count -- useful when the caller handles
+                them via a post-optimisation pruning step rather than by
+                AF-time enumeration.
         Returns:
             int: Returns the number of unique combinations of discrete and categorical
                 features.
@@ -526,14 +548,16 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         num_discretes = [len(d.values) for d in discretes]
 
-        conditional_conts = [
-            f
-            for f in self.get(includes=include, excludes=exclude)
-            if (isinstance(f, ContinuousInput) and f.allow_zero and not f.is_fixed())
-        ]
-
-        # each conditional feature may be 'active' or 'inactive'
-        num_conditional_conts = [2 for _ in conditional_conts]
+        if include_semicontinuous:
+            conditional_conts = [
+                f
+                for f in self.get(includes=include, excludes=exclude)
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
+            ]
+            # each conditional feature may be 'active' or 'inactive'
+            num_conditional_conts = [2 for _ in conditional_conts]
+        else:
+            num_conditional_conts = []
 
         num_values = num_cats + num_discretes + num_conditional_conts
 
@@ -542,7 +566,9 @@ class Inputs(_BaseFeatures[AnyInput]):
     def get_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -579,7 +605,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         conditional_conts = [
             f
             for f in self.get(includes=include, excludes=exclude)
-            if (isinstance(f, ContinuousInput) and f.allow_zero and not f.is_fixed())
+            if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
         ]
 
         conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]
@@ -594,7 +620,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 )
             ]
 
-        return all_combos  # type: ignore
+        return all_combos
 
     # transformation related methods
     def _get_transform_info(
@@ -657,7 +683,9 @@ class Inputs(_BaseFeatures[AnyInput]):
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
-                descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
+                descriptor_names = specs[
+                    feat.key
+                ].get_descriptor_names()  # ty: ignore[possibly-missing-attribute]
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist(),
                 )
@@ -706,7 +734,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 transformed.append(feat.to_descriptor_encoding(s))
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
-                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))  # type: ignore
+                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -753,7 +781,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
                 transformed.append(
-                    feat.from_descriptor_encoding(specs[feat.key], experiments),  # type: ignore
+                    feat.from_descriptor_encoding(specs[feat.key], experiments),
                 )
 
         return pd.concat(transformed, axis=1)
@@ -795,7 +823,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
-                if not isinstance(value, tuple(no_enums)):  # type: ignore
+                if not isinstance(value, tuple(no_enums)):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
@@ -807,6 +835,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
         reference_experiment: Optional[pd.Series] = None,
+        relax_allow_zero: bool = False,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
@@ -821,6 +850,9 @@ class Inputs(_BaseFeatures[AnyInput]):
             then the local bounds based on a local search region are provided as reference to the
                 reference experiment. Currently only supported for continuous inputs.
                 For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
+            relax_allow_zero (bool, optional): If True, semi-continuous continuous inputs
+                (`allow_zero=True` with positive lower bound) report a relaxed lower bound of 0.
+                Other input types ignore this flag. Defaults to False.
 
         Raises:
             ValueError: If a feature type is not known.
@@ -843,13 +875,14 @@ class Inputs(_BaseFeatures[AnyInput]):
         for feat in self.get():
             assert isinstance(feat, Input)
             lo, up = feat.get_bounds(
-                transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
+                transform_type=specs.get(feat.key),
+                values=experiments[feat.key] if experiments is not None else None,
                 reference_value=(
                     reference_experiment[feat.key]
                     if reference_experiment is not None
                     else None
                 ),
+                relax_allow_zero=relax_allow_zero,
             )
             lower += lo
             upper += up
@@ -899,6 +932,21 @@ class Inputs(_BaseFeatures[AnyInput]):
             .all(axis=1)
         )
 
+    def to_pydantic_model(self, name: str = "CandidatePoint"):
+        """Build a dynamic Pydantic model with one field per input feature.
+
+        Each feature's ``to_pydantic_field()`` determines the field type and
+        constraints (e.g., ge/le for continuous, Literal for categorical).
+
+        Returns:
+            A Pydantic BaseModel subclass with typed fields matching the inputs.
+        """
+        fields = {}
+        for feature in self:
+            field_type, field_info = feature.to_pydantic_field()
+            fields[feature.key] = (field_type, field_info)
+        return create_model(name, **fields)
+
 
 class Outputs(_BaseFeatures[AnyOutput]):
     """Container of output features, only output features are allowed.
@@ -908,7 +956,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
 
     """
 
-    type: Literal["Outputs"] = "Outputs"  # type: ignore
+    type: Literal["Outputs"] = "Outputs"
 
     def get_by_objective(
         self,
@@ -1017,7 +1065,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments_adapt[feat.key].dropna(),  # type: ignore
+                    experiments_adapt[feat.key].dropna(),
                 )
                 for feat in self.features
                 if feat.objective is not None
@@ -1025,10 +1073,10 @@ class Outputs(_BaseFeatures[AnyOutput]):
             ]
             + [
                 (
-                    pd.Series(  # type: ignore
+                    pd.Series(
                         data=feat(
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),
                         ),
                         name=f"{feat.key}_pred",
                     )
@@ -1098,7 +1146,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
                         excludes=Objective,
-                        includes=None,  # type: ignore
+                        includes=None,
                     )
                 ],
             ),

@@ -30,6 +30,12 @@ class qLogNEI(SingleObjectiveAcquisitionFunction):
     n_mc_samples: IntPowerOfTwo = 512
 
 
+class pTS(SingleObjectiveAcquisitionFunction):
+    """Pathwise Thompson Sampling acquisition function."""
+
+    type: Literal["pTS"] = "pTS"
+
+
 class qEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qEI"] = "qEI"
     n_mc_samples: IntPowerOfTwo = 512
@@ -81,6 +87,14 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     alpha: Annotated[float, Field(ge=0)] = 0.0
     prune_baseline: bool = True
     n_mc_samples: IntPowerOfTwo = 512
+
+
+class qMFHVKG(MultiObjectiveAcquisitionFunction):
+    type: Literal["qMFHVKG"] = "qMFHVKG"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    num_fantasies: int = 8
+    num_pareto: int = 10
+    n_mc_samples: IntPowerOfTwo = 32
 
 
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):

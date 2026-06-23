@@ -33,7 +33,7 @@ def plot_cv_folds_plotly(
                 if plot_uncertainties and fold.standard_deviation is not None
                 else None,
                 mode="markers",
-                name=f"Fold {i+1}",
+                name=f"Fold {i + 1}",
                 visible=False,  # Initially hide all traces
                 text=fold.labcodes
                 if plot_labcodes and fold.labcodes is not None
@@ -138,7 +138,11 @@ def plot_cv_folds_plotly(
         visible = [False] * len(cv.results) + [False]
         visible[i] = True
         buttons.append(
-            {"label": f"Fold {i+1}", "method": "update", "args": [{"visible": visible}]}
+            {
+                "label": f"Fold {i + 1}",
+                "method": "update",
+                "args": [{"visible": visible}],
+            }
         )
 
     fig.update_layout(

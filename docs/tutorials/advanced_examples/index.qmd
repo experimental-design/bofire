@@ -31,3 +31,12 @@ Using Random Forest as a surrogate model instead of Gaussian Processes.
 
 ### [Transfer Learning BO](transfer_learning_bo.qmd)
 Applying transfer learning techniques to Bayesian optimization.
+
+### [Conditional Features BO](conditional_features_bo.qmd)
+Define input features that are conditionally active.
+
+### [LLM-driven Molecular Optimization](llm_molecular.qmd)
+Propose candidates with an `LLMStrategy` that prompts a large language model with the optimization problem and prior experiments.
+
+### [Preference Learning with the Pairwise GP](pairwise_gp.qmd)
+Learn a latent utility function from pairwise comparison data using Pairwise Gaussian Processes.

@@ -34,20 +34,10 @@ from bofire.data_models.constraints.product import (
     ProductEqualityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.unions import tagged_union
 
 
-AbstractConstraint = Union[
-    Constraint,
-    LinearConstraint,
-    NonlinearConstraint,
-    IntrapointConstraint,
-    InterpointConstraint,
-    ProductConstraint,
-    InequalityConstraint,
-    EqualityConstraint,
-]
-
-AnyConstraint = Union[
+AnyConstraint = tagged_union(
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NonlinearEqualityConstraint,
@@ -57,9 +47,9 @@ AnyConstraint = Union[
     ProductEqualityConstraint,
     ProductInequalityConstraint,
     CategoricalExcludeConstraint,
-]
+)
 
-AnyContinuousConstraint = Union[
+AnyContinuousConstraint = tagged_union(
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NonlinearEqualityConstraint,
@@ -68,14 +58,14 @@ AnyContinuousConstraint = Union[
     InterpointEqualityConstraint,
     ProductEqualityConstraint,
     ProductInequalityConstraint,
-]
+)
 
 AnyCategoricalConstraint = CategoricalExcludeConstraint
 
-AnyCondition = Union[
+AnyCondition = tagged_union(
     SelectionCondition,
     ThresholdCondition,
     NonZeroCondition,
-]
+)
 
 AnyConstraintError = Union[ConstraintError, ConstraintNotFulfilledError]

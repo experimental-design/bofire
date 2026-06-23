@@ -31,7 +31,11 @@ def plot_prior_pdf_plotly(
     fig = go.Figure()
     for i, prior in enumerate(priors):
         y = np.exp(prior.log_prob(torch.from_numpy(x)).numpy())
-        label = labels[i] if use_labels else prior.__class__.__name__  # type: ignore
+        label = (
+            labels[i]  # ty: ignore[not-subscriptable]
+            if use_labels
+            else prior.__class__.__name__
+        )
         fig.add_trace(go.Scatter(x=x, y=y, mode="lines", name=label))
     if layout_options is not None:
         fig.update_layout(layout_options)

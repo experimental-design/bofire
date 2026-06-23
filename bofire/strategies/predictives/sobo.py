@@ -9,6 +9,7 @@ from bofire.data_models.api import Domain
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.data_models.unions import unwrap_annotated
 from bofire.strategies.strategy import make_strategy
 
 
@@ -30,10 +31,8 @@ from botorch.acquisition.objective import (
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
-    qLogNEI,
+    AnyUnconstrainedAcquisitionFunction,
     qLogPF,
-    qNEI,
-    qPI,
     qSR,
     qUCB,
 )
@@ -62,6 +61,9 @@ from bofire.utils.torch_tools import (
 )
 
 
+# TODO: tidy up the sobo strategies into one by modularizing the objective and constraint construction.
+
+
 class SoboStrategy(BotorchStrategy):
     def __init__(
         self,
@@ -84,6 +86,8 @@ class SoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        params = self.acquisition_function.model_dump()
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,
@@ -91,24 +95,12 @@ class SoboStrategy(BotorchStrategy):
             X_observed=X_train,
             X_pending=X_pending,
             constraints=constraint_callables,
-            mc_samples=self.acquisition_function.n_mc_samples,
-            beta=(
-                self.acquisition_function.beta
-                if isinstance(self.acquisition_function, qUCB)
-                else 0.2
-            ),
-            tau=(
-                self.acquisition_function.tau
-                if isinstance(self.acquisition_function, qPI)
-                else 1e-3
-            ),
+            mc_samples=params.get("n_mc_samples", 512),
+            beta=params.get("beta", 0.2),
+            tau=params.get("tau", 1e-3),
             eta=torch.tensor(etas).to(**tkwargs),
             cache_root=None,
-            prune_baseline=(
-                self.acquisition_function.prune_baseline
-                if isinstance(self.acquisition_function, (qNEI, qLogNEI))
-                else True
-            ),
+            prune_baseline=params.get("prune_baseline", True),
         )
         return [acqf]
 
@@ -151,9 +143,10 @@ class SoboStrategy(BotorchStrategy):
             constraint_callables, etas = None, 1e-3
 
         # special cases of qUCB and qSR do not work with separate constraints
-        if (isinstance(self.acquisition_function, (qSR, qUCB))) and (
-            constraint_callables is not None
-        ):
+        if isinstance(
+            self.acquisition_function,
+            unwrap_annotated(AnyUnconstrainedAcquisitionFunction)[0],
+        ) and (constraint_callables is not None):
             return (
                 ConstrainedMCObjective(
                     objective=objective_callable,
@@ -249,12 +242,15 @@ class AdditiveSoboStrategy(SoboStrategy):
                 experiments=self.experiments,
             )
 
-            # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, (qSR, qUCB)):
+            # special cases of qUCB and qSRdo not work with separate constraints
+            if isinstance(
+                self.acquisition_function,
+                unwrap_annotated(AnyUnconstrainedAcquisitionFunction)[0],
+            ):
                 return (
                     ConstrainedMCObjective(
-                        objective=objective_callable,  # type: ignore
-                        constraints=constraint_callables,  # type: ignore
+                        objective=objective_callable,
+                        constraints=constraint_callables,
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
                             objective=objective_callable,
@@ -264,7 +260,7 @@ class AdditiveSoboStrategy(SoboStrategy):
                     1e-3,
                 )
             return (
-                GenericMCObjective(objective=objective_callable),  # type: ignore
+                GenericMCObjective(objective=objective_callable),
                 constraint_callables,
                 etas,
             )
@@ -274,7 +270,8 @@ class AdditiveSoboStrategy(SoboStrategy):
             GenericMCObjective(
                 objective=get_additive_botorch_objective(
                     outputs=self.domain.outputs,
-                    exclude_constraints=False,  # type: ignore
+                    experiments=self.experiments,
+                    exclude_constraints=False,
                 ),
             ),
             constraint_callables,
@@ -282,7 +279,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         )
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         use_output_constraints: bool | None = None,
@@ -337,7 +334,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_botorch_objective(  # type: ignore
+                objective=get_multiplicative_botorch_objective(
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
                     adapt_weights_to_1_inf=True,
@@ -402,7 +399,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_additive_objective(  # type: ignore
+                objective=get_multiplicative_additive_objective(
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
                     additive_features=self.additive_features,
@@ -414,7 +411,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         )
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         use_output_constraints: bool | None = None,
@@ -501,8 +498,8 @@ class CustomSoboStrategy(SoboStrategy):
             if isinstance(self.acquisition_function, (qSR, qUCB)):
                 return (
                     ConstrainedMCObjective(
-                        objective=objective_callable,  # type: ignore
-                        constraints=constraint_callables,  # type: ignore
+                        objective=objective_callable,
+                        constraints=constraint_callables,
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
                             objective=objective_callable,
@@ -512,7 +509,7 @@ class CustomSoboStrategy(SoboStrategy):
                     1e-3,
                 )
             return (
-                GenericMCObjective(objective=objective_callable),  # type: ignore
+                GenericMCObjective(objective=objective_callable),
                 constraint_callables,
                 etas,
             )
@@ -520,7 +517,7 @@ class CustomSoboStrategy(SoboStrategy):
         # we absorb all constraints into the objective
         return (
             GenericMCObjective(
-                objective=get_custom_botorch_objective(  # type: ignore
+                objective=get_custom_botorch_objective(
                     outputs=self.domain.outputs,
                     f=self.f,
                     exclude_constraints=False,
@@ -535,16 +532,16 @@ class CustomSoboStrategy(SoboStrategy):
         """Dumps the function to a string via pickle as this is not directly json serializable."""
         if self.f is None:
             raise ValueError("No function has been provided for the strategy")
-        f_bytes_dump = cloudpickle.dumps(self.f)  # type: ignore
+        f_bytes_dump = cloudpickle.dumps(self.f)
         return base64.b64encode(f_bytes_dump).decode()
 
     def loads(self, data: str):
         """Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         f_bytes_load = base64.b64decode(data.encode())
-        self.f = cloudpickle.loads(f_bytes_load)  # type: ignore
+        self.f = cloudpickle.loads(f_bytes_load)
 
     @classmethod
-    def make(  # type: ignore
+    def make(
         cls,
         domain: Domain,
         use_output_constraints: bool | None = None,

@@ -38,6 +38,9 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 
     type: Literal["MaximizeSigmoidObjective"] = "MaximizeSigmoidObjective"
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
     def __call__(
         self,
         x: Union[pd.Series, np.ndarray],
@@ -68,6 +71,9 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
     """
 
     type: Literal["MovingMaximizeSigmoidObjective"] = "MovingMaximizeSigmoidObjective"
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def get_adjusted_tp(self, x: Union[pd.Series, np.ndarray]) -> float:
         """Get the adjusted turning point for the sigmoid function.
@@ -112,6 +118,9 @@ class MinimizeSigmoidObjective(SigmoidObjective):
     """
 
     type: Literal["MinimizeSigmoidObjective"] = "MinimizeSigmoidObjective"
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def __call__(
         self,

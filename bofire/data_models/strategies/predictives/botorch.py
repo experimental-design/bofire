@@ -4,7 +4,11 @@ from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.domain.api import Domain, Outputs
-from bofire.data_models.features.api import CategoricalInput, ContinuousInput, TaskInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    CategoricalTaskInput,
+    ContinuousInput,
+)
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     AnyAcqfOptimizer,
@@ -12,6 +16,7 @@ from bofire.data_models.strategies.predictives.acqf_optimization import (
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.surrogates.api import (
+    AnyBotorchSurrogate,
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
     MultiTaskGPSurrogate,
@@ -92,8 +97,9 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return self
 
-    @staticmethod
+    @classmethod
     def _generate_surrogate_specs(
+        cls,
         domain: Domain,
         surrogate_specs: BotorchSurrogates,
     ) -> BotorchSurrogates:
@@ -115,29 +121,43 @@ class BotorchStrategy(PredictiveStrategy):
         non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
         _surrogate_specs = surrogate_specs.surrogates
         for output_feature in non_exisiting_keys:
-            if len(domain.inputs.get(CategoricalInput, exact=True)):
-                _surrogate_specs.append(
-                    MixedSingleTaskGPSurrogate(
-                        inputs=domain.inputs,
-                        outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)],
-                        ),
-                    ),
-                )
-            else:
-                _surrogate_specs.append(
-                    SingleTaskGPSurrogate(
-                        inputs=domain.inputs,
-                        outputs=Outputs(
-                            features=[
-                                domain.outputs.get_by_key(output_feature),  # type: ignore
-                            ],
-                        ),
-                    ),
-                )
+            _surrogate_specs.append(
+                cls._generate_single_surrogate_spec_for_output(domain, output_feature)
+            )
         surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
+
+    @classmethod
+    def _generate_single_surrogate_spec_for_output(
+        cls, domain: Domain, output_feature: str
+    ) -> AnyBotorchSurrogate:
+        """Generate a single BoTorch surrogate if one is not specified for a given output feature.
+
+        Args:
+            domain (Domain): The domain defining the problem to be optimized with the strategy
+            output_feature (str): The key of the target output feature.
+
+        Returns:
+            AnyBotorchSurrogate: Spec for the surrogate for the given output feature.
+        """
+
+        if len(domain.inputs.get(CategoricalInput, exact=True)):
+            return MixedSingleTaskGPSurrogate(
+                inputs=domain.inputs,
+                outputs=Outputs(
+                    features=[domain.outputs.get_by_key(output_feature)],
+                ),
+            )
+
+        return SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(
+                features=[
+                    domain.outputs.get_by_key(output_feature),
+                ],
+            ),
+        )
 
     @model_validator(mode="after")
     def validate_multitask_allowed(self):
@@ -146,7 +166,7 @@ class BotorchStrategy(PredictiveStrategy):
             isinstance(m, MultiTaskGPSurrogate) for m in self.surrogate_specs.surrogates
         ):
             # find the task input
-            task_input = self.domain.inputs.get(TaskInput, exact=True)
+            task_input = self.domain.inputs.get(CategoricalTaskInput, exact=True)
             # check if there is only one allowed task category
             assert (
                 sum(task_input.features[0].allowed) == 1

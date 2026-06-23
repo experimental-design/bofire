@@ -1,6 +1,5 @@
 from typing import Union
 
-from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
 from bofire.benchmarks.benchmark import (
     Benchmark,
     FormulationWrapper,
@@ -17,6 +16,7 @@ from bofire.benchmarks.multi import (
     TNK,
     ZDT1,
     CrossCoupling,
+    MOMFBraninCurrin,
     SnarBenchmark,
 )
 from bofire.benchmarks.single import (
@@ -40,6 +40,7 @@ AnyMultiBenchmark = Union[
     SnarBenchmark,
     BNH,
     TNK,
+    MOMFBraninCurrin,
 ]
 AnySingleBenchmark = Union[
     Ackley,

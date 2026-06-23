@@ -1,10 +1,10 @@
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.domain.api import Domain, EngineeredFeatures, Inputs, Outputs
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
@@ -28,7 +28,7 @@ metrics2objectives = {
 
 
 class Hyperconfig(BaseModel):
-    type: str
+    type: Any
     hyperstrategy: Literal[
         "RandomStrategy", "FractionalFactorialStrategy", "SoboStrategy"
     ]
@@ -76,14 +76,6 @@ class Hyperconfig(BaseModel):
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
-    engineered_features: EngineeredFeatures = Field(
-        default_factory=lambda: EngineeredFeatures()
-    )
-
-    @model_validator(mode="after")
-    def validate_aggregations(self):
-        self.engineered_features.validate_inputs(self.inputs)  # type: ignore
-        return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         if self.hyperconfig is not None:

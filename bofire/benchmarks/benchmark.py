@@ -29,7 +29,7 @@ class OutlierPrior(BaseModel):
 
 
 class UniformOutlierPrior(OutlierPrior):
-    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"  # type: ignore
+    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
     bounds: Tuple[float, float]
 
     def sample(self, n_samples: int) -> np.ndarray:
@@ -40,7 +40,7 @@ class UniformOutlierPrior(OutlierPrior):
 
 
 class NormalOutlierPrior(OutlierPrior):
-    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"  # type: ignore
+    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
     loc: float
     scale: PositiveFloat
 
@@ -92,7 +92,7 @@ class Benchmark:
 
     @property
     def domain(self) -> Domain:
-        return self._domain  # type: ignore
+        return self._domain  # ty: ignore[unresolved-attribute]
 
 
 class GenericBenchmark(Benchmark):
@@ -121,8 +121,11 @@ class FormulationWrapper(Benchmark):
     multiple features per original feature are created and a linear inequality constraint
     is added to ensure that their sum does not exceed 1/n_original_features.
 
-    Via the `max_count` parameter an additional NChooseK constraint can be added to
-    the formulation, that limits the number of non-zero non-filler features to `max_count`.
+    Via the `min_count` / `max_count` parameters an additional NChooseK
+    constraint can be added to the formulation. The constraint is applied
+    over *all* non-filler features (the original features and any
+    multi-feature expansions of them), bounding the count of non-zero
+    features into ``[min_count, max_count]``.
     """
 
     def __init__(
@@ -131,6 +134,7 @@ class FormulationWrapper(Benchmark):
         n_filler_features: int = 1,
         n_features_per_original_feature: int = 1,
         max_count: Optional[int] = None,
+        min_count: int = 0,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -189,15 +193,11 @@ class FormulationWrapper(Benchmark):
             )
         )
         if max_count is not None:
-            constraints.append(  # type: ignore
+            constraints.append(
                 NChooseKConstraint(
-                    features=[
-                        key
-                        for key in inputs.get_keys()
-                        if not key.startswith("x_filler_")
-                    ],
+                    features=inputs.get_keys(),
                     max_count=max_count,
-                    min_count=0,
+                    min_count=min_count,
                     none_also_valid=True,
                 )
             )
@@ -208,11 +208,11 @@ class FormulationWrapper(Benchmark):
             outputs=self._benchmark.domain.outputs,
         )
         self._mins = np.array(
-            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]  # type: ignore
+            [feat.bounds[0] for feat in self._benchmark.domain.inputs.get()]
         )
         self._scales = np.array(
             [
-                feat.bounds[1] - feat.bounds[0]  # type: ignore
+                feat.bounds[1] - feat.bounds[0]
                 for feat in self._benchmark.domain.inputs.get()
             ]
         )
@@ -230,9 +230,9 @@ class FormulationWrapper(Benchmark):
 
         # drop original columns, only keep latent ones
         X = X.drop(columns=self.domain.inputs.get_keys())
-        X = X / self._scales_new  # type: ignore
+        X = X / self._scales_new
 
-        return self._mins + self._scales * X  # type: ignore
+        return self._mins + self._scales * X
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
         X_transformed = self._transform(candidates)
@@ -245,20 +245,42 @@ class FormulationWrapper(Benchmark):
 class SpuriousFeaturesWrapper(Benchmark):
     """Wrapper that adds spurious features to a benchmark, that are ignored on evaluation."""
 
-    def __init__(self, benchmark: Benchmark, n_spurious_features: int = 1, **kwargs):
+    def __init__(
+        self,
+        benchmark: Benchmark,
+        n_spurious_features: int = 1,
+        max_count: Optional[int] = None,
+        min_count: int = 0,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         assert n_spurious_features >= 1, "n_spurious_features must be >= 1."
+        assert len(benchmark.domain.constraints) == 0, "Constraints not supported yet."
         self._benchmark = benchmark
+        inputs = Inputs(
+            features=benchmark.domain.inputs.features  # ty: ignore[unsupported-operator]
+            + [
+                ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
+                for i in range(n_spurious_features)
+            ]
+        )
+        constraints = Constraints()
+        if max_count is not None:
+            constraints = Constraints(
+                constraints=[
+                    NChooseKConstraint(
+                        features=inputs.get_keys(),
+                        max_count=max_count,
+                        min_count=min_count,
+                        none_also_valid=False,
+                    )
+                ]
+            )
+
         self._domain = Domain(
-            inputs=Inputs(
-                features=benchmark.domain.inputs.features
-                + [
-                    ContinuousInput(key=f"x_spurious_{i}", bounds=(0, 1))
-                    for i in range(n_spurious_features)
-                ]  # type: ignore
-            ),
+            inputs=inputs,
             outputs=self._benchmark.domain.outputs,
-            constraints=self._benchmark.domain.constraints,
+            constraints=constraints,
         )
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -303,7 +325,7 @@ class SyntheticBoTorch(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1}", bounds=b)
+                    ContinuousInput(key=f"x_{i + 1}", bounds=b)
                     for i, b in enumerate(self.test_function._bounds)
                 ]
             ),

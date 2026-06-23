@@ -34,7 +34,7 @@ class Objective:
         else:
             self.transform = MinMaxTransform(
                 inputs=self.domain.inputs,
-                feature_range=tuple(transform_range),  # type: ignore
+                feature_range=tuple(transform_range),
             )
 
         self.n_experiments = n_experiments

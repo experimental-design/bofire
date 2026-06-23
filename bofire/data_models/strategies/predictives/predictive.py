@@ -27,7 +27,7 @@ class PredictiveStrategy(Strategy):
         """
         for feature in domain.outputs.get_by_objective(Objective):
             assert isinstance(feature, Output)
-            if not cls.is_objective_implemented(type(feature.objective)):  # type: ignore
+            if not cls.is_objective_implemented(type(feature.objective)):
                 raise ValueError(
                     f"Objective `{type(feature.objective)}` is not implemented for strategy `{cls.__name__}`",
                 )

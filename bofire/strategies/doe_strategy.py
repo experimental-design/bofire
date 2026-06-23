@@ -75,7 +75,11 @@ class DoEStrategy(Strategy):
 
         self._candidates = candidates
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore # due to inheriting from Strategy, we then later call this using self.candidates
+    def _ask(
+        self, candidate_count: PositiveInt
+    ) -> (
+        pd.DataFrame
+    ):  # due to inheriting from Strategy, we then later call this using self.candidates
         (
             relaxed_domain,
             mappings_categorical_var_key_to_aux_var_key_state_pairs,
@@ -114,6 +118,7 @@ class DoEStrategy(Strategy):
             partially_fixed_experiments=relaxed_candidates,  # technically fixed experiments are also partially_fixed, so we only use this
             ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
+            seed=self.seed,
         )
 
         # if cats or discrete var present, need to filture out all the aux vars and project back into original domain

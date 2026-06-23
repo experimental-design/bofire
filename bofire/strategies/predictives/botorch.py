@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, get_args
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
@@ -92,14 +93,14 @@ class BotorchStrategy(PredictiveStrategy):
             # we have to import here to avoid circular imports
             from bofire.runners.hyperoptimize import hyperoptimize
 
-            self.surrogate_specs.surrogates = [  # type: ignore
+            self.surrogate_specs.surrogates = [  # ty: ignore[invalid-assignment]
                 (
                     hyperoptimize(
-                        surrogate_data=surrogate_data,  # type: ignore
+                        surrogate_data=surrogate_data,
                         training_data=experiments,
                         folds=self.folds,
                     )[0]
-                    if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
+                    if isinstance(surrogate_data, tuple(to_list(AnyTrainableSurrogate)))
                     else surrogate_data
                 )
                 for surrogate_data in self.surrogate_specs.surrogates
@@ -112,25 +113,25 @@ class BotorchStrategy(PredictiveStrategy):
         )
         self.surrogates = BotorchSurrogates(
             data_model=self.surrogate_specs, re_init_kwargs=re_init_kwargs
-        )  # type: ignore
+        )
 
         self.surrogates.fit(experiments)
-        self.model = self.surrogates.compatibilize(  # type: ignore
+        self.model = self.surrogates.compatibilize(
             inputs=self.domain.inputs,
             outputs=self.domain.outputs,
         )
 
-    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore
+    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         # we are using self.model here for this purpose we have to take the transformed
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
             try:
-                posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+                posterior = self.model.posterior(X=X, observation_noise=True)
             except (
                 NotImplementedError
             ):  # NotImplementedEerror is thrown for MultiTaskGPSurrogate
-                posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
+                posterior = self.model.posterior(X=X, observation_noise=False)
 
             if len(posterior.mean.shape) == 2:
                 preds = posterior.mean.cpu().detach().numpy()
@@ -173,7 +174,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         return vals
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: int) -> pd.DataFrame:
         """[summary]
 
         Args:
@@ -296,5 +297,5 @@ class BotorchStrategy(PredictiveStrategy):
         return get_infeasible_cost(
             X=X,
             model=self.model,
-            objective=objective,  # type: ignore
+            objective=objective,
         )

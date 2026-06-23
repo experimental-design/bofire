@@ -191,7 +191,10 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
             raise Exception("There is no solution that fulfills the constraints.")
 
     if len(constraints) > 0:
-        _domain.constraints.constraints = _domain.constraints.constraints + constraints  # type: ignore
+        _domain.constraints.constraints = (
+            _domain.constraints.constraints
+            + constraints  # ty: ignore[unsupported-operator]
+        )
 
     # assemble equalities
     _equalities = []
@@ -403,7 +406,7 @@ def rref(A: np.ndarray, tol: float = 1e-8) -> Tuple[np.ndarray, List[int]]:
         # if yes: start elimination
         else:
             pivots.append(col)
-            max_row = np.argmax(np.abs(A[row:, col])) + row
+            max_row = int(np.argmax(np.abs(A[row:, col]))) + row
             # switch to most stable row
             A[[row, max_row], :] = A[[max_row, row], :]
             # normalize row

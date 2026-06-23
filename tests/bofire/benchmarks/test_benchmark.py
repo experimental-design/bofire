@@ -103,7 +103,8 @@ def test_FormulationWrapper():
     wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2, max_count=2)
     assert len(wrapped.domain.constraints) == 2
     nkc = wrapped.domain.constraints[1]
-    assert nkc.features == ["x_1_0", "x_2_0"]
+    # NChooseK is now applied globally (over all features including fillers).
+    assert nkc.features == ["x_1_0", "x_2_0", "x_filler_0", "x_filler_1"]
     assert nkc.max_count == 2
     assert nkc.min_count == 0
     assert nkc.none_also_valid is True
@@ -128,7 +129,7 @@ def test_formulation_wrapper_latent():
     descriptor_vals = [[1, 0], [0, 1]]
     for i in range(2):
         for j in range(3):
-            feat = wrapped.domain.inputs.get_by_key(f"x_{i+1}_{j}")
+            feat = wrapped.domain.inputs.get_by_key(f"x_{i + 1}_{j}")
             assert feat.descriptors == benchmark.domain.inputs.get_keys()
             assert feat.values == [
                 1 if k == i else 0 for k in range(len(benchmark.domain.inputs))
