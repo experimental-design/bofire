@@ -61,7 +61,7 @@ def test_ask(domain, num_samples):
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=SpaceFillingCriterion(),
-        ipopt_options={"max_iter": 300, "print_level": 0},
+        optimizer_options={"max_iter": 300, "print_level": 0},
     )
     sampler = strategies.DoEStrategy(data_model=data_model)
     samples = sampler.ask(num_samples)
@@ -75,7 +75,7 @@ def test_ask_pending_candidates():
     data_model = data_models.DoEStrategy(
         domain=domains[0],
         criterion=SpaceFillingCriterion(),
-        ipopt_options={"max_iter": 300, "print_level": 0},
+        optimizer_options={"max_iter": 300, "print_level": 0},
     )
     sampler = strategies.DoEStrategy(data_model=data_model)
     pending_candidates = sampler.ask(2, add_pending=True)

@@ -323,35 +323,38 @@ for criterion in [
         "quadratic",
         "fully-quadratic",
     ]:
-        for use_cyipopt in [True, False, None]:
+        for optimizer in ["ipopt", "pounce", "scipy"]:
             specs.add_valid(
                 strategies.DoEStrategy,
-                lambda criterion=criterion, formula=formula, use_cyipopt=use_cyipopt: {
+                lambda criterion=criterion, formula=formula, optimizer=optimizer: {
                     "domain": domain.valid().obj().model_dump(),
                     "verbose": False,
                     "seed": 42,
                     "criterion": criterion(
                         formula=formula, transform_range=None
                     ).model_dump(),
-                    "use_hessian": False,
-                    "use_cyipopt": use_cyipopt,
+                    "optimizer": optimizer,
+                    "optimizer_options": None,
+                    "scip_params": None,
+                    "sampling": None,
                     "return_fixed_candidates": False,
                 },
             )
 
-for use_cyipopt in [True, False, None]:
+for optimizer in ["ipopt", "pounce", "scipy"]:
     specs.add_valid(
         strategies.DoEStrategy,
-        lambda use_cyipopt=use_cyipopt: {
+        lambda optimizer=optimizer: {
             "domain": domain.valid().obj().model_dump(),
             "verbose": False,
-            "ipopt_options": {"max_iter": 200, "print_level": 0},
+            "optimizer": optimizer,
+            "optimizer_options": {"max_iter": 200, "print_level": 0},
             "criterion": strategies.SpaceFillingCriterion(
                 sampling_fraction=0.3, transform_range=[-1, 1]
             ).model_dump(),
             "seed": 42,
-            "use_hessian": False,
-            "use_cyipopt": use_cyipopt,
+            "scip_params": None,
+            "sampling": None,
             "return_fixed_candidates": False,
         },
     )

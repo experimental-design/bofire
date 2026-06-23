@@ -1,8 +1,9 @@
+import warnings
 from typing import Annotated, Any, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -75,7 +76,22 @@ class KOptimalityCriterion(DoEOptimalityCriterion):
 class IOptimalityCriterion(DoEOptimalityCriterion):
     type: Literal["IOptimalityCriterion"] = "IOptimalityCriterion"
     n_space_filling_points: Optional[int] = None
-    ipopt_options: Optional[Dict] = None
+    optimizer_options: Optional[Dict] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _map_legacy_ipopt_options(cls, data):
+        """Back-compat: legacy ``ipopt_options`` → ``optimizer_options``."""
+        if isinstance(data, dict) and "ipopt_options" in data:
+            io = data.pop("ipopt_options")
+            warnings.warn(
+                "`ipopt_options` is deprecated; use `optimizer_options`.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            data = {**data}
+            data.setdefault("optimizer_options", io)
+        return data
 
 
 AnyDoEOptimalityCriterion = tagged_union(
@@ -106,10 +122,9 @@ class DoEStrategy(Strategy):
     )
 
     verbose: bool = False  # get rid of this at a later stage
-    ipopt_options: Optional[Dict] = None
+    optimizer: Literal["ipopt", "pounce", "scipy"] = "ipopt"
+    optimizer_options: Optional[Dict] = None
     scip_params: Optional[Dict] = None
-    use_hessian: bool = False
-    use_cyipopt: Optional[bool] = None
     sampling: Optional[List[List[float]]] = None
     return_fixed_candidates: bool = False
 
@@ -119,14 +134,59 @@ class DoEStrategy(Strategy):
     Args:
         criterion: object indicating which criterion function to use.
         verbose: Should optimization be verbose?
-        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        optimizer: Which NLP solver to use for the continuous relaxation —
+            "ipopt" (cyipopt), "pounce", or "scipy" (SLSQP). If the chosen backend
+            is not installed it falls back to scipy. Problems with only box bounds
+            always use scipy L-BFGS-B regardless of this setting.
+        optimizer_options: options passed to the chosen optimizer. For ipopt/pounce
+            these are Ipopt options (e.g. max_iter, print_level); see
+            [this link](https://coin-or.github.io/Ipopt/OPTIONS.html).
         scip_params: Parameters for SCIP solver used when generating DoEs with discrete variables.
-        use_hessian: If True, the hessian of the objective function is used. Default is False.
-        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
-            If None, cyipopt is used if available.
         sampling: dataframe containing the initial guess.
         return_fixed_candidates: Should fixed candidates be also returned?
     """
+
+    @model_validator(mode="before")
+    @classmethod
+    def _map_legacy_solver_fields(cls, data):
+        """Back-compat shim for the pre-``optimizer`` API.
+
+        Maps the removed ``use_cyipopt`` / ``ipopt_options`` / ``use_hessian``
+        fields onto the new ``optimizer`` / ``optimizer_options`` (the new keys
+        win if both are given). ``use_hessian`` is gone — second-order DoE was
+        removed — so a truthy value warns and is dropped.
+        """
+        if not isinstance(data, dict):
+            return data
+        data = {**data}
+        if "use_cyipopt" in data:
+            uc = data.pop("use_cyipopt")
+            warnings.warn(
+                "`use_cyipopt` is deprecated; use `optimizer` "
+                "('ipopt' | 'pounce' | 'scipy').",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            data.setdefault(
+                "optimizer",
+                {True: "ipopt", False: "scipy", None: "ipopt"}.get(uc, "ipopt"),
+            )
+        if "ipopt_options" in data:
+            io = data.pop("ipopt_options")
+            warnings.warn(
+                "`ipopt_options` is deprecated; use `optimizer_options`.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            data.setdefault("optimizer_options", io)
+        if data.pop("use_hessian", None):
+            warnings.warn(
+                "`use_hessian` is deprecated and ignored; second-order DoE was "
+                "removed.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        return data
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
