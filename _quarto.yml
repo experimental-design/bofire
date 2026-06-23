@@ -12,6 +12,7 @@ project:
     - "!docs/*.md"
     - "!docs/_build/"
     - "!docs/javascripts/"
+    - "!build/"
   resources:
     - "docs/**/*.png"
     - "docs/**/*.jpg"
