@@ -753,7 +753,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial fits a <code>PairwiseGPSurrogate</code> to synthetic preference data and checks that it recovers the hidden utility.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="1dffbbc8" class="cell" data-execution_count="1">
+<div id="47f1e710" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -773,14 +773,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="a-synthetic-preference-problem" class="level2">
 <h2 class="anchored" data-anchor-id="a-synthetic-preference-problem">A synthetic preference problem</h2>
 <p>We work on a two-dimensional input space. The <em>latent utility</em> — the thing an expert implicitly scores when they pick a winner — is a smooth bump that peaks near <code>(0.7, 0.3)</code>. In a real preference experiment this function is unknown; we define it here only so we can check what the surrogate learned.</p>
-<div id="9e70e3e2" class="cell" data-execution_count="2">
+<div id="006b0d35" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> latent_utility(X: np.ndarray) <span class="op">-&gt;</span> np.ndarray:</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Ground-truth utility. Unobserved in a real preference experiment."""</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    peak <span class="op">=</span> np.array([<span class="fl">0.7</span>, <span class="fl">0.3</span>])</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>np.<span class="bu">sum</span>((X <span class="op">-</span> peak) <span class="op">**</span> <span class="dv">2</span>, axis<span class="op">=-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We draw a handful of candidate designs and give each a unique <code>labcode</code> — the identifier BoFire uses to link a design to the comparisons it appears in.</p>
-<div id="1c8d0171" class="cell" data-execution_count="3">
+<div id="8e37e5f8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>n_candidates <span class="op">=</span> <span class="dv">40</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> rng.random((n_candidates, <span class="dv">2</span>))</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>labcodes <span class="op">=</span> [<span class="ss">f"design_</span><span class="sc">{</span>i<span class="sc">:02d}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_candidates)]</span>
@@ -839,7 +839,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Now we simulate an expert comparing random pairs of designs. The expert prefers whichever design has the higher latent utility, but their judgement is noisy, so they occasionally pick the worse one.</p>
-<div id="55297915" class="cell" data-execution_count="4">
+<div id="6afb0169" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_comparisons(n_comparisons: <span class="bu">int</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_comparisons):</span>
@@ -913,7 +913,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="setting-up-the-surrogate" class="level2">
 <h2 class="anchored" data-anchor-id="setting-up-the-surrogate">Setting up the surrogate</h2>
 <p>A <code>PairwiseGPSurrogate</code> needs an input space and exactly one output — the latent utility it will infer.</p>
-<div id="160dcef5" class="cell" data-execution_count="5">
+<div id="d0eaf09d" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x_1"</span>, bounds<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">1.0</span>)),</span>
@@ -926,7 +926,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Unlike a standard surrogate, <code>fit</code> takes <em>two</em> DataFrames — the designs and the comparisons between them:</p>
-<div id="9a0de6d6" class="cell" data-execution_count="6">
+<div id="4d0eba0d" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>surrogate.fit(experiments, preferences)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>surrogate.is_fitted</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -937,7 +937,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="inspecting-the-learned-utility" class="level2">
 <h2 class="anchored" data-anchor-id="inspecting-the-learned-utility">Inspecting the learned utility</h2>
 <p><code>predict</code> returns the posterior mean (<code>utility_pred</code>) and standard deviation (<code>utility_sd</code>) of the latent utility on new designs. Pairwise data pins down the <em>ranking</em> of designs, not the absolute utility values — the GP recovers utility only up to an arbitrary scale and offset — so we score it with the Kendall-Tau rank correlation against the true utility.</p>
-<div id="bd46f454" class="cell" data-execution_count="7">
+<div id="03d72e26" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>test_X <span class="op">=</span> rng.random((<span class="dv">500</span>, <span class="dv">2</span>))</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>test_df <span class="op">=</span> pd.DataFrame(test_X, columns<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>])</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>predictions <span class="op">=</span> surrogate.predict(test_df)</span>
@@ -950,7 +950,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>A correlation close to 1 means the surrogate ranks unseen designs almost exactly as the latent utility would. We can see this directly by plotting the learned posterior mean next to the ground truth.</p>
-<div id="047a6d1c" class="cell" data-execution_count="8">
+<div id="d4f88c5d" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="fl">4.5</span>))</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">60</span>)</span>
