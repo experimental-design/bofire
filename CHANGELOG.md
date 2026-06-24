@@ -11,6 +11,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ### Changed
 
 ### Fixed
+- Pin `pydantic-ai<2.0.0` to avoid breaking API changes introduced in pydantic-ai 2.0.0 (`output_retries` removed, `OpenAIModel` moved).
 
 ## [0.4.1] - 2026-06-16
 
