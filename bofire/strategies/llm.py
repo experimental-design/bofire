@@ -2,8 +2,7 @@
 
 import asyncio
 import json
-from dataclasses import dataclass
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import pandas as pd
 from pydantic import BaseModel as PydanticBaseModel
@@ -13,17 +12,9 @@ from typing_extensions import Self
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousOutput
-from bofire.data_models.llm.api import AnyLLMProvider
-from bofire.data_models.objectives.api import MinimizeObjective
+from bofire.data_models.llm.api import AnyLLMCapability, AnyLLMProvider
+from bofire.llm.context import LLMContext
 from bofire.strategies.strategy import Strategy, make_strategy
-
-
-# --- Dependencies dataclass for pydantic-ai agent ---
-@dataclass
-class _LLMDeps:
-    domain: Domain
-    experiments_text: str
 
 
 # --- Default system prompt ---
@@ -45,51 +36,6 @@ Consider:
 - If previous experiments are provided, use them to inform proposals
 For each candidate, briefly explain your reasoning.
 """
-
-
-# --- Experiment selection ---
-def _select_experiments(
-    experiments: pd.DataFrame,
-    domain: Domain,
-    n_recent: Optional[int],
-    n_top: Optional[int],
-) -> tuple[pd.DataFrame, str]:
-    """Select a subset of experiments for LLM presentation.
-
-    Returns a tuple of (selected_df, description_text) where description_text
-    explains to the LLM what kind of experiments are being shown.
-    """
-    if n_recent is None and n_top is None:
-        return experiments, f"All {len(experiments)} experiments"
-
-    parts = []
-    desc_parts = []
-
-    if n_recent is not None:
-        recent = experiments.tail(n_recent)
-        parts.append(recent)
-        desc_parts.append(f"last {len(recent)} most recent")
-
-    if n_top is not None:
-        # Use the single objective output (validated at data model level)
-        for feat in domain.outputs:
-            if isinstance(feat, ContinuousOutput) and feat.objective is not None:
-                metric_key = feat.key
-                ascending = isinstance(feat.objective, MinimizeObjective)
-                break
-
-        sorted_exps = experiments.sort_values(by=metric_key, ascending=ascending)
-        top = sorted_exps.head(n_top)
-        parts.append(top)
-        direction = "lowest" if ascending else "highest"
-        desc_parts.append(f"top {len(top)} by {direction} {metric_key}")
-
-    selected = pd.concat(parts).drop_duplicates()
-    description = (
-        " + ".join(desc_parts)
-        + f" ({len(selected)} unique shown out of {len(experiments)} total)"
-    )
-    return selected, description
 
 
 def _reasoning_column_name(domain: Domain) -> str:
@@ -139,8 +85,7 @@ class LLMStrategy(Strategy):
         super().__init__(data_model=data_model, **kwargs)
         self._llm_provider = data_model.llm
         self._output_retries = data_model.output_retries
-        self._n_recent_experiments = data_model.n_recent_experiments
-        self._n_top_experiments = data_model.n_top_experiments
+        self._capabilities = data_model.capabilities
         self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
         self._pydantic_ai_model = None
         self._agent = None
@@ -163,35 +108,40 @@ class LLMStrategy(Strategy):
         """Lazily constructed pydantic-ai Agent. Built once on first access.
 
         Per BoFire's "build once, execute many" philosophy: the Agent
-        captures the domain, output schema, system prompt, and provider
-        model at first access. Per-call inputs (current experiments,
-        candidate count) are passed in via ``_LLMDeps`` on each
+        captures the domain, output schema, system prompt, capabilities, and
+        provider model at first access. Per-call inputs (current experiments,
+        pending candidates) are passed in via ``LLMContext`` on each
         ``agent.run()``.
         """
         if self._agent is None:
             from pydantic_ai import Agent, ModelRetry
 
+            import bofire.llm.capabilities_mapper as cap_mapper
+
             proposal_model = _build_proposal_model(self.domain)
+            capabilities = [cap_mapper.map(c) for c in self._capabilities]
 
             agent = Agent(
                 self.pydantic_ai_model,
+                deps_type=LLMContext,
                 system_prompt=self._system_prompt,
                 output_type=proposal_model,
-                output_retries=self._output_retries,
+                # pydantic-ai v2 unified ``output_retries`` into ``retries``
+                # (``AgentRetries = {tools, output}``). We only retry on output
+                # validation failures, so map onto the ``output`` budget.
+                retries={"output": self._output_retries},
+                capabilities=capabilities or None,
                 name="LLMStrategy",
             )
 
             @agent.system_prompt
             async def add_domain_description(ctx) -> str:
-                deps: _LLMDeps = ctx.deps
-                parts = [deps.domain.to_description()]
-                if deps.experiments_text:
-                    parts.append(deps.experiments_text)
-                return "\n".join(parts)
+                deps: LLMContext = ctx.deps
+                return deps.domain.to_description()
 
             @agent.output_validator
             async def validate_against_domain(ctx, proposal):
-                deps: _LLMDeps = ctx.deps
+                deps: LLMContext = ctx.deps
                 rows = [c.values.model_dump() for c in proposal.candidates]
                 candidates_df = pd.DataFrame(rows)
                 try:
@@ -226,32 +176,12 @@ class LLMStrategy(Strategy):
             candidate_count = 1
         return asyncio.run(self._ask_async(candidate_count))
 
-    def _build_experiments_text(self) -> str:
-        """Render the currently held experiments as a JSON block for the LLM."""
-        if self.experiments is None or len(self.experiments) == 0:
-            return ""
-        selected, description = _select_experiments(
-            self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments
-            ),
-            self.domain,
-            self._n_recent_experiments,
-            self._n_top_experiments,
-        )
-        display_cols = self.domain.inputs.get_keys() + self.domain.outputs.get_keys()
-        experiments_json = json.dumps(
-            selected[display_cols].to_dict(orient="records"), indent=2
-        )
-        return (
-            f"\n## Previous Experiments ({description})\n"
-            f"```json\n{experiments_json}\n```"
-        )
-
     async def _ask_async(self, candidate_count: int) -> pd.DataFrame:
         """Async implementation of candidate generation."""
-        deps = _LLMDeps(
+        deps = LLMContext(
             domain=self.domain,
-            experiments_text=self._build_experiments_text(),
+            experiments=self.experiments,
+            candidates=self.candidates,
         )
 
         result = await self.agent.run(
@@ -275,8 +205,7 @@ class LLMStrategy(Strategy):
         llm: AnyLLMProvider,
         model_settings: Optional[Dict[str, Any]] = None,
         output_retries: Optional[int] = None,
-        n_recent_experiments: Optional[int] = None,
-        n_top_experiments: Optional[int] = None,
+        capabilities: Optional[List[AnyLLMCapability]] = None,
         system_prompt: Optional[str] = None,
         seed: Optional[int] = None,
     ) -> Self:
@@ -289,8 +218,9 @@ class LLMStrategy(Strategy):
                 ``model_settings`` (e.g. ``{"temperature": 0.2,
                 "max_tokens": 4096, "thinking": "high"}``).
             output_retries: Number of retries for output validation.
-            n_recent_experiments: Number of recent experiments to show.
-            n_top_experiments: Number of top experiments to show.
+            capabilities: Capabilities to attach to the agent. If omitted, the
+                data model default (a single ``ExperimentAccessCapability``) is
+                used. Supplying a list replaces the default.
             system_prompt: Custom system prompt override.
             seed: Random seed.
 

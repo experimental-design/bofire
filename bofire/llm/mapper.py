@@ -101,7 +101,7 @@ def map_anthropic_foundry(data_model: AnthropicFoundryLLMProvider):
 @register(OpenAILLMProvider)
 def map_openai(data_model: OpenAILLMProvider):
     from openai import AsyncOpenAI
-    from pydantic_ai.models.openai import OpenAIModel
+    from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openai import OpenAIProvider
 
     kwargs = {"api_key": _resolve_env_var(data_model.api_key_env_var)}
@@ -112,13 +112,15 @@ def map_openai(data_model: OpenAILLMProvider):
 
     client = AsyncOpenAI(**kwargs)
     provider = OpenAIProvider(openai_client=client)
-    return OpenAIModel(data_model.model, provider=provider)
+    # pydantic-ai v2 renamed ``OpenAIModel`` -> ``OpenAIChatModel`` (the bare
+    # ``openai:`` prefix now defaults to the Responses API).
+    return OpenAIChatModel(data_model.model, provider=provider)
 
 
 @register(OpenAICompatibleLLMProvider)
 def map_openai_compatible(data_model: OpenAICompatibleLLMProvider):
     from openai import AsyncOpenAI
-    from pydantic_ai.models.openai import OpenAIModel
+    from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openai import OpenAIProvider
 
     client = AsyncOpenAI(
@@ -126,7 +128,7 @@ def map_openai_compatible(data_model: OpenAICompatibleLLMProvider):
         base_url=data_model.base_url,
     )
     provider = OpenAIProvider(openai_client=client)
-    return OpenAIModel(data_model.model, provider=provider)
+    return OpenAIChatModel(data_model.model, provider=provider)
 
 
 def map(data_model: LLMProvider):

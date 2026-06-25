@@ -26,6 +26,7 @@ from bofire.data_models.features.api import (
     ContinuousTaskInput,
     DiscreteInput,
 )
+from bofire.data_models.llm.capability import ExperimentAccessCapability
 from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
@@ -1037,8 +1038,7 @@ specs.add_valid(
         "seed": 42,
         "model_settings": None,
         "output_retries": 3,
-        "n_recent_experiments": None,
-        "n_top_experiments": None,
+        "capabilities": [ExperimentAccessCapability().model_dump()],
         "system_prompt": None,
     },
 )
@@ -1058,8 +1058,9 @@ specs.add_valid(
             "thinking": "medium",
         },
         "output_retries": 5,
-        "n_recent_experiments": 10,
-        "n_top_experiments": 5,
+        "capabilities": [
+            ExperimentAccessCapability(max_rows_per_tool_call=20).model_dump()
+        ],
         "system_prompt": "You are a helpful assistant.",
     },
 )

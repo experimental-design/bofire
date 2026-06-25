@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
+from bofire.data_models.llm.capability import LLMCapability
 from bofire.data_models.llm.provider import LLMProvider
 from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
@@ -824,6 +825,85 @@ class TestLLMProviderPydanticIntegration:
         )
         data_model = LLMStrategyDataModel(domain=domain, llm=_MapperLLMProvider())
         assert isinstance(data_model.llm, _MapperLLMProvider)
+
+
+# ---------------------------------------------------------------------------
+# LLM capability registration tests
+# ---------------------------------------------------------------------------
+
+
+class _IntegrationLLMCapability(LLMCapability):
+    type: Literal["_IntegrationLLMCapability"] = "_IntegrationLLMCapability"
+
+
+class TestLLMCapabilityPydanticIntegration:
+    """After register_llm_capability, custom capability types should pass
+    Pydantic validation on LLMStrategy.capabilities and round-trip through
+    AnyLLMCapability."""
+
+    def test_custom_capability_in_llm_strategy(self):
+        from pydantic import TypeAdapter
+
+        import bofire.data_models.llm.api as llm_api
+        from bofire.data_models.llm.api import register_llm_capability
+        from bofire.data_models.llm.provider import AnthropicLLMProvider
+        from bofire.data_models.objectives.api import MaximizeObjective
+        from bofire.data_models.strategies.api import (
+            LLMStrategy as LLMStrategyDataModel,
+        )
+
+        register_llm_capability(_IntegrationLLMCapability)
+
+        obj = _IntegrationLLMCapability()
+        deserialized = TypeAdapter(llm_api.AnyLLMCapability).validate_python(
+            obj.model_dump()
+        )
+        assert deserialized == obj
+
+        domain = Domain(
+            inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+            ),
+        )
+        data_model = LLMStrategyDataModel(
+            domain=domain,
+            llm=AnthropicLLMProvider(api_key_env_var="FAKE_KEY"),
+            capabilities=[obj],
+        )
+        assert isinstance(data_model.capabilities[0], _IntegrationLLMCapability)
+
+    def test_mapper_register_also_updates_pydantic(self):
+        """The capability mapper-level register() should trigger data model registration."""
+        import bofire.llm.capabilities_mapper as cap_mapper
+
+        class _MapperLLMCapability(LLMCapability):
+            type: Literal["_MapperLLMCapability"] = "_MapperLLMCapability"
+
+        sentinel = MagicMock(name="pydantic_ai_capability")
+        cap_mapper.register(_MapperLLMCapability, lambda dm: sentinel)
+
+        assert cap_mapper.CAPABILITY_MAP[_MapperLLMCapability] is not None
+        assert cap_mapper.map(_MapperLLMCapability()) is sentinel
+
+        from bofire.data_models.llm.provider import AnthropicLLMProvider
+        from bofire.data_models.objectives.api import MaximizeObjective
+        from bofire.data_models.strategies.api import (
+            LLMStrategy as LLMStrategyDataModel,
+        )
+
+        domain = Domain(
+            inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+            ),
+        )
+        data_model = LLMStrategyDataModel(
+            domain=domain,
+            llm=AnthropicLLMProvider(api_key_env_var="FAKE_KEY"),
+            capabilities=[_MapperLLMCapability()],
+        )
+        assert isinstance(data_model.capabilities[0], _MapperLLMCapability)
 
 
 # ---------------------------------------------------------------------------

@@ -7,6 +7,7 @@ from bofire.data_models.api import (
     AnyDataFrame,
     AnyFeature,
     AnyKernel,
+    AnyLLMCapability,
     AnyLLMProvider,
     AnyLocalSearchConfig,
     AnyMolFeatures,
@@ -147,6 +148,10 @@ def test_local_search_config_should_be_deserializable(local_search_config_spec: 
 
 
 def test_llm_should_be_deserializable(llm_spec: Spec):
+    from bofire.data_models.llm.provider import LLMProvider
+
     obj = llm_spec.obj()
-    deserialized = TypeAdapter(AnyLLMProvider).validate_python(obj.model_dump())
+    # The llm spec group holds both providers and capabilities; pick the union.
+    union = AnyLLMProvider if isinstance(obj, LLMProvider) else AnyLLMCapability
+    deserialized = TypeAdapter(union).validate_python(obj.model_dump())
     assert obj == deserialized

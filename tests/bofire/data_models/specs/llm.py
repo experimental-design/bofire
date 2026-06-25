@@ -1,3 +1,4 @@
+from bofire.data_models.llm.capability import ExperimentAccessCapability
 from bofire.data_models.llm.provider import (
     AnthropicFoundryLLMProvider,
     AnthropicLLMProvider,
@@ -8,6 +9,13 @@ from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
+
+specs.add_valid(
+    ExperimentAccessCapability,
+    lambda: {
+        "max_rows_per_tool_call": 50,
+    },
+)
 
 specs.add_valid(
     AnthropicLLMProvider,

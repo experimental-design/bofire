@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Dict, Literal, Optional, Type
+from typing import Any, Dict, List, Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, model_validator
 
@@ -9,7 +9,11 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.features.api import Feature
-from bofire.data_models.llm.api import AnyLLMProvider
+from bofire.data_models.llm.api import (
+    AnyLLMCapability,
+    AnyLLMProvider,
+    ExperimentAccessCapability,
+)
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.data_models.strategies.strategy import Strategy
 
@@ -32,10 +36,11 @@ class LLMStrategy(Strategy):
 
     On each ``ask()``, a pydantic output schema is generated from the
     domain's input features and the LLM is prompted with a textual problem
-    description plus, optionally, a selection of prior experiments. Returned
-    candidates are validated against the domain; bound or constraint
-    violations are sent back to the LLM as retry messages via pydantic-ai's
-    ``output_retries``.
+    description. Prior experiments and pending candidates are exposed to the
+    LLM through capabilities (by default the ``ExperimentAccessCapability``,
+    which provides tools to inspect them on demand) rather than being rendered
+    into the prompt. Returned candidates are validated against the domain;
+    bound or constraint violations are sent back to the LLM as retry messages.
 
     Currently supports single-objective optimization with ``MaximizeObjective``
     or ``MinimizeObjective``, and ``LinearEquality``, ``LinearInequality``,
@@ -76,12 +81,12 @@ class LLMStrategy(Strategy):
         output_retries: Number of retries when output validation fails
             (constraint or bound violations). Each retry sends the LLM the
             invalid candidates and the error so it can correct.
-        n_recent_experiments: If set, only the most recent N experiments
-            are shown to the LLM. Keeps prompt size bounded on long
-            campaigns.
-        n_top_experiments: If set, the top N experiments by objective
-            value are shown to the LLM. Combine with
-            ``n_recent_experiments`` to mix recency and quality.
+        capabilities: Capabilities attached to the underlying agent. Defaults
+            to a single ``ExperimentAccessCapability`` that exposes prior
+            experiments and pending candidates via tools. Supplying an explicit
+            list replaces this default, so re-add ``ExperimentAccessCapability``
+            if you want experiment access alongside other capabilities. Pass an
+            empty list to disable all capabilities.
         system_prompt: Optional override for the default system prompt.
     """
 
@@ -90,8 +95,9 @@ class LLMStrategy(Strategy):
     llm: AnyLLMProvider
     model_settings: Optional[Dict[str, Any]] = None
     output_retries: PositiveInt = 3
-    n_recent_experiments: Optional[Annotated[int, Field(gt=0)]] = None
-    n_top_experiments: Optional[Annotated[int, Field(gt=0)]] = None
+    capabilities: List[AnyLLMCapability] = Field(
+        default_factory=lambda: [ExperimentAccessCapability()]
+    )
     system_prompt: Optional[str] = None
 
     @model_validator(mode="after")

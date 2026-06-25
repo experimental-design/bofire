@@ -1,4 +1,11 @@
-from bofire.data_models.llm._register import register_llm_provider  # noqa: F401
+from bofire.data_models.llm._register import (  # noqa: F401
+    register_llm_capability,
+    register_llm_provider,
+)
+from bofire.data_models.llm.capability import (
+    ExperimentAccessCapability,
+    LLMCapability,  # noqa: F401
+)
 from bofire.data_models.llm.provider import (
     AnthropicFoundryLLMProvider,
     AnthropicLLMProvider,
@@ -14,4 +21,8 @@ AnyLLMProvider = tagged_union(
     AnthropicFoundryLLMProvider,
     OpenAILLMProvider,
     OpenAICompatibleLLMProvider,
+)
+
+AnyLLMCapability = tagged_union(
+    ExperimentAccessCapability,
 )
