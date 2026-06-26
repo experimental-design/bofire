@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Any, List, Literal, Optional
+from typing import Annotated, Any, List, Literal, Optional, Protocol
 
 import pandas as pd
 from pydantic import Field, PositiveInt, field_validator
@@ -10,9 +10,27 @@ from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.unions import tagged_union
 
 
+class StepStrategy(Protocol):
+    """Minimal interface of the step strategy needed to evaluate conditions."""
+
+    def has_converged(self) -> bool: ...
+
+
 class EvaluateableCondition:
     @abstractmethod
-    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: Optional[pd.DataFrame],
+    ) -> bool:
+        """Whether the step using ``strategy`` should remain the active step.
+
+        This is the polymorphic hook used by the ``StepwiseStrategy`` to select
+        the active step. Data-based conditions only look at ``domain`` and
+        ``experiments`` and ignore ``strategy``; conditions that depend on the
+        strategy itself (e.g. whether it is finished) inspect ``strategy``.
+        """
         pass
 
 
@@ -46,7 +64,12 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
     n_required_feasible_experiments: PositiveInt = 1
     threshold: Annotated[float, Field(ge=0, le=1)] = 0.9
 
-    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: Optional[pd.DataFrame],
+    ) -> bool:
         constrained_outputs = domain.outputs.get_by_objective(ConstrainedObjective)
         if len(constrained_outputs) == 0:
             return False
@@ -81,7 +104,12 @@ class NumberOfExperimentsCondition(SingleCondition, EvaluateableCondition):
     type: Literal["NumberOfExperimentsCondition"] = "NumberOfExperimentsCondition"
     n_experiments: Annotated[int, Field(ge=1)]
 
-    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: Optional[pd.DataFrame],
+    ) -> bool:
         if experiments is None:
             n_experiments = 0
         else:
@@ -94,8 +122,36 @@ class NumberOfExperimentsCondition(SingleCondition, EvaluateableCondition):
 class AlwaysTrueCondition(SingleCondition, EvaluateableCondition):
     type: Literal["AlwaysTrueCondition"] = "AlwaysTrueCondition"
 
-    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: Optional[pd.DataFrame],
+    ) -> bool:
         return True
+
+
+class StrategyHasConvergedCondition(SingleCondition, EvaluateableCondition):
+    """Condition that keeps the current step active until its strategy converged.
+
+    In contrast to the other conditions, this condition cannot be evaluated from
+    the domain and experiments alone. It asks the strategy of the current step
+    whether it has converged, i.e. whether its convergence criterion is met.
+
+    The current step stays active as long as its strategy has not converged. Once
+    the strategy reports that it has converged, the ``StepwiseStrategy`` advances
+    to the next step.
+    """
+
+    type: Literal["StrategyHasConvergedCondition"] = "StrategyHasConvergedCondition"
+
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: Optional[pd.DataFrame],
+    ) -> bool:
+        return not strategy.has_converged()
 
 
 class CombiCondition(Condition, EvaluateableCondition):
@@ -121,10 +177,15 @@ class CombiCondition(Condition, EvaluateableCondition):
             )
         return v
 
-    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: Optional[pd.DataFrame],
+    ) -> bool:
         n_matched_conditions = 0
         for c in self.conditions:
-            if c.evaluate(domain, experiments):
+            if c.evaluate(strategy, domain, experiments):
                 n_matched_conditions += 1
         if n_matched_conditions >= self.n_required_conditions:
             return True
@@ -136,4 +197,5 @@ AnyCondition = tagged_union(
     CombiCondition,
     AlwaysTrueCondition,
     FeasibleExperimentCondition,
+    StrategyHasConvergedCondition,
 )

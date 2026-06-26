@@ -14,6 +14,7 @@ from bofire.data_models.strategies.api import (
     SoboStrategy,
     Step,
     StepwiseStrategy,
+    StrategyHasConvergedCondition,
 )
 from bofire.data_models.strategies.stepwise.stepwise import (
     validate_domain_compatibility,
@@ -128,6 +129,43 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     else:
         assert strategy.surrogates == _strategy.surrogates  # type: ignore
         assert strategy.surrogates_specs == _strategy.surrogate_specs  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "first_step_finished, expected_strategy",
+    [(False, strategies.RandomStrategy), (True, strategies.SoboStrategy)],
+)
+def test_StepwiseStrategy_get_step_strategy_has_converged(
+    first_step_finished, expected_strategy
+):
+    benchmark = Himmelblau()
+    experiments = benchmark.f(
+        benchmark.domain.inputs.sample(5),
+        return_complete=True,
+    )
+    data_model = StepwiseStrategy(
+        domain=benchmark.domain,
+        steps=[
+            Step(
+                strategy_data=RandomStrategy(domain=benchmark.domain),
+                condition=StrategyHasConvergedCondition(),
+            ),
+            Step(
+                strategy_data=SoboStrategy(
+                    domain=benchmark.domain,
+                    acquisition_function=qNEI(),
+                ),
+                condition=AlwaysTrueCondition(),
+            ),
+        ],
+    )
+    strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
+    strategy.tell(experiments)
+    # the actual termination decision math is not implemented, so we control the
+    # outcome of `has_converged` directly to verify the stepwise wiring.
+    strategy.strategies[0].has_converged = lambda: first_step_finished  # type: ignore
+    _strategy, _ = strategy.get_step()
+    assert isinstance(_strategy, expected_strategy)
 
 
 def test_StepWiseStrategy_get_step_invalid():

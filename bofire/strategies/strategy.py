@@ -7,6 +7,7 @@ import pandas as pd
 from pydantic import PositiveInt
 from typing_extensions import Self
 
+import bofire.convergence_criteria.api as convergence_criteria
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
@@ -123,6 +124,52 @@ class Strategy(ABC):
 
     def _tell(self) -> None:
         """Method to allow for customized tell functions in addition to self.tell()"""
+
+    def has_converged(self) -> bool:
+        """Returns whether the strategy has converged according to its convergence criterion.
+
+        The convergence criterion is evaluated against the internal state and
+        data of the strategy. Depending on the criterion, the strategy's
+        surrogate model(s) may be required and are provided to the evaluation.
+        If no convergence criterion is configured, the strategy is never
+        considered converged.
+
+        Returns:
+            bool: True if the strategy's convergence criterion is met, False otherwise.
+
+        Raises:
+            ValueError: If the convergence criterion requires a surrogate model
+                but the strategy does not provide a (fitted) one.
+
+        """
+        criterion = self._data_model.convergence_criterion
+        if criterion is None:
+            return False
+        surrogates = None
+        if criterion.requires_surrogate:
+            surrogates = self._get_surrogates()
+            if surrogates is None:
+                raise ValueError(
+                    f"Convergence criterion `{type(criterion).__name__}` requires a "
+                    f"surrogate model, but strategy `{type(self).__name__}` does not "
+                    "provide a fitted one.",
+                )
+        evaluator = convergence_criteria.map(criterion)
+        return evaluator(criterion, self, surrogates=surrogates)
+
+    def _get_surrogates(self):
+        """Returns the fitted surrogate model(s) of the strategy if available.
+
+        Strategies that build surrogate models (e.g. BoTorch-based strategies)
+        expose them via a ``surrogates`` attribute. For strategies without
+        surrogate models, or before the models have been fitted, this returns
+        ``None``.
+
+        Returns:
+            BotorchSurrogates | None: The fitted surrogate model(s) or None.
+
+        """
+        return getattr(self, "surrogates", None)
 
     def ask(
         self,
