@@ -17,6 +17,22 @@ class StepStrategy(Protocol):
 
 
 class EvaluateableCondition:
+    """Mixin for stepwise conditions that select the active step.
+
+    A condition is **orchestration** logic for a ``StepwiseStrategy``: it decides
+    which step is currently active, based on the ``domain`` and ``experiments``
+    and, at most, the minimal ``StepStrategy`` protocol (``has_converged()``).
+    Conditions deliberately do **not** get access to a strategy's surrogate
+    model(s); model-aware stopping logic belongs in a ``ConvergenceCriterion``
+    (see ``bofire.data_models.convergence_criteria``), which runs inside the
+    strategy and is surfaced here only through ``StrategyHasConvergedCondition``.
+
+    Note the polarity: ``evaluate`` returns ``True`` while the step should *stay
+    active* (i.e. it is **not** yet done), which is the opposite of
+    ``strategy.has_converged()``. The ``StrategyHasConvergedCondition`` bridge
+    reconciles the two by returning ``not strategy.has_converged()``.
+    """
+
     @abstractmethod
     def evaluate(
         self,

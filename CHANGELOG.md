@@ -7,6 +7,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ## [Unreleased]
 
 ### Added
+- Convergence criteria as a first-class, user-extensible family (`bofire.convergence_criteria` and `bofire.data_models.convergence_criteria`). Strategies expose a `convergence_criterion` field and a `has_converged()` method, with `ObjectiveImprovementCriterion` (best-objective stagnation over a lookback window) and `ProposalDeviationCriterion` (normalized deviation between consecutive proposals) as  first simple built-in criteria. Custom criteria can be registered via `bofire.convergence_criteria.api.register`. Stepwise strategies can advance on convergence via the `StrategyHasConvergedCondition`.
 
 ### Changed
 
