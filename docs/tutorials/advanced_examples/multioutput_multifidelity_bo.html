@@ -65,6 +65,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../../">
+<link href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html" rel="next">
+<link href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html" rel="prev">
 <script src="../../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -115,7 +117,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="../../../styles.css">
 </head>
 
-<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -297,7 +299,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../../../index.html"> 
+    <a class="nav-link active" href="../../../index.html" aria-current="page"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
@@ -376,10 +378,344 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
       </div> <!-- /container-fluid -->
     </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/index.html">Advanced Examples</a></li><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/multioutput_multifidelity_bo.html">Multi-Objective, Multi-Fidelity BO</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
 </header>
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
+      <a href="../../../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Basic Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/basic_terminology.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic terminology</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Reaction_Optimization_Example.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Getting started by Example: Optimization of Reaction Conditions</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Model_Fitting_and_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Building with BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Outlier Detection and Robust GP</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Classification Surrogate Tests</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/basic_examples/index_kernel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Introduction to index kernel and positive index kernel.</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Advanced Examples</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Advanced Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Custom Sobo Strategy</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/desirability_objectives.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Desirability Functions for Multi-Objective Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">For optimizations in the bofire domain, a GA optimizer is available</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/merging_objectives.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Merging multiple objectives to a scalar target for single-target BO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Multi-fidelity Bayesian Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/multioutput_multifidelity_bo.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Multi-Objective, Multi-Fidelity BO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Input Features as Output Objectives</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/random_forest_in_bofire.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Random Forest in BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/octane_number.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Predict Motor Octane Number of Hydrocarbon Mixtures</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/llm_molecular.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM-driven Molecular Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/pairwise_gp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Preference Learning with the Pairwise GP</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Benchmarks</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Benchmark Examples</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/001-Himmelblau.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/002-DTLZ2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DTLZ2 Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/004-30dimBranin.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">30dim Branin Benchmark with SAASBO</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/005-Himmelblau_with_outliers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Himmelblau Benchmark with outliers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Bayesian Optimisation Over Molecules</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/007-LSRBO.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Local Search Region Bayesian Optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/008-ZDT1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ZDT1</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/009-BNH.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">BNH Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/010-TNK.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">TNK Benchmark</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/011-ActiveLearning.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Active Learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/benchmarks/013-spherical_kernel.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Spherical linear kernels for high dimensional BO</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Design of Experiments</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design of Experiments (DOE)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/basic_examples.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Basic Examples for the DoE Subpackage</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/design_with_explicit_formula.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design with explicit Formula</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/fractional_factorial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Full and Fractional Factorial Designs</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/nchoosek_constraint.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design with NChooseK constraint</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/doe/optimality_criteria.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">DoE Optimality Criteria in BoFire</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true">
+ <span class="menu-text">Serialization</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-5" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-5" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Serialization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/models_serial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Model Building with BoFire</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/serialization/strategies_serial.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Strategy Serialization with BoFire</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
@@ -398,7 +734,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <main class="content" id="quarto-document-content">
 
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/index.html">Advanced Examples</a></li><li class="breadcrumb-item"><a href="../../../docs/tutorials/advanced_examples/multioutput_multifidelity_bo.html">Multi-Objective, Multi-Fidelity BO</a></li></ol></nav>
 <div class="quarto-title">
 <div class="quarto-title-block"><div><h1 class="title">Multi-Objective, Multi-Fidelity BO</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 </div>
@@ -420,7 +756,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to set up a multi-fidelity problem that has multiple objectives. This approach uses the Multi-fidelity Hypervolume Knowledge Gradient acquisition function [1], which supports: - Multiple objectives, optimizing their pareto front - Multiple fidelities, which can correspond to the quality of a function evaluation. For example, when running a computer simulation, one can control the resolution or the duration, each of which trade-off between quality and cost. - A cost-weighting, which determines how expensive an experiment is to carry out given the fidelity.</p>
 <p>For a deeper look at how this acquisition function works, see the corresponding paper or the <a href="https://botorch.org/docs/tutorials/Multi_objective_multi_fidelity_BO">BoTorch tutorial</a>.</p>
 <p>[1] S. Daulton, M. Balandat, and E. Bakshy. <a href="https://proceedings.mlr.press/v202/daulton23a.html">Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information</a>. ICML, 2023.</p>
-<div id="09b6b0fe" class="cell" data-execution_count="1">
+<div id="732b95eb" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qMFHVKG</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.enum <span class="im">import</span> SamplingMethodEnum</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousTaskInput</span>
@@ -433,7 +769,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="9c6f8142" class="cell" data-execution_count="2">
+<div id="692d057c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">32</span>,</span>
@@ -459,7 +795,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="problem-definition">Problem definition</h2>
 <p>We will consider a very simple objective function - a rigid-body physics simulation of thousands of particles in a packed bed reactor. We can control the shape of each particle, and we want to optimize the performance of the reactor. This includes: - maximizing air flow through the reactor (minimizing pressure drop), and - maximizing the number reaction sites (maximizing surface area per unit volume of the reactor).</p>
 <p>We can also decrease the fidelity in two different ways, each reducing the cost of an experiment: - stop the simulation early, and - reduce the resolution of the simulation.</p>
-<div id="311d2b52" class="cell" data-execution_count="3">
+<div id="f46691d2" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulation_black_box(experiments: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Toy function representing a rigid-body simulation of reactor packing.</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -491,7 +827,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"surface_area"</span>: surface_area,</span>
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="595c1594" class="cell" data-execution_count="4">
+<div id="97f6731f" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Benchmark</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> domain_api</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> feature_api</span>
@@ -521,7 +857,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> simulation_black_box(candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s plot the objective function. First, we show the surface at the highest fidelity, varying the height+radius parameters. The objective surface is quite smooth, and unimodal, so this problem shouldn’t be too difficult.</p>
-<div id="54063696" class="cell" data-execution_count="5">
+<div id="b5f9bead" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -551,7 +887,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We can also plot the pareto front below, keeping in mind that we want to minimize the pressure drop, and maximize the surface area. We color the observations according to the radius, and scale their size according to the height.</p>
-<div id="eafb855b" class="cell" data-execution_count="6">
+<div id="2f691633" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_pareto_idcs(data: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">int</span>]:</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    dominating_points: <span class="bu">list</span>[<span class="bu">int</span>] <span class="op">=</span> []</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    cur_max_surface_area <span class="op">=</span> <span class="op">-</span>np.inf</span>
@@ -580,7 +916,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We also show the impact of varying the fidelity parameters, for a fixed height+radius. This shows the scale of bias that is introduced when changing the fidelities.</p>
-<div id="deee76bf" class="cell" data-execution_count="7">
+<div id="ec18be1a" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> CenteredNorm</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fixed_shape <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">7.5</span>, <span class="st">"radius"</span>: <span class="fl">5.0</span>}</span>
@@ -616,7 +952,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="creating-the-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="creating-the-strategy">Creating the strategy</h2>
 <p>Now that the problem has been defined, we can sample some experiments from the problem, and define the strategy that we will use to ask for points.</p>
-<div id="b350f9e9" class="cell" data-execution_count="8">
+<div id="6f688a70" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SimulationBenchmark()</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(<span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -689,7 +1025,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="ffa0e352" class="cell" data-execution_count="9">
+<div id="4a5ce2db" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
@@ -731,16 +1067,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>3.895115</td>
-<td>1.099056</td>
+<td>8.604464</td>
+<td>6.550383</td>
 <td>0.1</td>
 <td>0.2</td>
-<td>0.536874</td>
-<td>3.190268</td>
-<td>0.650524</td>
-<td>0.626668</td>
-<td>-0.536874</td>
-<td>3.190268</td>
+<td>0.334544</td>
+<td>2.83138</td>
+<td>0.417367</td>
+<td>0.373843</td>
+<td>-0.334544</td>
+<td>2.83138</td>
 </tr>
 </tbody>
 </table>
@@ -753,7 +1089,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A key piece of information that we omitted in the above cells is the <em>cost</em> function - how much does an experiment cost to run? This is highly relevant in multi-fidelity settings, since if all experiments cost the same, then there is no reason to not query at the highest fidelity.</p>
 <p>By default, we assume that an experiment at the lowest fidelity costs <code>1.0</code> units, and scales linearly with the task features with coefficients <code>1.0</code>. However, this should be explicitly defined as a part of the strategy. Note that currently, BoFire only supports linear costs.</p>
 <p>In our example, increasing the duration of the simulation will increase the cost by a large coefficient. However (eg. due to parallelization of the simulation), increasing the resolution incurs a smaller cost. We can explicitly include this in the model. We would then expect the strategy to propose experiments at full resolution (since there is no significant cost savings to reducing the resolution), but not necessarily at the full duration.</p>
-<div id="a12f7be8" class="cell" data-execution_count="10">
+<div id="cec87a57" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cost_model <span class="op">=</span> LinearDeterministicSurrogate(</span>
@@ -799,16 +1135,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>8.971721</td>
-<td>7.344493</td>
+<td>7.71872</td>
+<td>6.557248</td>
 <td>0.1</td>
-<td>0.2</td>
-<td>0.459935</td>
-<td>2.645675</td>
-<td>0.550375</td>
-<td>0.491392</td>
-<td>-0.459935</td>
-<td>2.645675</td>
+<td>0.619847</td>
+<td>0.40318</td>
+<td>2.790906</td>
+<td>0.225044</td>
+<td>0.186752</td>
+<td>-0.40318</td>
+<td>2.790906</td>
 </tr>
 </tbody>
 </table>
@@ -1291,7 +1627,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       }
     }
   });
-  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html" class="pagination-link" aria-label="Multi-fidelity Bayesian Optimization">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Multi-fidelity Bayesian Optimization</span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html" class="pagination-link" aria-label="Input Features as Output Objectives">
+        <span class="nav-page-text">Input Features as Output Objectives</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Multi-Objective, Multi-Fidelity BO</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
