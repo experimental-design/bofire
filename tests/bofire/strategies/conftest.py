@@ -170,6 +170,10 @@ class OptimizerBenchmark:
                 pytest.skip(
                     "skipping nonlinear constraints / n-choose-k constr. / categorical exclude constr. for botorch optimizer"
                 )
+            if isinstance(optimizer, data_models_strategies.GeneticAlgorithmOptimizer):
+                pytest.skip(
+                    "skipping tests with nonlinear constraints for GeneticAlgorithm - RandomStrategy cannot reliably generate feasible initial candidates"
+                )
 
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
         strategy = strategies.map(strategy)

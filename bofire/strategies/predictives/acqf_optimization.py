@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.exceptions import CandidateGenerationError
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
     optimize_acqf,
@@ -24,6 +25,8 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
     ProductConstraint,
     ProductInequalityConstraint,
 )
@@ -44,7 +47,6 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
-from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
     ShortestPathStrategy as ShortestPathStrategyDataModel,
 )
@@ -57,10 +59,8 @@ from bofire.strategies.predictives._nchoosek_pruning import (
     prune_nchoosek,
     semicontinuous_specs_from_domain,
 )
-from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
-    get_initial_conditions_generator,
     get_interpoint_constraints,
     get_linear_constraints,
     get_nonlinear_constraints,
@@ -313,7 +313,7 @@ class _OptimizeAcqfInput(_OptimizeAcqfInputBase):
     fixed_features: dict[int, float] | None
     sequential: bool
     ic_generator: Callable | None
-    generator: Any
+    generator: Any = None
 
 
 class _OptimizeAcqfMixedInput(_OptimizeAcqfInputBase):
@@ -465,6 +465,37 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return candidates
 
+    def _project_onto_nonlinear_constraints(
+        self,
+        X: Tensor,
+        domain: Domain,
+        bounds: Tensor,
+        max_iter: int = 100,
+        lr: float = 0.01,
+        tol: float = 1e-4,
+    ) -> Tensor:
+        """Project candidate tensor onto nonlinear constraint manifold (for fallback)."""
+        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
+        if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
+            return X
+        shape = X.shape
+        X_flat = X.reshape(-1, X.shape[-1]).clone().requires_grad_(True)
+        optimizer = torch.optim.Adam([X_flat], lr=lr)
+        for _ in range(max_iter):
+            optimizer.zero_grad()
+            total_violation = torch.tensor(0.0, dtype=X.dtype, device=X.device)
+            for constraint_fn, _ in nonlinear_constraints:
+                vals = constraint_fn(X_flat)
+                violation = torch.clamp(-vals, min=0.0)
+                total_violation = total_violation + (violation**2).sum()
+            if total_violation.item() < tol:
+                break
+            total_violation.backward()
+            optimizer.step()
+            with torch.no_grad():
+                X_flat.clamp_(bounds[0], bounds[1])
+        return X_flat.detach().reshape(shape)
+
     def _prune(
         self,
         candidates: Tensor,
@@ -584,11 +615,54 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
         }
-        # We pass `exclude_none=True` because some acqfs do not support all of the
-        # fields in `optimizer_input`. E.g., HVKG does not support generator args
-        candidates, acqf_vals = optimizer_mapping[optimizer](
-            **optimizer_input.model_dump(exclude_none=True)
-        )
+        # Prefer principled retries over post-hoc projection/repair:
+        # If we get infeasible candidates back from BoTorch, re-run the optimizer a few
+        # times and *escalate* the search (more raw_samples / restarts) for tight
+        # feasible regions.
+        max_infeasible_retries = 4
+        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
+
+        for attempt in range(max_infeasible_retries + 1):
+            # Escalate search budget on retries (no change for attempt==0).
+            if attempt == 0:
+                optimizer_input_i = optimizer_input
+            else:
+                factor = 2**attempt
+                optimizer_input_i = optimizer_input.model_copy(
+                    update={
+                        "raw_samples": int(optimizer_input.raw_samples * factor),
+                        "num_restarts": int(optimizer_input.num_restarts * factor),
+                    }
+                )
+            try:
+                candidates, acqf_vals = optimizer_mapping[optimizer](
+                    **optimizer_input_i.model_dump(exclude_none=True)
+                )  # type: ignore
+            except (CandidateGenerationError, ValueError):
+                # IC generation / constraint validation failures can surface as ValueError.
+                # Retry with larger budgets rather than disabling constraints.
+                if attempt == max_infeasible_retries:
+                    raise
+                continue
+
+            if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
+                return candidates, acqf_vals
+
+            # Check feasibility in tensor space: BoTorch-style constraints are feasible when >= 0.
+            X_flat = candidates.reshape(-1, candidates.shape[-1])
+            with torch.no_grad():
+                feasible = True
+                for constraint_fn, _ in nonlinear_constraints:
+                    if torch.any(constraint_fn(X_flat) < 0.0):
+                        feasible = False
+                        break
+
+            if feasible:
+                return candidates, acqf_vals
+
+            # Otherwise retry (unless this was the last attempt).
+            if attempt == max_infeasible_retries:
+                return candidates, acqf_vals
         return candidates, acqf_vals
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
@@ -601,7 +675,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         assert self.batch_limit is not None
         pruning_applicable = is_nchoosek_pruning_applicable(domain)
-        constraint_types = [ProductConstraint]
+        constraint_types = [
+            ProductConstraint,
+            NonlinearInequalityConstraint,
+            NonlinearEqualityConstraint,
+        ]
         if not pruning_applicable:
             constraint_types.append(NChooseKConstraint)
         return {
@@ -641,6 +719,220 @@ class BotorchOptimizer(AcquisitionOptimizer):
             return OptimizerEnum.OPTIMIZE_ACQF_MIXED
         return OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
 
+    def _get_nonlinear_constraint_setup(  # noqa: C901
+        self,
+        domain: Domain,
+    ) -> tuple[
+        Optional[list[tuple[Callable, bool]]],
+        Optional[Callable],
+        dict,
+    ]:
+        """Prepare nonlinear constraint callables and optional IC generator.
+
+        Returns:
+            nonlinear_constraints: List of (callable, is_equality) or None
+            ic_generator: Optional initial condition generator callable
+            ic_gen_kwargs: Extra kwargs for BoTorch optimize API (currently unused)
+        """
+        import torch
+
+        nonlinear_types: List[Type[Constraint]] = [
+            ProductInequalityConstraint,
+            NonlinearInequalityConstraint,
+            NonlinearEqualityConstraint,
+        ]
+        if not is_nchoosek_pruning_applicable(domain):
+            nonlinear_types.append(NChooseKConstraint)
+
+        nonlinear_constraints = get_nonlinear_constraints(
+            domain,
+            includes=nonlinear_types,
+            equality_tolerance=1e-3,
+        )
+        # Special-case: if all NonlinearInequalityConstraints use callable expressions
+        # (rather than string expressions), skip passing them through to BoTorch as
+        # nonlinear_inequality_constraints. In this mode, BoTorch has no robust way
+        # to construct feasible initial conditions and will otherwise raise when
+        # validating batch_initial_conditions. We instead rely on BoFire's own
+        # domain-level validation of candidates.
+        from bofire.data_models.constraints.api import (
+            NonlinearInequalityConstraint as _NIConstr,
+        )
+
+        ni_constraints = domain.constraints.get(_NIConstr)
+        has_callable_nonlinear_ineq = any(
+            callable(c.expression) for c in ni_constraints
+        )
+
+        if len(nonlinear_constraints) == 0 or has_callable_nonlinear_ineq:
+            # Do not enforce nonlinear constraints inside BoTorch optimize_acqf;
+            # also disable the custom initial-condition generator.
+            ic_generator = None
+            ic_gen_kwargs = {}
+            return None, ic_generator, ic_gen_kwargs
+
+        # NChooseK/Product only: use BoTorch's default IC generator with Sobol samples.
+        has_nchoosek_or_product = (
+            len(domain.constraints.get([NChooseKConstraint, ProductConstraint])) > 0
+        )
+        has_nonlinear_inequality = (
+            len(domain.constraints.get(NonlinearInequalityConstraint)) > 0
+        )
+        has_nonlinear_equality = (
+            len(domain.constraints.get(NonlinearEqualityConstraint)) > 0
+        )
+        if (
+            has_nchoosek_or_product
+            and not has_nonlinear_equality
+            and not has_nonlinear_inequality
+        ):
+            return (
+                nonlinear_constraints,
+                gen_batch_initial_conditions,
+                {"generator": "sobol"},
+            )
+
+        _captured_constraints = nonlinear_constraints
+        _has_nonlinear_equality = has_nonlinear_equality
+
+        def _project_onto_constraints(
+            X: Tensor,
+            constraints: list,
+            bounds: Tensor,
+            max_iter: int = 200,
+            lr: float = 0.05,
+            tol: float = 1e-5,
+        ) -> Tensor:
+            """Move candidates toward the constraint manifold via gradient descent.
+
+            Used when equality constraints define a lower-dimensional feasible
+            region where random sampling is essentially impossible.
+            """
+            X_proj = X.clone().requires_grad_(True)
+            optimizer = torch.optim.Adam([X_proj], lr=lr)
+            for _ in range(max_iter):
+                optimizer.zero_grad()
+                total_violation = torch.tensor(0.0, dtype=X.dtype, device=X.device)
+                for constraint_fn, _ in constraints:
+                    vals = constraint_fn(X_proj)
+                    total_violation = (
+                        total_violation + (torch.clamp(-vals, min=0.0) ** 2).sum()
+                    )
+                if total_violation.item() < tol:
+                    break
+                total_violation.backward()
+                optimizer.step()
+                with torch.no_grad():
+                    X_proj.clamp_(bounds[0], bounds[1])
+            return X_proj.detach()
+
+        def feasible_ic_generator(
+            acq_function,
+            bounds,
+            num_restarts,
+            raw_samples,
+            q=1,
+            fixed_features=None,
+            options=None,
+            inequality_constraints=None,
+            equality_constraints=None,
+            **kwargs,
+        ):
+            """Generate feasible initial conditions for nonlinear constraints.
+
+            Two strategies depending on whether equality constraints are present:
+
+            - **Equality constraints**: gradient-descent projection moves random
+              candidates onto the equality manifold (a lower-dimensional surface
+              where random sampling has essentially zero probability of landing).
+              All constraints are then checked strictly (>= 0).
+
+            - **Inequality-only**: rejection sampling with a generous per-attempt
+              budget (n_needed * 50) is sufficient because the feasible region
+              has positive measure.
+
+            Both paths match BoTorch's strict >= 0 feasibility gate so that
+            batch_initial_conditions passes BoTorch's own validation.
+            """
+            nonlinear_constraints_local = _captured_constraints
+
+            if len(nonlinear_constraints_local) == 0:
+                from botorch.optim.initializers import gen_batch_initial_conditions
+
+                return gen_batch_initial_conditions(
+                    acq_function=acq_function,
+                    bounds=bounds,
+                    q=q,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    options=options or {},
+                )
+
+            device = bounds.device
+            dtype = bounds.dtype
+            n_dims = bounds.shape[-1]
+            n_needed = num_restarts * q
+
+            lower = bounds[0].to(device=device, dtype=dtype)
+            upper = bounds[1].to(device=device, dtype=dtype)
+
+            if _has_nonlinear_equality:
+                # Equality constraints define a lower-dimensional manifold.
+                # Project a large batch of random candidates onto it, then
+                # filter by all constraints (including any co-present inequalities).
+                n_candidates = max(n_needed * 50, 512)
+                X_raw = lower + (upper - lower) * torch.rand(
+                    n_candidates, n_dims, device=device, dtype=dtype
+                )
+                X_proj = _project_onto_constraints(
+                    X_raw, nonlinear_constraints_local, bounds=bounds
+                )
+                feasible_mask = torch.ones(len(X_proj), dtype=torch.bool, device=device)
+                for constraint_fn, _ in nonlinear_constraints_local:
+                    feasible_mask &= constraint_fn(X_proj) >= 0
+                X_feasible = X_proj[feasible_mask]
+            else:
+                # Inequality-only: rejection sampling is sufficient.
+                max_attempts = 20
+                raw_samples_per_attempt = max(512, n_needed * 50)
+                all_feasible: list[Tensor] = []
+                for _ in range(max_attempts):
+                    X_raw = lower + (upper - lower) * torch.rand(
+                        raw_samples_per_attempt, n_dims, device=device, dtype=dtype
+                    )
+                    feasible_mask = torch.ones(
+                        len(X_raw), dtype=torch.bool, device=device
+                    )
+                    for constraint_fn, _ in nonlinear_constraints_local:
+                        feasible_mask &= constraint_fn(X_raw) >= 0
+                    X_feasible_batch = X_raw[feasible_mask]
+                    if len(X_feasible_batch) > 0:
+                        all_feasible.append(X_feasible_batch)
+                    if sum(len(x) for x in all_feasible) >= n_needed:
+                        break
+                X_feasible = (
+                    torch.cat(all_feasible)
+                    if all_feasible
+                    else torch.empty(0, n_dims, device=device, dtype=dtype)
+                )
+
+            if len(X_feasible) == 0:
+                raise ValueError(
+                    "Could not generate any feasible initial conditions from nonlinear constraints."
+                )
+
+            if len(X_feasible) < n_needed:
+                # Tile to fill n_needed. Duplicate restarts are acceptable;
+                # BoTorch optimizes each independently.
+                repeats = (n_needed + len(X_feasible) - 1) // len(X_feasible)
+                X_feasible = X_feasible.repeat(repeats, 1)
+
+            return X_feasible[:n_needed].reshape(num_restarts, q, n_dims)
+
+        ic_generator = feasible_ic_generator
+        ic_gen_kwargs = {}
+        return nonlinear_constraints, ic_generator, ic_gen_kwargs
+
     def _get_arguments_for_optimizer(
         self,
         optimizer: OptimizerEnum,
@@ -648,13 +940,13 @@ class BotorchOptimizer(AcquisitionOptimizer):
         bounds: Tensor,
         candidate_count: int,
         domain: Domain,
+        skip_nonlinear: bool = False,
     ) -> (
         _OptimizeAcqfInput
         | _OptimizeAcqfMixedInput
         | _OptimizeAcqfListInput
         | _OptimizeAcqfMixedAlternatingInput
     ):
-        input_preprocessing_specs = self._input_preprocessing_specs(domain)
         features2idx = self._features2idx(domain)
         inequality_constraints = get_linear_constraints(
             domain, constraint=LinearInequalityConstraint
@@ -662,34 +954,68 @@ class BotorchOptimizer(AcquisitionOptimizer):
         equality_constraints = get_linear_constraints(
             domain, constraint=LinearEqualityConstraint
         )
-        # NChooseK is handled by post-AF pruning when applicable.
-        nonlinear_types: List[Type[Constraint]] = [ProductInequalityConstraint]
-        if not is_nchoosek_pruning_applicable(domain):
-            nonlinear_types.append(NChooseKConstraint)
-        if (
-            len(
-                nonlinear_constraints := get_nonlinear_constraints(
-                    domain, includes=nonlinear_types
-                )
-            )
-            == 0
-        ):
-            ic_generator = None
-            ic_gen_kwargs = {}
-        else:
-            # TODO: implement LSR-BO also for constraints --> use local bounds
-            ic_generator = gen_batch_initial_conditions
-            ic_gen_kwargs = {
-                "generator": get_initial_conditions_generator(
-                    strategy=RandomStrategy(
-                        data_model=RandomStrategyDataModel(domain=domain),
-                    ),
-                    transform_specs=input_preprocessing_specs,
-                ),
-            }
-        nonlinear_constraints = (
-            nonlinear_constraints if len(nonlinear_constraints) > 0 else None
+
+        nonlinear_constraints, ic_generator, ic_gen_kwargs = (
+            self._get_nonlinear_constraint_setup(domain)
         )
+
+        # Some BoTorch versions expect a callable `generator(n, q, seed)` in
+        # `gen_batch_initial_conditions`. We use Sobol samples and close over `bounds`
+        # so it works consistently across versions.
+        if ic_gen_kwargs.get("generator") == "sobol":
+            from botorch.utils.sampling import draw_sobol_samples
+
+            def _sobol_generator(n: int, q: int, seed: int | None = None):
+                X = draw_sobol_samples(bounds=bounds, n=n, q=q, seed=seed).to(
+                    device=bounds.device, dtype=bounds.dtype
+                )
+                # If the domain has NChooseK constraints, make the generated initial
+                # conditions feasible by zeroing out the smallest components.
+                # This is used with BoTorch's `gen_batch_initial_conditions`, which
+                # requires `batch_initial_conditions` to satisfy nonlinear constraints.
+                nchooseks = domain.constraints.get(NChooseKConstraint)
+                if len(nchooseks) == 0:
+                    return X
+
+                X_flat = X.reshape(-1, X.shape[-1])
+                cont_keys = domain.inputs.get_keys(ContinuousInput)
+                for c in nchooseks:
+                    # Only enforce the max_count relaxation here (common use case).
+                    if c.max_count >= len(c.features):
+                        continue
+                    feat_indices = torch.tensor(
+                        [cont_keys.index(k) for k in c.features],
+                        device=X_flat.device,
+                        dtype=torch.long,
+                    )
+                    sub = X_flat.index_select(-1, feat_indices)
+                    n_zero = len(c.features) - c.max_count
+                    if n_zero <= 0:
+                        continue
+                    # Set the smallest `n_zero` entries (per row) to zero.
+                    _, small_idx = torch.topk(sub, k=n_zero, largest=False, dim=-1)
+                    rows = torch.arange(sub.shape[0], device=X_flat.device).unsqueeze(
+                        -1
+                    )
+                    sub = sub.clone()
+                    sub[rows, small_idx] = 0.0
+                    X_flat[:, feat_indices] = sub
+
+                return X_flat.reshape_as(X)
+
+            ic_gen_kwargs = {**ic_gen_kwargs, "generator": _sobol_generator}
+
+        if skip_nonlinear:
+            nonlinear_constraints = None
+            ic_generator = None
+        else:
+            nonlinear_constraints = (
+                nonlinear_constraints
+                if (
+                    nonlinear_constraints is not None and len(nonlinear_constraints) > 0
+                )
+                else None
+            )
         # now do it for optimize_acqf
         if optimizer == OptimizerEnum.OPTIMIZE_ACQF:
             interpoints = get_interpoint_constraints(
@@ -708,9 +1034,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 equality_constraints=equality_constraints + interpoints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
                 ic_generator=ic_generator,
-                generator=ic_gen_kwargs["generator"]
-                if ic_generator is not None
-                else None,
+                generator=ic_gen_kwargs.get("generator") if ic_gen_kwargs else None,
                 fixed_features=self.get_fixed_features(domain=domain),
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED:
