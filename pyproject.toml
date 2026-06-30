@@ -25,7 +25,7 @@ classifiers = [
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11.0, <3.15"
 dependencies = [
-    "numpy<=2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "pandas",
     "pydantic>=2.5",
     "scipy>=1.7",
@@ -36,7 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 optimization = [
     "botorch[fully_bayesian]>=0.18.1",
-    "numpy<=2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
     "formulaic>=1.0.1,<1.1",
@@ -57,7 +57,7 @@ tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
     "botorch[fully_bayesian]>=0.18.1",
-    "numpy<=2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
     "formulaic==1.0.1",
