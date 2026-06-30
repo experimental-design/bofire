@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
+from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -367,11 +368,11 @@ def test_inputs_validate_transform_specs_invalid(specs):
     [
         ({"x2": CategoricalEncodingEnum.ONE_HOT}),
         ({"x3": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
+        ({"x3": DescriptorEncoding()}),
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x3": DescriptorEncoding(),
             }
         ),
     ],
@@ -421,27 +422,33 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x4": Fingerprints()}),
-        ({"x4": Fragments()}),
-        ({"x4": FingerprintsFragments()}),
-        ({"x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])}),
+        ({"x4": MolecularEncoding(generator=Fingerprints())}),
+        ({"x4": MolecularEncoding(generator=Fragments())}),
+        ({"x4": MolecularEncoding(generator=FingerprintsFragments())}),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x4": Fingerprints(),
-            }
-        ),
-        (
-            {
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": Fingerprints(),
+                "x4": MolecularEncoding(
+                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                )
             }
         ),
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": Fingerprints(),
+                "x4": MolecularEncoding(generator=Fingerprints()),
+            }
+        ),
+        (
+            {
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(generator=Fingerprints()),
+            }
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(generator=Fingerprints()),
             }
         ),
     ],
@@ -468,7 +475,12 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
     "specs, expected_features2idx, expected_features2names",
     [
         (
-            {"x2": CategoricalEncodingEnum.ONE_HOT, "x4": Fingerprints(n_bits=2048)},
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x4": MolecularEncoding(
+                    generator=Fingerprints(n_bits=2048, filter_descriptors=False)
+                ),
+            },
             {
                 "x1": (0,),
                 "x2": (2050, 2051, 2052),
@@ -485,7 +497,12 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x2": CategoricalEncodingEnum.DUMMY,
-                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                "x4": MolecularEncoding(
+                    generator=Fragments(
+                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        filter_descriptors=False,
+                    )
+                ),
             },
             {"x1": (0,), "x2": (4, 5), "x3": (3,), "x4": (1, 2)},
             {
@@ -498,9 +515,12 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x2": CategoricalEncodingEnum.ORDINAL,
-                "x4": FingerprintsFragments(
-                    n_bits=2048,
-                    fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                "x4": MolecularEncoding(
+                    generator=FingerprintsFragments(
+                        n_bits=2048,
+                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        filter_descriptors=False,
+                    )
                 ),
             },
             {
@@ -522,7 +542,11 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x4": MolecularEncoding(
+                    generator=MordredDescriptors(
+                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                    )
+                ),
             },
             {"x1": (0,), "x2": (7,), "x3": (3, 4, 5, 6), "x4": (1, 2)},
             {
@@ -535,8 +559,12 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(
+                    generator=MordredDescriptors(
+                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                    )
+                ),
             },
             {"x1": (0,), "x2": (5, 6, 7), "x3": (3, 4), "x4": (1, 2)},
             {
@@ -581,11 +609,11 @@ def test_inputs_get_transform_info(
         ({"x2": CategoricalEncodingEnum.DUMMY}),
         ({"x2": CategoricalEncodingEnum.ORDINAL}),
         ({"x3": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
+        ({"x3": DescriptorEncoding()}),
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x3": DescriptorEncoding(),
             }
         ),
         (
@@ -640,7 +668,11 @@ def test_input_reverse_transform_molecular():
         ],
     )
     specs = {
-        "x3": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        "x3": MolecularEncoding(
+            generator=MordredDescriptors(
+                descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+            )
+        ),
         "x2": CategoricalEncodingEnum.ONE_HOT,
     }
     samples = inps.sample(n=20)
@@ -654,7 +686,12 @@ def test_input_reverse_transform_molecular():
     "specs, expected",
     [
         (
-            {"x2": CategoricalEncodingEnum.ONE_HOT, "x4": Fingerprints(n_bits=32)},
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x4": MolecularEncoding(
+                    generator=Fingerprints(n_bits=32, filter_descriptors=False)
+                ),
+            },
             {
                 "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
                 "x4_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
@@ -698,7 +735,12 @@ def test_input_reverse_transform_molecular():
         (
             {
                 "x2": CategoricalEncodingEnum.DUMMY,
-                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                "x4": MolecularEncoding(
+                    generator=Fragments(
+                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        filter_descriptors=False,
+                    )
+                ),
             },
             {
                 "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
@@ -712,9 +754,12 @@ def test_input_reverse_transform_molecular():
         (
             {
                 "x2": CategoricalEncodingEnum.ORDINAL,
-                "x4": FingerprintsFragments(
-                    n_bits=32,
-                    fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                "x4": MolecularEncoding(
+                    generator=FingerprintsFragments(
+                        n_bits=32,
+                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        filter_descriptors=False,
+                    )
                 ),
             },
             {
@@ -760,8 +805,12 @@ def test_input_reverse_transform_molecular():
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(
+                    generator=MordredDescriptors(
+                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                    )
+                ),
             },
             {
                 "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
@@ -873,7 +922,7 @@ inputs2 = Inputs(
             inputs1,
             {
                 "if3": CategoricalEncodingEnum.ONE_HOT,
-                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+                "if5": DescriptorEncoding(),
             },
             [[3, 1, 2, 0, 0, 0], [5.3, 1, 2, 1, 1, 1]],
         ),
@@ -881,7 +930,7 @@ inputs2 = Inputs(
             inputs1,
             {
                 "if3": CategoricalEncodingEnum.DUMMY,
-                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+                "if5": DescriptorEncoding(),
             },
             [[3, 1, 2, 0, 0], [5.3, 1, 2, 1, 1]],
         ),
@@ -905,7 +954,7 @@ inputs2 = Inputs(
             inputs1,
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
-                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+                "if5": DescriptorEncoding(),
             },
             [[3, 1, 2, 0], [5.3, 1, 2, 2]],
         ),
@@ -923,8 +972,8 @@ inputs2 = Inputs(
             {
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if4": CategoricalEncodingEnum.ONE_HOT,
-                "if5": CategoricalEncodingEnum.DESCRIPTOR,
-                "if6": CategoricalEncodingEnum.DESCRIPTOR,
+                "if5": DescriptorEncoding(),
+                "if6": DescriptorEncoding(),
             },
             [
                 [3, 3, 1, 2, 1, 2, 0, 0, 0, 0, 0, 0],
@@ -962,8 +1011,8 @@ inputs2 = Inputs(
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if4": CategoricalEncodingEnum.ORDINAL,
-                "if5": CategoricalEncodingEnum.DESCRIPTOR,
-                "if6": CategoricalEncodingEnum.DESCRIPTOR,
+                "if5": DescriptorEncoding(),
+                "if6": DescriptorEncoding(),
             },
             [
                 [
@@ -995,7 +1044,7 @@ inputs2 = Inputs(
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if4": CategoricalEncodingEnum.ONE_HOT,
                 "if5": CategoricalEncodingEnum.ORDINAL,
-                "if6": CategoricalEncodingEnum.DESCRIPTOR,
+                "if6": DescriptorEncoding(),
             },
             [
                 [3.0, 3.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0],
@@ -1079,16 +1128,16 @@ def test_inputs_get_bounds_fit():
         specs={
             "if3": CategoricalEncodingEnum.ONE_HOT,
             "if4": CategoricalEncodingEnum.ONE_HOT,
-            "if5": CategoricalEncodingEnum.DESCRIPTOR,
-            "if6": CategoricalEncodingEnum.DESCRIPTOR,
+            "if5": DescriptorEncoding(),
+            "if6": DescriptorEncoding(),
         },
     )
     fit_bounds = inputs.get_bounds(
         {
             "if3": CategoricalEncodingEnum.ONE_HOT,
             "if4": CategoricalEncodingEnum.ONE_HOT,
-            "if5": CategoricalEncodingEnum.DESCRIPTOR,
-            "if6": CategoricalEncodingEnum.DESCRIPTOR,
+            "if5": DescriptorEncoding(),
+            "if6": DescriptorEncoding(),
         },
         experiments=experiments,
     )
@@ -1116,7 +1165,9 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
                 "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": Fingerprints(n_bits=2),
+                "x4": MolecularEncoding(
+                    generator=Fingerprints(n_bits=2, filter_descriptors=False)
+                ),
             },
             ["x1"],
             ["x2", "x3"],
@@ -1129,7 +1180,12 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
                 "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                "x4": MolecularEncoding(
+                    generator=Fragments(
+                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        filter_descriptors=False,
+                    )
+                ),
             },
             ["x1"],
             ["x2", "x3"],
@@ -1142,7 +1198,11 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
                 "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x4": MolecularEncoding(
+                    generator=MordredDescriptors(
+                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                    )
+                ),
             },
             ["x1", "x4"],
             ["x2", "x3"],
@@ -1154,8 +1214,10 @@ def test_inputs_get_bounds_fit():
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": Fingerprints(n_bits=2),
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(
+                    generator=Fingerprints(n_bits=2, filter_descriptors=False)
+                ),
             },
             ["x1", "x3"],
             ["x2"],
@@ -1167,8 +1229,13 @@ def test_inputs_get_bounds_fit():
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(
+                    generator=Fragments(
+                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        filter_descriptors=False,
+                    )
+                ),
             },
             ["x1", "x3"],
             ["x2"],
@@ -1180,8 +1247,12 @@ def test_inputs_get_bounds_fit():
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x3": DescriptorEncoding(),
+                "x4": MolecularEncoding(
+                    generator=MordredDescriptors(
+                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                    )
+                ),
             },
             ["x1", "x3", "x4"],
             ["x2"],

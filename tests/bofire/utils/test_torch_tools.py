@@ -18,6 +18,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
+from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -1071,7 +1072,7 @@ def test_get_initial_conditions_generator(sequential: bool):
     # test with descriptor encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
-        transform_specs={"b": CategoricalEncodingEnum.DESCRIPTOR},
+        transform_specs={"b": DescriptorEncoding()},
         ask_options={},
         sequential=sequential,
     )
@@ -1188,7 +1189,7 @@ def test_interp1d():
                 descriptors=["oscar", "wilde"],
                 values=[[1, 2], [3, 4], [5, 6]],
             ),
-            CategoricalEncodingEnum.DESCRIPTOR,
+            DescriptorEncoding(),
             torch.tensor([[1, 2], [3, 4], [5, 6]]).to(**tkwargs),
         ),
         (
@@ -1211,9 +1212,9 @@ def test_get_categorical_encoder(feature, transform, expected_encoding):
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_categorical_encoder_molecular():
     feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
-    transform = Fingerprints(filter_descriptors=False)
+    transform = MolecularEncoding(generator=Fingerprints(filter_descriptors=False))
     expected_encoding = torch.from_numpy(
-        feat.to_descriptor_encoding(transform, pd.Series(feat.categories)).values
+        transform.to_descriptor_encoding(feat, pd.Series(feat.categories)).values
     ).to(**tkwargs)
     encoder = get_categorical_encoder(feat, transform)
     assert isinstance(encoder, Encoder)

@@ -17,7 +17,7 @@ from bofire.benchmarks.data.aniline_cn_crosscoupling import (
     EXPERIMENTS as ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS,
 )
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     ContinuousInput,
@@ -590,8 +590,8 @@ class CrossCoupling(Benchmark):
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
             categorical_encodings={
-                "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
-                "base": CategoricalEncodingEnum.DESCRIPTOR,
+                "catalyst": DescriptorEncoding(),
+                "base": DescriptorEncoding(),
             },
         )
         ground_truth_yield = surrogates.map(data_model)

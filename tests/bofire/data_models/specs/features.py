@@ -303,6 +303,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
         "allowed": [True, True, False],
+        "descriptors": {},
         "context": None,
     },
 )
@@ -347,12 +348,9 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
         "allowed": [True, True, False],
-        "descriptors": ["d1", "d2"],
-        "values": [
-            [1.0, 2.0],
-            [3.0, 7.0],
-            [5.0, 1.0],
-        ],
+        # legacy descriptors/values are migrated to the new `descriptors` table,
+        # which is the canonical (re-emitted) shape.
+        "descriptors": {"d1": [1.0, 3.0, 5.0], "d2": [2.0, 7.0, 1.0]},
         "context": None,
     },
 )
@@ -391,6 +389,15 @@ specs.add_valid(
             "N[C@](C)(F)C(=O)O",
         ],
         "allowed": [True, True, True, True],
+        # SMILES categories are mirrored into the reserved `smiles` column.
+        "descriptors": {
+            "smiles": [
+                "CC(=O)Oc1ccccc1C(=O)O",
+                "c1ccccc1",
+                "[CH3][CH2][OH]",
+                "N[C@](C)(F)C(=O)O",
+            ],
+        },
         "context": None,
     },
 )
@@ -422,6 +429,7 @@ specs.add_valid(
         ],
         "allowed": [True, True, True],
         "fidelities": [0, 1, 2],
+        "descriptors": {},
         "context": None,
     },
 )

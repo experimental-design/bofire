@@ -4,6 +4,7 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.domain.api import Inputs
+from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
@@ -115,11 +116,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     @classmethod
     def _default_categorical_encodings(
         cls,
-    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+    ) -> dict:
         return {
             CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
-            CategoricalMolecularInput: Fingerprints(),
-            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
+            CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
+            CategoricalDescriptorInput: DescriptorEncoding(),
             CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
         }
 

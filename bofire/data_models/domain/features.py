@@ -27,15 +27,14 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.encodings.api import AnyCategoricalEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     AnyEngineeredFeature,
     AnyFeature,
     AnyInput,
     AnyOutput,
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalOutput,
     CategoricalTaskInput,
     ContinuousInput,
@@ -47,7 +46,6 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
-from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import (
     AbstractObjective,
     ConstrainedCategoricalObjective,
@@ -672,20 +670,11 @@ class Inputs(_BaseFeatures[AnyInput]):
                     [get_encoded_name(feat.key, c) for c in feat.categories[1:]],
                 )
                 counter += len(feat.categories) - 1
-            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                features2idx[feat.key] = tuple(
-                    (np.array(range(len(feat.descriptors))) + counter).tolist(),
-                )
-                features2names[feat.key] = tuple(
-                    [get_encoded_name(feat.key, d) for d in feat.descriptors],
-                )
-                counter += len(feat.descriptors)
-            elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, CategoricalMolecularInput)
-                descriptor_names = specs[
-                    feat.key
-                ].get_descriptor_names()  # ty: ignore[possibly-missing-attribute]
+            elif isinstance(specs[feat.key], tuple(to_list(AnyCategoricalEncoding))):
+                assert isinstance(feat, CategoricalInput)
+                descriptor_names = specs[feat.key].get_descriptor_names(
+                    feat
+                )  # ty: ignore[unresolved-attribute]
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist(),
                 )
@@ -729,12 +718,11 @@ class Inputs(_BaseFeatures[AnyInput]):
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
                 assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.to_dummy_encoding(s))
-            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                transformed.append(feat.to_descriptor_encoding(s))
-            elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, CategoricalMolecularInput)
-                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
+            elif isinstance(specs[feat.key], tuple(to_list(AnyCategoricalEncoding))):
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(
+                    specs[feat.key].to_descriptor_encoding(feat, s)
+                )  # ty: ignore[unresolved-attribute]
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -775,13 +763,12 @@ class Inputs(_BaseFeatures[AnyInput]):
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
                 assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.from_dummy_encoding(experiments))
-            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                transformed.append(feat.from_descriptor_encoding(experiments))
-            elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, CategoricalMolecularInput)
+            elif isinstance(specs[feat.key], tuple(to_list(AnyCategoricalEncoding))):
+                assert isinstance(feat, CategoricalInput)
                 transformed.append(
-                    feat.from_descriptor_encoding(specs[feat.key], experiments),
+                    specs[feat.key].from_descriptor_encoding(
+                        feat, experiments
+                    ),  # ty: ignore[unresolved-attribute]
                 )
 
         return pd.concat(transformed, axis=1)
@@ -872,18 +859,26 @@ class Inputs(_BaseFeatures[AnyInput]):
         lower = []
         upper = []
 
+        encoding_classes = tuple(to_list(AnyCategoricalEncoding))
         for feat in self.get():
             assert isinstance(feat, Input)
-            lo, up = feat.get_bounds(
-                transform_type=specs.get(feat.key),
-                values=experiments[feat.key] if experiments is not None else None,
-                reference_value=(
-                    reference_experiment[feat.key]
-                    if reference_experiment is not None
-                    else None
-                ),
-                relax_allow_zero=relax_allow_zero,
-            )
+            spec = specs.get(feat.key)
+            values = experiments[feat.key] if experiments is not None else None
+            if isinstance(spec, encoding_classes):
+                # descriptor-space bounds come from the encoder object, which
+                # knows how to read the feature's descriptor table.
+                lo, up = spec.get_bounds(feat, values=values)
+            else:
+                lo, up = feat.get_bounds(
+                    transform_type=spec,
+                    values=values,
+                    reference_value=(
+                        reference_experiment[feat.key]
+                        if reference_experiment is not None
+                        else None
+                    ),
+                    relax_allow_zero=relax_allow_zero,
+                )
             lower += lo
             upper += up
         return lower, upper

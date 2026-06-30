@@ -1,5 +1,6 @@
 import bofire.data_models.surrogates.api as models
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
+from bofire.data_models.encodings.api import MolecularEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -746,7 +747,9 @@ specs.add_valid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
         "categorical_encodings": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            "mol1": MolecularEncoding(
+                generator=Fingerprints(n_bits=32, bond_radius=3),
+            ).model_dump(),
         },
         "dump": None,
         "hyperconfig": None,

@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from bofire.data_models.encodings.api import MolecularEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
@@ -40,7 +41,7 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
     [
         (
             "molecule_2_two",
-            Fingerprints(n_bits=32),
+            Fingerprints(n_bits=32, filter_descriptors=False),
             {
                 "molecule_2_two_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
                 "molecule_2_two_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
@@ -78,7 +79,10 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
         ),
         (
             "molecule_",
-            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+            Fragments(
+                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                filter_descriptors=False,
+            ),
             {
                 "molecule__fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
                 "molecule__fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
@@ -89,6 +93,7 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
             FingerprintsFragments(
                 n_bits=32,
                 fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                filter_descriptors=False,
             ),
             {
                 "molecule_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
@@ -129,7 +134,9 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
         ),
         (
             "_mo_le_cule",
-            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            MordredDescriptors(
+                descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+            ),
             {
                 "_mo_le_cule_NssCH2": {
                     0: 0.5963718820861676,
@@ -147,7 +154,9 @@ def test_categorical_molecular_input_to_descriptor_encoding(
 ):
     input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
-    encoded = input_feature.to_descriptor_encoding(transform_type, VALID_SMILES)
+    encoded = MolecularEncoding(generator=transform_type).to_descriptor_encoding(
+        input_feature, VALID_SMILES
+    )
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
     assert len(encoded) == len(smiles)
     assert_frame_equal(encoded, pd.DataFrame.from_dict(values))
@@ -192,8 +201,9 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
         Fragments(),
         MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
     ]:
-        encoded = feat.to_descriptor_encoding(transform_type, values=values)
-        decoded = feat.from_descriptor_encoding(transform_type, values=encoded)
+        encoding = MolecularEncoding(generator=transform_type)
+        encoded = encoding.to_descriptor_encoding(feat, values=values)
+        decoded = encoding.from_descriptor_encoding(feat, values=encoded)
         assert np.all(decoded == values)
 
 
@@ -217,28 +227,27 @@ def test_categorical_molecular_input_get_bounds():
         categories=VALID_SMILES.to_list(),
         allowed=[True, True, False, False],
     )
-    lower, upper = feat.get_bounds(
-        transform_type=MordredDescriptors(
+    lower, upper = MolecularEncoding(
+        generator=MordredDescriptors(
             descriptors=[
                 "nAromAtom",
                 "nAromBond",
             ],
+            filter_descriptors=False,
         ),
-        reference_value=None,
-    )
+    ).get_bounds(feat)
     assert lower == [6.0, 6.0]
     assert upper == [6.0, 6.0]
 
-    lower, upper = feat.get_bounds(
-        transform_type=MordredDescriptors(
+    lower, upper = MolecularEncoding(
+        generator=MordredDescriptors(
             descriptors=[
                 "nAromAtom",
                 "nAromBond",
             ],
+            filter_descriptors=False,
         ),
-        values=VALID_SMILES,
-        reference_value=None,
-    )
+    ).get_bounds(feat, values=VALID_SMILES)
     assert lower == [0.0, 0.0]
     assert upper == [6.0, 6.0]
 

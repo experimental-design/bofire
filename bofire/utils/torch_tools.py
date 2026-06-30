@@ -18,15 +18,9 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.encodings.api import AnyCategoricalEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalMolecularInput,
-    ContinuousInput,
-    Input,
-)
-from bofire.data_models.molfeatures.api import AnyMolFeatures
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -210,13 +204,13 @@ def get_nchoosek_constraints(
         return torch.exp(-0.5 * (x / ell) ** 2)
 
     def max_constraint(indices: Tensor, num_features: int, max_count: int):
-        return lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1) - (
-            num_features - max_count
+        return lambda x: (
+            narrow_gaussian(x=x[..., indices]).sum(dim=-1) - (num_features - max_count)
         )
 
     def min_constraint(indices: Tensor, num_features: int, min_count: int):
-        return lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1) + (
-            num_features - min_count
+        return lambda x: (
+            -narrow_gaussian(x=x[..., indices]).sum(dim=-1) + (num_features - min_count)
         )
 
     constraints = []
@@ -360,18 +354,18 @@ def constrained_objective2botorch(
         )
     if isinstance(objective, MinimizeSigmoidObjective):
         return (
-            [lambda Z: (Z[..., idx] - objective.tp)],
+            [lambda Z: Z[..., idx] - objective.tp],
             [1.0 / objective.steepness],
             idx + 1,
         )
     if isinstance(objective, TargetObjective):
         return (
             [
-                lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
-                * -1.0,
                 lambda Z: (
-                    Z[..., idx] - (objective.target_value + objective.tolerance)
+                    (Z[..., idx] - (objective.target_value - objective.tolerance))
+                    * -1.0
                 ),
+                lambda Z: Z[..., idx] - (objective.target_value + objective.tolerance),
             ],
             [1.0 / objective.steepness, 1.0 / objective.steepness],
             idx + 1,
@@ -492,13 +486,17 @@ def get_objective_callable(
             / (objective.upper_bound - objective.lower_bound)
         )
     if isinstance(objective, MinimizeObjective):
-        return lambda y, X=None: -1.0 * (
-            (y[..., idx] - objective.lower_bound)
-            / (objective.upper_bound - objective.lower_bound)
+        return lambda y, X=None: (
+            -1.0
+            * (
+                (y[..., idx] - objective.lower_bound)
+                / (objective.upper_bound - objective.lower_bound)
+            )
         )
     if isinstance(objective, CloseToTargetObjective):
-        return lambda y, X=None: -1.0 * (
-            torch.abs(y[..., idx] - objective.target_value) ** objective.exponent
+        return lambda y, X=None: (
+            -1.0
+            * (torch.abs(y[..., idx] - objective.target_value) ** objective.exponent)
         )
     if isinstance(objective, MinimizeSigmoidObjective):
         return lambda y, X=None: (
@@ -1059,26 +1057,21 @@ class Encoder:
 
 
 def get_categorical_encoder(
-    feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
+    feature: CategoricalInput,
+    transform: Union[CategoricalEncodingEnum, AnyCategoricalEncoding],
 ) -> Encoder:
     """Get the categorical transformer for a given feature."""
-    if isinstance(transform, tuple(to_list(AnyMolFeatures))):
-        assert isinstance(feature, CategoricalMolecularInput)
-        # filter out the highly-correlated descriptors
-        transform.remove_correlated_descriptors(feature.categories)
-        encodings = torch.from_numpy(
-            feature.to_descriptor_encoding(
-                transform, pd.Series(feature.categories)
-            ).values
-        ).to(**tkwargs)
-    elif transform == CategoricalEncodingEnum.ONE_HOT:
+    if transform == CategoricalEncodingEnum.ONE_HOT:
         encodings = torch.from_numpy(
             feature.to_onehot_encoding(pd.Series(feature.categories)).values
         ).to(**tkwargs)
-    elif transform == CategoricalEncodingEnum.DESCRIPTOR:
-        assert isinstance(feature, CategoricalDescriptorInput)
+    elif isinstance(transform, tuple(to_list(AnyCategoricalEncoding))):
+        # descriptor / molecular encodings read the feature's descriptor table;
+        # correlation filtering (if any) is handled inside the encoder.
         encodings = torch.from_numpy(
-            feature.to_descriptor_encoding(pd.Series(feature.categories)).values
+            transform.to_descriptor_encoding(
+                feature, pd.Series(feature.categories)
+            ).values
         ).to(**tkwargs)
     else:
         raise ValueError(

@@ -2,6 +2,7 @@ from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.encodings.api import MolecularEncoding
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
@@ -50,16 +51,19 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     @model_validator(mode="after")
     def validate_moleculars(self):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
-        if not any(
-            isinstance(value, Fingerprints)
-            or isinstance(value, Fragments)
-            or (
-                isinstance(value, CompositeMolFeatures)
+
+        def _is_tanimoto_generator(generator) -> bool:
+            return isinstance(generator, (Fingerprints, Fragments)) or (
+                isinstance(generator, CompositeMolFeatures)
                 and all(
                     isinstance(feature, (Fingerprints, Fragments))
-                    for feature in value.features
+                    for feature in generator.features
                 )
             )
+
+        if not any(
+            isinstance(value, MolecularEncoding)
+            and _is_tanimoto_generator(value.generator)
             for value in self.categorical_encodings.values()
         ):
             raise ValueError(

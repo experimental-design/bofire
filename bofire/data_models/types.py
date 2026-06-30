@@ -3,8 +3,8 @@ from typing import Annotated, Dict, List, Tuple, Union
 
 from pydantic import AfterValidator, Field, PositiveInt
 
+from bofire.data_models.encodings.api import AnyCategoricalEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.molfeatures.api import AnyMolFeatures
 
 
 def make_unique_validator(name: str):
@@ -131,6 +131,6 @@ Bounds = Annotated[
 
 DiscreteVals = Annotated[List[float], Field(min_length=1)]
 
-InputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
+InputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyCategoricalEncoding]]
 
 IntPowerOfTwo = Annotated[PositiveInt, AfterValidator(validate_power_of_two)]

@@ -6,6 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -437,7 +438,7 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
             transform_type,
         )
         for expected, expected_value, transform_type in [
-            (True, [1, 2], CategoricalEncodingEnum.DESCRIPTOR),
+            (True, [1, 2], DescriptorEncoding()),
         ]
     ],
 )
@@ -448,7 +449,15 @@ def test_categorical_input_feature_is_fixed(
     transform_type,
 ):
     assert input_feature.is_fixed() == expected
-    assert input_feature.fixed_value(transform_type) == expected_value
+    if isinstance(transform_type, DescriptorEncoding):
+        # the descriptor encoding now carries the descriptor-based fixed value:
+        # a fixed (single allowed category) feature has matching lower/upper bounds
+        # equal to that category's descriptor row.
+        lower, upper = transform_type.get_bounds(input_feature)
+        assert lower == expected_value
+        assert upper == expected_value
+    else:
+        assert input_feature.fixed_value(transform_type) == expected_value
 
 
 @pytest.mark.parametrize(

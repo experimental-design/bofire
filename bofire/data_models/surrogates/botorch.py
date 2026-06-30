@@ -1,9 +1,8 @@
-from typing import Type
-
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
+from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -12,7 +11,7 @@ from bofire.data_models.features.api import (
     CategoricalTaskInput,
     NumericalInput,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
+from bofire.data_models.molfeatures.api import Fingerprints, MolFeatures
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 
@@ -68,14 +67,45 @@ class BotorchSurrogate(Surrogate):
                 )
         return v
 
+    @staticmethod
+    def _migrate_encoding_value(value):
+        """Migrate a legacy ``categorical_encodings`` value to the new encoder objects.
+
+        - a bare molecular feature (``Fingerprints``/... or its serialized dict)
+          becomes a :class:`MolecularEncoding`;
+        - the legacy ``CategoricalEncodingEnum.DESCRIPTOR`` becomes a
+          :class:`DescriptorEncoding`.
+        Other values pass through unchanged.
+        """
+        molfeature_types = {
+            "Fingerprints",
+            "Fragments",
+            "MordredDescriptors",
+            "CompositeMolFeatures",
+        }
+        if isinstance(value, MolFeatures):
+            return MolecularEncoding(generator=value)
+        if isinstance(value, dict) and value.get("type") in molfeature_types:
+            return {"type": "MolecularEncoding", "generator": value}
+        if value == CategoricalEncodingEnum.DESCRIPTOR or value == "DESCRIPTOR":
+            return DescriptorEncoding()
+        return value
+
+    @field_validator("categorical_encodings", mode="before")
+    @classmethod
+    def migrate_legacy_categorical_encodings(cls, v):
+        if not isinstance(v, dict):
+            return v
+        return {key: cls._migrate_encoding_value(value) for key, value in v.items()}
+
     @classmethod
     def _default_categorical_encodings(
         cls,
-    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+    ) -> dict:
         return {
             CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
-            CategoricalMolecularInput: Fingerprints(),
-            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
+            CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
+            CategoricalDescriptorInput: DescriptorEncoding(),
             CategoricalTaskInput: CategoricalEncodingEnum.ONE_HOT,
         }
 
@@ -88,7 +118,14 @@ class BotorchSurrogate(Surrogate):
         for key in categorical_keys:
             if key not in categorical_encodings:
                 feat = inputs.get_by_key(key)
-                categorical_encodings[key] = default_encodings[type(feat)]
+                default = default_encodings[type(feat)]
+                # deep-copy so per-feature encoders (and their stateful generators)
+                # are not shared between features.
+                categorical_encodings[key] = (
+                    default.model_copy(deep=True)
+                    if hasattr(default, "model_copy")
+                    else default
+                )
         return categorical_encodings
 
     @field_validator("categorical_encodings")

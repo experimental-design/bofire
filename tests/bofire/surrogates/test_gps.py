@@ -543,7 +543,9 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     n_descriptors_after_filtering = len(
-        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+        gp_data.categorical_encodings["x_mol"].get_descriptor_names(
+            gp_data.inputs.get_by_key("x_mol")
+        )
     )
     assert pred.shape == (4, 2)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [

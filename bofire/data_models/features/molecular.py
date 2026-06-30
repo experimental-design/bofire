@@ -1,22 +1,13 @@
 import warnings
 from collections.abc import Sequence
-from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, Literal
 
-import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, field_validator, model_validator, validate_call
 
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.feature import get_encoded_name
-from bofire.data_models.molfeatures.api import (
-    AnyMolFeatures,
-    CompositeMolFeatures,
-    Fingerprints,
-    Fragments,
-    MordredDescriptors,
-)
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.utils.cheminformatics import smiles2mol
 
 
@@ -51,9 +42,34 @@ class ContinuousMolecularInput(ContinuousInput):
 
 
 class CategoricalMolecularInput(CategoricalInput):
+    """Deprecated. Use :class:`CategoricalInput` with a ``smiles`` descriptor column
+    and a :class:`MolecularEncoding` on the surrogate instead.
+
+    Kept as a thin deserialization shim: the SMILES categories are mirrored into a
+    reserved ``smiles`` descriptor column so molecular encoders can consume them.
+    """
+
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_smiles(cls, data):
+        if not isinstance(data, dict):
+            return data
+        warnings.warn(
+            "`CategoricalMolecularInput` is deprecated, use `CategoricalInput` with "
+            "a `smiles` descriptor column and a `MolecularEncoding` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        categories = data.get("categories")
+        descriptors = dict(data.get("descriptors") or {})
+        if categories is not None and "smiles" not in descriptors:
+            descriptors["smiles"] = list(categories)
+            data["descriptors"] = descriptors
+        return data
 
     def _description_prefix(self) -> str:
         return (
@@ -86,117 +102,6 @@ class CategoricalMolecularInput(CategoricalInput):
         for cat in categories:
             smiles2mol(cat)
         return categories
-
-    @staticmethod
-    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
-        return (
-            CategoricalInput.valid_transform_types()  # ty: ignore[invalid-return-type]
-            + [
-                Fingerprints,
-                CompositeMolFeatures,
-                Fragments,
-                MordredDescriptors,
-            ]
-        )
-
-    def get_bounds(
-        self,
-        transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
-        values: Optional[pd.Series] = None,
-        reference_value: Optional[str] = None,
-        **kwargs,
-    ) -> Tuple[List[float], List[float]]:
-        if isinstance(transform_type, CategoricalEncodingEnum):
-            # we are just using the standard categorical transformations
-            return super().get_bounds(
-                transform_type=transform_type,
-                values=values,
-                reference_value=reference_value,
-            )
-        # in case that values is None, we return the optimization bounds
-        # else we return the complete bounds
-        data = self.to_descriptor_encoding(
-            transform_type=transform_type,
-            values=(
-                pd.Series(self.get_allowed_categories())
-                if values is None
-                else pd.Series(self.categories)
-            ),
-        )
-        lower = data.min(axis=0).values.tolist()
-        upper = data.max(axis=0).values.tolist()
-        return lower, upper
-
-    def to_descriptor_encoding(
-        self,
-        transform_type: AnyMolFeatures,
-        values: pd.Series,
-    ) -> pd.DataFrame:
-        """Converts values to descriptor encoding.
-
-        Args:
-            values (pd.Series): Values to transform.
-
-        Returns:
-            pd.DataFrame: Descriptor encoded dataframe.
-
-        """
-        descriptor_values = transform_type.get_descriptor_values(values)
-
-        descriptor_values.columns = [
-            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
-        ]
-        descriptor_values.index = values.index
-
-        return descriptor_values
-
-    def from_descriptor_encoding(
-        self,
-        transform_type: AnyMolFeatures,
-        values: pd.DataFrame,
-    ) -> pd.Series:
-        """Converts values back from descriptor encoding.
-
-        Args:
-            values (pd.DataFrame): Descriptor encoded dataframe.
-
-        Raises:
-            ValueError: If descriptor columns not found in the dataframe.
-
-        Returns:
-            pd.Series: Series with categorical values.
-
-        """
-        # This method is modified based on the categorical descriptor feature
-        # TODO: move it to more central place
-        cat_cols = [
-            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
-        ]
-        # we allow here explicitly that the dataframe can have more columns than needed to have it
-        # easier in the backtransform.
-        if np.any([c not in values.columns for c in cat_cols]):
-            raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}.",
-            )
-        s = pd.DataFrame(
-            data=np.sqrt(
-                np.sum(
-                    (
-                        values[cat_cols].to_numpy()[:, np.newaxis, :]
-                        - self.to_descriptor_encoding(
-                            transform_type=transform_type,
-                            values=pd.Series(self.get_allowed_categories()),
-                        ).to_numpy()
-                    )
-                    ** 2,
-                    axis=2,
-                ),
-            ),
-            columns=self.get_allowed_categories(),
-            index=values.index,
-        ).idxmin(1)
-        s.name = self.key
-        return s
 
     @validate_call
     def select_mordred_descriptors(

@@ -11,7 +11,7 @@ from botorch.models.transforms.input import (
 )
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
 from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
 from bofire.data_models.surrogates.scaler import AnyScaler
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
@@ -20,13 +20,34 @@ from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
+def _produces_continuous_columns(value) -> bool:
+    """Whether an encoding produces real-valued (continuous-like) columns that
+    should undergo the default scaler.
+
+    Real-valued descriptor encodings (manual descriptors, Mordred descriptors)
+    are scaled; binary/count encodings (one-hot, fingerprints, fragments) are not.
+    """
+    if isinstance(value, DescriptorEncoding):
+        return True
+    if isinstance(value, MolecularEncoding):
+        generator = value.generator
+        if isinstance(generator, MordredDescriptors):
+            return True
+        if isinstance(generator, CompositeMolFeatures) and any(
+            isinstance(molfeature, MordredDescriptors)
+            for molfeature in generator.features
+        ):
+            return True
+    return False
+
+
 def get_continuous_feature_keys(
     inputs: Inputs,
     specs: InputTransformSpecs,
 ) -> List[str]:
     """Returns a list of continuous feature keys in the input data.
-    These features include continuous inputs, categorical inputs with transform
-    type CategoricalEncodingEnum.DESCRIPTOR, and Mordred descriptors.
+    These features include continuous inputs, categorical inputs with a
+    descriptor encoding, and Mordred descriptors.
 
     Args:
         inputs (Inputs): Input features.
@@ -38,17 +59,7 @@ def get_continuous_feature_keys(
 
     """
     non_continuous_feature_key_list = [
-        key
-        for key, value in specs.items()
-        if value != CategoricalEncodingEnum.DESCRIPTOR
-        and not isinstance(value, MordredDescriptors)
-        and not (
-            isinstance(value, CompositeMolFeatures)
-            and any(
-                isinstance(molfeature, MordredDescriptors)
-                for molfeature in value.features
-            )
-        )
+        key for key, value in specs.items() if not _produces_continuous_columns(value)
     ]
     continuous_feature_key_list = [
         feat.key
