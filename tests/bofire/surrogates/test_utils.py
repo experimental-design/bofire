@@ -12,8 +12,12 @@ from botorch.models.transforms.input import (
 )
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    MolecularEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -54,8 +58,8 @@ def test_get_scaler_none():
         inputs=inputs,
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings={
-            "x_cat": CategoricalEncodingEnum.ONE_HOT,
-            "x_desc": CategoricalEncodingEnum.ONE_HOT,
+            "x_cat": OneHotEncoding(),
+            "x_desc": OneHotEncoding(),
         },
         scaler_type=NormalizeScaler(),
     )
@@ -68,8 +72,8 @@ def test_get_scaler_none():
         (
             NormalizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
+                "x_desc": OneHotEncoding(),
             },
             Normalize,
             torch.tensor([0, 1], dtype=torch.int64),
@@ -79,7 +83,7 @@ def test_get_scaler_none():
         (
             NormalizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
                 "x_desc": DescriptorEncoding(),
             },
             Normalize,
@@ -90,8 +94,8 @@ def test_get_scaler_none():
         (
             StandardizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
+                "x_desc": OneHotEncoding(),
             },
             InputStandardize,
             torch.tensor([0, 1], dtype=torch.int64),
@@ -101,7 +105,7 @@ def test_get_scaler_none():
         (
             StandardizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
                 "x_desc": DescriptorEncoding(),
             },
             InputStandardize,
@@ -112,8 +116,8 @@ def test_get_scaler_none():
         (
             None,
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
+                "x_desc": OneHotEncoding(),
             },
             type(None),
             None,
@@ -123,7 +127,7 @@ def test_get_scaler_none():
         (
             None,
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
                 "x_desc": DescriptorEncoding(),
             },
             type(None),
@@ -362,7 +366,7 @@ def test_get_scaler_engineered_features():
     scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=engineered_features,
-        categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        categorical_encodings={"x_cat": OneHotEncoding()},
         scaler_type=NormalizeScaler(),
     )
 
@@ -403,7 +407,7 @@ def test_get_scaler_feature_specific():
     scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=engineered_features,
-        categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        categorical_encodings={"x_cat": OneHotEncoding()},
         scaler_type=NormalizeScaler(features=["x_2", "x_4", "sum"]),
     )
 
@@ -423,16 +427,16 @@ def test_get_scaler_feature_specific():
     [
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(generator=Fingerprints(n_bits=2)),
             },
             ["x1"],
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
                 ),
@@ -441,8 +445,8 @@ def test_get_scaler_feature_specific():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
                 ),
@@ -451,7 +455,7 @@ def test_get_scaler_feature_specific():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(generator=Fingerprints(n_bits=2)),
             },
@@ -459,7 +463,7 @@ def test_get_scaler_feature_specific():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
@@ -469,7 +473,7 @@ def test_get_scaler_feature_specific():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=FingerprintsFragments(
@@ -481,7 +485,7 @@ def test_get_scaler_feature_specific():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
@@ -491,7 +495,7 @@ def test_get_scaler_feature_specific():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=CompositeMolFeatures(
@@ -550,7 +554,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -560,7 +564,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=None,
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -570,7 +574,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ORDINAL,
+            "x2": OrdinalEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -580,7 +584,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=None,
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ORDINAL,
+            "x2": OrdinalEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -590,7 +594,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(
             features=[
@@ -612,7 +616,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(
             features=[

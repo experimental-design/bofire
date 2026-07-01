@@ -50,7 +50,7 @@ def test_categorical_descriptor_to_descriptor_encoding(
         values=[[1, 2], [3, 4], [5, 6]],
     )
     samples = pd.Series(samples_in)
-    t_samples = DescriptorEncoding().to_descriptor_encoding(c, samples)
+    t_samples = DescriptorEncoding().encode(c, samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
@@ -58,7 +58,7 @@ def test_categorical_descriptor_to_descriptor_encoding(
             columns=[f"{key}_{des_str}" for des_str in descriptors],
         ),
     )
-    untransformed = DescriptorEncoding().from_descriptor_encoding(c, t_samples)
+    untransformed = DescriptorEncoding().decode(c, t_samples)
     assert np.all(samples == untransformed)
 
 
@@ -85,7 +85,7 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
         columns=[f"{key}_{des_str}" for des_str in descriptors] + ["misc"],
         data=[[1.05, 2.5, 6], [4, 4.5, 9]],
     )
-    samples = DescriptorEncoding().from_descriptor_encoding(c1, descriptor_values)
+    samples = DescriptorEncoding().decode(c1, descriptor_values)
     print(samples)
     assert np.all(samples == pd.Series([categories[0], categories[1]]))
 
@@ -97,7 +97,7 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
         allowed=[False, True, True],
     )
 
-    samples = DescriptorEncoding().from_descriptor_encoding(c2, descriptor_values)
+    samples = DescriptorEncoding().decode(c2, descriptor_values)
     print(samples)
     assert np.all(samples == pd.Series([categories[1], categories[1]]))
 

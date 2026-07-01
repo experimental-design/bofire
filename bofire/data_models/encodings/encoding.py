@@ -2,9 +2,9 @@
 
 An encoding is the *per-surrogate choice* of how a categorical feature's value is
 turned into model-input columns. It reads the *data* carried on the feature (its
-``descriptors`` table) and holds the modelling knobs (which columns, which
-generator, hyperparameters). This inverts the previous design where the feature
-class itself knew how to encode.
+``categories`` and ``descriptors`` table) and holds the modelling knobs. The
+mechanical pandas transforms themselves live on ``CategoricalInput`` (so they
+stay available downstream); the encoders are thin choice wrappers that delegate.
 """
 
 from abc import abstractmethod
@@ -24,28 +24,30 @@ class CategoricalEncoding(BaseModel):
 
     type: Any
 
-    @abstractmethod
-    def get_descriptor_names(self, feature: "CategoricalInput") -> List[str]:
-        """Unprefixed names of the columns produced for ``feature``."""
+    @property
+    def is_identity(self) -> bool:
+        """Whether this is the ordinal passthrough that stays as-is pre-model.
+
+        Botorch-based surrogates encode categoricals to ordinal *before* the model
+        and expand them to the target encoding *inside* the model. The identity
+        (ordinal) encoding is the one that must not be expanded again.
+        """
+        return False
 
     @abstractmethod
-    def to_descriptor_encoding(
-        self,
-        feature: "CategoricalInput",
-        values: pd.Series,
-    ) -> pd.DataFrame:
-        """Encode a series of categories into descriptor columns.
+    def get_names(self, feature: "CategoricalInput") -> List[str]:
+        """Final (encoded) column names produced for ``feature``."""
 
-        The returned frame uses ``get_encoded_name(feature.key, name)`` columns.
+    @abstractmethod
+    def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
+        """Encode a series of categories into model-input columns.
+
+        The returned frame's columns equal ``get_names(feature)``.
         """
 
     @abstractmethod
-    def from_descriptor_encoding(
-        self,
-        feature: "CategoricalInput",
-        values: pd.DataFrame,
-    ) -> pd.Series:
-        """Back-transform descriptor columns to the nearest categories."""
+    def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
+        """Back-transform encoded columns to categories."""
 
     @abstractmethod
     def get_bounds(
@@ -53,7 +55,7 @@ class CategoricalEncoding(BaseModel):
         feature: "CategoricalInput",
         values: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
-        """Descriptor-space lower/upper bounds for ``feature``.
+        """Lower/upper bounds of the encoded columns for ``feature``.
 
         If ``values`` is None the optimization bounds (over allowed categories)
         are returned, else the full bounds over all categories.

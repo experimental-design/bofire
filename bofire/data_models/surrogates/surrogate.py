@@ -5,6 +5,7 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.encodings._migrate import migrate_legacy_encodings
 from bofire.data_models.features.api import AnyOutput
 from bofire.data_models.types import InputTransformSpecs
 
@@ -18,6 +19,11 @@ class Surrogate(BaseModel):
         validate_default=True,
     )
     dump: Optional[str] = None
+
+    @field_validator("input_preprocessing_specs", mode="before")
+    @classmethod
+    def migrate_legacy_input_preprocessing_specs(cls, v):
+        return migrate_legacy_encodings(v)
 
     @field_validator("input_preprocessing_specs")
     @classmethod

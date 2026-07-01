@@ -18,7 +18,7 @@ from torch import Tensor
 import bofire.data_models.surrogates.api as data_models
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -67,19 +67,19 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     )
     surrogate = surrogates.map(data_model)
     assert surrogate.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ORDINAL,
-        "cat": CategoricalEncodingEnum.ORDINAL,
+        "x_cat": OrdinalEncoding(),
+        "cat": OrdinalEncoding(),
     }
     # test that it can also handle incomplete specs
     data_model = modelclass(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        input_preprocessing_specs={"x_cat": OrdinalEncoding()},
     )
     surrogate = surrogates.map(data_model)
     assert surrogate.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ORDINAL,
-        "cat": CategoricalEncodingEnum.ORDINAL,
+        "x_cat": OrdinalEncoding(),
+        "cat": OrdinalEncoding(),
     }
 
 
@@ -89,15 +89,15 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
         (
             data_models.SingleTaskGPSurrogate,
             {
-                "x_cat": CategoricalEncodingEnum.DUMMY,
-                "cat": CategoricalEncodingEnum.ORDINAL,
+                "x_cat": OneHotEncoding(drop_first=True),
+                "cat": OrdinalEncoding(),
             },
         ),
         (
             data_models.MixedSingleTaskGPSurrogate,
             {
-                "x_cat": CategoricalEncodingEnum.ORDINAL,
-                "cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OrdinalEncoding(),
+                "cat": OneHotEncoding(),
             },
         ),
     ],
@@ -205,7 +205,7 @@ def test_BotorchSurrogates_invalid_inputs():
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -232,7 +232,7 @@ def test_BotorchSurrogates_invalid_inputs():
                         ],
                     ),
                     scaler=NormalizeScaler(),
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -269,7 +269,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -292,7 +292,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -319,7 +319,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.LOG,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -342,7 +342,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.LOG,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -369,7 +369,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -392,7 +392,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -613,8 +613,8 @@ def test_botorch_models_input_preprocessing_specs():
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     surrogate = BotorchSurrogates(data_model=data_model)
     assert surrogate.input_preprocessing_specs == {
-        "cat": CategoricalEncodingEnum.ORDINAL,
-        "cat2": CategoricalEncodingEnum.ORDINAL,
+        "cat": OrdinalEncoding(),
+        "cat2": OrdinalEncoding(),
     }
 
 
@@ -761,7 +761,7 @@ def test_botorch_models_fit_and_compatibilize():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        specs={"x_cat": OrdinalEncoding()},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -834,7 +834,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     data_model2 = data_models.RandomForestSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        input_preprocessing_specs={"x_cat": OrdinalEncoding()},
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -881,7 +881,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        specs={"x_cat": OrdinalEncoding()},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -1011,7 +1011,7 @@ def test_empirical_model():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        specs={"x_cat": OrdinalEncoding()},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():

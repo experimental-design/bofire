@@ -6,8 +6,11 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -333,13 +336,13 @@ def test_categorical_to_label_encoding():
     [
         (
             CategoricalInput(key="c", categories=["B", "A", "C"]),
-            CategoricalEncodingEnum.ORDINAL,
+            OrdinalEncoding(),
             None,
             (0, 2),
         ),
         (
             CategoricalInput(key="c", categories=["B", "A", "C"]),
-            CategoricalEncodingEnum.ONE_HOT,
+            OneHotEncoding(),
             None,
             ([0, 0, 0], [1, 1, 1]),
         ),
@@ -349,7 +352,7 @@ def test_categorical_to_label_encoding():
                 categories=["B", "A", "C"],
                 allowed=[True, False, True],
             ),
-            CategoricalEncodingEnum.ONE_HOT,
+            OneHotEncoding(),
             pd.Series(["A", "B", "C"]),
             ([0, 0, 0], [1, 1, 1]),
         ),
@@ -359,13 +362,13 @@ def test_categorical_to_label_encoding():
                 categories=["B", "A", "C"],
                 allowed=[True, False, True],
             ),
-            CategoricalEncodingEnum.ONE_HOT,
+            OneHotEncoding(),
             None,
             ([0, 0, 0], [1, 0, 1]),
         ),
         (
             CategoricalInput(key="c", categories=["B", "A", "C"]),
-            CategoricalEncodingEnum.DUMMY,
+            OneHotEncoding(drop_first=True),
             None,
             ([0, 0], [1, 1]),
         ),
@@ -406,21 +409,21 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
                 [True, False, False, False],
                 True,
                 [0],
-                CategoricalEncodingEnum.ORDINAL,
+                OrdinalEncoding(),
             ),
             (
                 ["1", "2", "3", "4"],
                 [True, False, False, False],
                 True,
                 [1, 0, 0, 0],
-                CategoricalEncodingEnum.ONE_HOT,
+                OneHotEncoding(),
             ),
             (
                 ["1", "2", "3", "4"],
                 [True, False, False, False],
                 True,
                 [0, 0, 0],
-                CategoricalEncodingEnum.DUMMY,
+                OneHotEncoding(drop_first=True),
             ),
         ]
     ]

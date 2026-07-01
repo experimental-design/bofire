@@ -6,6 +6,21 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
+    encodings.OneHotEncoding,
+    lambda: {"drop_first": False},
+)
+
+specs.add_valid(
+    encodings.OneHotEncoding,
+    lambda: {"drop_first": True},
+)
+
+specs.add_valid(
+    encodings.OrdinalEncoding,
+    lambda: {},
+)
+
+specs.add_valid(
     encodings.DescriptorEncoding,
     lambda: {"columns": None},
 )

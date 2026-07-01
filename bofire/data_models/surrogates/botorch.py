@@ -2,8 +2,13 @@ from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings._migrate import migrate_legacy_encodings
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    MolecularEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -11,7 +16,7 @@ from bofire.data_models.features.api import (
     CategoricalTaskInput,
     NumericalInput,
 )
-from bofire.data_models.molfeatures.api import Fingerprints, MolFeatures
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 
@@ -23,7 +28,7 @@ class BotorchSurrogate(Surrogate):
     Attributes:
         input_preprocessing_specs: A dictionary specifying how categorical features are to be
             preprocessed **before** being passed to the surrogate. For all botorch based surrogates, an
-            ordinal encoding (`CategoricalEncodingEnum.ORDINAL`) has to be used for all
+            ordinal encoding (`OrdinalEncoding`) has to be used for all
             categorical features, which is also set as default if nothing is provided.
         categorical_encodings: A dictionary specifying how
             categorical features are to be encoded **within** the botorch based surrogate.
@@ -52,14 +57,12 @@ class BotorchSurrogate(Surrogate):
         inputs = info.data["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=False)
         for key in categorical_keys:
-            if (
-                v.get(key, CategoricalEncodingEnum.ORDINAL)
-                != CategoricalEncodingEnum.ORDINAL
-            ):
+            spec = v.get(key)
+            if spec is not None and not isinstance(spec, OrdinalEncoding):
                 raise ValueError(
                     "Botorch based models have to use ordinal encodings for categoricals",
                 )
-            v[key] = CategoricalEncodingEnum.ORDINAL
+            v[key] = OrdinalEncoding()
         for key in inputs.get_keys(NumericalInput):
             if v.get(key) is not None:
                 raise ValueError(
@@ -67,46 +70,20 @@ class BotorchSurrogate(Surrogate):
                 )
         return v
 
-    @staticmethod
-    def _migrate_encoding_value(value):
-        """Migrate a legacy ``categorical_encodings`` value to the new encoder objects.
-
-        - a bare molecular feature (``Fingerprints``/... or its serialized dict)
-          becomes a :class:`MolecularEncoding`;
-        - the legacy ``CategoricalEncodingEnum.DESCRIPTOR`` becomes a
-          :class:`DescriptorEncoding`.
-        Other values pass through unchanged.
-        """
-        molfeature_types = {
-            "Fingerprints",
-            "Fragments",
-            "MordredDescriptors",
-            "CompositeMolFeatures",
-        }
-        if isinstance(value, MolFeatures):
-            return MolecularEncoding(generator=value)
-        if isinstance(value, dict) and value.get("type") in molfeature_types:
-            return {"type": "MolecularEncoding", "generator": value}
-        if value == CategoricalEncodingEnum.DESCRIPTOR or value == "DESCRIPTOR":
-            return DescriptorEncoding()
-        return value
-
     @field_validator("categorical_encodings", mode="before")
     @classmethod
     def migrate_legacy_categorical_encodings(cls, v):
-        if not isinstance(v, dict):
-            return v
-        return {key: cls._migrate_encoding_value(value) for key, value in v.items()}
+        return migrate_legacy_encodings(v)
 
     @classmethod
     def _default_categorical_encodings(
         cls,
     ) -> dict:
         return {
-            CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
+            CategoricalInput: OneHotEncoding(),
             CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
             CategoricalDescriptorInput: DescriptorEncoding(),
-            CategoricalTaskInput: CategoricalEncodingEnum.ONE_HOT,
+            CategoricalTaskInput: OneHotEncoding(),
         }
 
     @classmethod

@@ -9,8 +9,12 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
-from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    MolecularEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -336,10 +340,10 @@ def test_inputs_sample_empty():
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x4": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x1": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x4": OneHotEncoding()}),
+        ({"x1": OneHotEncoding()}),
         ({"x2": ScalerEnum.STANDARDIZE}),
-        ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
+        ({"x2": DescriptorEncoding()}),
         ({"x1": Fingerprints()}),
         ({"x2": Fragments()}),
         ({"x3": FingerprintsFragments()}),
@@ -366,12 +370,12 @@ def test_inputs_validate_transform_specs_invalid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x2": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x3": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x2": OneHotEncoding()}),
+        ({"x3": OneHotEncoding()}),
         ({"x3": DescriptorEncoding()}),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
             }
         ),
@@ -397,7 +401,7 @@ def test_inputs_validate_transform_valid(specs):
     "specs",
     [
         ({"x4": ScalerEnum.STANDARDIZE}),
-        ({"x4": CategoricalEncodingEnum.DESCRIPTOR}),
+        ({"x4": DescriptorEncoding()}),
     ],
 )
 def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
@@ -434,7 +438,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x4": MolecularEncoding(generator=Fingerprints()),
             }
         ),
@@ -446,7 +450,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(generator=Fingerprints()),
             }
@@ -476,7 +480,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
     [
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fingerprints(n_bits=2048, filter_descriptors=False)
                 ),
@@ -496,7 +500,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.DUMMY,
+                "x2": OneHotEncoding(drop_first=True),
                 "x4": MolecularEncoding(
                     generator=Fragments(
                         fragments=["fr_unbrch_alkane", "fr_thiocyan"],
@@ -514,7 +518,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ORDINAL,
+                "x2": OrdinalEncoding(),
                 "x4": MolecularEncoding(
                     generator=FingerprintsFragments(
                         n_bits=2048,
@@ -541,7 +545,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         ),
         (
             {
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(
                         descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
@@ -558,7 +562,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(
@@ -605,27 +609,27 @@ def test_inputs_get_transform_info(
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x2": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x2": CategoricalEncodingEnum.DUMMY}),
-        ({"x2": CategoricalEncodingEnum.ORDINAL}),
-        ({"x3": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x2": OneHotEncoding()}),
+        ({"x2": OneHotEncoding(drop_first=True)}),
+        ({"x2": OrdinalEncoding()}),
+        ({"x3": OneHotEncoding()}),
         ({"x3": DescriptorEncoding()}),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
             }
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
             }
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.DUMMY,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(drop_first=True),
+                "x3": OneHotEncoding(),
             }
         ),
     ],
@@ -673,7 +677,7 @@ def test_input_reverse_transform_molecular():
                 descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
             )
         ),
-        "x2": CategoricalEncodingEnum.ONE_HOT,
+        "x2": OneHotEncoding(),
     }
     samples = inps.sample(n=20)
     transformed = inps.transform(experiments=samples, specs=specs)
@@ -687,7 +691,7 @@ def test_input_reverse_transform_molecular():
     [
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fingerprints(n_bits=32, filter_descriptors=False)
                 ),
@@ -734,7 +738,7 @@ def test_input_reverse_transform_molecular():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.DUMMY,
+                "x2": OneHotEncoding(drop_first=True),
                 "x4": MolecularEncoding(
                     generator=Fragments(
                         fragments=["fr_unbrch_alkane", "fr_thiocyan"],
@@ -753,7 +757,7 @@ def test_input_reverse_transform_molecular():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ORDINAL,
+                "x2": OrdinalEncoding(),
                 "x4": MolecularEncoding(
                     generator=FingerprintsFragments(
                         n_bits=32,
@@ -804,7 +808,7 @@ def test_input_reverse_transform_molecular():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(
@@ -921,7 +925,7 @@ inputs2 = Inputs(
         (
             inputs1,
             {
-                "if3": CategoricalEncodingEnum.ONE_HOT,
+                "if3": OneHotEncoding(),
                 "if5": DescriptorEncoding(),
             },
             [[3, 1, 2, 0, 0, 0], [5.3, 1, 2, 1, 1, 1]],
@@ -929,7 +933,7 @@ inputs2 = Inputs(
         (
             inputs1,
             {
-                "if3": CategoricalEncodingEnum.DUMMY,
+                "if3": OneHotEncoding(drop_first=True),
                 "if5": DescriptorEncoding(),
             },
             [[3, 1, 2, 0, 0], [5.3, 1, 2, 1, 1]],
@@ -937,23 +941,23 @@ inputs2 = Inputs(
         (
             inputs1,
             {
-                "if3": CategoricalEncodingEnum.DUMMY,
-                "if5": CategoricalEncodingEnum.DUMMY,
+                "if3": OneHotEncoding(drop_first=True),
+                "if5": OneHotEncoding(drop_first=True),
             },
             [[3, 0, 0, 0, 0], [5.3, 1, 1, 1, 1]],
         ),
         (
             inputs1,
             {
-                "if3": CategoricalEncodingEnum.ONE_HOT,
-                "if5": CategoricalEncodingEnum.ONE_HOT,
+                "if3": OneHotEncoding(),
+                "if5": OneHotEncoding(),
             },
             [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 0, 0, 1, 1, 1]],
         ),
         (
             inputs1,
             {
-                "if3": CategoricalEncodingEnum.ORDINAL,
+                "if3": OrdinalEncoding(),
                 "if5": DescriptorEncoding(),
             },
             [[3, 1, 2, 0], [5.3, 1, 2, 2]],
@@ -961,8 +965,8 @@ inputs2 = Inputs(
         (
             inputs1,
             {
-                "if3": CategoricalEncodingEnum.ORDINAL,
-                "if5": CategoricalEncodingEnum.ORDINAL,
+                "if3": OrdinalEncoding(),
+                "if5": OrdinalEncoding(),
             },
             [[3, 0, 0], [5.3, 2, 2]],
         ),
@@ -970,8 +974,8 @@ inputs2 = Inputs(
         (
             inputs2,
             {
-                "if3": CategoricalEncodingEnum.ONE_HOT,
-                "if4": CategoricalEncodingEnum.ONE_HOT,
+                "if3": OneHotEncoding(),
+                "if4": OneHotEncoding(),
                 "if5": DescriptorEncoding(),
                 "if6": DescriptorEncoding(),
             },
@@ -996,10 +1000,10 @@ inputs2 = Inputs(
         (
             inputs2,
             {
-                "if3": CategoricalEncodingEnum.ONE_HOT,
-                "if4": CategoricalEncodingEnum.ONE_HOT,
-                "if5": CategoricalEncodingEnum.ONE_HOT,
-                "if6": CategoricalEncodingEnum.ONE_HOT,
+                "if3": OneHotEncoding(),
+                "if4": OneHotEncoding(),
+                "if5": OneHotEncoding(),
+                "if6": OneHotEncoding(),
             },
             [
                 [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -1009,8 +1013,8 @@ inputs2 = Inputs(
         (
             inputs2,
             {
-                "if3": CategoricalEncodingEnum.ORDINAL,
-                "if4": CategoricalEncodingEnum.ORDINAL,
+                "if3": OrdinalEncoding(),
+                "if4": OrdinalEncoding(),
                 "if5": DescriptorEncoding(),
                 "if6": DescriptorEncoding(),
             },
@@ -1031,19 +1035,19 @@ inputs2 = Inputs(
         (
             inputs2,
             {
-                "if3": CategoricalEncodingEnum.ORDINAL,
-                "if4": CategoricalEncodingEnum.ORDINAL,
-                "if5": CategoricalEncodingEnum.ORDINAL,
-                "if6": CategoricalEncodingEnum.ORDINAL,
+                "if3": OrdinalEncoding(),
+                "if4": OrdinalEncoding(),
+                "if5": OrdinalEncoding(),
+                "if6": OrdinalEncoding(),
             },
             [[3, 3, 0, 0, 0, 0], [5.3, 3, 2, 2, 2, 2]],
         ),
         (
             inputs2,
             {
-                "if3": CategoricalEncodingEnum.ORDINAL,
-                "if4": CategoricalEncodingEnum.ONE_HOT,
-                "if5": CategoricalEncodingEnum.ORDINAL,
+                "if3": OrdinalEncoding(),
+                "if4": OneHotEncoding(),
+                "if5": OrdinalEncoding(),
                 "if6": DescriptorEncoding(),
             },
             [
@@ -1077,7 +1081,7 @@ def test_input_get_bounds_reference_experiment():
         ],
     )
     specs = {
-        "if2": CategoricalEncodingEnum.ONE_HOT,
+        "if2": OneHotEncoding(),
     }
 
     lower, upper = inputs.get_bounds(
@@ -1126,16 +1130,16 @@ def test_inputs_get_bounds_fit():
     experiments["if6"] = [random.choice(if6.categories) for _ in range(100)]
     opt_bounds = inputs.get_bounds(
         specs={
-            "if3": CategoricalEncodingEnum.ONE_HOT,
-            "if4": CategoricalEncodingEnum.ONE_HOT,
+            "if3": OneHotEncoding(),
+            "if4": OneHotEncoding(),
             "if5": DescriptorEncoding(),
             "if6": DescriptorEncoding(),
         },
     )
     fit_bounds = inputs.get_bounds(
         {
-            "if3": CategoricalEncodingEnum.ONE_HOT,
-            "if4": CategoricalEncodingEnum.ONE_HOT,
+            "if3": OneHotEncoding(),
+            "if4": OneHotEncoding(),
             "if5": DescriptorEncoding(),
             "if6": DescriptorEncoding(),
         },
@@ -1163,8 +1167,8 @@ def test_inputs_get_bounds_fit():
     [
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fingerprints(n_bits=2, filter_descriptors=False)
                 ),
@@ -1178,8 +1182,8 @@ def test_inputs_get_bounds_fit():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fragments(
                         fragments=["fr_unbrch_alkane", "fr_thiocyan"],
@@ -1196,8 +1200,8 @@ def test_inputs_get_bounds_fit():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(
                         descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
@@ -1213,7 +1217,7 @@ def test_inputs_get_bounds_fit():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fingerprints(n_bits=2, filter_descriptors=False)
@@ -1228,7 +1232,7 @@ def test_inputs_get_bounds_fit():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=Fragments(
@@ -1246,7 +1250,7 @@ def test_inputs_get_bounds_fit():
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": MolecularEncoding(
                     generator=MordredDescriptors(

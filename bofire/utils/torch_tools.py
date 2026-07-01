@@ -19,7 +19,6 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.encodings.api import AnyCategoricalEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -38,7 +37,6 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 from bofire.data_models.types import InputTransformSpecs
-from bofire.data_models.unions import to_list
 from bofire.strategies.strategy import Strategy
 
 
@@ -1058,26 +1056,16 @@ class Encoder:
 
 def get_categorical_encoder(
     feature: CategoricalInput,
-    transform: Union[CategoricalEncodingEnum, AnyCategoricalEncoding],
+    transform: AnyCategoricalEncoding,
 ) -> Encoder:
-    """Get the categorical transformer for a given feature."""
-    if transform == CategoricalEncodingEnum.ONE_HOT:
-        encodings = torch.from_numpy(
-            feature.to_onehot_encoding(pd.Series(feature.categories)).values
-        ).to(**tkwargs)
-    elif isinstance(transform, tuple(to_list(AnyCategoricalEncoding))):
-        # descriptor / molecular encodings read the feature's descriptor table;
-        # correlation filtering (if any) is handled inside the encoder.
-        encodings = torch.from_numpy(
-            transform.to_descriptor_encoding(
-                feature, pd.Series(feature.categories)
-            ).values
-        ).to(**tkwargs)
-    else:
-        raise ValueError(
-            f"No categorical transformer found for feature with key: {feature.key} "
-            f"and transform: {transform}"
-        )
+    """Build the in-model encoding matrix for a categorical feature.
+
+    Polymorphic: the encoding object (one-hot, descriptor, molecular, ...) knows
+    how to turn the feature's categories into the target columns.
+    """
+    encodings = torch.from_numpy(
+        transform.encode(feature, pd.Series(feature.categories)).values
+    ).to(**tkwargs)
     return Encoder(encodings)
 
 
@@ -1090,8 +1078,7 @@ def get_NumericToCategorical_input_transform(
             transform_specs[feat.key],
         )
         for feat in inputs.get(CategoricalInput)
-        if transform_specs.get(feat.key, CategoricalEncodingEnum.ORDINAL)
-        is not CategoricalEncodingEnum.ORDINAL
+        if feat.key in transform_specs and not transform_specs[feat.key].is_identity
     }
     if len(encoders) > 0:
         return NumericToCategoricalEncoding(

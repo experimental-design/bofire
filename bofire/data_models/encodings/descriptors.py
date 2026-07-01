@@ -23,7 +23,7 @@ class DescriptorEncoding(CategoricalEncoding):
     type: Literal["DescriptorEncoding"] = "DescriptorEncoding"
     columns: Optional[List[str]] = None
 
-    def get_descriptor_names(self, feature: "CategoricalInput") -> List[str]:
+    def _columns(self, feature: "CategoricalInput") -> List[str]:
         if self.columns is None:
             return feature.descriptor_columns(role="descriptor")
         available = set(feature.descriptor_columns(role="descriptor"))
@@ -35,18 +35,16 @@ class DescriptorEncoding(CategoricalEncoding):
             )
         return list(self.columns)
 
-    def to_descriptor_encoding(
-        self,
-        feature: "CategoricalInput",
-        values: pd.Series,
-    ) -> pd.DataFrame:
+    def get_names(self, feature: "CategoricalInput") -> List[str]:
         from bofire.data_models.features.feature import get_encoded_name
 
-        columns = self.get_descriptor_names(feature)
-        table = feature.descriptor_table(columns)
+        return [get_encoded_name(feature.key, d) for d in self._columns(feature)]
+
+    def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
+        table = feature.descriptor_table(self._columns(feature))
         return pd.DataFrame(
             data=table.loc[values.tolist()].to_numpy(),
-            columns=[get_encoded_name(feature.key, d) for d in columns],
+            columns=self.get_names(feature),
             index=values.index,
         )
 
@@ -55,23 +53,15 @@ class DescriptorEncoding(CategoricalEncoding):
         feature: "CategoricalInput",
         values: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
-        columns = self.get_descriptor_names(feature)
-        table = feature.descriptor_table(columns)
+        table = feature.descriptor_table(self._columns(feature))
         # values None -> optimization bounds over allowed categories,
         # else full bounds over all categories (for model fitting).
         if values is None:
             table = table.loc[feature.get_allowed_categories()]
         return table.min().values.tolist(), table.max().values.tolist()
 
-    def from_descriptor_encoding(
-        self,
-        feature: "CategoricalInput",
-        values: pd.DataFrame,
-    ) -> pd.Series:
-        from bofire.data_models.features.feature import get_encoded_name
-
-        columns = self.get_descriptor_names(feature)
-        cat_cols = [get_encoded_name(feature.key, d) for d in columns]
+    def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
+        cat_cols = self.get_names(feature)
         # we allow here explicitly that the dataframe can have more columns than
         # needed to make the back-transform easier.
         if np.any([c not in values.columns for c in cat_cols]):
@@ -80,7 +70,7 @@ class DescriptorEncoding(CategoricalEncoding):
                 f"{values.columns}, {cat_cols}.",
             )
         allowed = feature.get_allowed_categories()
-        table_allowed = feature.descriptor_table(columns).loc[allowed]
+        table_allowed = feature.descriptor_table(self._columns(feature)).loc[allowed]
         s = pd.DataFrame(
             data=np.sqrt(
                 np.sum(

@@ -4,8 +4,12 @@ import pandas as pd
 from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    MolecularEncoding,
+    OrdinalEncoding,
+)
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalDescriptorInput,
@@ -131,10 +135,10 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         cls,
     ) -> dict:
         return {
-            CategoricalInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalInput: OrdinalEncoding(),
             CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
             CategoricalDescriptorInput: DescriptorEncoding(),
-            CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalTaskInput: OrdinalEncoding(),
         }
 
     @model_validator(mode="after")
@@ -149,8 +153,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             )
         # check that a least one of the categorical features is ordinal or not encoded
         if not any(
-            self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
-            == CategoricalEncodingEnum.ORDINAL
+            isinstance(self.categorical_encodings.get(cat), OrdinalEncoding)
             for cat in categoricals
         ):
             raise ValueError(
@@ -160,8 +163,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         categorical_feature_keys = [
             cat
             for cat in categoricals
-            if self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
-            == CategoricalEncodingEnum.ORDINAL
+            if isinstance(self.categorical_encodings.get(cat), OrdinalEncoding)
         ]
         ordinal_feature_keys = list(
             set(self.inputs.get_keys()) - set(categorical_feature_keys)

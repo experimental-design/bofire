@@ -5,8 +5,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from bofire.data_models.encodings.api import MolecularEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import MolecularEncoding, OneHotEncoding
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
     ContinuousMolecularInput,
@@ -154,7 +153,7 @@ def test_categorical_molecular_input_to_descriptor_encoding(
 ):
     input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
-    encoded = MolecularEncoding(generator=transform_type).to_descriptor_encoding(
+    encoded = MolecularEncoding(generator=transform_type).encode(
         input_feature, VALID_SMILES
     )
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
@@ -202,8 +201,8 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
         MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
     ]:
         encoding = MolecularEncoding(generator=transform_type)
-        encoded = encoding.to_descriptor_encoding(feat, values=values)
-        decoded = encoding.from_descriptor_encoding(feat, values=encoded)
+        encoded = encoding.encode(feat, values=values)
+        decoded = encoding.decode(feat, values=encoded)
         assert np.all(decoded == values)
 
 
@@ -216,7 +215,7 @@ def test_categorical_molecular_input_get_bounds():
         allowed=[True, True, True, True],
     )
     lower, upper = feat.get_bounds(
-        transform_type=CategoricalEncodingEnum.ONE_HOT,
+        transform_type=OneHotEncoding(),
         reference_value=None,
     )
     assert lower == [0 for _ in range(len(feat.categories))]

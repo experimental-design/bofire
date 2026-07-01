@@ -4,7 +4,11 @@ from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -76,13 +80,13 @@ def test_model_cross_validate_descriptor():
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
     for encoding in [
-        CategoricalEncodingEnum.ONE_HOT,
-        CategoricalEncodingEnum.DESCRIPTOR,
+        OneHotEncoding(),
+        DescriptorEncoding(),
     ]:
         model = SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            input_preprocessing_specs={"x_3": CategoricalEncodingEnum.ORDINAL},
+            input_preprocessing_specs={"x_3": OrdinalEncoding()},
             categorical_encodings={"x_3": encoding},
         )
         model = surrogates.map(model)

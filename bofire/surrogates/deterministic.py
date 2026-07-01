@@ -2,7 +2,7 @@ import torch
 from botorch.models.deterministic import AffineDeterministicModel
 from botorch.models.transforms.input import ChainedInputTransform
 
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OneHotEncoding
 from bofire.data_models.surrogates.api import (
     CategoricalDeterministicSurrogate as CategoricalDeterministicSurrogateDataModel,
 )
@@ -70,5 +70,5 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         # to one hot with a specific input transform
         self.model.input_transform = get_NumericToCategorical_input_transform(  # ty: ignore[unresolved-attribute]
             inputs=self.inputs,
-            transform_specs={self.inputs[0].key: CategoricalEncodingEnum.ONE_HOT},
+            transform_specs={self.inputs[0].key: OneHotEncoding()},
         )

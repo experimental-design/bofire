@@ -28,7 +28,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -171,7 +171,7 @@ class AcquisitionOptimizer(ABC):
         domain: Domain,
     ) -> InputTransformSpecs:
         return dict.fromkeys(
-            domain.inputs.get_keys(CategoricalInput), CategoricalEncodingEnum.ORDINAL
+            domain.inputs.get_keys(CategoricalInput), OrdinalEncoding()
         )
 
     @staticmethod

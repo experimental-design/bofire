@@ -7,17 +7,6 @@ class SamplingMethodEnum(str, Enum):
     LHS = "LHS"
 
 
-class CategoricalEncodingEnum(str, Enum):
-    """Enumeration class of implemented categorical encodings
-    Currently, one-hot and ordinal encoding are implemented.
-    """
-
-    ONE_HOT = "ONE_HOT"
-    ORDINAL = "ORDINAL"
-    DUMMY = "DUMMY"
-    DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
-
-
 class ClassificationMetricsEnum(str, Enum):
     """Enumeration class for classification metrics."""
 

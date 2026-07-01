@@ -56,24 +56,20 @@ class MolecularEncoding(CategoricalEncoding):
                 self._structure_column(feature)
             )
 
-    def get_descriptor_names(self, feature: "CategoricalInput") -> List[str]:
-        self._prepare(feature)
-        return self.generator.get_descriptor_names()
-
-    def to_descriptor_encoding(
-        self,
-        feature: "CategoricalInput",
-        values: pd.Series,
-    ) -> pd.DataFrame:
+    def get_names(self, feature: "CategoricalInput") -> List[str]:
         from bofire.data_models.features.feature import get_encoded_name
 
         self._prepare(feature)
-        smiles = values.map(self._smiles_map(feature))
-        descriptor_values = self.generator.get_descriptor_values(smiles)
-        descriptor_values.columns = [
+        return [
             get_encoded_name(feature.key, d)
             for d in self.generator.get_descriptor_names()
         ]
+
+    def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
+        self._prepare(feature)
+        smiles = values.map(self._smiles_map(feature))
+        descriptor_values = self.generator.get_descriptor_values(smiles)
+        descriptor_values.columns = self.get_names(feature)
         descriptor_values.index = values.index
         return descriptor_values
 
@@ -82,7 +78,7 @@ class MolecularEncoding(CategoricalEncoding):
         feature: "CategoricalInput",
         values: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
-        data = self.to_descriptor_encoding(
+        data = self.encode(
             feature,
             pd.Series(feature.get_allowed_categories())
             if values is None
@@ -90,18 +86,9 @@ class MolecularEncoding(CategoricalEncoding):
         )
         return data.min(axis=0).values.tolist(), data.max(axis=0).values.tolist()
 
-    def from_descriptor_encoding(
-        self,
-        feature: "CategoricalInput",
-        values: pd.DataFrame,
-    ) -> pd.Series:
-        from bofire.data_models.features.feature import get_encoded_name
-
+    def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
         self._prepare(feature)
-        cat_cols = [
-            get_encoded_name(feature.key, d)
-            for d in self.generator.get_descriptor_names()
-        ]
+        cat_cols = self.get_names(feature)
         # we allow here explicitly that the dataframe can have more columns than
         # needed to make the back-transform easier.
         if np.any([c not in values.columns for c in cat_cols]):
@@ -110,7 +97,7 @@ class MolecularEncoding(CategoricalEncoding):
                 f"{values.columns}, {cat_cols}.",
             )
         allowed = feature.get_allowed_categories()
-        reference = self.to_descriptor_encoding(feature, pd.Series(allowed))
+        reference = self.encode(feature, pd.Series(allowed))
         s = pd.DataFrame(
             data=np.sqrt(
                 np.sum(

@@ -4,8 +4,13 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    MolecularEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalDescriptorInput,
@@ -118,10 +123,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         cls,
     ) -> dict:
         return {
-            CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
+            CategoricalInput: OneHotEncoding(),
             CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
             CategoricalDescriptorInput: DescriptorEncoding(),
-            CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalTaskInput: OrdinalEncoding(),
         }
 
     @classmethod
@@ -139,9 +144,8 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         if len(self.inputs.get_keys(CategoricalTaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
         task_feature = self.inputs.get(CategoricalTaskInput)[0]
-        if (
-            not self.categorical_encodings[task_feature.key]
-            == CategoricalEncodingEnum.ORDINAL
+        if not isinstance(
+            self.categorical_encodings[task_feature.key], OrdinalEncoding
         ):
             raise ValueError(
                 f"The task feature {task_feature.key} has to be encoded as ordinal."
@@ -160,8 +164,8 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
 
         task_feature_id = info.data["inputs"].get_keys(CategoricalTaskInput)[0]
         if v.get(task_feature_id) is None:
-            v[task_feature_id] = CategoricalEncodingEnum.ORDINAL
-        elif v[task_feature_id] != CategoricalEncodingEnum.ORDINAL:
+            v[task_feature_id] = OrdinalEncoding()
+        elif not isinstance(v[task_feature_id], OrdinalEncoding):
             raise ValueError(
                 f"The task feature {task_feature_id} has to be encoded as ordinal.",
             )

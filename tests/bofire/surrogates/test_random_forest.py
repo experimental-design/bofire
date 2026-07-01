@@ -15,7 +15,7 @@ from sklearn.exceptions import NotFittedError
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.single import Himmelblau, PositiveHimmelblau
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -138,7 +138,7 @@ def test_random_forest(scaler, output_scaler):
         output_scaler=output_scaler,
     )
     rf = surrogates.map(rf)
-    assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ORDINAL
+    assert rf.input_preprocessing_specs["x_cat"] == OrdinalEncoding()
     with pytest.raises(ValueError):
         rf.dumps()
     rf.fit(experiments=experiments)

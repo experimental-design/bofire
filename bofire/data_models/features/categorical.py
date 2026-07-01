@@ -6,7 +6,6 @@ from pydantic import Field, field_validator, model_validator
 from pydantic.fields import FieldInfo
 
 from bofire.data_models.encodings.reserved import get_reserved_descriptor, is_reserved
-from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
     Input,
     Output,
@@ -166,23 +165,21 @@ class CategoricalInput(Input):
         )
 
     def valid_transform_types(self) -> List:
-        """Valid encodings for this feature.
+        """Valid encoding classes for this feature.
 
-        The param-less enum encodings are always valid; the object encoders are
-        valid only when the feature actually carries the data they consume
-        (numeric descriptor columns for ``DescriptorEncoding``, a structure
-        column for ``MolecularEncoding``).
+        One-hot and ordinal are always valid; the data-backed encoders are valid
+        only when the feature carries the data they consume (numeric descriptor
+        columns for ``DescriptorEncoding``, a structure column for
+        ``MolecularEncoding``).
         """
         from bofire.data_models.encodings.api import (
             DescriptorEncoding,
             MolecularEncoding,
+            OneHotEncoding,
+            OrdinalEncoding,
         )
 
-        types: List = [
-            CategoricalEncodingEnum.ONE_HOT,
-            CategoricalEncodingEnum.DUMMY,
-            CategoricalEncodingEnum.ORDINAL,
-        ]
+        types: List = [OneHotEncoding, OrdinalEncoding]
         if self.descriptor_columns(role="descriptor"):
             types.append(DescriptorEncoding)
         if self.descriptor_columns(role="structure"):
@@ -214,14 +211,12 @@ class CategoricalInput(Input):
             val = self.get_allowed_categories()[0]
             if transform_type is None:
                 return [val]
-            if transform_type == CategoricalEncodingEnum.ONE_HOT:
-                return self.to_onehot_encoding(pd.Series([val])).values[0].tolist()
-            if transform_type == CategoricalEncodingEnum.DUMMY:
-                return self.to_dummy_encoding(pd.Series([val])).values[0].tolist()
-            if transform_type == CategoricalEncodingEnum.ORDINAL:
-                return self.to_ordinal_encoding(pd.Series([val])).tolist()
-            raise ValueError(
-                f"Unknown transform type {transform_type} for categorical input {self.key}",
+            return (
+                transform_type.encode(
+                    self, pd.Series([val])
+                )  # ty: ignore[unresolved-attribute]
+                .values[0]
+                .tolist()
             )
         return None
 
@@ -458,32 +453,14 @@ class CategoricalInput(Input):
         reference_value: Optional[str] = None,
         **kwargs,
     ) -> Tuple[List[float], List[float]]:
-        assert isinstance(transform_type, CategoricalEncodingEnum)
-        if transform_type == CategoricalEncodingEnum.ORDINAL:
-            return [0], [len(self.categories) - 1]
-        if transform_type == CategoricalEncodingEnum.ONE_HOT:
-            # in the case that values are None, we return the bounds
-            # based on the optimization bounds, else we return the true
-            # bounds as this is for model fitting.
-            if values is None:
-                lower = [0.0 for _ in self.categories]
-                upper = [
-                    1.0
-                    if self.allowed[i] is True  # ty: ignore[not-subscriptable]
-                    else 0.0
-                    for i, _ in enumerate(self.categories)
-                ]
-            else:
-                lower = [0.0 for _ in self.categories]
-                upper = [1.0 for _ in self.categories]
-            return lower, upper
-        if transform_type == CategoricalEncodingEnum.DUMMY:
-            lower = [0.0 for _ in range(len(self.categories) - 1)]
-            upper = [1.0 for _ in range(len(self.categories) - 1)]
-            return lower, upper
-        raise ValueError(
-            f"Invalid transform_type {transform_type} provided for categorical {self.key}.",
-        )
+        # bounds are encoding-specific and delegated to the encoder object.
+        if transform_type is None:
+            raise ValueError(
+                f"An encoding must be provided to get bounds for categorical {self.key}.",
+            )
+        return transform_type.get_bounds(
+            self, values
+        )  # ty: ignore[unresolved-attribute]
 
     def __str__(self) -> str:
         """Returns the number of categories as str

@@ -5,12 +5,11 @@ import pandas as pd
 from pydantic.fields import FieldInfo
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.molfeatures.api import AnyMolFeatures
+from bofire.data_models.encodings.api import AnyCategoricalEncoding
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
 
-TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
+TTransform = Union[AnyCategoricalEncoding, ScalerEnum]
 
 
 class Feature(BaseModel):
@@ -50,9 +49,8 @@ class Input(Feature):
         (e.g., ``ge``/``le`` bounds for continuous, ``Literal`` for categorical).
         """
 
-    @staticmethod
     @abstractmethod
-    def valid_transform_types() -> List[Union[CategoricalEncodingEnum, AnyMolFeatures]]:
+    def valid_transform_types(self) -> List:
         pass
 
     @abstractmethod
