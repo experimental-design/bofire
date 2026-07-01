@@ -18,6 +18,7 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.stepwise.stepwise import (
     validate_domain_compatibility,
 )
+from bofire.strategies.stepwise.stepwise import OptimizationComplete
 
 
 def test_validate_domain_compatibility():
@@ -151,7 +152,7 @@ def test_StepWiseStrategy_get_step_invalid():
     )
     strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
-    with pytest.raises(ValueError, match="No condition could be satisfied."):
+    with pytest.raises(OptimizationComplete):
         strategy.get_step()
 
 

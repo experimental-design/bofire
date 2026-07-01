@@ -740,3 +740,237 @@ class Multinormalpdfs(Benchmark):
             index=[0],
         )
         return pd.concat([x_opt, self._f(x_opt)], axis=1)
+
+
+class SixHumpCamel(Benchmark):
+    """Six-Hump Camel function.
+
+    f(x) = (4 - 2.1*x1^2 + x1^4/3)*x1^2 + x1*x2 + (-4 + 4*x2^2)*x2^2
+
+    Domain: x1 in [-3, 3], x2 in [-2, 2].
+    Global minimum: f ≈ -1.0316 at (0.0898, -0.7126) and (-0.0898, 0.7126).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=[-3, 3]),
+                    ContinuousInput(key="x_2", bounds=[-2, 2]),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+            ),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        x1 = X["x_1"].values
+        x2 = X["x_2"].values
+        y = (4 - 2.1 * x1**2 + x1**4 / 3) * x1**2 + x1 * x2 + (-4 + 4 * x2**2) * x2**2
+        return pd.DataFrame({"y": y, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "x_1": [0.0898, -0.0898],
+                "x_2": [-0.7126, 0.7126],
+                "y": [-1.0316284534898, -1.0316284534898],
+                "valid_y": [1, 1],
+            }
+        )
+
+
+class Easom(Benchmark):
+    """Easom function.
+
+    f(x) = -cos(x1)*cos(x2)*exp(-((x1 - pi)^2 + (x2 - pi)^2))
+
+    Domain: [-100, 100]^2.
+    Global minimum: f = -1 at (pi, pi).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=[-100, 100]),
+                    ContinuousInput(key="x_2", bounds=[-100, 100]),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+            ),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        x1 = X["x_1"].values
+        x2 = X["x_2"].values
+        y = -np.cos(x1) * np.cos(x2) * np.exp(-((x1 - np.pi) ** 2 + (x2 - np.pi) ** 2))
+        return pd.DataFrame({"y": y, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {"x_1": [np.pi], "x_2": [np.pi], "y": [-1.0], "valid_y": [1]}
+        )
+
+
+class Rosenbrock(Benchmark):
+    """Rosenbrock function.
+
+    f(x) = sum_{i=1}^{d-1} [100*(x_{i+1} - x_i^2)^2 + (1 - x_i)^2]
+
+    Domain: [-5, 10]^d (default d=2).
+    Global minimum: f = 0 at (1, 1, ..., 1).
+    """
+
+    def __init__(self, dim: PositiveInt = 2, **kwargs):
+        super().__init__(**kwargs)
+        self.dim = dim
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i + 1}", bounds=[-5, 10])
+                    for i in range(dim)
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+            ),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        x = np.column_stack([X[f"x_{i + 1}"].values for i in range(self.dim)])
+        y = np.sum(
+            100.0 * (x[:, 1:] - x[:, :-1] ** 2) ** 2 + (1.0 - x[:, :-1]) ** 2,
+            axis=1,
+        )
+        return pd.DataFrame({"y": y, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        opt = {f"x_{i + 1}": [1.0] for i in range(self.dim)}
+        opt["y"] = [0.0]
+        opt["valid_y"] = [1]
+        return pd.DataFrame(opt)
+
+
+class Booth(Benchmark):
+    """Booth function.
+
+    f(x) = (x1 + 2*x2 - 7)^2 + (2*x1 + x2 - 5)^2
+
+    Domain: [-10, 10]^2.
+    Global minimum: f = 0 at (1, 3).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=[-10, 10]),
+                    ContinuousInput(key="x_2", bounds=[-10, 10]),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+            ),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        x1 = X["x_1"].values
+        x2 = X["x_2"].values
+        y = (x1 + 2 * x2 - 7) ** 2 + (2 * x1 + x2 - 5) ** 2
+        return pd.DataFrame({"y": y, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame({"x_1": [1.0], "x_2": [3.0], "y": [0.0], "valid_y": [1]})
+
+
+class HolderTable(Benchmark):
+    """Holder Table function.
+
+    f(x) = -|sin(x1)*cos(x2)*exp(|1 - sqrt(x1^2 + x2^2)/pi|)|
+
+    Domain: [-10, 10]^2.
+    Global minimum: f ≈ -19.2085 at (±8.05502, ±9.66459).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=[-10, 10]),
+                    ContinuousInput(key="x_2", bounds=[-10, 10]),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+            ),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        x1 = X["x_1"].values
+        x2 = X["x_2"].values
+        y = -np.abs(
+            np.sin(x1) * np.cos(x2) * np.exp(np.abs(1 - np.sqrt(x1**2 + x2**2) / np.pi))
+        )
+        return pd.DataFrame({"y": y, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "x_1": [8.05502, -8.05502, 8.05502, -8.05502],
+                "x_2": [9.66459, 9.66459, -9.66459, -9.66459],
+                "y": [-19.2085] * 4,
+                "valid_y": [1] * 4,
+            }
+        )
+
+
+class CrossInTray(Benchmark):
+    """Cross-in-Tray function.
+
+    f(x) = -0.0001 * (|sin(x1)*sin(x2)*exp(|100 - sqrt(x1^2+x2^2)/pi|)| + 1)^0.1
+
+    Domain: [-10, 10]^2.
+    Global minimum: f ≈ -2.06261 at (±1.3491, ±1.3491).
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=[-10, 10]),
+                    ContinuousInput(key="x_2", bounds=[-10, 10]),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+            ),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        x1 = X["x_1"].values
+        x2 = X["x_2"].values
+        inner = np.abs(
+            np.sin(x1)
+            * np.sin(x2)
+            * np.exp(np.abs(100 - np.sqrt(x1**2 + x2**2) / np.pi))
+        )
+        y = -0.0001 * (inner + 1) ** 0.1
+        return pd.DataFrame({"y": y, "valid_y": 1})
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "x_1": [1.3491, -1.3491, 1.3491, -1.3491],
+                "x_2": [1.3491, 1.3491, -1.3491, -1.3491],
+                "y": [-2.06261] * 4,
+                "valid_y": [1] * 4,
+            }
+        )
