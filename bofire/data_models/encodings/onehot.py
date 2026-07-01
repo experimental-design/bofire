@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, List, Literal, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
@@ -22,21 +23,44 @@ class OneHotEncoding(CategoricalEncoding):
     type: Literal["OneHotEncoding"] = "OneHotEncoding"
     drop_first: bool = False
 
+    def _categories(self, feature: "CategoricalInput") -> list:
+        return feature.categories[1:] if self.drop_first else feature.categories
+
     def get_names(self, feature: "CategoricalInput") -> List[str]:
         from bofire.data_models.features.feature import get_encoded_name
 
-        categories = feature.categories[1:] if self.drop_first else feature.categories
-        return [get_encoded_name(feature.key, c) for c in categories]
+        return [get_encoded_name(feature.key, c) for c in self._categories(feature)]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
-        if self.drop_first:
-            return feature.to_dummy_encoding(values)
-        return feature.to_onehot_encoding(values)
+        return pd.DataFrame(
+            {
+                name: (values == category)
+                for name, category in zip(
+                    self.get_names(feature), self._categories(feature)
+                )
+            },
+            dtype=float,
+            index=values.index,
+        )
 
     def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
+        from bofire.data_models.features.feature import get_encoded_name
+
+        cat_cols = [get_encoded_name(feature.key, c) for c in feature.categories]
+        # for the dropped-first column we only require the remaining columns; it is
+        # reconstructed below. we allow more columns than needed to ease back-transform.
+        required = cat_cols[1:] if self.drop_first else cat_cols
+        if np.any([c not in values.columns for c in required]):
+            raise ValueError(
+                f"{feature.key}: Column names don't match categorical levels: "
+                f"{values.columns}, {required}.",
+            )
         if self.drop_first:
-            return feature.from_dummy_encoding(values)
-        return feature.from_onehot_encoding(values)
+            values = values.copy()
+            values[cat_cols[0]] = 1 - values[cat_cols[1:]].sum(axis=1)
+        s = values[cat_cols].idxmax(1).str[(len(feature.key) + 1) :]
+        s.name = feature.key
+        return s
 
     def get_bounds(
         self,

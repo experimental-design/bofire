@@ -765,9 +765,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     for feat in domain.inputs.get(DiscreteInput)
                 },
                 cat_dims={
-                    features2idx[feat.key][0]: feat.to_ordinal_encoding(
-                        pd.Series(feat.get_allowed_categories())
-                    ).tolist()
+                    features2idx[feat.key][0]: feat.to_encoding(
+                        OrdinalEncoding(), pd.Series(feat.get_allowed_categories())
+                    )[feat.key].tolist()
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
                 },

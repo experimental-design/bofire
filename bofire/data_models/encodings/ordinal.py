@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, List, Literal, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
@@ -24,10 +25,19 @@ class OrdinalEncoding(CategoricalEncoding):
         return [feature.key]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
-        return feature.to_ordinal_encoding(values).to_frame()
+        enc = pd.Series(range(len(feature.categories)), index=list(feature.categories))
+        s = enc[values]
+        s.index = values.index
+        s.name = feature.key
+        return s.to_frame()
 
     def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
-        return feature.from_ordinal_encoding(values[feature.key].astype(int))
+        codes = values[feature.key].astype(int)
+        return pd.Series(
+            np.array(feature.categories)[codes],
+            index=values.index,
+            name=feature.key,
+        )
 
     def get_bounds(
         self,

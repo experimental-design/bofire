@@ -219,7 +219,7 @@ def test_cateogorical_input_is_fulfilled():
 def test_categorical_to_one_hot_encoding(key, categories, samples):
     c = CategoricalInput(key=key, categories=categories)
     samples = pd.Series(samples)
-    t_samples = c.to_onehot_encoding(samples)
+    t_samples = c.to_encoding(OneHotEncoding(), samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
@@ -227,7 +227,7 @@ def test_categorical_to_one_hot_encoding(key, categories, samples):
             columns=[f"{key}_{cat_str}" for cat_str in categories],
         ),
     )
-    untransformed = c.from_onehot_encoding(t_samples)
+    untransformed = c.from_encoding(OneHotEncoding(), t_samples)
     assert np.all(samples == untransformed)
 
 
@@ -248,7 +248,7 @@ def test_categorical_from_one_hot_encoding(key, categories):
         columns=[f"{key}_{cat_str}" for cat_str in categories] + ["misc"],
         data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
     )
-    samples = c.from_onehot_encoding(one_hot_values)
+    samples = c.from_encoding(OneHotEncoding(), one_hot_values)
     assert np.all(samples == pd.Series([categories[0], categories[2]]))
 
 
@@ -266,7 +266,7 @@ def test_categorical_from_one_hot_encoding_invalid():
         ],
     )
     with pytest.raises(ValueError):
-        c.from_onehot_encoding(one_hot_values)
+        c.from_encoding(OneHotEncoding(), one_hot_values)
 
 
 @pytest.mark.parametrize(
@@ -289,7 +289,7 @@ def test_categorical_from_one_hot_encoding_invalid():
 def test_categorical_to_dummy_encoding(key, categories, samples):
     c = CategoricalInput(key=key, categories=categories)
     samples = pd.Series(samples)
-    t_samples = c.to_dummy_encoding(samples)
+    t_samples = c.to_encoding(OneHotEncoding(drop_first=True), samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
@@ -297,7 +297,7 @@ def test_categorical_to_dummy_encoding(key, categories, samples):
             columns=[f"{key}_{cat_str}" for cat_str in categories[1:]],
         ),
     )
-    untransformed = c.from_dummy_encoding(t_samples)
+    untransformed = c.from_encoding(OneHotEncoding(drop_first=True), t_samples)
     assert np.all(samples == untransformed)
 
 
@@ -318,16 +318,16 @@ def test_categorical_from_dummy_encoding(key, categories):
         columns=[f"{key}_{cat_str}" for cat_str in categories[1:]] + ["misc"],
         data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
     )
-    samples = c.from_dummy_encoding(one_hot_values)
+    samples = c.from_encoding(OneHotEncoding(drop_first=True), one_hot_values)
     assert np.all(samples == pd.Series([categories[1], categories[0]]))
 
 
 def test_categorical_to_label_encoding():
     c = CategoricalInput(key="c", categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
-    t_samples = c.to_ordinal_encoding(samples)
-    assert_series_equal(t_samples, pd.Series([1, 1, 2, 0], name="c"))
-    untransformed = c.from_ordinal_encoding(t_samples)
+    t_samples = c.to_encoding(OrdinalEncoding(), samples)
+    assert_series_equal(t_samples["c"], pd.Series([1, 1, 2, 0], name="c"))
+    untransformed = c.from_encoding(OrdinalEncoding(), t_samples)
     assert np.all(samples == untransformed)
 
 
