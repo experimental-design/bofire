@@ -1,7 +1,4 @@
-import importlib
-import inspect
 import os
-from functools import partial
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -38,10 +35,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
-from bofire.data_models.strategies.predictives.acqf_optimization import (
-    CsvProgressCallback,
-    ImportPathCallback,
-)
 from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.domain_repair import (
     LinearProjection,
@@ -53,49 +46,11 @@ from bofire.utils.torch_tools import get_nonlinear_constraints, tkwargs
 def _resolve_ga_callback(
     data_model: GeneticAlgorithmDataModel,
 ) -> Optional[Callable[..., Any]]:
-    """Resolve a runtime callback from the serializable GA data model definition."""
-    callback_spec = data_model.callback
-    if callback_spec is None:
+    """Resolve a runtime callback from GA data model settings."""
+    file_path = data_model.ga_progress_csv_path
+    if file_path is None:
         return None
-
-    if isinstance(callback_spec, CsvProgressCallback):
-        return _make_csv_progress_callback(callback_spec.file_path)
-
-    if not isinstance(callback_spec, ImportPathCallback):
-        raise ValueError(
-            f"Unsupported callback specification type: {type(callback_spec)}"
-        )
-
-    module_name, sep, attr_name = callback_spec.target.rpartition(":")
-    if not sep or not module_name or not attr_name:
-        raise ValueError(
-            "Invalid callback target. Expected format "
-            "'module.submodule:function_name'."
-        )
-
-    module = importlib.import_module(module_name)
-    callback_obj = getattr(module, attr_name, None)
-    if callback_obj is None:
-        raise ValueError(
-            f"Could not resolve callback target {callback_spec.target!r}."
-        )
-    if not callable(callback_obj):
-        raise ValueError(
-            f"Callback target {callback_spec.target!r} is not callable."
-        )
-
-    if callback_spec.kwargs:
-        if inspect.isclass(callback_obj):
-            callback_obj = callback_obj(**callback_spec.kwargs)
-            if not callable(callback_obj):
-                raise ValueError(
-                    f"Callback class target {callback_spec.target!r} did not "
-                    "produce a callable instance."
-                )
-            return callback_obj
-        return partial(callback_obj, **callback_spec.kwargs)
-
-    return callback_obj
+    return _make_csv_progress_callback(file_path)
 
 
 def _make_csv_progress_callback(file_path: str) -> Callable[..., Any]:
@@ -809,12 +764,15 @@ def run_ga(
 
     resolved_callback = callback or _resolve_ga_callback(data_model)
 
+    pymoo_kwargs = {"verbose": verbose}
+    if resolved_callback is not None:
+        pymoo_kwargs["callback"] = resolved_callback
+
     res = pymoo_minimize(
         problem,
         algorithm,
         termination,
-        verbose=verbose,
-        callback=resolved_callback,
+        **pymoo_kwargs,
     )
 
     if callable_format == "torch":

@@ -1,6 +1,6 @@
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
@@ -98,28 +98,6 @@ class LSRBO(LocalSearchConfig):
 
 
 AnyLocalSearchConfig = LSRBO
-
-
-class ImportPathCallback(BaseModel):
-    """Serializable callback definition resolved from a Python import path.
-
-    The callback target must be specified as "module.submodule:function_name".
-    Optional keyword arguments are bound when constructing the runtime callback.
-    """
-
-    type: Literal["ImportPathCallback"] = "ImportPathCallback"
-    target: str
-    kwargs: Dict[str, Any] = Field(default_factory=dict)
-
-
-class CsvProgressCallback(BaseModel):
-    """Built-in GA callback writing per-generation progress to a CSV file."""
-
-    type: Literal["CsvProgressCallback"] = "CsvProgressCallback"
-    file_path: str
-
-
-AnyGACallback = tagged_union(ImportPathCallback, CsvProgressCallback)
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
@@ -282,8 +260,9 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     # verbosity
     verbose: bool = False
 
-    # Optional serializable callback definition resolved at runtime.
-    callback: Optional[AnyGACallback] = None
+    # progress tracking
+    ga_progress_csv_path: Optional[str] = Field(
+        default=None, description="Path to a CSV file where the progress of the genetic algorithm will be saved.")
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         return my_type in [

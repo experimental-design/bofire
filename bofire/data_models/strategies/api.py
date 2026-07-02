@@ -21,8 +21,6 @@ from bofire.data_models.strategies.fractional_factorial import (
 from bofire.data_models.strategies.llm import LLMStrategy
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.acqf_optimization import (
-    CsvProgressCallback,
-    ImportPathCallback,
     LSRBO,
     AcquisitionOptimizer,
     AnyAcqfOptimizer,

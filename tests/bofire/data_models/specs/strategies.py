@@ -173,9 +173,7 @@ specs.add_valid(
             population_size=4,
             n_max_gen=1,
             n_max_evals=20,
-            callback=strategies.ImportPathCallback(
-                target="tests.bofire.strategies.test_utils:_callback_write_generation"
-            ),
+            ga_progress_csv_path="ga_progress_specs.csv",
         ).model_dump(),
         "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
         "outlier_detection_specs": None,
@@ -199,7 +197,7 @@ specs.add_valid(
             population_size=4,
             n_max_gen=1,
             n_max_evals=20,
-            callback=strategies.CsvProgressCallback(file_path="ga_progress_specs.csv"),
+            ga_progress_csv_path="ga_progress_specs_2.csv",
         ).model_dump(),
         "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
         "outlier_detection_specs": None,
