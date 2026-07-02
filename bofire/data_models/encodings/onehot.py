@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
+from bofire.data_models.encodings.naming import get_encoded_name
 
 
 if TYPE_CHECKING:
@@ -27,8 +28,6 @@ class OneHotEncoding(CategoricalEncoding):
         return feature.categories[1:] if self.drop_first else feature.categories
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
-        from bofire.data_models.features.feature import get_encoded_name
-
         return [get_encoded_name(feature.key, c) for c in self._categories(feature)]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
@@ -44,8 +43,6 @@ class OneHotEncoding(CategoricalEncoding):
         )
 
     def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
-        from bofire.data_models.features.feature import get_encoded_name
-
         cat_cols = [get_encoded_name(feature.key, c) for c in feature.categories]
         # for the dropped-first column we only require the remaining columns; it is
         # reconstructed below. we allow more columns than needed to ease back-transform.

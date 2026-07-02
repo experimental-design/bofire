@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
+from bofire.data_models.encodings.naming import get_encoded_name
 
 
 if TYPE_CHECKING:
@@ -36,8 +37,6 @@ class DescriptorEncoding(CategoricalEncoding):
         return list(self.columns)
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
-        from bofire.data_models.features.feature import get_encoded_name
-
         return [get_encoded_name(feature.key, d) for d in self._columns(feature)]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:

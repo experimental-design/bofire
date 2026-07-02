@@ -7,6 +7,7 @@ import pandas as pd
 from pydantic import PrivateAttr
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
+from bofire.data_models.encodings.naming import get_encoded_name
 from bofire.data_models.encodings.reserved import get_reserved_descriptor, is_reserved
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 
@@ -73,8 +74,6 @@ class MolecularEncoding(CategoricalEncoding):
         self.generator._descriptors = self._filtered_cache[smiles]
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
-        from bofire.data_models.features.feature import get_encoded_name
-
         self._prepare(feature)
         return [
             get_encoded_name(feature.key, d)
