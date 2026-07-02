@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -666,6 +666,7 @@ def run_ga(
     n_obj: Optional[int] = None,
     verbose: bool = False,
     optimization_direction: Literal["min", "max"] = "max",
+    callback: Optional[Callable[..., Any]] = None,
 ) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
     """Convenience function to minimize one or multiple objective functions using a genetic algorithm.
 
@@ -699,6 +700,8 @@ def run_ga(
             Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
             must be set to the sum of the number of outputs of each callable.
         verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
+        callback (Optional[Callable[..., Any]], optional): Callback passed to `pymoo.optimize.minimize`.
+            The callback is invoked by pymoo during optimization. Defaults to None.
 
     Returns
         x_opt (Union[Tensor, pd.DataFrame]): optimized experiments
@@ -717,7 +720,13 @@ def run_ga(
         optimization_direction=optimization_direction,
     )
 
-    res = pymoo_minimize(problem, algorithm, termination, verbose=verbose)
+    res = pymoo_minimize(
+        problem,
+        algorithm,
+        termination,
+        verbose=verbose,
+        callback=callback,
+    )
 
     if callable_format == "torch":
         # transform the result to the numeric domain

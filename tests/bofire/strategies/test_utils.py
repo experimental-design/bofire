@@ -14,6 +14,7 @@ from bofire.data_models.domain import api as data_models_domain
 from bofire.data_models.features import api as data_models_features
 from bofire.data_models.strategies import api as data_models_strategies
 from bofire.strategies.utils import GaMixedDomainHandler, LinearProjectionPymooRepair
+from bofire.strategies.utils import run_ga
 from bofire.utils.torch_tools import get_linear_constraints
 
 
@@ -285,3 +286,36 @@ class TestLinearProjection:
             # check that the min_count is met
             n_non_zero = (xr[i, :] > 1e-5).sum()
             assert n_non_zero >= min_count
+
+
+def test_run_ga_callback_writes_file(tmp_path):
+    domain = data_models_domain.Domain(
+        inputs=[data_models_features.ContinuousInput(key="x", bounds=(0.0, 1.0))],
+        constraints=[],
+    )
+    optimizer = data_models_strategies.GeneticAlgorithmOptimizer(
+        population_size=4,
+        n_max_gen=1,
+        n_max_evals=20,
+    )
+    callback_path = tmp_path / "ga_callback.txt"
+
+    def _objective(x):
+        return -x[:, 0, 0].reshape(-1)
+
+    def _callback(algorithm):
+        callback_path.write_text(f"generation={algorithm.n_gen}\n", encoding="utf-8")
+
+    x_opt, f_opt = run_ga(
+        data_model=optimizer,
+        domain=domain,
+        objective_callables=[_objective],
+        q=1,
+        callable_format="torch",
+        callback=_callback,
+    )
+
+    assert callback_path.exists()
+    content = callback_path.read_text(encoding="utf-8").strip()
+    assert content.startswith("generation=")
+    callback_path.unlink()
