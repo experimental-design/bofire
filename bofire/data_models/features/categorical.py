@@ -16,6 +16,12 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 from pydantic.fields import FieldInfo
 
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    MolecularEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.encodings.reserved import get_reserved_descriptor, is_reserved
 from bofire.data_models.features.feature import Input, Output, TTransform
 from bofire.data_models.objectives.api import AnyCategoricalObjective
@@ -184,13 +190,6 @@ class CategoricalInput(Input):
         columns for ``DescriptorEncoding``, a structure column for
         ``MolecularEncoding``).
         """
-        from bofire.data_models.encodings.api import (
-            DescriptorEncoding,
-            MolecularEncoding,
-            OneHotEncoding,
-            OrdinalEncoding,
-        )
-
         types: List = [OneHotEncoding, OrdinalEncoding]
         if self.descriptor_columns(role="descriptor"):
             types.append(DescriptorEncoding)

@@ -3,11 +3,17 @@
 Old serialized surrogates stored ``categorical_encodings`` / ``input_preprocessing_specs``
 values as enum strings (``"ONE_HOT"``/``"DUMMY"``/``"ORDINAL"``/``"DESCRIPTOR"``) or as bare
 molecular features. These are migrated to the encoder objects on load, with a single
-``DeprecationWarning`` per spec map. Import-light (no ``features`` import) to avoid cycles.
+``DeprecationWarning`` per spec map.
 """
 
 import warnings
 from typing import Any, Dict
+
+from bofire.data_models.encodings.descriptors import DescriptorEncoding
+from bofire.data_models.encodings.molecular import MolecularEncoding
+from bofire.data_models.encodings.onehot import OneHotEncoding
+from bofire.data_models.encodings.ordinal import OrdinalEncoding
+from bofire.data_models.molfeatures.molfeatures import MolFeatures
 
 
 _MOLFEATURE_TYPES = {
@@ -24,12 +30,6 @@ def _migrate_value(value: Any) -> Any:
     A migrated value is always a new object, so callers can detect migration via
     identity (``migrated is not original``).
     """
-    from bofire.data_models.encodings.descriptors import DescriptorEncoding
-    from bofire.data_models.encodings.molecular import MolecularEncoding
-    from bofire.data_models.encodings.onehot import OneHotEncoding
-    from bofire.data_models.encodings.ordinal import OrdinalEncoding
-    from bofire.data_models.molfeatures.molfeatures import MolFeatures
-
     legacy = {
         "ONE_HOT": OneHotEncoding,
         "DUMMY": lambda: OneHotEncoding(drop_first=True),
