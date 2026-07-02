@@ -26,6 +26,10 @@ class PredictiveStrategy(Strategy):
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
     """
 
+    # Narrow the base ``Strategy._data_model`` annotation to the predictive data
+    # model so type checkers know it carries e.g. ``convergence_criterion``.
+    _data_model: DataModel
+
     def __init__(
         self,
         data_model: DataModel,
