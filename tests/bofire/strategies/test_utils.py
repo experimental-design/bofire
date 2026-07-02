@@ -13,8 +13,11 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain import api as data_models_domain
 from bofire.data_models.features import api as data_models_features
 from bofire.data_models.strategies import api as data_models_strategies
-from bofire.strategies.utils import GaMixedDomainHandler, LinearProjectionPymooRepair
-from bofire.strategies.utils import run_ga
+from bofire.strategies.utils import (
+    GaMixedDomainHandler,
+    LinearProjectionPymooRepair,
+    run_ga,
+)
 from bofire.utils.torch_tools import get_linear_constraints
 
 

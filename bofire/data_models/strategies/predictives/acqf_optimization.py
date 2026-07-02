@@ -262,7 +262,9 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
 
     # progress tracking
     ga_progress_csv_path: Optional[str] = Field(
-        default=None, description="Path to a CSV file where the progress of the genetic algorithm will be saved.")
+        default=None,
+        description="Path to a CSV file where the progress of the genetic algorithm will be saved.",
+    )
 
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
         return my_type in [
