@@ -16,7 +16,7 @@ import bofire.surrogates.api as surrogates
 from bofire.benchmarks.multi import CrossCoupling
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.domain.api import Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.surrogates.api import (
     AnySurrogate,
     EmpiricalSurrogate,
@@ -292,7 +292,7 @@ experiments.head(10)
 surrogate_data = MixedSingleTaskGPSurrogate(
     inputs=benchmark.domain.inputs,
     outputs=Outputs(features=[benchmark.domain.outputs.features[0]]),
-    categorical_encodings={"catalyst": CategoricalEncodingEnum.ORDINAL},
+    categorical_encodings={"catalyst": OrdinalEncoding()},
 )
 
 # we generate the json spec

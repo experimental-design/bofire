@@ -141,6 +141,8 @@ class CategoricalInput(Input):
 
     def _extra_description_parts(self) -> List[str]:
         """Optional extras appended after the prefix, before context."""
+        if self.descriptors:
+            return [f"descriptors: {list(self.descriptors)}"]
         return []
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:

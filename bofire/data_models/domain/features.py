@@ -675,7 +675,12 @@ class Inputs(_BaseFeatures[AnyInput]):
         for feat in self.get():
             s = experiments[feat.key]
             spec = specs.get(feat.key)
-            transformed.append(s if spec is None else spec.encode(feat, s))
+            if spec is None:
+                transformed.append(s)
+            else:
+                # only categorical features carry an encoding
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_encoding(spec, s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -704,11 +709,12 @@ class Inputs(_BaseFeatures[AnyInput]):
                 transformed.append(feat.from_continuous(experiments))
                 continue
             spec = specs.get(feat.key)
-            transformed.append(
-                experiments[feat.key]
-                if spec is None
-                else spec.decode(feat, experiments)
-            )
+            if spec is None:
+                transformed.append(experiments[feat.key])
+            else:
+                # only categorical features carry an encoding
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.from_encoding(spec, experiments))
         return pd.concat(transformed, axis=1)
 
     def _validate_transform_specs(

@@ -385,7 +385,10 @@ def test_categorical_descriptor_input_to_pydantic_field():
         values=[[1.0, 2.0], [3.0, 4.0]],
     )
     _, field_info = feat.to_pydantic_field()
-    assert field_info.description == "Categorical, allowed: ['a', 'b']"
+    assert (
+        field_info.description
+        == "Categorical, allowed: ['a', 'b'] — descriptors: ['d1', 'd2']"
+    )
 
 
 def test_continuous_descriptor_input_to_pydantic_field():

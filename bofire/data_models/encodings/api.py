@@ -1,4 +1,5 @@
 from bofire.data_models.encodings.descriptors import DescriptorEncoding
+from bofire.data_models.encodings.encoding import CategoricalEncoding
 from bofire.data_models.encodings.molecular import MolecularEncoding
 from bofire.data_models.encodings.onehot import OneHotEncoding
 from bofire.data_models.encodings.ordinal import OrdinalEncoding
@@ -13,3 +14,12 @@ _ENCODING_TYPES = [
 ]
 
 AnyCategoricalEncoding = tagged_union(*_ENCODING_TYPES)
+
+__all__ = [
+    "AnyCategoricalEncoding",
+    "CategoricalEncoding",
+    "DescriptorEncoding",
+    "MolecularEncoding",
+    "OneHotEncoding",
+    "OrdinalEncoding",
+]

@@ -1,9 +1,10 @@
 """Molecular encoding: generate descriptors from a feature's SMILES column."""
 
-from typing import TYPE_CHECKING, List, Literal, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pydantic import PrivateAttr
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
 from bofire.data_models.encodings.reserved import get_reserved_descriptor, is_reserved
@@ -30,6 +31,12 @@ class MolecularEncoding(CategoricalEncoding):
     structure: str = "smiles"
     generator: AnyMolFeatures
 
+    # correlation filtering result cached per SMILES-set, so reusing one encoding
+    # across features never leaks feature A's filtered descriptors into feature B.
+    _filtered_cache: Dict[tuple, Optional[List[str]]] = PrivateAttr(
+        default_factory=dict
+    )
+
     def _structure_column(self, feature: "CategoricalInput") -> List[str]:
         if self.structure not in feature.descriptors:
             raise ValueError(
@@ -50,11 +57,20 @@ class MolecularEncoding(CategoricalEncoding):
         return dict(zip(feature.categories, self._structure_column(feature)))
 
     def _prepare(self, feature: "CategoricalInput") -> None:
-        """Run correlation filtering once (cached on the generator)."""
-        if self.generator._descriptors is None:
-            self.generator.remove_correlated_descriptors(
-                self._structure_column(feature)
-            )
+        """Ensure the generator reflects THIS feature's SMILES set.
+
+        Correlation filtering is cached per SMILES-set: reusing one
+        ``MolecularEncoding`` across features with different molecules no longer
+        leaks the first feature's filtered descriptor set into the others.
+        """
+        smiles = tuple(self._structure_column(feature))
+        if smiles not in self._filtered_cache:
+            # reset any stale filter state, then compute for this SMILES set
+            self.generator._descriptors = None
+            self.generator.remove_correlated_descriptors(list(smiles))
+            self._filtered_cache[smiles] = self.generator._descriptors
+        # point the generator at this feature's descriptor set before any use
+        self.generator._descriptors = self._filtered_cache[smiles]
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
         from bofire.data_models.features.feature import get_encoded_name
