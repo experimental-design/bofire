@@ -6,10 +6,15 @@ from pydantic import field_validator
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import Output
 from bofire.data_models.objectives.api import Objective
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.strategy import Strategy
 
 
 class PredictiveStrategy(Strategy):
+    convergence_criterion: AnyConvergenceCriterion | None = None
+
     @field_validator("domain")
     @classmethod
     def validate_objectives(cls, domain: Domain):

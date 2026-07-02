@@ -289,7 +289,6 @@ specs.add_valid(
         "n_thinning": 32,
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
         "sampler_kwargs": {},
-        "convergence_criterion": None,
     },
 )
 
@@ -300,7 +299,6 @@ specs.add_valid(
         "seed": 42,
         "fallback_sampling_method": SamplingMethodEnum.SOBOL,
         "sampler_kwargs": {"scramble": True},
-        "convergence_criterion": None,
     },
 )
 
@@ -311,7 +309,6 @@ specs.add_valid(
         "seed": 42,
         "fallback_sampling_method": SamplingMethodEnum.LHS,
         "sampler_kwargs": {"scramble": True, "strength": 2},
-        "convergence_criterion": None,
     },
 )
 
@@ -341,7 +338,6 @@ for criterion in [
                     "use_hessian": False,
                     "use_cyipopt": use_cyipopt,
                     "return_fixed_candidates": False,
-                    "convergence_criterion": None,
                 },
             )
 
@@ -359,7 +355,6 @@ for use_cyipopt in [True, False, None]:
             "use_hessian": False,
             "use_cyipopt": use_cyipopt,
             "return_fixed_candidates": False,
-            "convergence_criterion": None,
         },
     )
 
@@ -395,7 +390,6 @@ specs.add_valid(
             ).model_dump(),
         ],
         "seed": 42,
-        "convergence_criterion": None,
     },
 )
 
@@ -412,7 +406,6 @@ specs.add_valid(
             ),
         ).model_dump(),
         "seed": 42,
-        "convergence_criterion": None,
     },
 )
 
@@ -455,7 +448,6 @@ specs.add_valid(
         "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
         "end": {"a": 0.2, "b": 0.7, "c": 0.1, "d": "b"},
         "atol": 1e-6,
-        "convergence_criterion": None,
     },
 )
 
@@ -795,7 +787,6 @@ specs.add_valid(
         "n_generators": 0,
         "generator": "",
         "randomize_runorder": False,
-        "convergence_criterion": None,
     },
 )
 
@@ -1051,7 +1042,6 @@ specs.add_valid(
         "n_recent_experiments": None,
         "n_top_experiments": None,
         "system_prompt": None,
-        "convergence_criterion": None,
     },
 )
 
@@ -1073,7 +1063,6 @@ specs.add_valid(
         "n_recent_experiments": 10,
         "n_top_experiments": 5,
         "system_prompt": "You are a helpful assistant.",
-        "convergence_criterion": None,
     },
 )
 

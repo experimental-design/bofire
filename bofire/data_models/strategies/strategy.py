@@ -7,16 +7,12 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import Feature
-from bofire.data_models.strategies.convergence_criteria.api import (
-    AnyConvergenceCriterion,
-)
 
 
 class Strategy(BaseModel):
     type: Any
     domain: Domain
     seed: Optional[Annotated[int, Field(ge=0)]] = None
-    convergence_criterion: Optional[AnyConvergenceCriterion] = None
 
     @model_validator(mode="after")
     def validate_constraints(self):

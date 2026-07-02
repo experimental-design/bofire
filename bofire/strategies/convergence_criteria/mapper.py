@@ -41,7 +41,7 @@ def register(
 
         # Decorator form
         @register(MyConvergenceCriterion)
-        def evaluate_my_criterion(criterion, strategy, surrogates):
+        def evaluate_my_criterion(criterion, strategy):
             return ...
 
         # Direct call form
@@ -49,11 +49,12 @@ def register(
 
     Args:
         data_model_cls: The Pydantic convergence criterion data model class.
-        evaluator: A callable that takes ``(criterion, strategy, surrogates)``
-            and returns whether the strategy is considered converged. It must be
-            a pure function of the criterion and the strategy's recorded history
-            and must not keep internal state between calls. If not provided,
-            returns a decorator.
+        evaluator: A callable that takes ``(criterion, strategy)`` and returns
+            whether the strategy is considered converged. It must be a pure
+            function of the criterion and the strategy's recorded history and
+            must not keep internal state between calls. If the criterion needs
+            the strategy's surrogate model(s), it reads them from the strategy.
+            If not provided, returns a decorator.
 
     Returns:
         The evaluator function (unchanged) when used as a decorator, None
@@ -81,8 +82,8 @@ def map(criterion: ConvergenceCriterion) -> Callable[..., bool]:
     This is used at strategy creation time to bind the evaluator to the
     strategy, so the strategy does not need to dispatch on the criterion type
     when checking for convergence. The returned evaluator is called with
-    ``(criterion, strategy, surrogates)`` and returns whether the strategy is
-    considered converged.
+    ``(criterion, strategy)`` and returns whether the strategy is considered
+    converged.
 
     Args:
         criterion: The convergence criterion data model to map.

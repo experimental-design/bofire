@@ -11,19 +11,19 @@ def _all_subclasses(cls: type):
 
 
 def _rebuild_dependent_models() -> None:
-    """Patch the ``convergence_criterion`` field on all strategy models.
+    """Patch the ``convergence_criterion`` field on all predictive strategy models.
 
-    The convergence criterion is an (optional) field on the base ``Strategy``
-    data model and therefore inherited by every concrete strategy. To make a
-    newly registered criterion acceptable, the field annotation on the base
-    model and all of its subclasses is patched to the rebuilt
+    The convergence criterion is an (optional) field on the ``PredictiveStrategy``
+    data model and therefore inherited by every concrete predictive strategy. To
+    make a newly registered criterion acceptable, the field annotation on the
+    base model and all of its subclasses is patched to the rebuilt
     ``AnyConvergenceCriterion`` union and the models are rebuilt.
     """
     import bofire.data_models.strategies.convergence_criteria.api as cc_api
     from bofire.data_models._register_utils import patch_field
-    from bofire.data_models.strategies.strategy import Strategy
+    from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 
-    for model_cls in [Strategy, *_all_subclasses(Strategy)]:
+    for model_cls in [PredictiveStrategy, *_all_subclasses(PredictiveStrategy)]:
         if "convergence_criterion" in model_cls.model_fields:
             patch_field(
                 model_cls,
@@ -38,8 +38,8 @@ def register_convergence_criterion(data_model_cls: type) -> None:
 
     This appends the type to the internal registry, rebuilds the
     ``AnyConvergenceCriterion`` union, and patches/rebuilds the
-    ``convergence_criterion`` field on the base ``Strategy`` and all of its
-    subclasses so that Pydantic accepts the new type.
+    ``convergence_criterion`` field on the base ``PredictiveStrategy`` and all of
+    its subclasses so that Pydantic accepts the new type.
 
     Args:
         data_model_cls: A concrete subclass of ``ConvergenceCriterion``.

@@ -5,7 +5,7 @@ import bofire.strategies.api as strategies
 import bofire.strategies.convergence_criteria.api as convergence_criteria
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.strategies.api import (
-    RandomStrategy,
+    SoboStrategy,
     StrategyHasConvergedCondition,
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
@@ -18,7 +18,11 @@ from bofire.data_models.strategies.convergence_criteria.api import (
 
 
 def _strategy_with_experiments(criterion, points, y):
-    """Build a RandomStrategy on Himmelblau and tell it crafted experiments.
+    """Build a SoboStrategy on Himmelblau and tell it crafted experiments.
+
+    Convergence criteria only apply to ``PredictiveStrategy``s. The built-in
+    criteria only read the recorded experiments, so the surrogate model is not
+    fitted here (``retrain=False``) to keep the tests fast.
 
     Args:
         criterion: convergence criterion to attach to the strategy.
@@ -30,9 +34,9 @@ def _strategy_with_experiments(criterion, points, y):
     experiments["y"] = y
     experiments["valid_y"] = 1
     strategy = strategies.map(
-        RandomStrategy(domain=domain, convergence_criterion=criterion)
+        SoboStrategy(domain=domain, convergence_criterion=criterion)
     )
-    strategy.tell(experiments)
+    strategy.tell(experiments, retrain=False)
     return strategy
 
 
@@ -45,19 +49,9 @@ def test_convergence_criterion_serialization_roundtrip():
         assert reconstructed == criterion
 
 
-def test_convergence_criterion_requires_surrogate():
-    assert (
-        ObjectiveImprovementCriterion(
-            min_improvement=1e-2, n_lookback=5
-        ).requires_surrogate
-        is False
-    )
-    assert ProposalDeviationCriterion(threshold=1e-3).requires_surrogate is False
-
-
 def test_has_converged_without_convergence_criterion():
     domain = Himmelblau().domain
-    strategy = strategies.map(RandomStrategy(domain=domain))
+    strategy = strategies.map(SoboStrategy(domain=domain))
     assert strategy.has_converged() is False
 
 
@@ -129,23 +123,24 @@ def test_has_converged_requires_missing_surrogate():
     class _SurrogateRequiringCriterion(convergence_data_models_ConvergenceCriterion):
         type: Literal["_SurrogateRequiringCriterion"] = "_SurrogateRequiringCriterion"
 
-        @property
-        def requires_surrogate(self) -> bool:
-            return True
+    def _evaluate(criterion, strategy):
+        # A custom criterion may access the strategy's surrogate model(s)
+        # directly; here we simply assert that a fitted strategy exposes them.
+        assert strategy.surrogates is not None
+        return True
 
-    convergence_criteria.register(
-        _SurrogateRequiringCriterion, lambda criterion, strategy, surrogates: True
-    )
+    convergence_criteria.register(_SurrogateRequiringCriterion, _evaluate)
 
-    domain = Himmelblau().domain
+    benchmark = Himmelblau()
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     strategy = strategies.map(
-        RandomStrategy(
-            domain=domain,
+        SoboStrategy(
+            domain=benchmark.domain,
             convergence_criterion=_SurrogateRequiringCriterion(),
         )
     )
-    with pytest.raises(ValueError, match="requires a surrogate model"):
-        strategy.has_converged()
+    strategy.tell(experiments)
+    assert strategy.has_converged() is True
 
 
 def test_map_unregistered_convergence_criterion():
@@ -184,7 +179,7 @@ def test_register_custom_convergence_criterion():
     calls = {}
 
     @convergence_criteria.register(_CustomConvergenceCriterion)
-    def _evaluate(criterion, strategy, surrogates):
+    def _evaluate(criterion, strategy):
         calls["hit"] = True
         return True
 
@@ -192,7 +187,7 @@ def test_register_custom_convergence_criterion():
     # and its evaluator is bound to the strategy and used by has_converged().
     domain = Himmelblau().domain
     strategy = strategies.map(
-        RandomStrategy(
+        SoboStrategy(
             domain=domain,
             convergence_criterion=_CustomConvergenceCriterion(),
         )

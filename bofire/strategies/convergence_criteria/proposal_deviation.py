@@ -33,22 +33,18 @@ from bofire.data_models.strategies.convergence_criteria.api import (
 
 
 if TYPE_CHECKING:
-    from bofire.strategies.strategy import Strategy
-    from bofire.surrogates.botorch_surrogates import BotorchSurrogates
+    from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
 def evaluate_proposal_deviation_criterion(
     criterion: ProposalDeviationCriterion,
-    strategy: "Strategy",
-    surrogates: "BotorchSurrogates | None",
+    strategy: "PredictiveStrategy",
 ) -> bool:
     """Evaluate whether consecutive proposals stopped moving.
 
     Args:
         criterion: The convergence criterion data model with its parameters.
         strategy: The functional strategy providing the recorded experiments.
-        surrogates: The fitted surrogate model(s) of the strategy. Not used by
-            this criterion, as it is evaluated on the observed data alone.
 
     Returns:
         bool: True if the last ``n_consecutive`` normalized deviations are all
