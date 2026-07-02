@@ -7,7 +7,7 @@ import pandas as pd
 from pydantic import PositiveInt
 from typing_extensions import Self
 
-import bofire.convergence_criteria.api as convergence_criteria
+import bofire.strategies.convergence_criteria.api as convergence_criteria
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel

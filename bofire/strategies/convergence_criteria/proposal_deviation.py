@@ -26,8 +26,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bofire.data_models.convergence_criteria.api import ProposalDeviationCriterion
 from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ProposalDeviationCriterion,
+)
 
 
 if TYPE_CHECKING:

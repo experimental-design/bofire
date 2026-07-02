@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import PositiveFloat, PositiveInt
 
-from bofire.data_models.convergence_criteria.convergence_criterion import (
+from bofire.data_models.strategies.convergence_criteria.convergence_criterion import (
     ConvergenceCriterion,
 )
 

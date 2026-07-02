@@ -1,10 +1,10 @@
 """Mapping and registration of strategy convergence criteria.
 
 This module wires convergence criterion data models (see
-:mod:`bofire.data_models.convergence_criteria`) to their functional evaluators.
-The evaluators themselves live in dedicated per-criterion modules (e.g.
-:mod:`bofire.convergence_criteria.objective_improvement`); this module only holds
-the registry and the ``map`` / ``register`` machinery.
+:mod:`bofire.data_models.strategies.convergence_criteria`) to their functional
+evaluators. The evaluators themselves live in dedicated per-criterion modules
+(e.g. :mod:`bofire.strategies.convergence_criteria.objective_improvement`); this
+module only holds the registry and the ``map`` / ``register`` machinery.
 
 Custom criteria can be added at runtime via :func:`register`, which registers
 both the data model (so it is accepted in strategy ``convergence_criterion``
@@ -13,14 +13,14 @@ fields) and its evaluator.
 
 from typing import Callable, Optional, Type
 
-import bofire.data_models.convergence_criteria.api as data_models
-from bofire.convergence_criteria.objective_improvement import (
+import bofire.data_models.strategies.convergence_criteria.api as data_models
+from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
+from bofire.strategies.convergence_criteria.objective_improvement import (
     evaluate_objective_improvement_criterion,
 )
-from bofire.convergence_criteria.proposal_deviation import (
+from bofire.strategies.convergence_criteria.proposal_deviation import (
     evaluate_proposal_deviation_criterion,
 )
-from bofire.data_models.convergence_criteria.api import ConvergenceCriterion
 
 
 CONVERGENCE_MAP: dict[type[ConvergenceCriterion], Callable[..., bool]] = {

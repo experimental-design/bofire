@@ -5,9 +5,11 @@ from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
-from bofire.data_models.convergence_criteria.api import AnyConvergenceCriterion
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import Feature
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 
 
 class Strategy(BaseModel):

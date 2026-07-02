@@ -27,9 +27,10 @@ class ConvergenceCriterion(BaseModel):
       ``StrategyHasConvergedCondition`` bridge.
 
     The data model only holds the parameters; the actual convergence logic is
-    implemented in the functional layer (see ``bofire.convergence_criteria``).
+    implemented in the functional layer (see
+    ``bofire.strategies.convergence_criteria``).
     Custom criteria can be added via
-    :func:`bofire.convergence_criteria.api.register`.
+    :func:`bofire.strategies.convergence_criteria.api.register`.
     """
 
     type: Any

@@ -1,17 +1,19 @@
 import pandas as pd
 import pytest
 
-import bofire.convergence_criteria.api as convergence_criteria
-import bofire.data_models.convergence_criteria.api as convergence_data_models
 import bofire.strategies.api as strategies
+import bofire.strategies.convergence_criteria.api as convergence_criteria
 from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.convergence_criteria.api import (
-    ObjectiveImprovementCriterion,
-    ProposalDeviationCriterion,
-)
 from bofire.data_models.strategies.api import (
     RandomStrategy,
     StrategyHasConvergedCondition,
+)
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ConvergenceCriterion as convergence_data_models_ConvergenceCriterion,
+)
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ObjectiveImprovementCriterion,
+    ProposalDeviationCriterion,
 )
 
 
@@ -124,7 +126,7 @@ def test_proposal_deviation_not_enough_experiments():
 def test_has_converged_requires_missing_surrogate():
     from typing import Literal
 
-    class _SurrogateRequiringCriterion(convergence_data_models.ConvergenceCriterion):
+    class _SurrogateRequiringCriterion(convergence_data_models_ConvergenceCriterion):
         type: Literal["_SurrogateRequiringCriterion"] = "_SurrogateRequiringCriterion"
 
         @property
@@ -147,7 +149,7 @@ def test_has_converged_requires_missing_surrogate():
 
 
 def test_map_unregistered_convergence_criterion():
-    class _UnknownCriterion(convergence_data_models.ConvergenceCriterion):
+    class _UnknownCriterion(convergence_data_models_ConvergenceCriterion):
         type: str = "_UnknownCriterion"
 
     with pytest.raises(KeyError, match="No convergence evaluator registered"):
@@ -176,7 +178,7 @@ def test_strategy_has_converged_condition_evaluate():
 def test_register_custom_convergence_criterion():
     from typing import Literal
 
-    class _CustomConvergenceCriterion(convergence_data_models.ConvergenceCriterion):
+    class _CustomConvergenceCriterion(convergence_data_models_ConvergenceCriterion):
         type: Literal["_CustomConvergenceCriterion"] = "_CustomConvergenceCriterion"
 
     calls = {}

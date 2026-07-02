@@ -19,7 +19,7 @@ def _rebuild_dependent_models() -> None:
     model and all of its subclasses is patched to the rebuilt
     ``AnyConvergenceCriterion`` union and the models are rebuilt.
     """
-    import bofire.data_models.convergence_criteria.api as cc_api
+    import bofire.data_models.strategies.convergence_criteria.api as cc_api
     from bofire.data_models._register_utils import patch_field
     from bofire.data_models.strategies.strategy import Strategy
 
@@ -48,7 +48,7 @@ def register_convergence_criterion(data_model_cls: type) -> None:
         ValueError: If a different convergence criterion with the same ``type``
             discriminator is already registered.
     """
-    import bofire.data_models.convergence_criteria.api as cc_api
+    import bofire.data_models.strategies.convergence_criteria.api as cc_api
     from bofire.data_models._register_utils import register_into
 
     if not register_into(

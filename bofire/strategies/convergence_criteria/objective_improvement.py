@@ -25,7 +25,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bofire.data_models.convergence_criteria.api import ObjectiveImprovementCriterion
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ObjectiveImprovementCriterion,
+)
 
 
 if TYPE_CHECKING:
