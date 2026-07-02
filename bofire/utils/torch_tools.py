@@ -18,7 +18,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.encodings.api import AnyCategoricalEncoding
+from bofire.data_models.encodings.api import AnyCategoricalEncoding, OrdinalEncoding
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -1078,7 +1078,10 @@ def get_NumericToCategorical_input_transform(
             transform_specs[feat.key],
         )
         for feat in inputs.get(CategoricalInput)
-        if feat.key in transform_specs and not transform_specs[feat.key].is_identity
+        # ordinal is the pre-model passthrough; it is expanded to the target
+        # encoding inside the model, all other encodings are built here.
+        if feat.key in transform_specs
+        and not isinstance(transform_specs[feat.key], OrdinalEncoding)
     }
     if len(encoders) > 0:
         return NumericToCategoricalEncoding(

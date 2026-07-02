@@ -17,10 +17,6 @@ class OrdinalEncoding(CategoricalEncoding):
 
     type: Literal["OrdinalEncoding"] = "OrdinalEncoding"
 
-    @property
-    def is_identity(self) -> bool:
-        return True
-
     def get_names(self, feature: "CategoricalInput") -> List[str]:
         return [feature.key]
 

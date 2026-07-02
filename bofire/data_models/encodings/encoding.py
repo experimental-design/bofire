@@ -24,16 +24,6 @@ class CategoricalEncoding(BaseModel):
 
     type: Any
 
-    @property
-    def is_identity(self) -> bool:
-        """Whether this is the ordinal passthrough that stays as-is pre-model.
-
-        Botorch-based surrogates encode categoricals to ordinal *before* the model
-        and expand them to the target encoding *inside* the model. The identity
-        (ordinal) encoding is the one that must not be expanded again.
-        """
-        return False
-
     @abstractmethod
     def get_names(self, feature: "CategoricalInput") -> List[str]:
         """Final (encoded) column names produced for ``feature``."""
