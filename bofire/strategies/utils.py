@@ -1,3 +1,6 @@
+import importlib
+import inspect
+from functools import partial
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
@@ -40,6 +43,46 @@ from bofire.utils.domain_repair import (
     default_input_preprocessing_specs,
 )
 from bofire.utils.torch_tools import get_nonlinear_constraints, tkwargs
+
+
+def _resolve_ga_callback(
+    data_model: GeneticAlgorithmDataModel,
+) -> Optional[Callable[..., Any]]:
+    """Resolve a runtime callback from the serializable GA data model definition."""
+    callback_spec = data_model.callback
+    if callback_spec is None:
+        return None
+
+    module_name, sep, attr_name = callback_spec.target.rpartition(":")
+    if not sep or not module_name or not attr_name:
+        raise ValueError(
+            "Invalid callback target. Expected format "
+            "'module.submodule:function_name'."
+        )
+
+    module = importlib.import_module(module_name)
+    callback_obj = getattr(module, attr_name, None)
+    if callback_obj is None:
+        raise ValueError(
+            f"Could not resolve callback target {callback_spec.target!r}."
+        )
+    if not callable(callback_obj):
+        raise ValueError(
+            f"Callback target {callback_spec.target!r} is not callable."
+        )
+
+    if callback_spec.kwargs:
+        if inspect.isclass(callback_obj):
+            callback_obj = callback_obj(**callback_spec.kwargs)
+            if not callable(callback_obj):
+                raise ValueError(
+                    f"Callback class target {callback_spec.target!r} did not "
+                    "produce a callable instance."
+                )
+            return callback_obj
+        return partial(callback_obj, **callback_spec.kwargs)
+
+    return callback_obj
 
 
 class GaMixedDomainHandler:
@@ -720,12 +763,14 @@ def run_ga(
         optimization_direction=optimization_direction,
     )
 
+    resolved_callback = callback or _resolve_ga_callback(data_model)
+
     res = pymoo_minimize(
         problem,
         algorithm,
         termination,
         verbose=verbose,
-        callback=callback,
+        callback=resolved_callback,
     )
 
     if callable_format == "torch":

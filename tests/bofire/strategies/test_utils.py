@@ -18,6 +18,11 @@ from bofire.strategies.utils import run_ga
 from bofire.utils.torch_tools import get_linear_constraints
 
 
+def _callback_write_generation(algorithm, path: str):
+    with open(path, "w", encoding="utf-8") as file:
+        file.write(f"generation={algorithm.n_gen}\n")
+
+
 @pytest.fixture
 def domain_handler(optimizer_benchmark) -> GaMixedDomainHandler:
     """Fixture to provide a problem and algorithm for testing."""
@@ -319,3 +324,42 @@ def test_run_ga_callback_writes_file(tmp_path):
     content = callback_path.read_text(encoding="utf-8").strip()
     assert content.startswith("generation=")
     callback_path.unlink()
+    assert not callback_path.exists()
+    assert x_opt.shape == (1, 1)
+    assert f_opt.shape == (1,)
+
+
+def test_run_ga_callback_from_data_model_definition(tmp_path):
+    domain = data_models_domain.Domain(
+        inputs=[data_models_features.ContinuousInput(key="x", bounds=(0.0, 1.0))],
+        constraints=[],
+    )
+    callback_path = tmp_path / "ga_callback_from_model.txt"
+    optimizer = data_models_strategies.GeneticAlgorithmOptimizer(
+        population_size=4,
+        n_max_gen=1,
+        n_max_evals=20,
+        callback=data_models_strategies.ImportPathCallback(
+            target="tests.bofire.strategies.test_utils:_callback_write_generation",
+            kwargs={"path": str(callback_path)},
+        ),
+    )
+
+    def _objective(x):
+        return -x[:, 0, 0].reshape(-1)
+
+    x_opt, f_opt = run_ga(
+        data_model=optimizer,
+        domain=domain,
+        objective_callables=[_objective],
+        q=1,
+        callable_format="torch",
+    )
+
+    assert callback_path.exists()
+    content = callback_path.read_text(encoding="utf-8").strip()
+    assert content.startswith("generation=")
+    callback_path.unlink()
+    assert not callback_path.exists()
+    assert x_opt.shape == (1, 1)
+    assert f_opt.shape == (1,)
