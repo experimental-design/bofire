@@ -12,7 +12,11 @@ from botorch.models.transforms.input import (
 )
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -24,9 +28,7 @@ from bofire.data_models.features.api import (
     WeightedSumFeature,
 )
 from bofire.data_models.molfeatures.api import (
-    CompositeMolFeatures,
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
@@ -53,8 +55,8 @@ def test_get_scaler_none():
         inputs=inputs,
         engineered_features=EngineeredFeatures(features=[]),
         categorical_encodings={
-            "x_cat": CategoricalEncodingEnum.ONE_HOT,
-            "x_desc": CategoricalEncodingEnum.ONE_HOT,
+            "x_cat": OneHotEncoding(),
+            "x_desc": OneHotEncoding(),
         },
         scaler_type=NormalizeScaler(),
     )
@@ -67,8 +69,8 @@ def test_get_scaler_none():
         (
             NormalizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
+                "x_desc": OneHotEncoding(),
             },
             Normalize,
             torch.tensor([0, 1], dtype=torch.int64),
@@ -78,8 +80,8 @@ def test_get_scaler_none():
         (
             NormalizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
+                "x_cat": OneHotEncoding(),
+                "x_desc": DescriptorEncoding(),
             },
             Normalize,
             torch.tensor([0, 1, 2, 3], dtype=torch.int64),
@@ -89,8 +91,8 @@ def test_get_scaler_none():
         (
             StandardizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
+                "x_desc": OneHotEncoding(),
             },
             InputStandardize,
             torch.tensor([0, 1], dtype=torch.int64),
@@ -100,8 +102,8 @@ def test_get_scaler_none():
         (
             StandardizeScaler(),
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
+                "x_cat": OneHotEncoding(),
+                "x_desc": DescriptorEncoding(),
             },
             InputStandardize,
             torch.tensor([0, 1, 2, 3], dtype=torch.int64),
@@ -111,8 +113,8 @@ def test_get_scaler_none():
         (
             None,
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+                "x_cat": OneHotEncoding(),
+                "x_desc": OneHotEncoding(),
             },
             type(None),
             None,
@@ -122,8 +124,8 @@ def test_get_scaler_none():
         (
             None,
             {
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-                "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
+                "x_cat": OneHotEncoding(),
+                "x_desc": DescriptorEncoding(),
             },
             type(None),
             None,
@@ -229,7 +231,12 @@ def test_get_scaler_with_experiments():
         (
             NormalizeScaler(),
             {
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x_mol": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
+                ),
             },
             Normalize,
             torch.tensor([0, 1, 2, 3], dtype=torch.int64),
@@ -237,7 +244,9 @@ def test_get_scaler_with_experiments():
         (
             NormalizeScaler(),
             {
-                "x_mol": Fingerprints(n_bits=2),
+                "x_mol": DescriptorEncoding(
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
+                ),
             },
             Normalize,
             torch.tensor([0, 1], dtype=torch.int64),
@@ -245,7 +254,12 @@ def test_get_scaler_with_experiments():
         (
             StandardizeScaler(),
             {
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x_mol": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
+                ),
             },
             InputStandardize,
             torch.tensor([0, 1, 2, 3], dtype=torch.int64),
@@ -253,7 +267,16 @@ def test_get_scaler_with_experiments():
         (
             StandardizeScaler(),
             {
-                "x_mol": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                "x_mol": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(
+                                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            )
+                        ]
+                    },
+                ),
             },
             InputStandardize,
             torch.tensor([0, 1], dtype=torch.int64),
@@ -261,7 +284,12 @@ def test_get_scaler_with_experiments():
         (
             None,
             {
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x_mol": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
+                ),
             },
             type(None),
             None,
@@ -269,7 +297,10 @@ def test_get_scaler_with_experiments():
         (
             None,
             {
-                "x_mol": FingerprintsFragments(n_bits=32),
+                "x_mol": DescriptorEncoding(
+                    columns=[],
+                    generators={"smiles": [Fingerprints(n_bits=32), Fragments()]},
+                ),
             },
             type(None),
             None,
@@ -348,7 +379,7 @@ def test_get_scaler_engineered_features():
     scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=engineered_features,
-        categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        categorical_encodings={"x_cat": OneHotEncoding()},
         scaler_type=NormalizeScaler(),
     )
 
@@ -389,7 +420,7 @@ def test_get_scaler_feature_specific():
     scaler_dict = get_scaler(
         inputs=inputs,
         engineered_features=engineered_features,
-        categorical_encodings={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        categorical_encodings={"x_cat": OneHotEncoding()},
         scaler_type=NormalizeScaler(features=["x_2", "x_4", "sum"]),
     )
 
@@ -409,74 +440,113 @@ def test_get_scaler_feature_specific():
     [
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": Fingerprints(n_bits=2),
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
+                ),
             },
             ["x1"],
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
+                        ]
+                    },
+                ),
             },
             ["x1"],
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
+                ),
             },
             ["x1", "x4"],
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": Fingerprints(n_bits=2),
-            },
-            ["x1", "x3"],
-        ),
-        (
-            {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
-            },
-            ["x1", "x3"],
-        ),
-        (
-            {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": FingerprintsFragments(
-                    fragments=["fr_unbrch_alkane", "fr_thiocyan"], n_bits=32
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
                 ),
             },
             ["x1", "x3"],
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
+                        ]
+                    },
+                ),
+            },
+            ["x1", "x3"],
+        ),
+        (
+            {
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fingerprints(n_bits=32),
+                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                        ]
+                    },
+                ),
+            },
+            ["x1", "x3"],
+        ),
+        (
+            {
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                "x4": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
+                ),
             },
             ["x1", "x3", "x4"],
         ),
         (
             {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-                "x4": CompositeMolFeatures(
-                    features=[
-                        MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                        Fingerprints(n_bits=128),
-                    ]
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                # mixed real (Mordred) + binary (Fingerprints): not purely continuous,
+                # so x4 is not scaled (every generator must be real-valued to qualify).
+                "x4": DescriptorEncoding(
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                            Fingerprints(n_bits=128),
+                        ]
+                    },
                 ),
             },
-            ["x1", "x3", "x4"],
+            ["x1", "x3"],
         ),
     ],
 )
@@ -524,7 +594,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -534,7 +604,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=None,
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -544,7 +614,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ORDINAL,
+            "x2": OrdinalEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -554,7 +624,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=None,
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ORDINAL,
+            "x2": OrdinalEncoding(),
         },
         engineered_features=EngineeredFeatures(features=[]),
     )
@@ -564,7 +634,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(
             features=[
@@ -586,7 +656,7 @@ def test_get_input_transform():
         inputs=inputs,
         scaler_type=NormalizeScaler(),
         categorical_encodings={
-            "x2": CategoricalEncodingEnum.ONE_HOT,
+            "x2": OneHotEncoding(),
         },
         engineered_features=EngineeredFeatures(
             features=[

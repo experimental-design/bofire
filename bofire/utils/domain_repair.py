@@ -14,7 +14,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import get_linear_constraints
@@ -24,9 +24,7 @@ def default_input_preprocessing_specs(
     domain: Domain,
 ) -> InputTransformSpecs:
     """Default input preprocessing specs for the GA optimizer: If none given, will use Ordinal encoding for all categorical inputs"""
-    return dict.fromkeys(
-        domain.inputs.get_keys(CategoricalInput), CategoricalEncodingEnum.ORDINAL
-    )
+    return dict.fromkeys(domain.inputs.get_keys(CategoricalInput), OrdinalEncoding())
 
 
 class DomainRepair:

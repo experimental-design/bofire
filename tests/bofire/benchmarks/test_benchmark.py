@@ -125,16 +125,17 @@ def test_formulation_wrapper_latent():
     assert_array_equal(wrapped._scales_new, np.array([0.5, 0.5]))
     # now we test the transform method
 
-    # Test the descriptors
+    # Test the descriptors (now a per-level table {orig_key: [latent_coord]})
     descriptor_vals = [[1, 0], [0, 1]]
     for i in range(2):
         for j in range(3):
             feat = wrapped.domain.inputs.get_by_key(f"x_{i + 1}_{j}")
-            assert feat.descriptors == benchmark.domain.inputs.get_keys()
-            assert feat.values == [
+            assert list(feat.descriptors.keys()) == benchmark.domain.inputs.get_keys()
+            flat = [feat.descriptors[name][0] for name in feat.descriptors]
+            assert flat == [
                 1 if k == i else 0 for k in range(len(benchmark.domain.inputs))
             ]
-            assert feat.values == descriptor_vals[i]
+            assert flat == descriptor_vals[i]
 
     assert len(wrapped.domain.constraints) == 3
     ineqs = wrapped.domain.constraints.get(LinearInequalityConstraint)

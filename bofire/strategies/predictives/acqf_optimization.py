@@ -28,7 +28,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -171,7 +171,7 @@ class AcquisitionOptimizer(ABC):
         domain: Domain,
     ) -> InputTransformSpecs:
         return dict.fromkeys(
-            domain.inputs.get_keys(CategoricalInput), CategoricalEncodingEnum.ORDINAL
+            domain.inputs.get_keys(CategoricalInput), OrdinalEncoding()
         )
 
     @staticmethod
@@ -765,9 +765,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     for feat in domain.inputs.get(DiscreteInput)
                 },
                 cat_dims={
-                    features2idx[feat.key][0]: feat.to_ordinal_encoding(
-                        pd.Series(feat.get_allowed_categories())
-                    ).tolist()
+                    features2idx[feat.key][0]: feat.to_encoding(
+                        OrdinalEncoding(), pd.Series(feat.get_allowed_categories())
+                    )[feat.key].tolist()
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
                 },

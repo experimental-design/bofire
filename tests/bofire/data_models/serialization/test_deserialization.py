@@ -114,6 +114,14 @@ def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
     assert obj == deserialized
 
 
+def test_encoding_should_be_deserializable(encoding_spec: Spec):
+    from bofire.data_models.encodings.api import AnyCategoricalEncoding
+
+    obj = encoding_spec.obj()
+    deserialized = TypeAdapter(AnyCategoricalEncoding).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
 def test_inputs_should_be_deserializable(inputs_spec: Spec):
     obj = inputs_spec.obj()
     deserialized = TypeAdapter(Inputs).validate_python(obj.model_dump())

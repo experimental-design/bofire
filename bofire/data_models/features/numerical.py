@@ -12,8 +12,7 @@ class NumericalInput(Input):
 
     unit: Optional[str] = None
 
-    @staticmethod
-    def valid_transform_types() -> List:
+    def valid_transform_types(self) -> List:
         return []
 
     @property

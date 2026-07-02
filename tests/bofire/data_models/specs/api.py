@@ -8,6 +8,7 @@ from tests.bofire.data_models.specs.constraints_container import (
 )
 from tests.bofire.data_models.specs.dataframes import specs as dataframes
 from tests.bofire.data_models.specs.domain import specs as domain
+from tests.bofire.data_models.specs.encodings import specs as encodings
 from tests.bofire.data_models.specs.engineered_features import (
     specs as engineered_features,
 )

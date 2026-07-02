@@ -6,7 +6,6 @@ import operator
 import re
 import warnings
 from collections.abc import Iterator, Sequence
-from enum import Enum
 from typing import (
     Dict,
     Generic,
@@ -27,15 +26,14 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
+from bofire.data_models.encodings.encoding import CategoricalEncoding
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     AnyEngineeredFeature,
     AnyFeature,
     AnyInput,
     AnyOutput,
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalOutput,
     CategoricalTaskInput,
     ContinuousInput,
@@ -45,9 +43,7 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
-from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
-from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import (
     AbstractObjective,
     ConstrainedCategoricalObjective,
@@ -650,49 +646,11 @@ class Inputs(_BaseFeatures[AnyInput]):
                 features2idx[feat.key] = (counter,)
                 features2names[feat.key] = (feat.key,)
                 counter += 1
-            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
-                assert isinstance(feat, CategoricalInput)
-                features2idx[feat.key] = tuple(
-                    (np.array(range(len(feat.categories))) + counter).tolist(),
-                )
-                features2names[feat.key] = tuple(
-                    [get_encoded_name(feat.key, c) for c in feat.categories],
-                )
-                counter += len(feat.categories)
-            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
-                features2idx[feat.key] = (counter,)
-                features2names[feat.key] = (feat.key,)
-                counter += 1
-            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
-                assert isinstance(feat, CategoricalInput)
-                features2idx[feat.key] = tuple(
-                    (np.array(range(len(feat.categories) - 1)) + counter).tolist(),
-                )
-                features2names[feat.key] = tuple(
-                    [get_encoded_name(feat.key, c) for c in feat.categories[1:]],
-                )
-                counter += len(feat.categories) - 1
-            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                features2idx[feat.key] = tuple(
-                    (np.array(range(len(feat.descriptors))) + counter).tolist(),
-                )
-                features2names[feat.key] = tuple(
-                    [get_encoded_name(feat.key, d) for d in feat.descriptors],
-                )
-                counter += len(feat.descriptors)
-            elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, CategoricalMolecularInput)
-                descriptor_names = specs[
-                    feat.key
-                ].get_descriptor_names()  # ty: ignore[possibly-missing-attribute]
-                features2idx[feat.key] = tuple(
-                    (np.array(range(len(descriptor_names))) + counter).tolist(),
-                )
-                features2names[feat.key] = tuple(
-                    [get_encoded_name(feat.key, d) for d in descriptor_names],
-                )
-                counter += len(descriptor_names)
+            else:
+                names = specs[feat.key].get_names(feat)
+                features2idx[feat.key] = tuple(range(counter, counter + len(names)))
+                features2names[feat.key] = tuple(names)
+                counter += len(names)
         return features2idx, features2names
 
     def transform(
@@ -713,28 +671,17 @@ class Inputs(_BaseFeatures[AnyInput]):
             pd.DataFrame: Transformed dataframe. Only input features are included.
 
         """
-        # TODO: clean this up and move it into the individual classes
         specs = self._validate_transform_specs(specs)
         transformed = []
         for feat in self.get():
             s = experiments[feat.key]
-            if feat.key not in specs.keys():
+            spec = specs.get(feat.key)
+            if spec is None:
                 transformed.append(s)
-            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+            else:
+                # only categorical features carry an encoding
                 assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.to_onehot_encoding(s))
-            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
-                assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.to_ordinal_encoding(s))
-            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
-                assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.to_dummy_encoding(s))
-            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                transformed.append(feat.to_descriptor_encoding(s))
-            elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, CategoricalMolecularInput)
-                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
+                transformed.append(feat.to_encoding(spec, s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -756,34 +703,19 @@ class Inputs(_BaseFeatures[AnyInput]):
             pd.DataFrame: Back transformed dataframe. Only input features are included.
 
         """
-        # TODO: clean this up and move it into the individual classes
         self._validate_transform_specs(specs=specs)
         transformed = []
         for feat in self.get():
             if isinstance(feat, DiscreteInput):
                 transformed.append(feat.from_continuous(experiments))
-            elif feat.key not in specs.keys():
+                continue
+            spec = specs.get(feat.key)
+            if spec is None:
                 transformed.append(experiments[feat.key])
-            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+            else:
+                # only categorical features carry an encoding
                 assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.from_onehot_encoding(experiments))
-            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
-                assert isinstance(feat, CategoricalInput)
-                transformed.append(
-                    feat.from_ordinal_encoding(experiments[feat.key].astype(int)),
-                )
-            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
-                assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.from_dummy_encoding(experiments))
-            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                assert isinstance(feat, CategoricalDescriptorInput)
-                transformed.append(feat.from_descriptor_encoding(experiments))
-            elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, CategoricalMolecularInput)
-                transformed.append(
-                    feat.from_descriptor_encoding(specs[feat.key], experiments),
-                )
-
+                transformed.append(feat.from_encoding(spec, experiments))
         return pd.concat(transformed, axis=1)
 
     def _validate_transform_specs(
@@ -796,8 +728,8 @@ class Inputs(_BaseFeatures[AnyInput]):
             specs (InputTransformSpecs): Transform specs to be validated.
 
         """
-        # first check that the keys in the specs dict are correct also correct feature keys
-        # next check that all values are of type CategoricalEncodingEnum or MolFeatures
+        # check that keys are valid feature keys and values are encodings valid
+        # for the respective feature.
         for key, value in specs.items():
             try:
                 feat = self.get_by_key(key)
@@ -805,29 +737,13 @@ class Inputs(_BaseFeatures[AnyInput]):
                 raise ValueError(
                     f"Unknown feature with key {key} specified in transform specs.",
                 )
-            # TODO
-            # this is ugly, on the long run we have to get rid of the transform enums
-            # and replace them with classes, then the following lines collapse into just two
             assert isinstance(feat, Input)
-            enums = [t for t in feat.valid_transform_types() if isinstance(t, Enum)]
-            no_enums = [
-                t for t in feat.valid_transform_types() if not isinstance(t, Enum)
-            ]
-            if isinstance(value, Enum):
-                if value not in enums:
-                    raise ValueError(
-                        f"Forbidden transform type for feature with key {key}",
-                    )
-            else:
-                if len(no_enums) == 0:
-                    raise ValueError(
-                        f"Forbidden transform type for feature with key {key}",
-                    )
-                if not isinstance(value, tuple(no_enums)):
-                    raise ValueError(
-                        f"Forbidden transform type for feature with key {key}",
-                    )
-
+            if not isinstance(value, tuple(feat.valid_transform_types())):
+                raise ValueError(
+                    f"Forbidden transform type for feature with key {key}",
+                )
+            if isinstance(value, CategoricalEncoding):
+                value.validate_for_feature(feat)
         return specs
 
     def get_bounds(
@@ -874,6 +790,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         for feat in self.get():
             assert isinstance(feat, Input)
+            # categorical features delegate to their encoder inside get_bounds.
             lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),
                 values=experiments[feat.key] if experiments is not None else None,

@@ -6,7 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -50,7 +50,7 @@ def test_categorical_descriptor_to_descriptor_encoding(
         values=[[1, 2], [3, 4], [5, 6]],
     )
     samples = pd.Series(samples_in)
-    t_samples = c.to_descriptor_encoding(samples)
+    t_samples = DescriptorEncoding().encode(c, samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
@@ -58,7 +58,7 @@ def test_categorical_descriptor_to_descriptor_encoding(
             columns=[f"{key}_{des_str}" for des_str in descriptors],
         ),
     )
-    untransformed = c.from_descriptor_encoding(t_samples)
+    untransformed = DescriptorEncoding().decode(c, t_samples)
     assert np.all(samples == untransformed)
 
 
@@ -85,7 +85,7 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
         columns=[f"{key}_{des_str}" for des_str in descriptors] + ["misc"],
         data=[[1.05, 2.5, 6], [4, 4.5, 9]],
     )
-    samples = c1.from_descriptor_encoding(descriptor_values)
+    samples = DescriptorEncoding().decode(c1, descriptor_values)
     print(samples)
     assert np.all(samples == pd.Series([categories[0], categories[1]]))
 
@@ -97,7 +97,7 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
         allowed=[False, True, True],
     )
 
-    samples = c2.from_descriptor_encoding(descriptor_values)
+    samples = DescriptorEncoding().decode(c2, descriptor_values)
     print(samples)
     assert np.all(samples == pd.Series([categories[1], categories[1]]))
 
@@ -143,14 +143,14 @@ def test_categorical_descriptor_feature_get_bounds(
     experiments = pd.DataFrame(
         {"if1": ["a", "b"], "if2": ["a", "c"], "if3": ["a", "a"], "if4": ["b", "b"]},
     )
-    lower, upper = input_feature.get_bounds(
-        transform_type=CategoricalEncodingEnum.DESCRIPTOR,
+    lower, upper = DescriptorEncoding().get_bounds(
+        input_feature,
         values=experiments[input_feature.key],
     )
     assert np.allclose(lower, expected_with_values[0])
     assert np.allclose(upper, expected_with_values[1])
-    lower, upper = input_feature.get_bounds(
-        transform_type=CategoricalEncodingEnum.DESCRIPTOR,
+    lower, upper = DescriptorEncoding().get_bounds(
+        input_feature,
         values=None,
     )
     assert np.allclose(lower, expected[0])
@@ -319,7 +319,7 @@ def test_categorical_descriptor_input_feature_as_dataframe(
         descriptors=descriptors,
         values=values,
     )
-    df = f.to_df()
+    df = f.descriptor_table(f.descriptor_columns(role="descriptor"))
     assert len(df.columns) == len(descriptors)
     assert len(df) == len(categories)
     assert df.values.tolist() == values
@@ -339,7 +339,7 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
         descriptors=descriptors,
         values=values,
     )
-    df = f.to_df()
+    df = f.descriptor_table(f.descriptor_columns(role="descriptor"))
     assert len(df.columns) == len(descriptors)
     assert len(df) == 1
     assert df.values.tolist()[0] == values
@@ -373,8 +373,8 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     )
     f = CategoricalDescriptorInput.from_df("k", df)
     assert f.categories == categories
-    assert f.descriptors == descriptors
-    assert f.values == values
+    assert f.descriptor_columns(role="descriptor") == descriptors
+    assert f.descriptor_table(descriptors).values.tolist() == values
 
 
 def test_categorical_descriptor_input_to_pydantic_field():
@@ -385,9 +385,9 @@ def test_categorical_descriptor_input_to_pydantic_field():
         values=[[1.0, 2.0], [3.0, 4.0]],
     )
     _, field_info = feat.to_pydantic_field()
-    assert field_info.description == (
-        "Categorical with descriptors, allowed: ['a', 'b'] — "
-        "descriptors per category: {'a': {'d1': 1.0, 'd2': 2.0}, 'b': {'d1': 3.0, 'd2': 4.0}}"
+    assert (
+        field_info.description
+        == "Categorical, allowed: ['a', 'b'] — descriptors: ['d1', 'd2']"
     )
 
 
@@ -402,9 +402,9 @@ def test_continuous_descriptor_input_to_pydantic_field():
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is float
-    assert field_info.description == (
-        "Continuous, bounds [0.0, 1.0] — descriptors: {'d1': 0.5}"
-    )
+    # the deprecated shim is now a plain ContinuousInput; the descriptor table no
+    # longer surfaces in the LLM field description.
+    assert field_info.description == "Continuous, bounds [0.0, 1.0]"
 
 
 def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_threshold():
@@ -422,7 +422,6 @@ def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_thresho
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is str
-    # description still lists the categories (via the prefix) and the mapping
+    # description still lists the categories (via the prefix)
     assert "c0" in field_info.description
     assert f"c{n - 1}" in field_info.description
-    assert "descriptors per category" in field_info.description

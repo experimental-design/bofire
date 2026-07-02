@@ -24,7 +24,8 @@ from torch.nn import Module
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Hartmann, Himmelblau
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
@@ -533,8 +534,8 @@ def test_SingleTaskGPModel_mixed_features():
             ]
         ),
         categorical_encodings={
-            "x_cat_1": CategoricalEncodingEnum.ORDINAL,
-            "x_cat_2": CategoricalEncodingEnum.ORDINAL,
+            "x_cat_1": OrdinalEncoding(),
+            "x_cat_2": OrdinalEncoding(),
             "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
         },
     )
@@ -543,7 +544,9 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     n_descriptors_after_filtering = len(
-        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+        gp_data.categorical_encodings["x_mol"].get_names(
+            gp_data.inputs.get_by_key("x_mol")
+        )
     )
     assert pred.shape == (4, 2)
     assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
@@ -746,7 +749,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     surrogate_data = MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        # input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        # input_preprocessing_specs={"x_cat": OneHotEncoding()},
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,

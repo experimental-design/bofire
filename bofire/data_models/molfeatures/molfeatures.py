@@ -1,9 +1,9 @@
 import warnings
 from abc import abstractmethod
-from typing import Annotated, Any, List, Literal, Optional, Union
+from typing import Annotated, Any, List, Literal, Optional
 
 import pandas as pd
-from pydantic import Field, PrivateAttr, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.molfeatures import names
@@ -15,91 +15,53 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
 
 
 class MolFeatures(BaseModel):
-    """Base class for all molecular features"""
+    """Base class for all molecular features.
+
+    A ``MolFeatures`` is a pure, stateless transform: given a series of structure
+    identifiers (SMILES) it returns a dataframe of numeric descriptor columns.
+    Correlation-based decorrelation is *not* done here — it lives on the consuming
+    descriptor encoding / engineered feature (``DescriptorSpec``), applied across the
+    whole assembled descriptor block.
+    """
 
     type: Any
-    filter_descriptors: bool = True
-    correlation_cutoff: float = 0.95
-    _descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = PrivateAttr(
-        None
-    )
+    # the kind of structure identifier this generator consumes; the descriptor spec
+    # validates its structure column carries this kind.
+    reads: Literal["smiles"] = "smiles"
 
-    def get_descriptor_names(self) -> List[str]:
-        if self._descriptors is not None:
-            return self._descriptors
-        return self._get_descriptor_names()
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_legacy_filter_fields(cls, data):
+        """Correlation filtering moved to the descriptor encoding/feature.
 
-    @abstractmethod
-    def _get_descriptor_names(self) -> List[str]:
-        pass
-
-    def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
-        all_descriptor_values = self._get_descriptor_values(values)
-        if self._descriptors is not None:
-            return all_descriptor_values[self._descriptors].copy()
-        return all_descriptor_values
-
-    @abstractmethod
-    def _get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
-        pass
-
-    def remove_correlated_descriptors(self, molecules: List[str]):
-        if not self.filter_descriptors:
-            self._descriptors = self._get_descriptor_names()
-            return self._descriptors
-
-        # Get unique SMILES to avoid redundant calculations
-        unique_smiles = pd.Series(molecules)
-
-        # Get descriptor values for all SMILES
-        descriptor_values = self.get_descriptor_values(unique_smiles)
-
-        # Remove columns with zero variance (non-informative descriptors)
-        variances = descriptor_values.var()
-        non_zero_var_descriptors = variances[variances > 0].index.tolist()
-
-        if len(non_zero_var_descriptors) == 0:
-            raise ValueError(
-                "No descriptors with non-zero variance found. "
-                "Cannot perform correlation-based filtering."
-            )
-
-        descriptor_values = descriptor_values[non_zero_var_descriptors]
-
-        # Handle edge case: only one descriptor left
-        if descriptor_values.shape[1] == 1:
+        Old serialized generators may still carry ``filter_descriptors`` /
+        ``correlation_cutoff``; drop them (with a warning) so those dumps still load.
+        """
+        if isinstance(data, dict) and (
+            "filter_descriptors" in data or "correlation_cutoff" in data
+        ):
             warnings.warn(
-                "Only one descriptor with non-zero variance found for feature. "
-                "No correlation filtering needed."
+                "`filter_descriptors` / `correlation_cutoff` moved off MolFeatures to "
+                "the descriptor encoding/feature (`filter_descriptors` on "
+                "`DescriptorEncoding` / `WeightedSumFeature`); the values on the "
+                "generator are ignored.",
+                DeprecationWarning,
+                stacklevel=2,
             )
-            self._descriptors = non_zero_var_descriptors
-            return
+            data = {
+                k: v
+                for k, v in data.items()
+                if k not in ("filter_descriptors", "correlation_cutoff")
+            }
+        return data
 
-        # Compute absolute correlation matrix
-        correlation_matrix = descriptor_values.corr().abs()
+    @abstractmethod
+    def get_descriptor_names(self) -> List[str]:
+        """The descriptor column names this generator produces."""
 
-        # Greedy algorithm to select uncorrelated descriptors
-        selected_descriptors = []
-        remaining_descriptors = set(range(len(descriptor_values.columns)))
-
-        while remaining_descriptors:
-            # Select the first remaining descriptor
-            current_idx = min(remaining_descriptors)
-            selected_descriptors.append(descriptor_values.columns[current_idx])
-            remaining_descriptors.remove(current_idx)
-
-            # Find and remove highly correlated descriptors
-            to_remove = set()
-            for idx in remaining_descriptors:
-                if correlation_matrix.iloc[current_idx, idx] > self.correlation_cutoff:
-                    to_remove.add(idx)
-
-            remaining_descriptors -= to_remove
-
-        # Update the transform_type.descriptors with the filtered list
-        if self.filter_descriptors is True:
-            self._descriptors = selected_descriptors
-        return selected_descriptors
+    @abstractmethod
+    def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
+        """Descriptor values for a series of structures (columns = descriptor names)."""
 
 
 class Fingerprints(MolFeatures):
@@ -107,17 +69,17 @@ class Fingerprints(MolFeatures):
     bond_radius: int = 5
     n_bits: int = 2048
 
-    def _get_descriptor_names(self) -> List[str]:
+    def get_descriptor_names(self) -> List[str]:
         return [f"fingerprint_{i}" for i in range(self.n_bits)]
 
-    def _get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
+    def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
             data=smiles2fingerprints(
                 values.to_list(),
                 bond_radius=self.bond_radius,
                 n_bits=self.n_bits,
             ).astype(float),
-            columns=self._get_descriptor_names(),
+            columns=self.get_descriptor_names(),
             index=values.index,
         )
 
@@ -152,13 +114,13 @@ class Fragments(MolFeatures):
 
         return fragments
 
-    def _get_descriptor_names(self) -> List[str]:
+    def get_descriptor_names(self) -> List[str]:
         return self.fragments if self.fragments is not None else names.fragments
 
-    def _get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
+    def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
-            data=smiles2fragments(values.to_list(), self._get_descriptor_names()),
-            columns=self._get_descriptor_names(),
+            data=smiles2fragments(values.to_list(), self.get_descriptor_names()),
+            columns=self.get_descriptor_names(),
             index=values.index,
         )
 
@@ -193,77 +155,14 @@ class MordredDescriptors(MolFeatures):
                 )
         return descriptors
 
-    def _get_descriptor_names(self) -> List[str]:
+    def get_descriptor_names(self) -> List[str]:
         return self.descriptors if self.descriptors is not None else names.mordred
 
-    def _get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
+    def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
             data=smiles2mordred(
-                values.to_list(), self._get_descriptor_names(), ignore_3D=self.ignore_3D
+                values.to_list(), self.get_descriptor_names(), ignore_3D=self.ignore_3D
             ),
-            columns=self._get_descriptor_names(),
+            columns=self.get_descriptor_names(),
             index=values.index,
         )
-
-
-class CompositeMolFeatures(MolFeatures):
-    """Composite of multiple MolFeatures objects.
-
-    Combines descriptor sets from multiple MolFeatures into a single
-    feature space. Descriptor names across components must be unique.
-    """
-
-    type: Literal["CompositeMolFeatures"] = "CompositeMolFeatures"
-    features: Annotated[
-        List[Union[Fingerprints, Fragments, MordredDescriptors]], Field(min_length=2)
-    ]
-
-    def _get_descriptor_names(self) -> List[str]:
-        all_names: List[str] = []
-        for feat in self.features:
-            all_names.extend(feat._get_descriptor_names())
-        duplicate_names = {name for name in all_names if all_names.count(name) > 1}
-        if duplicate_names:
-            raise ValueError(
-                "Duplicate descriptor names found in CompositeMolFeatures: "
-                f"{sorted(duplicate_names)}",
-            )
-        return all_names
-
-    def _get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
-        descriptor_dfs = [feat._get_descriptor_values(values) for feat in self.features]
-        combined = pd.concat(descriptor_dfs, axis=1)
-        if combined.columns.duplicated().any():
-            duplicate_names = combined.columns[combined.columns.duplicated()].tolist()
-            raise ValueError(
-                "Duplicate descriptor names found in CompositeMolFeatures: "
-                f"{sorted(set(duplicate_names))}",
-            )
-        return combined
-
-
-def FingerprintsFragments(
-    fragments: Optional[List[str]] = None,
-    bond_radius: int = 5,
-    n_bits: int = 2048,
-    correlation_cutoff: float = 0.95,
-    filter_descriptors: bool = True,
-) -> CompositeMolFeatures:
-    """Factory function to create a FingerprintsFragments MolFeatures object.
-
-    Args:
-        fragments (Optional[List[str]], optional): List of fragment names. Defaults to None.
-        bond_radius (int, optional): Bond radius for fingerprints. Defaults to 5.
-        n_bits (int, optional): Number of bits for fingerprints. Defaults to 2048.
-
-    Returns:
-        MolFeatures: An instance of FingerprintsFragments.
-    """
-    return CompositeMolFeatures(
-        correlation_cutoff=correlation_cutoff,
-        features=[
-            Fingerprints(bond_radius=bond_radius, n_bits=n_bits),
-            Fragments(fragments=fragments),
-        ],
-        filter_descriptors=filter_descriptors,
-    )

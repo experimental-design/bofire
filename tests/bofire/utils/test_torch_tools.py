@@ -18,7 +18,11 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -1053,7 +1057,7 @@ def test_get_initial_conditions_generator(sequential: bool):
     # test with ordinal encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
-        transform_specs={"b": CategoricalEncodingEnum.ORDINAL},
+        transform_specs={"b": OrdinalEncoding()},
         ask_options={},
         sequential=sequential,
     )
@@ -1062,7 +1066,7 @@ def test_get_initial_conditions_generator(sequential: bool):
     # test with one hot encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
-        transform_specs={"b": CategoricalEncodingEnum.ONE_HOT},
+        transform_specs={"b": OneHotEncoding()},
         ask_options={},
         sequential=sequential,
     )
@@ -1071,7 +1075,7 @@ def test_get_initial_conditions_generator(sequential: bool):
     # test with descriptor encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
-        transform_specs={"b": CategoricalEncodingEnum.DESCRIPTOR},
+        transform_specs={"b": DescriptorEncoding()},
         ask_options={},
         sequential=sequential,
     )
@@ -1178,7 +1182,7 @@ def test_interp1d():
                 key="a",
                 categories=["a", "b", "c"],
             ),
-            CategoricalEncodingEnum.ONE_HOT,
+            OneHotEncoding(),
             torch.tensor([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).to(**tkwargs),
         ),
         (
@@ -1188,7 +1192,7 @@ def test_interp1d():
                 descriptors=["oscar", "wilde"],
                 values=[[1, 2], [3, 4], [5, 6]],
             ),
-            CategoricalEncodingEnum.DESCRIPTOR,
+            DescriptorEncoding(),
             torch.tensor([[1, 2], [3, 4], [5, 6]]).to(**tkwargs),
         ),
         (
@@ -1196,7 +1200,7 @@ def test_interp1d():
                 key="a",
                 categories=["CC", "CCC"],
             ),
-            CategoricalEncodingEnum.ONE_HOT,
+            OneHotEncoding(),
             torch.tensor([[1, 0], [0, 1]]).to(**tkwargs),
         ),
     ],
@@ -1211,9 +1215,9 @@ def test_get_categorical_encoder(feature, transform, expected_encoding):
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_categorical_encoder_molecular():
     feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
-    transform = Fingerprints(filter_descriptors=False)
+    transform = DescriptorEncoding(columns=[], generators={"smiles": [Fingerprints()]})
     expected_encoding = torch.from_numpy(
-        feat.to_descriptor_encoding(transform, pd.Series(feat.categories)).values
+        transform.encode(feat, pd.Series(feat.categories)).values
     ).to(**tkwargs)
     encoder = get_categorical_encoder(feat, transform)
     assert isinstance(encoder, Encoder)
@@ -1230,8 +1234,8 @@ def test_get_NumericToCategorical_input_transform():
         ]
     )
     transform_specs = {
-        "x2": CategoricalEncodingEnum.ONE_HOT,
-        "x3": CategoricalEncodingEnum.ONE_HOT,
+        "x2": OneHotEncoding(),
+        "x3": OneHotEncoding(),
     }
     transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
     assert isinstance(transform, NumericToCategoricalEncoding)
@@ -1239,8 +1243,8 @@ def test_get_NumericToCategorical_input_transform():
     assert len(transform.encoders) == 2
     assert list(transform.encoders.keys()) == [1, 2]
     transform_specs = {
-        "x2": CategoricalEncodingEnum.ORDINAL,
-        "x3": CategoricalEncodingEnum.ONE_HOT,
+        "x2": OrdinalEncoding(),
+        "x3": OneHotEncoding(),
     }
     transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
     assert isinstance(transform, NumericToCategoricalEncoding)
@@ -1248,8 +1252,8 @@ def test_get_NumericToCategorical_input_transform():
     assert len(transform.encoders) == 1
     assert list(transform.encoders.keys()) == [2]
     transform_specs = {
-        "x2": CategoricalEncodingEnum.ORDINAL,
-        "x3": CategoricalEncodingEnum.ORDINAL,
+        "x2": OrdinalEncoding(),
+        "x3": OrdinalEncoding(),
     }
     transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
     assert transform is None

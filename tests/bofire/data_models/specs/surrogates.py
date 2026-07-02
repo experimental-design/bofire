@@ -1,6 +1,10 @@
 import bofire.data_models.surrogates.api as models
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
@@ -435,8 +439,8 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {"cat1": CategoricalEncodingEnum.ORDINAL},
+        "input_preprocessing_specs": {"cat1": OrdinalEncoding().model_dump()},
+        "categorical_encodings": {"cat1": OrdinalEncoding().model_dump()},
         "dump": None,
         "hyperconfig": None,
     },
@@ -502,7 +506,7 @@ specs.add_invalid(
                 features.valid(ContinuousOutput).obj(),
             ],
         ).model_dump(),
-        "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "categorical_encodings": {"x_cat": OneHotEncoding().model_dump()},
     },
     error=ValueError,
     message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
@@ -744,9 +748,12 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
+        "input_preprocessing_specs": {"mol1": OrdinalEncoding().model_dump()},
         "categorical_encodings": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            "mol1": DescriptorEncoding(
+                columns=[],
+                generators={"smiles": [Fingerprints(n_bits=32, bond_radius=3)]},
+            ).model_dump(),
         },
         "dump": None,
         "hyperconfig": None,
@@ -768,8 +775,8 @@ specs.add_valid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "input_preprocessing_specs": {"x_cat": OrdinalEncoding().model_dump()},
+        "categorical_encodings": {"x_cat": OrdinalEncoding().model_dump()},
         "engineered_features": EngineeredFeatures().model_dump(),
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
@@ -791,7 +798,7 @@ specs.add_invalid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "input_preprocessing_specs": {"x_cat": OrdinalEncoding().model_dump()},
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
     },
@@ -812,7 +819,7 @@ specs.add_invalid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "input_preprocessing_specs": {"x_cat": OrdinalEncoding().model_dump()},
         "mapping": {"a": 0.1, "b": 0.2, "d": 1.0},
         "dump": None,
     },
@@ -917,10 +924,10 @@ specs.add_valid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ORDINAL,
+            "task": OrdinalEncoding().model_dump(),
         },
         "categorical_encodings": {
-            "task": CategoricalEncodingEnum.ORDINAL,
+            "task": OrdinalEncoding().model_dump(),
         },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
@@ -953,7 +960,7 @@ specs.add_invalid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ONE_HOT,
+            "task": OneHotEncoding().model_dump(),
         },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
@@ -987,7 +994,7 @@ specs.add_invalid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ORDINAL,
+            "task": OrdinalEncoding().model_dump(),
         },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
@@ -1022,10 +1029,10 @@ specs.add_invalid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ORDINAL,
+            "task": OrdinalEncoding().model_dump(),
         },
         "categorical_encodings": {
-            "task": CategoricalEncodingEnum.ONE_HOT,
+            "task": OneHotEncoding().model_dump(),
         },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
